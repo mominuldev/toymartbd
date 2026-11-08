@@ -1,0 +1,11 @@
+{
+    "name": "@toymart/api-types",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "TypeScript types generated from the API's OpenAPI 3.1 document. Generated, never hand-edited.",
+    "exports": { ".": "./src/index.ts" },
+    "scripts": {
+        "generate": "echo 'openapi-typescript runs once /api/docs is published (P3-API-07)' && exit 0"
+    }
+}

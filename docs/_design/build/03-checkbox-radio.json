@@ -1,0 +1,4582 @@
+{
+  "components": [
+    {
+      "name": "Checkbox",
+      "description": "Row checkbox. WHY the shape: the 4px-radius square (radius/xs) is the only affordance that separates it from Radio's radius/full circle; the two must never be confusable, so the radius is never themed per surface. WHY the hit area: the visual box is 20x20, far under the 44px floor, so the whole row is the target - root frame min-height 44, full-width, and every adjacent row is separated by at least space/2 so no two 44px targets overlap (SS0.8). WHY the label association: the root frame IS the <label> element and Box is the visually-hidden native <input type=checkbox> rendered inside it, so association is implicit - no for/id pair, and clicking the Label text or the Description toggles the box. Checked/Indeterminate are discrete content states (a designer must place a pre-checked 'Save this address' row), so they are axes; Disabled is an axis because permission matrices and bulk-select headers need it. Hover/pressed/focus-visible stay interaction-only.",
+      "variantAxes": {
+        "Checked": [
+          "False",
+          "True",
+          "Indeterminate"
+        ],
+        "Disabled": [
+          "False",
+          "True"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Checked=False, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/surface",
+                  "strokeToken": "color/border/strong",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Checked=True, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/brand",
+                  "strokeToken": "color/bg/brand",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Checked=Indeterminate, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/brand",
+                  "strokeToken": "color/bg/brand",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Checked=False, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/on-brand",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Checked=True, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/tertiary",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/tertiary",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Checked=Indeterminate, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "BoxWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Box",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Mark/Check",
+                      "icon": "icon/check",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/text/tertiary",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "Mark/Indeterminate",
+                      "size": {
+                        "w": 10,
+                        "h": 2
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/tertiary",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_errorRing",
+                      "fillToken": null,
+                      "strokeToken": "color/feedback/danger",
+                      "strokeWeight": 1.5,
+                      "strokeAlign": "INSIDE",
+                      "cornerRadiusToken": "radius/xs",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/sm",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Save this address for next time",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "We will not share your details",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Accept the terms to continue",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "label",
+          "type": "TEXT",
+          "default": "Save this address for next time",
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showLabel",
+          "type": "BOOLEAN",
+          "default": true,
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "default": "We will not share your details",
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showDescription",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "error",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": [
+            {
+              "layer": "BoxWrapper/Box/_errorRing",
+              "field": "visible"
+            },
+            {
+              "layer": "TextBlock/Message",
+              "field": "visible"
+            }
+          ]
+        },
+        {
+          "name": "errorText",
+          "type": "TEXT",
+          "default": "Accept the terms to continue",
+          "bindTo": {
+            "layer": "TextBlock/Message/Text",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "focusVisible",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "BoxWrapper/Box/_focus",
+            "field": "visible"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Checkbox/Bare",
+      "description": "Label-less checkbox for DataTable row-select and bulk-select headers. WHY the shape: identical radius/xs square as Checkbox - a bare control has no text to disambiguate it, so the square is the ONLY affordance and must match the parent exactly. WHY the hit area: there is no row to click, so the component frame itself is 44x44 FIXED with the 20x20 Box centred - it needs no _hit44 helper because the frame already IS the 44px target, and in a 44px-tall table row the select target fills the row height exactly. WHY the label association: with no visible text there is no <label>, so the accessible name comes from the ariaLabel TEXT property on the 1x1 _aria-label layer, which maps to the aria-label attribute on the input (not a hidden span). Axes are identical to Checkbox so the same React component renders both.",
+      "variantAxes": {
+        "Checked": [
+          "False",
+          "True",
+          "Indeterminate"
+        ],
+        "Disabled": [
+          "False",
+          "True"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Checked=False, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/surface",
+              "strokeToken": "color/border/strong",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Checked=True, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/brand",
+              "strokeToken": "color/bg/brand",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Checked=Indeterminate, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/brand",
+              "strokeToken": "color/bg/brand",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Checked=False, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/subtle",
+              "strokeToken": "color/border/default",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/on-brand",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Checked=True, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/subtle",
+              "strokeToken": "color/border/default",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Checked=Indeterminate, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Checkbox/Bare",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 44,
+              "h": 44
+            },
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "padding": {
+              "t": "space/3",
+              "r": "space/3",
+              "b": "space/3",
+              "l": "space/3"
+            },
+            "gap": 0,
+            "primaryAxisAlign": "CENTER",
+            "counterAxisAlign": "CENTER",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "Box",
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "layoutMode": "HORIZONTAL",
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": 0,
+              "fillToken": "color/bg/subtle",
+              "strokeToken": "color/border/default",
+              "strokeWeight": 1.5,
+              "strokeAlign": "INSIDE",
+              "cornerRadiusToken": "radius/xs",
+              "visible": true,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Mark/Check",
+                  "icon": "icon/check",
+                  "size": {
+                    "w": 14,
+                    "h": 14
+                  },
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "Mark/Indeterminate",
+                  "size": {
+                    "w": 10,
+                    "h": 2
+                  },
+                  "cornerRadiusToken": "radius/full",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_scrim",
+                  "fillToken": "color/text/primary",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_errorRing",
+                  "fillToken": null,
+                  "strokeToken": "color/feedback/danger",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/xs",
+                  "absolute": {
+                    "inset": 0,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "RECTANGLE",
+                  "name": "_focus",
+                  "fillToken": null,
+                  "strokeToken": "color/border/focus",
+                  "strokeWeight": 2,
+                  "strokeAlign": "CENTER",
+                  "cornerRadiusToken": "radius/sm",
+                  "absolute": {
+                    "inset": -4,
+                    "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Select row",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT/TOP"
+              },
+              "visible": true
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "ariaLabel",
+          "type": "TEXT",
+          "default": "Select row",
+          "bindTo": {
+            "layer": "_aria-label",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "error",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "Box/_errorRing",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "focusVisible",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "Box/_focus",
+            "field": "visible"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Radio",
+      "description": "Row radio for payment and delivery selection. WHY the shape: the 20px circle is radius/full and NOTHING else in the system that sits in a form row is - the circle means 'one of these', the Checkbox square means 'any of these', and because users scan shape before colour the two radii are fixed constants, never themed. The selected dot is a 10px filled circle inside a 1.5px brand-bordered 20px circle, never a 6px border, because a thick border animates badly and renders unevenly at 1.5x DPR. WHY the hit area: the visual dot is 20x20, so the whole row is the <label> - root min-height 44 and FILL width give a target of row-width x >=44 (SS8.8). WHY the label association: the root frame IS the <label> and Dot is the visually-hidden <input type=radio> inside it, so association is implicit; the GROUP name lives on a <fieldset>/<legend> wrapper (RadioGroup, a layout frame - not a variant set), and arrow keys move AND select natively. Selected/Disabled are the only axes: there is no indeterminate radio, and the group's error attaches to the fieldset, not to a row, which is why Error is not an axis here (see showMessage).",
+      "variantAxes": {
+        "Selected": [
+          "False",
+          "True"
+        ],
+        "Disabled": [
+          "False",
+          "True"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Selected=False, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/surface",
+                  "strokeToken": "color/border/strong",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Choose a payment method",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selected=True, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/surface",
+                  "strokeToken": "color/bg/brand",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body-strong",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Choose a payment method",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selected=False, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": false
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Choose a payment method",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Selected=True, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 44
+            },
+            "minHeight": 44,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/2",
+              "r": "space/0",
+              "b": "space/2",
+              "l": "space/0"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": null,
+            "cornerRadiusToken": "radius/md",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/tertiary",
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_scrim",
+                      "fillToken": "color/text/primary",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": 0,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "RECTANGLE",
+                      "name": "_focus",
+                      "fillToken": null,
+                      "strokeToken": "color/border/focus",
+                      "strokeWeight": 2,
+                      "strokeAlign": "CENTER",
+                      "cornerRadiusToken": "radius/full",
+                      "absolute": {
+                        "inset": -4,
+                        "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+                      },
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                },
+                {
+                  "type": "FRAME",
+                  "name": "Message",
+                  "layoutMode": "HORIZONTAL",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": "space/1",
+                  "fillToken": null,
+                  "visible": false,
+                  "children": [
+                    {
+                      "type": "ICON_INSTANCE",
+                      "name": "Icon",
+                      "icon": "icon/warning-circle",
+                      "size": {
+                        "w": 14,
+                        "h": 14
+                      },
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "visible": true
+                    },
+                    {
+                      "type": "TEXT",
+                      "name": "Text",
+                      "characters": "Choose a payment method",
+                      "textStyle": "Latin/Mobile/caption",
+                      "fillToken": "color/feedback/danger",
+                      "sizing": {
+                        "h": "FILL",
+                        "v": "HUG"
+                      },
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "label",
+          "type": "TEXT",
+          "default": "Cash on delivery",
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showLabel",
+          "type": "BOOLEAN",
+          "default": true,
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "default": "Pay when your order arrives",
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showDescription",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "errorText",
+          "type": "TEXT",
+          "default": "Choose a payment method",
+          "bindTo": {
+            "layer": "TextBlock/Message/Text",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showMessage",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TextBlock/Message",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "trailingSlot",
+          "type": "INSTANCE_SWAP",
+          "default": "icon/circle",
+          "bindTo": {
+            "layer": "TrailingSlot/Slot",
+            "field": "mainComponent"
+          }
+        },
+        {
+          "name": "showTrailing",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TrailingSlot",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "focusVisible",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "DotWrapper/Dot/_focus",
+            "field": "visible"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Radio/Card",
+      "description": "Card-shaped radio for payment-method and delivery-method selection. A SEPARATE set, not a Style axis on Radio: a Style=Row|Card axis would change every geometry number per value, which is a different component wearing the same name. WHY the shape: the card is radius/lg (16) and carries the radius/full dot UNCHANGED inside it - the dot, not the card, is the affordance, so a user who has learnt the circle reads the card instantly; the card itself must never become square, because a square card plus a square mark would read as a multi-select tile. WHY the hit area: the whole card is the <label>, min-height 64 with space/4 padding on all sides, so the target clears 44 in both axes with room to spare, and focus-visible rings the WHOLE card (_focus at -4px, raw 20px radius) because the card IS the control - a ring on the 20px dot inside a 358px card would read as a stray artefact. WHY the label association: root frame = <label>, Dot = the visually-hidden <input type=radio>, implicit association; the group name is on the enclosing <fieldset>/<legend>. No Message layer and no error axis: a radio group's error attaches to the fieldset via aria-describedby (SS8.9), never to one card.",
+      "variantAxes": {
+        "Selected": [
+          "False",
+          "True"
+        ],
+        "Disabled": [
+          "False",
+          "True"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Selected=False, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio/Card",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 64
+            },
+            "minHeight": 64,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/4",
+              "r": "space/4",
+              "b": "space/4",
+              "l": "space/4"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": "color/bg/surface",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1.5,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/lg",
+            "effectStyle": null,
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/surface",
+                  "strokeToken": "color/border/strong",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_scrim",
+              "fillToken": "color/text/primary",
+              "cornerRadiusToken": "radius/lg",
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": true
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_focus",
+              "fillToken": null,
+              "strokeToken": "color/border/focus",
+              "strokeWeight": 2,
+              "strokeAlign": "CENTER",
+              "cornerRadiusToken": 20,
+              "absolute": {
+                "inset": -4,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": false
+            }
+          ]
+        },
+        {
+          "name": "Selected=True, Disabled=False",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio/Card",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 64
+            },
+            "minHeight": 64,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/4",
+              "r": "space/4",
+              "b": "space/4",
+              "l": "space/4"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": "color/bg/brand-subtle",
+            "strokeToken": "color/bg/brand",
+            "strokeWeight": 1.5,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/lg",
+            "effectStyle": "Elevation/Light/e1",
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/surface",
+                  "strokeToken": "color/bg/brand",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body-strong",
+                  "fillToken": "color/text/primary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_scrim",
+              "fillToken": "color/text/primary",
+              "cornerRadiusToken": "radius/lg",
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": true
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_focus",
+              "fillToken": null,
+              "strokeToken": "color/border/focus",
+              "strokeWeight": 2,
+              "strokeAlign": "CENTER",
+              "cornerRadiusToken": 20,
+              "absolute": {
+                "inset": -4,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": false
+            }
+          ]
+        },
+        {
+          "name": "Selected=False, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio/Card",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 64
+            },
+            "minHeight": 64,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/4",
+              "r": "space/4",
+              "b": "space/4",
+              "l": "space/4"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": "color/bg/subtle",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1.5,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/lg",
+            "effectStyle": null,
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/bg/brand",
+                      "visible": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_scrim",
+              "fillToken": "color/text/primary",
+              "cornerRadiusToken": "radius/lg",
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": true
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_focus",
+              "fillToken": null,
+              "strokeToken": "color/border/focus",
+              "strokeWeight": 2,
+              "strokeAlign": "CENTER",
+              "cornerRadiusToken": 20,
+              "absolute": {
+                "inset": -4,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": false
+            }
+          ]
+        },
+        {
+          "name": "Selected=True, Disabled=True",
+          "frame": {
+            "type": "FRAME",
+            "name": "Radio/Card",
+            "layoutMode": "HORIZONTAL",
+            "size": {
+              "w": 358,
+              "h": 64
+            },
+            "minHeight": 64,
+            "sizing": {
+              "h": "FIXED",
+              "v": "HUG"
+            },
+            "padding": {
+              "t": "space/4",
+              "r": "space/4",
+              "b": "space/4",
+              "l": "space/4"
+            },
+            "gap": "space/3",
+            "counterAxisAlign": "START",
+            "primaryAxisAlign": "START",
+            "fillToken": "color/bg/subtle",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1.5,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/lg",
+            "effectStyle": null,
+            "clipsContent": false
+          },
+          "layers": [
+            {
+              "type": "FRAME",
+              "name": "DotWrapper",
+              "layoutMode": "VERTICAL",
+              "size": {
+                "w": 20,
+                "h": 22
+              },
+              "sizing": {
+                "h": "FIXED",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": "space/0-5",
+                "r": "space/0",
+                "b": "space/0",
+                "l": "space/0"
+              },
+              "gap": 0,
+              "fillToken": null,
+              "clipsContent": false,
+              "visible": true,
+              "children": [
+                {
+                  "type": "FRAME",
+                  "name": "Dot",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "layoutMode": "HORIZONTAL",
+                  "padding": {
+                    "t": 0,
+                    "r": 0,
+                    "b": 0,
+                    "l": 0
+                  },
+                  "gap": 0,
+                  "primaryAxisAlign": "CENTER",
+                  "counterAxisAlign": "CENTER",
+                  "fillToken": "color/bg/subtle",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1.5,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/full",
+                  "clipsContent": false,
+                  "visible": true,
+                  "children": [
+                    {
+                      "type": "ELLIPSE",
+                      "name": "InnerDot",
+                      "size": {
+                        "w": 10,
+                        "h": 10
+                      },
+                      "sizing": {
+                        "h": "FIXED",
+                        "v": "FIXED"
+                      },
+                      "cornerRadiusToken": "radius/full",
+                      "fillToken": "color/text/tertiary",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TextBlock",
+              "layoutMode": "VERTICAL",
+              "sizing": {
+                "h": "FILL",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": true,
+              "children": [
+                {
+                  "type": "TEXT",
+                  "name": "Label",
+                  "characters": "Cash on delivery",
+                  "textStyle": "Latin/Mobile/body",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": true
+                },
+                {
+                  "type": "TEXT",
+                  "name": "Description",
+                  "characters": "Pay when your order arrives",
+                  "textStyle": "Latin/Mobile/body-sm",
+                  "fillToken": "color/text/tertiary",
+                  "sizing": {
+                    "h": "FILL",
+                    "v": "HUG"
+                  },
+                  "visible": false
+                }
+              ]
+            },
+            {
+              "type": "FRAME",
+              "name": "TrailingSlot",
+              "layoutMode": "HORIZONTAL",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "padding": {
+                "t": 0,
+                "r": 0,
+                "b": 0,
+                "l": 0
+              },
+              "gap": "space/1",
+              "fillToken": null,
+              "visible": false,
+              "children": [
+                {
+                  "type": "ICON_INSTANCE",
+                  "name": "Slot",
+                  "icon": "icon/circle",
+                  "size": {
+                    "w": 20,
+                    "h": 20
+                  },
+                  "fillToken": "color/text/secondary",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_scrim",
+              "fillToken": "color/text/primary",
+              "cornerRadiusToken": "radius/lg",
+              "absolute": {
+                "inset": 0,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": true
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_focus",
+              "fillToken": null,
+              "strokeToken": "color/border/focus",
+              "strokeWeight": 2,
+              "strokeAlign": "CENTER",
+              "cornerRadiusToken": 20,
+              "absolute": {
+                "inset": -4,
+                "constraints": "LEFT_RIGHT/TOP_BOTTOM"
+              },
+              "visible": false
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "label",
+          "type": "TEXT",
+          "default": "Cash on delivery",
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showLabel",
+          "type": "BOOLEAN",
+          "default": true,
+          "bindTo": {
+            "layer": "TextBlock/Label",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "default": "Pay when your order arrives",
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showDescription",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TextBlock/Description",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "trailingSlot",
+          "type": "INSTANCE_SWAP",
+          "default": "icon/circle",
+          "bindTo": {
+            "layer": "TrailingSlot/Slot",
+            "field": "mainComponent"
+          }
+        },
+        {
+          "name": "showTrailing",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "TrailingSlot",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "focusVisible",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "_focus",
+            "field": "visible"
+          }
+        }
+      ]
+    }
+  ],
+  "newTextStyles": [
+    {
+      "name": "Latin/Mobile/body-strong",
+      "family": "Hanken Grotesk",
+      "weight": 600,
+      "size": 15,
+      "lineHeightPercent": 160,
+      "trackingPx": 0,
+      "why": "SS8.4 sends the SELECTED radio label to weight 600 - the one weight change in the primitive set, because a payment-method group is read at a glance. No existing style matches: Latin/Mobile/body is 15/400 and Latin/Mobile/button is 15/600 but at 120% line-height with 0.002em tracking, which breaks the 24px first-line box the dot's optical nudge is calculated against. Used by Radio and Radio/Card at Selected=True, Disabled=False."
+    },
+    {
+      "name": "Bangla/Mobile/body-strong",
+      "family": "Anek Bangla",
+      "weight": 600,
+      "size": 15,
+      "lineHeightPercent": 184,
+      "trackingPx": 0,
+      "why": "Bangla parallel of the above. 160% x 1.15 = 184%, tracking forced to 0 per the absolute Bangla tracking rule. Anek Bangla ships static 600 so this does not synthesise."
+    },
+    {
+      "name": "Latin/Desktop/body-strong",
+      "family": "Hanken Grotesk",
+      "weight": 600,
+      "size": 16,
+      "lineHeightPercent": 160,
+      "trackingPx": 0,
+      "why": "Desktop step of body-strong (body is 16px on desktop). Checkout radio groups render on desktop."
+    },
+    {
+      "name": "Bangla/Desktop/body-strong",
+      "family": "Anek Bangla",
+      "weight": 600,
+      "size": 16,
+      "lineHeightPercent": 184,
+      "trackingPx": 0,
+      "why": "Bangla desktop parallel. 160% x 1.15 = 184%, tracking 0."
+    }
+  ],
+  "notes": [
+    "MANIFEST CONVENTIONS - read before executing. (a) `layer` paths in `properties[].bindTo` are SLASH PATHS into the variant layer tree, not Figma layer names; the actual Figma layer name is the last path segment. `Mark/Check` and `Mark/Indeterminate` are the ONE exception: those are literal Figma layer names (they are siblings inside Box, not nested frames). (b) `cornerRadiusToken`, `padding`, `gap` hold a token NAME (string) when a variable exists, or a RAW NUMBER in px when it does not - a number means 'set the literal value, bind nothing'. (c) `minHeight` appears only on a variant's `frame` and maps to node.minHeight. (d) `fillToken: null` means no fill; `effectStyle: null` means no effect style. (e) `absolute.inset` is a single number applied to all four sides, with Ignore auto-layout ON. (f) `sizing.h/v` map to layoutSizingHorizontal/Vertical.",
+    "LABEL ASSOCIATION - the binding rule for all four sets. In `Checkbox`, `Radio` and `Radio/Card` the ROOT FRAME is the HTML <label> element and the `Box` / `Dot` frame is the visually-hidden native <input> rendered inside it (clip-rect technique, never display:none, which would drop it from the a11y tree and the tab order). Association is therefore IMPLICIT - no for/id pair is generated, and a tap anywhere on the row or card, including on `Description`, toggles the control. This is why the layers are named exactly `Box`, `Dot`, `Label`, `Description`, `Message`: Code Connect maps root->label, Box|Dot->input, Label->the label's text node, Message->the element referenced by aria-describedby. `Checkbox/Bare` has no <label> at all; its accessible name is the `ariaLabel` TEXT property on the 1x1 `_aria-label` layer, emitted as the aria-label ATTRIBUTE on the input. In a radio group the GROUP name is a real <legend> inside a <fieldset> (RadioGroup is a plain layout frame, never a variant set) and the group's error attaches to the fieldset via aria-describedby.",
+    "SHAPE AFFORDANCE IS LOAD-BEARING. Checkbox = `radius/xs` (4), Radio = `radius/full`. This overrides the spec's `radius/sm` (6) for the checkbox box: `radius/sm` is 8 in the live file, and an 8px radius on a 20px box is 40% of its width, which starts reading as a circle at 1x DPR - exactly the confusion the rule forbids. 4px keeps the corner unmistakably square. Consequence: the box `_focus` ring radius is host+4 = 8 = `radius/sm` (the spec said `radius/md`, which would be 12 on an 8px host and visibly rounder than the box it rings).",
+    "ERROR IS A BOOLEAN PROPERTY, NOT AN AXIS - and here is the mechanism. A Figma BOOLEAN can only drive `visible`, so it cannot repaint the Box border to `color/feedback/danger`. Rather than promote Error to a third axis (3x2x2 = 12 variants, 6 of them near-duplicates), `Checkbox` carries `_errorRing`: a 20x20 rectangle, absolute inset 0, fill none, stroke 1.5 `color/feedback/danger`, strokeAlign INSIDE, `radius/xs`, visible false. At inset 0 with INSIDE alignment it lands exactly on top of the Box's own 1.5px border and replaces it optically. The single `error` property binds to BOTH `_errorRing.visible` and `Message.visible`, which is legal - one property, many bound layers. `_errorRing` keeps its `_` prefix because it is never itself exposed as an instance property.",
+    "`error` is only meaningful at `Checked=False`. Per SS7.4 checking the box CLEARS the error, so code sets error=false on check; a designer who sets error=true on a Checked=True variant will get a danger ring over a brand-filled box, which is not a state the product can reach.",
+    "RADIO HAS NO `error` BOOLEAN - it has `showMessage` instead. SS8.2 inherits Checkbox's `error`, but SS8.9 is binding: a radio group's error attaches to the <fieldset> via aria-describedby, never to an individual input. So no row ever repaints its dot to danger, there is nothing for an `error` flag to recolour, and the only honest control is a visibility toggle on the `Message` layer for the one case that does exist - a designer placing the group-level message under the last option on a mockup board. `Radio/Card` drops `Message` entirely for the same reason.",
+    "PROPERTY DEFAULTS ARE GLOBAL, SO CONTENT THAT DIFFERS PER VARIANT IS NOT A PROPERTY. Every TEXT/BOOLEAN/INSTANCE_SWAP default here is identical across all variants of its set (the label string does not change when a box becomes checked), so the single-default rule costs nothing. The things that DO differ per variant - box fill, border, mark colour, mark visibility, label colour, label TEXT STYLE (400 vs 600 at Selected=True), card elevation - are baked into each variant's layers and are deliberately NOT properties.",
+    "SETTING A PROPERTY-BOUND `visible` REQUIRES setProperties ON AN INSTANCE. `focusVisible`, `error`, `showMessage`, `showLabel`, `showDescription` and `showTrailing` cannot be flipped by toggling the layer's eye on an instance - the lead must call instance.setProperties({ 'focusVisible#<id>': true }). Inside the main component the layer's own visibility is what the manifest states.",
+    "PHOSPHOR ICONS ARE FILLED PATHS - colour `Mark/Check` and `Message/Icon` with FILLS, never strokes. The spec's 'check icon stroke 2.25px' is void: there is no stroke to thicken. A filled Phosphor check at 14px already carries more mass than a 2.25px stroked check, so the spec's concern (a 14px check reading grey at 2x DPR) is answered by the fill, not by weight. `icon/check` is the checkmark glyph. For the indeterminate mark the manifest uses the spec's exact geometry - a 10x2 RECTANGLE at `radius/full` - because it is tokenisable and pixel-exact; there is no `minus-square` in the set, and `icon/minus` at 14px is the icon-instance fallback if the lead prefers an instance over a rectangle.",
+    "1.5px STROKES ARE UNBOUND RAW VALUES. `border-width/hairline` is 1 and `border-width/strong` is 2; the 1.5px control border the spec mandates for Box, Dot and the card has no variable. All `strokeWeight: 1.5` values in this manifest are literal. RECOMMENDATION for Foundations: add `border-width/control` = 1.5 and rebind these 20 strokes in one pass - 1.5 is the right value (1px disappears on a 20px box at 1x, 2px makes an unchecked box look pre-filled) and it should not stay hard-coded across four component sets.",
+    "RAW PX VALUES USED, WITH REASONS: Mark/Check 14x14 and Message/Icon 14x14 (between `size/icon-sm` 16 and nothing smaller; 16 inside a 20px box leaves a 2px inset and reads as a filled square); `Mark/Indeterminate` 10x2; `InnerDot` 10x10; `Radio/Card` `_focus` cornerRadius 20 (= `radius/lg` 16 + 4); `_aria-label` 1x1. Everything else is a token.",
+    "OPTICAL NUDGE: `BoxWrapper` / `DotWrapper` carry padding-top `space/0-5` (2px) so the 20px control centres on the 24px first line of `Latin/Mobile/body` (15 x 1.60 = 24; (24-20)/2 = 2). In CSS this is padding-top: calc((1lh - 20px) / 2), NOT a magic offset, so the Bangla build resolves it to 4px automatically (15 x 1.84 = 27.6; (27.6-20)/2 = 3.8 ~ 4). FOR THE BANGLA BOARD INSTANCES ONLY, override the wrapper padding-top to `space/1` (4). Both wrappers are FIXED 20 wide x HUG tall and must have Clip content = FALSE, as must `Box`, `Dot` and every root frame - the `_focus` ring sits 4px OUTSIDE its host and will be clipped away otherwise.",
+    "`_focus` LIVES INSIDE `Box` / `Dot`, not as its sibling. SS7.5 and SS8.6 draw it as a child of BoxWrapper/DotWrapper, but the wrapper is 20x22 (it carries the 2px nudge), so a -4px inset there would produce a 28x30 ring sitting 2px low on a 20x20 control. Parented to `Box` / `Dot` the -4 inset gives a true 28x28 ring concentric with the control, which is what SS7.4 actually asks for ('ring around the Box only'). `Radio/Card` is the exception: its `_focus` is a child of the ROOT frame at -4px, because there the card is the control.",
+    "HOVER IS A ROOT-FRAME FILL, NOT A SCRIM, FOR THE UNCHECKED ROW. Every root frame ships fill = none with `cornerRadiusToken: radius/md` already set, so :hover simply paints `color/bg/subtle` into an already-correctly-rounded box. Deliberately NOT `color/border/focus` - that token is reserved for focus so hovered and focused can never look identical. The `_scrim` layers (inside `Box`, inside `Dot`, and at card level) are the 8%/12% darkening for the CHECKED/SELECTED control and for the card, per SS0.2. All `_scrim` layers are instances of the shared `_scrim` helper component at LAYER OPACITY 0% - the layer schema has no opacity key, so set opacity on the instance; `visible: true` with 0% opacity is correct and intentional.",
+    "INTERACTION STATES, for the record, are not variants: hover = row/card fill `color/bg/subtle` at `radius/md` (unchecked) or `_scrim` 8% (checked/selected); pressed = Box scale(0.92) / InnerDot scale(0.85) over `fast` 120ms plus `_scrim` 12%; focus-visible = the `focusVisible` property. The check animates stroke-dashoffset full->0 over `fast` 120ms `decelerate` and the InnerDot enters scale(0->1) over the same; box fill crossfades 120ms. Reduced motion: both appear instantly. `spring` easing is forbidden.",
+    "BANGLA - WRAP, UNBOUNDED, for all four sets. `TextBlock` is FILL x HUG and `Label` / `Description` are FILL x HUG with wrapping on; truncation is forbidden everywhere. Root `minHeight` 44 (64 for the card) is a FLOOR, never a height - the row grows and the parent absorbs it. In `Radio` / `Radio/Card` the `TrailingSlot` is HUG x HUG and keeps its width; `TextBlock` is FILL and absorbs the loss, so a 40%-longer Bangla string wraps to 2-3 lines at 390px with the slot intact. Nothing is hard-coded per locale except the Bangla board's 4px wrapper nudge and the `Bangla/Mobile/*` style swap.",
+    "`TrailingSlot` NEEDS A PER-CHILD COUNTER-AXIS OVERRIDE. The root frames align children to START (Top) so the control sits on line 1, but the trailing slot must sit on the row's optical centre: set counterAxisAlignSelf = 'CENTER' on the `TrailingSlot` frame only (SS8.6 'counter align Center'). The layer schema has no alignSelf key - apply it in the API call.",
+    "`trailingSlot` DEFAULTS TO `icon/circle`, NOT `Price`. SS8.2 names `Price` as the default, but no Price component exists in the file yet, and SS0.9 forbids a blank-frame default because it hides layout bugs. The INSTANCE_SWAP therefore defaults to `icon/circle` at 20x20 (`size/icon-md`) per SS0.9's 'Lucide circle -> nearest Phosphor' mapping. ACTION FOR THE LEAD: once Tier 2 `Price` ships, repoint this default; the real payment group swaps in a logo row and the delivery group swaps in Price + ETA.",
+    "SELECTED + DISABLED LOSES WEIGHT 600 ON PURPOSE. SS8.4's and SS8.5's token tables mark (600) only on the `Selected=True, Disabled=False` row, so `Selected=True, Disabled=True` renders `Latin/Mobile/body` at 400 in `color/text/tertiary`. This follows SS0.4 - a disabled control must not look actionable, and that includes not looking emphatically chosen. FLAGGING IT: in a wholly disabled group this makes the selected option harder to spot. The adjacent explanatory text that says WHY the group is disabled is never tertiary; it is `color/text/secondary` or stronger.",
+    "DISABLED VARIANTS CARRY NO SHADOW AND NO RING. `Radio/Card` at `Selected=True, Disabled=True` has effectStyle null, not `Elevation/Light/e1` - per SS0.4 a disabled control gets no elevation. Elevation styles named here are the LIGHT set; the dark-mode board swaps `Elevation/Light/e1` for `Elevation/Dark/e1`, it is not a variant.",
+    "NO `_hit44` LAYER IS NEEDED BY ANY OF THESE FOUR SETS. `Checkbox` and `Radio` reach 44 through root minHeight plus a FILL-width row that is the whole label; `Checkbox/Bare` IS a 44x44 frame; `Radio/Card` is minHeight 64. The helper exists for controls whose visual box is under 44 with no row to grow into (Button Size=Small, IconButton Size=Small, Chip remove, Toast dismiss). Adjacent rows must still be separated by at least `space/2` (8) so no two 44px targets overlap - that spacing belongs to the enclosing group frame, not to these components.",
+    "COMPONENT-LEVEL WIDTH IS 358 (390 mobile viewport minus two 16px gutters) for `Checkbox`, `Radio` and `Radio/Card`. The root is FIXED at the component level because a top-level component cannot be FILL; every INSTANCE must be set to FILL horizontally. `Checkbox/Bare` is genuinely 44x44 FIXED and must never be stretched.",
+    "RESPONSIVE INSTANCE, NOT A VARIANT: under 480px with both a Description and a TrailingSlot, `Radio/Card` flips layoutMode to VERTICAL with the slot below the text at gap `space/2`. Build it on the documentation board as a detached-layout instance named `Radio/Card / narrow`. Do not add a Direction axis.",
+    "NUMERALS ARE WESTERN (0-9) IN BOTH LOCALES. Any digit entering `Label`, `Description`, `Message/Text` or a swapped `TrailingSlot` (a price, an ETA, '2-3 days') stays 0-9; the Bangla stack puts Hanken Grotesk first precisely so U+0030-0039 never resolve to Anek Bangla's Bengali numerals.",
+    "ACCESSIBILITY CARRY-OVER THE LEAD SHOULD HAND TO ENGINEERING: indeterminate is the DOM `indeterminate` property set in an effect, not an attribute, and aria-checked='mixed' is NOT added manually; a required terms checkbox is `required` + aria-required='true' with its error inline below the row and linked from the form summary; Tab enters a radio group at the selected option and leaves the group entirely (one tab stop per group) and arrow keys move AND select - do not intercept them.",
+    "SPACING TOKEN NAMES: the spec writes `spacing/N`; the live file has `space/N`. Every padding and gap in this manifest already uses the live `space/*` names. `space/0-5` is 2px, `space/1` is 4, `space/2` is 8, `space/3` is 12, `space/4` is 16."
+  ]
+}

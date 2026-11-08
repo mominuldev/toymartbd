@@ -1,0 +1,45 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "name": "toymartbd",
+    "private": true,
+    "type": "module",
+    "workspaces": [
+        "packages/*",
+        "toymartbd-app/storefront"
+    ],
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint resources/js",
+        "test": "vitest run",
+        "dev:storefront": "npm run dev --workspace=storefront",
+        "build:storefront": "npm run build --workspace=storefront",
+        "tokens:build": "npm run build --workspace=@toymart/tokens",
+        "api-types:generate": "npm run generate --workspace=@toymart/api-types"
+    },
+    "dependencies": {
+        "@tanstack/react-query": "^5.107.1",
+        "@tanstack/react-table": "^9.3.1",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
+        "react-hook-form": "^7.91.0",
+        "react-router": "^8.5.1",
+        "recharts": "^3.10.1",
+        "zod": "^4.6.7",
+        "zustand": "^5.1.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.3.5",
+        "@types/node": "^26.6.6",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.2.1",
+        "eslint": "^10.14.0",
+        "laravel-vite-plugin": "^3.2.1",
+        "tailwindcss": "^4.3.5",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.6",
+        "vitest": "^5.1.0"
+    }
+}

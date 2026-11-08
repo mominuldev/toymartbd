@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens come from @toymart/tokens, which is generated from the Figma
+ * library — see packages/tokens/README.md. Until that build exists, this file
+ * holds no colour values of its own on purpose: a hardcoded hex here is a defect,
+ * because it means a token is missing.
+ *
+ * Bangla and Latin need different line-heights at the same size, so the .lang-bn
+ * class carries the Bangla adjustment. Never set one global line-height for both.
+ */
+
+@theme {
+    --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-bangla: "Anek Bangla", "Noto Sans Bengali UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+:root {
+    color-scheme: light dark;
+}
+
+.lang-bn {
+    font-family: var(--font-bangla);
+    line-height: 1.15em;
+}
+
+/* Tabular figures wherever digits line up in a column — every admin table,
+   every money figure. Mixed-width digits make a cart or a P&L unreadable. */
+.tabular {
+    font-variant-numeric: tabular-nums;
+}

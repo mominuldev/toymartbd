@@ -1,0 +1,881 @@
+<title>Toy Mart BD Competitor Dossier</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a numbered dossier — single reading column, full-bleed bands for the matrix and the
+   gap cards, tri-state evidence badges as the organising visual language. */
+:root{
+  --paper:#F7F8F9;
+  --card:#FFFFFF;
+  --sunk:#EDEFF2;
+  --ink:#15191E;
+  --ink-2:#4A535E;
+  --ink-3:#737E8A;
+  --rule:#DDE2E8;
+  --rule-2:#C6CDD6;
+  --accent:#0C6E78;
+  --accent-soft:#E2F1F3;
+  --mark:#B4650A;
+  --mark-soft:#FBEFDC;
+  --ok:#157F4B;
+  --ok-soft:#E3F3EA;
+  --gap:#B3203C;
+  --gap-soft:#FBE6EA;
+  --nv:#7A6A52;
+  --nv-soft:#F2EDE4;
+  --shadow:0 1px 2px rgba(21,25,30,.05),0 8px 24px rgba(21,25,30,.05);
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101317;
+  --card:#181C22;
+  --sunk:#1F242B;
+  --ink:#EDF0F3;
+  --ink-2:#AEB8C4;
+  --ink-3:#7F8995;
+  --rule:#2A3039;
+  --rule-2:#3A424D;
+  --accent:#4FC2CC;
+  --accent-soft:#113236;
+  --mark:#E09B3D;
+  --mark-soft:#33260F;
+  --ok:#4FC283;
+  --ok-soft:#10291C;
+  --gap:#F0788F;
+  --gap-soft:#33131B;
+  --nv:#C0AC8C;
+  --nv-soft:#26211A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#101317;
+  --card:#181C22;
+  --sunk:#1F242B;
+  --ink:#EDF0F3;
+  --ink-2:#AEB8C4;
+  --ink-3:#7F8995;
+  --rule:#2A3039;
+  --rule-2:#3A424D;
+  --accent:#4FC2CC;
+  --accent-soft:#113236;
+  --mark:#E09B3D;
+  --mark-soft:#33260F;
+  --ok:#4FC283;
+  --ok-soft:#10291C;
+  --gap:#F0788F;
+  --gap-soft:#33131B;
+  --nv:#C0AC8C;
+  --nv-soft:#26211A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:17px;
+  line-height:1.62;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--card)}
+
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:720px}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,6vw,3.5rem);font-weight:800;letter-spacing:-.025em;line-height:1.04}
+h2{font-size:clamp(1.45rem,3.4vw,2.05rem);font-weight:700;letter-spacing:-.018em;line-height:1.14}
+h3{font-size:1.16rem;font-weight:700;letter-spacing:-.008em;line-height:1.3}
+h4{font-size:.95rem;font-weight:700;letter-spacing:-.004em}
+p{margin:0}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.84em;font-variant-ligatures:none}
+code{background:var(--sunk);padding:.1em .34em;border-radius:4px;word-break:break-word}
+.eyebrow{font-family:var(--f-display);font-size:.72rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font-size:clamp(1.05rem,2.3vw,1.3rem);line-height:1.5;color:var(--ink-2)}
+.small{font-size:.9rem;line-height:1.5;color:var(--ink-2)}
+.tiny{font-size:.8rem;line-height:1.45;color:var(--ink-3)}
+em.q{font-style:italic;color:var(--ink-2)}
+strong{font-weight:600}
+.stack{display:flex;flex-direction:column}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}.g24{gap:24px}.g32{gap:32px}
+
+/* masthead */
+.mast{background:var(--card);border-bottom:1px solid var(--rule)}
+.mast .wrap{padding-block:clamp(40px,7vw,76px) clamp(32px,5vw,52px)}
+.mast-grid{display:grid;gap:28px}
+.rule-dot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 20px;padding-top:22px;border-top:1px solid var(--rule);margin-top:4px}
+.meta-row div{min-width:0}
+.meta-row dt{font-family:var(--f-display);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.meta-row dd{margin:2px 0 0;font-family:var(--f-mono);font-size:.82rem;color:var(--ink)}
+
+/* sticky nav */
+nav.jump{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--card);border-bottom:1px solid var(--rule)}
+nav.jump .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:9px;scrollbar-width:thin}
+nav.jump a{font-family:var(--f-display);font-size:.78rem;font-weight:600;color:var(--ink-2);text-decoration:none;white-space:nowrap;padding:6px 11px;border-radius:999px}
+nav.jump a:hover{background:var(--sunk);color:var(--ink)}
+nav.jump a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+section{padding-block:clamp(40px,6vw,72px)}
+section.band{background:var(--card);border-block:1px solid var(--rule)}
+.sechead{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;max-width:720px}
+.secnum{font-family:var(--f-mono);font-size:.78rem;font-weight:600;color:var(--accent)}
+
+/* tri-state badges */
+.b{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-display);font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.b-ok{background:var(--ok-soft);color:var(--ok)}
+.b-gap{background:var(--gap-soft);color:var(--gap)}
+.b-nv{background:var(--nv-soft);color:var(--nv)}
+.b-mark{background:var(--mark-soft);color:var(--mark)}
+.b-acc{background:var(--accent-soft);color:var(--accent)}
+
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin-top:4px}
+.legend div{background:var(--sunk);border-radius:8px;padding:13px 15px;min-width:0}
+.legend p{margin-top:7px}
+
+/* gap cards */
+.gaps{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
+.gapcard{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:11px;min-width:0}
+.gapcard .n{font-family:var(--f-mono);font-size:1.5rem;font-weight:600;color:var(--gap);line-height:1}
+
+/* figure strip */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.fig{background:var(--card);padding:18px 16px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.fig .v{font-family:var(--f-display);font-size:clamp(1.6rem,4vw,2.1rem);font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.fig .k{font-size:.82rem;line-height:1.35;color:var(--ink-2)}
+.v-gap{color:var(--gap)}.v-ok{color:var(--ok)}.v-mark{color:var(--mark)}.v-acc{color:var(--accent)}
+
+/* dossiers */
+.doss{display:grid;gap:16px}
+.d{background:var(--card);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.d.dead{background:var(--sunk);box-shadow:none}
+.d-top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;padding:18px 20px 14px;border-bottom:1px solid var(--rule)}
+.d-top h3{min-width:0;word-break:break-word}
+.d-plat{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-3);min-width:0;flex:1 1 180px}
+.d-body{padding:18px 20px;display:grid;gap:16px}
+@media(min-width:760px){.d-body{grid-template-columns:1fr 1fr}}
+.d-sub{min-width:0;display:flex;flex-direction:column;gap:8px}
+.d-sub ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px}
+.d-sub li{font-size:.92rem;line-height:1.5}
+.d-sub li::marker{color:var(--ink-3)}
+.verdict{padding:14px 20px;background:var(--accent-soft);border-top:1px solid var(--rule);font-size:.93rem;line-height:1.5}
+.verdict strong{color:var(--accent)}
+.d.dead .verdict{background:var(--sunk)}
+
+/* tables */
+.tscroll{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-family:var(--f-display)}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{position:sticky;top:0;background:var(--sunk);font-size:.72rem;font-weight:700;letter-spacing:.055em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;z-index:1}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+tbody th{font-weight:600;font-size:.86rem;white-space:normal;min-width:185px}
+td.c{text-align:center;font-family:var(--f-mono);font-size:.78rem;font-weight:600;white-space:nowrap}
+td.c.y{color:var(--ok)}
+td.c.n{color:var(--gap);background:var(--gap-soft)}
+td.c.u{color:var(--nv)}
+tbody tr:hover td,tbody tr:hover th{background:var(--sunk)}
+tbody tr:hover td.c.n{background:var(--gap-soft)}
+.trow-note{font-size:.78rem;color:var(--ink-3);font-weight:400;display:block;margin-top:3px}
+table.plain td,table.plain th{font-family:var(--f-body);font-size:.9rem;line-height:1.5}
+table.plain tbody th{font-family:var(--f-display)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.controls button{font-family:var(--f-display);font-size:.8rem;font-weight:600;color:var(--ink-2);background:var(--card);border:1px solid var(--rule-2);border-radius:999px;padding:7px 14px;cursor:pointer}
+.controls button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.controls button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* callouts */
+.call{border:1px solid var(--rule);border-left:3px solid var(--mark);border-radius:8px;background:var(--mark-soft);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.call.acc{border-left-color:var(--accent);background:var(--accent-soft)}
+.call.neg{border-left-color:var(--gap);background:var(--gap-soft)}
+.call h4{color:var(--ink)}
+.call p{font-size:.93rem;line-height:1.55}
+
+ol.weak{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:16px;counter-reset:w}
+ol.weak>li{counter-increment:w;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px;display:grid;gap:10px;grid-template-columns:auto 1fr;align-items:start}
+ol.weak>li::before{content:counter(w);font-family:var(--f-display);font-size:1.1rem;font-weight:800;color:var(--paper);background:var(--ink);width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+ol.weak .wbody{min-width:0;display:flex;flex-direction:column;gap:8px}
+
+.build{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.build>div{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.build ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:7px}
+.build li{font-size:.92rem;line-height:1.5}
+
+footer{border-top:1px solid var(--rule);background:var(--card)}
+footer .wrap{padding-block:34px 44px;display:flex;flex-direction:column;gap:10px}
+
+@media (prefers-reduced-motion:no-preference){nav.jump{scroll-behavior:smooth}}
+:where(a,button,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<header class="mast">
+  <div class="wrap mast-grid">
+    <div class="stack g16 col">
+      <div class="rule-dot">
+        <span class="dot"></span>
+        <span class="eyebrow">Toy Mart BD &middot; Phase 1 research</span>
+      </div>
+      <h1>Competitor Dossier</h1>
+      <p class="lede">Nine Bangladeshi toy retailers and two marketplaces, audited by direct fetch. What they actually ship &mdash; and the four things none of them do.</p>
+    </div>
+    <dl class="meta-row">
+      <div><dt>Audit date</dt><dd>2026-11-07</dd></div>
+      <div><dt>Properties</dt><dd>11 fetched</dd></div>
+      <div><dt>Real competitors</dt><dd>8 of 9</dd></div>
+      <div><dt>Reviews found</dt><dd>1 in ~1,100 products</dd></div>
+    </dl>
+  </div>
+</header>
+
+<nav class="jump" aria-label="Sections">
+  <div class="wrap">
+    <a href="#method">Method</a>
+    <a href="#headline">Headline</a>
+    <a href="#set">The set</a>
+    <a href="#gaps">Universal gaps</a>
+    <a href="#dossiers">Dossiers</a>
+    <a href="#matrix">Matrix</a>
+    <a href="#appbyte">AppByte</a>
+    <a href="#markets">Marketplaces</a>
+    <a href="#weak">Weaknesses</a>
+    <a href="#build">What we build</a>
+  </div>
+</nav>
+
+<section id="method">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">01</span>
+      <h2>Method and evidence discipline</h2>
+      <p class="small">Homepage, a category listing, a product page, cart, checkout, <code>sitemap.xml</code>, <code>robots.txt</code> and a blog page were fetched per site with a desktop Chrome user-agent, redirects followed. Raw HTML and JavaScript bundles were read directly rather than converted, so platform fingerprints, JSON-LD and meta tags stay quotable. Cart and checkout were inspected with real cart sessions, because all three stores in one batch hide checkout behind an empty-cart redirect. No orders were placed.</p>
+    </div>
+
+    <div class="legend">
+      <div>
+        <span class="b b-ok">Yes</span>
+        <p class="small">Observed in a fetched response.</p>
+      </div>
+      <div>
+        <span class="b b-gap">No</span>
+        <p class="small"><strong>Verified absent.</strong> Searched for in the place it would have to appear, and not found.</p>
+      </div>
+      <div>
+        <span class="b b-nv">NV</span>
+        <p class="small"><strong>Not verified.</strong> Client-rendered, gated or unreachable. Not the same as absent.</p>
+      </div>
+    </div>
+
+    <div class="col stack g12">
+      <h4>Stated limitations</h4>
+      <p class="small">Two sites could not be fully audited because their money pages render entirely client-side. Their rows are <span class="mono">NV</span>, not <span class="mono">No</span> &mdash; though that opacity is itself a finding. <code>sktoy.com.bd</code> and <code>krystal.com.bd</code> serve a Cloudflare-managed <code>robots.txt</code> containing <code>User-agent: ClaudeBot / Disallow: /</code>; fetch volume was kept low and user-directed, and the restriction is recorded rather than worked around. Catalogue sizes are counted from sitemaps and are therefore a floor, not an exact figure.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="headline">
+  <div class="wrap stack g32">
+    <div class="sechead">
+      <span class="secnum">02</span>
+      <h2>The headline</h2>
+      <p class="lede">This market is larger in count than in strength.</p>
+    </div>
+
+    <div class="figs">
+      <div class="fig"><span class="v v-gap">1</span><span class="k">customer review across roughly 1,100 products in the five-site batch</span></div>
+      <div class="fig"><span class="v v-gap">0</span><span class="k">of 8 niche stores offer a brand filter or a gender filter</span></div>
+      <div class="fig"><span class="v v-gap">0</span><span class="k">of 11 properties offer gift wrap, a gift message or a gift finder</span></div>
+      <div class="fig"><span class="v v-mark">6</span><span class="k">of 8 real competitors run WooCommerce, directly or headless</span></div>
+      <div class="fig"><span class="v v-acc">0</span><span class="k">have a purpose-built operational back end</span></div>
+    </div>
+
+    <div class="col stack g12">
+      <p>Among the eight real competitors: a store with <strong>820 products that emits no structured data at all</strong> &mdash; no canonical, no Open Graph, no JSON-LD, on any page type. A COD-only store that <strong>collects no phone number</strong>, making its orders unfulfillable by any Bangladeshi courier. A store whose only payment method is asking a stranger to transfer money first and then type their own account number and transaction ID. A store that returns <strong>one byte-identical page for every URL</strong>, including ones that do not exist. And a single customer review across roughly eleven hundred products.</p>
+      <p>None of this is a hard problem. It is an unattended one. The opening is not a feature &mdash; it is competence applied in two places at once: a storefront that is simply correct and fast, and a back office that tells the owner the truth about money.</p>
+    </div>
+  </div>
+</section>
+
+<section id="set">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">03</span>
+      <h2>The competitive set</h2>
+      <p class="small">Platform detection is evidence-based: fingerprints were quoted from the served HTML and bundles, not guessed from appearance.</p>
+    </div>
+    <div class="tscroll">
+      <table class="plain">
+        <thead><tr><th scope="col">Site</th><th scope="col">Platform</th><th scope="col">Products</th><th scope="col">Verdict</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">sktoy.com.bd</th><td>Next.js App Router, headless against a separate Node/Mongo API. Built by &ldquo;Rootdevs&rdquo;</td><td class="c">81</td><td>Best marketing stack, worst crawlability on money pages</td></tr>
+          <tr><th scope="row">krystal.com.bd</th><td><strong>Astro</strong> over <strong>headless WooCommerce</strong> (<code>PHP/8.5.12</code>)</td><td class="c">820</td><td>Best checkout in the set; catastrophic SEO</td></tr>
+          <tr><th scope="row">toyshop.com.bd</th><td>WordPress + WooCommerce + Elementor 4.3.6 + Woostify</td><td class="c">126</td><td>Worst purchase experience in the set</td></tr>
+          <tr><th scope="row">kidsrepublicbd.com</th><td>WordPress 7.1.4 + WooCommerce 11.2.2 + Theme Freesia + Yoast</td><td class="c">71</td><td>Best structured data; slowest site</td></tr>
+          <tr><th scope="row">kidszonebd.shop</th><td>Angular SPA on the <code>saleecom</code> platform</td><td class="c">no sitemap</td><td>Effectively invisible to search</td></tr>
+          <tr><th scope="row">toyhousebd.com</th><td>WooCommerce + Elementor / ShopEngine</td><td class="c">12</td><td>Soft-launch shell; broken commercially</td></tr>
+          <tr><th scope="row">babybazarbd.com</th><td>WooCommerce + Woodmart + Yoast</td><td class="c">666</td><td>Best taxonomy, no merchandising</td></tr>
+          <tr><th scope="row">edutoyzone.com</th><td><strong>nopCommerce</strong> with purpose-built custom plugins</td><td class="c">510</td><td><strong>The site to beat</strong></td></tr>
+          <tr><th scope="row" style="text-decoration:line-through;color:var(--ink-3)">kidszone.com</th><td colspan="3"><strong>Not a competitor.</strong> A parked domain serving an ad-monetisation pixel. Remove from the set &mdash; see dossier 09.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="gaps">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">04</span>
+      <h2>Four universal gaps</h2>
+      <p class="small">Absent across every auditable competitor. Each is cheap to build, and none requires beating anyone on price or catalogue size.</p>
+    </div>
+    <div class="gaps">
+      <div class="gapcard">
+        <span class="n">01</span>
+        <h3>Nobody lets a parent filter by age</h3>
+        <p class="small">Two sites <em>navigate</em> by age; only EduToyZone makes it a filter. None lets you combine age with price, brand or gender. Even Daraz stores <code>Recommended Age</code> as a seller-typed free-text attribute, producing about thirty overlapping, unsortable buckets on one page &mdash; <em class="q">&ldquo;3 years&rdquo;</em>, <em class="q">&ldquo;From 0 month +&rdquo;</em>, <em class="q">&ldquo;0 - 12 years&rdquo;</em>, <em class="q">&ldquo;10 and Up&rdquo;</em>.</p>
+        <p class="tiny">A single-merchant store with age stored in months beats the market leader on its own best facet.</p>
+      </div>
+      <div class="gapcard">
+        <span class="n">02</span>
+        <h3>Nobody has reviews</h3>
+        <p class="small">One real review across roughly 1,100 products. Eight of nine emit no <code>AggregateRating</code> &mdash; and <strong>neither marketplace emits it on its product pages either</strong>.</p>
+        <p class="tiny">Review stars in Google results are unclaimed by the entire category.</p>
+      </div>
+      <div class="gapcard">
+        <span class="n">03</span>
+        <h3>Nobody has working content</h3>
+        <p class="small">Every blog is empty, dormant or demo filler. Kids Republic still serves 2019 theme placeholder posts &mdash; and lists them in its production sitemap. Baby Bazar serves <strong>live SEO-spam pages on a children's store</strong> (<em class="q">&ldquo;What Is an Online Slot Machine?&rdquo;</em>, <em class="q">&ldquo;Cheap Essays&hellip;&rdquo;</em>), both HTTP 200 and in the sitemap.</p>
+        <p class="tiny">All parenting, age-guide and gift-guide intent is uncontested. Three sites additionally block AI crawlers, conceding AI-answer citations too.</p>
+      </div>
+      <div class="gapcard">
+        <span class="n">04</span>
+        <h3>Nobody's data is trustworthy</h3>
+        <p class="small">Products priced <code>৳0</code> marked <code>InStock</code>. Three contradictory free-delivery thresholds on one site &mdash; on two separate sites. A live page printing its own hotline as <code>xxxx-xxxxx</code>, twice. 19 of 28 homepage products out of stock. A working order-tracking page wrapped in <strong>unedited theme demo content: lorem ipsum, a Brooklyn NY address and &ldquo;UTC +2&rdquo; opening hours</strong>.</p>
+        <p class="tiny">Being merely accurate is a differentiator here.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="dossiers">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">05</span>
+      <h2>Site dossiers</h2>
+      <p class="small">Strengths and observed defects per site. Everything below was seen in a fetched response.</p>
+    </div>
+
+    <div class="doss">
+
+      <article class="d">
+        <div class="d-top">
+          <h3>01 &nbsp;SK Toy</h3>
+          <span class="d-plat">Next.js App Router &rarr; Node/Mongo API &middot; 81 products &middot; TTFB 1.52s</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li>The only site with a <strong>complete paid-acquisition stack</strong>: GA4 <code>G-R9C6P60JKN</code>, Meta Pixel <code>1516765536845697</code>, and uniquely a TikTok pixel.</li>
+              <li>Heavy Bangla content. Age-tile browsing. Working <code>/track</code> page. Published delivery charges (৳80 / ৳130).</li>
+              <li>COD enabled; three-level category depth.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> The product page's <code>&lt;main&gt;</code> contains <strong>only a spinning loader</strong>. The homepage is server-rendered; every listing and product page is not.</li>
+              <li><code>Product</code> schema is broken: <code>"price": 0</code> alongside <code>"availability": "InStock"</code>, HTML inside <code>description</code>, and a <code>shippingRate</code> of 60 that contradicts its own ৳80/৳130 config.</li>
+              <li><strong>Three different free-delivery thresholds</strong> &mdash; ৳3,000 in the banner, ৳2,500 in config, a flat ৳60 in schema.</li>
+              <li>Two products priced ৳0, four &ldquo;Coming Soon&rdquo;, one &ldquo;SOLD OUT&rdquo; on the homepage. bKash badges in the footer while the gateway is <code>enabled:false</code>.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> the best-instrumented competitor has excluded its own product and category pages from organic search. Those queries are free.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>02 &nbsp;Krystal</h3>
+          <span class="d-plat">Astro + headless WooCommerce &middot; 820 products &middot; 17.9&nbsp;KB gzipped</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li><strong>Best checkout in the set:</strong> one page, seven fields, 64 districts with dependent thana selects, email optional, COD <em>and</em> SSLCommerz, coupon field, and charges stated in Bangla (Dhaka ৳70 / nationwide ৳115, free over ৳1,500).</li>
+              <li>The only competitor with a working automated gateway. The only one with an AI chat assistant. Names four couriers. Shows low-stock counts. Has Messenger.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> <strong>820 products and zero JSON-LD, zero canonical, zero Open Graph on every page type.</strong> The single biggest SEO hole found anywhere in this audit.</li>
+              <li><code>/cart/</code> returns 404 &mdash; there is no cart page.</li>
+              <li>Shipping page says free delivery over <strong>৳10,000</strong>; checkout says <strong>৳1,500</strong>.</li>
+              <li>The hotline prints as <code>xxxx-xxxxx</code> twice on a live page. One courier is misspelled &ldquo;SteadTas&rdquo;. Flat, single-level category structure. Sort options ship <code>disabled</code>. 88 blog posts, all off-market filler.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> the strongest commerce mechanics in the market, attached to no discoverability at all. Its checkout is the bar to match.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>03 &nbsp;Toyshop</h3>
+          <span class="d-plat">WordPress + WooCommerce + Elementor &middot; 126 products &middot; 90&nbsp;KB gzipped / 421&nbsp;KB raw</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li>Fastest measured TTFB in the set at 0.48s.</li>
+              <li>Server-rendered throughout. Working <code>/track-order/</code>. AJAX search autocomplete. Price filter present.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> <strong>No COD.</strong> The only gateways are <code>woo_bkash</code>, <code>woo_rocket</code> and <code>woo_nagad</code>, all <strong>manual transfer</strong>: <em class="q">&ldquo;Bkash করুন এই নাম্বারেঃ 01941111000&hellip; You need to send us ৳3350.00&rdquo;</em>, after which the buyer types their own account number and transaction ID.</li>
+              <li>Three-step checkout, required email, a <code>2 + 2 = ?</code> math captcha, and untranslated WooCommerce labels (&ldquo;State / County&rdquo;, &ldquo;Postcode / ZIP&rdquo;).</li>
+              <li>Delivery charge invisible until an address is entered: <em class="q">&ldquo;Enter your address to view shipping options&rdquo;</em>.</li>
+              <li><strong>19 of 28 homepage products out of stock</strong>; most listing buttons read &ldquo;Read more&rdquo; instead of &ldquo;Add to cart&rdquo;. <strong>11 <code>&lt;h1&gt;</code> elements on the homepage.</strong> No meta descriptions. No Meta Pixel. Wishlist is CSS only, with no button.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> a stranger is asked to send money before an order exists. This is the clearest demonstration in the audit that the market's problem is execution, not technology.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>04 &nbsp;Kids Republic</h3>
+          <span class="d-plat">WordPress 7.1.4 + WooCommerce 11.2.2 + Yoast &middot; 71 products &middot; TTFB 2.27s</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li><strong>The only site in the audit with <code>AggregateRating</code> in its schema</strong> &mdash; and the only one with a real customer review.</li>
+              <li>Strongest structured data overall (Yoast): Product, Offer, BreadcrumbList, Organization. Meta descriptions present. Age taxonomy. Variants. Wishlist.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> <strong>91 <code>&lt;script&gt;</code> tags and 21 stylesheets on a single product page</strong>, with the slowest TTFB measured at 2.27s.</li>
+              <li>Its <code>AggregateRating</code> is built on <strong>one</strong> review.</li>
+              <li><strong>Duplicate <code>rel=canonical</code></strong> emitted on the same page.</li>
+              <li>Still serving <strong>2019 theme demo posts</strong> &mdash; <code>/2019/03/27/10-student-discount/</code> renders as &ldquo;Grow / Post By admin / Slider&rdquo; &mdash; and listing them in its sitemap.</li>
+              <li>Order tracking page <strong>404s</strong>. No delivery charge published anywhere. No Meta Pixel. <code>viewport</code> declared without <code>initial-scale</code>.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> the best SEO foundations in the market, undermined by page weight and three years of unattended content.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>05 &nbsp;Kids Zone BD</h3>
+          <span class="d-plat">Angular SPA on <code>saleecom</code> &middot; catalogue size unknown &middot; ~682&nbsp;KB JS before first paint</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li>Fast shell delivery (0.19s) and the smallest HTML payload measured &mdash; because it contains almost nothing.</li>
+              <li>Wishlist and product compare are present in the bundle.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> Returns <strong>one byte-identical 53,313-byte shell titled <code>&lt;title&gt;E-commerce Platform&lt;/title&gt;</code> for every URL</strong> &mdash; including <code>/this-path-does-not-exist-12345</code>. All responses hash to the same MD5.</li>
+              <li><strong>No sitemap</strong> (<code>/sitemap.xml</code> serves the shell), no canonical, no Open Graph, no JSON-LD.</li>
+              <li><strong>No analytics or pixels of any kind.</strong> A branded search for the domain surfaced nothing from it.</li>
+              <li>Blocks pinch-zoom (<code>user-scalable=no, maximum-scale=1.0</code>). PWA scaffolding is commented out, so there is no favicon and no manifest. Dead third-party CDN assets still referenced. <code>cache-control: no-store</code> on the one cacheable asset.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> not competing for organic traffic, and not measuring anything. Effectively absent.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>06 &nbsp;Toy House BD</h3>
+          <span class="d-plat">WooCommerce + Elementor / ShopEngine &middot; 12 products</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li>Server-rendered. Guest checkout. Price filter, wishlist and compare present.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> <strong>No phone field at checkout at all</strong> &mdash; <code>billing_phone</code> appears only in a WooCommerce i18n config object &mdash; while the store is COD-only. <strong>These orders cannot be fulfilled by any Bangladeshi courier.</strong></li>
+              <li><span class="b b-gap">Critical</span> <strong>No shipping is ever calculated.</strong> Order total equals subtotal, despite a &ldquo;Flat-rate Delivery&rdquo; badge.</li>
+              <li>12 products total; 4 of its 11 menu categories contain none. No <code>Product</code> JSON-LD (ShopEngine bypasses WooCommerce's schema). No meta descriptions. <strong>Zero analytics or pixels.</strong> No Bangla.</li>
+              <li>About twelve unconfigured theme-demo pages live in the sitemap (<code>/shop-2/</code>, <code>/checkout-2/</code>, <code>/manage-profile-3/</code>). Product copy reads <em class="q">&ldquo;1 pen is added&rdquo;</em>.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> a soft-launch shell. Not currently a commercial threat.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>07 &nbsp;Baby Bazar BD</h3>
+          <span class="d-plat">WooCommerce 11.2.2 + Woodmart + Yoast &middot; 666 products &middot; 80 categories, 3 levels</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li><strong>The best taxonomy in the market:</strong> shop-by-age plus a <strong>ten-goal therapeutic skill axis</strong> (fine motor, sensory processing, bilateral integration&hellip;) and a special-needs category. Genuinely differentiated.</li>
+              <li>Real Bangla <code>h1</code> and category tiles. Names both Pathao and eCourier. ECAB and DBID trust badges. iOS and Android apps. &ldquo;Tika Reminder&rdquo; and &ldquo;Hello Doctor&rdquo; services. Complete Open Graph. Meta Pixel <code>229240508811973</code>.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects</h4>
+            <ul>
+              <li><span class="b b-gap">Critical</span> <strong>Zero filters on 666 products.</strong> The sidebar is CSS-hidden and empty &mdash; no price, age, brand or gender filter.</li>
+              <li><strong>No stock status anywhere</strong>, including on variable products, and no <code>max</code> on quantity inputs.</li>
+              <li>The homepage is an <strong>80-item alphabetical catalogue dump</strong> (578&nbsp;KB) that opens with cotton buds. Checkout inlines the entire terms and conditions, producing a 325&nbsp;KB page.</li>
+              <li><strong>Live SEO-spam pages on a children's store</strong> &mdash; <em class="q">&ldquo;What Is an Online Slot Machine?&rdquo;</em>, <em class="q">&ldquo;Cheap Essays&hellip;&rdquo;</em> &mdash; both HTTP 200 and in the sitemap.</li>
+              <li><code>/track-order/</code> works but is wrapped in <strong>unedited theme demo content: lorem ipsum, a Brooklyn NY address, &ldquo;UTC +2&rdquo; hours</strong>. No reviews. Flat ৳130 national rate from a Chattogram base. No GA4 or GTM. Flash-sale capability present but explicitly disabled (<code>sale_countdown:0</code>).</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> the right taxonomy with none of the merchandising to exploit it. Its skill axis is the idea worth learning from.</p>
+      </article>
+
+      <article class="d">
+        <div class="d-top">
+          <h3>08 &nbsp;EduToyZone <span class="b b-acc" style="vertical-align:middle">Benchmark</span></h3>
+          <span class="d-plat">nopCommerce with purpose-built plugins &middot; 510 products</span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>Strengths</h4>
+            <ul>
+              <li>Not a stock theme &mdash; custom plugins (<code>ETZ.Plugin.Misc.ProductDiscovery</code>, <code>ETZ.Plugin.Misc.OneCspCheckout</code>).</li>
+              <li><strong>The only real merchandising filters in the market:</strong> recommended age (7 bands, <em>with result counts</em>), learning goal, price bands, in-stock only. Age-first and skill-first three-level navigation.</li>
+              <li>Bundles and combo offers. Variants with per-variant pricing <em>and</em> per-variant stock. Product video. Reviews. Free-delivery progress bar.</li>
+              <li><strong>Best-localised checkout found:</strong> phone-first, email optional, district select with Dhaka-subcity granularity, and genuine three-tier zone pricing &mdash; inside Dhaka ৳70, Dhaka subcity ৳100, outside Dhaka ৳120.</li>
+              <li>Guest order lookup at <code>/findorder</code> (order ID + last four phone digits). WhatsApp <em>and</em> Messenger in three places. Extensive Bangla.</li>
+              <li>Best SEO in the set: Product + Offer (BDT) + BreadcrumbList + <strong>per-product <code>FAQPage</code> in Bangla</strong>. The only full analytics stack: <code>GTM-W7DGWV43</code>, <code>G-ZSFE8WM8TS</code>, Pixel <code>1071219174683903</code>.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Observed defects &mdash; where it is still beatable</h4>
+            <ul>
+              <li><strong>Free-delivery threshold contradicts itself three ways</strong> &mdash; ৳1,999 / ৳2,000 / ৳3,000, sometimes on the same page.</li>
+              <li><strong>The product-page age badge says &ldquo;Age 2 years+&rdquo; while Specifications says &ldquo;3/4/5 Year +&rdquo;</strong> on the same product.</li>
+              <li><strong>Filters are client-side with no <code>pushState</code></strong>, so a filtered view cannot be shared, bookmarked or indexed. The strongest feature in the market generates no landing pages.</li>
+              <li>No brand filter, no gender filter, no flash sale or countdown. Reviews are very sparse and there is no <code>AggregateRating</code>. No Open Graph on the homepage. Blog page has no posts.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Verdict:</strong> the site to beat, and beatable on specifics rather than on strategy. Its operational back end is a generic .NET admin, not a Bangladesh-specific order, courier, risk and P&amp;L system.</p>
+      </article>
+
+      <article class="d dead">
+        <div class="d-top">
+          <h3>09 &nbsp;kidszone.com <span class="b b-gap" style="vertical-align:middle">Not a competitor</span></h3>
+          <span class="d-plat">No platform &middot; no catalogue &middot; no <code>&lt;title&gt;</code></span>
+        </div>
+        <div class="d-body">
+          <div class="d-sub">
+            <h4>What it actually is</h4>
+            <ul>
+              <li>27&nbsp;KB of HTML with <strong>no <code>&lt;title&gt;</code>, no products, no navigation, no prices and no commerce markup</strong>. No WordPress, Shopify, Laravel or Next.js markers &mdash; no platform at all.</li>
+              <li>The body is a consentmanager.net GDPR/CCPA script supporting 32 European languages plus US state-privacy keys, and <strong>one parked-domain ad pixel</strong>: <code>l.cdn-fileserver.com/bping.php?&hellip;vgd_*&amp;prid=&hellip;&amp;crid=&hellip;</code>.</li>
+              <li><code>/robots.txt</code> connection-resets. <code>/sitemap.xml</code> returns an HTML error page, not XML.</li>
+            </ul>
+          </div>
+          <div class="d-sub">
+            <h4>Why it looked Bangladeshi</h4>
+            <ul>
+              <li>The tracking pixel carries <code>cc=BD</code>, which reflects the geolocation of the requesting IP address &mdash; not the site's market. The GDPR-global default, European language list and US state-privacy handling all point to a US or EU domain-monetisation operator.</li>
+            </ul>
+          </div>
+        </div>
+        <p class="verdict"><strong>Action:</strong> remove from the competitor set. Any brief listing it as a Bangladeshi toy retailer is mistaken.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="band" id="matrix">
+  <div class="wrap stack g16">
+    <div class="sechead">
+      <span class="secnum">06</span>
+      <h2>Feature matrix</h2>
+      <p class="small">Eight niche toy stores plus two marketplaces. Rose cells are <strong>verified absent</strong> &mdash; searched for and not found. Scroll the table sideways; filter to the rows where the market has left something open.</p>
+    </div>
+
+    <div class="controls" role="group" aria-label="Filter rows">
+      <button type="button" id="f-all" aria-pressed="true">All rows</button>
+      <button type="button" id="f-gaps" aria-pressed="false">Only rows with verified gaps</button>
+      <span class="tiny" id="rowcount" aria-live="polite"></span>
+    </div>
+
+    <div class="tscroll">
+      <table id="matrix">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">SK&nbsp;Toy</th>
+            <th scope="col">Krystal</th>
+            <th scope="col">Toyshop</th>
+            <th scope="col">Kids&nbsp;Rep.</th>
+            <th scope="col">Kids&nbsp;Zone</th>
+            <th scope="col">Toy&nbsp;House</th>
+            <th scope="col">Baby&nbsp;Bazar</th>
+            <th scope="col">EduToyZone</th>
+            <th scope="col">Daraz</th>
+            <th scope="col">Othoba</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Age filter on listings</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes*</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Brand filter</th><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Gender filter</th><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Skill / interest filter</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Price filter</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Search typo tolerance</th><td class="c u">NV</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Bangla / Banglish search parity</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Per-variant stock shown</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Delivery charge on product page</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Delivery charge published at all</th><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Reviews with real volume</th><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No<span class="trow-note">1 review</span></td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row"><code>AggregateRating</code> in schema</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No<span class="trow-note">listings only</span></td><td class="c n">No</td></tr>
+          <tr><th scope="row"><code>FAQPage</code> schema</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row"><code>rel=canonical</code></th><td class="c y">Yes</td><td class="c n">No</td><td class="c u">Part</td><td class="c n">No<span class="trow-note">duplicated</span></td><td class="c n">No</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Open Graph complete</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No<span class="trow-note">not on home</span></td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row"><code>hreflang</code> / bn-BD locale</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Working sitemap</th><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No<span class="trow-note">0 bytes</span></td></tr>
+          <tr><th scope="row">Server-rendered product page</th><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">Part</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Guest checkout</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c n">No<span class="trow-note">OTP forced</span></td></tr>
+          <tr><th scope="row">Phone collected at checkout</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c u">NV</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">COD offered</th><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c u">NV</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Automated online gateway</th><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No<span class="trow-note">manual transfer</span></td><td class="c u">NV</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td></tr>
+          <tr><th scope="row">Dependent thana / area select</th><td class="c u">NV</td><td class="c y">Yes</td><td class="c n">No</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c u">NV</td><td class="c y">Yes</td><td class="c u">NV</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Order tracking that resolves</th><td class="c y">Yes</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No<span class="trow-note">404s</span></td><td class="c u">NV</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No<span class="trow-note">login only</span></td></tr>
+          <tr><th scope="row">Shipment-level status</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Courier named to the buyer</th><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c u">&mdash;</td><td class="c u">&mdash;</td></tr>
+          <tr><th scope="row">Flash sale / countdown</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No<span class="trow-note">disabled</span></td><td class="c n">No</td><td class="c y">Yes</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Bundles / combos</th><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Gift wrap / message / finder</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Safety / certification info</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">NV</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No<span class="trow-note">ad-hoc only</span></td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">GA4 or GTM</th><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c n">No</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Meta Pixel firing</th><td class="c y">Yes</td><td class="c n">No<span class="trow-note">wired, not firing</span></td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c y">Yes</td><td class="c y">Yes</td><td class="c n">No</td><td class="c u">NV</td></tr>
+          <tr><th scope="row">Server-side conversion API</th><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td></tr>
+          <tr><th scope="row">Blog with real posts</th><td class="c y">Yes</td><td class="c n">No<span class="trow-note">off-market</span></td><td class="c n">No<span class="trow-note">dormant</span></td><td class="c n">No<span class="trow-note">2019 demo</span></td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c n">No</td><td class="c u">&mdash;</td><td class="c u">&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tiny">* Daraz has an age facet, but <code>Recommended Age</code> is a seller-typed free-text attribute, producing roughly thirty overlapping, unsortable buckets. <code>Warranty Period</code> is worse: raw database IDs surface as visible labels (<code>26</code>, <code>42</code>, <code>112</code>) beside <code>1 Month</code>.</p>
+  </div>
+</section>
+
+<section id="appbyte">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">07</span>
+      <h2>AppByte benchmark</h2>
+      <p class="small">Benchmarked as a software product, not a competing store &mdash; it sells the back office this project also needs.</p>
+    </div>
+
+    <div class="call neg">
+      <h4>There is no product site to audit</h4>
+      <p><code>appbyte.net</code> serves <strong>EcomByte</strong> by appByte Technologies Ltd. It is a fully client-rendered single-page React application. Sixteen paths were probed &mdash; <code>robots.txt</code>, <code>sitemap.xml</code>, <code>/features</code>, <code>/pricing</code>, <code>/docs</code>, <code>/blog</code>, <code>/demo</code>, <code>/integrations</code>, <code>/changelog</code>, <code>/api-docs</code>, <code>/login</code>, <code>/dashboard</code> and others &mdash; and <strong>every one returns the identical 634,483-byte shell</strong>. The footer lists all of those pages; the links have no <code>href</code>. There is no documentation, help centre, API reference, changelog, legal page or demo tenant.</p>
+      <p>Everything below was recovered by extracting string literals from the inlined JavaScript bundle: a 29-item FAQ array, a three-plan pricing array, a 31-row comparison table and a 29-card feature grid. <strong>That is reliable evidence of what AppByte claims, and nothing more.</strong> No independent verification exists &mdash; no review, comparison, testimonial or forum thread in English or Bengali. Every screenshot on the site is a hand-coded mock with fabricated data.</p>
+    </div>
+
+    <div class="col stack g12">
+      <h3>Claimed modules</h3>
+      <p class="small">Orders with six statuses, phone as an order source, and ad click-IDs retained 90 days &middot; inventory with batch tracking and multi-warehouse &middot; four couriers &middot; Fake Order Guard &middot; accounting including projected profit from in-transit parcels &middot; COD amounts due per courier &middot; invoices with 10+ templates and barcode stickers &middot; CRM with OTP login and one-click WhatsApp &middot; coupons, bundles and B2B quotations &middot; role-based access &middot; Bengali SMS and browser push &middot; Meta CAPI and TikTok Events &middot; a landing-page builder.</p>
+      <p class="small"><strong>Pricing is annual prepay, not monthly SaaS:</strong> ৳7,000, ৳12,000 and ৳30,000 per year, hosting bundled, no commission. <strong>Every call to action is &ldquo;contact us&rdquo; via WhatsApp &mdash; there is no signup, trial or checkout.</strong> For context, Easy Order Manager is ৳390/month and Bonik AI around ৳590/month; the market clears near ৳400&ndash;1,000 per month.</p>
+      <p class="tiny">One internal contradiction worth noting: the pricing table claims data from <span class="mono">৭ টি কুরিয়ার</span> (seven couriers) while the FAQ says four and the interface renders an array of length four.</p>
+    </div>
+
+    <div class="call">
+      <h4>The fake-order check, and why we will build it differently</h4>
+      <p>Lookup is by phone number, returning per-courier signals beside each courier's logo: parcel and delivery counts, success ratio, number age, address verification, <em class="q">&ldquo;4 names at one address&rdquo;</em>, <em class="q">&ldquo;3 COD payments not taken&rdquo;</em>. Three tiers map to auto-confirm, phone-verify and block, with an explicit stated rule: <span class="mono">স্কোর ৭০% ছাড়ালে অর্ডার নিজে থেকেই আটকে যায়</span> &mdash; above a 70% risk score the order is held automatically.</p>
+      <p><strong>AppByte never discloses its data source.</strong> The category mechanism was confirmed from working open-source code: vendors <strong>store the merchant's courier-portal email and password</strong> and call reverse-engineered internal endpoints on Pathao, Steadfast, RedX and Carrybee. Undocumented, unsupported, and requiring stored passwords.</p>
+      <p><strong>Toy Mart BD will not do that.</strong> Steadfast publishes an official <code>GET /fraud_check/{phone}</code> endpoint in its own Postman collection. We use that plus our own order history, and accept thinner signal on a genuinely first-time customer as the price of not holding credentials we have no right to. We agree with the auto-<em>hold</em>; we will never auto-<em>cancel</em>, because a false positive on a real parent costs a customer and a public review, while a held order costs one phone call.</p>
+    </div>
+
+    <div class="col stack g12">
+      <h3>What AppByte appears not to do</h3>
+      <p class="small">No supplier or purchase-order module at all &middot; no landed costing &middot; <strong>no partial-delivery state, although both couriers support it</strong> &middot; no COD settlement-to-consignment matching &middot; no COD gating by success rate &middot; no VAT/Mushak-compliant invoicing &middot; and OTP and SMS are paywalled out of the cheapest tier, which is the tier its fraud-check marketing targets. It also does not include a storefront.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="markets">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">08</span>
+      <h2>Marketplace baseline</h2>
+      <p class="small">Daraz and Othoba set what Bangladeshi shoppers expect. A niche store cannot match their price, breadth or voucher budget &mdash; so what matters is where they are structurally weak.</p>
+    </div>
+
+    <div class="build">
+      <div>
+        <h3>Daraz &mdash; toys</h3>
+        <p class="small">4,080 results across 15&ndash;16 facets, and the richest promotional mechanics observed anywhere in this study: copy-to-clipboard vouchers, collectible vouchers, live <em>and</em> pre-launch countdowns, multi-buy, combos, freebies and loyalty coins.</p>
+        <h4>Where it is weak</h4>
+        <ul>
+          <li><strong>Only three sort options</strong> across 4,080 products &mdash; best match and two price directions. No newest, no top-rated, no best-selling.</li>
+          <li><code>Recommended Age</code> is seller-typed free text, so its most valuable facet is unusable.</li>
+          <li>Its product page emits <code>Product</code> with <strong>no <code>offers</code>, no <code>aggregateRating</code> and an empty <code>BreadcrumbList</code></strong>.</li>
+          <li><strong>No GA4, GTM or Meta Pixel</strong> &mdash; Alibaba's first-party stack only. No <code>hreflang</code> despite bilingual content.</li>
+          <li>Bangla is visibly machine-translated: underscores leak into facet titles, and <code>Interest</code> is rendered <span class="mono">সুদ</span> &mdash; financial interest. Navigation shows <span class="mono">ছাগল</span> (goat).</li>
+          <li>Returns and payment pages serve one identical 149&nbsp;KB empty shell; the Help Centre's body text is literally <em class="q">Help Center</em>. Terms are unreadable.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Othoba &mdash; kids' toys</h3>
+        <p class="small">Also nopCommerce. Five category levels, with toys filed oddly under <code>FMCG &rsaquo; Mother &amp; Baby &rsaquo; Toys</code>. Its product-page delivery block is the best single element found in the whole audit: delivery area, a location selector, separate inside- and outside-Dhaka timeframes, the shipping charge, and COD availability, all in one place.</p>
+        <h4>Where it is weak</h4>
+        <ul>
+          <li><strong>Assortment is effectively empty</strong> &mdash; <code>/kids-toys</code> returns one product; <code>/soft-toy</code> and <code>/education-learning</code> return none.</li>
+          <li><strong>Only three facets</strong> (brand, vendor, rating) and <strong>no price, age or gender filter</strong>. Sort options ship with raw nopCommerce enum names as visible labels: <code>NameAsc</code>, <code>PriceDesc</code>, <code>NewArrivals</code>.</li>
+          <li><strong>No guest checkout</strong> &mdash; phone plus OTP is mandatory before buying.</li>
+          <li>Returns are inspect-at-the-door: <em class="q">&ldquo;After you accept the package, we are unable to receive claims for missing, wrong or defective items.&rdquo;</em> An effectively zero-day window.</li>
+          <li>Tracking requires logging in; the footer's <em class="q">Track My Order</em> link is <code>href="#"</code>. Zero Open Graph tags and a 0-byte sitemap.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="call acc">
+      <h4>Where a specialist beats a marketplace</h4>
+      <p>Age and developmental stage as a first-class, structured, combinable axis &mdash; which Daraz cannot do because its age data is seller-typed. Curation and safety provenance in a category where quality is unverifiable. Consultative pre-purchase help. Occasion merchandising for birthdays and Eid, which neither marketplace offers. Content authority, since every niche blog is empty. Cross-SKU developmental bundles, which a horizontal marketplace structurally cannot assemble. <strong>A frictionless guest COD checkout, which is an edge over both marketplaces &mdash; they each gate identity.</strong> And hand-written Bangla, against Daraz's machine translation.</p>
+    </div>
+  </div>
+</section>
+
+<section id="weak">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">09</span>
+      <h2>The five most exploitable weaknesses</h2>
+    </div>
+    <ol class="weak">
+      <li><div class="wbody">
+        <h3>Structured data and Bangla-first SEO are unowned</h3>
+        <p class="small">Krystal has 820 products and emits zero JSON-LD, zero canonical and zero Open Graph. Kids Zone BD emits nothing. SK Toy's <code>Product</code> schema is actively broken. Only one site has <code>AggregateRating</code>, built on one review. <strong>No site has <code>hreflang</code> or a bn-BD variant &mdash; including both marketplaces.</strong> Shipping correct Product + Offer + AggregateRating + BreadcrumbList + FAQPage with Bangla fields takes the rich results and the AI-answer citations uncontested &mdash; and three sites have additionally excluded themselves from AI crawlers.</p>
+      </div></li>
+      <li><div class="wbody">
+        <h3>Checkout friction, with Toyshop as the extreme</h3>
+        <p class="small">No COD, manual money transfer before an order exists, three steps, a required email, a math captcha, and untranslated address labels. Toy House BD is COD-only and collects no phone number. Krystal is the bar to beat &mdash; and even it has no cart page and contradicts its own shipping policy. A one-page, phone-first, district-to-thana, COD-default checkout with the charge already known beats seven of nine outright.</p>
+      </div></li>
+      <li><div class="wbody">
+        <h3>Two competitors have conceded organic search</h3>
+        <p class="small">Kids Zone BD serves one identical shell for every URL, has no sitemap, runs no analytics of any kind, and does not appear in a search for its own name. SK Toy server-renders its homepage but ships a spinning loader on every product and category page. Those queries are free.</p>
+      </div></li>
+      <li><div class="wbody">
+        <h3>Stock, price and policy data are visibly wrong across the board</h3>
+        <p class="small">Products at ৳0 marked in stock. 19 of 28 homepage products unavailable. Three contradictory delivery thresholds, on three separate sites. A hotline printed as <code>xxxx-xxxxx</code>. A product whose age badge and specifications disagree with each other. Live gambling and essay-mill spam pages on a children's store. Accurate stock, real prices and one consistent policy are low-cost and high-trust.</p>
+      </div></li>
+      <li><div class="wbody">
+        <h3>The toy-specific merchandising a parent needs does not exist</h3>
+        <p class="small">No combinable age, brand or gender faceting anywhere. Bundles on one site of nine. No countdown mechanics in the entire niche &mdash; one competitor has the capability and switched it off. No gift flows on any of the eleven properties. No structured safety guidance. Search that breaks on a one-letter typo. One review across eleven hundred products.</p>
+      </div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" id="build">
+  <div class="wrap stack g24">
+    <div class="sechead">
+      <span class="secnum">10</span>
+      <h2>What this means for the build</h2>
+      <p class="small">The full requirement set, with IDs and MVP priority, is in <code>docs/PRODUCT-REQUIREMENTS.md</code>. The gap analysis ranked by impact over effort is in <code>docs/FEATURE-MATRIX.md</code>.</p>
+    </div>
+
+    <div class="build">
+      <div>
+        <h3>Storefront</h3>
+        <ul>
+          <li>Age in <strong>months</strong>, plus skill, brand, gender and price &mdash; combinable, URL-addressable and therefore indexable.</li>
+          <li>Typo-tolerant Bangla &harr; Banglish &harr; English search.</li>
+          <li>Accurate per-variant stock.</li>
+          <li><strong>The delivery charge on the product page</strong>, from the same code path as checkout, so the two can never disagree.</li>
+          <li>One-page, phone-first, COD-default checkout with district &rarr; upazila &rarr; area and a landmark field.</li>
+          <li>Moderated reviews with verified-purchase proof and <code>AggregateRating</code>.</li>
+          <li>Systematic safety and certification information.</li>
+          <li>Named courier with a real shipment timeline. Flash sales with a countdown. Complete schema including <code>FAQPage</code>. Automatic 301s from slug history. A blog that has posts.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Back office &mdash; where no competitor competes</h3>
+        <ul>
+          <li>Append-only stock ledger; suppliers and purchase orders with <strong>landed cost</strong>.</li>
+          <li>Pathao and Steadfast one-click and bulk booking behind one abstraction, with per-provider location mapping and a failed-booking retry queue.</li>
+          <li><strong>Partial delivery</strong> handled &mdash; both couriers support it; AppByte has no such state.</li>
+          <li>Phone-keyed risk screening with a <strong>visible score breakdown</strong>, and official courier data shown as a separate, timestamped panel rather than blended into one number.</li>
+          <li><strong>COD settlement reconciliation</strong> matching remittances to consignments.</li>
+          <li>A P&amp;L that keeps <strong>revenue, cash collected and receivables separate</strong>, and nets off courier charges, COD fees, return charges, gateway fees, packaging, discounts, refunds and write-offs.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="call">
+      <h4>Two things outside the software that need attention first</h4>
+      <p><strong>The supplied Figma file is empty</strong> &mdash; one page, zero nodes, no styles, no variables, still named &ldquo;Document&rdquo;. There was nothing to review, so the design system was written from first principles instead. Design work cannot start until this is resolved.</p>
+      <p><strong>Toys came under mandatory BSTI certification in 2026</strong> &mdash; R.O. 232/233-Act/2026, gazetted 23 June 2026, effective 23 August 2026, covering the BDS ISO 8124 safety standards. This post-dates every compliance guide currently online, which is why it is easy to miss, and whether an importer needs a full CM licence or consignment-wise port clearance could not be resolved from public sources. Confirm with BSTI and a customs agent before committing to an import plan. It also creates an opportunity: no competitor presents safety certification systematically, so a mandatory cost becomes the strongest available trust signal.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="tiny">Toy Mart BD &middot; Phase 1 competitor research &middot; audited 2026-11-07, compiled 2026-11-08.</p>
+    <p class="tiny">Every claim here was observed in a fetched response. &ldquo;Verified absent&rdquo; is kept strictly distinct from &ldquo;not verified&rdquo;, and nothing is inferred from what e-commerce sites usually do. Per-site captures with quoted evidence are in <code>docs/_research/</code>; the synthesis is in <code>docs/COMPETITOR-ANALYSIS.md</code>.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var table = document.getElementById('matrix');
+  if(!table) return;
+  var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+  var bAll = document.getElementById('f-all');
+  var bGaps = document.getElementById('f-gaps');
+  var count = document.getElementById('rowcount');
+
+  function gapsIn(row){
+    return row.querySelectorAll('td.c.n').length;
+  }
+
+  function apply(onlyGaps){
+    var shown = 0;
+    rows.forEach(function(r){
+      var keep = !onlyGaps || gapsIn(r) >= 4;
+      r.hidden = !keep;
+      if(keep) shown++;
+    });
+    bAll.setAttribute('aria-pressed', String(!onlyGaps));
+    bGaps.setAttribute('aria-pressed', String(onlyGaps));
+    count.textContent = onlyGaps
+      ? shown + ' of ' + rows.length + ' rows where four or more properties verifiably lack the feature'
+      : rows.length + ' rows';
+  }
+
+  bAll.addEventListener('click', function(){ apply(false); });
+  bGaps.addEventListener('click', function(){ apply(true); });
+  apply(false);
+})();
+</script>

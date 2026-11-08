@@ -1,0 +1,3038 @@
+{
+  "$schema": "build-manifest/v1",
+  "batch": "05-avatar-skeleton-divider-tooltip",
+  "author": "Build Agent 5",
+  "date": "2026-11-08",
+  "source": "docs/_design/02-primitives-spec.md sections 0, 13, 15, 16, 17",
+  "components": [
+    {
+      "name": "Avatar",
+      "description": "Non-interactive identity circle. 5 Sizes x 3 Types = 15 variants. WHY non-interactive: when an avatar is a trigger (account menu) it is placed in the icon slot of IconButton Variant=Ghost Size=Medium, and that wrapper owns hover/pressed/focus-visible/disabled - so no interaction axis is added here and 15 combinations never become 60 (spec 13.4). WHY a 1px color/border/default on Type=Image only: customer-supplied avatars are frequently white-background screenshots, and a white circle on color/bg/surface is invisible; Initials and Icon carry a tinted fill and need no border. WHY a color/bg/surface ring on the status dot: the dot must read against a photograph. WHY the dot is never the only signal: it is paired with text in the one place it is used (admin user list); on the storefront showStatus is always false. Bangla (0.7): the frame is script-independent, but initials are not - Bangla has no case, so initials cannot be produced by uppercasing. Latin takes first-letter-of-first-and-last-word uppercased (Mominul Rahman -> MR); Bangla takes the FIRST GRAPHEME CLUSTER of the first word only (the conjunct must not be split - Intl.Segmenter granularity:'grapheme', never string[0]), rendered +2px over the Latin size because one Anek Bangla character is optically smaller than two Jakarta capitals. Empty/unparseable name falls back to Type=Icon, never a blank circle. Touch target (0.8): n/a - non-interactive; only Size=XS and Size=Small are ever placed inside a 44x44 IconButton, and XS is restricted to admin table rows.",
+      "variantAxes": {
+        "Size": [
+          "XS",
+          "Small",
+          "Medium",
+          "Large",
+          "XL"
+        ],
+        "Type": [
+          "Image",
+          "Initials",
+          "Icon"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Size=XS, Type=Image",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 24,
+              "h": 24
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": null,
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 24,
+                "h": 24
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xs",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 8,
+                "h": 8
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 1.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=XS, Type=Initials",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 24,
+              "h": 24
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/brand-subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 24,
+                "h": 24
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xs",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": true
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 8,
+                "h": 8
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 1.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=XS, Type=Icon",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 24,
+              "h": 24
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 24,
+                "h": 24
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xs",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/text/secondary",
+              "visible": true
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 8,
+                "h": 8
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 1.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Small, Type=Image",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 32,
+              "h": 32
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": null,
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 32,
+                "h": 32
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 10,
+                "h": 10
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Small, Type=Initials",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 32,
+              "h": 32
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/brand-subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 32,
+                "h": 32
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": true
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 10,
+                "h": 10
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Small, Type=Icon",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 32,
+              "h": 32
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 32,
+                "h": 32
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/text/secondary",
+              "visible": true
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 10,
+                "h": 10
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": -2,
+                  "b": -2
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Medium, Type=Image",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 40,
+              "h": 40
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": null,
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-md",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Medium, Type=Initials",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 40,
+              "h": 40
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/brand-subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-md",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": true
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Medium, Type=Icon",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 40,
+              "h": 40
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-md",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 20,
+                "h": 20
+              },
+              "fillToken": "color/text/secondary",
+              "visible": true
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 12
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Large, Type=Image",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 56,
+              "h": 56
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": null,
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 56,
+                "h": 56
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-lg",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 28,
+                "h": 28
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 14,
+                "h": 14
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Large, Type=Initials",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 56,
+              "h": 56
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/brand-subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 56,
+                "h": 56
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-lg",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": true
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 28,
+                "h": 28
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 14,
+                "h": 14
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=Large, Type=Icon",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 56,
+              "h": 56
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 56,
+                "h": 56
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-lg",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 28,
+                "h": 28
+              },
+              "fillToken": "color/text/secondary",
+              "visible": true
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 14,
+                "h": 14
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.0,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=XL, Type=Image",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 80,
+              "h": 80
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": null,
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 80,
+                "h": 80
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xl",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=XL, Type=Initials",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 80,
+              "h": 80
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/brand-subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 80,
+                "h": 80
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xl",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": true
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/text/secondary",
+              "visible": false
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size=XL, Type=Icon",
+          "frame": {
+            "type": "FRAME",
+            "name": "Avatar",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 80,
+              "h": 80
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "cornerRadiusToken": "radius/full",
+            "fillToken": "color/bg/subtle"
+          },
+          "layers": [
+            {
+              "type": "ELLIPSE",
+              "name": "Image",
+              "sizing": {
+                "h": "FILL",
+                "v": "FILL"
+              },
+              "size": {
+                "w": 80,
+                "h": 80
+              },
+              "fillToken": "color/bg/subtle",
+              "cornerRadiusToken": "radius/full",
+              "visible": false
+            },
+            {
+              "type": "TEXT",
+              "name": "Initials",
+              "characters": "MR",
+              "textStyle": "Latin/Avatar/Initials-xl",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "visible": false
+            },
+            {
+              "type": "ICON_INSTANCE",
+              "name": "Icon",
+              "icon": "icon/user",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 40,
+                "h": 40
+              },
+              "fillToken": "color/text/secondary",
+              "visible": true
+            },
+            {
+              "type": "ELLIPSE",
+              "name": "Status",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 16,
+                "h": 16
+              },
+              "fillToken": "color/status/in-stock",
+              "strokeToken": "color/bg/surface",
+              "strokeWeight": 2.5,
+              "strokeAlign": "OUTSIDE",
+              "cornerRadiusToken": "radius/full",
+              "visible": false,
+              "absolute": {
+                "inset": {
+                  "r": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "BOTTOM"
+                }
+              }
+            },
+            {
+              "type": "TEXT",
+              "name": "_aria-label",
+              "characters": "Mominul Rahman",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": null,
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 1
+              },
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0,
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "initials",
+          "type": "TEXT",
+          "default": "MR",
+          "bindTo": {
+            "layer": "Initials",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "iconSwap",
+          "type": "INSTANCE_SWAP",
+          "default": "icon/user",
+          "bindTo": {
+            "layer": "Icon",
+            "field": "mainComponent"
+          }
+        },
+        {
+          "name": "showStatus",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": {
+            "layer": "Status",
+            "field": "visible"
+          }
+        },
+        {
+          "name": "altText",
+          "type": "TEXT",
+          "default": "Mominul Rahman",
+          "bindTo": {
+            "layer": "_aria-label",
+            "field": "characters"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Skeleton",
+      "description": "Loading placeholder. One axis, Shape = Line | Block | Circle, 3 variants. WHY no Size axis: a skeleton's only job is to be the exact shape of the thing that will replace it, so its dimensions come from the instance (FILL width, height set by the consuming composite). Baking sizes into variants guarantees they drift from the real content (spec 15.1). WHY the radius is per-Shape and token-bound, never eyeballed: A SKELETON MUST MATCH THE RADIUS OF WHATEVER IT REPLACES, otherwise the swap produces a visible radius pop / corner snap at the moment data lands. Line = radius/sm (text lines), Block = radius/lg - the SAME token ProductCard's image box uses, so the product image fades in with no corner change - and Circle = radius/full, the same token Avatar uses. Line heights are line-box heights rounded down, not font sizes: 12 for caption, 16 for body-sm/body, 20 for h3/price, 28 for price-lg/h1 (a skeleton line matching the font size is visibly too thin). WHY the shimmer's middle stop binds color/bg/surface-raised and not color/bg/surface: in light mode surface-raised is #FFFFFF, identical to surface, so the light sweep is unchanged; in dark mode bg/subtle and bg/surface are both neutral.800 and a gradient between them is invisible, while surface-raised is neutral.700 and gives a visible lift. One binding, correct in both modes, no mode-specific override. WHY the motion is DROPPED ENTIRELY under prefers-reduced-motion rather than slowed (the opposite of Spinner): a skeleton's information content is its SHAPE - the grey blocks already say 'content of this size is coming'. The shimmer only says 'still working', which the role=status live region says in words, so the motion is redundant and can go. A large-area horizontal sweep is also the motion pattern most likely to trigger vestibular symptoms, and at 1400ms across a full-width product grid it is far more provocative than a 20px rotation. The reduced-motion state is a flat color/bg/subtle fill (animate=false reproduces it exactly). Bangla (0.7): no text, so no string behaviour - but line COUNTS differ (a 2-line Latin title becomes 2-3 lines in Bangla and bn line-boxes are 1.15x taller). The skeleton line height stays 16 in both scripts, so ProductCard's title box is pinned to min-height 56 in both builds and the skeleton fills it top-aligned with 2 x 16 + 8 gap, leaving 16px reserved. That is the CLS fix and it is measured here. Touch target (0.8): n/a - aria-hidden, no tab stop, pointer-events:none so a tap passes through.",
+      "variantAxes": {
+        "Shape": [
+          "Line",
+          "Block",
+          "Circle"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Shape=Line",
+          "frame": {
+            "type": "FRAME",
+            "name": "Skeleton",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FILL",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 120,
+              "h": 16
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "fillToken": "color/bg/subtle",
+            "cornerRadiusToken": "radius/sm"
+          },
+          "layers": [
+            {
+              "type": "RECTANGLE",
+              "name": "_shimmer",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 240,
+                "h": 16
+              },
+              "fillToken": "gradient:linear 100deg | color/bg/subtle 0% -> color/bg/surface-raised 50% -> color/bg/subtle 100%",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": -60,
+                  "t": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "TOP_BOTTOM"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Shape=Block",
+          "frame": {
+            "type": "FRAME",
+            "name": "Skeleton",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FILL",
+              "v": "FILL"
+            },
+            "size": {
+              "w": 160,
+              "h": 160
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "fillToken": "color/bg/subtle",
+            "cornerRadiusToken": "radius/lg"
+          },
+          "layers": [
+            {
+              "type": "RECTANGLE",
+              "name": "_shimmer",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 320,
+                "h": 160
+              },
+              "fillToken": "gradient:linear 100deg | color/bg/subtle 0% -> color/bg/surface-raised 50% -> color/bg/subtle 100%",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": -80,
+                  "t": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "TOP_BOTTOM"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Shape=Circle",
+          "frame": {
+            "type": "FRAME",
+            "name": "Skeleton",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FIXED"
+            },
+            "size": {
+              "w": 40,
+              "h": 40
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "fillToken": "color/bg/subtle",
+            "cornerRadiusToken": "radius/full"
+          },
+          "layers": [
+            {
+              "type": "RECTANGLE",
+              "name": "_shimmer",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 80,
+                "h": 40
+              },
+              "fillToken": "gradient:linear 100deg | color/bg/subtle 0% -> color/bg/surface-raised 50% -> color/bg/subtle 100%",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": -20,
+                  "t": 0,
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "TOP_BOTTOM"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "animate",
+          "type": "BOOLEAN",
+          "default": true,
+          "bindTo": {
+            "layer": "_shimmer",
+            "field": "visible"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Divider",
+      "description": "Rule. Orientation (Horizontal | Vertical) x Emphasis (Default | Strong) = 4 variants. No state axis - Divider is non-interactive and has no hover, focus or disabled appearance. WHY radius is radius/none and not radius/full: a 1px line with a 9999px radius renders identically but costs a corner computation per divider, and a DataTable can hold 60 of them (spec 16.3). WHY the component carries NO margin: spacing is the parent stack's gap. A divider with built-in margin cannot be used in a gap-based auto-layout without double spacing. Reference surrounding gaps: space/4 (16) in a card, space/3 (12) in a list, space/6 (24) between page sections, 0 in a DataTable (the row's own padding provides the air). Related rule: a divider is never the first or last child of a card, because in dark mode e1/e2 elevations substitute a 1px color/border/default border and the card edge would then show two adjacent 1px lines. WHY showLabel is a property and not a third axis: the label is the same content in both Emphasis values, so it costs 0 extra combinations as a boolean; Vertical + label is invalid and is marked _invalid on the documentation board. Bangla (0.7) - Strategy GROW: the label hugs and the two FILL rule segments shrink symmetrically. 'or' (14px) -> 'অথবা' (34px) costs 20px, split 10px off each rule; at the narrowest place a labelled divider appears (the 358px login card at a 390px viewport) each rule is still 155px. The label never wraps (white-space:nowrap) - if a labelled divider's text were long enough to wrap, that is a section heading, not a divider. Touch target (0.8): n/a - non-interactive. A Divider is never a drag handle; the admin DataTable column resizer is its own control with a 12px visual and a 44px hit area and is not this component.",
+      "variantAxes": {
+        "Orientation": [
+          "Horizontal",
+          "Vertical"
+        ],
+        "Emphasis": [
+          "Default",
+          "Strong"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Orientation=Horizontal, Emphasis=Default",
+          "frame": {
+            "type": "FRAME",
+            "name": "Divider",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FILL",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 320,
+              "h": 1
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 12,
+            "fillToken": null,
+            "cornerRadiusToken": "radius/none"
+          },
+          "layers": [
+            {
+              "type": "RECTANGLE",
+              "name": "_rule-start",
+              "sizing": {
+                "h": "FILL",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 147,
+                "h": 1
+              },
+              "fillToken": "color/border/default",
+              "cornerRadiusToken": "radius/none",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Label",
+              "characters": "or",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": "color/text/tertiary",
+              "sizing": {
+                "h": "HUG",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 14,
+                "h": 20
+              },
+              "visible": false
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_rule-end",
+              "sizing": {
+                "h": "FILL",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 147,
+                "h": 1
+              },
+              "fillToken": "color/border/default",
+              "cornerRadiusToken": "radius/none",
+              "visible": false
+            }
+          ]
+        },
+        {
+          "name": "Orientation=Horizontal, Emphasis=Strong",
+          "frame": {
+            "type": "FRAME",
+            "name": "Divider",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FILL",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 320,
+              "h": 1
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 12,
+            "fillToken": null,
+            "cornerRadiusToken": "radius/none"
+          },
+          "layers": [
+            {
+              "type": "RECTANGLE",
+              "name": "_rule-start",
+              "sizing": {
+                "h": "FILL",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 147,
+                "h": 1
+              },
+              "fillToken": "color/border/strong",
+              "cornerRadiusToken": "radius/none",
+              "visible": true
+            },
+            {
+              "type": "TEXT",
+              "name": "Label",
+              "characters": "or",
+              "textStyle": "Latin/Mobile/caption",
+              "fillToken": "color/text/tertiary",
+              "sizing": {
+                "h": "HUG",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 14,
+                "h": 20
+              },
+              "visible": false
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_rule-end",
+              "sizing": {
+                "h": "FILL",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 147,
+                "h": 1
+              },
+              "fillToken": "color/border/strong",
+              "cornerRadiusToken": "radius/none",
+              "visible": false
+            }
+          ]
+        },
+        {
+          "name": "Orientation=Vertical, Emphasis=Default",
+          "frame": {
+            "type": "FRAME",
+            "name": "Divider",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FILL"
+            },
+            "size": {
+              "w": 1,
+              "h": 24
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "fillToken": "color/border/default",
+            "cornerRadiusToken": "radius/none"
+          },
+          "layers": []
+        },
+        {
+          "name": "Orientation=Vertical, Emphasis=Strong",
+          "frame": {
+            "type": "FRAME",
+            "name": "Divider",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "FIXED",
+              "v": "FILL"
+            },
+            "size": {
+              "w": 1,
+              "h": 24
+            },
+            "padding": {
+              "t": 0,
+              "r": 0,
+              "b": 0,
+              "l": 0
+            },
+            "gap": 0,
+            "fillToken": "color/border/strong",
+            "cornerRadiusToken": "radius/none"
+          },
+          "layers": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "label",
+          "type": "TEXT",
+          "default": "or",
+          "bindTo": {
+            "layer": "Label",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showLabel",
+          "type": "BOOLEAN",
+          "default": false,
+          "bindTo": [
+            {
+              "layer": "Label",
+              "field": "visible"
+            },
+            {
+              "layer": "_rule-end",
+              "field": "visible"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tooltip",
+      "description": "Explanatory bubble. One axis, Side = Top | Bottom | Left | Right, 4 variants. WHY no Align axis (unlike Popover): a tooltip is narrow, centred on its trigger and collision-resolved by FLIPPING Side to its opposite; adding Align would be 12 combinations for a control that never needs edge alignment. No state axis either - the tooltip is shown or not, and the TRIGGER owns every state. WHY TOOLTIP IS DESKTOP/ADMIN-ONLY, WITH A DOCUMENTED POPOVER FALLBACK ON TOUCH: a tooltip NEVER appears on a touch device - under @media (hover: none) the component does not mount at all. There is no hover on a phone and every workaround is worse: long-press competes with text selection and the context menu, tap-to-show steals the trigger's own action, and tap-anywhere-to-dismiss is undiscoverable. Because the audience is predominantly mid-range Android, a touch-only tooltip would make the information invisible to most of the audience. So every tooltip's content has a decided touch answer: (a) information a buyer needs in order to decide (delivery-charge basis, what 'authentic' means, the return window) is MOVED INLINE as a Helper line or a body-sm color/text/secondary line and is not a tooltip on any viewport; (b) a secondary explanation tied to a control (why a variant is unavailable, what a risk score means) switches the trigger to a POPOVER on (hover: none) - same content string, tap to open, tap-outside or Esc to close, focus managed - one content string, two presentations; (c) admin-only abbreviations and column help need no touch equivalent because admin is desktop/tablet. On the storefront Tooltip appears in exactly two places, the PDP delivery-estimator info icon and the risk-free-returns icon, and BOTH have the Popover fallback. WHY a LIGHT tooltip and not a dark one: there is no inverse-surface token in this system, and inverting by binding fill to color/text/primary and text to color/bg/surface would produce a component whose dark-mode appearance is a near-white box with dark text - exactly backwards. A light bg/surface-raised box with a 1px color/border/default border and e3 is unambiguous in both modes from one binding. WHY radius/md: a tooltip is an explanatory utility; the playful radii belong to cards and buttons. WHY no interactive content inside: no links, buttons or fields - content requiring interaction is a Popover. That is what keeps the tooltip out of the tab order entirely. aria-describedby (never aria-labelledby) on the trigger, role=tooltip on the bubble, kept in the DOM and toggled with [hidden] so the reference never dangles, Esc dismisses without moving focus (WCAG 1.4.13). Bangla (0.7) - Strategy WRAP, up to 4 lines at a max-width that stays 240 in both scripts. 'Delivery charge is calculated by district' is 2 lines at 240 in Latin; the Bangla string wraps to 3 lines at bn/body-sm (14 x 1.5 x 1.15 = 24.2px per line) = a 73px text block in an 89px tooltip. Widening for Bangla would make the Latin build inconsistent and a 300px tooltip overhangs a 390px viewport's safe area. 4 lines (97px of text) is the hard cap and content is capped at 90 Bangla characters - beyond that it is not tooltip content and moves inline or into a Popover. Touch target (0.8): the bubble is not a target (non-interactive, and absent on touch). The TRIGGER must meet 44x44 and is an IconButton Size=Medium Variant=Ghost holding a 16px icon/info - a 44x44 button with a small glyph, never a 16px clickable icon. It stays a real <button> on desktop so keyboard users open the tooltip at 0ms delay.",
+      "variantAxes": {
+        "Side": [
+          "Top",
+          "Bottom",
+          "Left",
+          "Right"
+        ]
+      },
+      "variants": [
+        {
+          "name": "Side=Top",
+          "frame": {
+            "type": "FRAME",
+            "name": "Tooltip",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "HUG",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 240,
+              "h": 58
+            },
+            "padding": {
+              "t": 8,
+              "r": 12,
+              "b": 8,
+              "l": 12
+            },
+            "gap": 0,
+            "fillToken": "color/bg/surface-raised",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/md",
+            "effectStyle": "Elevation/Light/e3"
+          },
+          "layers": [
+            {
+              "type": "TEXT",
+              "name": "Content",
+              "characters": "Delivery charge is calculated by district",
+              "textStyle": "Latin/Desktop/body-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "size": {
+                "w": 216,
+                "h": 42
+              },
+              "visible": true
+            },
+            {
+              "type": "FRAME",
+              "name": "Arrow",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 6
+              },
+              "fillToken": null,
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "b": -6
+                },
+                "constraints": {
+                  "horizontal": "CENTER",
+                  "vertical": "BOTTOM"
+                }
+              },
+              "children": [
+                {
+                  "type": "RECTANGLE",
+                  "name": "_arrow-square",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "size": {
+                    "w": 8.485,
+                    "h": 8.485
+                  },
+                  "fillToken": "color/bg/surface-raised",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/none",
+                  "visible": true,
+                  "absolute": {
+                    "inset": {
+                      "l": 1.757,
+                      "t": -4.243
+                    },
+                    "constraints": {
+                      "horizontal": "CENTER",
+                      "vertical": "CENTER"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_arrow-mask",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 1
+              },
+              "fillToken": "color/bg/surface-raised",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "b": 0
+                },
+                "constraints": {
+                  "horizontal": "CENTER",
+                  "vertical": "BOTTOM"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Side=Bottom",
+          "frame": {
+            "type": "FRAME",
+            "name": "Tooltip",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "HUG",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 240,
+              "h": 58
+            },
+            "padding": {
+              "t": 8,
+              "r": 12,
+              "b": 8,
+              "l": 12
+            },
+            "gap": 0,
+            "fillToken": "color/bg/surface-raised",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/md",
+            "effectStyle": "Elevation/Light/e3"
+          },
+          "layers": [
+            {
+              "type": "TEXT",
+              "name": "Content",
+              "characters": "Delivery charge is calculated by district",
+              "textStyle": "Latin/Desktop/body-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "size": {
+                "w": 216,
+                "h": 42
+              },
+              "visible": true
+            },
+            {
+              "type": "FRAME",
+              "name": "Arrow",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 6
+              },
+              "fillToken": null,
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "t": -6
+                },
+                "constraints": {
+                  "horizontal": "CENTER",
+                  "vertical": "TOP"
+                }
+              },
+              "children": [
+                {
+                  "type": "RECTANGLE",
+                  "name": "_arrow-square",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "size": {
+                    "w": 8.485,
+                    "h": 8.485
+                  },
+                  "fillToken": "color/bg/surface-raised",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/none",
+                  "visible": true,
+                  "absolute": {
+                    "inset": {
+                      "l": 1.757,
+                      "t": 1.757
+                    },
+                    "constraints": {
+                      "horizontal": "CENTER",
+                      "vertical": "CENTER"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_arrow-mask",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 12,
+                "h": 1
+              },
+              "fillToken": "color/bg/surface-raised",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "t": 0
+                },
+                "constraints": {
+                  "horizontal": "CENTER",
+                  "vertical": "TOP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Side=Left",
+          "frame": {
+            "type": "FRAME",
+            "name": "Tooltip",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "HUG",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 240,
+              "h": 58
+            },
+            "padding": {
+              "t": 8,
+              "r": 12,
+              "b": 8,
+              "l": 12
+            },
+            "gap": 0,
+            "fillToken": "color/bg/surface-raised",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/md",
+            "effectStyle": "Elevation/Light/e3"
+          },
+          "layers": [
+            {
+              "type": "TEXT",
+              "name": "Content",
+              "characters": "Delivery charge is calculated by district",
+              "textStyle": "Latin/Desktop/body-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "size": {
+                "w": 216,
+                "h": 42
+              },
+              "visible": true
+            },
+            {
+              "type": "FRAME",
+              "name": "Arrow",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 6,
+                "h": 12
+              },
+              "fillToken": null,
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "r": -6
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "CENTER"
+                }
+              },
+              "children": [
+                {
+                  "type": "RECTANGLE",
+                  "name": "_arrow-square",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "size": {
+                    "w": 8.485,
+                    "h": 8.485
+                  },
+                  "fillToken": "color/bg/surface-raised",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/none",
+                  "visible": true,
+                  "absolute": {
+                    "inset": {
+                      "l": -4.243,
+                      "t": 1.757
+                    },
+                    "constraints": {
+                      "horizontal": "CENTER",
+                      "vertical": "CENTER"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_arrow-mask",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 12
+              },
+              "fillToken": "color/bg/surface-raised",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "r": 0
+                },
+                "constraints": {
+                  "horizontal": "RIGHT",
+                  "vertical": "CENTER"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Side=Right",
+          "frame": {
+            "type": "FRAME",
+            "name": "Tooltip",
+            "layoutMode": "HORIZONTAL",
+            "sizing": {
+              "h": "HUG",
+              "v": "HUG"
+            },
+            "size": {
+              "w": 240,
+              "h": 58
+            },
+            "padding": {
+              "t": 8,
+              "r": 12,
+              "b": 8,
+              "l": 12
+            },
+            "gap": 0,
+            "fillToken": "color/bg/surface-raised",
+            "strokeToken": "color/border/default",
+            "strokeWeight": 1,
+            "strokeAlign": "INSIDE",
+            "cornerRadiusToken": "radius/md",
+            "effectStyle": "Elevation/Light/e3"
+          },
+          "layers": [
+            {
+              "type": "TEXT",
+              "name": "Content",
+              "characters": "Delivery charge is calculated by district",
+              "textStyle": "Latin/Desktop/body-sm",
+              "fillToken": "color/text/primary",
+              "sizing": {
+                "h": "HUG",
+                "v": "HUG"
+              },
+              "size": {
+                "w": 216,
+                "h": 42
+              },
+              "visible": true
+            },
+            {
+              "type": "FRAME",
+              "name": "Arrow",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 6,
+                "h": 12
+              },
+              "fillToken": null,
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": -6
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "CENTER"
+                }
+              },
+              "children": [
+                {
+                  "type": "RECTANGLE",
+                  "name": "_arrow-square",
+                  "sizing": {
+                    "h": "FIXED",
+                    "v": "FIXED"
+                  },
+                  "size": {
+                    "w": 8.485,
+                    "h": 8.485
+                  },
+                  "fillToken": "color/bg/surface-raised",
+                  "strokeToken": "color/border/default",
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "cornerRadiusToken": "radius/none",
+                  "visible": true,
+                  "absolute": {
+                    "inset": {
+                      "l": 1.757,
+                      "t": 1.757
+                    },
+                    "constraints": {
+                      "horizontal": "CENTER",
+                      "vertical": "CENTER"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "RECTANGLE",
+              "name": "_arrow-mask",
+              "sizing": {
+                "h": "FIXED",
+                "v": "FIXED"
+              },
+              "size": {
+                "w": 1,
+                "h": 12
+              },
+              "fillToken": "color/bg/surface-raised",
+              "cornerRadiusToken": "radius/none",
+              "visible": true,
+              "absolute": {
+                "inset": {
+                  "l": 0
+                },
+                "constraints": {
+                  "horizontal": "LEFT",
+                  "vertical": "CENTER"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "name": "content",
+          "type": "TEXT",
+          "default": "Delivery charge is calculated by district",
+          "bindTo": {
+            "layer": "Content",
+            "field": "characters"
+          }
+        },
+        {
+          "name": "showArrow",
+          "type": "BOOLEAN",
+          "default": true,
+          "bindTo": [
+            {
+              "layer": "Arrow",
+              "field": "visible"
+            },
+            {
+              "layer": "_arrow-mask",
+              "field": "visible"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "newTextStyles": [
+    {
+      "name": "Latin/Avatar/Initials-xs",
+      "family": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 10,
+      "lineHeightPercent": 100,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=XS Type=Initials",
+      "why": "Avatar initials are 700 weight at 10/12/14/20/28px; no existing Latin style pairs those sizes with 700 (caption is 12/500, body-sm is 14/400, overline is 11/700 with 0.09em tracking). Line height 100% so two capitals optically centre in a circle whose auto-layout is Center/Center; tracking 0 so a two-capital pair does not drift off centre."
+    },
+    {
+      "name": "Latin/Avatar/Initials-sm",
+      "family": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 12,
+      "lineHeightPercent": 100,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Small Type=Initials",
+      "why": "Size matches Latin/Mobile/caption (12) but the weight does not (500 vs required 700)."
+    },
+    {
+      "name": "Latin/Avatar/Initials-md",
+      "family": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 14,
+      "lineHeightPercent": 100,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Medium Type=Initials",
+      "why": "Size matches Latin/Mobile/body-sm (14) but the weight does not (400 vs required 700)."
+    },
+    {
+      "name": "Latin/Avatar/Initials-lg",
+      "family": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 20,
+      "lineHeightPercent": 100,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Large Type=Initials",
+      "why": "Size matches Latin/Mobile/h2 (20) but h2 carries -0.010em tracking, which pulls a two-capital pair off the circle's optical centre."
+    },
+    {
+      "name": "Latin/Avatar/Initials-xl",
+      "family": "Plus Jakarta Sans",
+      "weight": 700,
+      "size": 28,
+      "lineHeightPercent": 100,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=XL Type=Initials",
+      "why": "No existing style is 28px in either Latin set (Mobile/display-2 is 26, Mobile/h1 and Mobile/price-lg are 24)."
+    },
+    {
+      "name": "Bangla/Avatar/Initials-xs",
+      "family": "Anek Bangla",
+      "weight": 700,
+      "size": 12,
+      "lineHeightPercent": 115,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=XS Type=Initials, .lang-bn build + documentation board",
+      "why": "Spec 13.6: the Bangla initial renders +2px over the Latin size because one Anek Bangla character is optically smaller than two Jakarta capitals. 115% line height gives the matra line and any conjunct headroom that 100% would clip; tracking 0 per the absolute Bangla tracking rule."
+    },
+    {
+      "name": "Bangla/Avatar/Initials-sm",
+      "family": "Anek Bangla",
+      "weight": 700,
+      "size": 14,
+      "lineHeightPercent": 115,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Small Type=Initials, .lang-bn build + documentation board",
+      "why": "Latin 12 + 2 per spec 13.6."
+    },
+    {
+      "name": "Bangla/Avatar/Initials-md",
+      "family": "Anek Bangla",
+      "weight": 700,
+      "size": 16,
+      "lineHeightPercent": 115,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Medium Type=Initials, .lang-bn build + documentation board",
+      "why": "Latin 14 + 2 per spec 13.6 - the example the spec states explicitly (16 instead of 14 at Medium)."
+    },
+    {
+      "name": "Bangla/Avatar/Initials-lg",
+      "family": "Anek Bangla",
+      "weight": 700,
+      "size": 22,
+      "lineHeightPercent": 115,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=Large Type=Initials, .lang-bn build + documentation board",
+      "why": "Latin 20 + 2 per spec 13.6."
+    },
+    {
+      "name": "Bangla/Avatar/Initials-xl",
+      "family": "Anek Bangla",
+      "weight": 700,
+      "size": 30,
+      "lineHeightPercent": 115,
+      "trackingPx": 0,
+      "usedBy": "Avatar Size=XL Type=Initials, .lang-bn build + documentation board",
+      "why": "Latin 28 + 2 per spec 13.6."
+    }
+  ],
+  "notes": [
+    "CONVENTION / bindTo: where one property drives several layers, `bindTo` is an ARRAY of {layer, field} objects instead of a single object. Used twice: Divider.showLabel (Label + _rule-end) and Tooltip.showArrow (Arrow + _arrow-mask). Figma supports one boolean property driving several layers' visibility.",
+    "CONVENTION / gradient fills: the layer descriptor has no gradient key, so Skeleton's `_shimmer` carries its paint as the fillToken string \"gradient:linear 100deg | color/bg/subtle 0% -> color/bg/surface-raised 50% -> color/bg/subtle 100%\". Build it as a GRADIENT_LINEAR paint with 3 stops at 0 / 0.5 / 1.0 bound to color/bg/subtle, color/bg/surface-raised, color/bg/subtle, rotated to 100deg (NOT 90deg). Every other fillToken in this manifest is a plain variable-bound solid.",
+    "CONVENTION / omitted frame keys: the permitted layer-descriptor key list has no fields for clip-content, axis alignment, min/max width/height, rotation or layer opacity. Every such value is stated below, per component, and is mandatory.",
+    "TOKEN REMAP: the spec writes `spacing/N`; the real variables are `space/N`. Mapping used here - spacing/2 -> space/2 (8), spacing/3 -> space/3 (12), spacing/4 -> space/4 (16), spacing/6 -> space/6 (24).",
+    "TOKEN REMAP / radius: the spec's parenthetical pixel values are stale (it writes sm=6, md=10, lg=14). The file's real values are radius/sm=8, radius/md=12, radius/lg=16. The token NAMES in this manifest are authoritative and must be bound as named - do not hand-enter the spec's px values. This matters most for Skeleton: Block must bind the identical token ProductCard's image box binds (radius/lg), because matching the NAME is what guarantees no radius pop even if the value is later retuned.",
+    "SHARED HELPER LAYERS (0.2): `_focus`, `_scrim` and `_hit44` are NOT used by any of these four components - all four are non-interactive (Avatar 13.4, Skeleton 15.9, Divider 16.7, Tooltip 17.9). The only helper present is `_aria-label`, on Avatar. Build it 1x1px, fill None, LAYER OPACITY 0%, absolutely positioned at inset 0,0 with Left/Top constraints; it is bound to the `altText` TEXT property and is never otherwise exposed.",
+    "BINDING DECISION 3: every property-bound `visible` in this manifest (Avatar.showStatus -> Status, Divider.showLabel -> Label + _rule-end, Tooltip.showArrow -> Arrow + _arrow-mask) only changes on an instance via setProperties. The variant's own layer `visible` flags recorded here are the component-set defaults.",
+    "BINDING DECISION 2 (one default per set): every TEXT/INSTANCE_SWAP default here is identical across the whole set - Avatar.initials=\"MR\" and Avatar.altText=\"Mominul Rahman\" for all 15 variants, Divider.label=\"or\" for all 4, Tooltip.content for all 4. Content that varies by variant is NOT property-bound anywhere. What DOES vary per variant is layer-level styling (Avatar's per-Size text style, per-Type fill, per-Type visibility; Tooltip's per-Side arrow geometry), all of which is baked into the variant.",
+    "BINDING DECISION 5 / numerals: Western 0-9 in both locales. Nothing in these four components renders a numeral except Avatar's `altText`, which is a person's name.",
+    "ICONS: Phosphor glyphs are FILLED paths. Avatar's `Icon` layer colours via FILL (color/text/secondary) with NO stroke. Avatar's fallback glyph is icon/user, which is also the INSTANCE_SWAP default. The spec's 0.9 default of 'the Lucide circle glyph' maps to icon/circle under binding decision 1, but is NOT used here: 13.2 names icon/user explicitly and a user silhouette is the correct fallback.",
+    "AVATAR / clip content = FALSE on the root frame. This is a deliberate DEVIATION from spec 13.5 ('Clip content = true'). At Size=XS and Small the Status dot is inset -2px and carries a 1.5-2px OUTSIDE ring, so it sits outside the frame bounds; clipping the root would shear the ring off exactly where it is needed. The image masking that 13.5 wanted the clip for is instead provided by the `Image` layer itself: it is an ELLIPSE, so its image paint is cropped to the circle by the shape. Net effect is identical masking plus an intact status ring.",
+    "AVATAR / auto-layout: HORIZONTAL, FIXED x FIXED per Size, primary-axis alignment CENTER and counter-axis alignment CENTER, padding 0, gap 0. Layer order top-to-bottom in the panel: Image | Initials | Icon (in flow, mutually exclusive) -> Status (Ignore auto-layout) -> _aria-label (Ignore auto-layout).",
+    "AVATAR / all three content layers exist in all 15 variants, with `visible` set per variant so exactly one is on. This is NOT property-bound: Type is the axis that selects them, and per binding decision 4 a discrete content state is an axis. Keeping all three present in every variant is what lets `initials` and `iconSwap` bind once at set level and resolve in every variant.",
+    "AVATAR / per-Size geometry (frame / Latin initials style / Bangla initials style / icon px / status dot px / status ring px / status inset): XS 24x24 / Initials-xs 10 / bn 12 / 12 / 8 / 1.5 / -2 . Small 32x32 / Initials-sm 12 / bn 14 / 16 / 10 / 2 / -2 . Medium 40x40 / Initials-md 14 / bn 16 / 20 / 12 / 2 / 0 . Large 56x56 / Initials-lg 20 / bn 22 / 28 / 14 / 2 / 0 . XL 80x80 / Initials-xl 28 / bn 30 / 40 / 16 / 2.5 / 0.",
+    "AVATAR / icon sizes: 16 = size/icon-sm and 20 = size/icon-md, so bind those two to the size variables. 12, 28 and 40 are raw px - icon sizes are deliberately not fully tokenised in this system (spec preamble). Radius is radius/full at every size and every Type.",
+    "AVATAR / Status is built as an ELLIPSE at the dot size with the ring as an OUTSIDE stroke bound to color/bg/surface, so the outer diameter is dot + 2 x ring (XS = 8 + 3 = 11). Constraints Right + Bottom; the -2 / 0 insets ARE the spec's '45 degrees on the circle' construction, stated as implementation in 13.3. Default fill is color/status/in-stock (online); offline overrides to color/text/tertiary and away to color/feedback/warning as an instance fill override, NOT a variant axis - the dot is never the only signal, it is always paired with text in the admin user list, and showStatus is always false on the storefront.",
+    "AVATAR / Type=Image is the only Type with a border: 1px color/border/default, stroke align INSIDE, on the ROOT frame. Root fill per Type: Image = none (the Image ELLIPSE carries the paint, with color/bg/subtle as the placeholder until a real image paint is dropped on the instance), Initials = color/bg/brand-subtle with color/text/primary text, Icon = color/bg/subtle with a color/text/secondary glyph.",
+    "AVATAR / DEVIATION - the `imageSwap` INSTANCE_SWAP property from spec 13.2 is DROPPED. Its stated default `placeholder/avatar` does not exist in the Figma file, no substitute may be invented, and an INSTANCE_SWAP cannot bind to a fill in any case (13.2 itself describes the binding as 'Image fill'). Instead: the `Image` ELLIPSE ships with a color/bg/subtle placeholder fill, and a real photo is applied as an ordinary image-paint override on the instance - no property needed, and it is how the lead will actually place avatars on the board. If a `placeholder/avatar` component is created later, add the property then and bind it to the `Image` layer's mainComponent.",
+    "AVATAR / accessibility: Type=Image renders <img alt=\"{altText}\"> and the alt is the person's NAME, never 'avatar' or 'profile picture'. Type=Initials and Type=Icon render <span role=\"img\" aria-label=\"{altText}\"> with the initials themselves aria-hidden, so a screen reader says 'Mominul Rahman', not 'M R'. Beside the person's name in running text (the review card) the avatar is alt=\"\" / aria-hidden=\"true\" and the name is read once from the adjacent text. CODE REQUIREMENT, recorded because it is this component's most common production failure: a broken image URL must not leave an empty circle - onError switches the instance to Type=Initials.",
+    "SKELETON / clip content = TRUE on all three variants. It is what crops the 200%-wide `_shimmer` and it is non-optional.",
+    "SKELETON / auto-layout per 15.7: Line = HORIZONTAL, FILL x FIXED (height per instance, default 16); Block = HORIZONTAL, FILL x FILL; Circle = HORIZONTAL, FIXED x FIXED 40x40. Padding 0, gap 0 everywhere. Layer order: base frame -> `_shimmer` (Ignore auto-layout).",
+    "SKELETON / `_shimmer` geometry: width 200% of the parent, height 100%, and X at -50% - which is the MID-SWEEP frame and is deliberately the resting state a reviewer sees on the board. Concrete values at the default sizes: Line 240x16 at x=-60; Block 320x160 at x=-80; Circle 80x40 at x=-20. Set the horizontal constraint to SCALE so the 200%/-50% proportion survives when the instance's FILL width changes; vertical constraint Top+Bottom so it always spans the full height.",
+    "SKELETON / MOTION - Figma cannot animate this (binding decision 6), so the component is the static resting state and the animation is this CSS, authoritative: .skeleton { position: relative; overflow: hidden; background: var(--color-bg-subtle); } .skeleton::after { content: \"\"; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(100deg, var(--color-bg-subtle) 0%, var(--color-bg-surface-raised) 50%, var(--color-bg-subtle) 100%); animation: shimmer 1400ms cubic-bezier(.4,0,.2,1) infinite; } @keyframes shimmer { 100% { transform: translateX(100%); } }",
+    "SKELETON / MOTION parameters and their reasons: duration 1400ms - slower than the 800ms Spinner because a skeleton covers a large area and a fast sweep across a full product grid reads as flicker. Easing cubic-bezier(.4,0,.2,1) - slight ease-in-out so the sweep decelerates at the edges instead of hard-cutting at the clip boundary. Gradient angle 100deg, NOT 90deg - the 10-degree tilt makes it read as a light source crossing the surface rather than a bar sliding sideways, and that is what distinguishes it from a progress bar. Travel -100% -> 100% - two widths, so there is a brief gap between sweeps; the gap is intentional because a continuous sweep has no rhythm. Delay 0ms AND NO STAGGER - explicitly: skeleton rows do not have staggered delays; a staggered grid of 24 produces 24 independent timelines and a visible diagonal wave that costs measurable frames on a mid-range Android and looks like a loading bug, so all skeletons on a page sweep in unison. Composited properties only: transform. No background-position animation - it is not compositable and repaints every frame.",
+    "SKELETON / REDUCED MOTION - the shimmer is REMOVED ENTIRELY, not slowed: @media (prefers-reduced-motion: reduce) { .skeleton::after { display: none; } .skeleton { background: var(--color-bg-subtle); } }. In Figma that state is exactly `animate = false`. It must not be mistaken for a disabled control - skeletons only appear where content is absent, and the live region names what is loading.",
+    "SKELETON / Line heights used by the composites, fixed here so they stay consistent: 12 for caption, 16 for body-sm and body, 20 for h3 and price, 28 for price-lg and h1. These are LINE-BOX heights rounded down, not font sizes - a skeleton line matching the font size is visibly too thin.",
+    "SKELETON / composition rules, part of the primitive because they are what stops skeletons looking cheap: (1) a skeleton matches its replacement's width, height, radius AND position exactly - ProductCardSkeleton is built by duplicating ProductCard and swapping each content layer for a Skeleton, never by eyeballing grey boxes; (2) in a multi-line text block the LAST Line is 60% width and every other line is 100% - a block of equal-length lines reads as a table; (3) line gap inside a text block is space/2 (8), not the text's line-height, because 16px lines + 8px gap reproduces the real 24px rhythm; (4) never more than 6 animated rows at once - rows 7+ use animate=false, so on a 24-item category grid the 6 above-the-fold cards shimmer and the rest are flat, which is indistinguishable to the user and cuts compositor work ~75% on the target device; (5) minimum display time 300ms - delay the mount by 150ms and if it is already shown keep it 300ms, because a skeleton that flashes in under 200ms reads as a rendering fault; (6) NO skeleton for a price - Price is server-rendered and has no loading state, and a shimmering price is the exact defect that component exists to prevent.",
+    "SKELETON / accessibility: the shapes are wrapped in <div class=\"skeleton-group\" aria-hidden=\"true\"> - announcing 40 grey boxes is noise. A single sibling visually-hidden <p role=\"status\"> names what is loading ('Loading products') and is announced once on mount; when content arrives its text is cleared and a second message announces the result ('24 products loaded'). It is the SAME live region the filter count uses, so a filter-plus-load sequence produces one announcement, not two. pointer-events: none, no tab stop.",
+    "DIVIDER / clip content = false (irrelevant, nothing overflows). Horizontal auto-layout: FILL x HUG, counter-axis alignment CENTER, gap space/3 (12), padding 0. Vertical: FIXED 1 x FILL with MIN HEIGHT 16 (16.3).",
+    "DIVIDER / DEVIATION - the Horizontal variants are ALWAYS an auto-layout row of _rule-start -> Label -> _rule-end, even unlabelled, whereas 16.5 describes the unlabelled horizontal divider as a bare rectangle. Reason: 16.2 makes showLabel a PROPERTY, not an axis, and a boolean cannot change a bare rectangle into a three-child row. With Label and _rule-end hidden, the row hugs to the single FILL x 1px _rule-start and is pixel-identical to the bare rectangle, so nothing is lost.",
+    "DIVIDER / DEVIATION - 16.3 asks for Row height HUG with Min height 20. A Figma min-height is a frame property and cannot be conditional on showLabel, so a 20px min-height would make every UNLABELLED divider 20px tall and silently break '16.3: a Divider has no margin'. Instead the `Label` text layer is HUG x FIXED 20 (text vertically centred). Labelled: the row hugs to 20, exactly as specified. Unlabelled: the row hugs to 1. Do NOT also set a min-height on the frame.",
+    "DIVIDER / the two rule segments are named `_rule-start` and `_rule-end` rather than two layers both called `_rule` (16.5), so that showLabel can bind to one of them unambiguously. Both are FILL x FIXED 1, radius/none, filled with the variant's Emphasis token: Default = color/border/default, Strong = color/border/strong. The Label is color/text/tertiary regardless of Emphasis.",
+    "DIVIDER / Label text: Latin/Mobile/caption (12px / 140% / 500) - the exact match for the spec's `en/caption` 12/1.4/500; Latin/Desktop/caption is also 12 so the Mobile style is chosen because the labelled divider's canonical use is the mobile-first OTP-vs-email login card. Horizontal text alignment CENTER inside the label box, and WHITE-SPACE: NOWRAP - the label never wraps.",
+    "DIVIDER / Vertical variants contain NO Label and NO second rule: 16.2 marks Vertical + label invalid and the lead marks that cell `_invalid` on the documentation board. The showLabel property still appears on the set (one property list per set) but has no effect on Vertical, which is the intended, documented behaviour.",
+    "DIVIDER / accessibility: a decorative divider is <div role=\"presentation\"> or a CSS border-top on the following element - NEVER <hr>, because an <hr> is announced as a thematic break and 60 of them in a table is 60 announcements. A divider that genuinely marks a thematic break (product description -> reviews) is a real <hr> with no role override; there are four such places on the storefront and everywhere else is decorative. A LABELLED divider is <div role=\"separator\" aria-orientation=\"horizontal\"> with the label as its accessible name, so a screen reader says 'separator, or' - the label is NOT aria-hidden, it carries meaning (these are alternatives, not a sequence). Vertical dividers between inline metadata (4.3 star / 128 reviews / In stock) are CSS pseudo-elements, never DOM nodes, so the metadata reads as one phrase.",
+    "TOOLTIP / clip content = FALSE on the root. Mandatory: the `Arrow` frame is positioned 6px OUTSIDE the body on the side opposite `Side` and would be clipped away otherwise.",
+    "TOOLTIP / sizing: root HORIZONTAL auto-layout, HUG x HUG, MAX WIDTH 240, MIN WIDTH 80, MIN HEIGHT 32, both alignments CENTER, padding X space/3 (12) and Y space/2 (8), gap 0. Fill color/bg/surface-raised, 1px color/border/default stroke align INSIDE, radius/md, effect style Elevation/Light/e3 (use Elevation/Dark/e3 on the dark-mode documentation board).",
+    "TOOLTIP / DEVIATION - 17.7 specifies `Content` as FILL x HUG, but Figma does not allow a child to fill an axis on which its parent hugs. Content is therefore HUG x HUG with MAX WIDTH 216 (= 240 max-width minus 24 horizontal padding) and auto-wrap on. The resolved behaviour is identical: text wraps at 216 and the root hugs up to 240. Horizontal text alignment LEFT, not Center - centred multi-line text is harder to read and a 240px tooltip is frequently three lines in Bangla (17.7). Default content is 2 lines of Latin/Desktop/body-sm (14px / 150% = 21px per line) = 42px of text in a 58px bubble.",
+    "TOOLTIP / Content text style: Latin/Desktop/body-sm, the exact match for the spec's `en/body-sm` 14/1.5/400. Desktop rather than Mobile because Tooltip is a desktop/admin-only component; both styles are 14px/150% so the geometry is the same either way.",
+    "TOOLTIP / ARROW CONSTRUCTION. The spec wants a 12-wide x 6-deep triangle with the body's 1px border on its two OUTER edges. The layer vocabulary has no polygon or rotation field, so build it as a clipped, rotated square - the only construction that puts a real 1px variable-bound stroke on exactly the two outer edges: (a) `Arrow` is a FRAME with CLIP CONTENT = TRUE, fill none, 12x6 for Side=Top/Bottom and 6x12 for Side=Left/Right, Ignore auto-layout, offset -6 on the edge opposite `Side`; (b) inside it `_arrow-square` is a RECTANGLE 8.485 x 8.485 (= 12 / sqrt 2) ROTATED 45 degrees about its own centre, fill color/bg/surface-raised, stroke 1px color/border/default align INSIDE, radius/none. Rotated, its bounding box is exactly 12x12, so clipping it to the 6px-deep Arrow frame leaves a 12-wide, 6-deep triangle whose two visible edges carry the stroke and whose base is open. The inset values in the manifest are the UNROTATED top-left; rotate after placing. Per-Side square bounding-box centres inside the Arrow frame: Top (6, 0), Bottom (6, 6), Left (0, 6), Right (6, 6).",
+    "TOOLTIP / `_arrow-mask` - a 12x1 (Top/Bottom) or 1x12 (Left/Right) RECTANGLE filled color/bg/surface-raised, Ignore auto-layout, sitting at inset 0 on the body edge the arrow meets, ordered ABOVE `Arrow`. It hides the body's own 1px INSIDE border where the arrow's open base crosses it, so bubble and arrow read as one shape. It is bound to `showArrow` together with the Arrow: if the arrow is hidden and the mask is not, a 12px gap appears in the border.",
+    "TOOLTIP / placement options and offset: the gap from trigger edge to tooltip edge is space/2 (8), and the arrow sits INSIDE that 8px - the arrow is 6 deep, so the tip stops 2px short of the trigger. Collision resolution FLIPS `Side` to its opposite; if both fail, pick the side with the most room and clamp to a 16px viewport inset. Rendered in a portal at the document root, above the sticky AddToCartBar and MobileNav; inside a Drawer or Modal it is portalled into that container instead. SINGLETON: only one tooltip is open at a time, globally.",
+    "TOOLTIP / behaviour: open delay 300ms on pointer, 0ms on keyboard focus; close delay 100ms. Enter = opacity 0->1 plus a 4px translate TOWARD the trigger, fast 120ms decelerate cubic-bezier(0,0,.2,1). Exit = opacity 1->0, fast 120ms. Reduced motion = opacity only at 120ms, no translate. Dismissed by Esc (always, WCAG 1.4.13), by the pointer leaving the trigger OR the tooltip, by trigger blur, and by scroll. HOVERABLE CONTENT is required: the pointer may travel from trigger into the tooltip without closing, and the 100ms close delay is what covers the 8px gap - this is WCAG 1.4.13 'Content on Hover or Focus'. The spring easing cubic-bezier(.34,1.56,.64,1) is forbidden here, as in every component in this spec.",
+    "TOOLTIP / 'never the only place': everything in a tooltip is also in the page's static content, the FAQ, or on the relevant field as a Helper. A tooltip is an accelerator, not a container. This is the same rule that makes the touch fallback cheap - the content already exists elsewhere."
+  ]
+}

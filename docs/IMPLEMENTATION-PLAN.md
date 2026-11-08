@@ -1,0 +1,227 @@
+# Toy Mart BD — Implementation Plan
+
+**Status:** Draft · **Date:** 2026-11-07
+**Scope note:** Phases 3 and 4 are broken down to task level because they start first and the detail is actionable now. Phases 5–10 are broken to feature level; each is expanded to task level at the start of its own phase, when the preceding phase's reality is known. Writing task-level detail for Phase 8 today would be guesswork dressed as a plan.
+
+---
+
+## 0. Conventions
+
+- **Task ID** `P{phase}-{domain}-{n}` e.g. `P4-CAT-03`
+- **Branch** `phase-4/catalog-variant-matrix`
+- **Size** S ≤ 0.5 day · M 1 day · L 2 days · XL 3+ days (an XL must be split before work starts)
+- **Owner** the agent or developer taking the task; one owner per task, one task per branch
+- Every task lists its **tests**, and is not done until they pass. See `AGENTS.md` §6.
+
+---
+
+## 1. Repository Layout
+
+```
+toymartbd/
+├── app/{Domain,Http,Support,Providers}/     ← Laravel 13 at the repo ROOT
+├── bootstrap/ · config/ · database/{migrations,seeders,factories}/
+├── routes/{api_v1_admin.php,api_v1_storefront.php,api_v1_webhooks.php,console.php}
+├── resources/views/            Blade for invoice PDFs and mail only — no SPA views
+├── storage/ · public/ · tests/{Unit,Feature,Integration}/
+├── composer.json
+├── toymartbd-app/              ALL frontend code — npm workspaces root
+│   ├── package.json
+│   ├── storefront/             Next.js 16 App Router
+│   │   └── app/{(shop),(account),(content)}/ · components/ · lib/
+│   ├── admin/                  React 19 + Vite
+│   │   └── src/{features,components/ui,shared,lib,routes}/
+│   └── packages/
+│       ├── tokens/             design tokens exported from Figma → Tailwind preset + CSS vars
+│       └── api-types/          generated from OpenAPI — never hand-edited
+├── docs/
+│   ├── _research/              Phase 1 raw research with sources
+│   └── _design/                Phase 2 build specifications
+├── e2e/                        Playwright — drives both frontends
+└── .github/workflows/
+```
+
+**Layout decided by the owner, 2026-11-08: Laravel 13 at the repo root, all frontend under `toymartbd-app/`.** PHP commands run from the root; `npm install` and every JS script run from `toymartbd-app/`, which is the npm workspaces root.
+
+Two consequences of Laravel sitting at the root, both deliberate:
+1. **Laravel's own Vite scaffolding is removed** — root `package.json`, `vite.config.js`, `resources/js/`, `resources/css/`. Keeping them would create a second npm root at the repo root and invite frontend code to accumulate outside `toymartbd-app/`. `resources/views/` stays, because invoice PDFs and transactional email still render through Blade, and both use inline CSS anyway, as email clients require.
+2. **`public/` serves the API and the storage symlink only.** There is no Blade storefront; the customer-facing app is the Next.js workspace.
+
+One repository. A monorepo because the three apps share a contract and must change together in one reviewable PR; separate repos would make every contract change a two-PR dance. The two frontends sit side by side rather than merged because their requirements are opposite — the storefront is read-heavy, SEO-critical and CDN-cached for mid-range Android on 4G; the admin is write-heavy, behind a login, never indexed, and tuned for data density. Merging them would make the storefront carry the admin's bundle weight. They share `packages/` so tokens and API types cannot drift apart.
+
+---
+
+## 2. Phase 3 — Foundation · 18 dev-days
+
+### Setup
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-SET-01 | Monorepo skeleton, workspaces, Composer, EditorConfig, Pint, PHPStan L6, ESLint, Prettier, TS strict configs | M | — | lint and typecheck run clean on an empty project |
+| P3-SET-02 | `docker-compose.yml`: MySQL 8.4, Redis 7, Meilisearch, Mailpit; `.env.example`; one-command bootstrap script | M | 01 | `make up` yields a working stack from a clean clone |
+| P3-SET-03 | Laravel 13 install, `utf8mb4_0900_ai_ci` enforced, `Asia/Dhaka` app timezone, Horizon, Telescope (local only) | M | 02 | migration test asserts collation; a Bangla string round-trips |
+| P3-SET-04 | Domain directory structure + `deptrac.yaml` encoding the boundary rules | M | 03 | `deptrac` fails on a deliberate `Domain → Http` import |
+
+### Support layer
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-SUP-01 | `Money` value object + Eloquent cast, `DECIMAL(14,2)`, no float arithmetic anywhere | M | P3-SET-04 | add/subtract/percentage/allocation; rounding at 0.005; allocation of 100.00 across 3 lines loses no poisha |
+| P3-SUP-02 | `PhoneNumber` value object: normalise to `01XXXXXXXXX`, accept `+880`/`880`/`0` prefixes, validate against live operator prefixes, `masked()` for staff views | M | P3-SET-04 | every valid operator prefix accepted; invalid prefix, wrong length and non-numeric rejected; all input forms normalise identically |
+| P3-SUP-03 | `DhakaDate` helper for report bucketing; a lint rule or test forbidding raw `now()` in report queries | S | P3-SET-04 | an order placed 23:30 UTC buckets to the next Dhaka day |
+| P3-SUP-04 | Slug generator with Bangla transliteration and uniqueness | S | P3-SET-04 | Bangla name yields a usable ASCII slug; collisions suffix correctly; **one slug serves both locales** |
+| P3-I18N-01 | Laravel locale resolution, lang files, explicit-locale API contract (`?locale=` plus `Accept-Language` fallback), locale-aware date/number formatters pinned to Western digits | M | P3-SET-03 | a request resolves the right locale from each source; an unknown locale falls back to `en` without erroring |
+| P3-I18N-02 | Next.js locale routing — English at `/`, Bangla at `/bn/`; `hreflang` pair plus `x-default` emitted on every page; persisted toggle; Bangla suggested (never force-redirected) on a first BD visit | L | P3-STO-01, P3-I18N-01 | both locale trees render; `hreflang` is reciprocal on every template; a crawler is never redirected |
+| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `toymartbd-app/admin/src` and `toymartbd-app/storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
+
+### Data foundation
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-DAT-01 | `users`, `settings`, `activity_log`, `audit_sensitive` migrations; `audit_sensitive` has no delete grant | M | P3-SET-03 | insert-only enforced |
+| P3-DAT-02 | `spatie/laravel-permission`; the 7 launch roles and full permission set seeded | M | 01 | each role's permission set asserted |
+| P3-DAT-03 | `divisions`, `districts` (64), `upazilas` with Bangla names and `is_inside_dhaka_metro` flags, seeded from a sourced dataset | L | P3-SET-03 | 8 divisions, 64 districts, upazila counts per district; Bangla names render |
+| P3-DAT-04 | Factories and a demo seeder with Bangla product names, variants, images, stock and orders | L | P3-DAT-03 | `migrate:fresh --seed` succeeds and produces a browsable catalog |
+
+### API foundation
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-API-01 | Route groups for admin/storefront/webhooks; base `ApiController`, `JsonResource` and `FormRequest` classes | M | P3-SET-04 | route list matches the contract |
+| P3-API-02 | RFC 9457 exception handler with stable machine-readable `type` per error class | M | 01 | validation, auth, authorisation, not-found and server errors each return the right shape and `type` |
+| P3-API-03 | `Idempotency-Key` middleware with Redis storage and response replay | M | 01 | replay returns the original response and does not re-execute; concurrent identical requests execute once |
+| P3-API-04 | Rate limiters per `SYSTEM-ARCHITECTURE.md` §5 | S | 01 | each limiter returns 429 at its threshold with `Retry-After` |
+| P3-API-05 | Sanctum: admin cookie session, storefront server token with limited abilities, customer token | L | P3-DAT-02 | login/logout; CSRF enforced on admin writes; a storefront token cannot reach an admin route |
+| P3-API-06 | Policy scaffold + the 403 role matrix test helper | M | 05 | every admin endpoint returns 403 for every role lacking its permission |
+| P3-API-07 | OpenAPI 3.1 generation, published at `/api/docs`, committed to the repo; `openapi-typescript` generates `packages/api-types` | M | 01 | CI fails if the committed spec is stale |
+| P3-API-08 | `/api/v1/health` reporting database, Redis, queue depth, Meilisearch, last courier sync | S | 01 | degraded dependency surfaces in the response |
+
+### Frontend foundation
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-ADM-01 | Vite + React 19 + TS strict; Tailwind v4 consuming `packages/tokens`; dark mode wired to semantic tokens | M | P2 tokens | build passes; no hardcoded hex in `src/` (lint rule) |
+| P3-ADM-02 | Router, TanStack Query with sane defaults, generated API client, auth guard, error boundary, toast host | M | 01, P3-API-07 | 401 redirects to login; a failed query surfaces a retryable error |
+| P3-ADM-03 | `AppShell`: sidebar, topbar, theme toggle, responsive drawer | M | 01 | keyboard navigable; renders at 768px |
+| P3-ADM-04 | Login screen + one real CRUD screen (brands) proving table, form, validation and mutation end to end | L | 02, 03 | Vitest on the form schema; Playwright login → create → edit → delete |
+| P3-STO-01 | Next.js 16 App Router, Tailwind from `packages/tokens`, fonts self-hosted and subset | M | P2 tokens | build passes; no CLS from font loading |
+| P3-STO-02 | Server-only API client with the storefront token; typed from `packages/api-types`; `no-store` vs. tagged-cache helpers | M | P3-API-07 | no credential appears in any client bundle (asserted by a bundle grep test) |
+| P3-STO-03 | `/api/revalidate` route handler with shared-secret verification; Laravel listener dispatching tag revalidation | M | 02 | a product save revalidates only its own tags; an unsigned request is rejected |
+| P3-STO-04 | One real catalog page rendered from the API with ISR, proving the stack | M | 02, 03 | Playwright asserts server-rendered HTML contains the product name with JS disabled |
+
+### Pipeline
+| ID | Task | Size | Depends | Tests |
+|---|---|---|---|---|
+| P3-CI-01 | PR workflow: Pint, PHPStan, deptrac, Pest, ESLint, tsc, Vitest, Playwright smoke | M | all above | a deliberately broken PR fails |
+| P3-CI-02 | Staging deploy on merge to `main`: zero-downtime release swap, migrations, graceful Horizon restart | L | 01 | deploy and rollback both rehearsed |
+| P3-CI-03 | Automated encrypted backup to off-host storage **and a verified restore onto staging** | M | 02 | restore produces a working application — this is the acceptance criterion, not the backup itself |
+| P3-CI-04 | Sentry on all three apps, structured JSON logging, `X-Request-Id` propagated into queued jobs | M | 01 | a thrown error reaches Sentry with the request id attached |
+
+**Phase 3 exit:** clone → one command → working stack with Bangla seed data · login with roles · OpenAPI published and types generated · CI green · staging deploying · a restore performed successfully. Then **Gate 3** — the storefront stack decision.
+
+---
+
+## 3. Phase 4 — Core E-commerce · 52 dev-days
+
+### Catalog (CAT)
+| ID | Task | Size | Tests |
+|---|---|---|---|
+| P4-CAT-01 | Migrations: products, variants, attributes, attribute values, variant values, categories (nested set), brands, images, relations | L | tree integrity after move/delete; unique SKU and barcode |
+| P4-CAT-02 | Models, relations, scopes, enums, policies | L | relation and scope coverage |
+| P4-CAT-03 | `CreateProduct` / `UpdateProduct` actions generating the variant matrix from selected attribute values | L | simple product gets exactly one default variant; a 3×4 attribute matrix creates 12 variants; removing a value archives rather than deletes its variants |
+| P4-CAT-04 | Admin product CRUD: tabbed form (General, Pricing, Variants, Inventory, Images, SEO, Related) | XL→split | Vitest on schemas; Playwright create-with-variants |
+| P4-CAT-05 | `VariantMatrixEditor`: per-row price, cost, SKU, barcode, stock, status | L | bulk edit; validation per row |
+| P4-CAT-06 | `ImageUploader`: drag-drop, reorder, per-image alt text (both languages), crop, variant assignment | L | reorder persists; alt text required before publish |
+| P4-CAT-07 | Media pipeline: validate real MIME, re-encode through Intervention (strips EXIF), generate AVIF/WebP at defined widths, CDN URLs | L | a renamed `.php` upload is rejected; EXIF stripped; variants generated |
+| P4-CAT-08 | Category tree admin: drag reorder, nesting, image, menu visibility | L | tree operations; menu cache invalidation |
+| P4-CAT-09 | Brands, attributes and attribute values admin | M | CRUD + role tests |
+| P4-CAT-10 | Bulk CSV/Excel import and export with a row-level error report | L | 1,000-row import; malformed rows reported, not silently skipped; Bangla names survive round-trip |
+| P4-CAT-11 | Product duplication including variants, images and SEO | S | duplicate has new SKUs and slug |
+| P4-CAT-12 | Review submission and moderation; `is_verified_purchase` derived from `order_item_id`; rating aggregates maintained | M | unverified review cannot claim verified status; aggregates recompute on approve/reject |
+| P4-CAT-13 | Storefront catalog API: listings, filters (**age range, price, brand, category, gender, rating, availability**), sorting, cursor pagination, facet counts | L | unlisted filter returns 400; facet counts match results; age filter boundaries inclusive |
+| P4-CAT-14 | Meilisearch: index schema, queued sync on save, nightly full reindex, Bangla + Banglish synonyms, typo tolerance, facets | L | a product is searchable within 5s of save; "gari"/"গাড়ি"/"car" return the same product; index-lag alert fires |
+
+### Storefront (STO)
+| ID | Task | Size | Tests |
+|---|---|---|---|
+| P4-STO-01 | Layout: header, mega menu, mobile bottom tab bar, footer, search bar | L | keyboard navigation of the mega menu; 320px reflow |
+| P4-STO-02 | Home page from CMS blocks (static fallback until Phase 7) | L | Lighthouse budget; LCP image has `priority` |
+| P4-STO-03 | Category and brand listing with filter sidebar / mobile bottom sheet, chips, sort | XL→split | filter state is URL-driven and shareable; back button restores it |
+| P4-STO-04 | Search results and zero-results with suggestions | M | zero-results shows corrections and best sellers |
+| P4-STO-05 | PDP: gallery with zoom, variant selector, price block, stock state, age indicator, trust strip, sticky add-to-cart, tabs | XL→split | CLS ≤ 0.05; out-of-stock variant disabled with a reason; price never reflows after load |
+| P4-STO-06 | **`DeliveryEstimator` on the PDP** — district select returning the real charge and ETA before the cart | M | the quote equals the charge later applied at checkout (same code path) |
+| P4-STO-07 | Related products, frequently bought together, recently viewed | M | no N+1; respects stock |
+| P4-STO-08 | Cart page, line editing, coupon field, summary, empty state | L | quantity beyond stock blocked with a message |
+| P4-STO-09 | Checkout: single page, three accordion sections, cascading address selects, COD default, sticky total, idempotent submit | XL→split | guest checkout; double-submit creates one order; price mismatch blocks with an explicit message |
+| P4-STO-10 | Order confirmation, payment failure/retry, public tracking by number + phone | M | tracking requires both; wrong phone returns 404, not a hint |
+| P4-STO-11 | Account: phone+OTP auth, dashboard, order history and detail, addresses, wishlist, profile | XL→split | OTP rate limited; a customer cannot read another's order |
+| P4-STO-12 | 404, 500, maintenance, static page template | S | styled, with a route back into the catalog |
+
+### Cart & Checkout engine (CRT)
+| ID | Task | Size | Tests |
+|---|---|---|---|
+| P4-CRT-01 | `carts`/`cart_items` migrations; cart resolution by httpOnly token; merge on login | M | guest cart merges into the account cart without duplicating lines |
+| P4-CRT-02 | Pricing pipeline: base → promotion (priority, stacking) → coupon → shipping → total, returning an itemised breakdown | L | stacking order; non-stackable stops the chain; breakdown sums to the total |
+| P4-CRT-03 | Delivery-charge resolver per `DATABASE-DESIGN.md` §5.1 — **one implementation, used by both the estimator and checkout** | M | every zone; free-shipping threshold; weight surcharge; estimator and checkout agree |
+| P4-CRT-04 | Coupon validation: window, minimum, total and per-customer limits keyed on phone, scope, exclusions | M | per-customer limit holds across guest checkouts on the same phone |
+| P4-CRT-05 | Stock availability check and reservation helper | M | `available = on_hand - reserved`; reservation expiry releases |
+
+### Orders (ORD)
+| ID | Task | Size | Tests |
+|---|---|---|---|
+| P4-ORD-01 | Migrations: orders (3 status columns), order_items with `cost_price_snapshot`, order_events, order_financials | L | status enums; indexes present |
+| P4-ORD-02 | `PlaceOrder` action — the full transaction in `DATABASE-DESIGN.md` §4.1 | XL→split | **concurrency test: 10 parallel checkouts against 5 units sell exactly 5** · cost snapshot written · reservation taken · events recorded |
+| P4-ORD-03 | Order state machine with guarded transitions and emitted events | L | every invalid transition rejected; each valid one emits its event |
+| P4-ORD-04 | Order board: status tabs with counts, filters, cursor pagination, bulk select | L | filters are URL-driven; counts match |
+| P4-ORD-05 | Order detail: items, customer, addresses, payments, shipment, timeline, internal notes, risk panel | XL→split | role-based PII masking |
+| P4-ORD-06 | Manual/phone order creation with product search, customer lookup by phone, address entry | L | creates an identical order shape to a web order with `source=phone` |
+| P4-ORD-07 | Order edit after placement with stock and total recalculation and a full audit trail | L | editing adjusts reservations correctly; audit records before/after |
+| P4-ORD-08 | Bulk processing: confirm, print invoices, mark packed, book courier | M | partial failure reports per-order results, never a silent all-or-nothing |
+| P4-ORD-09 | Cancel and release-reservation flow with reason capture | M | coupon usage reversed; risk counters updated |
+| P4-ORD-10 | Customer aggregate projection (orders count, total spent, AOV, first/last order) | M | rebuildable from orders; matches a recomputation |
+
+### Payments & notifications (PAY / NOT)
+| ID | Task | Size | Tests |
+|---|---|---|---|
+| P4-PAY-01 | `PaymentGateway` contract, `payments`/`refunds` migrations, COD driver | M | COD flows through the same status transitions as online |
+| P4-PAY-02 | Online gateway driver for the recommended provider: initiate, verify, query | L | recorded-fixture integration tests for success, failure, timeout, malformed |
+| P4-PAY-03 | Webhook endpoint: **verify signature → re-query provider for authoritative amount and status → then write**; `webhook_receipts` idempotency | L | invalid signature rejected before parsing; replay is a no-op; an amount mismatch does not mark the order paid |
+| P4-PAY-04 | Payment failure, retry and expiry handling; reservation release on expiry | M | abandoned online payment releases stock |
+| P4-NOT-01 | SMS driver + templates; `notification_logs` with per-message cost | M | failure dead-letters visibly; cost recorded |
+| P4-NOT-02 | Email driver + templates (order placed, confirmed, shipped, delivered) | M | renders with Bangla names |
+| P4-NOT-03 | Notification preferences and admin template editor | M | opt-out respected |
+| P4-I18N-01 | Bangla + English strings wired for every MVP storefront surface from `docs/_design/05-content-and-assets-spec.md`; no hardcoded label survives the lint rule | L | every key resolves in both locales; a missing key fails CI rather than rendering the key |
+| P4-I18N-02 | Bangla layout pass across every MVP screen at 390px and 1440px — string overflow, button widths, nav wrapping, `.lang-bn` line-height | L | no clipped or overflowing Bangla label on any screen; Playwright screenshots both locales |
+| P4-I18N-03 | Bangla notification templates for SMS, email and WhatsApp, with per-template segment counts recorded so cost is visible | M | Bangla SMS segment count asserted (70 chars/segment, not 160); WhatsApp preferred for order updates, SMS for OTP |
+
+**Phase 4 exit:** a real product can be added and bought COD on a real phone, the SMS arrives, stock reserves and releases correctly, both invariants hold, and the Playwright golden path passes. Then **Gate 4 — owner UAT**.
+
+---
+
+## 4. Phases 5–10 — Feature-level Plan
+
+Expanded to task level at each phase start. Each feature below carries its own tests; the phase gates are in `DEVELOPMENT-ROADMAP.md`.
+
+**Phase 5 — Inventory & Operations (35d).** Stock levels and append-only ledger with locking · nightly reconciliation job with alerting · suppliers · purchase orders with partial receipt and landed-cost apportionment · weighted-average costing on receipt · stock adjustments with approval · damage and loss · low-stock alerts and reorder points · inventory valuation · stock-overview screens · financial ledger with the revenue/cash separation · expenses and categories · `order_financials` projection · product-, category- and order-wise profitability · P&L daily/weekly/monthly/yearly · supplier payments · returns and refunds with approval threshold, restocking, ledger reversal and gateway refund.
+
+**Phase 6 — Courier & Order Intelligence (24d).** ⚠️ **No merchant account exists for either provider (confirmed 2026-11-08).** Pathao has a real sandbox at `courier-api-sandbox.pathao.com`; **Steadfast has none — the `sandbox.api.steadfast.io` host in third-party docs is fabricated.** So: `PathaoGateway` is developed and verified against the real sandbox with captured fixtures; `SteadfastGateway` is developed against hand-authored fixtures from its published Postman collection, ships `verified: false`, and is blocked from production booking behind an explicit admin banner. `NullGateway` plus fixtures becomes the primary CI path for the whole fulfilment flow. Two items are deferred out of MVP and gated on real credentials: **Steadfast live verification (2d)** and **Steadfast `fraud_check` integration (1d)**. Until the latter lands, the risk score uses our own order history only, the courier panel renders "provider not connected" rather than a zero, and every first order from an unknown phone above a value threshold routes to the verification queue regardless of score. `CourierGateway` contract and provider config with encrypted credentials · `NullGateway` · Pathao driver (token issue/refresh, location sync, price calculation, order create, status) · Steadfast driver (create, bulk, status by consignment/invoice/tracking, balance) · `courier_locations` sync and the unmapped-area admin screen · one-click and bulk booking · label printing · charge preview · failed-booking retry queue · webhook ingestion with signature verification and idempotency · 15-minute reconciliation poll · status normalisation to one enum · circuit breaker per provider · customer tracking timeline · courier performance report · risk profiles keyed on phone · weighted scoring with a visible breakdown · courier lookup stored and displayed separately with its timestamp · verification queue · blacklist/whitelist · COD settlement reconciliation with variance flagging.
+
+**Phase 7 — CMS, SEO & Marketing (33d).** Adds **per-locale SEO**: `hreflang` pairs plus `x-default`, separate title/description/OG per locale, locale-partitioned sitemaps, and Bangla `name`/`description` in Product schema. No audited competitor or marketplace has any of this. Typed CMS blocks with ordering, scheduling and live preview · homepage builder · static pages · menu builder · banners · media library · blog with categories, tags and authors · per-entity SEO panel with SERP preview · Product/Offer/AggregateRating, BreadcrumbList, Organization, Article, FAQPage, WebSite+SearchAction schema · slug history with automatic 301s · redirect manager · XML sitemap generation · robots.txt editor · pagination SEO · coupons and coupon builder · promotions engine with priority and stacking · flash sales with countdown · abandoned-cart detection and recovery · GA4 Measurement Protocol · Meta Conversions API · browser/server deduplication by shared `event_id` · consent gating · tracking diagnostics screen.
+
+**Phase 8 — Reporting & Automation (25d).** Dashboard with date-range filtering · sales analytics · courier performance · customer analytics and LTV · invoice templates for customer and supplier, PDF, bulk print, numbering, company snapshot · nightly financial rollups · scheduled report emails · CSV/Excel export · WhatsApp Business templates · review-request automation · birthday reminders.
+
+**Phase 9 — Testing & Optimisation (22d).** Includes a bilingual regression sweep of every MVP screen in both locales at both widths. Coverage completion including the full 403 matrix and every error path · query profiling and N+1 elimination · index verification under volume · caching · image optimisation · Lighthouse budgets met on every template · OWASP security pass · authorisation audit · webhook verification review · upload handling review · dependency audit · secret-handling review · SEO crawl and index-coverage audit · real mid-range Android QA over throttled 4G · axe plus manual keyboard and screen-reader passes in both languages · load test of concurrent checkout, flash-sale burst and bulk courier booking.
+
+**Phase 10 — Deployment & Launch (10d).** Production provisioning and hardening · domain, SSL, DNS, SPF/DKIM/DMARC · production CI/CD with rehearsed rollback · encrypted off-host backups with a verified restore · Sentry, uptime checks, business alerts, log aggregation · live payment and courier credentials with production webhooks and a real low-value end-to-end order · GA4, GTM, Search Console, Bing, Meta CAPI, sitemap submission · content and catalog load · final UAT · launch checklist.
+
+---
+
+## 5. First Week After Approval
+
+| Day | Work | Who |
+|---|---|---|
+| 1 | Gate 1 decisions. **Start payment-gateway onboarding and request courier API credentials the same day** — these have the longest external lead times. Resolve the Figma blocker. | Owner + lead |
+| 1–2 | P3-SET-01…04 — monorepo, Docker, Laravel, domain structure, deptrac | Senior |
+| 2–3 | P3-SUP-01…04 — Money, PhoneNumber, DhakaDate, Slug, with full unit tests | Senior |
+| 2–4 | Phase 2 brand foundations and Tier 1 primitives in Figma | Designer |
+| 3–4 | P3-DAT-01…04 — users, roles, BD geography, demo seeder | Senior |
+| 4–5 | P3-API-01…04 — route groups, error handler, idempotency, rate limits | Senior |
+| 4–5 | P3-ADM-01…02 and P3-STO-01…02 — frontend scaffolds on Phase 2 tokens | Mid frontend |
+| 5 | P3-CI-01 — PR pipeline green. Week review and re-estimate against actuals. | Both |
+
+Re-estimate at the end of week 1 and at every gate. The numbers in `DEVELOPMENT-ROADMAP.md` are a plan, not a commitment, until the first week's actual velocity is known.

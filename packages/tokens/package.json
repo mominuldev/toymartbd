@@ -1,0 +1,14 @@
+{
+    "name": "@toymart/tokens",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Design tokens generated from the Figma library. Figma is the source of truth — never hand-edit a value here.",
+    "exports": {
+        ".": "./src/index.ts",
+        "./css": "./dist/tokens.css"
+    },
+    "scripts": {
+        "build": "echo 'tokens build runs once the Figma variable collections are published' && exit 0"
+    }
+}
