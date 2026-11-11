@@ -62,6 +62,31 @@ return [
             'report' => false,
         ],
 
+        // Encrypted backup archives (php artisan toymart:backup). Local default for
+        // development; outside storage/app/private so a backup never contains itself.
+        'backups' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backups'),
+            'throw' => true,
+            'report' => false,
+        ],
+
+        // Off-host production target (any S3-compatible store: AWS, R2, B2, Wasabi).
+        // Needs league/flysystem-aws-s3-v3 on the host — see docs/ops/backup-and-restore.md.
+        // Use a dedicated bucket with versioning on and a key scoped to that bucket only.
+        'backups_s3' => [
+            'driver' => 's3',
+            'key' => env('BACKUP_S3_KEY'),
+            'secret' => env('BACKUP_S3_SECRET'),
+            'region' => env('BACKUP_S3_REGION', 'auto'),
+            'bucket' => env('BACKUP_S3_BUCKET'),
+            'endpoint' => env('BACKUP_S3_ENDPOINT'),
+            'use_path_style_endpoint' => (bool) env('BACKUP_S3_PATH_STYLE', false),
+            'root' => 'toymartbd',
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

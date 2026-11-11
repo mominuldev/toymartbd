@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,3 +22,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/ping', fn () => ['ok' => true, 'audience' => 'storefront'])->name('ping');
+
+// Catalog reads: the Next.js server's token, with the `storefront:read` ability.
+// No token → 401 `unauthenticated`; a token without the ability → 403 `forbidden`.
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
+    Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
+    Route::get('/brands/{slug}', [BrandController::class, 'show'])->name('brands.show');
+});

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { bn, en, type MessageKey, type Messages } from './messages';
 import { setApiLocale } from '@/lib/api';
+import { configureZodErrors } from './zodErrors';
 
 export type Locale = 'en' | 'bn';
 
@@ -42,6 +43,7 @@ export function I18nProvider({ children, initialLocale }: { children: ReactNode;
         // screen-reader pronunciation; the API gets the same locale on every call.
         document.documentElement.lang = locale;
         setApiLocale(locale);
+        configureZodErrors(locale);
     }, [locale]);
 
     const setLocale = useCallback((next: Locale) => {

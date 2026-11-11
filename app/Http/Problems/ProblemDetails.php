@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Problems;
 
+use App\Support\Logging\RequestId;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
@@ -121,12 +123,16 @@ final readonly class ProblemDetails implements Responsable
     /** @return array<string, mixed> */
     public function toArray(): array
     {
+        // The X-Request-Id (AssignRequestId), so a customer can quote it to support.
+        $requestId = Context::get(RequestId::CONTEXT_KEY);
+
         return array_filter([
             'type' => $this->type->uri(),
             'title' => $this->type->title(),
             'status' => $this->status,
             'detail' => $this->detail,
             'errors' => $this->errors,
+            'request_id' => is_string($requestId) ? $requestId : null,
             'debug' => $this->debug,
         ], static fn (mixed $value): bool => $value !== null);
     }

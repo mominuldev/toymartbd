@@ -4,6 +4,7 @@ import { createQueryClient } from '@/lib/queryClient';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { vi } from 'vitest';
 import { routes } from '@/app/routes';
+import { ToastProvider } from '@/components/ui/Toast';
 import type { Me } from '@/features/auth/api';
 import { I18nProvider, type Locale } from '@/i18n/I18nProvider';
 
@@ -32,7 +33,9 @@ export function renderApp(path: string, { locale = 'en' }: { locale?: Locale } =
     const view = render(
         <QueryClientProvider client={client}>
             <I18nProvider initialLocale={locale}>
-                <RouterProvider router={router} />
+                <ToastProvider>
+                    <RouterProvider router={router} />
+                </ToastProvider>
             </I18nProvider>
         </QueryClientProvider>,
     );

@@ -90,6 +90,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /brands` — cursor-paginated, needs catalog.view
+         * @description Filters: `filter[search]` (name, name_bn or slug contains), `filter[status]` = `active|archived`.
+         *     Sorts: `name`, `-name`, `created_at`, `-created_at` (default `name`). Anything else is a 400.
+         */
+        get: operations["v1.admin.brands.index"];
+        put?: never;
+        /** `POST /brands` — needs catalog.create */
+        post: operations["v1.admin.brands.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/brands/{brand}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /brands/{brand}` — archived brands included, needs catalog.view */
+        get: operations["v1.admin.brands.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /brands/{brand}` — archives the brand (idempotent), needs catalog.archive */
+        delete: operations["v1.admin.brands.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /brands/{brand}` — needs catalog.update */
+        patch: operations["v1.admin.brands.update"];
+        trace?: never;
+    };
     "/storefront/ping": {
         parameters: {
             query?: never;
@@ -98,6 +139,40 @@ export interface paths {
             cookie?: never;
         };
         get: operations["v1.storefront.ping"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /brands` — every active brand, by name, unpaginated (capped at 500) */
+        get: operations["v1.storefront.brands.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/brands/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /brands/{slug}` — one active brand; 404 when missing or archived */
+        get: operations["v1.storefront.brands.show"];
         put?: never;
         post?: never;
         delete?: never;
@@ -155,6 +230,27 @@ export interface components {
             roles: string[];
             permissions: string[];
         };
+        /** Brand */
+        Brand: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            is_active: boolean;
+            logo_url: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            updated_at: string;
+        };
         /** HealthReportResource */
         HealthReportResource: {
             /** @enum {string} */
@@ -205,17 +301,44 @@ export interface components {
             is_active: boolean;
             roles: string[];
         };
+        /**
+         * StoreBrandRequest
+         * @description `POST /brands`. When `slug` is omitted it is generated from `name` (or `name_bn`),
+         *     ASCII-transliterated (rule 37) and made unique.
+         */
+        StoreBrandRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            is_active?: boolean;
+        };
+        /** StorefrontBrand */
+        StorefrontBrand: {
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            logo_url: string | null;
+        };
+        /**
+         * UpdateBrandRequest
+         * @description `PATCH /brands/{brand}` — every field optional; only the fields sent change.
+         *     `slug: null` (or omitted) keeps the current slug: a rename never moves the URL.
+         *     `is_active: true` restores an archived brand.
+         */
+        UpdateBrandRequest: {
+            name?: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            is_active?: boolean;
+        };
     };
     responses: {
-        /** @description Validation error */
-        ValidationException: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetails"];
-            };
-        };
         /** @description Unauthenticated */
         AuthenticationException: {
             headers: {
@@ -225,8 +348,26 @@ export interface components {
                 "application/problem+json": components["schemas"]["ProblemDetails"];
             };
         };
+        /** @description Validation error */
+        ValidationException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
         /** @description Authorization error */
         AuthorizationException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
+        /** @description Not found */
+        ModelNotFoundException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -382,6 +523,172 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "v1.admin.brands.index": {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive "contains" match on name, name_bn or slug. */
+                "filter[search]"?: string;
+                /** @description Only active or only archived brands. */
+                "filter[status]"?: "active" | "archived";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "name" | "-name" | "created_at" | "-created_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Brand` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Brand"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.brands.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description `Brand` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.brands.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The brand ID */
+                brand: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Brand` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.brands.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The brand ID */
+                brand: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.brands.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The brand ID */
+                brand: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description `Brand` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.ping": {
         parameters: {
             query?: never;
@@ -401,6 +708,79 @@ export interface operations {
                         /** @constant */
                         audience: "storefront";
                     };
+                };
+            };
+        };
+    };
+    "v1.storefront.brands.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontBrand` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontBrand"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.brands.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBrand` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBrand"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No active brand has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };
