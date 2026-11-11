@@ -42,6 +42,12 @@
     }
 }
 
+/* A quiet scrollbar for the sidebar and other long panels, in token colours. */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tm-color-border-strong) transparent;
+}
+
 /* Tabular figures wherever digits line up in a column — every admin table,
    every money figure. Mixed-width digits make a cart or a P&L unreadable. */
 .tabular {
