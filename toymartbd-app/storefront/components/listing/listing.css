@@ -1,0 +1,22 @@
+/* Mobile filter sheet (FilterSheet, §A7.4) built on <details>: closed it is only the trigger;
+   open it is a bottom sheet over a backdrop. Works without JavaScript. */
+.filter-sheet[open] > .filter-sheet-panel {
+    animation: tm-sheet-in var(--tm-duration-slow) var(--tm-ease-decelerate);
+}
+@keyframes tm-sheet-in {
+    from {
+        transform: translateY(100%);
+    }
+}
+
+/* Native disclosure markers off: the facet headers draw their own caret. */
+.listing-disclosure > summary {
+    list-style: none;
+}
+.listing-disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+.listing-disclosure[open] > summary .caret-closed,
+.listing-disclosure:not([open]) > summary .caret-open {
+    display: none;
+}

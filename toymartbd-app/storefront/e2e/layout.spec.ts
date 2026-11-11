@@ -34,8 +34,10 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         await expect(menu.locator('[role="menubar"]')).toHaveCount(0);
 
         const footer = page.locator('footer');
-        for (const heading of ['Shop', 'Help', 'Company', 'Talk to us']) await expect(footer.getByRole('heading', { name: heading })).toBeVisible();
-        await expect(footer.getByRole('link', { name: 'About us' })).toHaveAttribute('href', '/pages/about');
+        // Figma Footer 124:3310: help tile + Shop / Help / About link tiles + "Say hi!".
+        for (const heading of ['Stuck choosing a toy? We love helping.', 'Shop', 'Help', 'About', 'Say hi!'])
+            await expect(footer.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+        await expect(footer.getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/pages/about');
         // Placeholder contact details are tagged, and never become a dialable link.
         await expect(footer.locator('[data-placeholder="owner-to-confirm"]').first()).toBeVisible();
         await expect(footer.locator('a[href^="tel:"]')).toHaveCount(0);
@@ -60,7 +62,7 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         await expect(menu.locator('a[href="/bn/categories/science-learning"]').first()).toHaveAttribute('lang', 'en');
 
         const footer = page.locator('footer');
-        await expect(footer.getByRole('heading', { name: 'কিনুন' })).toBeVisible();
+        await expect(footer.getByRole('heading', { name: 'কিনুন', exact: true })).toBeVisible();
         await expect(footer.getByRole('link', { name: 'আমাদের সম্পর্কে' })).toHaveAttribute('href', '/bn/pages/about');
         await expect(page.locator('nav[aria-label="শর্টকাট"] a', { hasText: 'ক্যাটাগরি' })).toHaveAttribute('href', '/bn/categories');
     });
@@ -88,11 +90,11 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         await expect(page.locator('#search-desktop')).toHaveValue('লেগো');
     });
 
-    test('category links land on a real page (stub until the listing ships)', async ({ page }) => {
+    test('category links land on the category listing', async ({ page }) => {
         const res = await page.goto('/bn/categories/lego-sets');
         expect(res?.status()).toBe(200);
         await expect(page.locator('h1')).toHaveText('লেগো');
-        await expect(page.locator('main a[href="/bn/categories/lego-city"]')).toHaveText('লেগো সিটি');
+        await expect(page.locator('main nav[aria-label="উপ-ক্যাটাগরি"] a[href="/bn/categories/lego-city"]')).toHaveText('লেগো সিটি');
         await page.goto('/categories');
         await expect(page.locator('h1')).toHaveText('All categories');
         await expect(page.locator('main a[href="/categories/cars-rc"]')).toHaveText('Cars & Remote Control');
@@ -138,7 +140,7 @@ test.describe('static pages', () => {
         await expect(page.locator('h1')).toHaveText('About Toy Mart BD');
         await expect(page.locator('[data-placeholder="draft-copy"]')).toBeVisible();
         await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/about`);
-        await expect(page.locator('main a[href="/categories"]')).toBeVisible();
+        await expect(page.locator('main a[href="/pages/contact"]').first()).toBeVisible();
         await page.goto('/bn/pages/about');
         await expect(page.locator('h1')).toHaveText('টয় মার্ট বিডি সম্পর্কে');
     });

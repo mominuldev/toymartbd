@@ -1,15 +1,15 @@
 import type { IconName } from '@/components/icons/paths';
 
-// Mobile bottom tab bar (storefront spec §A5): five fixed, locale-authored items.
+// Mobile bottom tab bar (storefront spec §A5, Figma MobileNav 111:784): five fixed, locale-authored items.
 // Cart and account pages land with P4-STO-08 / P4-STO-11; until then those tabs reach the 404.
 
 export type TabKey = 'home' | 'categories' | 'search' | 'cart' | 'account';
 
 export const tabs: ReadonlyArray<{ key: TabKey; path: string; icon: IconName }> = [
     { key: 'home', path: '/', icon: 'house' },
-    { key: 'categories', path: '/categories', icon: 'squaresFour' },
+    { key: 'categories', path: '/categories', icon: 'list' },
     { key: 'search', path: '/search', icon: 'magnifyingGlass' },
-    { key: 'cart', path: '/cart', icon: 'shoppingCart' },
+    { key: 'cart', path: '/cart', icon: 'shoppingBagOpenFill' },
     { key: 'account', path: '/account', icon: 'user' },
 ];
 

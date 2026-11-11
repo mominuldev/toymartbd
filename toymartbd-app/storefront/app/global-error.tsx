@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 
-import { ServerErrorContent } from '@/components/status/ServerErrorContent';
+import { ErrorShell } from '@/components/status/ErrorShell';
 import { isLocale } from '@/lib/i18n/config';
 import './globals.css';
 
@@ -14,7 +14,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
     return (
         <html lang={locale} data-theme="light">
             <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>
-                <ServerErrorContent locale={locale} onRetry={reset} />
+                <ErrorShell locale={locale} onRetry={reset} />
             </body>
         </html>
     );

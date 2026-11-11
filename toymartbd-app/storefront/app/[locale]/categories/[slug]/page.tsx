@@ -1,87 +1,94 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 
-import { CategoryLinks } from '@/components/CategoryLinks';
+import { ListingView } from '@/components/listing/ListingView';
 import { PageShell } from '@/components/PageShell';
-import { categoryName, categoryNameIsFallback, categoryPath, findCategory } from '@/lib/category-tree';
-import { fetchCategoryTree } from '@/lib/categories';
-import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
-import { alternatesFor } from '@/lib/seo';
+import { categoryPath } from '@/lib/category-tree';
+import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib/i18n';
+import { listingMetadata } from '@/lib/listing/seo';
+import { hrefFor, parseListingState, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
+import { fetchListing, getCategoryPage } from '@/lib/products';
 
-// STUB until P4-STO-03 (category listing with filters). It exists so that every mega-menu link
-// lands on a real page: the category's name, its parents and its sub-categories, read from the
-// same cached tree as the menu (tag `categories`). No products yet. An unknown slug is a 404.
+// Category listing (P4-STO-03): the category (GET /storefront/categories/{slug}, tags `categories`
+// + `category:{slug}`) and its products with facets (GET /storefront/products, tags `products` +
+// `category:{slug}`). Rendered per request from the URL's filters; both fetches are tag-cached, so
+// a product or category write purges them (docs/api/revalidation.md). Unknown slug → 404.
 
 interface Props {
     params: Promise<{ locale: string; slug: string }>;
+    searchParams: Promise<RawSearchParams>;
 }
 
-export function generateStaticParams(): Array<{ slug: string }> {
-    return [];
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const loadCategory = cache(async (slug: string, locale: Locale) => (SLUG.test(slug) ? getCategoryPage(slug, locale) : null));
+
+function localised(locale: Locale, name: string, nameBn: string | null): { text: string; lang?: 'en' } {
+    return locale === 'bn' && nameBn ? { text: nameBn } : locale === 'bn' ? { text: name, lang: 'en' } : { text: name };
 }
 
-async function load(slug: string) {
-    return findCategory(await fetchCategoryTree(), slug);
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
-    const found = await load(slug);
-    if (!found) return {};
-    const name = categoryName(found.node, locale);
+    const category = await loadCategory(slug, locale);
+    if (!category) return {};
+    const name = localised(locale, category.name, category.name_bn).text;
+    const scope: ListingScope = { kind: 'category', slug };
     return {
         title: name,
-        description: format(getMessages(locale).categories.metaCategory, { category: name }),
-        alternates: alternatesFor(locale, categoryPath(slug)),
+        description: (locale === 'bn' ? category.description_bn : category.description) ?? format(getMessages(locale).listing.metaCategory, { category: name }),
+        ...listingMetadata(locale, categoryPath(slug), parseListingState(await searchParams, scope)),
     };
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
     const { locale, slug } = await params;
     if (!isLocale(locale)) notFound();
-    const found = await load(slug);
-    if (!found) notFound();
-    const t = getMessages(locale);
-    const { node, trail } = found;
+    const category = await loadCategory(slug, locale);
+    if (!category) notFound();
+
+    const t = getMessages(locale).listing;
+    const scope: ListingScope = { kind: 'category', slug };
+    const state = parseListingState(await searchParams, scope);
+    const listing = await fetchListing(state, scope, locale);
+    const title = localised(locale, category.name, category.name_bn);
+    const path = categoryPath(slug);
+    // Sub-category chips keep the active filters (minus paging) when moving down the tree.
+    const keep = { ...state, cursor: null };
 
     return (
-        <PageShell locale={locale} path={categoryPath(slug)}>
-            <nav aria-label={t.categories.title}>
-                <ol className="t-caption flex flex-wrap items-center gap-2 text-fg-secondary">
-                    <li>
-                        <a href={localizedPath(locale, '/categories')} className="underline underline-offset-4">
-                            {t.nav.allCategories}
-                        </a>
-                    </li>
-                    {trail.map((parent) => (
-                        <li key={parent.slug} className="flex items-center gap-2">
-                            <span aria-hidden="true">/</span>
-                            <a
-                                href={localizedPath(locale, categoryPath(parent.slug))}
-                                lang={categoryNameIsFallback(parent, locale) ? 'en' : undefined}
-                                className="underline underline-offset-4"
-                            >
-                                {categoryName(parent, locale)}
-                            </a>
-                        </li>
-                    ))}
-                </ol>
-            </nav>
-            <h1 className="t-h1 mt-4 text-fg-primary" lang={categoryNameIsFallback(node, locale) ? 'en' : undefined}>
-                {categoryName(node, locale)}
-            </h1>
-            <p className="t-body mt-4 max-w-prose text-fg-secondary">{t.categories.comingSoon}</p>
-            {node.children.length > 0 ? (
-                <section aria-labelledby="in-this-category" className="mt-8">
-                    <h2 id="in-this-category" className="t-h2 text-fg-primary">
-                        {t.categories.inThisCategory}
-                    </h2>
-                    <div className="mt-4">
-                        <CategoryLinks nodes={node.children} locale={locale} headingLevel={3} />
-                    </div>
-                </section>
-            ) : null}
+        <PageShell locale={locale} path={hrefFor(path, state)} top="crumb" mobileSearch>
+            <ListingView
+                locale={locale}
+                t={t}
+                path={path}
+                scope={scope}
+                state={state}
+                listing={listing}
+                title={title.text}
+                titleLang={title.lang}
+                intro={(locale === 'bn' ? (category.description_bn ?? category.description) : category.description) ?? null}
+                crumbs={[
+                    { label: t.home, path: '/' },
+                    ...category.breadcrumbs.map((crumb, i, all) => {
+                        const label = localised(locale, crumb.name, crumb.name_bn);
+                        return { label: label.text, lang: label.lang, path: i === all.length - 1 ? null : categoryPath(crumb.slug) };
+                    }),
+                ]}
+                subLinks={
+                    category.children.length > 0
+                        ? [
+                              { label: t.all, href: hrefFor(localizedPath(locale, path), keep), selected: true },
+                              ...category.children.map((child) => {
+                                  const label = localised(locale, child.name, child.name_bn);
+                                  return { label: label.text, lang: label.lang, href: hrefFor(localizedPath(locale, categoryPath(child.slug)), keep), selected: false };
+                              }),
+                          ]
+                        : []
+                }
+                emptyHref="/categories"
+            />
         </PageShell>
     );
 }

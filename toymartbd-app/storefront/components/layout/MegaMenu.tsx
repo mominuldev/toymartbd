@@ -126,13 +126,13 @@ export function MegaMenu({ locale, items, label }: Props) {
         <nav
             aria-label={label}
             data-enhanced={enhanced ? '' : undefined}
-            className="mega-menu relative hidden border-b border-line-default bg-surface lg:block"
+            className="mega-menu relative hidden border-y border-line-brand-subtle bg-surface px-gutter-desktop lg:block"
         >
             {enhanced && open !== null ? (
                 <div aria-hidden="true" onClick={() => close()} className="absolute inset-x-0 top-full z-10 h-dvh bg-fg-primary/8" />
             ) : null}
-            <div className="relative z-20 mx-auto max-w-content px-gutter-desktop">
-                <ul role={role('menubar')} aria-label={enhanced ? label : undefined} className="flex h-12 items-stretch overflow-x-auto whitespace-nowrap">
+            <div className="relative z-20 mx-auto max-w-content">
+                <ul role={role('menubar')} aria-label={enhanced ? label : undefined} className="flex h-12 items-stretch gap-1 overflow-x-auto whitespace-nowrap">
                     {items.map((item, index) => {
                         const withPanel = item.columns.length > 0;
                         const triggerId = `${item.id}-trigger`;
@@ -159,10 +159,12 @@ export function MegaMenu({ locale, items, label }: Props) {
                                     aria-controls={enhanced && withPanel ? panelId : undefined}
                                     onKeyDown={onTriggerKeyDown(index)}
                                     onClick={onTriggerClick(index)}
-                                    className={`t-body inline-flex items-center gap-1 rounded-xs px-3 font-semibold text-fg-primary transition-colors duration-(--tm-duration-fast) ease-standard hover:text-fg-brand ${open === index ? 'text-fg-brand' : ''}`}
+                                    className={`t-body-sm relative inline-flex items-center gap-1 rounded-xs px-3.5 font-semibold transition-colors duration-(--tm-duration-fast) ease-standard hover:text-fg-brand ${open === index ? 'text-fg-brand' : 'text-fg-primary'}`}
                                 >
                                     {item.label.label}
-                                    {withPanel ? <Icon name="caretDown" className="size-icon-sm" /> : null}
+                                    {withPanel ? <Icon name="caretDown" className="size-3.5" /> : null}
+                                    {/* Open item: coral label + 3px coral underline (Figma MegaMenuBar 123:1833). */}
+                                    {open === index ? <span aria-hidden="true" className="absolute inset-x-2 bottom-0 h-0.75 rounded-full bg-brand" /> : null}
                                 </a>
                                 {withPanel ? (
                                     <div

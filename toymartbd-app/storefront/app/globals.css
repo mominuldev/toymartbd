@@ -68,3 +68,8 @@
         transform: translateY(calc(var(--spacing) * -1));
     }
 }
+
+@layer components {
+    /* Header language menu (a <details>): close the caret affordance's marker in Safari. */
+    .locale-menu > summary::-webkit-details-marker { display: none; }
+}

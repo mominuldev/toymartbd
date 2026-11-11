@@ -33,6 +33,8 @@ test('an English browser sees no suggestion; the toggle switches page and rememb
     await expect(page.locator('h1')).toHaveText('LEGO');
     await expect(page.getByRole('region', { name: 'ভাষার পরামর্শ' })).toHaveCount(0);
 
+    // Figma Header 123:1832: the switch lives in the EN/বাং locale menu (a <details>) — open it first.
+    await page.locator('header details.locale-menu > summary').click();
     await page.locator('header a[hreflang="bn"]').click();
     await expect(page).toHaveURL(/\/bn\/brands\/lego$/);
     await expect(page.locator('h1')).toHaveText('লেগো');

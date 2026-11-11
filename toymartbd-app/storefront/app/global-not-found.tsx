@@ -38,7 +38,7 @@ export default async function GlobalNotFound() {
     return (
         <html lang={htmlLang[locale]} data-theme="light" className={fontVariables}>
             <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>
-                <PageShell locale={locale} path={path}>
+                <PageShell locale={locale} path={path} top="tight">
                     <NotFoundContent locale={locale} />
                 </PageShell>
             </body>

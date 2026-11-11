@@ -1,0 +1,324 @@
+{
+  "data": [
+    {
+      "id": 101,
+      "slug": "lego-classic-creative-bricks",
+      "name": "LEGO Classic Creative Bricks 484 pcs",
+      "name_bn": "লেগো ক্লাসিক ক্রিয়েটিভ ব্রিকস ৪৮৪ পিস",
+      "brand": {
+        "name": "LEGO",
+        "name_bn": "লেগো",
+        "slug": "lego"
+      },
+      "price": "4250.00",
+      "compare_at_price": "4990.00",
+      "price_max": "4250.00",
+      "discount_percent": 14,
+      "age_min_months": 48,
+      "age_max_months": 144,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": true,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "lego-classic"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-01"
+    },
+    {
+      "id": 102,
+      "slug": "lego-city-fire-station",
+      "name": "LEGO City Fire Station",
+      "name_bn": "লেগো সিটি ফায়ার স্টেশন",
+      "brand": {
+        "name": "LEGO",
+        "name_bn": "লেগো",
+        "slug": "lego"
+      },
+      "price": "6800.00",
+      "compare_at_price": null,
+      "price_max": "6800.00",
+      "discount_percent": null,
+      "age_min_months": 60,
+      "age_max_months": 120,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "lego-city"
+      ],
+      "_gender": "boys",
+      "_published_at": "2026-11-02"
+    },
+    {
+      "id": 103,
+      "slug": "lego-technic-race-car",
+      "name": "LEGO Technic Race Car",
+      "name_bn": "লেগো টেকনিক রেস কার",
+      "brand": {
+        "name": "LEGO",
+        "name_bn": "লেগো",
+        "slug": "lego"
+      },
+      "price": "3200.00",
+      "compare_at_price": null,
+      "price_max": "5400.00",
+      "discount_percent": null,
+      "age_min_months": 96,
+      "age_max_months": null,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 2,
+      "image": null,
+      "_categories": [
+        "lego-technic"
+      ],
+      "_gender": "boys",
+      "_published_at": "2026-11-03"
+    },
+    {
+      "id": 104,
+      "slug": "duplo-my-first-town",
+      "name": "DUPLO My First Town",
+      "name_bn": "ডুপ্লো আমার প্রথম শহর",
+      "brand": {
+        "name": "LEGO",
+        "name_bn": "লেগো",
+        "slug": "lego"
+      },
+      "price": "2950.00",
+      "compare_at_price": "3400.00",
+      "price_max": "2950.00",
+      "discount_percent": 13,
+      "age_min_months": 18,
+      "age_max_months": 48,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "duplo-town"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-04"
+    },
+    {
+      "id": 105,
+      "slug": "duplo-animal-train",
+      "name": "DUPLO Animal Train",
+      "name_bn": null,
+      "brand": {
+        "name": "LEGO",
+        "name_bn": "লেগো",
+        "slug": "lego"
+      },
+      "price": "1450.00",
+      "compare_at_price": null,
+      "price_max": "1450.00",
+      "discount_percent": null,
+      "age_min_months": 12,
+      "age_max_months": 36,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "duplo-animals"
+      ],
+      "_gender": null,
+      "_published_at": "2026-11-05"
+    },
+    {
+      "id": 106,
+      "slug": "hape-wooden-stacker",
+      "name": "Hape Wooden Rainbow Stacker",
+      "name_bn": "হেপ কাঠের রংধনু স্ট্যাকার",
+      "brand": {
+        "name": "Hape",
+        "name_bn": null,
+        "slug": "hape"
+      },
+      "price": "1250.00",
+      "compare_at_price": null,
+      "price_max": "1250.00",
+      "discount_percent": null,
+      "age_min_months": 12,
+      "age_max_months": 36,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": true,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "wooden-blocks"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-06"
+    },
+    {
+      "id": 107,
+      "slug": "hape-pound-tap-bench",
+      "name": "Hape Pound & Tap Bench with Xylophone",
+      "name_bn": "হেপ পাউন্ড অ্যান্ড ট্যাপ বেঞ্চ",
+      "brand": {
+        "name": "Hape",
+        "name_bn": null,
+        "slug": "hape"
+      },
+      "price": "2950.00",
+      "compare_at_price": "3400.00",
+      "price_max": "2950.00",
+      "discount_percent": 13,
+      "age_min_months": 12,
+      "age_max_months": 36,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "wooden-blocks"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-07"
+    },
+    {
+      "id": 108,
+      "slug": "magnetic-tiles-starter",
+      "name": "Magnetic Tiles Starter Set 60 pcs",
+      "name_bn": "ম্যাগনেটিক টাইলস স্টার্টার সেট",
+      "brand": {
+        "name": "Hape",
+        "name_bn": null,
+        "slug": "hape"
+      },
+      "price": "2480.00",
+      "compare_at_price": "2950.00",
+      "price_max": "2480.00",
+      "discount_percent": 15,
+      "age_min_months": 36,
+      "age_max_months": 96,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "magnetic-starter-sets"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-08"
+    },
+    {
+      "id": 109,
+      "slug": "mega-blocks-bucket",
+      "name": "Big Building Bag 80 pcs",
+      "name_bn": "বড় বিল্ডিং ব্যাগ ৮০ পিস",
+      "brand": null,
+      "price": "990.50",
+      "compare_at_price": null,
+      "price_max": "990.50",
+      "discount_percent": null,
+      "age_min_months": 12,
+      "age_max_months": 60,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "building-blocks"
+      ],
+      "_gender": null,
+      "_published_at": "2026-11-09"
+    },
+    {
+      "id": 110,
+      "slug": "wooden-alphabet-blocks",
+      "name": "Wooden Alphabet Blocks",
+      "name_bn": "কাঠের বর্ণমালা ব্লক",
+      "brand": {
+        "name": "Hape",
+        "name_bn": null,
+        "slug": "hape"
+      },
+      "price": "450.00",
+      "compare_at_price": null,
+      "price_max": "450.00",
+      "discount_percent": null,
+      "age_min_months": 24,
+      "age_max_months": 72,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "wooden-blocks"
+      ],
+      "_gender": "unisex",
+      "_published_at": "2026-11-10"
+    },
+    {
+      "id": 111,
+      "slug": "hot-wheels-5-pack",
+      "name": "Hot Wheels 5-Car Gift Pack",
+      "name_bn": "হট হুইলস ৫ গাড়ির উপহার প্যাক",
+      "brand": {
+        "name": "Hot Wheels",
+        "name_bn": "হট হুইলস",
+        "slug": "hot-wheels"
+      },
+      "price": "1200.00",
+      "compare_at_price": null,
+      "price_max": "1200.00",
+      "discount_percent": null,
+      "age_min_months": 36,
+      "age_max_months": null,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "scale-1-64"
+      ],
+      "_gender": "boys",
+      "_published_at": "2026-11-01"
+    },
+    {
+      "id": 112,
+      "slug": "barbie-dreamhouse-pool",
+      "name": "Barbie Dreamhouse Pool Party Doll",
+      "name_bn": "বার্বি ড্রিমহাউস পুল পার্টি পুতুল",
+      "brand": {
+        "name": "Barbie",
+        "name_bn": null,
+        "slug": "barbie"
+      },
+      "price": "2480.00",
+      "compare_at_price": "2950.00",
+      "price_max": "2480.00",
+      "discount_percent": 15,
+      "age_min_months": 36,
+      "age_max_months": 120,
+      "rating_avg": null,
+      "rating_count": 0,
+      "is_featured": false,
+      "variant_count": 1,
+      "image": null,
+      "_categories": [
+        "fashion-dolls"
+      ],
+      "_gender": "girls",
+      "_published_at": "2026-11-02"
+    }
+  ]
+}

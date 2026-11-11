@@ -2,21 +2,22 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { ListingView } from '@/components/listing/ListingView';
 import { PageShell } from '@/components/PageShell';
 import { brandDescription, brandName, brandNameIsFallback, getBrand } from '@/lib/brands';
 import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib/i18n';
-import { alternatesFor } from '@/lib/seo';
+import { listingMetadata } from '@/lib/listing/seo';
+import { hrefFor, parseListingState, withCategory, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
+import { fetchListing, getCategoryPage } from '@/lib/products';
 
-// ISR: tagged `brands` + `brand:{slug}`. Slugs are ASCII and shared by both locales (rule 37).
-// Empty generateStaticParams: each brand renders on its first visit, then is cached (ISR) —
-// the build never needs the API.
+// Brand page = the brand's product listing (P4-STO-03), same layout as a category listing. The
+// brand comes from GET /storefront/brands/{slug} (tags `brands` + `brand:{slug}`); its products
+// from GET /storefront/products?filter[brand]={slug} (tags `products` + `brand:{slug}`). The
+// sub-category chips narrow to one top-level category (`?category=`). Unknown slug → 404.
 
 interface Props {
     params: Promise<{ locale: string; slug: string }>;
-}
-
-export function generateStaticParams(): Array<{ slug: string }> {
-    return [];
+    searchParams: Promise<RawSearchParams>;
 }
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -24,55 +25,79 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // One API call per request, shared by generateMetadata and the page.
 const load = cache(async (slug: string, locale: Locale) => (SLUG.test(slug) ? getBrand(slug, locale) : null));
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
     const brand = await load(slug, locale);
     if (!brand) return {};
+    const name = brandName(brand, locale);
+    const scope: ListingScope = { kind: 'brand', slug };
     return {
-        title: brandName(brand, locale),
-        description: brandDescription(brand, locale) ?? getMessages(locale).brands.metaDescription,
-        alternates: alternatesFor(locale, `/brands/${slug}`),
+        title: name,
+        description: brandDescription(brand, locale) ?? format(getMessages(locale).listing.metaBrand, { brand: name }),
+        ...listingMetadata(locale, `/brands/${slug}`, parseListingState(await searchParams, scope)),
     };
 }
 
-export default async function BrandPage({ params }: Props) {
+export default async function BrandPage({ params, searchParams }: Props) {
     const { locale, slug } = await params;
     if (!isLocale(locale)) notFound();
     const brand = await load(slug, locale);
     if (!brand) notFound();
 
-    const t = getMessages(locale);
+    const messages = getMessages(locale);
+    const t = messages.listing;
+    const scope: ListingScope = { kind: 'brand', slug };
+    const state = parseListingState(await searchParams, scope);
+    const listing = await fetchListing(state, scope, locale);
+    const path = `/brands/${slug}`;
+    const href = localizedPath(locale, path);
     const name = brandName(brand, locale);
-    const description = brandDescription(brand, locale);
+    const nameLang = brandNameIsFallback(brand, locale) ? 'en' : undefined;
+    const categories = listing.facets.category.filter((c) => c.count > 0);
+    // With `?category=` the facet lists that category's children; name the selected one for its chip.
+    if (state.category && !listing.facets.category.some((c) => c.value === state.category)) {
+        const selected = await getCategoryPage(state.category, locale);
+        if (selected) {
+            listing.facets.category.push({ value: selected.slug, label: selected.name, labelBn: selected.name_bn, count: listing.total, selected: true });
+        }
+    }
 
     return (
-        <PageShell locale={locale} path={`/brands/${slug}`}>
-            <p>
-                <a
-                    href={localizedPath(locale, '/brands')}
-                    className="t-label inline-flex min-h-touch-min items-center text-fg-link underline underline-offset-4"
-                >
-                    {t.brands.backToAll}
-                </a>
-            </p>
-            <article className="mt-6">
-                <h1 className="t-h1 text-fg-primary" lang={brandNameIsFallback(brand, locale) ? 'en' : undefined}>
-                    {name}
-                </h1>
-                {brand.logo_url ? (
-                    // Plain <img>: the logo host is not configured for next/image yet (images.remotePatterns).
-                    <img
-                        src={brand.logo_url}
-                        alt={format(t.brands.logoAlt, { name })}
-                        width={160}
-                        height={160}
-                        loading="lazy"
-                        className="mt-6 size-40 rounded-md bg-surface object-contain"
-                    />
-                ) : null}
-                {description ? <p className="t-body-lg mt-6 max-w-prose text-fg-secondary">{description}</p> : null}
-            </article>
+        <PageShell locale={locale} path={hrefFor(path, state)} top="crumb" mobileSearch>
+            <ListingView
+                locale={locale}
+                t={t}
+                path={path}
+                scope={scope}
+                state={state}
+                listing={listing}
+                title={name}
+                titleLang={nameLang}
+                intro={brandDescription(brand, locale)}
+                crumbs={[
+                    { label: t.home, path: '/' },
+                    { label: messages.brands.title, path: '/brands' },
+                    { label: name, lang: nameLang, path: null },
+                ]}
+                subLinks={
+                    categories.length > 0
+                        ? [
+                              { label: t.all, href: hrefFor(href, withCategory(state, null)), selected: state.category === null },
+                              ...categories.map((c) => {
+                                  const bn = locale === 'bn';
+                                  return {
+                                      label: bn && c.labelBn ? c.labelBn : (c.label ?? c.value),
+                                      lang: bn && !c.labelBn ? ('en' as const) : undefined,
+                                      href: hrefFor(href, withCategory(state, c.value)),
+                                      selected: c.value === state.category,
+                                  };
+                              }),
+                          ]
+                        : []
+                }
+                emptyHref="/brands"
+            />
         </PageShell>
     );
 }
