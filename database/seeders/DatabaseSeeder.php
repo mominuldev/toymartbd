@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         // Reference data — safe and required in every environment.
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(GeographySeeder::class);
+        $this->call(CatalogReferenceSeeder::class);
 
         // A known login is only ever created on a developer's machine or in tests. In any
         // other environment a seeded account with a factory password is a back door.
@@ -28,7 +29,9 @@ class DatabaseSeeder extends Seeder
                 ['email' => 'owner@toymart.test'],
                 User::factory()->raw(['name' => 'Local Owner', 'email' => 'owner@toymart.test']),
             )->assignRole(Role::SuperAdmin->value);
+            $this->call(CategoryDemoSeeder::class);
             $this->call(CatalogDemoSeeder::class);
+            $this->call(DemoCatalogSeeder::class);
         }
     }
 }

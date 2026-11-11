@@ -6,6 +6,7 @@ namespace App\Support\Casts;
 
 use App\Support\Money;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use Illuminate\Contracts\Database\Eloquent\ComparesCastableAttributes;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -15,9 +16,13 @@ use InvalidArgumentException;
  * Reads always yield Money (or null). Writes accept Money or a decimal string;
  * a float is rejected rather than silently rounded.
  *
+ * Dirty checks compare amounts, not strings: SQLite hands a DECIMAL back as 1250
+ * while the cast writes "1250.00", and those must not count as a change (a false
+ * "price changed" would write a spurious audit row).
+ *
  * @implements CastsAttributes<Money|null, mixed>
  */
-final class MoneyCast implements CastsAttributes
+final class MoneyCast implements CastsAttributes, ComparesCastableAttributes
 {
     /** @param array<string, mixed> $attributes */
     public function get(Model $model, string $key, mixed $value, array $attributes): ?Money
@@ -49,5 +54,13 @@ final class MoneyCast implements CastsAttributes
                 "Column [{$key}] accepts Money or a decimal string, got ".get_debug_type($value).'.',
             ),
         };
+    }
+
+    public function compare(Model $model, string $key, mixed $firstValue, mixed $secondValue): bool
+    {
+        $first = $this->get($model, $key, $firstValue, []);
+        $second = $this->get($model, $key, $secondValue, []);
+
+        return $first === null || $second === null ? $first === $second : $first->equals($second);
     }
 }

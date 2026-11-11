@@ -84,14 +84,16 @@ Plural snake_case tables · `id` is `BIGINT UNSIGNED AUTO_INCREMENT` · every ta
 ### 3.1 Catalog
 
 **`products`**
-`id` · `name` · `name_bn` NULL · `slug` UNIQUE · `type` (`simple`|`variable`) · `brand_id` FK NULL · `primary_category_id` FK · `short_description` · `description` LONGTEXT · `specifications` JSON NULL · `age_min_months` SMALLINT NULL · `age_max_months` SMALLINT NULL · `gender` (`boys`|`girls`|`unisex`) NULL · `is_educational` BOOL · `safety_note` NULL · `warranty_months` NULL · `status` (`draft`|`active`|`archived`) · `is_featured` BOOL · `rating_avg` DECIMAL(3,2) NULL · `rating_count` INT · `view_count` INT · `published_at` NULL · timestamps · `deleted_at`
+`id` · `name` · `name_bn` NULL · `slug` UNIQUE (ASCII, ≤92, shared by both locales) · `type` (`simple`|`variable`) · `brand_id` FK NULL · `primary_category_id` FK · `short_description` · `short_description_bn` · `description` LONGTEXT · `description_bn` LONGTEXT · `specifications` JSON NULL · `age_min_months` SMALLINT NULL · `age_max_months` SMALLINT NULL · `gender` (`boys`|`girls`|`unisex`) NULL · `is_educational` BOOL · `safety_note` NULL · `safety_note_bn` NULL · `warranty_months` NULL · `status` (`draft`|`active`|`archived`) · `is_featured` BOOL · `rating_avg` DECIMAL(3,2) NULL · `rating_count` INT · `view_count` INT · `published_at` NULL · timestamps · `deleted_at`
 
 > `age_min_months`/`age_max_months` in **months**, not years, because the 0–36-month range is where parents shop most precisely and "1–3 years" loses the distinction between a 6-month-old and a 30-month-old. No verified competitor offers age filtering; it is the single most valuable catalog attribute for this category.
 
 **`product_variants`**
-`id` · `product_id` FK CASCADE · `sku` UNIQUE · `barcode` UNIQUE NULL · `name` NULL (e.g. "Red / Large") · `cost_price` DECIMAL(14,2) · `price` DECIMAL(14,2) · `compare_at_price` NULL · `wholesale_price` NULL · `weight_grams` INT · `is_default` BOOL · `position` · `status` · timestamps
+`id` · `product_id` FK CASCADE · `sku` UNIQUE · `barcode` UNIQUE NULL · `name` NULL (e.g. "Red / Large") · `name_bn` NULL · `cost_price` DECIMAL(14,2) · `price` DECIMAL(14,2) · `compare_at_price` NULL · `wholesale_price` NULL · `weight_grams` INT · `is_default` BOOL · `position` · `status` · timestamps
 Index: `(product_id, status)`, `(price)`
 
+> **Variant matrix (P4-CAT-03).** A variable product's variants are the cartesian product of the values selected for each variant-defining attribute. On edit, a combination that survives keeps its variant (id, SKU, prices); a new combination gets a new variant; a variant whose value was removed is **archived, never deleted**, and reactivated if the value comes back. Generated SKUs are `TM-{product id, 5 digits}` for a simple product and `TM-{product id}-{value code}-…` for a variable one (value code = the value slug, uppercased, A–Z/0–9 only, ≤ 8 chars, e.g. `TM-00042-RED-L`); any row may override its SKU, and renaming a product never changes one. Selling-price and cost changes on an existing variant write `audit_sensitive` rows.
+>
 > `cost_price` here is the **current** replacement cost used for margin display. Historical cost for profit always comes from `order_items.cost_price_snapshot` or, where exact costing is required, from `purchase_items` via FIFO. MVP uses weighted-average cost maintained on receipt; see §5.3.
 
 **`product_attributes`** `id` · `name` · `name_bn` · `slug` UNIQUE · `type` (`select`|`color`|`text`) · `is_variant_defining` BOOL · `is_filterable` BOOL · `position`
@@ -101,6 +103,8 @@ Index: `(product_id, status)`, `(price)`
 **`categories`** `id` · `parent_id` FK NULL · `name` · `name_bn` · `slug` UNIQUE · `description` · `image_path` · `icon` · `banner_path` · `position` · `is_featured` BOOL · `show_in_menu` BOOL · `status` · `_lft`/`_rgt`/`depth` (nested set, via `kalnoy/nestedset`) · timestamps · `deleted_at`
 
 > Nested set rather than a recursive CTE: the mega menu and breadcrumbs read the tree on nearly every page and writes are rare. One indexed range query beats a recursive query per request.
+>
+> As built (P4-CAT-08): `depth` is **computed on read** (`withDepth()`), not stored — a stored copy would have to be rewritten for a whole subtree on every move. The tree is capped at three levels. `slug` is ≤ 91 characters (not 94 as for brands) so the revalidation tag `category:{slug}` fits the 100-character limit; `tree` is reserved. `description_bn` is added alongside `description` (rule 35). A category is archived, never deleted, and archiving is refused (409) while it has active subcategories.
 
 **`category_product`** `category_id` · `product_id` · PK both — products appear in multiple categories; `products.primary_category_id` drives the canonical URL and breadcrumb to avoid duplicate-content issues.
 

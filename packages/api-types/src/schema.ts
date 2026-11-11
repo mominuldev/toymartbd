@@ -131,6 +131,233 @@ export interface paths {
         patch: operations["v1.admin.brands.update"];
         trace?: never;
     };
+    "/admin/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /products` — cursor-paginated, needs catalog.view
+         * @description Filters: `filter[search]` (name, name_bn, slug or a variant SKU contains),
+         *     `filter[status]` = `draft|active|archived`, `filter[type]` = `simple|variable`,
+         *     `filter[brand_id]`, `filter[category_id]` (any of the product's categories).
+         *     Sorts: `name`, `created_at`, `updated_at`, each with `-` for descending
+         *     (default `-updated_at`). Anything else is a 400.
+         */
+        get: operations["v1.admin.products.index"];
+        put?: never;
+        /** `POST /products` — needs catalog.create (and catalog.view_cost to send `cost_price`) */
+        post: operations["v1.admin.products.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /products/{product}` — with variants (archived included), images, categories and relations; needs catalog.view */
+        get: operations["v1.admin.products.show"];
+        /**
+         * `PUT /products/{product}` — replaces the whole document; needs catalog.update.
+         *     Changing a selling price or adding a variant also needs catalog.update_price;
+         *     sending `cost_price` needs catalog.view_cost
+         */
+        put: operations["v1.admin.products.update"];
+        post?: never;
+        /** `DELETE /products/{product}` — archives the product (idempotent), needs catalog.archive */
+        delete: operations["v1.admin.products.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /products/{product}/duplicate` — a draft copy with a new slug and new SKUs
+         *     (barcodes are not copied); needs catalog.create
+         */
+        post: operations["v1.admin.products.duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /categories` — needs catalog.view
+         * @description `?tree=1` returns the whole tree, archived categories included, as
+         *     `{ data: Category[] }` where each node carries `children` recursively, in tree
+         *     order. Filters and sorts do not apply to the tree.
+         *
+         *     Otherwise a cursor-paginated flat list in tree order. Filters:
+         *     `filter[search]` (name, name_bn or slug contains), `filter[status]` =
+         *     `active|archived`, `filter[parent_id]` = an id or `root`. Sorts: `name`,
+         *     `-name`, `created_at`, `-created_at` (default: tree order). Anything else is a 400.
+         */
+        get: operations["v1.admin.categories.index"];
+        put?: never;
+        /** `POST /categories` — needs catalog.create */
+        post: operations["v1.admin.categories.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/categories/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /categories/{category}` — archived categories included, needs catalog.view */
+        get: operations["v1.admin.categories.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /categories/{category}` — archives (idempotent), needs catalog.archive */
+        delete: operations["v1.admin.categories.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /categories/{category}` — needs catalog.update */
+        patch: operations["v1.admin.categories.update"];
+        trace?: never;
+    };
+    "/admin/categories/{category}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /categories/{category}/move` — reparent and/or reorder, needs catalog.update.
+         *     A 422 for a move under itself or a descendant, or past three levels
+         */
+        post: operations["v1.admin.categories.move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/attributes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /attributes` — every attribute with its values, by position; needs catalog.view */
+        get: operations["v1.admin.attributes.index"];
+        put?: never;
+        /** `POST /attributes` — needs catalog.create */
+        post: operations["v1.admin.attributes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/attributes/{attribute}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /attributes/{attribute}` — needs catalog.view */
+        get: operations["v1.admin.attributes.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /attributes/{attribute}` — deletes it and its values, needs catalog.archive */
+        delete: operations["v1.admin.attributes.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /attributes/{attribute}` — needs catalog.update */
+        patch: operations["v1.admin.attributes.update"];
+        trace?: never;
+    };
+    "/admin/attributes/{attribute}/values": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /attributes/{attribute}/values` — appended last, needs catalog.create */
+        post: operations["v1.admin.attributes.values.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/attributes/{attribute}/values/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /attributes/{attribute}/values/reorder` — returns the attribute with its
+         *     values in the new order; needs catalog.update
+         */
+        post: operations["v1.admin.attributes.values.reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/attributes/{attribute}/values/{value}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /attributes/{attribute}/values/{value}` — needs catalog.archive */
+        delete: operations["v1.admin.attributes.values.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /attributes/{attribute}/values/{value}` — needs catalog.update */
+        patch: operations["v1.admin.attributes.values.update"];
+        trace?: never;
+    };
     "/storefront/ping": {
         parameters: {
             query?: never;
@@ -181,6 +408,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/categories/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /categories/tree` — the mega menu: active categories with
+         *     `show_in_menu`, at most three levels, in tree order. A hidden or archived
+         *     category hides its whole branch
+         */
+        get: operations["v1.storefront.categories.tree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/categories/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /categories/{slug}` — one active category with its breadcrumbs (root
+         *     first, itself last) and its active subcategories (menu visibility aside)
+         */
+        get: operations["v1.storefront.categories.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -217,6 +485,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Attribute */
+        Attribute: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            /** @enum {string} */
+            type: "select" | "color" | "text";
+            is_variant_defining: boolean;
+            is_filterable: boolean;
+            position: number;
+            values: components["schemas"]["AttributeValue"][];
+        };
+        /**
+         * AttributeType
+         * @description `product_attributes.type`. `color` values carry a `color_hex` swatch; `select` and `text` do not.
+         * @enum {string}
+         */
+        AttributeType: "select" | "color" | "text";
+        /** AttributeValue */
+        AttributeValue: {
+            id: number;
+            attribute_id: number;
+            value: string;
+            value_bn: string | null;
+            slug: string;
+            color_hex: string | null;
+            position: number;
+        };
         /** AuthUserResource */
         AuthUserResource: {
             id: number;
@@ -251,6 +548,46 @@ export interface components {
              */
             updated_at: string;
         };
+        /** Category */
+        Category: {
+            id: number;
+            parent_id: number | null;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            icon: string | null;
+            image_url: string | null;
+            is_featured: boolean;
+            show_in_menu: boolean;
+            is_active: boolean;
+            position: number;
+            depth: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            updated_at: string;
+            children?: components["schemas"]["Category"][];
+        };
+        /**
+         * CategoryStatus
+         * @description `categories.status`. A category is archived rather than deleted, because products reference it through `primary_category_id` and `category_product`.
+         * @enum {string}
+         */
+        CategoryStatus: "active" | "archived";
+        /**
+         * Gender
+         * @description `products.gender` — nullable: most toys need no gender at all.
+         * @enum {string}
+         */
+        Gender: "boys" | "girls" | "unisex";
         /** HealthReportResource */
         HealthReportResource: {
             /** @enum {string} */
@@ -274,6 +611,17 @@ export interface components {
             remember?: boolean;
         };
         /**
+         * MoveCategoryRequest
+         * @description `POST /categories/{category}/move` — `{ parent_id, position }`. The category
+         *     becomes the child of `parent_id` (null = a root) at sibling index `position`
+         *     (0-based; past the end means last). Up/down keeps the parent and changes the
+         *     position; indent/outdent changes the parent.
+         */
+        MoveCategoryRequest: {
+            parent_id: number | null;
+            position: number;
+        };
+        /**
          * ProblemDetails
          * @description RFC 9457 problem details, served as `application/problem+json`.
          */
@@ -293,6 +641,183 @@ export interface components {
                 message: string;
             }[];
         };
+        /** Product */
+        Product: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            /** @enum {string} */
+            type: "simple" | "variable";
+            /** @enum {string} */
+            status: "draft" | "active" | "archived";
+            brand_id: number | null;
+            brand: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            primary_category_id: number;
+            category_ids: number[];
+            categories: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            }[];
+            short_description: string | null;
+            short_description_bn: string | null;
+            description: string | null;
+            description_bn: string | null;
+            specifications: {
+                [key: string]: string | null;
+            } | null;
+            age_min_months: number | null;
+            age_max_months: number | null;
+            /** @enum {string|null} */
+            gender: "boys" | "girls" | "unisex" | null;
+            is_educational: boolean;
+            safety_note: string | null;
+            safety_note_bn: string | null;
+            warranty_months: number | null;
+            is_featured: boolean;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            published_at: string | null;
+            /**
+             * @description The selected values of each variant-defining attribute, derived from the
+             *     active variants. Empty for a simple product.
+             */
+            options: {
+                attribute_id: number;
+                value_ids: number[];
+            }[];
+            variants: components["schemas"]["ProductVariant"][];
+            images: components["schemas"]["ProductImage"][];
+            relations: components["schemas"]["ProductRelation"][];
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            updated_at: string;
+        };
+        /** ProductImage */
+        ProductImage: {
+            id: number;
+            variant_id: number | null;
+            url: null;
+            alt_text: string | null;
+            alt_text_bn: string | null;
+            position: number;
+            is_primary: boolean;
+        };
+        /** ProductListItem */
+        ProductListItem: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            /** @enum {string} */
+            type: "simple" | "variable";
+            /** @enum {string} */
+            status: "draft" | "active" | "archived";
+            brand: {
+                id: number;
+                name: string;
+            } | null;
+            primary_category_id: number;
+            sku: string | null;
+            price_min: string | null;
+            price_max: string | null;
+            variants_count: string;
+            image_url: string | null;
+            is_featured: boolean;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            updated_at: string;
+        };
+        /** ProductRelation */
+        ProductRelation: {
+            id: number;
+            related_product_id: number;
+            related_product: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+                /** @enum {string} */
+                status: "draft" | "active" | "archived";
+            };
+            /** @enum {string} */
+            type: "related" | "upsell" | "cross_sell" | "bundle" | "age_progression";
+            position: number;
+            reason_note: string | null;
+            is_auto: boolean;
+        };
+        /**
+         * ProductStatus
+         * @description `products.status`. `draft` is invisible to the storefront; `active` is live once `published_at` has passed; `archived` is retired but kept (orders reference it).
+         * @enum {string}
+         */
+        ProductStatus: "draft" | "active" | "archived";
+        /**
+         * ProductType
+         * @description `products.type`. A simple product has exactly one (default) variant; a variable product has one variant per combination of its selected attribute values. Either way the variant is the unit of inventory (DATABASE-DESIGN §1.1).
+         * @enum {string}
+         */
+        ProductType: "simple" | "variable";
+        /** ProductVariant */
+        ProductVariant: {
+            id: number;
+            sku: string;
+            barcode: string | null;
+            name: string | null;
+            name_bn: string | null;
+            /** @description Selling price, decimal string. */
+            price: string;
+            compare_at_price: string | null;
+            /** @description Current replacement cost; only with catalog.view_cost. */
+            cost_price?: string;
+            wholesale_price: string | null;
+            weight_grams: number;
+            is_default: boolean;
+            position: number;
+            /** @enum {string} */
+            status: "active" | "archived";
+            /** @description One value per variant-defining attribute; empty for a simple product. */
+            attribute_values: {
+                attribute_id: number;
+                attribute_value_id: number;
+            }[];
+        };
+        /**
+         * RelationType
+         * @description `product_relations.type` (DATABASE-DESIGN §3.1). `age_progression` is its own type, not a flavour of upsell: an upsell is a better version of the same toy; an age progression is the next toy, for a child who has outgrown this one.
+         * @enum {string}
+         */
+        RelationType: "related" | "upsell" | "cross_sell" | "bundle" | "age_progression";
+        /**
+         * ReorderAttributeValuesRequest
+         * @description `POST /attributes/{attribute}/values/reorder` — `{ ids: [3, 1, 2] }`, every value
+         *     id of the attribute exactly once, in the new display order.
+         */
+        ReorderAttributeValuesRequest: {
+            ids: number[];
+        };
         /** StaffResource */
         StaffResource: {
             id: number;
@@ -300,6 +825,31 @@ export interface components {
             email: string;
             is_active: boolean;
             roles: string[];
+        };
+        /**
+         * StoreAttributeRequest
+         * @description `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)
+         *     or `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).
+         */
+        StoreAttributeRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            type?: components["schemas"]["AttributeType"];
+            is_variant_defining?: boolean;
+            is_filterable?: boolean;
+        };
+        /**
+         * StoreAttributeValueRequest
+         * @description `POST /attributes/{attribute}/values`. `slug` is unique within the attribute and
+         *     generated from `value` when omitted. `color_hex` (`#RRGGBB`) is kept only for a
+         *     colour-type attribute.
+         */
+        StoreAttributeValueRequest: {
+            value: string;
+            value_bn?: string | null;
+            slug?: string | null;
+            color_hex?: string | null;
         };
         /**
          * StoreBrandRequest
@@ -314,6 +864,83 @@ export interface components {
             description_bn?: string | null;
             is_active?: boolean;
         };
+        /**
+         * StoreCategoryRequest
+         * @description `POST /categories`. Appended as the last child of `parent_id` (omit or null for a
+         *     root). When `slug` is omitted it is generated from `name` (or `name_bn`). At most
+         *     three levels deep; an active category under an archived parent is a 409.
+         */
+        StoreCategoryRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            parent_id?: number | null;
+            description?: string | null;
+            description_bn?: string | null;
+            icon?: string | null;
+            is_featured?: boolean;
+            show_in_menu?: boolean;
+            is_active?: boolean;
+        };
+        /**
+         * StoreProductRequest
+         * @description `POST /products` — needs catalog.create. Setting the initial prices is part of
+         *     creating; a `cost_price` anywhere in the document needs catalog.view_cost.
+         *     When `slug` is omitted it is generated from `name` (or `name_bn`).
+         */
+        StoreProductRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            type: components["schemas"]["ProductType"];
+            status: components["schemas"]["ProductStatus"];
+            brand_id?: number | null;
+            primary_category_id: number;
+            category_ids: number[];
+            short_description?: string | null;
+            short_description_bn?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            specifications?: (string | null)[] | null;
+            age_min_months?: number | null;
+            age_max_months?: number | null;
+            gender?: components["schemas"]["Gender"] | null;
+            is_educational?: boolean;
+            safety_note?: string | null;
+            safety_note_bn?: string | null;
+            warranty_months?: number | null;
+            is_featured?: boolean;
+            /** Format: date-time */
+            published_at?: string | null;
+            options?: {
+                attribute_id: number;
+                value_ids: number[];
+            }[];
+            variant_defaults?: {
+                price?: string | null;
+                compare_at_price?: string | null;
+                cost_price?: string | null;
+                wholesale_price?: string | null;
+                weight_grams?: number | null;
+            } | null;
+            variants?: {
+                attribute_value_ids?: number[];
+                sku?: string | null;
+                barcode?: string | null;
+                price?: string | null;
+                compare_at_price?: string | null;
+                cost_price?: string | null;
+                wholesale_price?: string | null;
+                weight_grams?: number | null;
+                status?: components["schemas"]["VariantStatus"] | null;
+            }[];
+            relations?: {
+                related_product_id: number;
+                type: components["schemas"]["RelationType"];
+                position?: number | null;
+                reason_note?: string | null;
+            }[];
+        };
         /** StorefrontBrand */
         StorefrontBrand: {
             name: string;
@@ -322,6 +949,58 @@ export interface components {
             description: string | null;
             description_bn: string | null;
             logo_url: string | null;
+        };
+        /** StorefrontCategory */
+        StorefrontCategory: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            icon: string | null;
+            image_url: string | null;
+            banner_url: string | null;
+            breadcrumbs: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            }[];
+            children: components["schemas"]["StorefrontCategoryNode"][];
+        };
+        /** StorefrontCategoryNode */
+        StorefrontCategoryNode: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            icon: string | null;
+            image_url: string | null;
+            children: components["schemas"]["StorefrontCategoryNode"][];
+        };
+        /**
+         * UpdateAttributeRequest
+         * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
+         *     change. Changing `type` away from `color` clears the values' swatches.
+         */
+        UpdateAttributeRequest: {
+            name?: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            type?: components["schemas"]["AttributeType"];
+            is_variant_defining?: boolean;
+            is_filterable?: boolean;
+            position?: number;
+        };
+        /**
+         * UpdateAttributeValueRequest
+         * @description `PATCH /attributes/{attribute}/values/{value}` — only the fields sent change.
+         */
+        UpdateAttributeValueRequest: {
+            value?: string;
+            value_bn?: string | null;
+            slug?: string | null;
+            color_hex?: string | null;
         };
         /**
          * UpdateBrandRequest
@@ -337,6 +1016,92 @@ export interface components {
             description_bn?: string | null;
             is_active?: boolean;
         };
+        /**
+         * UpdateCategoryRequest
+         * @description `PATCH /categories/{category}` — every field optional; only the fields sent
+         *     change. `slug: null` (or omitted) keeps the current slug. The parent and order
+         *     change only through `POST /categories/{category}/move`.
+         */
+        UpdateCategoryRequest: {
+            name?: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            icon?: string | null;
+            is_featured?: boolean;
+            show_in_menu?: boolean;
+            is_active?: boolean;
+        };
+        /**
+         * UpdateProductRequest
+         * @description `PUT /products/{product}` — needs catalog.update. The whole document, variant
+         *     matrix included; `slug` null (or omitted) keeps the current slug, `relations`
+         *     omitted keeps the curated relations, `cost_price` omitted keeps a variant's cost.
+         *
+         *     Field-level abilities, enforced where the domain sees what changes (403 otherwise):
+         *     changing a selling price or adding a variant needs catalog.update_price; sending
+         *     any `cost_price` needs catalog.view_cost.
+         */
+        UpdateProductRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            type: components["schemas"]["ProductType"];
+            status: components["schemas"]["ProductStatus"];
+            brand_id?: number | null;
+            primary_category_id: number;
+            category_ids: number[];
+            short_description?: string | null;
+            short_description_bn?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            specifications?: (string | null)[] | null;
+            age_min_months?: number | null;
+            age_max_months?: number | null;
+            gender?: components["schemas"]["Gender"] | null;
+            is_educational?: boolean;
+            safety_note?: string | null;
+            safety_note_bn?: string | null;
+            warranty_months?: number | null;
+            is_featured?: boolean;
+            /** Format: date-time */
+            published_at?: string | null;
+            options?: {
+                attribute_id: number;
+                value_ids: number[];
+            }[];
+            variant_defaults?: {
+                price?: string | null;
+                compare_at_price?: string | null;
+                cost_price?: string | null;
+                wholesale_price?: string | null;
+                weight_grams?: number | null;
+            } | null;
+            variants?: {
+                attribute_value_ids?: number[];
+                sku?: string | null;
+                barcode?: string | null;
+                price?: string | null;
+                compare_at_price?: string | null;
+                cost_price?: string | null;
+                wholesale_price?: string | null;
+                weight_grams?: number | null;
+                status?: components["schemas"]["VariantStatus"] | null;
+            }[];
+            relations?: {
+                related_product_id: number;
+                type: components["schemas"]["RelationType"];
+                position?: number | null;
+                reason_note?: string | null;
+            }[];
+        };
+        /**
+         * VariantStatus
+         * @description `product_variants.status`. A variant is archived, never deleted: stock movements and order lines reference it.
+         * @enum {string}
+         */
+        VariantStatus: "active" | "archived";
     };
     responses: {
         /** @description Unauthenticated */
@@ -689,6 +1454,735 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.products.index": {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive "contains" match on name, name_bn, slug or a variant SKU. */
+                "filter[search]"?: string;
+                /** @description Only products in this status. */
+                "filter[status]"?: "draft" | "active" | "archived";
+                /** @description Only simple or only variable products. */
+                "filter[type]"?: "simple" | "variable";
+                /** @description Only products of this brand. */
+                "filter[brand_id]"?: number;
+                /** @description Only products in this category (primary or not). */
+                "filter[category_id]"?: number;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "name" | "-name" | "created_at" | "-created_at" | "updated_at" | "-updated_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `ProductListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProductListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.products.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreProductRequest"];
+            };
+        };
+        responses: {
+            /** @description `Product` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing catalog.create, or `cost_price` sent without catalog.view_cost (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Product` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.products.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductRequest"];
+            };
+        };
+        responses: {
+            /** @description `Product` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing catalog.update, a price change without catalog.update_price, or `cost_price` without catalog.view_cost (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.products.duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Product` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.categories.index": {
+        parameters: {
+            query?: {
+                /** @description Return the full nested tree instead of a paginated list. */
+                tree?: "1" | "0";
+                /** @description Case-insensitive "contains" match on name, name_bn or slug. */
+                "filter[search]"?: string;
+                /** @description Only active or only archived categories. */
+                "filter[status]"?: "active" | "archived";
+                /** @description Direct children of this category id, or `root` for top-level categories. */
+                "filter[parent_id]"?: string;
+                /** @description Sort field; prefix `-` for descending. Default: tree order. */
+                sort?: "name" | "-name" | "created_at" | "-created_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description Paginated set of `Category`
+             *
+             *     Array of `Category`
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Category"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    } | {
+                        data: components["schemas"]["Category"][];
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.categories.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description `Category` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The parent is archived (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.categories.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Category` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.categories.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The category still has active subcategories (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.categories.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description `Category` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Archiving with active subcategories, or restoring under an archived parent (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.categories.move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description `Category` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description An active category cannot move under an archived parent (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.attributes.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `Attribute` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Attribute"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.attributes.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreAttributeRequest"];
+            };
+        };
+        responses: {
+            /** @description `Attribute` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attribute"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.attributes.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Attribute` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attribute"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.attributes.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A product variant uses one of its values (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.attributes.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateAttributeRequest"];
+            };
+        };
+        responses: {
+            /** @description `Attribute` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attribute"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.attributes.values.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreAttributeValueRequest"];
+            };
+        };
+        responses: {
+            /** @description `AttributeValue` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeValue"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.attributes.values.reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderAttributeValuesRequest"];
+            };
+        };
+        responses: {
+            /** @description `Attribute` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attribute"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.attributes.values.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+                /** @description The value ID */
+                value: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A product variant uses this value (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.attributes.values.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The attribute ID */
+                attribute: number;
+                /** @description The value ID */
+                value: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateAttributeValueRequest"];
+            };
+        };
+        responses: {
+            /** @description `AttributeValue` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeValue"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.ping": {
         parameters: {
             query?: never;
@@ -775,6 +2269,79 @@ export interface operations {
                 };
             };
             /** @description No active brand has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.categories.tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontCategoryNode` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontCategoryNode"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.categories.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontCategory` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontCategory"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No active category has this slug */
             404: {
                 headers: {
                     [name: string]: unknown;
