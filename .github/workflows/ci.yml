@@ -28,8 +28,12 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: bcmath, intl, mbstring, pdo_mysql, pdo_sqlite
+          # gd (with WebP + AVIF) and exif: the media pipeline (config/media.php).
+          extensions: bcmath, intl, mbstring, pdo_mysql, pdo_sqlite, gd, exif, fileinfo
           coverage: none
+      - name: GD must encode WebP and AVIF (media pipeline)
+        run: |
+          php -r "\$i = gd_info(); exit(!empty(\$i['WebP Support']) && !empty(\$i['AVIF Support']) && function_exists('exif_read_data') ? 0 : 1);"
       - name: Composer install
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Prepare .env
@@ -114,7 +118,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: bcmath, intl, mbstring, pdo_sqlite
+          extensions: bcmath, intl, mbstring, pdo_sqlite, gd, exif, fileinfo
           coverage: none
       - uses: actions/setup-node@v4
         with:
