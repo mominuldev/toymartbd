@@ -9,6 +9,7 @@ NPM      ?= npm
 
 setup: up install env services-wait migrate ## First run: services, dependencies, .env, database with seed data
 	@echo "Ready: $(PHP) artisan serve  →  http://localhost:8000/admin   (and: $(NPM) run dev)"
+	@echo "Local sign-in: owner@toymart.test / password  (seeded in local and testing only)"
 
 up: ## Start MySQL, Redis, Meilisearch, Mailpit
 	docker compose up -d

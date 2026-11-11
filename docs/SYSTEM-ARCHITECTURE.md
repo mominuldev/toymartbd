@@ -149,7 +149,7 @@ app/
 
 - Base paths: `/api/v1/storefront/*`, `/api/v1/admin/*`, `/api/v1/webhooks/*`.
 - Versioning in the URL. `v1` is frozen on first production deploy; additive changes only. Breaking changes go to `v2` with both served during migration.
-- Contract: OpenAPI 3.1, generated from annotations, published at `/api/docs`, checked into the repo so diffs are reviewable in PRs.
+- Contract: OpenAPI 3.1, generated from code — routes, FormRequests, Resources and their PHPDoc — by `dedoc/scramble`, so there is no second hand-written copy to drift. Exported to `docs/api/openapi.json` with `composer openapi:export` (a test fails CI when it is stale) and served at `/api/docs` (open locally; elsewhere needs `settings.view`). `packages/api-types` is generated from that file (`npm run api-types:generate`), and CI fails if it is stale.
 - Standard envelope: `{ data, meta, links }` for collections; bare resource object for singles.
 - Errors: RFC 9457 Problem Details — `{ type, title, status, detail, errors[] }`. Every error carries a stable machine-readable `type` so clients branch on it rather than on message text.
 - Filtering/sorting/includes via `spatie/laravel-query-builder` with an explicit allowlist per endpoint. An unlisted filter is a 400, never a silent pass-through — this prevents a filter becoming an unindexed table scan.

@@ -106,19 +106,28 @@ One repository, because the API and both frontends share a contract and must cha
 | P3-CI-03 | Automated encrypted backup to off-host storage **and a verified restore onto staging** | M | 02 | restore produces a working application — this is the acceptance criterion, not the backup itself |
 | P3-CI-04 | Sentry on all three apps, structured JSON logging, `X-Request-Id` propagated into queued jobs | M | 01 | a thrown error reaches Sentry with the request id attached |
 
-### Progress (updated 2026-11-11)
+### Progress (updated 2026-11-11, batch 2)
 
-**Done, with passing tests** (208 on SQLite, 210 on MySQL; PHPStan L6, Pint, deptrac clean):
-P3-SET-01 (PHP side: Pint, PHPStan, EditorConfig) · P3-SET-02 (`docker-compose.yml`, `Makefile`) · P3-SET-03 (UTC storage, collation test, Bangla round-trip) · P3-SET-04 (13 domain folders, `deptrac.yaml`, probe test) · P3-SUP-01…04 (`Money` + `MoneyCast`, `PhoneNumber`, `DhakaDate`, `Slug`) · P3-I18N-01 (`ResolveLocale`, `lang/bn`, `Support\Locale\Formatter`) · P3-DAT-01…02 (settings, activity log, insert-only `audit_sensitive`, 7 roles × 64 permissions) · P3-API-01, 02, 04, 08 (base classes, RFC 9457 problems, rate limiters, `/api/v1/health`) · P3-CI-01 (GitHub Actions: PHP job + frontend job). P3-ADM-01 partly: tokens wired into Tailwind, unverified until CI builds it.
+**Done, with passing tests** (290 PHP on SQLite, 291 on MySQL; 14 Vitest; PHPStan L6, Pint, deptrac clean):
+- Batch 1 (PR #2): P3-SET-01…04 · P3-SUP-01…04 · P3-I18N-01 · P3-DAT-01…02 · P3-API-01, 02, 04, 08 · P3-CI-01.
+- Batch 2: P3-DAT-03 (8 divisions, 64 districts, 495 upazilas with Bangla names and BBS/OCHA P-codes, sourced in `database/data/geo/SOURCE.md`) · P3-API-03 (`idempotent` middleware, cache-backed, 2xx replayed) · P3-API-05 (Sanctum cookie session for the admin, `toymart:storefront-token` with `storefront:read`) · P3-API-06 (`Policy` base, `UserPolicy`, `tests/Support/RoleMatrix.php` driven by `Role::permissions()`) · P3-API-07 (`dedoc/scramble` → `docs/api/openapi.json` → `packages/api-types`) · P3-ADM-01…03 (tokens in Tailwind, router, TanStack Query with global 401 handling, auth guard, login, AppShell with sidebar rail/drawer, EN|বাং, theme toggle) · P3-I18N-03 as a Vitest guard (no hardcoded JSX text, hex or px).
+- Verified end to end on the running app: CSRF cookie → login → `/me` → 403 for a viewer on `/staff` → logout; Bangla validation messages; the built admin in a browser at desktop and phone widths.
 
-**Follow-ups found on the way:**
-- ESLint flat config + `typescript-eslint` (needs a working local npm to update the lockfile).
-- Trusted proxies: storefront and health rate limits key on client IP, so the Next.js server must forward the shopper's IP in `X-Forwarded-For` and Laravel must trust only that hop. Without it every shopper shares Vercel's IPs and one bucket.
-- Problem titles are English; `lang/*/app.php` has `problems.*` keys ready for the handler to translate.
-- All Bangla system strings in `lang/bn/` are marked for native-speaker review.
-- Owner: is the customer-facing default `৳2,450.50` (exact) or `৳2,451` (rounded retail)? `Formatter` has both.
+**Bug the tests had missed, found by running `migrate:fresh --seed`:** `DatabaseSeeder` used Laravel's default `WithoutModelEvents`, which silenced spatie's cache refresh and failed the first role sync on a fresh database. Fixed, with a regression test. The seeder also no longer creates a factory-password user outside `local`/`testing`.
 
-**Next:** P3-DAT-03 (BD geography with Bangla names, needs a sourced dataset) · P3-API-03 (idempotency) · P3-API-05…07 (Sanctum, policies + 403 matrix, OpenAPI) · P3-ADM-02…04 · P3-STO-* · P3-CI-02…04.
+**Owner decisions needed:**
+- **Dhaka delivery zones.** Dhaka city (North/South City Corporations) is not an upazila, so no upazila is flagged "inside Dhaka metro"; Savar and Keraniganj are flagged "suburb". Decide how a city address is recognised (e.g. a thana/city-corporation level, or district Dhaka with no upazila) and whether any Narayanganj/Gazipur upazilas are "suburb". See `database/data/geo/dhaka-zones.json`.
+- Exact (`৳2,450.50`) or rounded (`৳2,451`) price display for customers.
+
+**Follow-ups:**
+- ESLint: blocked on typescript-eslint support for the TypeScript 7 native compiler; `conventions.test.ts` covers the key rules meanwhile.
+- Trusted proxies before the storefront ships (IP-keyed rate limits behind Next.js).
+- Problem titles are English; `lang/*/app.php` has `problems.*` keys ready.
+- Native-speaker review of `lang/bn/*` and the admin's Bangla strings (`resources/js/admin/i18n/messages.ts`).
+- One upazila pairing is unconfirmed (Zianagar → Indurkani, renamed) — `pcode-reconciliation.json`.
+- `users.locale` column for a per-staff language preference (the API already reads it if present).
+
+**Next:** P3-ADM-04 (one real CRUD screen — brands, needs the brands table from P4-CAT, or staff management on the existing endpoint) · P3-STO-01…04 (Next.js storefront skeleton) · P3-DAT-04 (demo seeder, after P4 catalog tables) · P3-CI-02…04 (staging deploy, backup + restore, Sentry).
 
 **Phase 3 exit:** clone → one command → working stack with Bangla seed data · login with roles · OpenAPI published and types generated · CI green · staging deploying · a restore performed successfully. Then **Gate 3** — the storefront stack decision.
 
