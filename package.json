@@ -15,8 +15,13 @@
         "test": "vitest run",
         "dev:storefront": "npm run dev --workspace=storefront",
         "build:storefront": "npm run build --workspace=storefront",
+        "start:storefront": "npm run start --workspace=storefront",
+        "typecheck:storefront": "npm run typecheck --workspace=storefront",
+        "test:storefront": "npm run test --workspace=storefront",
+        "test:e2e:storefront": "npm run test:e2e --workspace=storefront",
         "tokens:build": "npm run build --workspace=@toymart/tokens",
-        "api-types:generate": "npm run generate --workspace=@toymart/api-types"
+        "api-types:generate": "npm run generate --workspace=@toymart/api-types",
+        "test:e2e:admin": "playwright test --config e2e/admin/playwright.config.ts"
     },
     "dependencies": {
         "@hookform/resolvers": "6.0.1",

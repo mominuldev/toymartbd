@@ -7,6 +7,12 @@ import { RouteError } from './RouteError';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { sectionPaths } from '@/components/shell/nav';
+import { CatalogLayout } from '@/features/catalog/CatalogLayout';
+import { BrandsPage } from '@/features/catalog/brands/BrandsPage';
+import { BrandFormPage } from '@/features/catalog/brands/BrandFormPage';
+
+// Sections with real screens; every other sidebar section renders ComingSoon.
+const built = new Set(['/products']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -19,7 +25,20 @@ export const routes: RouteObject[] = [
                 element: <Shell />,
                 children: [
                     { index: true, element: <Dashboard /> },
-                    ...sectionPaths.map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),
+                    {
+                        path: 'products',
+                        element: <CatalogLayout />,
+                        children: [
+                            { index: true, element: <ComingSoon title="catalog.tab.products" /> },
+                            { path: 'categories', element: <ComingSoon title="catalog.tab.categories" /> },
+                            { path: 'brands', element: <BrandsPage /> },
+                            { path: 'brands/new', element: <BrandFormPage /> },
+                            { path: 'brands/:brandId', element: <BrandFormPage /> },
+                        ],
+                    },
+                    ...sectionPaths
+                        .filter((item) => !built.has(item.path))
+                        .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),
                     { path: '*', element: <NotFound /> },
                 ],
             },

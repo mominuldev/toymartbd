@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router/dom';
 import { router } from './app/router';
 import { I18nProvider } from './i18n/I18nProvider';
 import { createQueryClient } from './lib/queryClient';
+import { ToastProvider } from './components/ui/Toast';
 import '../../css/admin.css';
 
 const queryClient = createQueryClient();
@@ -16,7 +17,9 @@ createRoot(el).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <I18nProvider>
-                <RouterProvider router={router} />
+                <ToastProvider>
+                    <RouterProvider router={router} />
+                </ToastProvider>
             </I18nProvider>
         </QueryClientProvider>
     </StrictMode>,
