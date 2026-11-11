@@ -1,0 +1,576 @@
+{
+    "openapi": "3.1.2",
+    "info": {
+        "title": "Toy Mart BD API",
+        "version": "1.0.0",
+        "description": "Toy Mart BD API v1, grouped by audience: storefront, admin, webhooks. Errors are RFC 9457 problem documents (`application/problem+json`, schema `ProblemDetails`); branch on `type`, never on `title`/`detail`. Routes marked with the `Idempotency-Key` header replay a completed 2xx response for 24h (header `Idempotent-Replayed: true`)."
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "This host"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Storefront",
+            "description": "Next.js storefront server \u2014 static server token or customer Sanctum token."
+        },
+        {
+            "name": "Admin",
+            "description": "Admin SPA \u2014 Sanctum cookie session, CSRF token on every write."
+        },
+        {
+            "name": "Webhooks",
+            "description": "Courier and payment-gateway callbacks \u2014 signature-verified, idempotent on the provider event id."
+        },
+        {
+            "name": "System",
+            "description": "Health and other infrastructure endpoints."
+        }
+    ],
+    "paths": {
+        "/admin/ping": {
+            "get": {
+                "operationId": "v1.admin.ping",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ok": {
+                                            "type": "boolean"
+                                        },
+                                        "audience": {
+                                            "type": "string",
+                                            "const": "admin"
+                                        }
+                                    },
+                                    "required": [
+                                        "ok",
+                                        "audience"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/auth/login": {
+            "post": {
+                "operationId": "v1.admin.auth.login",
+                "summary": "Wrong email, wrong password and a deactivated account all get the same 422\non `email`, so the response never reveals whether an account exists or its\nstate. Throttled by the `login` limiter (5/min per IP)",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AuthUserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthUserResource"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/auth/logout": {
+            "post": {
+                "operationId": "v1.admin.auth.logout",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/auth/me": {
+            "get": {
+                "operationId": "v1.admin.auth.me",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AuthUserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthUserResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/staff": {
+            "get": {
+                "operationId": "v1.admin.staff.index",
+                "summary": "`GET /staff` \u2014 cursor-paginated `{ data, links, meta }`, needs staff.view",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StaffResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/storefront/ping": {
+            "get": {
+                "operationId": "v1.storefront.ping",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ok": {
+                                            "type": "boolean"
+                                        },
+                                        "audience": {
+                                            "type": "string",
+                                            "const": "storefront"
+                                        }
+                                    },
+                                    "required": [
+                                        "ok",
+                                        "audience"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "operationId": "v1.health",
+                "tags": [
+                    "System"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/webhooks/ping": {
+            "get": {
+                "operationId": "v1.webhooks.ping",
+                "tags": [
+                    "Webhooks"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ok": {
+                                            "type": "boolean"
+                                        },
+                                        "audience": {
+                                            "type": "string",
+                                            "const": "webhooks"
+                                        }
+                                    },
+                                    "required": [
+                                        "ok",
+                                        "audience"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuthUserResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "No `users.locale` column yet; null means \"use the request locale\".",
+                        "enum": [
+                            "en",
+                            "bn",
+                            null
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "locale",
+                    "roles",
+                    "permissions"
+                ],
+                "title": "AuthUserResource"
+            },
+            "HealthReportResource": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "degraded"
+                        ]
+                    },
+                    "checks": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "last_courier_sync": {
+                        "type": "null",
+                        "description": "Courier sync lands in Phase 6 (Fulfilment). Always null until then, and never\ncounted towards `status`."
+                    },
+                    "checked_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status",
+                    "checks",
+                    "last_courier_sync",
+                    "checked_at"
+                ],
+                "title": "HealthReportResource"
+            },
+            "LoginRequest": {
+                "type": "object",
+                "description": "`POST /api/v1/admin/auth/login` \u2014 `{ email, password, remember? }`.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "remember": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "LoginRequest"
+            },
+            "ProblemDetails": {
+                "type": "object",
+                "description": "RFC 9457 problem details, served as `application/problem+json`.",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Stable machine-readable problem type, e.g. `https://toymartbd.com/problems/validation-error`. Branch on this."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer"
+                    },
+                    "detail": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "description": "Present on `validation-error` only.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "field": {
+                                    "type": "string",
+                                    "description": "Dot-notation field path, e.g. `items.0.qty`."
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "field",
+                                "message"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail"
+                ],
+                "title": "ProblemDetails"
+            },
+            "StaffResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "is_active",
+                    "roles"
+                ],
+                "title": "StaffResource"
+            }
+        },
+        "responses": {
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        }
+                    }
+                }
+            },
+            "AuthenticationException": {
+                "description": "Unauthenticated",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        }
+                    }
+                }
+            },
+            "AuthorizationException": {
+                "description": "Authorization error",
+                "content": {
+                    "application/problem+json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ProblemDetails"
+                        }
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "IdempotencyKey": {
+                "name": "Idempotency-Key",
+                "in": "header",
+                "required": true,
+                "description": "Client-generated unique key (a UUID v4 is ideal), 8\u2013255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`.",
+                "schema": {
+                    "type": "string",
+                    "pattern": "^[\\x21-\\x7E]{8,255}$",
+                    "minLength": 8,
+                    "maxLength": 255
+                }
+            }
+        }
+    }
+}

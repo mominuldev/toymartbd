@@ -1,0 +1,450 @@
+[
+ {
+  "id": 1,
+  "division_id": 1,
+  "name": "Comilla",
+  "name_bn": "কুমিল্লা",
+  "pcode": "BD2019"
+ },
+ {
+  "id": 2,
+  "division_id": 1,
+  "name": "Feni",
+  "name_bn": "ফেনী",
+  "pcode": "BD2030"
+ },
+ {
+  "id": 3,
+  "division_id": 1,
+  "name": "Brahmanbaria",
+  "name_bn": "ব্রাহ্মণবাড়িয়া",
+  "pcode": "BD2012"
+ },
+ {
+  "id": 4,
+  "division_id": 1,
+  "name": "Rangamati",
+  "name_bn": "রাঙ্গামাটি",
+  "pcode": "BD2084"
+ },
+ {
+  "id": 5,
+  "division_id": 1,
+  "name": "Noakhali",
+  "name_bn": "নোয়াখালী",
+  "pcode": "BD2075"
+ },
+ {
+  "id": 6,
+  "division_id": 1,
+  "name": "Chandpur",
+  "name_bn": "চাঁদপুর",
+  "pcode": "BD2013"
+ },
+ {
+  "id": 7,
+  "division_id": 1,
+  "name": "Lakshmipur",
+  "name_bn": "লক্ষ্মীপুর",
+  "pcode": "BD2051"
+ },
+ {
+  "id": 8,
+  "division_id": 1,
+  "name": "Chattogram",
+  "name_bn": "চট্টগ্রাম",
+  "pcode": "BD2015"
+ },
+ {
+  "id": 9,
+  "division_id": 1,
+  "name": "Coxsbazar",
+  "name_bn": "কক্সবাজার",
+  "pcode": "BD2022"
+ },
+ {
+  "id": 10,
+  "division_id": 1,
+  "name": "Khagrachhari",
+  "name_bn": "খাগড়াছড়ি",
+  "pcode": "BD2046"
+ },
+ {
+  "id": 11,
+  "division_id": 1,
+  "name": "Bandarban",
+  "name_bn": "বান্দরবান",
+  "pcode": "BD2003"
+ },
+ {
+  "id": 12,
+  "division_id": 2,
+  "name": "Sirajganj",
+  "name_bn": "সিরাজগঞ্জ",
+  "pcode": "BD5088"
+ },
+ {
+  "id": 13,
+  "division_id": 2,
+  "name": "Pabna",
+  "name_bn": "পাবনা",
+  "pcode": "BD5076"
+ },
+ {
+  "id": 14,
+  "division_id": 2,
+  "name": "Bogura",
+  "name_bn": "বগুড়া",
+  "pcode": "BD5010"
+ },
+ {
+  "id": 15,
+  "division_id": 2,
+  "name": "Rajshahi",
+  "name_bn": "রাজশাহী",
+  "pcode": "BD5081"
+ },
+ {
+  "id": 16,
+  "division_id": 2,
+  "name": "Natore",
+  "name_bn": "নাটোর",
+  "pcode": "BD5069"
+ },
+ {
+  "id": 17,
+  "division_id": 2,
+  "name": "Joypurhat",
+  "name_bn": "জয়পুরহাট",
+  "pcode": "BD5038"
+ },
+ {
+  "id": 18,
+  "division_id": 2,
+  "name": "Chapainawabganj",
+  "name_bn": "চাঁপাইনবাবগঞ্জ",
+  "pcode": "BD5070"
+ },
+ {
+  "id": 19,
+  "division_id": 2,
+  "name": "Naogaon",
+  "name_bn": "নওগাঁ",
+  "pcode": "BD5064"
+ },
+ {
+  "id": 20,
+  "division_id": 3,
+  "name": "Jashore",
+  "name_bn": "যশোর",
+  "pcode": "BD4041"
+ },
+ {
+  "id": 21,
+  "division_id": 3,
+  "name": "Satkhira",
+  "name_bn": "সাতক্ষীরা",
+  "pcode": "BD4087"
+ },
+ {
+  "id": 22,
+  "division_id": 3,
+  "name": "Meherpur",
+  "name_bn": "মেহেরপুর",
+  "pcode": "BD4057"
+ },
+ {
+  "id": 23,
+  "division_id": 3,
+  "name": "Narail",
+  "name_bn": "নড়াইল",
+  "pcode": "BD4065"
+ },
+ {
+  "id": 24,
+  "division_id": 3,
+  "name": "Chuadanga",
+  "name_bn": "চুয়াডাঙ্গা",
+  "pcode": "BD4018"
+ },
+ {
+  "id": 25,
+  "division_id": 3,
+  "name": "Kushtia",
+  "name_bn": "কুষ্টিয়া",
+  "pcode": "BD4050"
+ },
+ {
+  "id": 26,
+  "division_id": 3,
+  "name": "Magura",
+  "name_bn": "মাগুরা",
+  "pcode": "BD4055"
+ },
+ {
+  "id": 27,
+  "division_id": 3,
+  "name": "Khulna",
+  "name_bn": "খুলনা",
+  "pcode": "BD4047"
+ },
+ {
+  "id": 28,
+  "division_id": 3,
+  "name": "Bagerhat",
+  "name_bn": "বাগেরহাট",
+  "pcode": "BD4001"
+ },
+ {
+  "id": 29,
+  "division_id": 3,
+  "name": "Jhenaidah",
+  "name_bn": "ঝিনাইদহ",
+  "pcode": "BD4044"
+ },
+ {
+  "id": 30,
+  "division_id": 4,
+  "name": "Jhalakathi",
+  "name_bn": "ঝালকাঠি",
+  "pcode": "BD1042"
+ },
+ {
+  "id": 31,
+  "division_id": 4,
+  "name": "Patuakhali",
+  "name_bn": "পটুয়াখালী",
+  "pcode": "BD1078"
+ },
+ {
+  "id": 32,
+  "division_id": 4,
+  "name": "Pirojpur",
+  "name_bn": "পিরোজপুর",
+  "pcode": "BD1079"
+ },
+ {
+  "id": 33,
+  "division_id": 4,
+  "name": "Barisal",
+  "name_bn": "বরিশাল",
+  "pcode": "BD1006"
+ },
+ {
+  "id": 34,
+  "division_id": 4,
+  "name": "Bhola",
+  "name_bn": "ভোলা",
+  "pcode": "BD1009"
+ },
+ {
+  "id": 35,
+  "division_id": 4,
+  "name": "Barguna",
+  "name_bn": "বরগুনা",
+  "pcode": "BD1004"
+ },
+ {
+  "id": 36,
+  "division_id": 5,
+  "name": "Sylhet",
+  "name_bn": "সিলেট",
+  "pcode": "BD6091"
+ },
+ {
+  "id": 37,
+  "division_id": 5,
+  "name": "Moulvibazar",
+  "name_bn": "মৌলভীবাজার",
+  "pcode": "BD6058"
+ },
+ {
+  "id": 38,
+  "division_id": 5,
+  "name": "Habiganj",
+  "name_bn": "হবিগঞ্জ",
+  "pcode": "BD6036"
+ },
+ {
+  "id": 39,
+  "division_id": 5,
+  "name": "Sunamganj",
+  "name_bn": "সুনামগঞ্জ",
+  "pcode": "BD6090"
+ },
+ {
+  "id": 40,
+  "division_id": 6,
+  "name": "Narsingdi",
+  "name_bn": "নরসিংদী",
+  "pcode": "BD3068"
+ },
+ {
+  "id": 41,
+  "division_id": 6,
+  "name": "Gazipur",
+  "name_bn": "গাজীপুর",
+  "pcode": "BD3033"
+ },
+ {
+  "id": 42,
+  "division_id": 6,
+  "name": "Shariatpur",
+  "name_bn": "শরীয়তপুর",
+  "pcode": "BD3086"
+ },
+ {
+  "id": 43,
+  "division_id": 6,
+  "name": "Narayanganj",
+  "name_bn": "নারায়ণগঞ্জ",
+  "pcode": "BD3067"
+ },
+ {
+  "id": 44,
+  "division_id": 6,
+  "name": "Tangail",
+  "name_bn": "টাঙ্গাইল",
+  "pcode": "BD3093"
+ },
+ {
+  "id": 45,
+  "division_id": 6,
+  "name": "Kishoreganj",
+  "name_bn": "কিশোরগঞ্জ",
+  "pcode": "BD3048"
+ },
+ {
+  "id": 46,
+  "division_id": 6,
+  "name": "Manikganj",
+  "name_bn": "মানিকগঞ্জ",
+  "pcode": "BD3056"
+ },
+ {
+  "id": 47,
+  "division_id": 6,
+  "name": "Dhaka",
+  "name_bn": "ঢাকা",
+  "pcode": "BD3026"
+ },
+ {
+  "id": 48,
+  "division_id": 6,
+  "name": "Munshiganj",
+  "name_bn": "মুন্সিগঞ্জ",
+  "pcode": "BD3059"
+ },
+ {
+  "id": 49,
+  "division_id": 6,
+  "name": "Rajbari",
+  "name_bn": "রাজবাড়ী",
+  "pcode": "BD3082"
+ },
+ {
+  "id": 50,
+  "division_id": 6,
+  "name": "Madaripur",
+  "name_bn": "মাদারীপুর",
+  "pcode": "BD3054"
+ },
+ {
+  "id": 51,
+  "division_id": 6,
+  "name": "Gopalganj",
+  "name_bn": "গোপালগঞ্জ",
+  "pcode": "BD3035"
+ },
+ {
+  "id": 52,
+  "division_id": 6,
+  "name": "Faridpur",
+  "name_bn": "ফরিদপুর",
+  "pcode": "BD3029"
+ },
+ {
+  "id": 53,
+  "division_id": 7,
+  "name": "Panchagarh",
+  "name_bn": "পঞ্চগড়",
+  "pcode": "BD5577"
+ },
+ {
+  "id": 54,
+  "division_id": 7,
+  "name": "Dinajpur",
+  "name_bn": "দিনাজপুর",
+  "pcode": "BD5527"
+ },
+ {
+  "id": 55,
+  "division_id": 7,
+  "name": "Lalmonirhat",
+  "name_bn": "লালমনিরহাট",
+  "pcode": "BD5552"
+ },
+ {
+  "id": 56,
+  "division_id": 7,
+  "name": "Nilphamari",
+  "name_bn": "নীলফামারী",
+  "pcode": "BD5573"
+ },
+ {
+  "id": 57,
+  "division_id": 7,
+  "name": "Gaibandha",
+  "name_bn": "গাইবান্ধা",
+  "pcode": "BD5532"
+ },
+ {
+  "id": 58,
+  "division_id": 7,
+  "name": "Thakurgaon",
+  "name_bn": "ঠাকুরগাঁও",
+  "pcode": "BD5594"
+ },
+ {
+  "id": 59,
+  "division_id": 7,
+  "name": "Rangpur",
+  "name_bn": "রংপুর",
+  "pcode": "BD5585"
+ },
+ {
+  "id": 60,
+  "division_id": 7,
+  "name": "Kurigram",
+  "name_bn": "কুড়িগ্রাম",
+  "pcode": "BD5549"
+ },
+ {
+  "id": 61,
+  "division_id": 8,
+  "name": "Sherpur",
+  "name_bn": "শেরপুর",
+  "pcode": "BD4589"
+ },
+ {
+  "id": 62,
+  "division_id": 8,
+  "name": "Mymensingh",
+  "name_bn": "ময়মনসিংহ",
+  "pcode": "BD4561"
+ },
+ {
+  "id": 63,
+  "division_id": 8,
+  "name": "Jamalpur",
+  "name_bn": "জামালপুর",
+  "pcode": "BD4539"
+ },
+ {
+  "id": 64,
+  "division_id": 8,
+  "name": "Netrokona",
+  "name_bn": "নেত্রকোণা",
+  "pcode": "BD4572"
+ }
+]

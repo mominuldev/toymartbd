@@ -1,0 +1,50 @@
+[
+ {
+  "id": 1,
+  "name": "Chattagram",
+  "name_bn": "চট্টগ্রাম",
+  "pcode": "BD20"
+ },
+ {
+  "id": 2,
+  "name": "Rajshahi",
+  "name_bn": "রাজশাহী",
+  "pcode": "BD50"
+ },
+ {
+  "id": 3,
+  "name": "Khulna",
+  "name_bn": "খুলনা",
+  "pcode": "BD40"
+ },
+ {
+  "id": 4,
+  "name": "Barisal",
+  "name_bn": "বরিশাল",
+  "pcode": "BD10"
+ },
+ {
+  "id": 5,
+  "name": "Sylhet",
+  "name_bn": "সিলেট",
+  "pcode": "BD60"
+ },
+ {
+  "id": 6,
+  "name": "Dhaka",
+  "name_bn": "ঢাকা",
+  "pcode": "BD30"
+ },
+ {
+  "id": 7,
+  "name": "Rangpur",
+  "name_bn": "রংপুর",
+  "pcode": "BD55"
+ },
+ {
+  "id": 8,
+  "name": "Mymensingh",
+  "name_bn": "ময়মনসিংহ",
+  "pcode": "BD45"
+ }
+]

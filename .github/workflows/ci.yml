@@ -64,9 +64,14 @@ jobs:
         run: npm ci
       - name: Tokens are fresh and pass the contrast gate
         run: npm run check --workspace=@toymart/tokens
+      - name: API types match the committed OpenAPI spec
+        run: npm run api-types:generate && git diff --exit-code packages/api-types/src/schema.ts
       - name: Typecheck
         run: npm run typecheck
+      - name: Vitest (admin)
+        run: npm test
       - name: Build admin bundle
         run: npm run build
-      # ESLint is not wired yet: it needs a flat config plus typescript-eslint,
-      # which needs a lockfile update from a working npm (P3-SET-01 remainder).
+      # ESLint is not wired yet: typescript-eslint's support for the TypeScript 7
+      # native compiler is unverified. resources/js/admin/test/conventions.test.ts
+      # covers the two rules that matter most (no hardcoded strings, hex or px).

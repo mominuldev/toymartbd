@@ -22,6 +22,11 @@ enum ProblemType: string
     case ValidationError = 'validation-error';
     case TooManyRequests = 'too-many-requests';
     case ServiceUnavailable = 'service-unavailable';
+    /** Idempotency-Key (P3-API-03), statuses per draft-ietf-httpapi-idempotency-key-header. */
+    case IdempotencyKeyMissing = 'idempotency-key-missing';
+    case IdempotencyKeyInvalid = 'idempotency-key-invalid';
+    case IdempotencyKeyReused = 'idempotency-key-reused';
+    case RequestInProgress = 'request-in-progress';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -46,6 +51,9 @@ enum ProblemType: string
             self::ValidationError => 422,
             self::TooManyRequests => 429,
             self::ServiceUnavailable => 503,
+            self::IdempotencyKeyMissing, self::IdempotencyKeyInvalid => 400,
+            self::IdempotencyKeyReused => 422,
+            self::RequestInProgress => 409,
             self::ServerError, self::HttpError => 500,
         };
     }
@@ -63,6 +71,10 @@ enum ProblemType: string
             self::ValidationError => 'Validation failed',
             self::TooManyRequests => 'Too many requests',
             self::ServiceUnavailable => 'Service unavailable',
+            self::IdempotencyKeyMissing => 'Idempotency-Key required',
+            self::IdempotencyKeyInvalid => 'Idempotency-Key invalid',
+            self::IdempotencyKeyReused => 'Idempotency-Key reused',
+            self::RequestInProgress => 'Request in progress',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -82,6 +94,10 @@ enum ProblemType: string
             self::ValidationError => 'The given data was invalid.',
             self::TooManyRequests => 'Too many requests. Please wait before trying again.',
             self::ServiceUnavailable => 'The service is temporarily unavailable.',
+            self::IdempotencyKeyMissing => 'This endpoint requires an Idempotency-Key header.',
+            self::IdempotencyKeyInvalid => 'The Idempotency-Key must be 8 to 255 printable ASCII characters without spaces.',
+            self::IdempotencyKeyReused => 'This Idempotency-Key was already used with a different request.',
+            self::RequestInProgress => 'A request with this Idempotency-Key is still being processed. Retry shortly.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

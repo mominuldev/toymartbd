@@ -137,3 +137,18 @@ it('is called from DatabaseSeeder', function (): void {
 
     expect(Role::query()->count())->toBe(7);
 });
+
+it('seeds through DatabaseSeeder from empty tables (migrate:fresh --seed)', function (): void {
+    // Regression: DatabaseSeeder used WithoutModelEvents, which silenced the events spatie
+    // uses to refresh its permission cache, so syncPermissions() found nothing on a fresh
+    // database. Seeding the roles seeder on its own never showed it.
+    Role::query()->delete();
+    Permission::query()->delete();
+    $registrar = app(Spatie\Permission\PermissionRegistrar::class);
+    $registrar->forgetCachedPermissions();
+    $registrar->getPermissions();
+
+    $this->seed(Database\Seeders\DatabaseSeeder::class);
+
+    expect(Role::findByName('viewer', 'web')->permissions)->not->toBeEmpty();
+});
