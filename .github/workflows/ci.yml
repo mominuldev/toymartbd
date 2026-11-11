@@ -65,7 +65,7 @@ jobs:
       - name: Tokens are fresh and pass the contrast gate
         run: npm run check --workspace=@toymart/tokens
       - name: API types match the committed OpenAPI spec
-        run: npm run api-types:generate && git diff --exit-code packages/api-types/src/schema.ts
+        run: npm run api-types:generate && git diff --exit-code packages/api-types/src
       - name: Typecheck
         run: npm run typecheck
       - name: Vitest (admin)
@@ -75,3 +75,68 @@ jobs:
       # ESLint is not wired yet: typescript-eslint's support for the TypeScript 7
       # native compiler is unverified. resources/js/admin/test/conventions.test.ts
       # covers the two rules that matter most (no hardcoded strings, hex or px).
+
+  storefront:
+    name: Storefront — typecheck, unit, build, e2e (JS disabled)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: npm ci
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Typecheck
+        run: npm run typecheck:storefront
+      - name: Unit tests (revalidation HMAC, API client, i18n)
+        run: npm run test:storefront
+      - name: Build
+        run: npm run build:storefront
+      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles
+        env:
+          CI: '1'
+        run: npm run test:e2e:storefront
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-playwright-report
+          path: toymartbd-app/storefront/playwright-report
+
+  admin-e2e:
+    name: Admin E2E — login, brand create/edit/archive on the real app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Prepare .env
+        run: cp .env.example .env && php artisan key:generate
+      - name: npm ci
+        run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Build admin bundle
+        run: npm run build
+      - name: Playwright (admin)
+        env:
+          CI: '1'
+        run: npm run test:e2e:admin
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-playwright-report
+          path: e2e/admin/playwright-report

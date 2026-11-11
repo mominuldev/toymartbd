@@ -13,7 +13,7 @@ The business value is split roughly evenly between winning organic search traffi
 
 ## Current state
 
-**Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. Laravel 13 and the admin SPA are scaffolds — no domain code yet. Follow `docs/IMPLEMENTATION-PLAN.md` Phase 3.
+**Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. The foundation is built and tested end to end (auth, roles, i18n, API contract, observability, backups), with brands as the first full CRUD through admin, API and storefront. Follow `docs/IMPLEMENTATION-PLAN.md` Phase 3.
 
 ## Read before working
 
@@ -149,8 +149,17 @@ npm run api-types:generate      # regenerate types from the API's OpenAPI docume
 #   php artisan serve   → http://localhost:8000/admin
 #   npm run dev         → Vite HMR for the admin bundle
 
-# E2E — from the repo root
-npx playwright test
+# E2E — from the repo root (Playwright; Chromium via `npx playwright install chromium`)
+npm run build && npm run test:e2e:admin   # real Laravel app on a throwaway SQLite DB
+npm run test:e2e:storefront               # storefront against a mock API, JS disabled
+
+# Contract — after changing a FormRequest or Resource
+composer openapi:export                   # docs/api/openapi.json (a test fails when stale)
+npm run api-types:generate                # packages/api-types: TS types + Zod schemas
+
+# Ops
+php artisan toymart:backup && php artisan toymart:backup:restore-rehearsal
+php artisan toymart:storefront-token      # bearer token for the Next.js server
 ```
 
 ## Figma build rules

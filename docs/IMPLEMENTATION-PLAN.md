@@ -106,28 +106,32 @@ One repository, because the API and both frontends share a contract and must cha
 | P3-CI-03 | Automated encrypted backup to off-host storage **and a verified restore onto staging** | M | 02 | restore produces a working application — this is the acceptance criterion, not the backup itself |
 | P3-CI-04 | Sentry on all three apps, structured JSON logging, `X-Request-Id` propagated into queued jobs | M | 01 | a thrown error reaches Sentry with the request id attached |
 
-### Progress (updated 2026-11-11, batch 2)
+### Progress (updated 2026-11-11, batch 3)
 
-**Done, with passing tests** (290 PHP on SQLite, 291 on MySQL; 14 Vitest; PHPStan L6, Pint, deptrac clean):
+**Done, with passing tests** (394 PHP on SQLite, 395 on MySQL; 21 admin Vitest + 2 admin Playwright; 45 storefront unit + 16 storefront Playwright; PHPStan L6, Pint, deptrac clean):
 - Batch 1 (PR #2): P3-SET-01…04 · P3-SUP-01…04 · P3-I18N-01 · P3-DAT-01…02 · P3-API-01, 02, 04, 08 · P3-CI-01.
-- Batch 2: P3-DAT-03 (8 divisions, 64 districts, 495 upazilas with Bangla names and BBS/OCHA P-codes, sourced in `database/data/geo/SOURCE.md`) · P3-API-03 (`idempotent` middleware, cache-backed, 2xx replayed) · P3-API-05 (Sanctum cookie session for the admin, `toymart:storefront-token` with `storefront:read`) · P3-API-06 (`Policy` base, `UserPolicy`, `tests/Support/RoleMatrix.php` driven by `Role::permissions()`) · P3-API-07 (`dedoc/scramble` → `docs/api/openapi.json` → `packages/api-types`) · P3-ADM-01…03 (tokens in Tailwind, router, TanStack Query with global 401 handling, auth guard, login, AppShell with sidebar rail/drawer, EN|বাং, theme toggle) · P3-I18N-03 as a Vitest guard (no hardcoded JSX text, hex or px).
-- Verified end to end on the running app: CSRF cookie → login → `/me` → 403 for a viewer on `/staff` → logout; Bangla validation messages; the built admin in a browser at desktop and phone widths.
+- Batch 2 (PR #3): P3-DAT-03 · P3-API-03, 05, 06, 07 · P3-ADM-01…03 · P3-I18N-03 (as a Vitest guard).
+- Batch 3:
+  - **P3-ADM-04** — brands, the first real CRUD: `app/Domain/Catalog` (Actions own the transactions; `DELETE` archives, never deletes), admin endpoints with filter/sort allowlists and cursor pagination, storefront read endpoints behind the `storefront:read` token, admin list + form screens with client validation from **Zod generated off the OpenAPI spec** (`packages/api-types/scripts/zod.mjs`, rule 27), and a Playwright run on the real app: login → create → edit → archive, in English and Bangla.
+  - **P3-STO-01…04, P3-I18N-02** — Next.js 16 storefront: tokens + self-hosted fonts, English at `/` and Bangla at `/bn/` with no redirect (verified for Googlebot and Bangla browsers), hreflang both ways + `x-default`, server-only API client, signed `/api/revalidate` per `docs/api/revalidation.md`, ISR `/brands` and `/brands/[slug]`, and a test that no token or secret reaches a client bundle.
+  - **P3-CI-04** — request ids (propagated into queued jobs and problem bodies), JSON logs, phone/credential redaction on every log channel and in Sentry events, Sentry wired but off until `SENTRY_LARAVEL_DSN` is set.
+  - **P3-CI-03 (local part)** — `toymart:backup` (encrypted, manifest with row counts) and `toymart:backup:restore-rehearsal` (restores into a scratch DB and compares; passed 32/32 locally).
+- Verified on real services, not only in tests: storefront rendering the real API's brands in both locales, and an admin rename revalidating the cached storefront page through the signed hook.
 
-**Bug the tests had missed, found by running `migrate:fresh --seed`:** `DatabaseSeeder` used Laravel's default `WithoutModelEvents`, which silenced spatie's cache refresh and failed the first role sync on a fresh database. Fixed, with a regression test. The seeder also no longer creates a factory-password user outside `local`/`testing`.
+**Still open in Phase 3:**
+- **P3-CI-02 / P3-CI-03 acceptance** — staging deploy and a restore onto staging need a staging host and an off-host bucket (owner infra). See `docs/ops/backup-and-restore.md`.
+- **P3-DAT-04** — demo seeder beyond brands waits for the P4 catalog tables.
+- Gate 3 (storefront stack decision) can now be taken against a working Next.js skeleton.
 
-**Owner decisions needed:**
-- **Dhaka delivery zones.** Dhaka city (North/South City Corporations) is not an upazila, so no upazila is flagged "inside Dhaka metro"; Savar and Keraniganj are flagged "suburb". Decide how a city address is recognised (e.g. a thana/city-corporation level, or district Dhaka with no upazila) and whether any Narayanganj/Gazipur upazilas are "suburb". See `database/data/geo/dhaka-zones.json`.
-- Exact (`৳2,450.50`) or rounded (`৳2,451`) price display for customers.
+**Owner decisions needed** (in addition to Dhaka zones and price display from batch 2):
+- **Bangla font budget.** Anek Bangla's Bengali file is ~156 KB and Baloo Da 2's ~90 KB, over the 40 KB-per-file target in `UI-UX-DESIGN-SPEC.md` §3.2. They load only on pages with Bangla text. Options: fewer weights, a separate Bangla budget, or a lighter face.
+- **Fredoka has no 800 weight** (max 700), so Latin `display-1`, `display-2` and `price-lg` render at 700 while Bangla gets 800. Change the token weight to 700, or choose another display face.
 
 **Follow-ups:**
-- ESLint: blocked on typescript-eslint support for the TypeScript 7 native compiler; `conventions.test.ts` covers the key rules meanwhile.
-- Trusted proxies before the storefront ships (IP-keyed rate limits behind Next.js).
-- Problem titles are English; `lang/*/app.php` has `problems.*` keys ready.
-- Native-speaker review of `lang/bn/*` and the admin's Bangla strings (`resources/js/admin/i18n/messages.ts`).
-- One upazila pairing is unconfirmed (Zianagar → Indurkani, renamed) — `pcode-reconciliation.json`.
-- `users.locale` column for a per-staff language preference (the API already reads it if present).
-
-**Next:** P3-ADM-04 (one real CRUD screen — brands, needs the brands table from P4-CAT, or staff management on the existing endpoint) · P3-STO-01…04 (Next.js storefront skeleton) · P3-DAT-04 (demo seeder, after P4 catalog tables) · P3-CI-02…04 (staging deploy, backup + restore, Sentry).
+- Storefront 404 pages render their localized message only with JavaScript (Next 16.4 limitation; status 404 + `noindex` are correct without it).
+- Sentry SDKs for the storefront and admin; the storefront should forward `X-Request-Id`; `request_id` in the OpenAPI problem schema; `last_backup_at` on `/health`; backup heartbeat; binlog shipping for the 1-hour RPO.
+- Slug history / 301s for renamed brands (`TODO(P4-SEO)`; `BrandChanged` carries the old slug).
+- Earlier: ESLint (TS 7 support), trusted proxies, translated problem titles, native-speaker review of all Bangla strings, `users.locale`.
 
 **Phase 3 exit:** clone → one command → working stack with Bangla seed data · login with roles · OpenAPI published and types generated · CI green · staging deploying · a restore performed successfully. Then **Gate 3** — the storefront stack decision.
 
