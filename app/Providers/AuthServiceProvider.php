@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Catalog\Models\Brand;
 use App\Models\Enums\Role;
 use App\Models\User;
+use App\Policies\BrandPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     private const array POLICIES = [
         User::class => UserPolicy::class,
+        Brand::class => BrandPolicy::class,
     ];
 
     /**

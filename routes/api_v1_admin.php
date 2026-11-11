@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Admin\BrandController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Middleware\EnsureActiveStaffSession;
 use Illuminate\Support\Facades\Route;
@@ -35,4 +36,11 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+
+    // Catalog. DELETE archives (a brand is never hard-deleted; products reference it).
+    Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
+    Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
+    Route::get('/brands/{brand}', [BrandController::class, 'show'])->name('brands.show');
+    Route::patch('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
+    Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
 });

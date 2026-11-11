@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => 'owner@toymart.test'],
                 User::factory()->raw(['name' => 'Local Owner', 'email' => 'owner@toymart.test']),
             )->assignRole(Role::SuperAdmin->value);
+            $this->call(CatalogDemoSeeder::class);
         }
     }
 }
