@@ -88,7 +88,7 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium  # browser only: the runner image already has its system libraries, and apt mirrors are not always reachable
       - name: Typecheck
         run: npm run typecheck:storefront
       - name: Unit tests (revalidation HMAC, API client, i18n)
@@ -127,7 +127,7 @@ jobs:
       - name: npm ci
         run: npm ci
       - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium  # browser only: the runner image already has its system libraries, and apt mirrors are not always reachable
       - name: Build admin bundle
         run: npm run build
       - name: Playwright (admin)
