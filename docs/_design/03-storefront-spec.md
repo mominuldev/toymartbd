@@ -1601,3 +1601,17 @@ Audit finding: SK Toy states three different free-delivery thresholds, Krystal's
 - Set the PDP to an undiscounted, out-of-stock, single-variant product and confirm the price block is still exactly 96 tall and the delivery estimator is still exactly 132.
 
 **Open items that need the owner, not the lead:** the real hotline number (09610-123456 is a placeholder shape, not a confirmed line), the trade-licence number in the footer, confirmation that Steadfast and Pathao are the launch couriers, and whether Bangla UI ships at launch or as a fast follow — this document specifies both locales as real variants, which is the more expensive but safer assumption.
+
+---
+
+## B10. Customer account ("user dashboard") — built 2026-11-11
+
+Playful storefront language (pill buttons, Fredoka headings, pastel tiles), phone + SMS OTP as the identity, guest checkout always available. English shown; every string goes through i18n like the rest of the store.
+
+**Components (page 03, section `08 Account`):** `AccountNavItem` `236:2112` (Default / Active) · `AccountOrderCard` `236:2302` (Processing · On the way · Delivered · Cancelled — status is a pastel pill with icon + words; actions follow the stage: track while moving, buy again / rate after delivery) · `AddressCard` `236:2384` (Default / Other — label tag, name + phone, address, landmark, delivery charge and speed for that area) · `RewardsCard` `236:2385` (Bloom gradient: tier, points, worth in ৳, store credit).
+
+**Mobile (page 05):** Sign in `237:9273` (phone → SMS code; Google and email as alternatives; "just want to buy? check out as a guest") · Verify code `237:9412` (6 boxes, resend timer, voice-call fallback after 3 tries — never WhatsApp OTP) · Account home `237:9503` (greeting, 6 pastel quick tiles, active order, rewards, toys picked by child age) · My orders `237:9782` · Order detail `237:10066` (live status with "pay now by bKash", OrderTimeline, items + totals, address, invoice / return / WhatsApp help) · Addresses `238:10058` (division → district → upazila → area + landmark; charge and speed shown before saving) · Wishlist `238:10450` (back-in-stock alert, share with family on WhatsApp) · Rewards `238:10775` (earn rules, tiers, points history) · Profile `238:10951` (details, kids' first names + birthdays, language, WhatsApp/SMS preferences, sign out, delete account).
+
+**Desktop (page 06):** 280px account menu + content — Home `239:11547`, My orders `239:12108`, Order detail `239:12698`, Wishlist `239:13228`, Profile `239:13856`.
+
+Rules carried in: points are earned on delivered orders only; OTP stays on SMS (rule 32b); phone numbers and prices keep Western digits (rule 36); a cancelled-but-paid order says "refund sent" or "refund pending", never silence.

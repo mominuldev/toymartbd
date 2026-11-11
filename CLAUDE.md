@@ -13,7 +13,7 @@ The business value is split roughly evenly between winning organic search traffi
 
 ## Current state
 
-**Planning phase. No application code exists yet.** `docs/` holds the research and plan. Do not begin implementation until the owner has approved `docs/DEVELOPMENT-ROADMAP.md`.
+**Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. Laravel 13 and the admin SPA are scaffolds — no domain code yet. Follow `docs/IMPLEMENTATION-PLAN.md` Phase 3.
 
 ## Read before working
 
@@ -23,7 +23,8 @@ The business value is split roughly evenly between winning organic search traffi
 | What to build and for whom | `docs/PRODUCT-REQUIREMENTS.md` |
 | How the system fits together | `docs/SYSTEM-ARCHITECTURE.md` |
 | Schema, transactions, invariants | `docs/DATABASE-DESIGN.md` |
-| Tokens, components, screens | `docs/UI-UX-DESIGN-SPEC.md` |
+| Tokens, components, screens | `docs/UI-UX-DESIGN-SPEC.md` (§9 maps Figma components to React files) · `packages/tokens/README.md` |
+| Admin screen checklist + Figma node ids | `docs/_design/06-admin-feature-checklist.md` |
 | Phases, estimates, gates | `docs/DEVELOPMENT-ROADMAP.md` |
 | Task-level breakdown | `docs/IMPLEMENTATION-PLAN.md` |
 | Market, payments, couriers, legal | `docs/_research/` |
@@ -163,7 +164,7 @@ These are mechanical and non-obvious; each one cost a rework pass.
 5. **Font loads do not persist across calls.** Reload every face in every script that writes text, or the write fails with "unloaded font".
 6. **Figma rejects `.` in a variable name.** The spacing half-step is `space/0-5`; its CSS custom property stays `--space-0-5`.
 7. **`lineHeight` cannot be variable-bound.** A bound FLOAT is read as **pixels**, so a 160 meant as a percentage renders as a 160px line-height. Set `lineHeight` explicitly as a PERCENT. `fontSize`, `letterSpacing` and `fontFamily` bind correctly.
-8. **Elevation and motion cannot be variables.** Elevation is effect styles (`Elevation/Light/e1`–`e4`, `Elevation/Dark/e1`–`e4`, `Focus/ring`); motion is documentation plus the code token file.
+8. **Elevation and motion cannot be variables.** Elevation is effect styles (`Elevation/Light`, `Elevation/Dark`, `Elevation/Neutral` (Admin Light), `Elevation/Admin Dark` — each `e1`–`e4` — and `Focus/ring`); motion is documentation plus the code token file.
 9. **Screenshot a section, not the whole page.** A 9,000px page renders to an unreadable thumbnail and proves nothing.
 10. **`resize()` resets BOTH sizing modes to FIXED.** Resize first, then set `primaryAxisSizingMode`/`counterAxisSizingMode`. Getting this backwards locked every Button to its min-width and clipped the label — which would have truncated every Bangla string in the system.
 11. **A component property has one default across the whole set and overrides per-variant content.** Where content differs per variant (Badge labels, Badge icons), keep it per-variant and do NOT bind a property. A nested instance stays swappable without one.
@@ -171,7 +172,10 @@ These are mechanical and non-obvious; each one cost a rework pass.
 13. **`addComponentProperty` with `INSTANCE_SWAP` takes the component node id, not its key.**
 14. **An instance child's transform cannot be overridden.** Render a "pressed" state by resizing a child, not moving it.
 15. **Icons are Phosphor (filled paths), not Lucide (strokes).** Colour them with FILLS. Fetch path data from `@phosphor-icons/core`; never hand-write it. Component children need `constraints: SCALE` or instances crop instead of scaling.
+16. **Tokens leave Figma only through the export.** After any variable, effect-style or admin text-style change, re-export into `packages/tokens/src/figma-variables.json`, run `npm run tokens:build`, and commit the diff. Never edit `packages/tokens/dist/` by hand. Add a new colour mode to `THEMES` in `scripts/build.mjs`.
 
 ## Known gaps
 
-The owner has not yet answered the open questions in `SYSTEM-ARCHITECTURE.md` §15 and `PRODUCT-REQUIREMENTS.md`. The Figma file supplied on 2026-11-07 is empty — see `UI-UX-DESIGN-SPEC.md` §1. Both block Phase 2, not Phases 1 or 3.
+The owner has not yet answered the open questions in `SYSTEM-ARCHITECTURE.md` §15 and `PRODUCT-REQUIREMENTS.md`, nor Gate 1 decisions 3, 5 and 7 (`DEVELOPMENT-ROADMAP.md` §8: team, payment gateway, stock model). Designs still carry placeholder business values (delivery charges, hotline, licence/BIN, merchant numbers, loyalty rates) — `UI-UX-DESIGN-SPEC.md` §10. None of these block Phase 3.
+
+**Local toolchain:** on the lead's machine Homebrew `node` fails to start (missing `libsimdjson.33.dylib`; fix with `brew reinstall simdjson node`). Until fixed, npm, Vite and tsc cannot run, and the token build was run under macOS JavaScriptCore. Say so rather than claiming a frontend build passed.

@@ -36,12 +36,12 @@ A **15% contingency** is already included in each phase total. It is not optiona
 P1 Research ──────────────┐
                           ├──▶ P3 Foundation ──▶ P4 Core commerce ──┬──▶ P6 Courier & risk ──┐
 P2 Design system ─────────┘                          │               │                        │
-   (blocked on Figma)                                ├──▶ P5 Inventory & ops ────────────────┤
+   (✅ complete 2026-11-11)                          ├──▶ P5 Inventory & ops ────────────────┤
                                                       │                                        ├──▶ P8 Reporting ──▶ P9 Testing ──▶ P10 Launch
                                                       └──▶ P7 CMS, SEO & marketing ───────────┘
 ```
 
-P5, P6 and P7 are largely independent of each other and can run in parallel across developers. P8 needs all three. **P2 is on the critical path for everything customer-facing and is currently blocked** — see the gate below.
+P5, P6 and P7 are largely independent of each other and can run in parallel across developers. P8 needs all three. P2 was on the critical path for everything customer-facing; it completed and was signed off on 2026-11-11.
 
 ---
 
@@ -57,13 +57,15 @@ P5, P6 and P7 are largely independent of each other and can run in parallel acro
 
 **Completion criteria.** Every claim about a competitor or an external API is either sourced or explicitly marked unverified · MVP boundary agreed by the owner · roadmap approved.
 
-> ⛔ **Gate 1 — owner approval of this roadmap and the MVP boundary.** Nothing in Phase 3 onward starts until this is signed off.
+> ✅ **Gate 1 — owner approval of this roadmap and the MVP boundary.** Cleared 2026-11-11: the owner instructed development to start. Decisions 3, 5 and 7 in §8 are still open and do not block Phase 3; they are tracked there.
 
 ---
 
-### Phase 2 — UI/UX & Design System · 28 dev-days (designer-led) · ⛔ BLOCKED
+### Phase 2 — UI/UX & Design System · 28 dev-days (designer-led) · ✅ complete 2026-11-11
 
-**Blocker.** The supplied Figma file is empty — one page, zero nodes, no styles, no variables. See `UI-UX-DESIGN-SPEC.md` §1. The owner must either share the correct file, approve the written specification as the direction, or supply reference material.
+**Outcome.** The empty Figma file was built out from the written specification (`UI-UX-DESIGN-SPEC.md` §0): foundations as variables with four colour modes (storefront Light/Dark, Admin Light/Dark), the primitive, storefront and admin component libraries, storefront mobile + desktop screens including the customer account area, 41 admin screens with 1024/768 responsive, dark-mode and Bangla variants, and an alternate admin theme (Theme B — slate & indigo, dark sidebar) that the owner adopted. Tokens are exported to `packages/tokens` and built into Tailwind; the component inventory is mapped to React paths in `UI-UX-DESIGN-SPEC.md` §9.
+
+**Not done in Phase 2, carried forward:** clickable prototypes of the three flows (the static screens cover every step; prototype wiring is low value now that code is starting) · a 320px / 200%-zoom reflow check, which moves to the Playwright accessibility suite in Phase 9 · real values for the placeholders listed in `UI-UX-DESIGN-SPEC.md` §10.
 
 **Objective.** A published Figma library and every MVP screen designed, so that frontend work is assembly rather than invention.
 
@@ -81,7 +83,7 @@ P5, P6 and P7 are largely independent of each other and can run in parallel acro
 **Testing.** Contrast audit of every token pair against WCAG 2.2 AA · touch-target audit · 320px and 200%-zoom reflow check · design review against the brief's brand adjectives.
 **Completion criteria.** No screen contains a hardcoded hex or raw rectangle · every Tier 1 and Tier 2 component exists as a component set · tokens exported and committed · owner sign-off.
 
-> ⛔ **Gate 2 — design sign-off.** Storefront and admin UI work cannot start on unapproved designs without guaranteeing rework.
+> ✅ **Gate 2 — design sign-off.** Signed off by the owner on 2026-11-11 (admin: Theme B). Later design changes go through Figma first, then a token re-export.
 
 ---
 
@@ -334,7 +336,7 @@ Phase 5 and Phase 7 sit off the critical path and should be assigned to the seco
 
 | # | Risk | L | I | Mitigation | Owner |
 |---|---|---|---|---|---|
-| R1 | **Figma empty — Phase 2 blocked** | Certain | High | Resolve at Gate 1 by choosing one of the three options in `UI-UX-DESIGN-SPEC.md` §1 | Business owner |
+| R1 | ~~Figma empty — Phase 2 blocked~~ **Closed 2026-11-11** — design built and signed off | — | — | — | — |
 | R2 | Payment-gateway onboarding delays launch | High | High | Begin in week 1; build COD-complete so the store can launch COD-only if needed | Owner + lead |
 | R3 | Three-app complexity exceeds team capacity | High | High | Honest assessment at Gate 3; Plan B is Laravel Blade + Livewire with everything else unchanged | Lead |
 | R4 | Courier API behaviour differs from documentation | High | Medium | Gateway abstraction, raw payload retention, reconciliation poll, manual consignment entry as fallback | Lead |
@@ -369,9 +371,9 @@ If the budget or timeline must shrink, cut in this order — last listed is cut 
 ## 8. Decisions Needed at Gate 1
 
 1. Approve or amend the MVP boundary in §4.
-2. Resolve the empty Figma file (three options in `UI-UX-DESIGN-SPEC.md` §1).
+2. ~~Resolve the empty Figma file~~ — resolved: design built and approved 2026-11-11.
 3. Confirm the team: who are the developers and the designer, and at what availability? Every estimate here depends on it.
-4. Bangla UI at launch, or Phase 2?
+4. ~~Bangla UI at launch, or Phase 2?~~ — resolved 2026-11-08: at launch (storefront), and 2026-11-11: admin too.
 5. Confirm the payment gateway and start merchant onboarding this week.
-6. Confirm whether Pathao and Steadfast merchant accounts already exist.
+6. ~~Confirm whether Pathao and Steadfast merchant accounts already exist.~~ — answered 2026-11-08: neither exists yet (CLAUDE.md rule 33a).
 7. Answer the open questions in `SYSTEM-ARCHITECTURE.md` §15 — especially whether the business holds its own stock, and who will operate the admin daily.

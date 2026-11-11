@@ -1,28 +1,45 @@
 @import "tailwindcss";
 
 /*
- * Design tokens come from @toymart/tokens, which is generated from the Figma
- * library — see packages/tokens/README.md. Until that build exists, this file
- * holds no colour values of its own on purpose: a hardcoded hex here is a defect,
- * because it means a token is missing.
- *
- * Bangla and Latin need different line-heights at the same size, so the .lang-bn
- * class carries the Bangla adjustment. Never set one global line-height for both.
+ * Design tokens come from @toymart/tokens, generated from the Figma library
+ * (packages/tokens/README.md). This file holds no colour, size or font value of
+ * its own: a hardcoded value here is a defect, because it means a token is missing.
+ * tailwind.css also removes Tailwind's default palette, so only semantic utilities
+ * (bg-surface, text-fg-primary, border-line-default …) compile.
  */
+@import "../../packages/tokens/dist/tokens.css";
+@import "../../packages/tokens/dist/tailwind.css";
 
-@theme {
-    --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-    --font-bangla: "Anek Bangla", "Noto Sans Bengali UI", sans-serif;
-    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-}
+@source "../js/admin";
 
-:root {
-    color-scheme: light dark;
-}
+@layer base {
+    body {
+        background-color: var(--tm-color-bg-canvas);
+        color: var(--tm-color-text-primary);
+        font-family: var(--tm-font-latin);
+    }
 
-.lang-bn {
-    font-family: var(--font-bangla);
-    line-height: 1.15em;
+    /* Bangla needs its own family and ~1.15× line-height (rule 38). The .t-* type
+       classes carry the exact Bangla line-heights; this covers untyped text only.
+       Never one global line-height for both scripts. */
+    :lang(bn),
+    .lang-bn {
+        font-family: var(--tm-font-bangla);
+    }
+
+    :focus-visible {
+        outline: none;
+        box-shadow: var(--tm-focus-ring);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
 
 /* Tabular figures wherever digits line up in a column — every admin table,
