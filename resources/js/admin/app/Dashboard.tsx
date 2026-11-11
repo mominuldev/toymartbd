@@ -17,18 +17,18 @@ export function Dashboard() {
 
     return (
         <section className="space-y-4">
-            <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-            <p className="max-w-prose text-sm text-neutral-600 dark:text-neutral-400">
+            <h1 className="t-admin-page-title">Dashboard</h1>
+            <p className="t-admin-body max-w-prose text-fg-secondary">
                 Scaffold only. Screens are built from the specifications in{' '}
-                <code className="font-mono text-xs">docs/_design/</code> once the Figma
-                library is published.
+                <code className="t-admin-mono-sm">docs/_design/</code> and Figma
+                page 07 (Theme B).
             </p>
-            <div className="rounded-md border border-neutral-200 p-4 text-sm dark:border-neutral-800">
-                <p className="font-medium">API connectivity</p>
-                {isPending && <p className="text-neutral-500">Checking…</p>}
-                {error && <p className="text-red-600">{(error as Error).message}</p>}
+            <div className="t-admin-body rounded-md border border-line-default bg-surface p-4 shadow-e1">
+                <p className="t-admin-body-strong">API connectivity</p>
+                {isPending && <p className="text-fg-tertiary">Checking…</p>}
+                {error && <p className="text-feedback-danger">{(error as Error).message}</p>}
                 {data && (
-                    <p className="font-mono text-xs text-green-700 dark:text-green-400">
+                    <p className="t-admin-mono-sm text-feedback-success">
                         /api/v1/admin/ping → audience: {data.audience}
                     </p>
                 )}

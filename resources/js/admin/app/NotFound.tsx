@@ -3,11 +3,11 @@ import { Link } from 'react-router';
 export function NotFound() {
     return (
         <section className="space-y-3">
-            <h1 className="text-xl font-bold tracking-tight">Page not found</h1>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <h1 className="t-admin-page-title">Page not found</h1>
+            <p className="t-admin-body text-fg-secondary">
                 That admin page does not exist.
             </p>
-            <Link to="/" className="text-sm font-medium underline">
+            <Link to="/" className="t-admin-body-strong text-fg-link underline">
                 Back to dashboard
             </Link>
         </section>

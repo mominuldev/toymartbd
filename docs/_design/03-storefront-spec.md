@@ -1320,6 +1320,37 @@ Route `/track`. No login. Two fields: order number + the **last 4 digits of the 
 | 7 | Help | `TrustStrip Theme=Plain` + `হোয়াটসঅ্যাপে সাহায্য` / `Help on WhatsApp` | |
 | Refresh | Status polls every 60 s while the tab is visible; a changed step animates in and announces via `aria-live="polite"`. The timestamp of the last refresh is a `caption` under the timeline: `সর্বশেষ আপডেট: ২:১৪ অপরাহ্ণ` / `Last updated 2:14 pm` |
 
+### B7.3 As built in Figma (2026-11-11)
+
+- **1440** (node `161:16502`): two columns, not the 640 centred stack above. Main = order status card + `OrderTimeline` + a **Delivery details** card (deliver to · payment · courier). Rail 440 = lookup form + items + WhatsApp help card. All cards use 24 padding.
+- **Help card icon:** WhatsApp glyph is `color/text/on-brand` on a 44px (40 on 390) circle of `color/feedback/success`. The earlier light-green outline on `color/bg/brand-subtle` measured **1.63:1** and failed the 3:1 non-text minimum.
+
+---
+
+## B8. Utility pages — 404, Contact us, Privacy policy (as built 2026-11-11)
+
+Each exists at 390 (page 05) and 1440 (page 06), reusing the shared header, footer and mobile nav.
+
+| Page | 390 node | 1440 node | Structure |
+|---|---|---|---|
+| Search results (1440) | — | `161:15289` | Cloned from Category listing: related-search chips replace sub-categories; zero-results `EmptyState` + "Popular right now" row below |
+| 404 | `163:17451` | `163:9166` | `Gradient/Bloom-candy` hero with the "4 · ball · 4" illustration (four-hue ball = the §1 diamond motif's colours: `bg/brand`, `bg/accent`, `bg/teal`, `bg/grape`), copy from content spec C.7, `SearchBar`, `Go to the home page` + `Browse all toys`, then category tiles and a best-sellers row so the page is a working entry point |
+| Contact us | `167:7500` | `165:9657` | `Gradient/Bloom-sky` hero with live status + chat-bubble illustration · 4 pastel channel tiles (WhatsApp, call, email, visit) · message form (name, mobile, topic `Select`, optional order number, message) · visit card with hours · quick-help links |
+| Privacy policy | `168:7799` | `166:9992` | `Gradient/Bloom-mint` header · 1440: sticky "On this page" list (300) + article; 390: `NativeSelect` "Jump to a section" · "The short version" butter card · 8 numbered sections · privacy-contact card |
+| Terms of use | `175:9146` | `173:11315` | Same template as Privacy, `Gradient/Bloom-sky` header, sky "short version", 8 sections ending in governing law (Bangladesh) |
+| 500 | `173:19350` | `169:10286` | **No illustration, no gradient** (primitives spec §29): plain surface card, copy from content spec C.8, success-subtle reassurance list (no money taken · cart safe · placed orders unaffected), `Try again` + `Call 09610-123456` |
+| Maintenance | `173:19641` | `169:10575` | No site chrome (the shop is offline): wordmark, card with `page.maintenance.*` copy, `Call` + `Chat on WhatsApp`, address line |
+| About us | `174:8244` | `170:10502` | `Gradient/Bloom-sunrise` hero with a sticker-style product-photo collage · 4 promise tiles (age-checked, 7-day returns, COD, nationwide) · "What we believe" numbered values · candy visit band |
+| Common questions (FAQ) | `174:8582` | `171:10747` | `Gradient/Bloom-sky` header with question search · 1440: topic list (300) with counts; 390: `Chip` row · `Accordion/Item Boxed` groups (Orders, Delivery…) · mint "Still need help?" WhatsApp band |
+| Returns and refunds | `175:8763` | `172:11075` | `Gradient/Bloom-candy` header · 3 pastel "How it works" steps · "We take back" / "We cannot take back" cards · refund-timing table · butter "Something not right?" band |
+
+- **৳ in body copy:** Hanken Grotesk has no taka glyph, so it renders blank. Set the ৳ character alone to **Fredoka Medium** (prices already use Fredoka) wherever ৳ sits in running text.
+- Audit 2026-11-11: 256 desktop + 196 mobile text layers and every icon badge on these screens pass contrast.
+- **Open with the owner (utility pages):** FAQ answers beyond the two expanded ones, the "cannot take back" list and the refund timings are drafts; refund timing is pending legal confirmation (PRD §7 item 9c). About-page promises use only claims already in the specs.
+
+- Channel-tile links are `color/text/primary` + underline: `color/text/link` on `color/bg/tile-lavender` measured **4.15:1** and failed.
+- **Open with the owner:** privacy text is a plain-language draft that needs legal review before launch; WhatsApp `01712-345678`, the shop address and hours, `privacy@toymartbd.com` and the map are placeholders. The hotline differs between `05-content-and-assets-spec.md` (`09600-123456`) and the built footer (`09610-123456`); the new pages follow the footer until the owner confirms.
+
 ---
 
 # PART C — Real content
@@ -1570,3 +1601,17 @@ Audit finding: SK Toy states three different free-delivery thresholds, Krystal's
 - Set the PDP to an undiscounted, out-of-stock, single-variant product and confirm the price block is still exactly 96 tall and the delivery estimator is still exactly 132.
 
 **Open items that need the owner, not the lead:** the real hotline number (09610-123456 is a placeholder shape, not a confirmed line), the trade-licence number in the footer, confirmation that Steadfast and Pathao are the launch couriers, and whether Bangla UI ships at launch or as a fast follow — this document specifies both locales as real variants, which is the more expensive but safer assumption.
+
+---
+
+## B10. Customer account ("user dashboard") — built 2026-11-11
+
+Playful storefront language (pill buttons, Fredoka headings, pastel tiles), phone + SMS OTP as the identity, guest checkout always available. English shown; every string goes through i18n like the rest of the store.
+
+**Components (page 03, section `08 Account`):** `AccountNavItem` `236:2112` (Default / Active) · `AccountOrderCard` `236:2302` (Processing · On the way · Delivered · Cancelled — status is a pastel pill with icon + words; actions follow the stage: track while moving, buy again / rate after delivery) · `AddressCard` `236:2384` (Default / Other — label tag, name + phone, address, landmark, delivery charge and speed for that area) · `RewardsCard` `236:2385` (Bloom gradient: tier, points, worth in ৳, store credit).
+
+**Mobile (page 05):** Sign in `237:9273` (phone → SMS code; Google and email as alternatives; "just want to buy? check out as a guest") · Verify code `237:9412` (6 boxes, resend timer, voice-call fallback after 3 tries — never WhatsApp OTP) · Account home `237:9503` (greeting, 6 pastel quick tiles, active order, rewards, toys picked by child age) · My orders `237:9782` · Order detail `237:10066` (live status with "pay now by bKash", OrderTimeline, items + totals, address, invoice / return / WhatsApp help) · Addresses `238:10058` (division → district → upazila → area + landmark; charge and speed shown before saving) · Wishlist `238:10450` (back-in-stock alert, share with family on WhatsApp) · Rewards `238:10775` (earn rules, tiers, points history) · Profile `238:10951` (details, kids' first names + birthdays, language, WhatsApp/SMS preferences, sign out, delete account).
+
+**Desktop (page 06):** 280px account menu + content — Home `239:11547`, My orders `239:12108`, Order detail `239:12698`, Wishlist `239:13228`, Profile `239:13856`.
+
+Rules carried in: points are earned on delivered orders only; OTP stays on SMS (rule 32b); phone numbers and prices keep Western digits (rule 36); a cancelled-but-paid order says "refund sent" or "refund pending", never silence.
