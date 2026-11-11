@@ -12,6 +12,16 @@
   --radius-xl: 28px;
   --radius-2xl: 40px;
   --radius-full: calc(infinity * 1px);
+  --radius-sm-plus: 12px;
+  --radius-md-minus: 14px;
+  --radius-md-plus: 18px;
+  --radius-lg-plus: 24px;
+  --radius-xl-plus: 32px;
+  --radius-3xl: 48px;
+  --radius-3xs: 3px;
+  --radius-2xs: 4px;
+  --radius-xs-plus: 8px;
+  --radius-xl-minus: 22px;
   --breakpoint-sm: 30rem;
   --breakpoint-md: 48rem;
   --breakpoint-lg: 64rem;
@@ -93,11 +103,40 @@
   --color-feedback-warning: var(--tm-color-feedback-warning);
   --color-feedback-danger: var(--tm-color-feedback-danger);
   --color-feedback-info: var(--tm-color-feedback-info);
+  --color-deco-coral: var(--tm-color-deco-coral);
+  --color-deco-sun: var(--tm-color-deco-sun);
+  --color-deco-sky: var(--tm-color-deco-sky);
+  --color-deco-pink: var(--tm-color-deco-pink);
+  --color-deco-mint: var(--tm-color-deco-mint);
+  --color-deco-grape: var(--tm-color-deco-grape);
+  --color-deco-blob-pink: var(--tm-color-deco-blob-pink);
+  --color-deco-blob-butter: var(--tm-color-deco-blob-butter);
+  --color-deco-blob-mint: var(--tm-color-deco-blob-mint);
+  --color-deco-blob-sky: var(--tm-color-deco-blob-sky);
+  --color-deco-blob-lavender: var(--tm-color-deco-blob-lavender);
+  --color-fg-ink-pink: var(--tm-color-text-ink-pink);
+  --color-fg-ink-butter: var(--tm-color-text-ink-butter);
+  --color-fg-ink-mint: var(--tm-color-text-ink-mint);
+  --color-fg-ink-sky: var(--tm-color-text-ink-sky);
+  --color-fg-ink-coral: var(--tm-color-text-ink-coral);
+  --color-swatch-teal: var(--tm-color-swatch-teal);
+  --color-swatch-pink: var(--tm-color-swatch-pink);
+  --color-image: var(--tm-color-bg-image);
   --shadow-e1: var(--tm-elevation-e1);
   --shadow-e2: var(--tm-elevation-e2);
   --shadow-e3: var(--tm-elevation-e3);
   --shadow-e4: var(--tm-elevation-e4);
   --shadow-focus: var(--tm-focus-ring);
+  --shadow-gloss-button: var(--tm-effect-gloss-button);
+  --shadow-gloss-button-hover: var(--tm-effect-gloss-button-hover);
+  --shadow-glow-violet: var(--tm-effect-glow-violet);
+  --shadow-glow-tile-pink: var(--tm-effect-glow-tile-pink);
+  --shadow-glow-tile-butter: var(--tm-effect-glow-tile-butter);
+  --shadow-glow-tile-mint: var(--tm-effect-glow-tile-mint);
+  --shadow-glow-tile-sky: var(--tm-effect-glow-tile-sky);
+  --shadow-glow-tile-lavender: var(--tm-effect-glow-tile-lavender);
+  --shadow-up-nav: var(--tm-effect-up-nav);
+  --shadow-up-footer: var(--tm-effect-up-footer);
   --font-sans: var(--tm-font-latin);
   --font-bangla: var(--tm-font-bangla);
   --font-display-latin: var(--tm-font-display-latin);
@@ -112,3 +151,1598 @@
    sidebar) inside a light page resolves correctly. Tokens already switch per theme;
    reach for dark: only for non-colour differences. */
 @custom-variant dark (&:where([data-theme$="dark"], [data-theme$="dark"] *));
+
+/* Text styles, one utility per Figma text style (see scripts/build.mjs). Mobile size first, desktop
+   size from lg; Bangla twin under :lang(bn) / .lang-bn. Variants work: t-display-2 lg:t-display-1. */
+@utility t-display-1 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1.06;
+  letter-spacing: -1.14px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 800;
+    font-size: 2rem;
+    line-height: 1.22;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 3.25rem;
+    line-height: 1.06;
+    letter-spacing: -1.14px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 800;
+      font-size: 3.25rem;
+      line-height: 1.22;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-display-2 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.625rem;
+  line-height: 1.12;
+  letter-spacing: -0.72px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 800;
+    font-size: 1.625rem;
+    line-height: 1.29;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 2.5rem;
+    line-height: 1.12;
+    letter-spacing: -0.72px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 800;
+      font-size: 2.5rem;
+      line-height: 1.29;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-h1 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.18;
+  letter-spacing: -0.48px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1.36;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 2.125rem;
+    line-height: 1.18;
+    letter-spacing: -0.48px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 700;
+      font-size: 2.125rem;
+      line-height: 1.36;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-h2 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.27px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.44;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 1.6875rem;
+    line-height: 1.25;
+    letter-spacing: -0.27px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 700;
+      font-size: 1.6875rem;
+      line-height: 1.44;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-h3 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  letter-spacing: -0.13px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 600;
+    font-size: 1.3125rem;
+    line-height: 1.3;
+    letter-spacing: -0.13px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 600;
+      font-size: 1.3125rem;
+      line-height: 1.5;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-h4 {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.55;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 600;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    letter-spacing: 0px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 600;
+      font-size: 1.125rem;
+      line-height: 1.55;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-body-lg {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.84;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-latin);
+    font-weight: 400;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    letter-spacing: 0px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-bangla);
+      font-weight: 400;
+      font-size: 1.125rem;
+      line-height: 1.84;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-body {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 400;
+    font-size: 0.9375rem;
+    line-height: 1.84;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-latin);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-bangla);
+      font-weight: 400;
+      font-size: 1rem;
+      line-height: 1.84;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-body-sm {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.73;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-caption {
+  font-family: var(--tm-font-latin);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.06px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.61;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-overline {
+  font-family: var(--tm-font-latin);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0.99px;
+  text-transform: uppercase;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.24px;
+    text-transform: none;
+  }
+}
+
+@utility t-price-lg {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.36px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.32;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    letter-spacing: -0.36px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 800;
+      font-size: 1.875rem;
+      line-height: 1.32;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-price {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  letter-spacing: -0.14px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    line-height: 1.44;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 1.125rem;
+    line-height: 1.25;
+    letter-spacing: -0.14px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 700;
+      font-size: 1.125rem;
+      line-height: 1.44;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-price-was {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.44;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-button {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  letter-spacing: 0.03px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.38;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.2;
+    letter-spacing: 0.03px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 600;
+      font-size: 1rem;
+      line-height: 1.38;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-label {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  letter-spacing: 0.05px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-button-small {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.03px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.73;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-badge {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.12px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.61;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-price-current-compact {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  letter-spacing: -0.11px;
+}
+
+@utility t-price-current-card {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  letter-spacing: -0.14px;
+}
+
+@utility t-price-current-pdp {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.29px;
+}
+
+@utility t-price-symbol-compact {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-symbol-card {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-symbol-pdp {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: 0px;
+}
+
+@utility t-price-was-compact {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price--was {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-wassymbol-compact {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-wassymbol {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-discount-compact {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-price-discount {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-chip {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.73;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-field-label {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.73;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-body-strong {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.84;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-latin);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-bangla);
+      font-weight: 600;
+      font-size: 1rem;
+      line-height: 1.84;
+      letter-spacing: 0px;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-stepper-value {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.3;
+  letter-spacing: 0px;
+}
+
+@utility t-avatar-initials-xs {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1.15;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-avatar-initials-sm {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 0.875rem;
+    line-height: 1.15;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-avatar-initials-md {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.15;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-avatar-initials-lg {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.375rem;
+    line-height: 1.15;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-avatar-initials-xl {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.875rem;
+    line-height: 1.15;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-rating-numeric-md {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-rating-numeric-lg {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-rating-count-sm {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-tabs-label-active {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-accordion-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+}
+
+@utility t-accordion-title-expanded {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+}
+
+@utility t-breadcrumb-current {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-pagination-page {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-pagination-page-current {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-alert-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-modal-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  letter-spacing: 0em;
+}
+
+@utility t-popover-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+}
+
+@utility t-progressbar-label {
+  font-family: var(--tm-font-latin);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-progressbar-value {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-emptystate-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  letter-spacing: 0em;
+}
+
+@utility t-stepper-number {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-stepper-label {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-stepper-label-current {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-stepper-description {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-caption-strong {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.61;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-body-sm-strong {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.73;
+    letter-spacing: 0px;
+    text-transform: none;
+  }
+}
+
+@utility t-card-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1.3125rem;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.72;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 500;
+    font-size: 1.0625rem;
+    line-height: 1.5rem;
+    letter-spacing: 0em;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 500;
+      font-size: 1rem;
+      line-height: 1.72;
+      letter-spacing: 0em;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-admin-page-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.38;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-display {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 600;
+    font-size: 2rem;
+    line-height: 1.32;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-section {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-body-lg {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.72;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-body {
+  font-family: var(--tm-font-latin);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.72;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-body-strong {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.72;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-num {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-num-lg {
+  font-family: var(--tm-font-latin);
+  font-weight: 700;
+  font-size: 1.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility t-admin-num-xl {
+  font-family: var(--tm-font-latin);
+  font-weight: 800;
+  font-size: 2.125rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+@utility t-admin-caption {
+  font-family: var(--tm-font-latin);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-caption-strong {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-overline {
+  font-family: var(--tm-font-latin);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-button {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.38;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-button-sm {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.38;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-mono {
+  font-family: var(--tm-font-mono);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-mono-sm {
+  font-family: var(--tm-font-mono);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-wordmark-sm {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: normal;
+  letter-spacing: 0em;
+}
+
+@utility t-wordmark-md {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: normal;
+  letter-spacing: 0em;
+}
+
+@utility t-wordmark-tag-sm {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  line-height: normal;
+  letter-spacing: 0em;
+}
+
+@utility t-wordmark-tag-md {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  line-height: normal;
+  letter-spacing: 0em;
+}
+
+@utility t-logotype {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 6rem;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 18.75rem;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+  }
+}
+
+@utility t-error-digit {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 8.75rem;
+  line-height: 1;
+  letter-spacing: -1.14px;
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 16.25rem;
+    line-height: 1;
+    letter-spacing: -1.14px;
+  }
+}
+
+@utility t-feature-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  letter-spacing: -0.27px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    line-height: 1.44;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 1.375rem;
+    line-height: 1.25;
+    letter-spacing: -0.27px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 700;
+      font-size: 1.375rem;
+      line-height: 1.44;
+      letter-spacing: 0em;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-channel-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.25;
+  letter-spacing: -0.27px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.125rem;
+    line-height: 1.44;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+  @media (min-width: 64rem) {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    font-size: 1.375rem;
+    line-height: 1.25;
+    letter-spacing: -0.27px;
+    &:where(:lang(bn), .lang-bn, .lang-bn *) {
+      font-family: var(--tm-font-display-bangla);
+      font-weight: 700;
+      font-size: 1.375rem;
+      line-height: 1.44;
+      letter-spacing: 0em;
+      text-transform: none;
+    }
+  }
+}
+
+@utility t-admin-currency-num {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-currency-caption {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-currency-num-lg {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility t-admin-currency-label {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-currency-body-lg {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-currency-section {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-currency-chat {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.65;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-badge {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: normal;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.61;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-num-md {
+  font-family: var(--tm-font-latin);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility t-admin-card-title {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 1.1875rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 1.1875rem;
+    line-height: 1.55;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-admin-mono-display {
+  font-family: var(--tm-font-mono);
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-mono-section {
+  font-family: var(--tm-font-mono);
+  font-weight: 500;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-mono-input {
+  font-family: var(--tm-font-mono);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-detail-label {
+  font-family: var(--tm-font-latin);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.61;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-callout-title {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  letter-spacing: -0.27px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-display-bangla);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1.44;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-badge-sticker {
+  font-family: var(--tm-font-latin);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  letter-spacing: 0px;
+  &:where(:lang(bn), .lang-bn, .lang-bn *) {
+    font-family: var(--tm-font-bangla);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.84;
+    letter-spacing: 0em;
+    text-transform: none;
+  }
+}
+
+@utility t-currency-body-strong {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0px;
+}
+
+@utility t-currency-caption-strong {
+  font-family: var(--tm-font-display-latin);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.06px;
+}
+
+@utility t-admin-bn-amount {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-amount-lg {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 1.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility t-admin-bn-amount-xl {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 2.125rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+@utility t-admin-bn-amount-sm {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-kpi {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 1.625rem;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+@utility t-admin-bn-helper {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-body-compact {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-inline {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-body-strong-compact {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-inline-button-sm {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-inline-body-lg {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-page-title-compact {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-section-compact {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-meta {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-chat {
+  font-family: var(--tm-font-bangla);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.65;
+  letter-spacing: 0em;
+}
+
+@utility t-admin-bn-inline-strong {
+  font-family: var(--tm-font-bangla);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-bn-inline-caption-strong {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.06px;
+}
+
+@utility t-bn-inline-body-sm-strong {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0em;
+}
+
+@utility t-bn-inline-label {
+  font-family: var(--tm-font-bangla);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  letter-spacing: 0.05px;
+}
