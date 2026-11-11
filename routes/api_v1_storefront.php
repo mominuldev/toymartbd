@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
+use App\Http\Controllers\Api\V1\Storefront\CategoryController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
@@ -28,4 +29,7 @@ Route::get('/ping', fn () => ['ok' => true, 'audience' => 'storefront'])->name('
 Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
     Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
     Route::get('/brands/{slug}', [BrandController::class, 'show'])->name('brands.show');
+    // `tree` before `{slug}`: "tree" is a reserved category slug.
+    Route::get('/categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
+    Route::get('/categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
 });

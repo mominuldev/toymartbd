@@ -6,9 +6,10 @@ const tabs: { to: string; label: MessageKey; end?: boolean }[] = [
     { to: '/products', label: 'catalog.tab.products', end: true },
     { to: '/products/categories', label: 'catalog.tab.categories' },
     { to: '/products/brands', label: 'catalog.tab.brands' },
+    { to: '/products/attributes', label: 'catalog.tab.attributes' },
 ];
 
-/** Products section tabs (06-admin-feature-checklist §1: Products · Categories · Brands …). Figma AdminTab 185:125. */
+/** Products section tabs (06-admin-feature-checklist §1: Products · Categories · Brands · Attributes …). Figma AdminTab 185:125. */
 export function CatalogLayout() {
     const { t } = useI18n();
 

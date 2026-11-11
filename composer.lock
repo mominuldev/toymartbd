@@ -1795,7 +1795,8 @@
                 "issues": "https://github.com/lazychaser/laravel-nestedset/issues",
                 "source": "https://github.com/lazychaser/laravel-nestedset/tree/v7.0.0"
             },
-            "time": "2026-04-11T13:45:58+00:00"
+            "time": "2026-04-11T13:45:58+00:00",
+            "published-time": "2026-04-11T13:00:05+00:00"
         },
         {
             "name": "laravel/framework",
