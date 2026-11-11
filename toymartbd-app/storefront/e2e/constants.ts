@@ -1,0 +1,9 @@
+// Fake credentials for the E2E build. They are deliberately distinctive so the bundle test can
+// prove they never reach .next-e2e/static (CLAUDE.md rule 28).
+export const MOCK_API_PORT = 4010;
+export const STOREFRONT_PORT = 3100;
+export const MOCK_API_URL = `http://127.0.0.1:${MOCK_API_PORT}`;
+export const STOREFRONT_URL = `http://127.0.0.1:${STOREFRONT_PORT}`;
+export const FAKE_TOKEN = 'e2e-fake-storefront-token-7Qx9Lm2Vp4';
+export const FAKE_REVALIDATE_SECRET = 'e2e-fake-revalidate-secret-3Hk8Zr6Wn1';
+export const E2E_DIST_DIR = '.next-e2e';

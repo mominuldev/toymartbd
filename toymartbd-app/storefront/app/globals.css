@@ -1,0 +1,41 @@
+@import "tailwindcss" source("../");
+@import "@toymart/tokens/css";
+@import "@toymart/tokens/tailwind.css";
+
+/* next/font exposes --font-*; point the token font variables at them so every .t-* class and
+   font-* utility uses the self-hosted files and their size-adjusted fallbacks (no CLS). */
+:root {
+    --tm-font-latin: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+    --tm-font-display-latin: var(--font-fredoka), var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+    --tm-font-bangla: var(--font-anek-bangla), "Noto Sans Bengali UI", sans-serif;
+    --tm-font-display-bangla: var(--font-baloo-da-2), var(--font-anek-bangla), "Noto Sans Bengali UI", sans-serif;
+}
+
+@layer base {
+    body {
+        background-color: var(--tm-color-bg-canvas);
+        color: var(--tm-color-text-primary);
+        font-family: var(--tm-font-latin);
+    }
+
+    :lang(bn) body,
+    body:lang(bn) {
+        font-family: var(--tm-font-bangla);
+    }
+
+    /* Visible focus on every interactive element (UI-UX spec §7). The transparent outline keeps a
+       ring in Windows forced-colours mode, where box-shadow is dropped. */
+    :focus-visible {
+        outline: var(--tm-border-width-strong) solid transparent;
+        box-shadow: var(--tm-focus-ring);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            transition-duration: 0s !important;
+            animation-duration: 0s !important;
+        }
+    }
+}
