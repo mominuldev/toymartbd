@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Builds the design tokens from the Figma export in src/figma-variables.json.
 //
-//   dist/tokens.css     runtime custom properties (--tm-*), one block per theme, plus type classes
-//   dist/tailwind.css   Tailwind v4 @theme mapping utilities onto the runtime properties
+//   dist/tokens.css     runtime custom properties (--tm-*), one block per theme
+//   dist/tailwind.css   Tailwind v4 @theme mapping utilities onto the runtime properties, plus the
+//                       t-* type utilities (@utility) generated from the Figma text styles
 //   dist/tokens.json    every colour resolved to hex, per theme
 //   src/generated.ts    typed token names for TypeScript
 //
@@ -101,13 +102,21 @@ for (const [k, f] of Object.entries(fam)) {
 for (const [k, ms] of Object.entries(src.motion.duration)) staticVars.push(`--tm-duration-${k}: ${ms}ms;`);
 for (const [k, e] of Object.entries(src.motion.easing)) staticVars.push(`--tm-ease-${k}: ${e};`);
 for (const [k, [a, b]] of Object.entries(src.gradients)) staticVars.push(`--tm-gradient-${k}: linear-gradient(135deg, ${a} 0%, ${b} 100%);`);
+
+const shadow = (layers) => layers
+  .map(([inset, x, y, blur, spread, hex]) => `${inset ? 'inset ' : ''}${x}px ${y}px ${blur}px ${spread}px ${cssColor(hex)}`)
+  .join(', ');
+
+// Effect styles other than Elevation/* are theme-independent in Figma: Gloss/Button → --tm-effect-gloss-button,
+// Glow/Tile-pink → --tm-effect-glow-tile-pink, Shadow/Up-nav → --tm-effect-up-nav. Focus/ring stays the
+// theme-aware --tm-focus-ring below (it rings the current surface colour).
+const effectName = (name) => name.replace(/^Shadow\//, '').toLowerCase().replaceAll('/', '-');
+const effects = Object.entries(src.effects).filter(([n]) => !n.startsWith('$') && n !== 'Focus/ring');
+for (const [n, layers] of effects) staticVars.push(`--tm-effect-${effectName(n)}: ${shadow(layers)};`);
 css.push(`:root {\n  ${staticVars.join('\n  ')}\n}`);
 
 // One block per theme. Themes nest: the admin sidebar sets data-theme="admin-dark"
 // inside an admin-light page, which works because every value is set directly here.
-const shadow = (layers) => layers
-  .map(([inset, x, y, blur, spread, hex]) => `${inset ? 'inset ' : ''}${x}px ${y}px ${blur}px ${spread}px ${cssColor(hex)}`)
-  .join(', ');
 
 color.modes.forEach((mode, i) => {
   const theme = THEMES.find(([m]) => m === mode)?.[1];
@@ -130,38 +139,96 @@ color.modes.forEach((mode, i) => {
   }
 });
 
-// ---------- type classes ----------
-// Bangla twins apply under :lang(bn) or .lang-bn (CLAUDE.md rule 38) — never one
-// global line-height for both scripts.
-const bnSel = (cls) => `.${cls}:lang(bn), .lang-bn .${cls}, .${cls}.lang-bn`;
-const typeRule = ([family, weight, size, lh, tracking, upper], trackingUnit) => [
-  `font-family: var(--tm-font-${family});`,
-  `font-weight: ${weight};`,
-  `font-size: ${rem(size)};`,
-  `line-height: ${pct(lh)};`,
-  `letter-spacing: ${trackingUnit === '%' ? `${pct(tracking)}em` : `${tracking}px`};`,
-  ...(upper ? ['text-transform: uppercase;'] : []),
-].join(' ');
-
-const typeCss = [];
-for (const [name, spec] of Object.entries(src.adminText.en)) {
-  typeCss.push(`.t-admin-${name} { ${typeRule(spec, '%')} }`);
-  const bn = src.adminText.bn[name];
-  if (bn) typeCss.push(`${bnSel(`t-admin-${name}`)} { ${typeRule(bn, '%')} text-transform: none; }`);
+// ---------- type utilities (from the Figma text styles) ----------
+// Emitted into tailwind.css as Tailwind v4 @utility, so variants work: `t-display-2 lg:t-display-1`.
+//   Latin/Mobile/X + Latin/Desktop/X   → t-X (mobile size, desktop size from lg)
+//   Latin/<Group>/Mobile|Desktop       → t-<group> (same, e.g. Latin/Logotype/* → t-logotype)
+//   Latin/<Path>                       → t-<path> (Latin/Price/Current-Card → t-price-current-card)
+//   Admin/X                            → t-admin-X
+// Each has its Bangla twin (Bangla/…, Admin/bn/…) under :lang(bn) or .lang-bn (CLAUDE.md rule 38) —
+// never one global line-height for both scripts. The twin selector sits in :where() so it keeps the
+// utility's own specificity: a `font-semibold` next to `t-body-sm` still wins, as it did when these
+// were component classes.
+const familyKey = Object.fromEntries(Object.entries(fam).map(([k, f]) => [f, k]));
+const styles = Object.fromEntries(Object.entries(src.textStyles).filter(([n]) => !n.startsWith('$')));
+const cssLh = (lh) => (lh === 'auto' ? 'normal' : lh.endsWith('px') ? rem(parseFloat(lh)) : `${pct(parseFloat(lh))}`);
+const cssLs = (ls) => (ls.endsWith('%') ? `${+(parseFloat(ls) / 100).toFixed(4)}em` : `${parseFloat(ls)}px`);
+const decls = ([family, weight, size, lh, ls, upper], bangla) => {
+  const key = familyKey[family];
+  if (!key) throw new Error(`Text style family ${family} is not a font/family variable`);
+  return [
+    `font-family: var(--tm-font-${key});`,
+    `font-weight: ${weight};`,
+    `font-size: ${rem(size)};`,
+    `line-height: ${cssLh(lh)};`,
+    `letter-spacing: ${cssLs(ls)};`,
+    ...(bangla ? ['text-transform: none;'] : upper ? ['text-transform: uppercase;'] : []),
+  ];
+};
+const typeUtilities = []; // [utility, { base, bn, desk, deskBn }]
+const seen = new Set();
+const addType = (util, base, desk, bn, deskBn) => {
+  if (seen.has(util)) throw new Error(`Two text styles map to ${util}`);
+  seen.add(util);
+  // A missing Bangla desktop twin keeps the Bangla mobile metrics at the Latin desktop size.
+  if (desk && bn && !deskBn) deskBn = [bn[0], bn[1], desk[2], bn[3], bn[4], bn[5]];
+  typeUtilities.push([util, { base, bn, desk, deskBn }]);
+};
+for (const [name, spec] of Object.entries(styles)) {
+  let m;
+  if ((m = name.match(/^Latin\/Mobile\/(.+)$/))) {
+    addType(`t-${m[1]}`, spec, styles[`Latin/Desktop/${m[1]}`], styles[`Bangla/Mobile/${m[1]}`], styles[`Bangla/Desktop/${m[1]}`]);
+  } else if ((m = name.match(/^Latin\/Desktop\/(.+)$/))) {
+    if (!styles[`Latin/Mobile/${m[1]}`]) addType(`t-${m[1]}`, spec, null, styles[`Bangla/Desktop/${m[1]}`], null);
+  } else if ((m = name.match(/^Latin\/(.+)\/Mobile$/))) {
+    addType(`t-${m[1].toLowerCase().replaceAll('/', '-')}`, spec, styles[`Latin/${m[1]}/Desktop`], styles[`Bangla/${m[1]}/Mobile`], styles[`Bangla/${m[1]}/Desktop`]);
+  } else if ((m = name.match(/^Latin\/(.+)\/Desktop$/))) {
+    if (!styles[`Latin/${m[1]}/Mobile`]) addType(`t-${m[1].toLowerCase().replaceAll('/', '-')}`, spec, null, styles[`Bangla/${m[1]}/Desktop`], null);
+  } else if ((m = name.match(/^Latin\/(.+)$/))) {
+    // A component style that would shadow a scale style (Latin/Price/Was vs Latin/Mobile/price-was)
+    // keeps a double dash between group and leaf: t-price--was.
+    let util = `t-${m[1].toLowerCase().replaceAll('/', '-')}`;
+    if (styles[`Latin/Mobile/${util.slice(2)}`] || styles[`Latin/Desktop/${util.slice(2)}`]) util = `t-${m[1].toLowerCase().replace('/', '--').replaceAll('/', '-')}`;
+    addType(util, spec, null, styles[`Bangla/${m[1]}`], null);
+  } else if ((m = name.match(/^Admin\/(?!bn\/)(.+)$/))) {
+    addType(`t-admin-${m[1].replaceAll('/', '-')}`, spec, null, styles[`Admin/bn/${m[1]}`], null);
+  }
 }
-const typo = src.collections.Typography;
+// Bangla styles with no Latin counterpart (Bangla/Inline/*, Admin/bn/amount …) are utilities of their
+// own: Bangla/Inline/label → t-bn-inline-label, Admin/bn/amount → t-admin-bn-amount.
+const twinOf = (name) => {
+  let m;
+  if ((m = name.match(/^Bangla\/(Mobile|Desktop)\/(.+)$/))) return [`Latin/${m[1]}/${m[2]}`, `Latin/${m[1] === 'Mobile' ? 'Desktop' : 'Mobile'}/${m[2]}`];
+  if ((m = name.match(/^Bangla\/(.+)\/(Mobile|Desktop)$/))) return [`Latin/${m[1]}/${m[2]}`];
+  if ((m = name.match(/^Bangla\/(.+)$/))) return [`Latin/${m[1]}`];
+  if ((m = name.match(/^Admin\/bn\/(.+)$/))) return [`Admin/${m[1]}`];
+  return null;
+};
+for (const [name, spec] of Object.entries(styles)) {
+  const twins = twinOf(name);
+  if (!twins || twins.some((t) => styles[t])) continue;
+  const util = name.startsWith('Admin/bn/') ? `t-admin-bn-${name.slice(9)}` : `t-bn-${name.slice(7)}`;
+  addType(util.toLowerCase().replaceAll('/', '-'), spec, null, null, null);
+}
 const desktopQuery = `@media (min-width: ${rem(src.breakpoints.lg)})`;
-const desktop = [];
-for (const [name, [mob, desk, wl, wb, lhl, lhb, tr]] of Object.entries(typo.scale)) {
-  const display = typo.display.includes(name);
-  const upper = name === 'overline';
-  typeCss.push(`.t-${name} { ${typeRule([display ? 'display-latin' : 'latin', wl, mob, lhl, tr, upper], 'px')} }`);
-  typeCss.push(`${bnSel(`t-${name}`)} { ${typeRule([display ? 'display-bangla' : 'bangla', wb, name === 'overline' ? 12 : mob, lhb, 0, false], 'px')} text-transform: none; }`);
-  // The Bangla selector outranks the bare class, so it must be listed here too.
-  if (desk !== mob) desktop.push(`.t-${name}, ${bnSel(`t-${name}`)} { font-size: ${rem(desk)}; }`);
-}
-typeCss.push(`${desktopQuery} {\n  ${desktop.join('\n  ')}\n}`);
-css.push(`@layer components {\n${typeCss.join('\n')}\n}`);
+const BN = '&:where(:lang(bn), .lang-bn, .lang-bn *)';
+const block = (lines, indent) => lines.map((l) => `${' '.repeat(indent)}${l}`).join('\n');
+const typeCss = typeUtilities.map(([util, { base, bn, desk, deskBn }]) => {
+  const out = [`@utility ${util} {`, block(decls(base), 2)];
+  if (bn) out.push(`  ${BN} {`, block(decls(bn, true), 4), '  }');
+  const same = (a, b) => (a && decls(a).join()) === (b && decls(b).join());
+  const deskDiffers = desk && !same(desk, base);
+  const deskBnDiffers = deskBn && !same(deskBn, bn);
+  if (deskDiffers || deskBnDiffers) {
+    out.push(`  ${desktopQuery} {`);
+    // The Latin desktop rule comes after the Bangla twin, so the twin is repeated after it.
+    if (deskDiffers) out.push(block(decls(desk), 4));
+    if (deskBn && (deskDiffers || deskBnDiffers)) out.push(`    ${BN} {`, block(decls(deskBn, true), 6), '    }');
+    out.push('  }');
+  }
+  out.push('}');
+  return out.join('\n');
+});
 
 // ---------- Tailwind v4 theme ----------
 // bg/* → bg-canvas, bg-brand …   text/* → text-fg-primary …   border/* → border-line-default …
@@ -177,6 +244,7 @@ const twInline = [
   ...Object.keys(color.vars).map((n) => `${twColor(n)}: var(--tm-${slug(n)});`),
   ...Object.keys(src.elevation.Light).map((k) => `--shadow-${k}: var(--tm-elevation-${k});`),
   '--shadow-focus: var(--tm-focus-ring);',
+  ...effects.map(([n]) => `--shadow-${effectName(n)}: var(--tm-effect-${effectName(n)});`),
   ...Object.keys(fam).map((k) => `--font-${k === 'latin' ? 'sans' : k}: var(--tm-font-${k});`),
   ...Object.keys(src.motion.easing).map((k) => `--ease-${k}: var(--tm-ease-${k});`),
 ];
@@ -204,12 +272,20 @@ const tailwind = `${header}/* Import after "tailwindcss" and @toymart/tokens/css
    sidebar) inside a light page resolves correctly. Tokens already switch per theme;
    reach for dark: only for non-colour differences. */
 @custom-variant dark (&:where([data-theme$="dark"], [data-theme$="dark"] *));
+
+/* Text styles, one utility per Figma text style (see scripts/build.mjs). Mobile size first, desktop
+   size from lg; Bangla twin under :lang(bn) / .lang-bn. Variants work: t-display-2 lg:t-display-1. */
+${typeCss.join('\n\n')}
 `;
 
 // ---------- TypeScript names ----------
 const ts = `// Generated by packages/tokens/scripts/build.mjs. Do not edit.
 export const colorTokens = ${JSON.stringify(Object.keys(color.vars), null, 2)} as const;
 export type ColorToken = (typeof colorTokens)[number];
+export const radiusTokens = ${JSON.stringify(Object.keys(src.collections.Radius))} as const;
+export const effectTokens = ${JSON.stringify(effects.map(([n]) => effectName(n)))} as const;
+export const typeUtilities = ${JSON.stringify(typeUtilities.map(([u]) => u))} as const;
+export type TypeUtility = (typeof typeUtilities)[number];
 export const resolvedColors: Record<'light' | 'dark' | 'admin-light' | 'admin-dark', Record<ColorToken, string>> = ${JSON.stringify(resolved, null, 2)};
 `;
 

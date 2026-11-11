@@ -145,7 +145,7 @@ Primitive ramps (the raw palette) are separated from semantic tokens (what the U
 | Mono (admin ids, SKUs, consignment numbers) | **JetBrains Mono** | ui-monospace | |
 | Numerals / price | the family of the style, with `.tabular` (`font-variant-numeric: tabular-nums`) | — | Prices and admin tables must align in columns |
 
-Bangla needs ~1.15× the line-height of Latin at the same size for ascender/descender clearance — matra above, conjunct descenders below. In code every `.t-*` type class carries its own Bangla twin under `:lang(bn)` / `.lang-bn`; never set one global line-height for both scripts.
+Bangla needs ~1.15× the line-height of Latin at the same size for ascender/descender clearance — matra above, conjunct descenders below. In code every `t-*` type utility carries its own Bangla twin under `:lang(bn)` / `.lang-bn`; never set one global line-height for both scripts.
 
 > **Bangla face changed 2026-11-08, on the owner's instruction, from Hind Siliguri to Anek Bangla.** Three reasons, and one caveat.
 >
@@ -155,7 +155,7 @@ Bangla needs ~1.15× the line-height of Latin at the same size for ascender/desc
 >
 > **Caveat, stated plainly:** Anek Bangla is newer and less battle-tested in Bangladesh than Hind Siliguri, SolaimanLipi or Kalpurush. **A native Bangla reader must confirm conjunct rendering (যুক্তাক্ষর) and matra positioning at 15px on a real mid-range Android before launch.** If that check fails, the fallback is **Noto Sans Bengali UI** — 12 weights, tighter UI vertical metrics, exhaustive coverage — which is a font-family token change, not a redesign. Neither SolaimanLipi nor Kalpurush is available in Figma or on Google Fonts, so neither is a candidate for this system.
 
-**Storefront type scale** (Figma `Typography` collection → `.t-*` classes; desktop size applies from `lg` 1024px)
+**Storefront type scale** (Figma `Typography` collection and text styles → `t-*` Tailwind utilities; desktop size applies from `lg` 1024px; where Figma switches style per breakpoint, write it as a variant: `t-display-2 lg:t-display-1`)
 
 | Token | Mobile | Desktop | Weight | Line height Latin / Bangla | Tracking | Family | Use |
 |---|---|---|---|---|---|---|---|
@@ -186,7 +186,7 @@ Minimum body size on mobile is 15px. Product titles on cards clamp to two lines;
 
 **Spacing** — 4px base: `0, 1=4, 2=8, 3=12, 4=16, 5=20, 6=24, 8=32, 10=40, 12=48, 16=64, 20=80, 24=96`. Section vertical rhythm: 48px mobile, 80px desktop. Page gutter: 16px mobile, 24px tablet, 32px desktop, max content width 1280px.
 
-**Radius** — `none=0, xs=6, sm=10, md=16, lg=20, xl=28, 2xl=40, full=9999` (Figma `Radius`; Tailwind `rounded-*`). Buttons `full` on the storefront (the single strongest playful signal, at zero cost to usability) and squarer in the admin, where pill buttons read as unserious. Exact per-component radii are bound in Figma.
+**Radius** — `none=0, 3xs=3, 2xs=4, xs=6, xs-plus=8, sm=10, sm-plus=12, md-minus=14, md=16, md-plus=18, lg=20, xl-minus=22, lg-plus=24, xl=28, xl-plus=32, 2xl=40, 3xl=48, full=9999` (Figma `Radius`; Tailwind `rounded-*`). The in-between steps were added on 2026-11-11/12 to bind radii the approved frames already used as raw values (footer panel 32/48, heroes 24/32, sticker photos, social faces, TOC items, admin thumbnails 8, chat bubbles 22, chart bars 3/4). A radius at least half the shorter side binds to `full`. Buttons `full` on the storefront (the single strongest playful signal, at zero cost to usability) and squarer in the admin, where pill buttons read as unserious. Exact per-component radii are bound in Figma.
 
 **Elevation** — four levels, as effect styles per mode (Tailwind `shadow-e1`…`e4`, switching with the theme):
 - `Elevation/Light` — a neutral ink layer plus a coral-tinted layer, because neutral-grey shadows look cheap against a saturated palette.
@@ -194,7 +194,11 @@ Minimum body size on mobile is 15px. Product titles on cards clamp to two lines;
 - `Elevation/Neutral` — slate-tinted, used by Admin Light (Theme B).
 - `Focus/ring` — 2px surface gap + 2px `color/border/focus` (`shadow-focus`, applied on `:focus-visible`).
 
-**Size tokens** — controls `sm 36 · md 44 · lg 52`, touch minimum 44, icons 16/20/24 and 48 for category tiles; border widths hairline 1, control 1.5, strong 2.
+**Size tokens** — controls `sm 36 · md 44 · lg 52`, touch minimum 44, icons 16/20/24 and 48 for category tiles; border widths hairline 1, control 1.5, strong 2, rim 3 (CategoryTile).
+
+**Other effect styles** — `Gloss/Button` (primary button inset top gloss), `Glow/Violet`, `Glow/Tile-{pink,butter,mint,sky,lavender}` (CategoryTile lift), `Shadow/Up-nav` (MobileNav, AddToCartBar) and `Shadow/Up-footer` (Footer panel). Theme-independent; Tailwind `shadow-gloss-button`, `shadow-glow-tile-pink`, `shadow-up-nav` …
+
+**Decorative inks** — `color/deco/*` (coral, sun, sky, pink, mint, grape and the `blob-*` tints) for the footer rainbow strip, logotype letters, tile corner blobs and the online dot. Aliases of palette primitives in every mode; never used for text on a background, so not in the contrast gate.
 
 **Motion** — `fast=120ms`, `base=200ms`, `slow=320ms`; easing `standard cubic-bezier(.2,0,0,1)`, `decelerate cubic-bezier(0,0,.2,1)`, `spring cubic-bezier(.34,1.56,.64,1)` reserved for add-to-cart confirmation only. Everything respects `prefers-reduced-motion`. No carousel auto-advances — auto-advancing heroes measurably hurt conversion and accessibility.
 
@@ -335,10 +339,10 @@ Means: AVIF with WebP fallback via `next/image`, explicit dimensions everywhere,
 
 **Token pipeline.**
 ```
-Figma variables + effect/text styles
+Figma variables + text/effect/paint styles
    └─ export (use_figma, read-only)  →  packages/tokens/src/figma-variables.json   ← committed snapshot
-        └─ npm run tokens:build      →  dist/tokens.css     --tm-* per data-theme, .t-* type classes
-                                        dist/tailwind.css   @theme: bg-surface, text-fg-primary, border-line-default …
+        └─ npm run tokens:build      →  dist/tokens.css     --tm-* per data-theme
+                                        dist/tailwind.css   @theme: bg-surface, text-fg-primary, border-line-default …; t-* @utility per text style
                                         dist/tokens.json    resolved hex per theme (tests, charts)
                                         src/generated.ts    ColorToken union, cssVar()
 ```
@@ -356,15 +360,16 @@ CI runs `npm run check --workspace=@toymart/tokens`, which fails if any output i
 | AdminInput 184:338 · AdminSelect 184:369 · SearchField 185:28 · AdminField 185:151 | `components/ui/Input.tsx` · `Select.tsx` · `SearchField.tsx` · `Field.tsx` |
 | CountBadge 185:43 · StatusChip 185:79 · Tag 185:92 | `components/ui/CountBadge.tsx` · `StatusChip.tsx` · `Tag.tsx` |
 | SegmentedControl 185:110 · AdminTab 185:125 | `components/ui/SegmentedControl.tsx` · `Tabs.tsx` |
-| ConfirmDialog 203:1387 · AdminToast 203:2315 · AdminEmptyState 203:1531 | `components/ui/ConfirmDialog.tsx` · `Toast.tsx` · `EmptyState.tsx` |
+| ConfirmDialog 203:1387 · AdminToast 203:2315 · AdminEmptyState 203:1531 · Kbd 185:26 · Avatar 52:483 | `components/ui/ConfirmDialog.tsx` · `Toast.tsx` · `EmptyState.tsx` · `Kbd.tsx` · `components/shell/Avatar.tsx` |
 | SidebarItem 187:91 · Sidebar 187:473 · Topbar 187:474 · Topbar/Tablet 228:1857 · ContentHeader 187:530 | `components/shell/SidebarItem.tsx` · `Sidebar.tsx` · `Topbar.tsx` · `ContentHeader.tsx` → composed in `app/Shell.tsx` |
-| DataTable 192:532 · OrderCard 228:1891 (≤768 row card) · BulkActionBar 193:740 · DateRangePicker 193:741 | `components/data/DataTable.tsx` · `features/orders/components/OrderCard.tsx` · `components/data/BulkActionBar.tsx` · `components/data/DateRangePicker.tsx` |
+| DataTable 192:532 · OrderCard 228:1891 (≤768 row card) · BulkActionBar 193:740 · DateRangePicker 193:741 | `components/ui/DataTable.tsx` (shared table classes + footer) · `features/orders/components/OrderCard.tsx` · `components/data/BulkActionBar.tsx` · `components/data/DateRangePicker.tsx` |
 | StatCard 189:360 · ChartCards 189:361 / 406 / 437 / 483 | `features/dashboard/components/StatCard.tsx` · `ChartCard.tsx` |
 | OrderStatusBadge 190:384 · RiskPill 190:405 · PaymentChip 190:441 · OrderStatusStepper 194:683 | `features/orders/components/…` (same names) |
 | ShipmentTrackingTimeline 194:835 · CourierProviderCard 194:1014 · CourierBookingPanel 196:743 | `features/courier/components/…` |
 | RiskScoreCard 197:858 / 995 · CustomerPhoneLookup 197:1057 | `features/risk/components/…` — our score and courier data stay two panels (rule 24) |
-| FormSection 198:901 · FormActions 198:1085 · SlugField 198:1086 · SeoPanel 198:1123 | `components/form/…` |
-| ImageUploader 201:1035 · VariantMatrixEditor 201:1201 · RichTextToolbar 201:1570 | `features/catalog/components/…` |
+| FormSection 198:901 · FormActions 198:1085 · SlugField 198:1086 · SeoPanel 198:1123 | `components/ui/FormSection.tsx` · `components/ui/FormActions.tsx` · `components/form/…` (SlugField, SeoPanel not built yet) |
+| ImageUploader 201:1035 | `features/catalog/media/ImageUploader.tsx` |
+| VariantMatrixEditor 201:1201 · RichTextToolbar 201:1570 | `features/catalog/components/…` |
 | PageBuilderSection 201:1716 | `features/cms/components/PageBuilderSection.tsx` |
 | Chat components 202:1374–1560 | `features/inbox/components/…` |
 | ActivityFeed 203:1532 · PermissionMatrix 203:1610 · IntegrationCard 203:2257 | `features/activity/…` · `features/staff/…` · `features/settings/…` |

@@ -19,7 +19,7 @@ export default async function NotFound() {
     const value = await rootLocale();
     const locale = value && isLocale(value) ? value : 'en';
     return (
-        <PageShell locale={locale} path="/">
+        <PageShell locale={locale} path="/" top="tight">
             <NotFoundContent locale={locale} />
         </PageShell>
     );

@@ -15,7 +15,7 @@ describe('auth guard', () => {
 
         renderApp('/orders');
 
-        expect(await screen.findByRole('heading', { name: 'Sign in to the admin' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Sign in to Admin' })).toBeTruthy();
     });
 
     it('signs in and lands on the page the user was going to', async () => {
@@ -68,7 +68,7 @@ describe('session loss', () => {
 
         await client.fetchQuery({ queryKey: ['orders'], queryFn: () => api('/orders') }).catch(() => undefined);
 
-        expect(await screen.findByRole('heading', { name: 'Sign in to the admin' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Sign in to Admin' })).toBeTruthy();
     });
 });
 

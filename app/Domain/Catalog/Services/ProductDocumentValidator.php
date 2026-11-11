@@ -6,12 +6,14 @@ namespace App\Domain\Catalog\Services;
 
 use App\Domain\Catalog\DTOs\ProductData;
 use App\Domain\Catalog\DTOs\VariantData;
+use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttribute;
 use App\Domain\Catalog\Models\ProductAttributeValue;
+use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Support\Money;
 use Illuminate\Support\Collection;
@@ -47,12 +49,35 @@ final class ProductDocumentValidator
         $this->checkClassification($data, $existing);
         $options = $this->checkOptions($data);
         $this->checkRows($data, $options, $existing);
+        $this->checkPublishable($data, $existing);
 
         if ($this->errors !== []) {
             throw ValidationException::withMessages($this->errors);
         }
 
         return $options;
+    }
+
+    /**
+     * P4-CAT-06: an active product needs alt text in both languages on every image —
+     * the storefront ships Bangla, and an English-only alt is a blank alt for half the
+     * audience. Images are managed by their own endpoints, so a new product has none.
+     */
+    private function checkPublishable(ProductData $data, ?Product $existing): void
+    {
+        if ($data->status !== ProductStatus::Active || $existing === null) {
+            return;
+        }
+
+        $missing = ProductImage::query()->where('product_id', $existing->id)->orderBy('position')->orderBy('id')->get()
+            ->values()
+            ->filter(static fn (ProductImage $image): bool => ! $image->hasCompleteAlt());
+
+        if ($missing->isNotEmpty()) {
+            $numbers = $missing->keys()->map(static fn (int $i): int => $i + 1)->implode(', ');
+            $ids = $missing->pluck('id')->implode(', ');
+            $this->fail('status', "Add English and Bangla alt text to image(s) {$numbers} (id {$ids}) before publishing.");
+        }
     }
 
     private function checkClassification(ProductData $data, ?Product $existing): void

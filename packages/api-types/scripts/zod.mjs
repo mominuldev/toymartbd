@@ -25,7 +25,9 @@ function zodFor(schema, path) {
 
     // OpenAPI 3.1: type may be ["string", "null"].
     const types = Array.isArray(schema.type) ? schema.type : schema.type ? [schema.type] : [];
-    const nullable = types.includes('null') || schema.nullable === true;
+    // A nullable enum/ref arrives as anyOf: [{$ref}, {type: 'null'}] — keep the null.
+    const nullable =
+        types.includes('null') || schema.nullable === true || (schema.anyOf ?? schema.oneOf ?? []).some((s) => s.type === 'null');
     const type = types.find((t) => t !== 'null');
 
     let out;
@@ -37,6 +39,9 @@ function zodFor(schema, path) {
     } else if (schema.anyOf || schema.oneOf) {
         const parts = (schema.anyOf ?? schema.oneOf).filter((s) => s.type !== 'null');
         out = parts.length === 1 ? zodFor(parts[0], path) : `z.union([${parts.map((s, i) => zodFor(s, `${path}|${i}`)).join(', ')}])`;
+    } else if (type === 'string' && schema.format === 'binary') {
+        // A multipart upload field: a File/Blob in the browser, never a string.
+        out = 'z.instanceof(Blob)';
     } else if (type === 'string') {
         out = 'z.string()';
         if (schema.format === 'email') out = 'z.email()';
@@ -54,6 +59,9 @@ function zodFor(schema, path) {
         out = `z.array(${schema.items ? zodFor(schema.items, `${path}[]`) : 'z.unknown()'})`;
         if (schema.minItems !== undefined) out += `.min(${schema.minItems})`;
         if (schema.maxItems !== undefined) out += `.max(${schema.maxItems})`;
+    } else if (type === 'object' && !schema.properties && schema.additionalProperties && typeof schema.additionalProperties === 'object') {
+        // A string-keyed map (e.g. product specifications).
+        out = `z.record(z.string(), ${zodFor(schema.additionalProperties, `${path}{}`)})`;
     } else if (type === 'object') {
         const required = new Set(schema.required ?? []);
         const fields = Object.entries(schema.properties ?? {}).map(([key, prop]) => {

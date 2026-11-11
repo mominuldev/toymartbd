@@ -53,9 +53,10 @@ final class ProductListItemResource extends ApiResource
             'price_min' => $prices === [] ? null : $prices[0]->toDecimal(),
             /** @var string|null */
             'price_max' => $prices === [] ? null : $prices[count($prices) - 1]->toDecimal(),
+            /** @var int */
             'variants_count' => $product->activeVariants->count(),
             /** @var string|null */
-            'image_url' => ProductImageResource::url($image?->path),
+            'image_url' => $image?->url(160),
             'is_featured' => $product->is_featured,
             /**
              * ISO 8601, UTC.

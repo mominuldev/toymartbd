@@ -10,13 +10,14 @@ interface Props {
     /** The target language's own name, e.g. "বাংলা" on an English page. */
     label: string;
     accessibleLabel: string;
-    /** `pill` in the header, `text` in the footer legal bar. */
-    variant?: 'pill' | 'text';
+    /** `pill` standalone, `menu` inside the header locale menu, `text` in the footer legal bar. */
+    variant?: 'pill' | 'menu' | 'text';
 }
 
 const variants = {
     pill: 't-button inline-flex min-h-touch-min min-w-touch-min items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-fg-primary transition-colors duration-(--tm-duration-fast) ease-standard hover:bg-subtle',
-    text: 't-caption inline-flex min-h-touch-min items-center rounded-xs px-1 text-fg-primary underline underline-offset-4',
+    menu: 't-body-sm flex min-h-touch-min items-center rounded-sm px-3 text-fg-primary transition-colors duration-(--tm-duration-fast) ease-standard hover:bg-subtle',
+    text: 't-body-sm inline-flex min-h-touch-min items-center rounded-xs text-fg-secondary underline-offset-4 hover:underline',
 } as const;
 
 // A plain link to the same page in the other locale, so it works without JavaScript and crawlers

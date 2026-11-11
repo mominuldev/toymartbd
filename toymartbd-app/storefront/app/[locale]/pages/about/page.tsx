@@ -30,7 +30,7 @@ export default async function AboutPage({ params }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     return (
-        <PageShell locale={locale} path={PATH}>
+        <PageShell locale={locale} path={PATH} top="tight">
             <StaticPage locale={locale} content={staticPage('about', locale)} />
         </PageShell>
     );

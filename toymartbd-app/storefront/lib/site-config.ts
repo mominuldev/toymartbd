@@ -35,19 +35,21 @@ export const legal: { tradeLicence: string | null; bin: string | null } = {
 export const addressIsPlaceholder = true;
 
 /**
- * Footer link columns. `label` is a key of `footer.links` in the message catalogs; `path` is
- * locale-independent. Pages not built yet (track, policies, offers…) answer the styled 404 until
- * their task lands — listed here so the footer is complete from day one.
+ * Footer link tiles (Figma Footer 124:3310: Shop · Help · About). `label` is a key of
+ * `footer.links` in the message catalogs; `path` is locale-independent. Pages not built yet
+ * (track, policies, flash sale…) answer the styled 404 until their task lands — listed here so
+ * the footer is complete from day one.
  */
 export const footerColumns = [
     {
         title: 'shop',
         links: [
             { label: 'allToys', path: '/categories' },
-            { label: 'brands', path: '/brands' },
-            { label: 'newArrivals', path: '/new-arrivals' },
-            { label: 'offers', path: '/offers' },
             { label: 'byAge', path: '/age' },
+            { label: 'flashSale', path: '/offers' },
+            { label: 'newArrivals', path: '/new-arrivals' },
+            { label: 'bestSellers', path: '/best-sellers' },
+            { label: 'brands', path: '/brands' },
         ],
     },
     {
@@ -61,14 +63,27 @@ export const footerColumns = [
         ],
     },
     {
-        title: 'company',
+        title: 'about',
         links: [
             { label: 'about', path: '/pages/about' },
+            { label: 'safety', path: '/pages/toy-safety' },
+            { label: 'blog', path: '/blog' },
             { label: 'privacy', path: '/pages/privacy' },
             { label: 'terms', path: '/pages/terms' },
-            { label: 'safety', path: '/pages/toy-safety' },
         ],
     },
 ] as const;
 
 export type FooterColumn = (typeof footerColumns)[number];
+
+/**
+ * Social profiles for the footer "Say hi!" tile. PLACEHOLDERS: the owner has not supplied the
+ * URLs (Figma Footer description), so `href` is null and the tiles render as non-link, labelled
+ * images until it is.
+ */
+export const social: ReadonlyArray<{ key: 'facebook' | 'instagram' | 'youtube' | 'tiktok'; href: string | null }> = [
+    { key: 'facebook', href: null },
+    { key: 'instagram', href: null },
+    { key: 'youtube', href: null },
+    { key: 'tiktok', href: null },
+];

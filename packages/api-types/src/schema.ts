@@ -199,6 +199,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/products/{product}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /products/{product}/images` — ordered by position */
+        get: operations["v1.admin.products.images.index"];
+        put?: never;
+        /**
+         * `POST /products/{product}/images` — `multipart/form-data`; appended last, primary
+         *     when it is the product's first image. 201 with the image (`processing`)
+         */
+        post: operations["v1.admin.products.images.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/images/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /products/{product}/images/reorder` — returns the images in the new order */
+        post: operations["v1.admin.products.images.reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/images/{image}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /products/{product}/images/{image}` — files are removed after commit */
+        delete: operations["v1.admin.products.images.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /products/{product}/images/{image}` — alt text, variant, primary */
+        patch: operations["v1.admin.products.images.update"];
+        trace?: never;
+    };
+    "/admin/products/{product}/images/{image}/crop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /products/{product}/images/{image}/crop` — re-crops; the image returns to `processing` */
+        post: operations["v1.admin.products.images.crop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/categories": {
         parameters: {
             query?: never;
@@ -449,6 +522,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /products` — active, published products with at least one active
+         *     variant, 24 per page by cursor, with disjunctive facet counts in
+         *     `meta.facets` (each facet ignores its own filter) and the result-set size in
+         *     `meta.total`
+         * @description Lists are comma-separated. Unlisted parameters, filters or sorts and
+         *     malformed values are a 400. Availability ("in stock") arrives with the
+         *     inventory tables (P4-INV).
+         */
+        get: operations["v1.storefront.products.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -583,6 +681,17 @@ export interface components {
          */
         CategoryStatus: "active" | "archived";
         /**
+         * CropProductImageRequest
+         * @description `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the
+         *     image's current pixels (`width` × `height` on the resource). Needs catalog.update.
+         */
+        CropProductImageRequest: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+        /**
          * Gender
          * @description `products.gender` — nullable: most toys need no gender at all.
          * @enum {string}
@@ -712,7 +821,20 @@ export interface components {
         ProductImage: {
             id: number;
             variant_id: number | null;
-            url: null;
+            url: string | null;
+            urls: {
+                thumb: string | null;
+                medium: string | null;
+                large: string | null;
+            };
+            srcset: {
+                webp: string | null;
+                avif: string | null;
+            };
+            width: number | null;
+            height: number | null;
+            /** @enum {string} */
+            processing_status: "processing" | "ready" | "failed";
             alt_text: string | null;
             alt_text_bn: string | null;
             position: number;
@@ -736,7 +858,7 @@ export interface components {
             sku: string | null;
             price_min: string | null;
             price_max: string | null;
-            variants_count: string;
+            variants_count: number;
             image_url: string | null;
             is_featured: boolean;
             /**
@@ -818,6 +940,14 @@ export interface components {
         ReorderAttributeValuesRequest: {
             ids: number[];
         };
+        /**
+         * ReorderProductImagesRequest
+         * @description `POST /products/{product}/images/reorder` — `{ ids: [3, 1, 2] }`, every image id
+         *     of the product exactly once, in display order. Needs catalog.update.
+         */
+        ReorderProductImagesRequest: {
+            ids: number[];
+        };
         /** StaffResource */
         StaffResource: {
             id: number;
@@ -883,6 +1013,29 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * StoreProductImageRequest
+         * @description `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP
+         *     or AVIF by content, ≤ 10 MB, ≤ 8000 px per side), optional `alt_text`,
+         *     `alt_text_bn`, `variant_id`, and an optional `crop[x|y|width|height]` rectangle
+         *     in the source image's (EXIF-oriented) pixels. Needs catalog.update.
+         */
+        StoreProductImageRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 10240 kilobytes.
+             */
+            file: string;
+            alt_text?: string | null;
+            alt_text_bn?: string | null;
+            variant_id?: number | null;
+            crop?: {
+                x?: number;
+                y?: number;
+                width?: number;
+                height?: number;
+            };
+        };
+        /**
          * StoreProductRequest
          * @description `POST /products` — needs catalog.create. Setting the initial prices is part of
          *     creating; a `cost_price` anywhere in the document needs catalog.view_cost.
@@ -901,7 +1054,10 @@ export interface components {
             short_description_bn?: string | null;
             description?: string | null;
             description_bn?: string | null;
-            specifications?: (string | null)[] | null;
+            /** @description Label → value pairs ("Material" → "ABS plastic"), a JSON object. */
+            specifications?: {
+                [key: string]: string | null;
+            } | null;
             age_min_months?: number | null;
             age_max_months?: number | null;
             gender?: components["schemas"]["Gender"] | null;
@@ -978,6 +1134,37 @@ export interface components {
             image_url: string | null;
             children: components["schemas"]["StorefrontCategoryNode"][];
         };
+        /** StorefrontProductCard */
+        StorefrontProductCard: {
+            id: number;
+            slug: string;
+            name: string;
+            name_bn: string | null;
+            brand: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            } | null;
+            price: string;
+            compare_at_price: string | null;
+            price_max: string;
+            discount_percent: number | null;
+            age_min_months: number | null;
+            age_max_months: number | null;
+            rating_avg: string | null;
+            rating_count: number;
+            is_featured: boolean;
+            variant_count: number;
+            image: {
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+        };
         /**
          * UpdateAttributeRequest
          * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
@@ -1034,6 +1221,17 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * UpdateProductImageRequest
+         * @description `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`,
+         *     `variant_id` (null detaches), `is_primary` (`true` only). Needs catalog.update.
+         */
+        UpdateProductImageRequest: {
+            alt_text?: string | null;
+            alt_text_bn?: string | null;
+            variant_id?: number | null;
+            is_primary?: boolean;
+        };
+        /**
          * UpdateProductRequest
          * @description `PUT /products/{product}` — needs catalog.update. The whole document, variant
          *     matrix included; `slug` null (or omitted) keeps the current slug, `relations`
@@ -1056,7 +1254,10 @@ export interface components {
             short_description_bn?: string | null;
             description?: string | null;
             description_bn?: string | null;
-            specifications?: (string | null)[] | null;
+            /** @description Label → value pairs ("Material" → "ABS plastic"), a JSON object. */
+            specifications?: {
+                [key: string]: string | null;
+            } | null;
             age_min_months?: number | null;
             age_max_months?: number | null;
             gender?: components["schemas"]["Gender"] | null;
@@ -1661,6 +1862,198 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.images.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ProductImage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProductImage"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.products.images.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreProductImageRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductImage` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a JPEG/PNG/WebP/AVIF by content, over 10 MB or 8000 px, an embedded payload, or undecodable (`validation-error` on `file`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.products.images.reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderProductImagesRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `ProductImage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProductImage"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.images.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+                /** @description The image ID */
+                image: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.products.images.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+                /** @description The image ID */
+                image: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductImageRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductImage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.images.crop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+                /** @description The image ID */
+                image: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CropProductImageRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductImage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImage"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -2343,6 +2736,145 @@ export interface operations {
             };
             /** @description No active category has this slug */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.products.index": {
+        parameters: {
+            query?: {
+                /** @description Category slug; includes every active descendant category. */
+                "filter[category]"?: string;
+                /**
+                 * @description Brand slugs, comma-separated (any of).
+                 * @example lego,hape
+                 */
+                "filter[brand]"?: string;
+                /** @description A child's age in months (0–216): age_min_months ≤ age ≤ age_max_months, both inclusive, null bounds open. */
+                "filter[age]"?: number;
+                /** @description Age bands, comma-separated (any of): 0-12, 12-24, 24-48, 48-72, 72-96, 96-144, 144-. */
+                "filter[age_band]"?: string;
+                /** @description Lowest listing price (the minimum active variant price), inclusive; a decimal string. */
+                "filter[price_min]"?: string;
+                /** @description Highest listing price, inclusive; a decimal string. */
+                "filter[price_max]"?: string;
+                /** @description Price bands, comma-separated (any of): 0-500, 500-1000, 1000-2500, 2500-5000, 5000- (min inclusive, max exclusive). */
+                "filter[price_band]"?: string;
+                /** @description Comma-separated (any of): unisex, boys, girls. `unisex` also matches products with no gender. */
+                "filter[gender]"?: string;
+                /** @description Minimum average rating, 1–5. */
+                "filter[rating]"?: number;
+                /** @description Only educational (true) or only non-educational (false) products. */
+                "filter[educational]"?: "true" | "false" | "1" | "0";
+                /** @description Listing order. */
+                sort?: "featured" | "newest" | "price_asc" | "price_desc" | "rating" | "name";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `StorefrontProductCard` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontProductCard"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            total: number;
+                            /** @enum {string} */
+                            sort: "featured" | "newest" | "price_asc" | "price_desc" | "rating" | "name";
+                            facets: {
+                                category: {
+                                    value: string;
+                                    label: string;
+                                    label_bn: string;
+                                    count: number;
+                                    selected: boolean;
+                                }[];
+                                brand: ({
+                                    value: string;
+                                    label: string;
+                                    label_bn: string | null;
+                                    count: number;
+                                    selected: boolean;
+                                } | {
+                                    value: string;
+                                    label: string;
+                                    label_bn: string;
+                                    /** @constant */
+                                    count: 0;
+                                    selected: boolean;
+                                })[];
+                                age_band: {
+                                    value: string;
+                                    min_months: string;
+                                    max_months: string;
+                                    count: number;
+                                    selected: boolean;
+                                }[];
+                                price_band: {
+                                    value: string;
+                                    min: string;
+                                    max: string;
+                                    count: number;
+                                    selected: boolean;
+                                }[];
+                                gender: {
+                                    value: string;
+                                    count: number;
+                                    selected: boolean;
+                                }[];
+                                rating: {
+                                    value: string;
+                                    count: number;
+                                    selected: boolean;
+                                }[];
+                                educational: {
+                                    count: number;
+                                    selected: boolean;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter, filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

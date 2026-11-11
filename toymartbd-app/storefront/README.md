@@ -46,10 +46,11 @@ Every variable is **server-only**. Never give one a `NEXT_PUBLIC_` prefix and ne
 | Catalog pages | `app/[locale]/brands` (tag `brands`) and `app/[locale]/brands/[slug]` (tags `brands`, `brand:{slug}`) |
 | Site chrome | `components/PageShell.tsx` composes skip link, `layout/SiteHeader` (logo, `SearchBar`, wishlist/account/cart links, language toggle), `layout/MegaMenu`, `<main>`, `layout/SiteFooter` and `layout/MobileNav`. It is rendered by each page (not a layout) because the toggle needs the page's path and pages must stay ISR-cacheable |
 | Mega menu | Data: `lib/categories.ts` (`GET storefront/categories/tree`, tag `categories`, never throws — an API failure renders no menu). View model and depth cap: `lib/category-tree.ts`. Keyboard contract (spec §A4.4): `lib/megamenu-keys.ts`. Without JS it is plain server-rendered links revealed by CSS hover/focus-within |
-| Business contact details | `lib/site-config.ts` only. Hotline, WhatsApp, email, address, licence and BIN are **placeholders** until the owner confirms them; they render with a visible "sample" tag and never as tel:/mailto: links |
+| Business contact details | `lib/site-config.ts` only. Hotline, WhatsApp, email, address, licence and BIN are **placeholders** until the owner confirms them; they render as plain text marked `data-placeholder="owner-to-confirm"` (no visible tag — the Figma designs show them bare) and never as tel:/mailto:/wa.me links |
 | Status and static pages | `app/global-not-found.tsx` (unmatched URLs, both locales, server-rendered), `app/[locale]/not-found.tsx` (route-level `notFound()`), `app/[locale]/error.tsx` + `app/global-error.tsx` (500), `app/[locale]/maintenance`, `components/StaticPage.tsx` + `lib/static-pages.ts` (first page: `/pages/about`, draft copy) |
 | Stubs | `/search` (echoes the query, noindex) until P4-STO-04; `/categories` and `/categories/{slug}` (name, parents, sub-categories from the tree; no products) until P4-STO-03 |
 | Icons | `components/icons/paths.ts`, generated from Phosphor by `scripts/extract-icons.mjs` |
+| Figma fidelity | Chrome follows Figma Header 123:1832, MegaMenuBar 123:1833, MobileNav 111:784, SearchBar 111:853, Footer 124:3310 (giant logotype drawn as SVG text in `layout/FooterLogotype.tsx`), AnnouncementBar 123:1729 (Home only, `PageShell announcement`). Buttons: `layout/button-styles.ts`. Decorative pastel inks bound to palette primitives: `.deco-*` / `.blob-*` in `globals.css` |
 
 ### Adding a page
 

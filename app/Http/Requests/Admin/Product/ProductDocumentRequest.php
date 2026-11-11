@@ -71,6 +71,11 @@ abstract class ProductDocumentRequest extends ApiFormRequest
             'short_description_bn' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string', 'max:50000'],
             'description_bn' => ['nullable', 'string', 'max:50000'],
+            /**
+             * Label → value pairs ("Material" → "ABS plastic"), a JSON object.
+             *
+             * @var array<string, string|null>|null
+             */
             'specifications' => ['nullable', 'array', 'max:50'],
             'specifications.*' => ['nullable', 'string', 'max:500'],
             'age_min_months' => ['nullable', 'integer', 'min:0', 'max:216'],

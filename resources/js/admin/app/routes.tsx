@@ -11,9 +11,10 @@ import { CatalogLayout } from '@/features/catalog/CatalogLayout';
 import { BrandsPage } from '@/features/catalog/brands/BrandsPage';
 import { BrandFormPage } from '@/features/catalog/brands/BrandFormPage';
 import { CategoriesPage } from '@/features/catalog/categories/CategoriesPage';
-import { CategoryFormPage } from '@/features/catalog/categories/CategoryFormPage';
 import { AttributesPage } from '@/features/catalog/attributes/AttributesPage';
 import { AttributeFormPage } from '@/features/catalog/attributes/AttributeFormPage';
+import { ProductsPage } from '@/features/catalog/products/ProductsPage';
+import { ProductFormPage } from '@/features/catalog/products/ProductFormPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
 const built = new Set(['/products']);
@@ -33,10 +34,11 @@ export const routes: RouteObject[] = [
                         path: 'products',
                         element: <CatalogLayout />,
                         children: [
-                            { index: true, element: <ComingSoon title="catalog.tab.products" /> },
+                            { index: true, element: <ProductsPage /> },
                             { path: 'categories', element: <CategoriesPage /> },
-                            { path: 'categories/new', element: <CategoryFormPage /> },
-                            { path: 'categories/:categoryId', element: <CategoryFormPage /> },
+                            // One split view (Figma Categories 212:7132): the URL carries the selection.
+                            { path: 'categories/new', element: <CategoriesPage /> },
+                            { path: 'categories/:categoryId', element: <CategoriesPage /> },
                             { path: 'brands', element: <BrandsPage /> },
                             { path: 'brands/new', element: <BrandFormPage /> },
                             { path: 'brands/:brandId', element: <BrandFormPage /> },
@@ -45,6 +47,10 @@ export const routes: RouteObject[] = [
                             { path: 'attributes/:attributeId', element: <AttributeFormPage /> },
                         ],
                     },
+                    // The product form has its own header and tabs (Figma 241:37883), so it sits
+                    // outside the catalog tab strip. Static siblings (categories, brands …) still win.
+                    { path: 'products/new', element: <ProductFormPage /> },
+                    { path: 'products/:productId', element: <ProductFormPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

@@ -13,12 +13,12 @@ export const hanken = Hanken_Grotesk({
 });
 
 /**
- * Display Latin: price-was 400 · h3/h4/button 600 · h1/h2/price 700.
- * display-1/2 and price-lg ask for 800, which Fredoka does not have (max 700); they render at 700.
+ * Display Latin: price-was 400 · card-title 500 · h3/h4/button/badge/chip 600 · display/h1/h2/price 700
+ * (the Figma Latin display styles are Fredoka Bold; Fredoka has no 800).
  */
 export const fredoka = Fredoka({
     subsets: ['latin'],
-    weight: ['400', '600', '700'],
+    weight: ['400', '500', '600', '700'],
     display: 'swap',
     variable: '--font-fredoka',
 });
@@ -32,10 +32,10 @@ export const anekBangla = Anek_Bangla({
     preload: false,
 });
 
-/** Display Bangla: price-was 400 · h3/h4/button 600 · h1/h2/price 700 · display/price-lg 800. */
+/** Display Bangla: price-was 400 · card-title 500 · h3/h4/button 600 · h1/h2/price 700 · display/price-lg 800. */
 export const balooDa2 = Baloo_Da_2({
     subsets: ['bengali', 'latin'],
-    weight: ['400', '600', '700', '800'],
+    weight: ['400', '500', '600', '700', '800'],
     display: 'swap',
     variable: '--font-baloo-da-2',
     preload: false,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
+use App\Http\Controllers\Api\V1\Storefront\ProductController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
@@ -32,4 +33,5 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     // `tree` before `{slug}`: "tree" is a reserved category slug.
     Route::get('/categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
     Route::get('/categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 });

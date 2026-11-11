@@ -1,33 +1,43 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Size = 'sm' | 'md';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
-const variants: Record<Variant, string> = {
-    primary: 'bg-brand text-fg-on-brand hover:bg-brand-shelf',
-    secondary: 'border border-line-strong bg-surface text-fg-primary hover:bg-subtle',
-    ghost: 'text-fg-secondary hover:bg-subtle hover:text-fg-primary',
-    danger: 'bg-danger text-fg-on-danger hover:bg-danger-shelf',
+/*
+ * Figma AdminButton 184:242 (Theme B). One class string per variant; the disabled
+ * look is Figma's own Disabled state (bg/disabled + text/disabled), not an opacity fade.
+ *   primary    bg/brand (solid in Theme B, no gradient)
+ *   secondary  bg/brand-subtle + text/brand
+ *   outline    bg/surface + border/default
+ *   ghost      no fill
+ *   danger     bg/danger — only in ConfirmDialog or the FormActions destructive slot
+ */
+const variants: Record<ButtonVariant, string> = {
+    primary: 'bg-brand text-fg-on-brand hover:bg-brand-shelf disabled:bg-disabled disabled:text-fg-disabled',
+    secondary: 'bg-brand-subtle text-fg-brand hover:bg-brand-subtle-shelf disabled:bg-disabled disabled:text-fg-disabled',
+    outline: 'border border-line-default bg-surface text-fg-primary hover:bg-subtle disabled:bg-disabled disabled:text-fg-disabled',
+    ghost: 'text-fg-primary hover:bg-subtle disabled:bg-transparent disabled:text-fg-disabled',
+    danger: 'bg-danger text-fg-on-danger hover:bg-danger-shelf disabled:bg-disabled disabled:text-fg-disabled',
 };
 
-const sizes: Record<Size, string> = {
-    sm: 'h-control-sm px-3 t-admin-button-sm',
-    md: 'h-control-md px-4 t-admin-button',
+/* sm 32 · md 36 · lg 44 high; icons 16 / 16 / 20 (pass the icon at that size). */
+const sizes: Record<ButtonSize, string> = {
+    sm: 'h-8 gap-1.5 px-3 t-admin-button-sm',
+    md: 'h-9 gap-2 px-3.5 t-admin-button',
+    lg: 'h-11 gap-2 px-4.5 t-admin-button',
 };
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size };
+/** Classes for anything that should look like an AdminButton (a router <Link>, a <label>). */
+export function buttonClass(variant: ButtonVariant = 'primary', size: ButtonSize = 'md'): string {
+    return `inline-flex shrink-0 items-center justify-center rounded-sm whitespace-nowrap transition-colors duration-150 ease-standard disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]}`;
+}
 
-/** Figma AdminButton 184:242. Solid brand fill in Theme B (no gradient). */
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize };
+
+/** Figma AdminButton 184:242. Radius 10 (radius/sm), never a pill. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     { variant = 'primary', size = 'md', className = '', type = 'button', ...props },
     ref,
 ) {
-    return (
-        <button
-            ref={ref}
-            type={type}
-            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-sm transition-colors duration-150 ease-standard disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${sizes[size]} ${className}`}
-            {...props}
-        />
-    );
+    return <button ref={ref} type={type} className={`${buttonClass(variant, size)} ${className}`} {...props} />;
 });

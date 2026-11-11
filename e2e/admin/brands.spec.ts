@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function signIn(page: Page) {
     await page.goto('/admin/products/brands');
-    await expect(page.getByRole('heading', { name: 'Sign in to the admin' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
     await page.getByLabel('Email').fill('owner@toymart.test');
     await page.getByLabel('Password').fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();

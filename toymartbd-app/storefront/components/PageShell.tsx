@@ -4,6 +4,7 @@ import { buildMenu } from '@/lib/category-tree';
 import { getCategoryTree } from '@/lib/categories';
 import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
 import { LocaleSuggestion } from './LocaleSuggestion';
+import { AnnouncementBar } from './layout/AnnouncementBar';
 import { MobileNav } from './layout/MobileNav';
 import { SiteFooter } from './layout/SiteFooter';
 import { SiteHeader } from './layout/SiteHeader';
@@ -18,13 +19,23 @@ interface Props {
     path: string;
     /** Pre-fills the header search bar (search page). */
     searchQuery?: string;
+    /** The candy AnnouncementBar above the header (Figma Home 126:10; Home only). */
+    announcement?: boolean;
+    /** The full-width search row under the mobile header (Figma Home "SearchRow", search page). */
+    mobileSearch?: boolean;
+    /**
+     * Space between the chrome and the first block. `section` (default) is the section rhythm
+     * (48 / 80); `tight` (16 / 32) is for pages that open with a hero card (404, About); `crumb`
+     * (8 / 24) is for pages that open with a breadcrumb (Category listing 129:1572 / 136:2172).
+     */
+    top?: 'section' | 'tight' | 'crumb';
     children: ReactNode;
 }
 
 // The storefront chrome: skip link → (Bangla suggestion) → header + mega menu → main → footer →
 // mobile tab bar. Server-rendered; the only client islands are the mega menu's keyboard layer,
 // the language toggle's cookie and the suggestion banner.
-export async function PageShell({ locale, path, searchQuery, children }: Props) {
+export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', children }: Props) {
     const t = getMessages(locale);
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
@@ -52,13 +63,15 @@ export async function PageShell({ locale, path, searchQuery, children }: Props) 
                     region={bn.suggest.region}
                 />
             ) : null}
-            <SiteHeader locale={locale} path={path} menu={menu} searchQuery={searchQuery} />
+            {announcement ? <AnnouncementBar message={t.announcement.cod} /> : null}
+            <SiteHeader locale={locale} path={path} menu={menu} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} />
+            {/* Gutters outside, content capped at 1280 inside: at 1440 that is the design's 80px margin. */}
             <main
                 id="main"
                 tabIndex={-1}
-                className="mx-auto w-full max-w-content grow px-gutter-mobile pt-section-mobile focus:outline-none md:px-gutter-tablet lg:px-gutter-desktop lg:pt-section-desktop"
+                className={`w-full grow px-gutter-mobile focus:outline-none md:px-gutter-tablet lg:px-gutter-desktop ${top === 'tight' ? 'pt-4 lg:pt-8' : top === 'crumb' ? 'pt-2 lg:pt-6' : 'pt-section-mobile lg:pt-section-desktop'}`}
             >
-                {children}
+                <div className="mx-auto max-w-content">{children}</div>
             </main>
             <SiteFooter locale={locale} path={path} />
             <MobileNav locale={locale} path={path} />

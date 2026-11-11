@@ -323,7 +323,7 @@ Browser fires GA4 and Meta Pixel with a generated `event_id`; the server fires t
 | Mass assignment | `Model::preventSilentlyDiscardingAttributes()` and explicit `$fillable`; writes only through FormRequest-validated DTOs |
 | Broken authorisation | Policy on every model; `Gate::before` for super-admin only; `authorizeResource` in controllers; a feature test per role asserts 403 on every admin endpoint |
 | Credential exposure | Gateway keys in `encrypted` cast columns, decrypted only at call time; `APP_KEY` from the host secret store, never in the repo; secrets redacted in logs and in the activity log |
-| File upload abuse | Validate real MIME by content not extension; re-encode all images through Intervention (strips EXIF and any embedded payload); store outside webroot on S3-compatible storage; serve via CDN |
+| File upload abuse | Validate real MIME by content not extension; re-encode all images through Intervention (strips EXIF and any embedded payload); store outside webroot on S3-compatible storage; serve via CDN. Built in P4-CAT-07: `docs/api/media.md` |
 | SQL injection | Eloquent/query builder only; `DB::raw` requires bindings and a code-review tag |
 | XSS | React escapes by default, `dangerouslySetInnerHTML` banned by lint rule except for CMS HTML which is sanitised server-side with an allowlist before storage |
 | CSRF | Sanctum cookie + `X-XSRF-TOKEN` on all admin writes |

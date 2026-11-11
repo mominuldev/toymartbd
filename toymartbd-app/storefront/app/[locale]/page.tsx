@@ -22,7 +22,7 @@ export default async function HomePage({ params }: Props) {
     const locale = await localeOf(params);
     const t = getMessages(locale);
     return (
-        <PageShell locale={locale} path="/">
+        <PageShell locale={locale} path="/" announcement mobileSearch>
             <h1 className="t-display-1 text-fg-primary">{t.home.title}</h1>
             <p className="t-body-lg mt-4 max-w-prose text-fg-secondary">{t.home.intro}</p>
             <a
