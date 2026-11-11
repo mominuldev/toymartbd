@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Admin\BrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
+use App\Http\Controllers\Api\V1\Admin\ProductImageController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Middleware\EnsureActiveStaffSession;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +57,14 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::post('/products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
+
+    // Product images (media pipeline, P4-CAT-07): upload is multipart; renditions are queued.
+    Route::get('/products/{product}/images', [ProductImageController::class, 'index'])->name('products.images.index');
+    Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
+    Route::post('/products/{product}/images/reorder', [ProductImageController::class, 'reorder'])->name('products.images.reorder');
+    Route::patch('/products/{product}/images/{image}', [ProductImageController::class, 'update'])->scopeBindings()->name('products.images.update');
+    Route::post('/products/{product}/images/{image}/crop', [ProductImageController::class, 'crop'])->scopeBindings()->name('products.images.crop');
+    Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->scopeBindings()->name('products.images.destroy');
 
     // Categories (nested set). DELETE archives; never hard-deleted.
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

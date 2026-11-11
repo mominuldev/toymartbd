@@ -109,7 +109,8 @@ Index: `(product_id, status)`, `(price)`
 **`category_product`** `category_id` · `product_id` · PK both — products appear in multiple categories; `products.primary_category_id` drives the canonical URL and breadcrumb to avoid duplicate-content issues.
 
 **`brands`** `id` · `name` · `name_bn` NULL · `slug` UNIQUE (ASCII, ≤94, shared by both locales) · `logo_path` · `description` · `description_bn` NULL · `country` · `status` (`active`|`archived` — archived, never deleted, because products reference it) · `position`
-**`product_images`** `id` · `product_id` · `variant_id` NULL · `path` · `alt_text` · `alt_text_bn` · `position` · `is_primary`
+**`product_images`** `id` · `product_id` · `variant_id` NULL · `path` NULL · `width` NULL · `height` NULL · `processing_status` (`processing`|`ready`|`failed`) · `rendition_widths` JSON NULL · `alt_text` · `alt_text_bn` · `position` · `is_primary`
+> `path` is the rendition **base** on the media disk (`products/{product}/{ulid}`), not a file: renditions live at `{path}/{width}.webp|avif`, the sanitised master privately at `{path}/master.webp` (docs/api/media.md). A random id per upload makes every file immutable, so the CDN caches forever and a crop writes a new base. `width`/`height` are the master's (oriented, cropped) pixels so the storefront reserves the box with zero CLS. A duplicated product shares its source's bases; files are deleted only when no row references them. **Publish rule (P4-CAT-06):** a product cannot be saved `active` while any image lacks `alt_text` or `alt_text_bn`.
 **`product_relations`** `id` · `product_id` · `related_product_id` · `type` (`related`|`upsell`|`cross_sell`|`bundle`|`age_progression`) · `position` · `reason_note` NULL · `is_auto` BOOL · `rule_id` FK NULL · `created_by` · timestamps
 UNIQUE `(product_id, related_product_id, type)` · INDEX `(product_id, type, position)`
 

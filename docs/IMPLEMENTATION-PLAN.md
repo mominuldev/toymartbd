@@ -153,6 +153,17 @@ One repository, because the API and both frontends share a contract and must cha
 
 **Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details in `toymartbd-app/storefront/lib/site-config.ts` are placeholders (the hotline differs between the content spec and the footer design: 09600- vs 09610-123456).
 
+### Progress — Phase 4 batch 2 (PR #6, 2026-11-12)
+
+**Done, with passing tests** (688 PHP on SQLite, 689 on MySQL; 75 admin Vitest + 4 admin Playwright; 135 storefront unit + 52 storefront Playwright; PHPStan L6, Pint, deptrac clean):
+- **P4-CAT-04/05** — admin product list and tabbed form with `VariantMatrixEditor`.
+- **P4-CAT-06/07** — media pipeline (content-sniffed uploads, EXIF stripped, WebP/AVIF renditions after commit) and `ImageUploader`; publish blocked until every image has EN and BN alt text. Category/brand image upload not yet wired.
+- **P4-CAT-13 / P4-STO-03** — storefront catalog API with disjunctive facets; category and brand listings that work without JS. "In stock" filter waits for inventory.
+- **Figma fidelity** (owner requirement: match Figma 100%) — admin shell, primitives, sign-in, categories split view; storefront chrome, 404/500/maintenance/About. Every Figma text/effect/paint style exported; missing radii, rim, shadows, deco/ink colours added in Figma and bound with zero visual change.
+- **Demo catalogue** = the 16 PART C products with the Figma product photos, uploaded through the real pipeline (`DEMO_SEED_IMAGES`).
+
+**Owner decisions open:** strip C2PA "AI-generated" metadata on upload (it embeds an SVG, so such PNGs are refused today); card price = lowest variant vs. headline variant; Bengali vs. Western digits in Bangla product names; `ink-*` colours fail AA in Dark and `ink-mint` on `tile-mint` is 4.44:1 (pre-existing in Figma); spacing tokens for the frequent raw 6/10/14 values.
+
 ### Catalog (CAT)
 | ID | Task | Size | Tests |
 |---|---|---|---|
