@@ -10,6 +10,10 @@ import { sectionPaths } from '@/components/shell/nav';
 import { CatalogLayout } from '@/features/catalog/CatalogLayout';
 import { BrandsPage } from '@/features/catalog/brands/BrandsPage';
 import { BrandFormPage } from '@/features/catalog/brands/BrandFormPage';
+import { CategoriesPage } from '@/features/catalog/categories/CategoriesPage';
+import { CategoryFormPage } from '@/features/catalog/categories/CategoryFormPage';
+import { AttributesPage } from '@/features/catalog/attributes/AttributesPage';
+import { AttributeFormPage } from '@/features/catalog/attributes/AttributeFormPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
 const built = new Set(['/products']);
@@ -30,10 +34,15 @@ export const routes: RouteObject[] = [
                         element: <CatalogLayout />,
                         children: [
                             { index: true, element: <ComingSoon title="catalog.tab.products" /> },
-                            { path: 'categories', element: <ComingSoon title="catalog.tab.categories" /> },
+                            { path: 'categories', element: <CategoriesPage /> },
+                            { path: 'categories/new', element: <CategoryFormPage /> },
+                            { path: 'categories/:categoryId', element: <CategoryFormPage /> },
                             { path: 'brands', element: <BrandsPage /> },
                             { path: 'brands/new', element: <BrandFormPage /> },
                             { path: 'brands/:brandId', element: <BrandFormPage /> },
+                            { path: 'attributes', element: <AttributesPage /> },
+                            { path: 'attributes/new', element: <AttributeFormPage /> },
+                            { path: 'attributes/:attributeId', element: <AttributeFormPage /> },
                         ],
                     },
                     ...sectionPaths

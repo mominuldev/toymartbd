@@ -1,6 +1,8 @@
-// Tiny stand-in for the Laravel storefront brands API (node:http, no dependencies).
+// Tiny stand-in for the Laravel storefront API (node:http, no dependencies).
 //   GET  /api/v1/storefront/brands          → {data: Brand[]}
 //   GET  /api/v1/storefront/brands/{slug}   → {data: Brand} or 404 problem+json
+//   GET  /api/v1/storefront/categories/tree → {data: CategoryNode[]} (fixtures/categories.json:
+//        EN + BN names, a null name_bn, a childless L1 and one node deeper than the 3-level contract)
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
 //   GET  /__control/hits                    → {path: count} of authorised API reads
@@ -14,6 +16,7 @@ const expectedToken = process.env.EXPECTED_TOKEN;
 if (!expectedToken) throw new Error('EXPECTED_TOKEN is required');
 
 const fixtures = JSON.parse(readFileSync(new URL('./fixtures/brands.json', import.meta.url), 'utf8')).data;
+const categoryTree = JSON.parse(readFileSync(new URL('./fixtures/categories.json', import.meta.url), 'utf8'));
 let brands = structuredClone(fixtures);
 let hits = {};
 
@@ -57,6 +60,7 @@ createServer(async (req, res) => {
     hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
 
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
+    if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     const match = url.pathname.match(/^\/api\/v1\/storefront\/brands\/([^/]+)$/);
     if (match) {
         const brand = brands.find((b) => b.slug === decodeURIComponent(match[1]));

@@ -84,6 +84,31 @@ const lines = [
     '',
 ];
 
+// Non-request components a request $refs (e.g. a PHP enum used with Rule::enum) are
+// emitted first, so the request schemas can reference them by name.
+const referenced = new Set();
+function collectRefs(node) {
+    if (Array.isArray(node)) return node.forEach(collectRefs);
+    if (node === null || typeof node !== 'object') return;
+    if (typeof node.$ref === 'string') {
+        const name = node.$ref.split('/').pop();
+        if (!requestNames.includes(name) && !referenced.has(name)) {
+            referenced.add(name);
+            collectRefs(schemas[name]);
+        }
+    }
+    Object.values(node).forEach(collectRefs);
+}
+requestNames.forEach((name) => collectRefs(schemas[name]));
+
+for (const name of [...referenced].sort()) {
+    const schema = schemas[name];
+    if (!schema) throw new Error(`Unresolved $ref: ${name}`);
+    lines.push(`export const ${camel(name)}Schema = ${zodFor(schema, name)};`);
+    lines.push(`export type ${name} = z.infer<typeof ${camel(name)}Schema>;`);
+    lines.push('');
+}
+
 for (const name of requestNames) {
     const schema = schemas[name];
     const doc = schema.description ? `/** ${schema.description.replace(/\*\//g, '*\\/').split('\n')[0]} */\n` : '';
@@ -93,4 +118,4 @@ for (const name of requestNames) {
 }
 
 writeFileSync(join(root, 'src/zod.ts'), lines.join('\n'));
-console.log(`zod: ${requestNames.length} request schemas → src/zod.ts`);
+console.log(`zod: ${requestNames.length} request schemas, ${referenced.size} referenced schemas → src/zod.ts`);

@@ -1,4 +1,4 @@
-import { defaultLocale, locales } from './i18n/config';
+import { defaultLocale, isLocale, locales, splitLocalePath, type Locale } from './i18n/config';
 
 // Pure routing decision for proxy.ts, unit-tested in tests/locale-route.test.ts.
 //
@@ -11,6 +11,25 @@ import { defaultLocale, locales } from './i18n/config';
 
 /** Set on the internal rewrite so proxy.ts can recognise its own second pass. */
 export const LOCALE_REWRITE_HEADER = 'x-tm-locale-rewrite';
+
+/**
+ * Request headers proxy.ts sets on every page request: the public locale and the public path.
+ * Only app/global-not-found.tsx reads them — it has no params, and an unmatched URL must still
+ * come back in the right language. Pages never read them (that would opt them out of ISR).
+ */
+export const LOCALE_HEADER = 'x-tm-locale';
+export const PATH_HEADER = 'x-tm-path';
+
+/**
+ * Locale + locale-independent path from those headers, treating both as untrusted (a client can
+ * send them). Anything odd falls back to English and the home page.
+ */
+export function requestContext(localeHeader: string | null, pathHeader: string | null): { locale: Locale; path: string } {
+    const locale: Locale = localeHeader && isLocale(localeHeader) ? localeHeader : defaultLocale;
+    const raw = pathHeader ?? '';
+    const safe = raw.startsWith('/') && !raw.startsWith('//') && raw.length <= 512 && !/[\\\s]/.test(raw);
+    return { locale, path: safe ? splitLocalePath(raw).path : '/' };
+}
 
 export type LocaleRoute =
     | { action: 'next' }

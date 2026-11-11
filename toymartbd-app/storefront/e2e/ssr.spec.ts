@@ -85,11 +85,11 @@ test.describe('with JavaScript', () => {
 
     test('the 404 UI renders in the right language', async ({ page }) => {
         await page.goto('/brands/no-such-brand');
-        await expect(page.locator('h1')).toHaveText('Page not found');
+        await expect(page.locator('h1')).toHaveText("This page isn't here");
         await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
         await page.goto('/bn/brands/no-such-brand');
-        await expect(page.locator('h1')).toHaveText('পাতাটি পাওয়া যায়নি');
+        await expect(page.locator('h1')).toHaveText('এই পাতাটি নেই');
         await expect(page.locator('html')).toHaveAttribute('lang', 'bn');
     });
 });

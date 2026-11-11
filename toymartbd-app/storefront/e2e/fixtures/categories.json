@@ -1,0 +1,341 @@
+{
+  "data": [
+    {
+      "id": 12,
+      "name": "Building Blocks",
+      "name_bn": "বিল্ডিং ব্লক",
+      "slug": "building-blocks",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 4,
+          "name": "LEGO",
+          "name_bn": "লেগো",
+          "slug": "lego-sets",
+          "icon": null,
+          "image_url": null,
+          "children": [
+            {
+              "id": 1,
+              "name": "LEGO Classic",
+              "name_bn": "লেগো ক্লাসিক",
+              "slug": "lego-classic",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            },
+            {
+              "id": 2,
+              "name": "LEGO City",
+              "name_bn": "লেগো সিটি",
+              "slug": "lego-city",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            },
+            {
+              "id": 3,
+              "name": "LEGO Technic",
+              "name_bn": null,
+              "slug": "lego-technic",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "DUPLO",
+          "name_bn": "ডুপ্লো",
+          "slug": "duplo",
+          "icon": null,
+          "image_url": null,
+          "children": [
+            {
+              "id": 5,
+              "name": "DUPLO Town",
+              "name_bn": "ডুপ্লো টাউন",
+              "slug": "duplo-town",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            },
+            {
+              "id": 6,
+              "name": "DUPLO Animals",
+              "name_bn": "ডুপ্লো প্রাণী",
+              "slug": "duplo-animals",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "Wooden Blocks",
+          "name_bn": "কাঠের ব্লক",
+          "slug": "wooden-blocks",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 11,
+          "name": "Magnetic Tiles",
+          "name_bn": "ম্যাগনেটিক",
+          "slug": "magnetic-tiles",
+          "icon": null,
+          "image_url": null,
+          "children": [
+            {
+              "id": 10,
+              "name": "Magnetic Starter Sets",
+              "name_bn": "ম্যাগনেটিক স্টার্টার সেট",
+              "slug": "magnetic-starter-sets",
+              "icon": null,
+              "image_url": null,
+              "children": [
+                {
+                  "id": 9,
+                  "name": "Too Deep",
+                  "name_bn": "অনেক গভীর",
+                  "slug": "too-deep-level-4",
+                  "icon": null,
+                  "image_url": null,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Cars & Remote Control",
+      "name_bn": "গাড়ি ও রিমোট",
+      "slug": "cars-rc",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 15,
+          "name": "Die-cast Cars",
+          "name_bn": "ডাই-কাস্ট গাড়ি",
+          "slug": "die-cast-cars",
+          "icon": null,
+          "image_url": null,
+          "children": [
+            {
+              "id": 13,
+              "name": "1:64 Scale",
+              "name_bn": "1:64 স্কেল",
+              "slug": "scale-1-64",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            },
+            {
+              "id": 14,
+              "name": "1:43 Scale",
+              "name_bn": "1:43 স্কেল",
+              "slug": "scale-1-43",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "Remote Control",
+          "name_bn": "রিমোট কন্ট্রোল",
+          "slug": "remote-control",
+          "icon": null,
+          "image_url": null,
+          "children": [
+            {
+              "id": 16,
+              "name": "RC Cars",
+              "name_bn": "আরসি গাড়ি",
+              "slug": "rc-cars",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            },
+            {
+              "id": 17,
+              "name": "RC Helicopters",
+              "name_bn": "আরসি হেলিকপ্টার",
+              "slug": "rc-helicopters",
+              "icon": null,
+              "image_url": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": 19,
+          "name": "Train Sets",
+          "name_bn": "ট্রেন সেট",
+          "slug": "train-sets",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Puzzles & Games",
+      "name_bn": "পাজল ও গেম",
+      "slug": "puzzles-games",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 21,
+          "name": "Jigsaw Puzzles",
+          "name_bn": "জিগস পাজল",
+          "slug": "jigsaw-puzzles",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 22,
+          "name": "Board Games",
+          "name_bn": "বোর্ড গেম",
+          "slug": "board-games",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 23,
+          "name": "Brain Teasers",
+          "name_bn": "কিউব ও ব্রেইন টিজার",
+          "slug": "brain-teasers",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "name": "Dolls & Soft Toys",
+      "name_bn": "পুতুল ও সফট টয়",
+      "slug": "dolls-soft-toys",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 25,
+          "name": "Fashion Dolls",
+          "name_bn": "ফ্যাশন ডল",
+          "slug": "fashion-dolls",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 26,
+          "name": "Soft Toys",
+          "name_bn": "সফট টয়",
+          "slug": "soft-toys",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Baby & Toddler",
+      "name_bn": "শিশু ও বেবি",
+      "slug": "baby-toddler",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 28,
+          "name": "Activity Gyms",
+          "name_bn": "অ্যাক্টিভিটি জিম",
+          "slug": "activity-gyms",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 29,
+          "name": "Rattles & Teethers",
+          "name_bn": "র‍্যাটেল ও টিদার",
+          "slug": "rattles-teethers",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "name": "Outdoor & Ride-On",
+      "name_bn": "আউটডোর ও রাইড-অন",
+      "slug": "outdoor-ride-on",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 31,
+          "name": "Bicycles & Tricycles",
+          "name_bn": "সাইকেল ও ট্রাইসাইকেল",
+          "slug": "bicycles-tricycles",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "name": "Art & Craft",
+      "name_bn": "আর্ট ও ক্রাফট",
+      "slug": "art-craft",
+      "icon": null,
+      "image_url": null,
+      "children": []
+    },
+    {
+      "id": 36,
+      "name": "Science & Learning",
+      "name_bn": null,
+      "slug": "science-learning",
+      "icon": null,
+      "image_url": null,
+      "children": [
+        {
+          "id": 34,
+          "name": "Experiment Kits",
+          "name_bn": "এক্সপেরিমেন্ট কিট",
+          "slug": "experiment-kits",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        },
+        {
+          "id": 35,
+          "name": "STEM Building",
+          "name_bn": null,
+          "slug": "stem-building",
+          "icon": null,
+          "image_url": null,
+          "children": []
+        }
+      ]
+    }
+  ]
+}

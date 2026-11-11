@@ -30,6 +30,11 @@
         box-shadow: var(--tm-focus-ring);
     }
 
+    /* Skip-link target sits under the sticky header. */
+    #main {
+        scroll-margin-top: calc(var(--spacing) * 30);
+    }
+
     @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -37,5 +42,29 @@
             transition-duration: 0s !important;
             animation-duration: 0s !important;
         }
+    }
+}
+
+/* Mega menu panels (components/layout/MegaMenu.tsx, storefront spec §A4.2). Before hydration — or
+   with JavaScript disabled — a panel shows on hover or keyboard focus inside its L1 item, so every
+   category link is reachable. Once the component marks itself data-enhanced, only its open state
+   shows a panel. Open: opacity 0→1, translateY −4→0, 200ms decelerate (reduced motion: instant). */
+@layer components {
+    .mega-panel {
+        display: none;
+    }
+
+    .mega-menu:not([data-enhanced]) .mega-item:hover > .mega-panel,
+    .mega-menu:not([data-enhanced]) .mega-item:focus-within > .mega-panel,
+    .mega-menu[data-enhanced] .mega-panel[data-open] {
+        display: flex;
+        animation: tm-mega-open var(--tm-duration-base) var(--tm-ease-decelerate);
+    }
+}
+
+@keyframes tm-mega-open {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--spacing) * -1));
     }
 }

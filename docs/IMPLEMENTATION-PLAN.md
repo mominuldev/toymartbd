@@ -120,7 +120,7 @@ One repository, because the API and both frontends share a contract and must cha
 
 **Still open in Phase 3:**
 - **P3-CI-02 / P3-CI-03 acceptance** — staging deploy and a restore onto staging need a staging host and an off-host bucket (owner infra). See `docs/ops/backup-and-restore.md`.
-- **P3-DAT-04** — demo seeder beyond brands waits for the P4 catalog tables.
+- ~~P3-DAT-04~~ — done in Phase 4 batch 1 (`DemoCatalogSeeder`).
 - Gate 3 (storefront stack decision) can now be taken against a working Next.js skeleton.
 
 **Owner decisions needed** (in addition to Dhaka zones and price display from batch 2):
@@ -138,6 +138,20 @@ One repository, because the API and both frontends share a contract and must cha
 ---
 
 ## 3. Phase 4 — Core E-commerce · 52 dev-days
+
+### Progress (updated 2026-11-11, Phase 4 batch 1 — PR #5)
+
+**Done, with passing tests** (597 PHP on SQLite, 598 on MySQL; 39 admin Vitest + 3 admin Playwright; 101 storefront unit + 39 storefront Playwright; PHPStan L6, Pint, deptrac clean):
+- **P4-CAT-01/02** — all catalog tables, models, enums, factories, policies (categories via `kalnoy/nestedset`).
+- **P4-CAT-03** — `CreateProduct`/`UpdateProduct` generate the variant matrix; removing a value archives its variants, re-adding reactivates them. SKU scheme in `app/Domain/Catalog/Services/VariantSkus.php`.
+- **P4-CAT-08** — category tree admin (keyboard/button reorder, indent/outdent; drag not built). **P4-CAT-09** — attributes and values admin (brands were done in P3).
+- **P4-CAT-11** — product duplicate (API only; SEO copy waits for P7 tables).
+- Admin product API (`/api/v1/admin/products`): the form screens (P4-CAT-04/05) are the next batch.
+- **P4-STO-01** — header, mega menu from `/storefront/categories/tree`, bottom tab bar, footer. **P4-STO-12** — styled 404 (now server-rendered for unknown URLs), error, maintenance, About template.
+- **P3-DAT-04** — `DemoCatalogSeeder`: 13 products with Bangla names, 3 with variants (local/testing only).
+- Verified on the real app: product and category APIs, the mega menu rendering seeded categories in both locales, and a category rename revalidating the storefront.
+
+**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details in `toymartbd-app/storefront/lib/site-config.ts` are placeholders (the hotline differs between the content spec and the footer design: 09600- vs 09610-123456).
 
 ### Catalog (CAT)
 | ID | Task | Size | Tests |

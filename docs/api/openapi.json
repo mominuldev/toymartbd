@@ -588,6 +588,1318 @@
                 }
             }
         },
+        "/admin/products": {
+            "get": {
+                "operationId": "v1.admin.products.index",
+                "description": "Filters: `filter[search]` (name, name_bn, slug or a variant SKU contains),\n`filter[status]` = `draft|active|archived`, `filter[type]` = `simple|variable`,\n`filter[brand_id]`, `filter[category_id]` (any of the product's categories).\nSorts: `name`, `created_at`, `updated_at`, each with `-` for descending\n(default `-updated_at`). Anything else is a 400.",
+                "summary": "`GET /products` \u2014 cursor-paginated, needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Case-insensitive \"contains\" match on name, name_bn, slug or a variant SKU.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "description": "Only products in this status.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "active",
+                                "archived"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[type]",
+                        "in": "query",
+                        "description": "Only simple or only variable products.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "simple",
+                                "variable"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[brand_id]",
+                        "in": "query",
+                        "description": "Only products of this brand.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[category_id]",
+                        "in": "query",
+                        "description": "Only products in this category (primary or not).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "-name",
+                                "created_at",
+                                "-created_at",
+                                "updated_at",
+                                "-updated_at"
+                            ],
+                            "default": "-updated_at"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ProductListItem`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductListItem"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.products.store",
+                "summary": "`POST /products` \u2014 needs catalog.create (and catalog.view_cost to send `cost_price`)",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreProductRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`Product`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing catalog.create, or `cost_price` sent without catalog.view_cost (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}": {
+            "get": {
+                "operationId": "v1.admin.products.show",
+                "summary": "`GET /products/{product}` \u2014 with variants (archived included), images, categories and relations; needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Product`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.products.update",
+                "summary": "`PUT /products/{product}` \u2014 replaces the whole document; needs catalog.update.\nChanging a selling price or adding a variant also needs catalog.update_price;\nsending `cost_price` needs catalog.view_cost",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProductRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Product`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing catalog.update, a price change without catalog.update_price, or `cost_price` without catalog.view_cost (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.products.destroy",
+                "summary": "`DELETE /products/{product}` \u2014 archives the product (idempotent), needs catalog.archive",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/duplicate": {
+            "post": {
+                "operationId": "v1.admin.products.duplicate",
+                "summary": "`POST /products/{product}/duplicate` \u2014 a draft copy with a new slug and new SKUs\n(barcodes are not copied); needs catalog.create",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "`Product`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/categories": {
+            "get": {
+                "operationId": "v1.admin.categories.index",
+                "description": "`?tree=1` returns the whole tree, archived categories included, as\n`{ data: Category[] }` where each node carries `children` recursively, in tree\norder. Filters and sorts do not apply to the tree.\n\nOtherwise a cursor-paginated flat list in tree order. Filters:\n`filter[search]` (name, name_bn or slug contains), `filter[status]` =\n`active|archived`, `filter[parent_id]` = an id or `root`. Sorts: `name`,\n`-name`, `created_at`, `-created_at` (default: tree order). Anything else is a 400.",
+                "summary": "`GET /categories` \u2014 needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "tree",
+                        "in": "query",
+                        "description": "Return the full nested tree instead of a paginated list.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "1",
+                                "0"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Case-insensitive \"contains\" match on name, name_bn or slug.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "description": "Only active or only archived categories.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "archived"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[parent_id]",
+                        "in": "query",
+                        "description": "Direct children of this category id, or `root` for top-level categories.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending. Default: tree order.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "-name",
+                                "created_at",
+                                "-created_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `Category`\n\nArray of `Category`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Category"
+                                                    }
+                                                },
+                                                "links": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "first": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "last": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "prev": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "next": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "first",
+                                                        "last",
+                                                        "prev",
+                                                        "next"
+                                                    ]
+                                                },
+                                                "meta": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "path": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Base path for paginator generated URLs."
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "description": "Number of items shown per page.",
+                                                            "minimum": 0
+                                                        },
+                                                        "next_cursor": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "The \"cursor\" that points to the next set of items."
+                                                        },
+                                                        "prev_cursor": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "The \"cursor\" that points to the previous set of items."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "path",
+                                                        "per_page",
+                                                        "next_cursor",
+                                                        "prev_cursor"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "links",
+                                                "meta"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Category"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.categories.store",
+                "summary": "`POST /categories` \u2014 needs catalog.create",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`Category`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "The parent is archived (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/{category}": {
+            "get": {
+                "operationId": "v1.admin.categories.show",
+                "summary": "`GET /categories/{category}` \u2014 archived categories included, needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Category`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1.admin.categories.update",
+                "summary": "`PATCH /categories/{category}` \u2014 needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Category`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Archiving with active subcategories, or restoring under an archived parent (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.categories.destroy",
+                "summary": "`DELETE /categories/{category}` \u2014 archives (idempotent), needs catalog.archive",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "The category still has active subcategories (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/{category}/move": {
+            "post": {
+                "operationId": "v1.admin.categories.move",
+                "summary": "`POST /categories/{category}/move` \u2014 reparent and/or reorder, needs catalog.update.\nA 422 for a move under itself or a descendant, or past three levels",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "path",
+                        "required": true,
+                        "description": "The category ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MoveCategoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Category`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "An active category cannot move under an archived parent (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes": {
+            "get": {
+                "operationId": "v1.admin.attributes.index",
+                "summary": "`GET /attributes` \u2014 every attribute with its values, by position; needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `Attribute`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Attribute"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.attributes.store",
+                "summary": "`POST /attributes` \u2014 needs catalog.create",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreAttributeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`Attribute`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attribute"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{attribute}": {
+            "get": {
+                "operationId": "v1.admin.attributes.show",
+                "summary": "`GET /attributes/{attribute}` \u2014 needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Attribute`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attribute"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "v1.admin.attributes.update",
+                "summary": "`PATCH /attributes/{attribute}` \u2014 needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAttributeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Attribute`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attribute"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.attributes.destroy",
+                "summary": "`DELETE /attributes/{attribute}` \u2014 deletes it and its values, needs catalog.archive",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "A product variant uses one of its values (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{attribute}/values": {
+            "post": {
+                "operationId": "v1.admin.attributes.values.store",
+                "summary": "`POST /attributes/{attribute}/values` \u2014 appended last, needs catalog.create",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreAttributeValueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AttributeValue`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttributeValue"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{attribute}/values/reorder": {
+            "post": {
+                "operationId": "v1.admin.attributes.values.reorder",
+                "summary": "`POST /attributes/{attribute}/values/reorder` \u2014 returns the attribute with its\nvalues in the new order; needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReorderAttributeValuesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Attribute`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attribute"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{attribute}/values/{value}": {
+            "patch": {
+                "operationId": "v1.admin.attributes.values.update",
+                "summary": "`PATCH /attributes/{attribute}/values/{value}` \u2014 needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "in": "path",
+                        "required": true,
+                        "description": "The value ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAttributeValueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AttributeValue`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AttributeValue"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.attributes.values.destroy",
+                "summary": "`DELETE /attributes/{attribute}/values/{value}` \u2014 needs catalog.archive",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "attribute",
+                        "in": "path",
+                        "required": true,
+                        "description": "The attribute ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "in": "path",
+                        "required": true,
+                        "description": "The value ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "A product variant uses this value (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/ping": {
             "get": {
                 "operationId": "v1.storefront.ping",
@@ -720,6 +2032,105 @@
                 }
             }
         },
+        "/storefront/categories/tree": {
+            "get": {
+                "operationId": "v1.storefront.categories.tree",
+                "summary": "`GET /categories/tree` \u2014 the mega menu: active categories with\n`show_in_menu`, at most three levels, in tree order. A hidden or archived\ncategory hides its whole branch",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StorefrontCategoryNode`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StorefrontCategoryNode"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/categories/{slug}": {
+            "get": {
+                "operationId": "v1.storefront.categories.show",
+                "summary": "`GET /categories/{slug}` \u2014 one active category with its breadcrumbs (root\nfirst, itself last) and its active subcategories (menu visibility aside)",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontCategory`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontCategory"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No active category has this slug",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "v1.health",
@@ -776,6 +2187,113 @@
     },
     "components": {
         "schemas": {
+            "Attribute": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "select",
+                            "color",
+                            "text"
+                        ]
+                    },
+                    "is_variant_defining": {
+                        "type": "boolean"
+                    },
+                    "is_filterable": {
+                        "type": "boolean"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AttributeValue"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "type",
+                    "is_variant_defining",
+                    "is_filterable",
+                    "position",
+                    "values"
+                ],
+                "title": "Attribute"
+            },
+            "AttributeType": {
+                "type": "string",
+                "description": "`product_attributes.type`. `color` values carry a `color_hex` swatch; `select` and `text` do not.\n",
+                "enum": [
+                    "select",
+                    "color",
+                    "text"
+                ],
+                "title": "AttributeType"
+            },
+            "AttributeValue": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "attribute_id": {
+                        "type": "integer"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "value_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "color_hex": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "position": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "attribute_id",
+                    "value",
+                    "value_bn",
+                    "slug",
+                    "color_hex",
+                    "position"
+                ],
+                "title": "AttributeValue"
+            },
             "AuthUserResource": {
                 "type": "object",
                 "properties": {
@@ -887,6 +2405,125 @@
                 ],
                 "title": "Brand"
             },
+            "Category": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "parent_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "show_in_menu": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "depth": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "children": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Category"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "parent_id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "description",
+                    "description_bn",
+                    "icon",
+                    "image_url",
+                    "is_featured",
+                    "show_in_menu",
+                    "is_active",
+                    "position",
+                    "depth",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Category"
+            },
+            "CategoryStatus": {
+                "type": "string",
+                "description": "`categories.status`. A category is archived rather than deleted, because products reference it through `primary_category_id` and `category_product`.\n",
+                "enum": [
+                    "active",
+                    "archived"
+                ],
+                "title": "CategoryStatus"
+            },
+            "Gender": {
+                "type": "string",
+                "description": "`products.gender` \u2014 nullable: most toys need no gender at all.\n",
+                "enum": [
+                    "boys",
+                    "girls",
+                    "unisex"
+                ],
+                "title": "Gender"
+            },
             "HealthReportResource": {
                 "type": "object",
                 "properties": {
@@ -940,6 +2577,28 @@
                 ],
                 "title": "LoginRequest"
             },
+            "MoveCategoryRequest": {
+                "type": "object",
+                "description": "`POST /categories/{category}/move` \u2014 `{ parent_id, position }`. The category\nbecomes the child of `parent_id` (null = a root) at sibling index `position`\n(0-based; past the end means last). Up/down keeps the parent and changes the\nposition; indent/outdent changes the parent.",
+                "properties": {
+                    "parent_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "position": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 10000
+                    }
+                },
+                "required": [
+                    "parent_id",
+                    "position"
+                ],
+                "title": "MoveCategoryRequest"
+            },
             "ProblemDetails": {
                 "type": "object",
                 "description": "RFC 9457 problem details, served as `application/problem+json`.",
@@ -987,6 +2646,673 @@
                 ],
                 "title": "ProblemDetails"
             },
+            "Product": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "simple",
+                            "variable"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ]
+                    },
+                    "brand_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "brand": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "primary_category_id": {
+                        "type": "integer"
+                    },
+                    "category_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "slug": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "name_bn",
+                                "slug"
+                            ]
+                        }
+                    },
+                    "short_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "short_description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "specifications": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    "age_min_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "age_max_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "gender": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "boys",
+                            "girls",
+                            "unisex",
+                            null
+                        ]
+                    },
+                    "is_educational": {
+                        "type": "boolean"
+                    },
+                    "safety_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "safety_note_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "warranty_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "options": {
+                        "type": "array",
+                        "description": "The selected values of each variant-defining attribute, derived from the\nactive variants. Empty for a simple product.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_id": {
+                                    "type": "integer"
+                                },
+                                "value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "attribute_id",
+                                "value_ids"
+                            ]
+                        }
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductVariant"
+                        }
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductImage"
+                        }
+                    },
+                    "relations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProductRelation"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "type",
+                    "status",
+                    "brand_id",
+                    "brand",
+                    "primary_category_id",
+                    "category_ids",
+                    "categories",
+                    "short_description",
+                    "short_description_bn",
+                    "description",
+                    "description_bn",
+                    "specifications",
+                    "age_min_months",
+                    "age_max_months",
+                    "gender",
+                    "is_educational",
+                    "safety_note",
+                    "safety_note_bn",
+                    "warranty_months",
+                    "is_featured",
+                    "published_at",
+                    "options",
+                    "variants",
+                    "images",
+                    "relations",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Product"
+            },
+            "ProductImage": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "variant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "url": {
+                        "type": "null"
+                    },
+                    "alt_text": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "alt_text_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "variant_id",
+                    "url",
+                    "alt_text",
+                    "alt_text_bn",
+                    "position",
+                    "is_primary"
+                ],
+                "title": "ProductImage"
+            },
+            "ProductListItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "simple",
+                            "variable"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ]
+                    },
+                    "brand": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "primary_category_id": {
+                        "type": "integer"
+                    },
+                    "sku": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price_min": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price_max": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variants_count": {
+                        "type": "string"
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "type",
+                    "status",
+                    "brand",
+                    "primary_category_id",
+                    "sku",
+                    "price_min",
+                    "price_max",
+                    "variants_count",
+                    "image_url",
+                    "is_featured",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "ProductListItem"
+            },
+            "ProductRelation": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "related_product_id": {
+                        "type": "integer"
+                    },
+                    "related_product": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "draft",
+                                    "active",
+                                    "archived"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn",
+                            "slug",
+                            "status"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "related",
+                            "upsell",
+                            "cross_sell",
+                            "bundle",
+                            "age_progression"
+                        ]
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "reason_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_auto": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "related_product_id",
+                    "related_product",
+                    "type",
+                    "position",
+                    "reason_note",
+                    "is_auto"
+                ],
+                "title": "ProductRelation"
+            },
+            "ProductStatus": {
+                "type": "string",
+                "description": "`products.status`. `draft` is invisible to the storefront; `active` is live once `published_at` has passed; `archived` is retired but kept (orders reference it).\n",
+                "enum": [
+                    "draft",
+                    "active",
+                    "archived"
+                ],
+                "title": "ProductStatus"
+            },
+            "ProductType": {
+                "type": "string",
+                "description": "`products.type`. A simple product has exactly one (default) variant; a variable product has one variant per combination of its selected attribute values. Either way the variant is the unit of inventory (DATABASE-DESIGN \u00a71.1).\n",
+                "enum": [
+                    "simple",
+                    "variable"
+                ],
+                "title": "ProductType"
+            },
+            "ProductVariant": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "barcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price": {
+                        "type": "string",
+                        "description": "Selling price, decimal string."
+                    },
+                    "compare_at_price": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cost_price": {
+                        "type": "string",
+                        "description": "Current replacement cost; only with catalog.view_cost."
+                    },
+                    "wholesale_price": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "weight_grams": {
+                        "type": "integer"
+                    },
+                    "is_default": {
+                        "type": "boolean"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "archived"
+                        ]
+                    },
+                    "attribute_values": {
+                        "type": "array",
+                        "description": "One value per variant-defining attribute; empty for a simple product.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_id": {
+                                    "type": "integer"
+                                },
+                                "attribute_value_id": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "attribute_id",
+                                "attribute_value_id"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "sku",
+                    "barcode",
+                    "name",
+                    "name_bn",
+                    "price",
+                    "compare_at_price",
+                    "wholesale_price",
+                    "weight_grams",
+                    "is_default",
+                    "position",
+                    "status",
+                    "attribute_values"
+                ],
+                "title": "ProductVariant"
+            },
+            "RelationType": {
+                "type": "string",
+                "description": "`product_relations.type` (DATABASE-DESIGN \u00a73.1). `age_progression` is its own type, not a flavour of upsell: an upsell is a better version of the same toy; an age progression is the next toy, for a child who has outgrown this one.\n",
+                "enum": [
+                    "related",
+                    "upsell",
+                    "cross_sell",
+                    "bundle",
+                    "age_progression"
+                ],
+                "title": "RelationType"
+            },
+            "ReorderAttributeValuesRequest": {
+                "type": "object",
+                "description": "`POST /attributes/{attribute}/values/reorder` \u2014 `{ ids: [3, 1, 2] }`, every value\nid of the attribute exactly once, in the new display order.",
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 500,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "ids"
+                ],
+                "title": "ReorderAttributeValuesRequest"
+            },
             "StaffResource": {
                 "type": "object",
                 "properties": {
@@ -1017,6 +3343,80 @@
                     "roles"
                 ],
                 "title": "StaffResource"
+            },
+            "StoreAttributeRequest": {
+                "type": "object",
+                "description": "`POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)\nor `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 80
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/AttributeType"
+                    },
+                    "is_variant_defining": {
+                        "type": "boolean"
+                    },
+                    "is_filterable": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreAttributeRequest"
+            },
+            "StoreAttributeValueRequest": {
+                "type": "object",
+                "description": "`POST /attributes/{attribute}/values`. `slug` is unique within the attribute and\ngenerated from `value` when omitted. `color_hex` (`#RRGGBB`) is kept only for a\ncolour-type attribute.",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "value_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 80
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "color_hex": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    }
+                },
+                "required": [
+                    "value"
+                ],
+                "title": "StoreAttributeValueRequest"
             },
             "StoreBrandRequest": {
                 "type": "object",
@@ -1064,6 +3464,412 @@
                 ],
                 "title": "StoreBrandRequest"
             },
+            "StoreCategoryRequest": {
+                "type": "object",
+                "description": "`POST /categories`. Appended as the last child of `parent_id` (omit or null for a\nroot). When `slug` is omitted it is generated from `name` (or `name_bn`). At most\nthree levels deep; an active category under an archived parent is a 409.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 91
+                    },
+                    "parent_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "show_in_menu": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreCategoryRequest"
+            },
+            "StoreProductRequest": {
+                "type": "object",
+                "description": "`POST /products` \u2014 needs catalog.create. Setting the initial prices is part of\ncreating; a `cost_price` anywhere in the document needs catalog.view_cost.\nWhen `slug` is omitted it is generated from `name` (or `name_bn`).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 92
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ProductType"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ProductStatus"
+                    },
+                    "brand_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "primary_category_id": {
+                        "type": "integer"
+                    },
+                    "category_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "uniqueItems": true
+                    },
+                    "short_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "short_description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50000
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50000
+                    },
+                    "specifications": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 500
+                        },
+                        "maxItems": 50
+                    },
+                    "age_min_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 216
+                    },
+                    "age_max_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 216
+                    },
+                    "gender": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/Gender"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "is_educational": {
+                        "type": "boolean"
+                    },
+                    "safety_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "safety_note_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "warranty_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 120
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_id": {
+                                    "type": "integer"
+                                },
+                                "value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 30
+                                }
+                            },
+                            "required": [
+                                "attribute_id",
+                                "value_ids"
+                            ]
+                        },
+                        "maxItems": 3
+                    },
+                    "variant_defaults": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "compare_at_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "cost_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "wholesale_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "weight_grams": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ],
+                                "minimum": 0,
+                                "maximum": 1000000
+                            }
+                        }
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "maxItems": 3
+                                },
+                                "sku": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._\\/-]*$",
+                                    "maxLength": 64
+                                },
+                                "barcode": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^[A-Za-z0-9-]+$",
+                                    "maxLength": 32
+                                },
+                                "price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "compare_at_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "cost_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "wholesale_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "weight_grams": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 1000000
+                                },
+                                "status": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/VariantStatus"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "maxItems": 100
+                    },
+                    "relations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "related_product_id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "$ref": "#/components/schemas/RelationType"
+                                },
+                                "position": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 1000
+                                },
+                                "reason_note": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 500
+                                }
+                            },
+                            "required": [
+                                "related_product_id",
+                                "type"
+                            ]
+                        },
+                        "maxItems": 50
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "status",
+                    "primary_category_id",
+                    "category_ids"
+                ],
+                "title": "StoreProductRequest"
+            },
             "StorefrontBrand": {
                 "type": "object",
                 "properties": {
@@ -1108,6 +3914,222 @@
                 ],
                 "title": "StorefrontBrand"
             },
+            "StorefrontCategory": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "banner_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "breadcrumbs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "slug": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "name_bn",
+                                "slug"
+                            ]
+                        }
+                    },
+                    "children": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontCategoryNode"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "description",
+                    "description_bn",
+                    "icon",
+                    "image_url",
+                    "banner_url",
+                    "breadcrumbs",
+                    "children"
+                ],
+                "title": "StorefrontCategory"
+            },
+            "StorefrontCategoryNode": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "children": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontCategoryNode"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "slug",
+                    "icon",
+                    "image_url",
+                    "children"
+                ],
+                "title": "StorefrontCategoryNode"
+            },
+            "UpdateAttributeRequest": {
+                "type": "object",
+                "description": "`PATCH /attributes/{attribute}` \u2014 every field optional; only the fields sent\nchange. Changing `type` away from `color` clears the values' swatches.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 80
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/AttributeType"
+                    },
+                    "is_variant_defining": {
+                        "type": "boolean"
+                    },
+                    "is_filterable": {
+                        "type": "boolean"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 10000
+                    }
+                },
+                "title": "UpdateAttributeRequest"
+            },
+            "UpdateAttributeValueRequest": {
+                "type": "object",
+                "description": "`PATCH /attributes/{attribute}/values/{value}` \u2014 only the fields sent change.",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "value_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 80
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "color_hex": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    }
+                },
+                "title": "UpdateAttributeValueRequest"
+            },
             "UpdateBrandRequest": {
                 "type": "object",
                 "description": "`PATCH /brands/{brand}` \u2014 every field optional; only the fields sent change.\n`slug: null` (or omitted) keeps the current slug: a rename never moves the URL.\n`is_active: true` restores an archived brand.",
@@ -1150,6 +4172,412 @@
                     }
                 },
                 "title": "UpdateBrandRequest"
+            },
+            "UpdateCategoryRequest": {
+                "type": "object",
+                "description": "`PATCH /categories/{category}` \u2014 every field optional; only the fields sent\nchange. `slug: null` (or omitted) keeps the current slug. The parent and order\nchange only through `POST /categories/{category}/move`.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 91
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "icon": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 64
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "show_in_menu": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateCategoryRequest"
+            },
+            "UpdateProductRequest": {
+                "type": "object",
+                "description": "`PUT /products/{product}` \u2014 needs catalog.update. The whole document, variant\nmatrix included; `slug` null (or omitted) keeps the current slug, `relations`\nomitted keeps the curated relations, `cost_price` omitted keeps a variant's cost.\n\nField-level abilities, enforced where the domain sees what changes (403 otherwise):\nchanging a selling price or adding a variant needs catalog.update_price; sending\nany `cost_price` needs catalog.view_cost.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "slug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                        "maxLength": 92
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ProductType"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ProductStatus"
+                    },
+                    "brand_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "primary_category_id": {
+                        "type": "integer"
+                    },
+                    "category_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "uniqueItems": true
+                    },
+                    "short_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "short_description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50000
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 50000
+                    },
+                    "specifications": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 500
+                        },
+                        "maxItems": 50
+                    },
+                    "age_min_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 216
+                    },
+                    "age_max_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 216
+                    },
+                    "gender": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/Gender"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "is_educational": {
+                        "type": "boolean"
+                    },
+                    "safety_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "safety_note_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "warranty_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 120
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_id": {
+                                    "type": "integer"
+                                },
+                                "value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 30
+                                }
+                            },
+                            "required": [
+                                "attribute_id",
+                                "value_ids"
+                            ]
+                        },
+                        "maxItems": 3
+                    },
+                    "variant_defaults": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "compare_at_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "cost_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "wholesale_price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "weight_grams": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ],
+                                "minimum": 0,
+                                "maximum": 1000000
+                            }
+                        }
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "attribute_value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    },
+                                    "maxItems": 3
+                                },
+                                "sku": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._\\/-]*$",
+                                    "maxLength": 64
+                                },
+                                "barcode": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^[A-Za-z0-9-]+$",
+                                    "maxLength": 32
+                                },
+                                "price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "compare_at_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "cost_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "wholesale_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "weight_grams": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 1000000
+                                },
+                                "status": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/VariantStatus"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "maxItems": 100
+                    },
+                    "relations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "related_product_id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "$ref": "#/components/schemas/RelationType"
+                                },
+                                "position": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0,
+                                    "maximum": 1000
+                                },
+                                "reason_note": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 500
+                                }
+                            },
+                            "required": [
+                                "related_product_id",
+                                "type"
+                            ]
+                        },
+                        "maxItems": 50
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "status",
+                    "primary_category_id",
+                    "category_ids"
+                ],
+                "title": "UpdateProductRequest"
+            },
+            "VariantStatus": {
+                "type": "string",
+                "description": "`product_variants.status`. A variant is archived, never deleted: stock movements and order lines reference it.\n",
+                "enum": [
+                    "active",
+                    "archived"
+                ],
+                "title": "VariantStatus"
             }
         },
         "responses": {
