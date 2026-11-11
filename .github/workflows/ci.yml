@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP — Pint, PHPStan, deptrac, Pest
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: toymartbd_testing
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -psecret"
+          --health-interval=5s --health-retries=20
+        ports: ["3306:3306"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, pdo_sqlite
+          coverage: none
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Prepare .env
+        run: cp .env.example .env && php artisan key:generate
+      - name: Pint
+        run: vendor/bin/pint --test
+      - name: PHPStan (level 6)
+        run: php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress
+      - name: deptrac
+        run: vendor/bin/deptrac analyse --no-progress
+      - name: Pest (SQLite)
+        run: php artisan test
+      - name: Pest (MySQL 8.4 group — collation, locking)
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: toymartbd_testing
+          DB_USERNAME: root
+          DB_PASSWORD: secret
+        run: vendor/bin/pest --group=mysql
+
+  frontend:
+    name: Frontend — tokens, typecheck, admin build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: npm ci
+        run: npm ci
+      - name: Tokens are fresh and pass the contrast gate
+        run: npm run check --workspace=@toymart/tokens
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build admin bundle
+        run: npm run build
+      # ESLint is not wired yet: it needs a flat config plus typescript-eslint,
+      # which needs a lockfile update from a working npm (P3-SET-01 remainder).

@@ -1,6 +1,6 @@
 {
     "name": "@toymart/tokens",
-    "version": "0.1.0",
+    "version": "0.0.0",
     "private": true,
     "type": "module",
     "description": "Design tokens generated from the Figma library. Figma is the source of truth — never hand-edit a value here.",

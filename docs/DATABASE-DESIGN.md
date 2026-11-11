@@ -300,7 +300,7 @@ Index: `(occurred_on, type)`, `(source_type, source_id)`, `(type, occurred_on)`
 
 **`tracking_events`** `id` · `event_id` UUID (shared with the browser event for deduplication) · `event_name` · `source` (`browser`|`server`) · `customer_id` NULL · `session_id` · `order_id` NULL · `value` · `currency` · `payload` JSON · `consent_state` JSON · `ga4_status` · `ga4_response` · `meta_status` · `meta_response` · `dispatched_at` · `created_at`
 **`webhook_receipts`** `id` · `provider` · `external_event_id` · `signature_valid` BOOL · `payload` JSON · `headers` JSON · `processed_at` NULL · `result` · `error` · UNIQUE `(provider, external_event_id)`
-**`settings`** `key` PK · `value` JSON · `group` · `is_encrypted` BOOL · `updated_by` · `updated_at`
+**`settings`** `key` PK · `value` JSON · `group` · `is_encrypted` BOOL · `updated_by` · `created_at` · `updated_at` (both timestamps, per the table conventions)
 **`activity_log`** — `spatie/laravel-activitylog` schema.
 **`audit_sensitive`** `id` · `user_id` · `action` · `model_type`/`model_id` · `before` JSON · `after` JSON · `ip` · `user_agent` · `created_at` — immutable, insert-only, no delete grant for the application DB user. Covers price, cost, refund, role and credential changes.
 **`users`**, **`roles`**, **`permissions`** — `spatie/laravel-permission`.

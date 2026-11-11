@@ -41,3 +41,6 @@ toymartbd-app/packages/api-types/dist
 /e2e/test-results
 /e2e/playwright-report
 .php-cs-fixer.cache
+
+# Tool caches
+.deptrac.cache
