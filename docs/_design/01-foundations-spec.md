@@ -1,6 +1,7 @@
 # Toy Mart BD — Foundations Specification (FINAL)
 
 **Owner:** Design Agent 1 · **Date:** 2026-11-08 · **Status:** Final — execute as written
+**Revised 2026-11-11:** colour palette re-anchored to a soft toy-shop pastel direction (§14) a kid-friendly style pass on type, radius, buttons and shadows (§15), an exact colour match to the reference shop (§16, since withdrawn) and its replacement — a similar-not-exact palette with gradient candy buttons and zero contrast failures (§17), all at the owner's request. Values in §2–§4 are the revised ones; the §2.4 log is kept as history.
 **Supersedes:** `docs/UI-UX-DESIGN-SPEC.md` §2 and §3 in full.
 **Audience:** the lead agent, who types these values into Figma. Every number here is final. There is no TBD and no range where a single value is required.
 **Owner's brief, verbatim:** *"modern creative, premium and user friendly like kids."*
@@ -11,9 +12,11 @@
 
 **Rickshaw-plate chromatics, Swiss-grid discipline.**
 
+> **2026-11-11 revision (§14):** the hues below were softened toward a pastel toy-shop palette — coral rose, sunflower, sky and lavender on cream paper with navy ink. The flatness, the 12% area budget and the decision-surface ban are unchanged.
+
 Bangladesh already owns a native visual language for cheap joy: the painted rickshaw back-plate — vermilion, marigold, peacock teal and orchid violet laid down as flat, hard-edged, fully opaque fields, never blended into each other. We take the palette and the flatness and nothing else. No gradients, no glows, no glass, no coloured drop shadows, no 3D.
 
-The one thing that makes this premium rather than merely colourful is **the area budget**. Saturated colour is capped at roughly 12% of any viewport, and it is forbidden inside a decision surface — product-card body, cart, checkout, address form, account, any admin form. Everything structural is warm ink (`#241D19`) on warm paper (`#F7F3F1`) on a strict 4px grid, in one humanist sans with deliberately tight display tracking and tabular figures. Richness comes from colour relationships and generous macro-spacing, not from effects. The page reads as a well-printed object, not a bright app.
+The one thing that makes this premium rather than merely colourful is **the area budget**. Saturated colour is capped at roughly 12% of any viewport, and it is forbidden inside a decision surface — product-card body, cart, checkout, address form, account, any admin form. Everything structural is warm ink (`#232E4A`) on warm paper (`#FEF8F2`) on a strict 4px grid, in one humanist sans with deliberately tight display tracking and tabular figures. Richness comes from colour relationships and generous macro-spacing, not from effects. The page reads as a well-printed object, not a bright app.
 
 Children get the toy shelf: full-bleed category tiles, two-tone icons, illustrated empty states, one spring. Parents get a receipt: ink, grid, aligned numerals, no exclamation marks.
 
@@ -32,25 +35,25 @@ All ramps were constructed in OKLCh for perceptual evenness, then each contrast-
 
 | Ramp | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **`brand`** vermilion (OKLCh h 30) | `#FFF4F2` | `#FFE6E1` | `#FFCCC3` | `#FFA191` | `#F76854` | **`#DD2D1D`** | `#C22314` | `#9E1C10` | `#7D1B11` | `#5E150E` |
-| **`accent`** marigold (h 78) | `#FFF8EE` | `#FFEFD7` | `#FFDFAE` | `#FFC972` | `#FCB31C` | **`#EBA500`** | `#C38801` | `#996A01` | `#785300` | `#5D3F00` |
-| **`teal`** peacock (h 185) | `#EDFAF8` | `#D7F5F0` | `#B2EAE2` | `#7ED8CC` | `#4BBCB0` | **`#1C9E92`** | `#008076` | `#00655C` | `#054F49` | `#073C37` |
-| **`grape`** orchid (h 305) | `#F9F5FF` | `#F2E8FF` | `#E6D2FF` | `#D4AFFF` | `#B97CF8` | **`#9A4CDF`** | `#843CC1` | `#6A2F9D` | `#54277C` | `#411E5F` |
+| **`brand`** coral rose (OKLCh h 20) | `#FEF5F8` | `#FFE1EA` | `#FFD5E3` | `#FEBDC6` | `#FB6265` | **`#DC3442`** | `#BD303A` | `#961022` | `#841520` | `#60000F` |
+| **`accent`** sunflower (h 84) | `#FEFBEC` | `#FBEEBA` | `#F9E695` | `#F8DD77` | `#F8D568` | **`#F7CE54`** | `#BF9224` | `#856716` | `#58460B` | `#3C2F05` |
+| **`teal`** sky (h 218) | `#F0FAFD` | `#D5EEF5` | `#BFECF8` | `#9BDDEF` | `#6EC8DF` | **`#42A2BF`** | `#38869E` | `#1E7188` | `#045063` | `#023644` |
+| **`grape`** lavender (h 303) | `#FAF6FE` | `#E7D9F5` | `#DCC7F1` | `#CAAFE4` | `#B692E0` | **`#8B51DE`** | `#7540BF` | `#602EA1` | `#582099` | `#3F0076` |
 
-### 2.2 Neutral ramp — warm paper / warm ink (OKLCh h 50, chroma 0.003 → 0.014)
+### 2.2 Neutral ramp — cream paper / navy ink (light end OKLCh h 40–60, dark end h 265)
 
 | 0 | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `#FFFFFF` | `#FCFAF9` | `#F7F3F1` | `#EBE5E2` | `#D8D1CE` | `#B4ABA7` | `#89807B` | `#6E655F` | `#594F4A` | `#3D342F` | `#241D19` | `#16100C` |
+| `#FFFFFF` | `#FEFBF8` | `#FEF8F2` | `#F6EEE6` | `#E9DFD5` | `#BABECB` | `#7C8199` | `#616580` | `#474F6A` | `#313A57` | `#232E4A` | `#151B30` |
 
-The bias is deliberate and single-hue: every neutral sits on OKLCh hue 50 (warm, sand-to-ink), chroma rising from 0.003 at `50` to 0.014 at `500` and holding. Nothing in this ramp is a pure grey, and the ramp never crosses into cool. That is what lets the warm-tinted elevation in §6.3 derive honestly from `neutral/900` instead of being an arbitrary tint.
+The bias is deliberate and split: `50`–`300` are warm cream (OKLCh h 40–60, chroma ≈ 0.006–0.012) so pages read as paper, and `400`–`950` are navy ink (h 265, chroma 0.018 → 0.052) so text reads crisp rather than brown. Nothing in this ramp is a pure grey. Elevation shadows (§6.3) should be re-derived from the new `neutral/900`; until then the effect styles keep their warm tint.
 
 Two alpha primitives also live in this collection, because semantic tokens may never carry raw colour:
 
 | Token | Value |
 |---|---|
-| `neutral/ink-alpha-60` | `rgba(36, 29, 25, 0.60)` |
-| `neutral/ink-alpha-72` | `rgba(22, 16, 12, 0.72)` |
+| `neutral/ink-alpha-60` | `rgba(25, 36, 63, 0.60)` |
+| `neutral/ink-alpha-72` | `rgba(10, 19, 40, 0.72)` |
 
 ### 2.3 Status ramps
 
@@ -58,9 +61,9 @@ Each carries **50 / 100 / 300 / 400 / 500 / 600 / 700 / 800 / 900** — more tha
 
 | Ramp | 50 | 100 | 300 | 400 | 500 | 600 | 700 | 800 | 900 |
 |---|---|---|---|---|---|---|---|---|---|
-| **`success`** (h 145) | `#F0FBF0` | `#DCF6DC` | `#93D594` | `#6DBC71` | `#4EA253` | `#35813B` | `#2A682F` | `#215225` | `#183D1B` |
-| **`warning`** (h 52) | `#FFF7F2` | `#FFEBDF` | `#FFB78C` | `#F9904A` | `#E07526` | `#B25600` | `#914500` | `#743601` | `#592904` |
-| **`danger`** (h 12) | `#FFF3F4` | `#FFE5E7` | `#FF9EAA` | `#F56680` | `#E22F5E` | `#BE184A` | `#9B113B` | `#7A112E` | `#5D0E23` |
+| **`success`** (h 145) | `#EFFBF5` | `#D6F5E5` | `#9DE3C1` | `#72CDA2` | `#49C08D` | `#1B9769` | `#017D54` | `#035639` | `#023A25` |
+| **`warning`** (h 52) | `#FEF6EF` | `#FCE1CB` | `#FEC392` | `#F89F4E` | `#DF7D39` | `#B85E16` | `#994A01` | `#703500` | `#4E2301` |
+| **`danger`** raspberry (h 356) | `#FEF3F7` | `#FDE5ED` | `#FA9EC0` | `#EE67A0` | `#DA3285` | `#B71D6C` | `#951557` | `#751345` | `#5A0F34` |
 | **`info`** (h 255) | `#F1F7FF` | `#E1EEFF` | `#94C0F7` | `#5E9DEE` | `#3387EB` | `#0065C4` | `#004F9E` | `#003F7F` | `#013063` |
 
 ### 2.4 Every change from the draft, with its one-line justification
@@ -108,7 +111,7 @@ Light and dark values are **aliases to primitives only**. No raw hex appears bel
 | `color/text/discount` | `brand/600` | `brand/300` | "−25%" |
 | `color/text/link` | `teal/700` | `teal/300` | Inline links |
 | `color/border/default` | `neutral/300` | `neutral/700` | Dividers, card edges — **decorative only** |
-| `color/border/strong` | `neutral/500` | `neutral/500` | Input / control boundaries — meets 3:1 in both modes |
+| `color/border/strong` | `neutral/500` | `neutral/400` | Input / control boundaries — meets 3:1 in both modes |
 | `color/border/focus` | `teal/600` | `teal/400` | Focus ring outer stroke |
 | `color/status/in-stock` | `success/700` | `success/300` | "In stock" text + icon |
 | `color/status/low-stock` | `warning/700` | `warning/300` | "Only 3 left" text + icon |
@@ -124,11 +127,12 @@ Light and dark values are **aliases to primitives only**. No raw hex appears bel
 
 | Token | Light | Dark | Why it is needed |
 |---|---|---|---|
-| `color/bg/teal` | `teal/600` | `teal/600` | The `teal` ramp existed with no fill token; category tiles need it. |
+| `color/bg/teal` | `teal/700` | `teal/700` | The `teal` ramp existed with no fill token; category tiles need it. (`teal/700` since §14: white on `teal/600` fell to 3.4:1.) |
 | `color/bg/teal-subtle` | `teal/50` | `teal/900` | Tinted "shop by age" bands. |
 | `color/bg/grape` | `grape/500` | `grape/500` | Second category-tile fill. |
 | `color/bg/grape-subtle` | `grape/50` | `grape/900` | Tinted editorial / blog bands. |
-| `color/bg/danger` | `danger/600` | `danger/600` | Destructive admin buttons had no fill token. |
+| `color/bg/danger` | `danger/700` | `danger/700` | Destructive admin buttons had no fill token. (`danger/700` since §14, so a destructive fill is clearly darker than the coral-rose CTA.) |
+| `color/bg/tile-pink` / `-butter` / `-mint` / `-sky` / `-lavender` | `brand/100` / `accent/100` / `success/100` / `teal/100` / `grape/100` | the matching `/900` | Pastel category and promo tile surfaces (added §14). Text on them is `color/text/primary`; never behind a price, form or checkout. |
 | `color/bg/success-subtle` | `success/50` | `success/900` | Alerts cannot be built from `feedback/*` alone. |
 | `color/bg/warning-subtle` | `warning/50` | `warning/900` | ditto |
 | `color/bg/danger-subtle` | `danger/50` | `danger/900` | ditto — and it is the storefront error treatment (§2.4). |
@@ -139,14 +143,14 @@ Light and dark values are **aliases to primitives only**. No raw hex appears bel
 | `color/text/on-teal` | `neutral/0` | `neutral/0` | Label on `bg/teal`. |
 | `color/text/on-grape` | `neutral/0` | `neutral/0` | Label on `bg/grape`. |
 | `color/text/on-danger` | `neutral/0` | `neutral/0` | Label on `bg/danger`. |
-| `color/text/disabled` | `neutral/500` | `neutral/500` | Disabled label; exempt from 1.4.3 by design, so it must be a separate token rather than a misused `tertiary`. |
+| `color/text/disabled` | `neutral/600` | `neutral/400` | Disabled label; exempt from 1.4.3 by design, so it must be a separate token rather than a misused `tertiary`. |
 | `color/text/inverse` | `neutral/0` | `neutral/900` | Text on ink fills (toasts, tooltips). |
 | `color/border/brand` | `brand/500` | `brand/400` | Selected card / checked control boundary at 3:1. |
 | `color/border/danger` | `danger/500` | `danger/400` | Invalid field boundary at 3:1 without a red fill. |
 
 ### 3.3 The focus indicator is a composite, not a single stroke
 
-A single-colour ring cannot clear 3:1 against both white paper *and* a vermilion CTA fill (`teal/600` vs `brand/500` is only 1.42:1). The ring is therefore two strokes:
+A single-colour ring cannot clear 3:1 against both white paper *and* a coral-rose CTA fill (`teal/600` vs `brand/500` is only about 1.4:1). The ring is therefore two strokes:
 
 ```
 shadow/focus = 0 0 0 2px var(--color-bg-surface),   /* inner halo */
@@ -165,137 +169,137 @@ Computed with the WCAG 2.x relative-luminance formula (sRGB, linearised, `0.2126
 
 | Pair | Foreground | Background | Ratio | Req | Result |
 |---|---|---|---|---|---|
-| Body / heading <24px on page background | `neutral/900` · #241D19 | `neutral/100` · #F7F3F1 | **15.06** | 4.5:1 | PASS |
-| Body / heading <24px on card | `neutral/900` · #241D19 | `neutral/0` · #FFFFFF | **16.60** | 4.5:1 | PASS |
-| Body on striped row / inert fill | `neutral/900` · #241D19 | `neutral/200` · #EBE5E2 | **13.31** | 4.5:1 | PASS |
-| Body on brand-tinted section | `neutral/900` · #241D19 | `brand/50` · #FFF4F2 | **15.40** | 4.5:1 | PASS |
-| Body on accent-tinted section | `neutral/900` · #241D19 | `accent/50` · #FFF8EE | **15.74** | 4.5:1 | PASS |
-| Body on teal-tinted tile | `neutral/900` · #241D19 | `teal/50` · #EDFAF8 | **15.52** | 4.5:1 | PASS |
-| Body on grape-tinted tile | `neutral/900` · #241D19 | `grape/50` · #F9F5FF | **15.44** | 4.5:1 | PASS |
-| Secondary copy on page background | `neutral/700` · #594F4A | `neutral/100` · #F7F3F1 | **7.21** | 4.5:1 | PASS |
-| Secondary copy on card | `neutral/700` · #594F4A | `neutral/0` · #FFFFFF | **7.95** | 4.5:1 | PASS |
-| Secondary copy on striped row | `neutral/700` · #594F4A | `neutral/200` · #EBE5E2 | **6.37** | 4.5:1 | PASS |
-| Secondary copy on brand-tinted section | `neutral/700` · #594F4A | `brand/50` · #FFF4F2 | **7.37** | 4.5:1 | PASS |
-| Metadata / placeholder on page background | `neutral/600` · #6E655F | `neutral/100` · #F7F3F1 | **5.16** | 4.5:1 | PASS |
-| Metadata / placeholder on card | `neutral/600` · #6E655F | `neutral/0` · #FFFFFF | **5.69** | 4.5:1 | PASS |
-| Metadata on striped row | `neutral/600` · #6E655F | `neutral/200` · #EBE5E2 | **4.56** | 4.5:1 | PASS |
-| Button label on primary CTA | `neutral/0` · #FFFFFF | `brand/500` · #DD2D1D | **4.70** | 4.5:1 | PASS |
-| Badge label on sale badge | `neutral/900` · #241D19 | `accent/500` · #EBA500 | **7.84** | 4.5:1 | PASS |
-| Label on teal fill (category tile) | `neutral/0` · #FFFFFF | `teal/600` · #008076 | **4.83** | 4.5:1 | PASS |
-| Label on grape fill (category tile) | `neutral/0` · #FFFFFF | `grape/500` · #9A4CDF | **4.69** | 4.5:1 | PASS |
-| Current price on card | `neutral/900` · #241D19 | `neutral/0` · #FFFFFF | **16.60** | 4.5:1 | PASS |
-| Current price on page background | `neutral/900` · #241D19 | `neutral/100` · #F7F3F1 | **15.06** | 4.5:1 | PASS |
-| Struck original price on card | `neutral/600` · #6E655F | `neutral/0` · #FFFFFF | **5.69** | 4.5:1 | PASS |
-| Struck original price on striped row | `neutral/600` · #6E655F | `neutral/200` · #EBE5E2 | **4.56** | 4.5:1 | PASS |
-| Discount "−25%" on card | `brand/600` · #C22314 | `neutral/0` · #FFFFFF | **5.92** | 4.5:1 | PASS |
-| Discount on brand-tinted strip | `brand/600` · #C22314 | `brand/50` · #FFF4F2 | **5.49** | 4.5:1 | PASS |
-| Discount on page background | `brand/600` · #C22314 | `neutral/100` · #F7F3F1 | **5.37** | 4.5:1 | PASS |
-| Inline link on card | `teal/700` · #00655C | `neutral/0` · #FFFFFF | **6.96** | 4.5:1 | PASS |
-| Inline link on page background | `teal/700` · #00655C | `neutral/100` · #F7F3F1 | **6.31** | 4.5:1 | PASS |
-| Inline link on striped row | `teal/700` · #00655C | `neutral/200` · #EBE5E2 | **5.58** | 4.5:1 | PASS |
-| In-stock text on card | `success/700` · #2A682F | `neutral/0` · #FFFFFF | **6.73** | 4.5:1 | PASS |
-| In-stock text in success pill | `success/700` · #2A682F | `success/50` · #F0FBF0 | **6.33** | 4.5:1 | PASS |
-| Low-stock text on card | `warning/700` · #914500 | `neutral/0` · #FFFFFF | **6.87** | 4.5:1 | PASS |
-| Low-stock text in warning pill | `warning/700` · #914500 | `warning/50` · #FFF7F2 | **6.49** | 4.5:1 | PASS |
-| Out-of-stock text on card | `neutral/600` · #6E655F | `neutral/0` · #FFFFFF | **5.69** | 4.5:1 | PASS |
-| Out-of-stock text on striped row | `neutral/600` · #6E655F | `neutral/200` · #EBE5E2 | **4.56** | 4.5:1 | PASS |
-| Success message in alert | `success/700` · #2A682F | `success/50` · #F0FBF0 | **6.33** | 4.5:1 | PASS |
-| Warning message in alert | `warning/700` · #914500 | `warning/50` · #FFF7F2 | **6.49** | 4.5:1 | PASS |
-| Error message in alert | `danger/700` · #9B113B | `danger/50` · #FFF3F4 | **7.64** | 4.5:1 | PASS |
+| Body / heading <24px on page background | `neutral/900` · #232E4A | `neutral/100` · #FEF8F2 | **12.76** | 4.5:1 | PASS |
+| Body / heading <24px on card | `neutral/900` · #232E4A | `neutral/0` · #FFFFFF | **13.45** | 4.5:1 | PASS |
+| Body on striped row / inert fill | `neutral/900` · #232E4A | `neutral/200` · #F6EEE6 | **11.72** | 4.5:1 | PASS |
+| Body on brand-tinted section | `neutral/900` · #232E4A | `brand/50` · #FEF5F8 | **12.57** | 4.5:1 | PASS |
+| Body on accent-tinted section | `neutral/900` · #232E4A | `accent/50` · #FEFBEC | **12.95** | 4.5:1 | PASS |
+| Body on teal-tinted tile | `neutral/900` · #232E4A | `teal/50` · #F0FAFD | **12.68** | 4.5:1 | PASS |
+| Body on grape-tinted tile | `neutral/900` · #232E4A | `grape/50` · #FAF6FE | **12.61** | 4.5:1 | PASS |
+| Secondary copy on page background | `neutral/700` · #474F6A | `neutral/100` · #FEF8F2 | **7.68** | 4.5:1 | PASS |
+| Secondary copy on card | `neutral/700` · #474F6A | `neutral/0` · #FFFFFF | **8.09** | 4.5:1 | PASS |
+| Secondary copy on striped row | `neutral/700` · #474F6A | `neutral/200` · #F6EEE6 | **7.05** | 4.5:1 | PASS |
+| Secondary copy on brand-tinted section | `neutral/700` · #474F6A | `brand/50` · #FEF5F8 | **7.57** | 4.5:1 | PASS |
+| Metadata / placeholder on page background | `neutral/600` · #616580 | `neutral/100` · #FEF8F2 | **5.41** | 4.5:1 | PASS |
+| Metadata / placeholder on card | `neutral/600` · #616580 | `neutral/0` · #FFFFFF | **5.70** | 4.5:1 | PASS |
+| Metadata on striped row | `neutral/600` · #616580 | `neutral/200` · #F6EEE6 | **4.97** | 4.5:1 | PASS |
+| Button label on primary CTA | `neutral/0` · #FFFFFF | `brand/500` · #DC3442 | **4.55** | 4.5:1 | PASS |
+| Badge label on sale badge | `neutral/900` · #232E4A | `accent/500` · #F7CE54 | **8.91** | 4.5:1 | PASS |
+| Label on teal fill (category tile) | `neutral/0` · #FFFFFF | `teal/700` · #1E7188 | **5.57** | 4.5:1 | PASS |
+| Label on grape fill (category tile) | `neutral/0` · #FFFFFF | `grape/600` · #7540BF | **6.48** | 4.5:1 | PASS |
+| Current price on card | `neutral/900` · #232E4A | `neutral/0` · #FFFFFF | **13.45** | 4.5:1 | PASS |
+| Current price on page background | `neutral/900` · #232E4A | `neutral/100` · #FEF8F2 | **12.76** | 4.5:1 | PASS |
+| Struck original price on card | `neutral/600` · #616580 | `neutral/0` · #FFFFFF | **5.70** | 4.5:1 | PASS |
+| Struck original price on striped row | `neutral/600` · #616580 | `neutral/200` · #F6EEE6 | **4.97** | 4.5:1 | PASS |
+| Discount "−25%" on card | `brand/600` · #BD303A | `neutral/0` · #FFFFFF | **5.76** | 4.5:1 | PASS |
+| Discount on brand-tinted strip | `brand/600` · #BD303A | `brand/50` · #FEF5F8 | **5.38** | 4.5:1 | PASS |
+| Discount on page background | `brand/600` · #BD303A | `neutral/100` · #FEF8F2 | **5.46** | 4.5:1 | PASS |
+| Inline link on card | `teal/700` · #1E7188 | `neutral/0` · #FFFFFF | **5.57** | 4.5:1 | PASS |
+| Inline link on page background | `teal/700` · #1E7188 | `neutral/100` · #FEF8F2 | **5.28** | 4.5:1 | PASS |
+| Inline link on striped row | `teal/700` · #1E7188 | `neutral/200` · #F6EEE6 | **4.85** | 4.5:1 | PASS |
+| In-stock text on card | `success/700` · #017D54 | `neutral/0` · #FFFFFF | **5.17** | 4.5:1 | PASS |
+| In-stock text in success pill | `success/700` · #017D54 | `success/50` · #EFFBF5 | **4.87** | 4.5:1 | PASS |
+| Low-stock text on card | `warning/700` · #994A01 | `neutral/0` · #FFFFFF | **6.30** | 4.5:1 | PASS |
+| Low-stock text in warning pill | `warning/700` · #994A01 | `warning/50` · #FEF6EF | **5.89** | 4.5:1 | PASS |
+| Out-of-stock text on card | `neutral/600` · #616580 | `neutral/0` · #FFFFFF | **5.70** | 4.5:1 | PASS |
+| Out-of-stock text on striped row | `neutral/600` · #616580 | `neutral/200` · #F6EEE6 | **4.97** | 4.5:1 | PASS |
+| Success message in alert | `success/700` · #017D54 | `success/50` · #EFFBF5 | **4.87** | 4.5:1 | PASS |
+| Warning message in alert | `warning/700` · #994A01 | `warning/50` · #FEF6EF | **5.89** | 4.5:1 | PASS |
+| Error message in alert | `danger/700` · #951557 | `danger/50` · #FEF3F7 | **7.68** | 4.5:1 | PASS |
 | Info message in alert | `info/700` · #004F9E | `info/50` · #F1F7FF | **7.46** | 4.5:1 | PASS |
-| Destructive button label | `neutral/0` · #FFFFFF | `danger/600` · #BE184A | **6.14** | 4.5:1 | PASS |
-| Confirm button label | `neutral/0` · #FFFFFF | `success/700` · #2A682F | **6.73** | 4.5:1 | PASS |
+| Destructive button label | `neutral/0` · #FFFFFF | `danger/700` · #951557 | **8.32** | 4.5:1 | PASS |
+| Confirm button label | `neutral/0` · #FFFFFF | `success/700` · #017D54 | **5.17** | 4.5:1 | PASS |
 | Info button label | `neutral/0` · #FFFFFF | `info/600` · #0065C4 | **5.74** | 4.5:1 | PASS |
-| Chip label on brand chip | `brand/700` · #9E1C10 | `brand/100` · #FFE6E1 | **6.72** | 4.5:1 | PASS |
-| Countdown digits on accent-tint strip | `accent/700` · #996A01 | `accent/50` · #FFF8EE | **4.51** | 4.5:1 | PASS |
-| Secondary brand text (admin) | `grape/700` · #6A2F9D | `neutral/0` · #FFFFFF | **8.38** | 4.5:1 | PASS |
+| Chip label on brand chip | `brand/700` · #961022 | `brand/100` · #FFE1EA | **7.19** | 4.5:1 | PASS |
+| Countdown digits on accent-tint strip | `accent/700` · #856716 | `accent/50` · #FEFBEC | **5.12** | 4.5:1 | PASS |
+| Secondary brand text (admin) | `grape/700` · #602EA1 | `neutral/0` · #FFFFFF | **8.74** | 4.5:1 | PASS |
 
 ### Table B — Light mode, large text ≥24px (requirement 3:1)
 
 | Pair | Foreground | Background | Ratio | Req | Result |
 |---|---|---|---|---|---|
-| `display-1` / `display-2` in brand on card | `brand/500` · #DD2D1D | `neutral/0` · #FFFFFF | **4.70** | 3.0:1 | PASS |
-| `display-1` / `display-2` in brand on page bg | `brand/500` · #DD2D1D | `neutral/100` · #F7F3F1 | **4.26** | 3.0:1 | PASS |
-| `price-lg` on accent badge (28px) | `neutral/900` · #241D19 | `accent/500` · #EBA500 | **7.84** | 3.0:1 | PASS |
-| `h1` in teal on card | `teal/600` · #008076 | `neutral/0` · #FFFFFF | **4.83** | 3.0:1 | PASS |
-| `h1` in grape on card | `grape/600` · #843CC1 | `neutral/0` · #FFFFFF | **6.18** | 3.0:1 | PASS |
+| `display-1` / `display-2` in brand on card | `brand/500` · #DC3442 | `neutral/0` · #FFFFFF | **4.55** | 3.0:1 | PASS |
+| `display-1` / `display-2` in brand on page bg | `brand/600` · #BD303A | `neutral/100` · #FEF8F2 | **5.46** | 3.0:1 | PASS |
+| `price-lg` on accent badge (28px) | `neutral/900` · #232E4A | `accent/500` · #F7CE54 | **8.91** | 3.0:1 | PASS |
+| `h1` in teal on card | `teal/600` · #38869E | `neutral/0` · #FFFFFF | **4.14** | 3.0:1 | PASS |
+| `h1` in grape on card | `grape/600` · #7540BF | `neutral/0` · #FFFFFF | **6.48** | 3.0:1 | PASS |
 
 ### Table C — Light mode, non-text / UI boundary (requirement 3:1, SC 1.4.11)
 
 | Pair | Foreground | Background | Ratio | Req | Result |
 |---|---|---|---|---|---|
-| Input / control border on card | `neutral/500` · #89807B | `neutral/0` · #FFFFFF | **3.86** | 3.0:1 | PASS |
-| Input / control border on page bg | `neutral/500` · #89807B | `neutral/100` · #F7F3F1 | **3.50** | 3.0:1 | PASS |
-| Input / control border on striped row | `neutral/500` · #89807B | `neutral/200` · #EBE5E2 | **3.10** | 3.0:1 | PASS |
-| Focus ring outer vs card | `teal/600` · #008076 | `neutral/0` · #FFFFFF | **4.83** | 3.0:1 | PASS |
-| Focus ring outer vs page bg | `teal/600` · #008076 | `neutral/100` · #F7F3F1 | **4.38** | 3.0:1 | PASS |
-| Focus ring outer vs striped row | `teal/600` · #008076 | `neutral/200` · #EBE5E2 | **3.87** | 3.0:1 | PASS |
-| Focus ring outer vs disabled fill | `teal/600` · #008076 | `neutral/300` · #D8D1CE | **3.20** | 3.0:1 | PASS |
-| Focus halo (inner 2px) vs brand CTA fill | `neutral/0` · #FFFFFF | `brand/500` · #DD2D1D | **4.70** | 3.0:1 | PASS |
-| Focus halo vs grape fill | `neutral/0` · #FFFFFF | `grape/500` · #9A4CDF | **4.69** | 3.0:1 | PASS |
-| Focus halo vs teal fill | `neutral/0` · #FFFFFF | `teal/600` · #008076 | **4.83** | 3.0:1 | PASS |
-| Focus halo vs destructive fill | `neutral/0` · #FFFFFF | `danger/600` · #BE184A | **6.14** | 3.0:1 | PASS |
-| Focus halo vs ink fill (admin) | `neutral/0` · #FFFFFF | `neutral/900` · #241D19 | **16.60** | 3.0:1 | PASS |
-| Selected-state brand border on card | `brand/500` · #DD2D1D | `neutral/0` · #FFFFFF | **4.70** | 3.0:1 | PASS |
-| Checked checkbox fill vs card | `brand/500` · #DD2D1D | `neutral/0` · #FFFFFF | **4.70** | 3.0:1 | PASS |
-| Stock dot (in-stock) vs card | `success/500` · #4EA253 | `neutral/0` · #FFFFFF | **3.17** | 3.0:1 | PASS |
-| Stock dot (low-stock) vs card | `warning/500` · #E07526 | `neutral/0` · #FFFFFF | **3.11** | 3.0:1 | PASS |
-| Error field border vs card | `danger/500` · #E22F5E | `neutral/0` · #FFFFFF | **4.37** | 3.0:1 | PASS |
+| Input / control border on card | `neutral/500` · #7C8199 | `neutral/0` · #FFFFFF | **3.85** | 3.0:1 | PASS |
+| Input / control border on page bg | `neutral/500` · #7C8199 | `neutral/100` · #FEF8F2 | **3.65** | 3.0:1 | PASS |
+| Input / control border on striped row | `neutral/500` · #7C8199 | `neutral/200` · #F6EEE6 | **3.35** | 3.0:1 | PASS |
+| Focus ring outer vs card | `teal/600` · #38869E | `neutral/0` · #FFFFFF | **4.14** | 3.0:1 | PASS |
+| Focus ring outer vs page bg | `teal/600` · #38869E | `neutral/100` · #FEF8F2 | **3.93** | 3.0:1 | PASS |
+| Focus ring outer vs striped row | `teal/600` · #38869E | `neutral/200` · #F6EEE6 | **3.61** | 3.0:1 | PASS |
+| Focus ring outer vs disabled fill | `teal/600` · #38869E | `neutral/300` · #E9DFD5 | **3.15** | 3.0:1 | PASS |
+| Focus halo (inner 2px) vs brand CTA fill | `neutral/0` · #FFFFFF | `brand/500` · #DC3442 | **4.55** | 3.0:1 | PASS |
+| Focus halo vs grape fill | `neutral/0` · #FFFFFF | `grape/600` · #7540BF | **6.48** | 3.0:1 | PASS |
+| Focus halo vs teal fill | `neutral/0` · #FFFFFF | `teal/700` · #1E7188 | **5.57** | 3.0:1 | PASS |
+| Focus halo vs destructive fill | `neutral/0` · #FFFFFF | `danger/700` · #951557 | **8.32** | 3.0:1 | PASS |
+| Focus halo vs ink fill (admin) | `neutral/0` · #FFFFFF | `neutral/900` · #232E4A | **13.45** | 3.0:1 | PASS |
+| Selected-state brand border on card | `brand/500` · #DC3442 | `neutral/0` · #FFFFFF | **4.55** | 3.0:1 | PASS |
+| Checked checkbox fill vs card | `brand/500` · #DC3442 | `neutral/0` · #FFFFFF | **4.55** | 3.0:1 | PASS |
+| Stock dot (in-stock) vs card | `success/600` · #1B9769 | `neutral/0` · #FFFFFF | **3.70** | 3.0:1 | PASS |
+| Stock dot (low-stock) vs card | `warning/600` · #B85E16 | `neutral/0` · #FFFFFF | **4.52** | 3.0:1 | PASS |
+| Error field border vs card | `danger/500` · #DA3285 | `neutral/0` · #FFFFFF | **4.40** | 3.0:1 | PASS |
 
 ### Table D — Dark mode (admin), body text (requirement 4.5:1)
 
 | Pair | Foreground | Background | Ratio | Req | Result |
 |---|---|---|---|---|---|
-| Body on canvas | `neutral/50` · #FCFAF9 | `neutral/950` · #16100C | **18.12** | 4.5:1 | PASS |
-| Body on panel | `neutral/50` · #FCFAF9 | `neutral/900` · #241D19 | **15.96** | 4.5:1 | PASS |
-| Body on popover / raised | `neutral/50` · #FCFAF9 | `neutral/800` · #3D342F | **11.66** | 4.5:1 | PASS |
-| Body on striped row | `neutral/50` · #FCFAF9 | `neutral/800` · #3D342F | **11.66** | 4.5:1 | PASS |
-| Body on brand-tinted row | `neutral/50` · #FCFAF9 | `brand/900` · #5E150E | **12.70** | 4.5:1 | PASS |
-| Body on accent-tinted row | `neutral/50` · #FCFAF9 | `accent/900` · #5D3F00 | **9.27** | 4.5:1 | PASS |
-| Body on teal-tinted row | `neutral/50` · #FCFAF9 | `teal/900` · #073C37 | **11.80** | 4.5:1 | PASS |
-| Body on grape-tinted row | `neutral/50` · #FCFAF9 | `grape/900` · #411E5F | **12.81** | 4.5:1 | PASS |
-| Secondary copy on canvas | `neutral/300` · #D8D1CE | `neutral/950` · #16100C | **12.51** | 4.5:1 | PASS |
-| Secondary copy on panel | `neutral/300` · #D8D1CE | `neutral/900` · #241D19 | **11.01** | 4.5:1 | PASS |
-| Secondary copy on raised | `neutral/300` · #D8D1CE | `neutral/800` · #3D342F | **8.05** | 4.5:1 | PASS |
-| Metadata on canvas | `neutral/400` · #B4ABA7 | `neutral/950` · #16100C | **8.37** | 4.5:1 | PASS |
-| Metadata on panel | `neutral/400` · #B4ABA7 | `neutral/900` · #241D19 | **7.37** | 4.5:1 | PASS |
-| Metadata on raised | `neutral/400` · #B4ABA7 | `neutral/800` · #3D342F | **5.39** | 4.5:1 | PASS |
-| Button label on primary CTA | `neutral/0` · #FFFFFF | `brand/500` · #DD2D1D | **4.70** | 4.5:1 | PASS |
-| Badge label on sale badge | `neutral/900` · #241D19 | `accent/500` · #EBA500 | **7.84** | 4.5:1 | PASS |
-| Label on teal fill | `neutral/0` · #FFFFFF | `teal/600` · #008076 | **4.83** | 4.5:1 | PASS |
-| Label on grape fill | `neutral/0` · #FFFFFF | `grape/500` · #9A4CDF | **4.69** | 4.5:1 | PASS |
-| Current price on panel | `neutral/50` · #FCFAF9 | `neutral/900` · #241D19 | **15.96** | 4.5:1 | PASS |
-| Struck price on panel | `neutral/400` · #B4ABA7 | `neutral/900` · #241D19 | **7.37** | 4.5:1 | PASS |
-| Discount on panel | `brand/300` · #FFA191 | `neutral/900` · #241D19 | **8.51** | 4.5:1 | PASS |
-| Discount on brand-tinted row | `brand/300` · #FFA191 | `brand/900` · #5E150E | **6.77** | 4.5:1 | PASS |
-| Inline link on panel | `teal/300` · #7ED8CC | `neutral/900` · #241D19 | **9.95** | 4.5:1 | PASS |
-| Inline link on canvas | `teal/300` · #7ED8CC | `neutral/950` · #16100C | **11.30** | 4.5:1 | PASS |
-| In-stock text on panel | `success/300` · #93D594 | `neutral/900` · #241D19 | **9.63** | 4.5:1 | PASS |
-| In-stock text in success pill | `success/300` · #93D594 | `success/900` · #183D1B | **7.08** | 4.5:1 | PASS |
-| Low-stock text on panel | `warning/300` · #FFB78C | `neutral/900` · #241D19 | **9.81** | 4.5:1 | PASS |
-| Low-stock text in warning pill | `warning/300` · #FFB78C | `warning/900` · #592904 | **7.11** | 4.5:1 | PASS |
-| Out-of-stock text on panel | `neutral/400` · #B4ABA7 | `neutral/900` · #241D19 | **7.37** | 4.5:1 | PASS |
-| Success message in alert | `success/300` · #93D594 | `success/900` · #183D1B | **7.08** | 4.5:1 | PASS |
-| Warning message in alert | `warning/300` · #FFB78C | `warning/900` · #592904 | **7.11** | 4.5:1 | PASS |
-| Error message in alert | `danger/300` · #FF9EAA | `danger/900` · #5D0E23 | **6.91** | 4.5:1 | PASS |
+| Body on canvas | `neutral/50` · #FEFBF8 | `neutral/950` · #151B30 | **16.54** | 4.5:1 | PASS |
+| Body on panel | `neutral/50` · #FEFBF8 | `neutral/900` · #232E4A | **13.05** | 4.5:1 | PASS |
+| Body on popover / raised | `neutral/50` · #FEFBF8 | `neutral/800` · #313A57 | **10.87** | 4.5:1 | PASS |
+| Body on striped row | `neutral/50` · #FEFBF8 | `neutral/800` · #313A57 | **10.87** | 4.5:1 | PASS |
+| Body on brand-tinted row | `neutral/50` · #FEFBF8 | `brand/900` · #60000F | **13.54** | 4.5:1 | PASS |
+| Body on accent-tinted row | `neutral/50` · #FEFBF8 | `accent/900` · #3C2F05 | **12.72** | 4.5:1 | PASS |
+| Body on teal-tinted row | `neutral/50` · #FEFBF8 | `teal/900` · #023644 | **12.62** | 4.5:1 | PASS |
+| Body on grape-tinted row | `neutral/50` · #FEFBF8 | `grape/900` · #3F0076 | **13.83** | 4.5:1 | PASS |
+| Secondary copy on canvas | `neutral/300` · #E9DFD5 | `neutral/950` · #151B30 | **12.98** | 4.5:1 | PASS |
+| Secondary copy on panel | `neutral/300` · #E9DFD5 | `neutral/900` · #232E4A | **10.24** | 4.5:1 | PASS |
+| Secondary copy on raised | `neutral/300` · #E9DFD5 | `neutral/800` · #313A57 | **8.53** | 4.5:1 | PASS |
+| Metadata on canvas | `neutral/400` · #BABECB | `neutral/950` · #151B30 | **9.19** | 4.5:1 | PASS |
+| Metadata on panel | `neutral/400` · #BABECB | `neutral/900` · #232E4A | **7.25** | 4.5:1 | PASS |
+| Metadata on raised | `neutral/400` · #BABECB | `neutral/800` · #313A57 | **6.04** | 4.5:1 | PASS |
+| Button label on primary CTA | `neutral/0` · #FFFFFF | `brand/500` · #DC3442 | **4.55** | 4.5:1 | PASS |
+| Badge label on sale badge | `neutral/900` · #232E4A | `accent/500` · #F7CE54 | **8.91** | 4.5:1 | PASS |
+| Label on teal fill | `neutral/0` · #FFFFFF | `teal/700` · #1E7188 | **5.57** | 4.5:1 | PASS |
+| Label on grape fill | `neutral/0` · #FFFFFF | `grape/600` · #7540BF | **6.48** | 4.5:1 | PASS |
+| Current price on panel | `neutral/50` · #FEFBF8 | `neutral/900` · #232E4A | **13.05** | 4.5:1 | PASS |
+| Struck price on panel | `neutral/400` · #BABECB | `neutral/900` · #232E4A | **7.25** | 4.5:1 | PASS |
+| Discount on panel | `brand/300` · #FEBDC6 | `neutral/900` · #232E4A | **8.52** | 4.5:1 | PASS |
+| Discount on brand-tinted row | `brand/300` · #FEBDC6 | `brand/900` · #60000F | **8.85** | 4.5:1 | PASS |
+| Inline link on panel | `teal/300` · #9BDDEF | `neutral/900` · #232E4A | **8.96** | 4.5:1 | PASS |
+| Inline link on canvas | `teal/300` · #9BDDEF | `neutral/950` · #151B30 | **11.36** | 4.5:1 | PASS |
+| In-stock text on panel | `success/300` · #9DE3C1 | `neutral/900` · #232E4A | **9.09** | 4.5:1 | PASS |
+| In-stock text in success pill | `success/300` · #9DE3C1 | `success/900` · #023A25 | **8.68** | 4.5:1 | PASS |
+| Low-stock text on panel | `warning/300` · #FEC392 | `neutral/900` · #232E4A | **8.61** | 4.5:1 | PASS |
+| Low-stock text in warning pill | `warning/300` · #FEC392 | `warning/900` · #4E2301 | **8.59** | 4.5:1 | PASS |
+| Out-of-stock text on panel | `neutral/400` · #BABECB | `neutral/900` · #232E4A | **7.25** | 4.5:1 | PASS |
+| Success message in alert | `success/300` · #9DE3C1 | `success/900` · #023A25 | **8.68** | 4.5:1 | PASS |
+| Warning message in alert | `warning/300` · #FEC392 | `warning/900` · #4E2301 | **8.59** | 4.5:1 | PASS |
+| Error message in alert | `danger/300` · #FA9EC0 | `danger/900` · #5A0F34 | **6.90** | 4.5:1 | PASS |
 | Info message in alert | `info/300` · #94C0F7 | `info/900` · #013063 | **6.95** | 4.5:1 | PASS |
-| Destructive button label | `neutral/0` · #FFFFFF | `danger/600` · #BE184A | **6.14** | 4.5:1 | PASS |
-| Confirm button label | `neutral/0` · #FFFFFF | `success/700` · #2A682F | **6.73** | 4.5:1 | PASS |
+| Destructive button label | `neutral/0` · #FFFFFF | `danger/700` · #951557 | **8.32** | 4.5:1 | PASS |
+| Confirm button label | `neutral/0` · #FFFFFF | `success/700` · #017D54 | **5.17** | 4.5:1 | PASS |
 
 ### Table E — Dark mode, non-text (requirement 3:1)
 
 | Pair | Foreground | Background | Ratio | Req | Result |
 |---|---|---|---|---|---|
-| Input border on panel | `neutral/500` · #89807B | `neutral/900` · #241D19 | **4.30** | 3.0:1 | PASS |
-| Input border on canvas | `neutral/500` · #89807B | `neutral/950` · #16100C | **4.88** | 3.0:1 | PASS |
-| Input border on raised / striped | `neutral/500` · #89807B | `neutral/800` · #3D342F | **3.14** | 3.0:1 | PASS |
-| Focus ring outer vs canvas | `teal/400` · #4BBCB0 | `neutral/950` · #16100C | **8.19** | 3.0:1 | PASS |
-| Focus ring outer vs panel | `teal/400` · #4BBCB0 | `neutral/900` · #241D19 | **7.21** | 3.0:1 | PASS |
-| Focus ring outer vs raised | `teal/400` · #4BBCB0 | `neutral/800` · #3D342F | **5.27** | 3.0:1 | PASS |
-| Focus halo (panel colour) vs brand CTA fill | `neutral/900` · #241D19 | `brand/500` · #DD2D1D | **3.53** | 3.0:1 | PASS |
-| Focus halo vs focus ring | `neutral/900` · #241D19 | `teal/400` · #4BBCB0 | **7.21** | 3.0:1 | PASS |
-| Selected brand border on panel | `brand/400` · #F76854 | `neutral/900` · #241D19 | **5.58** | 3.0:1 | PASS |
-| Display text in brand on panel (≥24px) | `brand/400` · #F76854 | `neutral/900` · #241D19 | **5.58** | 3.0:1 | PASS |
+| Input border on panel | `neutral/500` · #7C8199 | `neutral/900` · #232E4A | **3.50** | 3.0:1 | PASS |
+| Input border on canvas | `neutral/500` · #7C8199 | `neutral/950` · #151B30 | **4.43** | 3.0:1 | PASS |
+| Input border on raised / striped | `neutral/400` · #BABECB | `neutral/800` · #313A57 | **6.04** | 3.0:1 | PASS |
+| Focus ring outer vs canvas | `teal/400` · #6EC8DF | `neutral/950` · #151B30 | **8.93** | 3.0:1 | PASS |
+| Focus ring outer vs panel | `teal/400` · #6EC8DF | `neutral/900` · #232E4A | **7.04** | 3.0:1 | PASS |
+| Focus ring outer vs raised | `teal/400` · #6EC8DF | `neutral/800` · #313A57 | **5.87** | 3.0:1 | PASS |
+| Focus halo (canvas colour, dark) vs brand CTA fill | `neutral/950` · #151B30 | `brand/500` · #DC3442 | **3.75** | 3.0:1 | PASS |
+| Focus halo vs focus ring | `neutral/950` · #151B30 | `teal/400` · #6EC8DF | **8.93** | 3.0:1 | PASS |
+| Selected brand border on panel | `brand/400` · #FB6265 | `neutral/900` · #232E4A | **4.51** | 3.0:1 | PASS |
+| Display text in brand on panel (≥24px) | `brand/400` · #FB6265 | `neutral/900` · #232E4A | **4.51** | 3.0:1 | PASS |
 
 ### 4.1 Surface-only colours — must NEVER carry text
 
@@ -303,22 +307,22 @@ Measured against white, these are all below 4.5:1 and most are below 3:1. Flagge
 
 | Colour | vs `#FFFFFF` | Verdict |
 |---|---|---|
-| `accent/500` `#EBA500` | **2.12** | **Surface only.** The single most dangerous value in the palette. Text on accent is always `neutral/900`. |
-| `accent/400` `#FCB31C` | 1.81 | Surface only |
-| `accent/300` `#FFC972` | 1.52 | Surface only |
-| `accent/600` `#C38801` | 3.07 | Surface + ≥24px text only. First text-safe accent step is **`accent/700`** (4.75). |
-| `brand/400` `#F76854` | 2.97 | Surface only (light mode) |
-| `brand/300` `#FFA191` | 1.95 | Surface only in light; it is the dark-mode discount text colour |
-| `teal/400` `#4BBCB0` | 2.30 | Surface / stroke only in light |
-| `teal/300` `#7ED8CC` | 1.67 | Surface only in light; dark-mode link colour |
-| `grape/400` `#B97CF8` | 2.88 | Surface only |
-| `grape/300` `#D4AFFF` | 1.85 | Surface only |
-| `success/500` `#4EA253` | 3.17 | Non-text indicator / dot only |
-| `warning/500` `#E07526` | 3.11 | Non-text indicator / dot only |
-| `danger/500` `#E22F5E` | 4.37 | Non-text / border only — **just below 4.5, do not use for text** |
+| `accent/500` `#F7CE54` | **2.12** | **Surface only.** The single most dangerous value in the palette. Text on accent is always `neutral/900`. |
+| `accent/400` `#F8D568` | 1.81 | Surface only |
+| `accent/300` `#F8DD77` | 1.52 | Surface only |
+| `accent/600` `#BF9224` | 3.07 | Surface + ≥24px text only. First text-safe accent step is **`accent/700`** (4.75). |
+| `brand/400` `#FB6265` | 2.97 | Surface only (light mode) |
+| `brand/300` `#FEBDC6` | 1.95 | Surface only in light; it is the dark-mode discount text colour |
+| `teal/400` `#6EC8DF` | 2.30 | Surface / stroke only in light |
+| `teal/300` `#9BDDEF` | 1.67 | Surface only in light; dark-mode link colour |
+| `grape/400` `#B692E0` | 2.88 | Surface only |
+| `grape/300` `#CAAFE4` | 1.85 | Surface only |
+| `success/500` `#49C08D` | 3.17 | Non-text indicator / dot only |
+| `warning/500` `#DF7D39` | 3.11 | Non-text indicator / dot only |
+| `danger/500` `#DA3285` | 4.37 | Non-text / border only — **just below 4.5, do not use for text** |
 | `info/500` `#3387EB` | 3.62 | Non-text only |
 | `neutral/200`–`neutral/400` | 1.25 – 2.25 | Surface / divider only |
-| `neutral/500` `#89807B` | 3.86 | Borders and disabled labels only |
+| `neutral/500` `#7C8199` | 3.86 | Borders and disabled labels only |
 | Every ramp's `50`, `100`, `200` | ≤ 1.5 | Surface only, in both modes |
 
 **Text allow-list, enforceable as a lint rule.**
@@ -478,10 +482,10 @@ Shadow colour is derived from `neutral/900` = `rgb(36, 29, 25)`, not from black.
 
 | Token | Dark-mode value |
 |---|---|
-| `shadow/e1` | `inset 0 0 0 1px #3D342F` (`neutral/800`) |
-| `shadow/e2` | `inset 0 0 0 1px #3D342F, 0 2px 6px -1px rgba(0,0,0,0.60)` |
-| `shadow/e3` | `inset 0 0 0 1px #594F4A, 0 12px 24px -6px rgba(0,0,0,0.70)` (`neutral/700`) |
-| `shadow/e4` | `inset 0 0 0 1px #594F4A, 0 28px 56px -12px rgba(0,0,0,0.80)` |
+| `shadow/e1` | `inset 0 0 0 1px #313A57` (`neutral/800`) |
+| `shadow/e2` | `inset 0 0 0 1px #313A57, 0 2px 6px -1px rgba(0,0,0,0.60)` |
+| `shadow/e3` | `inset 0 0 0 1px #474F6A, 0 12px 24px -6px rgba(0,0,0,0.70)` (`neutral/700`) |
+| `shadow/e4` | `inset 0 0 0 1px #474F6A, 0 28px 56px -12px rgba(0,0,0,0.80)` |
 | `shadow/focus` | unchanged — it already resolves through `bg/surface` and `border/focus` |
 
 ### 6.4 Motion
@@ -605,7 +609,7 @@ No logo exists. Two options below, each described tightly enough to be drawn fro
 
 ### Option 1 — "Blockmark" (container-first monogram) — RECOMMENDED
 
-**Form.** A 1:1 rounded-square tile, corner radius 24% of the side (optically `radius/xl` at logo scale), filled flat `brand/500` `#DD2D1D`. Inside it, on a 6×6u grid with 1u of clear space on all sides (so the drawing area is 4×4u), a single continuous white knockout shape built from exactly three modules:
+**Form.** A 1:1 rounded-square tile, corner radius 24% of the side (optically `radius/xl` at logo scale), filled flat `brand/500` `#DC3442`. Inside it, on a 6×6u grid with 1u of clear space on all sides (so the drawing area is 4×4u), a single continuous white knockout shape built from exactly three modules:
 
 1. A horizontal bar, 4u × 1u, flush to the top of the drawing area — the crossbar of a **T**.
 2. A vertical stem, 1u × 3u, dropping from the bar's horizontal centre.
@@ -613,9 +617,9 @@ No logo exists. Two options below, each described tightly enough to be drawn fro
 
 All knockout corners are radius 0.25u except the arc, which is a true quarter-circle. The result is a **T** that is simultaneously a rocking-horse runner and the opening stroke of the **M** that follows in the wordmark — the mark and the word interlock rather than sit beside each other.
 
-**Colour usage.** Default: one flat `brand/500` tile, one white knockout. Two-colour variant, permitted only at ≥48px: the arc alone in `accent/500` `#EBA500`. Below 48px the arc reverts to white. Inverse variant for dark backgrounds: tile in `neutral/0`, knockout in `brand/500`. There is no gradient, no outline and no shadow version.
+**Colour usage.** Default: one flat `brand/500` tile, one white knockout. Two-colour variant, permitted only at ≥48px: the arc alone in `accent/500` `#F7CE54`. Below 48px the arc reverts to white. Inverse variant for dark backgrounds: tile in `neutral/0`, knockout in `brand/500`. There is no gradient, no outline and no shadow version.
 
-**Wordmark.** `toymart` in Hanken Grotesk 800, all lowercase, tracking −0.02em, in `neutral/900` `#241D19`; followed by `bd` in Hanken Grotesk 600 at 70% of the cap height, baseline-aligned, in `neutral/600` `#6E655F`. Horizontal lockup: tile at left, gap = 0.5 × tile height, wordmark cap-height = 0.52 × tile height. Stacked lockup for square placements: tile above, wordmark centred below at gap = 0.3 × tile height.
+**Wordmark.** `toymart` in Hanken Grotesk 800, all lowercase, tracking −0.02em, in `neutral/900` `#232E4A`; followed by `bd` in Hanken Grotesk 600 at 70% of the cap height, baseline-aligned, in `neutral/600` `#616580`. Horizontal lockup: tile at left, gap = 0.5 × tile height, wordmark cap-height = 0.52 × tile height. Stacked lockup for square placements: tile above, wordmark centred below at gap = 0.3 × tile height.
 
 **At 24px favicon.** The mark survives because it is container-first: the vermilion rounded square is itself the recognisable unit, and the knockout stays legible because every stroke is 1u = 4px at 24px — above the 3px floor where sub-pixel rendering destroys detail on a low-DPI Android. Drop the marigold arc; drop the wordmark entirely. The 16px variant is the tile with only modules 1 and 2 (plain T), which is the only reduction drawing ever needed.
 
@@ -750,3 +754,105 @@ These cost a rebuild each and are now in `CLAUDE.md`.
 3. **`componentPropertyReferences` cannot be set to `null`**, nor to `{field: null}`. To unbind, delete the property — `deleteComponentProperty` removes the bindings with it.
 
 Also confirmed: `addComponentProperty` with type `INSTANCE_SWAP` wants the component's **node id**, not its `key`.
+
+---
+
+## 14. Palette re-anchor — pastel toy-shop direction (2026-11-11)
+
+**Owner request:** follow the graphic style of a reference Bangladeshi toy shop (soft pastels, coral-pink actions, navy text, bright lifestyle product photography) with colour tokens *similar, not exact*. The reference was studied for direction only; no value was copied — every ramp below was regenerated in OKLCh and solved for contrast.
+
+| Ramp | Before | After | Contrast anchor |
+|---|---|---|---|
+| `brand` | vermilion, h 30, `500` #DD2D1D | coral rose, h 20, `500` #D93647 | white on `500` 4.60:1; `600` discount text 5.79:1 on white |
+| `accent` | marigold, h 78, `500` #EBA500 | sunflower, h 84, `500` #FDBD0C | ink on `500` 9.13:1; `700` #916B04 4.68:1 on `50` |
+| `teal` | peacock, h 185, `600` #008076 | sky, h 218, `600` #04849E | focus ring 3.10:1 on `neutral/300`; `700` link 4.67:1 on `neutral/200` |
+| `grape` | orchid, h 305, `500` #9A4CDF | lavender, h 303, `500` #8C60C2 | white on `500` 4.60:1 |
+| `neutral` | warm paper/ink, h 50 | cream paper (h 40–60) / navy ink (h 265) | `900` #19243F on canvas 14.42:1 |
+| `danger` | crimson, h 12 | raspberry, h 356 | `700` 8.32:1 on white; **24.6° from brand** |
+
+**Why `danger` moved.** Coral rose landed at h 20.5 — within 9° of the old danger hue 12, which recreates exactly the "buy and error are the same red" collision §2.4 fixed. Rotating danger to raspberry restores the gap, and `color/bg/danger` moved to `danger/700` so a destructive button is also clearly darker than a primary one.
+
+**Tokens added:** the five `color/bg/tile-*` pastel surfaces (§3.2). **Tokens repointed:** `color/bg/teal` → `teal/700`, `color/bg/danger` → `danger/700`, `color/bg/danger-shelf` → `danger/900`.
+
+**Not changed:** typography (Hanken Grotesk / Anek Bangla), radius, spacing, the flat no-gradient rule, the 12% saturated-area budget, the decision-surface ban. **Open:** the elevation effect styles still carry the old warm shadow tint (§6.3) and should be re-derived from navy `neutral/900`.
+
+All 111 contrast rows in §4 were recomputed against the new values and pass.
+
+---
+
+## 15. Kid-friendly style pass (2026-11-11)
+
+**Owner request:** "all design should be fancy and kids like", including kid-like typography. This section overrides §5.1 (families), §6.2 (radius values, button radius) and §6.3 (light elevation colour) where they conflict. Contrast rules in §4 are unchanged and still pass.
+
+| Area | Before | After | Why |
+|---|---|---|---|
+| Display type | Hanken Grotesk / Anek Bangla everywhere | **Fredoka** (Latin) and **Baloo Da 2** (Bangla) for display, h1–h4, buttons, prices, badges, chips, tab/accordion/modal/alert/empty-state titles, stepper and pagination numbers, avatar initials — 83 text styles, bound to the new `font/family/display-latin` / `font/family/display-bangla` variables | Rounded terminals read as toy-like and friendly; Baloo Da 2 is the rounded Bengali companion, so both scripts share one voice |
+| Text type | — | unchanged: Hanken Grotesk / Anek Bangla for body, captions, labels, inputs | Paragraph legibility; rounded faces tire the eye at 14px over several lines |
+| Card title | `body-sm` (Hanken) | new `Latin/Mobile/card-title` = Fredoka Medium 14/150 (`Bangla/…` = Baloo Da 2 Medium 14/172) | Product names are what a child points at |
+| Radius | xs 4 · sm 8 · md 12 · lg 16 · xl 24 · 2xl 32 | **xs 6 · sm 10 · md 16 · lg 20 · xl 28 · 2xl 40** | Softer everywhere; 1,426 raw corner values on the Primitives page were bound to these tokens so they follow |
+| Buttons | `radius/lg` | **`radius/full` pills** on the existing candy shelf | The single strongest playful signal; padding 16/20/24 keeps Bangla clear of the curve. Reverses the §1 "no pill buttons" refusal at the owner's request |
+| Light elevation | warm-grey shadow from old `neutral/900` | **rose-tinted** (`#B82C48` at 6–28%), softer and wider; dark mode unchanged | A candy glow rather than a grey smudge |
+| Focus ring style | old teal | new `teal/600` `#04849E` | Follows §14 |
+| Gradients | refused | **four decorative paint styles** `Gradient/Bloom-candy / -sky / -mint / -sunrise` (two 100-step primitives each) | Hero, promo and section backgrounds ONLY — never a control, price, form, cart or checkout. Flat fills remain the rule everywhere else |
+| Product card | photo edge-to-edge | photo inset 6px in a pastel "toy box" (`color/bg/tile-*`), `radius/xl` card, discount badge tilted −8° as a sticker | Playful framing without touching the fixed card height (384 / 552) |
+| Doc pages | plain headers | gradient hero headers with pastel bubbles and stickers; section numbers as candy pills | The design system itself should feel like the product |
+
+**Unchanged on purpose:** the 12% saturated-area budget, the decision-surface ban (cart, checkout, address, admin forms stay calm), every contrast floor, fixed card heights, Western numerals.
+
+---
+
+## 16. Exact colour match to the reference shop + candy buttons (2026-11-11) — SUPERSEDED by §17
+
+**Owner request:** "update the colour tokens to match the reference site 100%, buttons should be fancy". The reference shop's live CSS was read (computed styles, not screenshots) and its colours pinned into the ramps at the steps where they sit; only the missing steps were generated in OKLCh. This supersedes the §14 values.
+
+| Reference colour | Hex | Pinned at |
+|---|---|---|
+| Coral (CTA, prices, accents) | `#FF5B6E` | `brand/500` |
+| Hot pink (gradient partner) | `#FF6FB1` | `pink/400` (new `pink` family) |
+| Magenta (icons) | `#E5539B` | `pink/500` |
+| Pastel pink tile / soft border | `#FFE0EC` / `#FFD4E6` | `brand/100` / `brand/200` |
+| Sunshine yellow / butter tile | `#FFCB47` / `#FFEDB6` | `accent/500` / `accent/100` |
+| Sky / sky deep / sky tile | `#6BC8E6` / `#3FA1C5` / `#D4EEF7` | `teal/400` / `teal/500` / `teal/100` |
+| Lavender / violet / lavender tile | `#B093E8` / `#8B5CF6` / `#E5D9F8` | `grape/400` / `grape/500` / `grape/100` |
+| Mint / green text / mint tile | `#4FC081` / `#15803D` / `#D7F5E2` | `success/500` / `success/700` / `success/100` |
+| Orange / peach tile | `#E5783A` / `#FFE0CB` | `warning/500` / `warning/100` |
+| Navy ink / muted grey / page cream | `#1F2F4A` / `#7A8299` / `#FFF8F2` | `neutral/900` / `neutral/500` / `neutral/100` |
+
+**New tokens:** `pink/50–900`; `color/bg/pink` (→ `pink/400`), `color/bg/tile-peach` (→ `warning/100`), `color/text/brand` (→ `brand/600`, coral text on white, 4.67:1), `color/border/brand-subtle` (→ `brand/200`, the soft pink outline). **Remapped:** `color/bg/grape` → `grape/600` (white on `grape/500` is 4.23:1), `color/text/discount` → `brand/700`, dark `color/border/strong` → `neutral/400`.
+
+**Candy buttons.** Primary = pill + paint style `Gradient/Button-primary` (135°, `#FF5B6E` → `#FF6FB1`, the reference gradient) + effect style `Glow/Brand` (coral glow `0 10 22 −10` at 55% plus a 1.5px white top gloss); hover `Glow/Brand-hover`. The §11 shelf is removed — the glow replaces it. Secondary = flat `brand/100`; Outline = white + 2px `color/border/brand-subtle` + `color/text/brand`; Ghost = text; Danger = raspberry `danger/700`. IconButton Filled/Outline follow the same treatment. Also added: `Gradient/Button-violet` + `Glow/Violet` for special CTAs, `Glow/Tile-*` coloured glows for pastel category cards, pink-tinted `Elevation/Light/e1–e4`, and the four `Gradient/Bloom-*` styles re-pinned to the reference pastels.
+
+> **Known accessibility failure — owner decision required.** White label on `#FF5B6E` measures **3.01:1** (and 2.57:1 on the `#FF6FB1` end). WCAG 2.2 AA requires 4.5:1 for button text of this size, and `CLAUDE.md` rule 29 makes that a CI gate. It is shipped here because the owner asked for an exact match. The one-step fix, if wanted: start the gradient at `brand/600` `#CA4555` → `pink/600` `#C04882` (white 4.67:1 / 4.86:1), which keeps the same hue and glow and reads almost identically at a glance. Every other text pairing in §4 passes.
+
+---
+
+## 17. Similar-not-exact palette, zero contrast failures (2026-11-11)
+
+**Owner request:** "don't use the exact colour tokens of the reference site — use similar", and "make sure there is no colour contrast issue". This supersedes the values in §16; the candy button treatment, new tokens and styles from §16 remain.
+
+**Method.** Each reference colour was moved in OKLCh by about +4–6° hue and −6% chroma (navy and cream by +6° hue only), so every swatch reads as the same family but none is the reference value. Steps that carry text or white labels were then re-solved numerically for contrast. Ramps were checked for monotonic lightness.
+
+| Role | Reference | Ours | Contrast anchor |
+|---|---|---|---|
+| CTA gradient start `brand/500` | #FF5B6E | **#DC3442** | white 4.66:1 |
+| CTA gradient end `pink/500` | #FF6FB1 | **#CA3F8D** | white 4.69:1 |
+| Bright coral (decorative) `brand/400` | #FF5B6E | #FB6265 | not used behind text |
+| Discount / coral text `brand/700` / `brand/600` | — | #961022 / #C1343D | 8.0:1 / 5.2:1 on canvas |
+| Sunshine `accent/500` | #FFCB47 | #F7CE54 | navy on it 8.9:1 |
+| Sky `teal/400` / `teal/500` | #6BC8E6 / #3FA1C5 | #6EC8DF / #42A2BF | focus `teal/600` #38869E 3.15:1 on `neutral/300`; link `teal/700` #1E7188 4.85:1 |
+| Violet `grape/500` | #8B5CF6 | #8B51DE | white 4.85:1 |
+| Mint `success/500` / text `success/700` | #4FC081 / #15803D | #49C08D / #017D54 | 5.17:1 |
+| Orange `warning/500` | #E5783A | #DF7D39 | text `warning/700` 6.3:1 |
+| Navy ink / cream page | #1F2F4A / #FFF8F2 | #232E4A / #FEF8F2 | 12.8:1 |
+| Pastel tiles | #FFE0EC #FFEDB6 #D7F5E2 #D4EEF7 #E5D9F8 #FFE0CB | #FFE1EA #FBEEBA #D6F5E5 #D5EEF5 #E7D9F5 #FCE1CB | navy text on each ≥12:1 |
+
+**Contrast fixes made in the same pass.** `Gradient/Button-primary` = `brand/500` → `pink/500` (both ends pass with white). `color/text/disabled` → `neutral/600` light / `neutral/400` dark — disabled labels now pass 4.5:1 even though WCAG exempts them; disabled controls still read as disabled through the flat `bg/disabled` fill, no glow and muted icons. `color/text/discount` → `brand/700` (the −25% chip was 4.497:1). `color/bg/grape` back to `grape/500` (now 4.85:1).
+
+**Audit.** A script walked every visible text layer in every component on the Primitives and Storefront Components pages (1,164 checks), found the actual painted background (parent fills, absolutely positioned faces, semi-transparent fills blended down, both ends of gradients) and tested Light and Dark against 4.5:1 / 3:1-large. Result: **0 real failures**. The only flags were Primary buttons nested inside Modal, Drawer, EmptyState and ProductCard, where the checker cannot read an instance's gradient style; those were verified by rendering (white on the coral→berry gradient, 4.66–4.69:1). All §4 rows pass. In dark mode the focus halo uses the canvas colour (`neutral/950`) rather than the panel colour, because navy-on-coral measured 2.88:1.
+
+**Buttons, icons.** Button default icon is now the filled `icon/shopping-bag-open-fill` (outline cart read thin on the gradient); "Notify me" uses `icon/bell-fill`. Icon colour per variant: white on Primary/Danger, `color/text/brand` on Secondary/Outline, `color/text/primary` on Ghost.
+
+**Update (2026-11-11, later):** button drop shadows removed at the owner's request — Primary, Danger and IconButton Filled now use `Gloss/Button` (a 1.5px white top gloss only; hover feedback is the `_scrim`). The gradient was lightened as far as AA allows and made more vivid: `brand/500` → **#DC3442**, `pink/500` → **#CA3F8D** (white label 4.55:1 at both ends). Any lighter and the white "Add to cart" label would fail 4.5:1.
+
+**Update — price colour (2026-11-11, later):** the dark wine `brand/700` read muddy as a price colour, so `color/text/discount` (prices on Version B cards and every discount figure) moved back to `brand/600`, re-tuned to **#BD303A** — a bright coral that passes on every price background: white 5.76:1, cream canvas 5.46:1, pink discount chip 4.72:1, `brand/50` 5.38:1.
+
