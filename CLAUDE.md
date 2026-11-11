@@ -13,7 +13,7 @@ The business value is split roughly evenly between winning organic search traffi
 
 ## Current state
 
-**Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. The foundation is built and tested end to end (auth, roles, i18n, API contract, observability, backups), with brands as the first full CRUD through admin, API and storefront. Follow `docs/IMPLEMENTATION-PLAN.md` Phase 3.
+**Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. The foundation is built and tested end to end (auth, roles, i18n, API contract, observability, backups), with brands as the first full CRUD through admin, API and storefront. **Phase 4 — Core E-commerce, started 2026-11-11:** catalog schema, product/variant API, categories and attributes admin, and the storefront layout are in. Phase 3 items still open need owner infrastructure (staging, backup bucket). Follow `docs/IMPLEMENTATION-PLAN.md` §2 progress and Phase 4.
 
 ## Read before working
 

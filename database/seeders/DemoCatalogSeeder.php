@@ -37,7 +37,7 @@ use RuntimeException;
  * writes. Idempotent on slug: an existing product is left as it is. ProductChanged is
  * silenced while seeding — a fresh database has no storefront cache to purge.
  *
- * Needs the brands (CatalogDemoSeeder), categories (CategoryDemoSeeder) and the
+ * Needs the brands (BrandDemoSeeder), categories (CategoryDemoSeeder) and the
  * Color/Size attributes (CatalogReferenceSeeder); it runs them first if missing.
  */
 class DemoCatalogSeeder extends Seeder
@@ -176,7 +176,7 @@ class DemoCatalogSeeder extends Seeder
             $this->call(CategoryDemoSeeder::class);
         }
         if (! Brand::query()->where('slug', 'lego')->exists()) {
-            $this->call(CatalogDemoSeeder::class);
+            $this->call(BrandDemoSeeder::class);
         }
     }
 

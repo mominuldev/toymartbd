@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
  * every seed). Local/testing only — called from DatabaseSeeder behind an
  * environment check. Idempotent on slug.
  */
-class CatalogDemoSeeder extends Seeder
+class BrandDemoSeeder extends Seeder
 {
     /** @var list<array{name: string, name_bn: string, slug: string, description: string, description_bn: string, country: string}> */
     private const array BRANDS = [

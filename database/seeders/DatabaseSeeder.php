@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
                 User::factory()->raw(['name' => 'Local Owner', 'email' => 'owner@toymart.test']),
             )->assignRole(Role::SuperAdmin->value);
             $this->call(CategoryDemoSeeder::class);
-            $this->call(CatalogDemoSeeder::class);
+            $this->call(BrandDemoSeeder::class);
             $this->call(DemoCatalogSeeder::class);
         }
     }
