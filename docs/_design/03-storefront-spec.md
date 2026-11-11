@@ -1320,6 +1320,27 @@ Route `/track`. No login. Two fields: order number + the **last 4 digits of the 
 | 7 | Help | `TrustStrip Theme=Plain` + `হোয়াটসঅ্যাপে সাহায্য` / `Help on WhatsApp` | |
 | Refresh | Status polls every 60 s while the tab is visible; a changed step animates in and announces via `aria-live="polite"`. The timestamp of the last refresh is a `caption` under the timeline: `সর্বশেষ আপডেট: ২:১৪ অপরাহ্ণ` / `Last updated 2:14 pm` |
 
+### B7.3 As built in Figma (2026-11-11)
+
+- **1440** (node `161:16502`): two columns, not the 640 centred stack above. Main = order status card + `OrderTimeline` + a **Delivery details** card (deliver to · payment · courier). Rail 440 = lookup form + items + WhatsApp help card. All cards use 24 padding.
+- **Help card icon:** WhatsApp glyph is `color/text/on-brand` on a 44px (40 on 390) circle of `color/feedback/success`. The earlier light-green outline on `color/bg/brand-subtle` measured **1.63:1** and failed the 3:1 non-text minimum.
+
+---
+
+## B8. Utility pages — 404, Contact us, Privacy policy (as built 2026-11-11)
+
+Each exists at 390 (page 05) and 1440 (page 06), reusing the shared header, footer and mobile nav.
+
+| Page | 390 node | 1440 node | Structure |
+|---|---|---|---|
+| Search results (1440) | — | `161:15289` | Cloned from Category listing: related-search chips replace sub-categories; zero-results `EmptyState` + "Popular right now" row below |
+| 404 | `163:17451` | `163:9166` | `Gradient/Bloom-candy` hero with the "4 · ball · 4" illustration (four-hue ball = the §1 diamond motif's colours: `bg/brand`, `bg/accent`, `bg/teal`, `bg/grape`), copy from content spec C.7, `SearchBar`, `Go to the home page` + `Browse all toys`, then category tiles and a best-sellers row so the page is a working entry point |
+| Contact us | `167:7500` | `165:9657` | `Gradient/Bloom-sky` hero with live status + chat-bubble illustration · 4 pastel channel tiles (WhatsApp, call, email, visit) · message form (name, mobile, topic `Select`, optional order number, message) · visit card with hours · quick-help links |
+| Privacy policy | `168:7799` | `166:9992` | `Gradient/Bloom-mint` header · 1440: sticky "On this page" list (300) + article; 390: `NativeSelect` "Jump to a section" · "The short version" butter card · 8 numbered sections · privacy-contact card |
+
+- Channel-tile links are `color/text/primary` + underline: `color/text/link` on `color/bg/tile-lavender` measured **4.15:1** and failed.
+- **Open with the owner:** privacy text is a plain-language draft that needs legal review before launch; WhatsApp `01712-345678`, the shop address and hours, `privacy@toymartbd.com` and the map are placeholders. The hotline differs between `05-content-and-assets-spec.md` (`09600-123456`) and the built footer (`09610-123456`); the new pages follow the footer until the owner confirms.
+
 ---
 
 # PART C — Real content
