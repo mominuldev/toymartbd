@@ -48,6 +48,15 @@
     scrollbar-color: var(--tm-color-border-strong) transparent;
 }
 
+/* Scrolls, but never shows a scrollbar (owner request for the sidebar). Wheel,
+   touch and keyboard focus still scroll it. */
+.scrollbar-none {
+    scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
 /* Tabular figures wherever digits line up in a column — every admin table,
    every money figure. Mixed-width digits make a cart or a P&L unreadable. */
 .tabular {

@@ -19,6 +19,15 @@ export type RelationType = z.infer<typeof relationTypeSchema>;
 export const variantStatusSchema = z.enum(["active","archived"]);
 export type VariantStatus = z.infer<typeof variantStatusSchema>;
 
+/** `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the */
+export const cropProductImageRequestSchema = z.object({
+    "x": z.number().int().min(0),
+    "y": z.number().int().min(0),
+    "width": z.number().int().min(1),
+    "height": z.number().int().min(1),
+});
+export type CropProductImageRequestInput = z.input<typeof cropProductImageRequestSchema>;
+
 /** `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`. */
 export const loginRequestSchema = z.object({
     "email": z.email().min(1).max(255),
@@ -39,6 +48,12 @@ export const reorderAttributeValuesRequestSchema = z.object({
     "ids": z.array(z.number().int()).max(500),
 });
 export type ReorderAttributeValuesRequestInput = z.input<typeof reorderAttributeValuesRequestSchema>;
+
+/** `POST /products/{product}/images/reorder` — `{ ids: [3, 1, 2] }`, every image id */
+export const reorderProductImagesRequestSchema = z.object({
+    "ids": z.array(z.number().int()).max(100),
+});
+export type ReorderProductImagesRequestInput = z.input<typeof reorderProductImagesRequestSchema>;
 
 /** `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch) */
 export const storeAttributeRequestSchema = z.object({
@@ -86,6 +101,21 @@ export const storeCategoryRequestSchema = z.object({
 });
 export type StoreCategoryRequestInput = z.input<typeof storeCategoryRequestSchema>;
 
+/** `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP */
+export const storeProductImageRequestSchema = z.object({
+    "file": z.instanceof(Blob),
+    "alt_text": z.string().max(255).nullable().optional(),
+    "alt_text_bn": z.string().max(255).nullable().optional(),
+    "variant_id": z.number().int().nullable().optional(),
+    "crop": z.object({
+    "x": z.number().int().min(0).optional(),
+    "y": z.number().int().min(0).optional(),
+    "width": z.number().int().min(1).optional(),
+    "height": z.number().int().min(1).optional(),
+}).optional(),
+});
+export type StoreProductImageRequestInput = z.input<typeof storeProductImageRequestSchema>;
+
 /** `POST /products` — needs catalog.create. Setting the initial prices is part of */
 export const storeProductRequestSchema = z.object({
     "name": z.string().min(1).max(160),
@@ -100,10 +130,10 @@ export const storeProductRequestSchema = z.object({
     "short_description_bn": z.string().max(1000).nullable().optional(),
     "description": z.string().max(50000).nullable().optional(),
     "description_bn": z.string().max(50000).nullable().optional(),
-    "specifications": z.array(z.string().max(500).nullable()).max(50).nullable().optional(),
+    "specifications": z.record(z.string(), z.string().nullable()).nullable().optional(),
     "age_min_months": z.number().int().min(0).max(216).nullable().optional(),
     "age_max_months": z.number().int().min(0).max(216).nullable().optional(),
-    "gender": genderSchema.optional(),
+    "gender": genderSchema.nullable().optional(),
     "is_educational": z.boolean().optional(),
     "safety_note": z.string().max(500).nullable().optional(),
     "safety_note_bn": z.string().max(500).nullable().optional(),
@@ -130,7 +160,7 @@ export const storeProductRequestSchema = z.object({
     "cost_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "wholesale_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "weight_grams": z.number().int().min(0).max(1000000).nullable().optional(),
-    "status": variantStatusSchema.optional(),
+    "status": variantStatusSchema.nullable().optional(),
 })).max(100).optional(),
     "relations": z.array(z.object({
     "related_product_id": z.number().int(),
@@ -187,6 +217,15 @@ export const updateCategoryRequestSchema = z.object({
 });
 export type UpdateCategoryRequestInput = z.input<typeof updateCategoryRequestSchema>;
 
+/** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
+export const updateProductImageRequestSchema = z.object({
+    "alt_text": z.string().max(255).nullable().optional(),
+    "alt_text_bn": z.string().max(255).nullable().optional(),
+    "variant_id": z.number().int().nullable().optional(),
+    "is_primary": z.boolean().optional(),
+});
+export type UpdateProductImageRequestInput = z.input<typeof updateProductImageRequestSchema>;
+
 /** `PUT /products/{product}` — needs catalog.update. The whole document, variant */
 export const updateProductRequestSchema = z.object({
     "name": z.string().min(1).max(160),
@@ -201,10 +240,10 @@ export const updateProductRequestSchema = z.object({
     "short_description_bn": z.string().max(1000).nullable().optional(),
     "description": z.string().max(50000).nullable().optional(),
     "description_bn": z.string().max(50000).nullable().optional(),
-    "specifications": z.array(z.string().max(500).nullable()).max(50).nullable().optional(),
+    "specifications": z.record(z.string(), z.string().nullable()).nullable().optional(),
     "age_min_months": z.number().int().min(0).max(216).nullable().optional(),
     "age_max_months": z.number().int().min(0).max(216).nullable().optional(),
-    "gender": genderSchema.optional(),
+    "gender": genderSchema.nullable().optional(),
     "is_educational": z.boolean().optional(),
     "safety_note": z.string().max(500).nullable().optional(),
     "safety_note_bn": z.string().max(500).nullable().optional(),
@@ -231,7 +270,7 @@ export const updateProductRequestSchema = z.object({
     "cost_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "wholesale_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "weight_grams": z.number().int().min(0).max(1000000).nullable().optional(),
-    "status": variantStatusSchema.optional(),
+    "status": variantStatusSchema.nullable().optional(),
 })).max(100).optional(),
     "relations": z.array(z.object({
     "related_product_id": z.number().int(),

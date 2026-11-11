@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeftIcon } from '@phosphor-icons/react';
 import { storeAttributeRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
-import { Field, inputClass } from '@/components/ui/Field';
+import { Button, buttonClass } from '@/components/ui/Button';
+import { ContentHeader } from '@/components/shell/ContentHeader';
+import { Select } from '@/components/ui/Select';
+import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
@@ -115,28 +116,27 @@ function AttributeForm({ id, attribute }: { id: number | null; attribute?: Attri
     const errorOf = (field: keyof FormValues) => formState.errors[field]?.message;
 
     return (
-        <section className="max-w-4xl space-y-5">
-            <Link to="/products/attributes" className="inline-flex items-center gap-1.5 t-admin-button-sm text-fg-link hover:underline">
-                <ArrowLeftIcon size={16} aria-hidden />
-                {t('attributes.backToList')}
-            </Link>
-            <h1 className="t-admin-page-title text-fg-primary">{id === null ? t('attributes.new') : t('attributes.edit')}</h1>
+        <section className="flex flex-col gap-6">
+            <ContentHeader
+                breadcrumb={[{ label: t('catalog.crumb') }, { label: t('attributes.backToList'), to: '/products/attributes' }, { label: id === null ? t('attributes.new') : t('attributes.edit') }]}
+                title={id === null ? t('attributes.new') : t('attributes.edit')}
+            />
 
-            <form onSubmit={submit} noValidate className="space-y-6">
-                <fieldset disabled={!editable || save.isPending} className="space-y-5 rounded-md border border-line-default bg-surface p-5 shadow-e1 md:p-6">
-                    <div className="grid gap-5 md:grid-cols-2">
+            <form onSubmit={submit} noValidate className="flex flex-col gap-6">
+                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 max-w-4xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('attributes.field.name')} error={errorOf('name')}>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name')} />
+                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name')} />
                             )}
                         </Field>
                         <Field label={t('attributes.field.nameBn')} error={errorOf('name_bn')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name_bn')} />
+                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name_bn')} />
                             )}
                         </Field>
                     </div>
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('attributes.field.slug')} hint={t('attributes.field.slugHint')} error={errorOf('slug')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <input
@@ -145,20 +145,20 @@ function AttributeForm({ id, attribute }: { id: number | null; attribute?: Attri
                                     autoCapitalize="none"
                                     aria-describedby={describedBy}
                                     aria-invalid={invalid || undefined}
-                                    className={`h-control-md t-admin-mono ${inputClass}`}
+                                    className={`h-10 ${monoInputClass}`}
                                     {...register('slug')}
                                 />
                             )}
                         </Field>
                         <Field label={t('attributes.field.type')} hint={t('attributes.field.typeHint')} error={errorOf('type')}>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <select id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('type')}>
+                                <Select id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} {...register('type')}>
                                     {attributeTypes.map((type) => (
                                         <option key={type} value={type}>
                                             {t(`attributes.type.${type}`)}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             )}
                         </Field>
                     </div>
@@ -176,14 +176,14 @@ function AttributeForm({ id, attribute }: { id: number | null; attribute?: Attri
 
                 <div className="flex items-center justify-between gap-3">
                     {id !== null && attribute && can(me, 'catalog.archive') ? (
-                        <Button variant="ghost" onClick={() => setConfirming(true)} className="text-feedback-danger">
+                        <Button variant="danger" onClick={() => setConfirming(true)}>
                             {t('attributes.delete')}
                         </Button>
                     ) : (
                         <span />
                     )}
-                    <div className="flex gap-2">
-                        <Link to="/products/attributes" className="inline-flex h-control-md items-center rounded-sm border border-line-strong bg-surface px-4 t-admin-button text-fg-primary hover:bg-subtle">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Link to="/products/attributes" className={buttonClass('ghost')}>
                             {t('common.cancel')}
                         </Link>
                         {editable && (

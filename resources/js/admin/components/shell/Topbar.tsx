@@ -1,19 +1,21 @@
-import { forwardRef, useEffect, useState } from 'react';
-import { BellIcon, ListIcon, MagnifyingGlassIcon, MoonIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
+import { forwardRef, useEffect, useId, useRef, useState } from 'react';
+import { BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
+import { IconButton } from '@/components/ui/IconButton';
+import { SearchField } from '@/components/ui/SearchField';
+import { Avatar } from './Avatar';
 import { LanguageSwitch } from './LanguageSwitch';
 import type { Me } from '@/features/auth/api';
-import { en, type MessageKey } from '@/i18n/messages';
 
 type TopbarProps = {
     me: Me;
+    /** Translated role name for the user block. */
+    roleLabel: string;
     onOpenMenu: () => void;
     onSignOut: () => void;
     signingOut: boolean;
 };
-
-const iconButton = 'grid size-9 shrink-0 place-items-center rounded-sm text-fg-secondary hover:bg-subtle';
 
 /** Dhaka wall-clock time with Western digits in both locales (rule 36). */
 function useDhakaTime(locale: string): string {
@@ -38,71 +40,100 @@ function useDhakaTime(locale: string): string {
     return time;
 }
 
-/** Figma Topbar 187:474 (≥1024) and Topbar/Tablet 228:1857. */
-export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar(
-    { me, onOpenMenu, onSignOut, signingOut },
-    menuButtonRef,
-) {
+/** User block (avatar · name · role · caret) opening a small menu with Sign out. */
+function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'me' | 'roleLabel' | 'onSignOut' | 'signingOut'>) {
+    const { t } = useI18n();
+    const [open, setOpen] = useState(false);
+    const menuId = useId();
+    const root = useRef<HTMLDivElement>(null);
+    const firstName = me.name.trim().split(/\s+/)[0] ?? me.name;
+
+    useEffect(() => {
+        if (!open) return;
+        const close = (event: MouseEvent | KeyboardEvent) => {
+            if (event instanceof KeyboardEvent ? event.key === 'Escape' : !root.current?.contains(event.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        document.addEventListener('keydown', close);
+        return () => {
+            document.removeEventListener('mousedown', close);
+            document.removeEventListener('keydown', close);
+        };
+    }, [open]);
+
+    return (
+        <div ref={root} className="relative">
+            <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-controls={open ? menuId : undefined}
+                aria-label={t('shell.userMenu', { name: me.name })}
+                onClick={() => setOpen((value) => !value)}
+                className="flex items-center gap-2 rounded-sm p-0.5 text-fg-primary hover:bg-subtle"
+            >
+                <Avatar name={me.name} />
+                <span className="hidden min-w-0 flex-col items-start text-start lg:flex">
+                    <span className="max-w-32 truncate t-admin-body-strong text-fg-primary">{firstName}</span>
+                    <span className="max-w-32 truncate t-admin-caption text-fg-tertiary">{roleLabel}</span>
+                </span>
+                <CaretDownIcon size={16} aria-hidden className="hidden text-fg-primary lg:block" />
+            </button>
+            {open && (
+                <div id={menuId} role="menu" className="absolute end-0 top-full z-30 mt-1 min-w-44 rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3">
+                    <button
+                        type="button"
+                        role="menuitem"
+                        autoFocus
+                        disabled={signingOut}
+                        onClick={onSignOut}
+                        className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body text-fg-primary hover:bg-subtle disabled:text-fg-disabled"
+                    >
+                        <SignOutIcon size={18} aria-hidden />
+                        {t('shell.signOut')}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Figma Topbar 187:474 (≥1024) and Topbar / Tablet 228:1857 (<1024): 60 high, bg/surface,
+ * border/default bottom edge, no shadow. Search 420 wide with ⌘K, Dhaka clock chip,
+ * EN | বাং, theme, notifications, user menu. Below 1024 the menu button opens the drawer.
+ */
+export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar({ me, roleLabel, onOpenMenu, onSignOut, signingOut }, menuButtonRef) {
     const { t, locale } = useI18n();
     const { theme, toggle } = useTheme();
     const time = useDhakaTime(locale);
     const dark = theme === 'admin-dark';
-    const roleLabel = (role: string | undefined) => {
-        const key = `role.${role ?? ''}`;
-        return key in en ? t(key as MessageKey) : (role ?? '');
-    };
 
     return (
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-line-default bg-surface px-4 shadow-e2 lg:gap-4 lg:px-6">
-            <button ref={menuButtonRef} type="button" onClick={onOpenMenu} aria-label={t('shell.openMenu')} className={`${iconButton} md:hidden`}>
-                <ListIcon size={22} aria-hidden />
-            </button>
+        <header className="sticky top-0 z-20 flex h-15 shrink-0 items-center gap-2 border-b border-line-default bg-surface px-4 md:gap-3 lg:gap-4 lg:px-6">
+            <IconButton ref={menuButtonRef} onClick={onOpenMenu} aria-label={t('shell.openMenu')} className="lg:hidden">
+                <ListIcon size={20} aria-hidden />
+            </IconButton>
 
-            {/* Search is a placeholder until P4 wires the global search endpoint. */}
-            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-line-default bg-subtle px-3 text-fg-tertiary focus-within:bg-surface focus-within:shadow-focus xl:max-w-105">
-                <MagnifyingGlassIcon size={18} aria-hidden className="shrink-0" />
-                <span className="sr-only">{t('shell.search')}</span>
-                <input
-                    type="search"
-                    placeholder={t('shell.search')}
-                    className="min-w-0 flex-1 bg-transparent t-admin-body text-fg-primary outline-none placeholder:text-fg-tertiary"
-                />
-            </label>
+            {/* Search is a placeholder until the global search endpoint lands. */}
+            <SearchField label={t('shell.search')} placeholder={t('shell.search')} shortcut="⌘K" className="hidden w-105 shrink lg:flex" />
 
-            <div className="ml-auto flex items-center gap-2">
-                <span className="hidden h-7 items-center rounded-sm bg-subtle px-2 t-admin-caption text-fg-secondary tabular lg:inline-flex">
-                    {t('shell.timezone', { time })}
-                </span>
-                <div className="hidden sm:block">
-                    <LanguageSwitch />
-                </div>
-                <button
-                    type="button"
-                    onClick={toggle}
-                    aria-pressed={dark}
-                    aria-label={dark ? t('shell.themeLight') : t('shell.themeDark')}
-                    className={iconButton}
-                >
-                    {dark ? <SunIcon size={20} aria-hidden /> : <MoonIcon size={20} aria-hidden />}
-                </button>
-                <button type="button" aria-label={t('shell.notifications')} className={iconButton}>
-                    <BellIcon size={20} aria-hidden />
-                </button>
-                <div className="hidden min-w-0 flex-col items-end md:flex">
-                    <span className="max-w-40 truncate t-admin-body-strong text-fg-primary">{me.name}</span>
-                    <span className="t-admin-caption text-fg-tertiary">{roleLabel(me.roles[0])}</span>
-                </div>
-                <button
-                    type="button"
-                    onClick={onSignOut}
-                    disabled={signingOut}
-                    aria-label={t('shell.signOut')}
-                    title={t('shell.signOut')}
-                    className={`${iconButton} disabled:opacity-60`}
-                >
-                    <SignOutIcon size={20} aria-hidden />
-                </button>
+            <div className="flex-1" />
+
+            <span className="hidden h-6.5 items-center gap-1.5 rounded-xs bg-subtle px-2.5 t-admin-caption whitespace-nowrap text-fg-secondary tabular md:inline-flex">
+                <ClockIcon size={14} aria-hidden />
+                {t('shell.timezone', { time })}
+            </span>
+            <div className="hidden sm:block">
+                <LanguageSwitch />
             </div>
+            <IconButton onClick={toggle} aria-pressed={dark} aria-label={dark ? t('shell.themeLight') : t('shell.themeDark')}>
+                {dark ? <SunIcon size={18} aria-hidden /> : <MoonIcon size={18} aria-hidden />}
+            </IconButton>
+            <IconButton aria-label={t('shell.notifications')}>
+                <BellIcon size={20} aria-hidden />
+            </IconButton>
+            <UserMenu me={me} roleLabel={roleLabel} onSignOut={onSignOut} signingOut={signingOut} />
         </header>
     );
 });

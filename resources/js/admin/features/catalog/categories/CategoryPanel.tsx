@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useBlocker, useNavigate } from 'react-router';
+import { XIcon } from '@phosphor-icons/react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeftIcon } from '@phosphor-icons/react';
 import { storeCategoryRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
 import { Button } from '@/components/ui/Button';
-import { Field, inputClass } from '@/components/ui/Field';
+import { IconButton } from '@/components/ui/IconButton';
+import { FormSection } from '@/components/ui/FormSection';
+import { Select } from '@/components/ui/Select';
+import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
@@ -18,7 +21,6 @@ import {
     heightOf,
     useArchiveCategory,
     useCategory,
-    useCategoryTree,
     useMoveCategory,
     useSaveCategory,
     type Category,
@@ -74,28 +76,25 @@ function toInput(values: FormValues): CategoryInput {
 }
 
 /**
- * Create and edit a category, in both languages. Choosing another parent on an
- * existing category moves it (last under the new parent) through the move endpoint,
- * so the tree's invariants stay on the server.
+ * The edit panel of the Categories split view (Figma Categories 212:7132, Theme B copy in
+ * section 14): create or edit a category in both languages. Choosing another parent on an
+ * existing category moves it (last under the new parent) through the move endpoint, so the
+ * tree's invariants stay on the server. Unsaved edits block leaving the row.
  */
-export function CategoryFormPage() {
-    const params = useParams();
-    const id = params.categoryId ? Number(params.categoryId) : null;
+export function CategoryPanel({ id, parentId, tree, onClose }: { id: number | null; parentId: number | null; tree: Category[]; onClose: () => void }) {
     const category = useCategory(id);
-    const tree = useCategoryTree();
 
-    const error = (id !== null && category.isError ? category.error : null) ?? (tree.isError ? tree.error : null);
-    if (error) {
-        return <QueryError error={error} onRetry={() => void (category.refetch(), tree.refetch())} />;
+    if (id !== null && category.isError) {
+        return <QueryError error={category.error} onRetry={() => void category.refetch()} />;
     }
-    if ((id !== null && !category.data) || !tree.data) {
+    if (id !== null && !category.data) {
         return <p aria-busy="true" className="sr-only" />;
     }
 
-    return <CategoryForm key={category.data?.id ?? 'new'} id={id} category={category.data} tree={tree.data} />;
+    return <CategoryForm key={`${category.data?.id ?? 'new'}-${parentId ?? ''}`} id={id} category={category.data} tree={tree} parentId={parentId} onClose={onClose} />;
 }
 
-function CategoryForm({ id, category, tree }: { id: number | null; category?: Category; tree: Category[] }) {
+function CategoryForm({ id, category, tree, parentId, onClose }: { id: number | null; category?: Category; tree: Category[]; parentId: number | null; onClose: () => void }) {
     const { t } = useI18n();
     const { data: me } = useMe();
     const { notify } = useToast();
@@ -104,6 +103,8 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
     const move = useMoveCategory();
     const archive = useArchiveCategory(id ?? 0);
     const [confirming, setConfirming] = useState(false);
+    // Set just before a navigation this form starts itself (after save or archive).
+    const leaving = useRef(false);
     const editable = can(me, id === null ? 'catalog.create' : 'catalog.update');
 
     // A category can move under any node that is not itself or below it, and that leaves
@@ -116,7 +117,7 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
     }, [id, tree]);
 
     const form = useForm<FormValues>({
-        defaultValues: toForm(category),
+        defaultValues: toForm(category, parentId),
         resolver: async (values, context, options) => {
             const result = await validateInput(toInput(values), context, options as never);
             return Object.keys(result.errors).length > 0 ? { values: {}, errors: result.errors as never } : { values, errors: {} };
@@ -124,7 +125,21 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
     });
     const { register, handleSubmit, setError, formState, reset } = form;
 
-    useEffect(() => reset(toForm(category)), [category, reset]);
+    useEffect(() => reset(toForm(category, parentId)), [category, parentId, reset]);
+
+    // Unsaved edits: ask before following another row, a tab or the back button…
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => !leaving.current && formState.isDirty && currentLocation.pathname !== nextLocation.pathname);
+    // …and before closing or reloading the browser tab.
+    useEffect(() => {
+        if (!formState.isDirty) return;
+        const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+        window.addEventListener('beforeunload', warn);
+        return () => window.removeEventListener('beforeunload', warn);
+    }, [formState.isDirty]);
+
+    // Focus the panel heading when a row opens, so the edit is announced and in view.
+    const heading = useRef<HTMLHeadingElement>(null);
+    useEffect(() => heading.current?.focus(), []);
 
     const fail = (error: Error) => {
         if (error instanceof ApiError && error.status === 422) {
@@ -143,9 +158,11 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
             onSuccess: (saved) => {
                 if (id === null) {
                     notify(t('categories.created'));
+                    leaving.current = true;
                     navigate(`/products/categories/${saved.id}`, { replace: true });
                     return;
                 }
+                reset(values);
                 const newParent = input.parent_id ?? null;
                 if (newParent === (category?.parent_id ?? null)) {
                     notify(t('categories.saved'));
@@ -164,30 +181,45 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
     const errorOf = (field: keyof FormValues) => formState.errors[field]?.message;
     const pending = save.isPending || move.isPending;
 
-    return (
-        <section className="max-w-3xl space-y-5">
-            <Link to="/products/categories" className="inline-flex items-center gap-1.5 t-admin-button-sm text-fg-link hover:underline">
-                <ArrowLeftIcon size={16} aria-hidden />
-                {t('categories.backToList')}
-            </Link>
-            <h1 className="t-admin-page-title text-fg-primary">{id === null ? t('categories.new') : t('categories.edit')}</h1>
+    const parentName = category?.parent_id ? (flatten(tree).find((entry) => entry.node.id === category.parent_id)?.node.name ?? '') : t('categories.topLevel');
+    const locked = !editable || pending;
+    const title = id === null ? t('categories.new') : (category?.name ?? '');
 
-            <form onSubmit={submit} noValidate className="space-y-6">
-                <fieldset disabled={!editable || pending} className="space-y-5 rounded-md border border-line-default bg-surface p-5 shadow-e1 md:p-6">
-                    <div className="grid gap-5 md:grid-cols-2">
+    return (
+        <>
+        <form onSubmit={submit} noValidate aria-labelledby="category-panel-title" className="flex min-w-0 flex-col gap-6">
+                {/* Figma Categories 212:7132 edit panel: a FormSection titled with the category. */}
+                <FormSection>
+                    <div className="flex items-start gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <h2 id="category-panel-title" ref={heading} tabIndex={-1} className="t-admin-section text-fg-primary outline-none focus:shadow-none">
+                                {title}
+                            </h2>
+                            {category && (
+                                <p className="t-admin-caption text-fg-tertiary">
+                                    {t('categories.parentLine', { name: parentName })} · <span className="t-admin-mono-sm">/categories/{category.slug}</span>
+                                </p>
+                            )}
+                        </div>
+                        <IconButton size="sm" aria-label={t('common.close')} onClick={onClose} className="-me-1.5 -mt-1">
+                            <XIcon size={16} aria-hidden />
+                        </IconButton>
+                    </div>
+                    <fieldset disabled={locked} className="flex min-w-0 flex-col gap-3.5">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('categories.field.name')} error={errorOf('name')}>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name')} />
+                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name')} />
                             )}
                         </Field>
                         <Field label={t('categories.field.nameBn')} hint={t('categories.field.nameBnHint')} error={errorOf('name_bn')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name_bn')} />
+                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name_bn')} />
                             )}
                         </Field>
                     </div>
 
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('categories.field.slug')} hint={t('categories.field.slugHint')} error={errorOf('slug')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <input
@@ -196,34 +228,21 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
                                     autoCapitalize="none"
                                     aria-describedby={describedBy}
                                     aria-invalid={invalid || undefined}
-                                    className={`h-control-md t-admin-mono ${inputClass}`}
+                                    className={`h-10 ${monoInputClass}`}
                                     {...register('slug')}
                                 />
                             )}
                         </Field>
                         <Field label={t('categories.field.parent')} hint={t('categories.field.parentHint')} error={errorOf('parent_id')}>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <select id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('parent_id')}>
+                                <Select id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} {...register('parent_id')}>
                                     <option value="">{t('categories.field.parentNone')}</option>
                                     {parents.map(({ node, depth }) => (
                                         <option key={node.id} value={String(node.id)}>
                                             {`${'— '.repeat(depth)}${node.name}`}
                                         </option>
                                     ))}
-                                </select>
-                            )}
-                        </Field>
-                    </div>
-
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <Field label={t('categories.field.description')} error={errorOf('description')} optional>
-                            {({ id: fieldId, describedBy, invalid }) => (
-                                <textarea id={fieldId} rows={4} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description')} />
-                            )}
-                        </Field>
-                        <Field label={t('categories.field.descriptionBn')} error={errorOf('description_bn')} optional>
-                            {({ id: fieldId, describedBy, invalid }) => (
-                                <textarea id={fieldId} rows={4} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description_bn')} />
+                                </Select>
                             )}
                         </Field>
                     </div>
@@ -236,7 +255,7 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
                                 autoCapitalize="none"
                                 aria-describedby={describedBy}
                                 aria-invalid={invalid || undefined}
-                                className={`h-control-md t-admin-mono md:max-w-80 ${inputClass}`}
+                                className={`h-10 md:max-w-80 ${monoInputClass}`}
                                 {...register('icon')}
                             />
                         )}
@@ -250,28 +269,45 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
                             </label>
                         ))}
                     </div>
-                </fieldset>
+                    </fieldset>
+                </FormSection>
 
-                <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-line-default bg-surface px-4 py-3 shadow-e4 md:-mx-5 md:px-5 lg:-mx-6 lg:px-6">
-                    {id !== null && category && can(me, 'catalog.archive') && category.is_active ? (
-                        <Button variant="ghost" onClick={() => setConfirming(true)} className="text-feedback-danger">
-                            {t('categories.archive')}
+                <FormSection title={t('categories.descriptionTitle')}>
+                    <fieldset disabled={locked} className="grid min-w-0 gap-x-4 gap-y-3.5 md:grid-cols-2">
+                        <Field label={t('categories.field.description')} error={errorOf('description')} optional>
+                            {({ id: fieldId, describedBy, invalid }) => (
+                                <textarea id={fieldId} rows={4} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description')} />
+                            )}
+                        </Field>
+                        <Field label={t('categories.field.descriptionBn')} error={errorOf('description_bn')} optional>
+                            {({ id: fieldId, describedBy, invalid }) => (
+                                <textarea id={fieldId} rows={4} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description_bn')} />
+                            )}
+                        </Field>
+                    </fieldset>
+                </FormSection>
+
+            {/* Figma FormActions 198:1085, scoped to the panel: destructive far left, then Discard and Save. */}
+            <div className="sticky bottom-4 z-10 flex min-h-16 flex-wrap items-center justify-between gap-3 rounded-md border border-line-default bg-surface px-5 py-3.5 shadow-e4">
+                {id !== null && category && can(me, 'catalog.archive') && category.is_active ? (
+                    <Button variant="danger" onClick={() => setConfirming(true)}>
+                        {t('categories.archive')}
+                    </Button>
+                ) : (
+                    <span />
+                )}
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button variant="ghost" disabled={!formState.isDirty || pending} onClick={() => reset(toForm(category, parentId))}>
+                        {t('common.discard')}
+                    </Button>
+                    {editable && (
+                        <Button type="submit" disabled={pending}>
+                            {pending ? t('common.saving') : t('common.save')}
                         </Button>
-                    ) : (
-                        <span />
                     )}
-                    <div className="flex gap-2">
-                        <Link to="/products/categories" className="inline-flex h-control-md items-center rounded-sm border border-line-strong bg-surface px-4 t-admin-button text-fg-primary hover:bg-subtle">
-                            {t('common.cancel')}
-                        </Link>
-                        {editable && (
-                            <Button type="submit" disabled={pending}>
-                                {pending ? t('common.saving') : t('common.save')}
-                            </Button>
-                        )}
-                    </div>
                 </div>
-            </form>
+            </div>
+        </form>
 
             {category && (
                 <ConfirmDialog
@@ -288,6 +324,7 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
                             onSuccess: () => {
                                 setConfirming(false);
                                 notify(t('categories.archived'));
+                                leaving.current = true;
                                 navigate('/products/categories', { replace: true });
                             },
                             onError: (error) => {
@@ -298,6 +335,16 @@ function CategoryForm({ id, category, tree }: { id: number | null; category?: Ca
                     }
                 />
             )}
-        </section>
+
+            <ConfirmDialog
+                open={blocker.state === 'blocked'}
+                title={t('categories.unsavedTitle')}
+                body={t('categories.unsavedBody')}
+                confirmLabel={t('categories.discard')}
+                cancelLabel={t('categories.keepEditing')}
+                onClose={() => blocker.reset?.()}
+                onConfirm={() => blocker.proceed?.()}
+            />
+        </>
     );
 }

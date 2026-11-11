@@ -151,7 +151,9 @@ describe('categories', () => {
         fireEvent.click(screen.getByLabelText('Show in the storefront menu'));
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByRole('heading', { name: 'Edit category' })).toBeTruthy();
+        // The split view keeps the tree and opens the saved category in the panel.
+        expect(await screen.findByRole('heading', { name: 'Jigsaws' })).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'Category tree' })).toBeTruthy();
         expect(posted).toEqual({
             name: 'Jigsaws',
             name_bn: 'জিগস',
@@ -231,6 +233,62 @@ describe('categories', () => {
 
         await waitFor(() => expect(deleted).toBe(true));
         expect(await screen.findByText('Category archived.')).toBeTruthy();
+    });
+
+    it('opens a row in the side panel, focuses its heading, and returns focus to the row on close', async () => {
+        mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: editor };
+            if (url.endsWith('/categories/3')) return { status: 200, body: books };
+            if (url.includes('/categories?tree=1')) return { status: 200, body: { data: tree } };
+            return { status: 404 };
+        });
+        renderApp('/products/categories');
+
+        const region = await screen.findByRole('region', { name: 'Category tree' });
+        fireEvent.click(within(region).getByRole('link', { name: 'Books' }));
+
+        const heading = await screen.findByRole('heading', { name: 'Books' });
+        await waitFor(() => expect(document.activeElement).toBe(heading));
+        expect(within(region).getByRole('link', { name: 'Books' }).getAttribute('aria-current')).toBe('page');
+        expect((screen.getByLabelText('Name (English)') as HTMLInputElement).value).toBe('Books');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+        await waitFor(() => expect(screen.queryByRole('heading', { name: 'Books' })).toBeNull());
+        await waitFor(() => expect(document.activeElement).toBe(within(region).getByRole('link', { name: 'Books' })));
+    });
+
+    it('warns before leaving a row with unsaved changes', async () => {
+        mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: editor };
+            if (url.endsWith('/categories/3')) return { status: 200, body: books };
+            if (url.endsWith('/categories/1')) return { status: 200, body: toys };
+            if (url.includes('/categories?tree=1')) return { status: 200, body: { data: tree } };
+            return { status: 404 };
+        });
+        renderApp('/products/categories/3');
+
+        fireEvent.change(await screen.findByLabelText('Name (English)'), { target: { value: 'Story books' } });
+        const region = screen.getByRole('region', { name: 'Category tree' });
+        fireEvent.click(within(region).getByRole('link', { name: 'Toys' }));
+
+        expect(await screen.findByRole('heading', { name: 'Discard unsaved changes?' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+        await waitFor(() => expect(screen.queryByRole('heading', { name: 'Discard unsaved changes?' })).toBeNull());
+        expect((screen.getByLabelText('Name (English)') as HTMLInputElement).value).toBe('Story books');
+
+        fireEvent.click(within(region).getByRole('link', { name: 'Toys' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Discard changes' }));
+        expect(await screen.findByRole('heading', { name: 'Toys' })).toBeTruthy();
+    });
+
+    it('starts a subcategory from a row with the parent filled in', async () => {
+        treeApi();
+        renderApp('/products/categories');
+
+        fireEvent.click(await screen.findByRole('link', { name: 'Add a subcategory under Toys' }));
+
+        expect(await screen.findByRole('heading', { name: 'New category' })).toBeTruthy();
+        expect((screen.getByLabelText('Parent category') as HTMLSelectElement).value).toBe('1');
     });
 
     it('renders the tree in Bangla', async () => {

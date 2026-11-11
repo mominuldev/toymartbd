@@ -47,7 +47,12 @@ export function setApiLocale(next: string): void {
     locale = next;
 }
 
-function csrfToken(): string {
+export function apiLocale(): string {
+    return locale;
+}
+
+/** The XSRF-TOKEN cookie value — for writes that cannot go through `api()` (multipart upload with progress). */
+export function csrfToken(): string {
     const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
     return match?.[1] ? decodeURIComponent(match[1]) : '';
 }
@@ -88,7 +93,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     return payload as T;
 }
 
-function isProblem(value: unknown): value is ProblemDetails {
+export function isProblem(value: unknown): value is ProblemDetails {
     return typeof value === 'object' && value !== null && 'type' in value && 'status' in value;
 }
 

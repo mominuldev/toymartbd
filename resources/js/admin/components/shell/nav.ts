@@ -2,23 +2,23 @@ import {
     ArrowUUpLeftIcon,
     CashRegisterIcon,
     ChartLineIcon,
-    ChatsCircleIcon,
+    ChatsIcon,
     GearIcon,
     GlobeIcon,
-    HouseIcon,
+    SquaresFourIcon,
     LightningIcon,
     PackageIcon,
     PlugsConnectedIcon,
-    ReceiptIcon,
+    ArticleIcon,
     ShieldWarningIcon,
-    ShoppingCartIcon,
-    StorefrontIcon,
+    FileTextIcon,
+    BrowserIcon,
     TruckIcon,
     UserGearIcon,
     UsersIcon,
     WalletIcon,
-    WarehouseIcon,
-    MegaphoneIcon,
+    StackIcon,
+    MegaphoneSimpleIcon,
     type Icon,
 } from '@phosphor-icons/react';
 import type { MessageKey } from '@/i18n/messages';
@@ -33,19 +33,22 @@ export type NavItem = {
 
 export type NavGroup = { label: MessageKey | null; items: NavItem[] };
 
-/** Sidebar information architecture — docs/_design/06-admin-feature-checklist.md §1. */
+/**
+ * Sidebar information architecture — docs/_design/06-admin-feature-checklist.md §1.
+ * Glyphs follow Figma Sidebar 187:473 (Phosphor, regular weight).
+ */
 export const navigation: NavGroup[] = [
     {
         label: null,
         items: [
-            { key: 'nav.overview', path: '/', icon: HouseIcon, permission: 'dashboard.view' },
-            { key: 'nav.inbox', path: '/inbox', icon: ChatsCircleIcon, permission: 'inbox.view' },
+            { key: 'nav.overview', path: '/', icon: SquaresFourIcon, permission: 'dashboard.view' },
+            { key: 'nav.inbox', path: '/inbox', icon: ChatsIcon, permission: 'inbox.view' },
         ],
     },
     {
         label: 'nav.group.sell',
         items: [
-            { key: 'nav.orders', path: '/orders', icon: ReceiptIcon, permission: 'orders.view' },
+            { key: 'nav.orders', path: '/orders', icon: ArticleIcon, permission: 'orders.view' },
             // No POS permission exists yet; selling at the till is creating an order.
             { key: 'nav.pos', path: '/pos', icon: CashRegisterIcon, permission: 'orders.create' },
             { key: 'nav.returns', path: '/returns', icon: ArrowUUpLeftIcon, permission: 'returns.view' },
@@ -56,8 +59,8 @@ export const navigation: NavGroup[] = [
         label: 'nav.group.catalog',
         items: [
             { key: 'nav.products', path: '/products', icon: PackageIcon, permission: 'catalog.view' },
-            { key: 'nav.inventory', path: '/inventory', icon: WarehouseIcon, permission: 'inventory.view' },
-            { key: 'nav.purchasing', path: '/purchasing', icon: ShoppingCartIcon, permission: 'purchasing.view' },
+            { key: 'nav.inventory', path: '/inventory', icon: StackIcon, permission: 'inventory.view' },
+            { key: 'nav.purchasing', path: '/purchasing', icon: FileTextIcon, permission: 'purchasing.view' },
         ],
     },
     {
@@ -70,14 +73,14 @@ export const navigation: NavGroup[] = [
     {
         label: 'nav.group.grow',
         items: [
-            { key: 'nav.marketing', path: '/marketing', icon: MegaphoneIcon, permission: 'marketing.view' },
+            { key: 'nav.marketing', path: '/marketing', icon: MegaphoneSimpleIcon, permission: 'marketing.view' },
             { key: 'nav.analytics', path: '/analytics', icon: ChartLineIcon, permission: 'reports.view' },
             { key: 'nav.seo', path: '/seo', icon: GlobeIcon, permission: 'seo.view' },
         ],
     },
     {
         label: 'nav.group.store',
-        items: [{ key: 'nav.store', path: '/store', icon: StorefrontIcon, permission: 'content.view' }],
+        items: [{ key: 'nav.store', path: '/store', icon: BrowserIcon, permission: 'content.view' }],
     },
     {
         label: 'nav.group.money',

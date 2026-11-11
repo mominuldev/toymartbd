@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeftIcon } from '@phosphor-icons/react';
 import { storeBrandRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
-import { Field, inputClass } from '@/components/ui/Field';
+import { Button, buttonClass } from '@/components/ui/Button';
+import { ContentHeader } from '@/components/shell/ContentHeader';
+import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
@@ -119,24 +119,23 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
     const errorOf = (field: keyof FormValues) => formState.errors[field]?.message;
 
     return (
-        <section className="max-w-3xl space-y-5">
-            <Link to="/products/brands" className="inline-flex items-center gap-1.5 t-admin-button-sm text-fg-link hover:underline">
-                <ArrowLeftIcon size={16} aria-hidden />
-                {t('brands.backToList')}
-            </Link>
-            <h1 className="t-admin-page-title text-fg-primary">{id === null ? t('brands.new') : t('brands.edit')}</h1>
+        <section className="flex flex-col gap-6">
+            <ContentHeader
+                breadcrumb={[{ label: t('catalog.crumb') }, { label: t('brands.backToList'), to: '/products/brands' }, { label: id === null ? t('brands.new') : t('brands.edit') }]}
+                title={id === null ? t('brands.new') : t('brands.edit')}
+            />
 
-            <form onSubmit={submit} noValidate className="space-y-6">
-                <fieldset disabled={!editable || save.isPending} className="space-y-5 rounded-md border border-line-default bg-surface p-5 shadow-e1 md:p-6">
-                    <div className="grid gap-5 md:grid-cols-2">
+            <form onSubmit={submit} noValidate className="flex flex-col gap-6">
+                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 max-w-3xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('brands.field.name')} error={errorOf('name')}>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name')} />
+                                <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name')} />
                             )}
                         </Field>
                         <Field label={t('brands.field.nameBn')} hint={t('brands.field.nameBnHint')} error={errorOf('name_bn')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
-                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-control-md ${inputClass}`} {...register('name_bn')} />
+                                <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name_bn')} />
                             )}
                         </Field>
                     </div>
@@ -149,13 +148,13 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
                                 autoCapitalize="none"
                                 aria-describedby={describedBy}
                                 aria-invalid={invalid || undefined}
-                                className={`h-control-md t-admin-mono ${inputClass}`}
+                                className={`h-10 ${monoInputClass}`}
                                 {...register('slug')}
                             />
                         )}
                     </Field>
 
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('brands.field.description')} error={errorOf('description')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <textarea id={fieldId} rows={4} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description')} />
@@ -174,16 +173,17 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
                     </label>
                 </fieldset>
 
-                <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-line-default bg-surface px-4 py-3 shadow-e4 md:-mx-5 md:px-5 lg:-mx-6 lg:px-6">
+                {/* Figma FormActions 198:1085: 64 high, destructive far left, buttons 12 apart. */}
+                <div className="sticky bottom-0 z-10 -mx-4 -mb-4 flex min-h-16 flex-wrap items-center justify-between gap-3 border-t border-line-default bg-surface px-4 py-3.5 shadow-e4 md:-mx-5 md:-mb-10 md:px-5 xl:-mx-6 xl:px-6">
                     {id !== null && brand && can(me, 'catalog.archive') && brand.is_active ? (
-                        <Button variant="ghost" onClick={() => setConfirming(true)} className="text-feedback-danger">
+                        <Button variant="danger" onClick={() => setConfirming(true)}>
                             {t('brands.archive')}
                         </Button>
                     ) : (
                         <span />
                     )}
-                    <div className="flex gap-2">
-                        <Link to="/products/brands" className="inline-flex h-control-md items-center rounded-sm border border-line-strong bg-surface px-4 t-admin-button text-fg-primary hover:bg-subtle">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Link to="/products/brands" className={buttonClass('ghost')}>
                             {t('common.cancel')}
                         </Link>
                         {editable && (

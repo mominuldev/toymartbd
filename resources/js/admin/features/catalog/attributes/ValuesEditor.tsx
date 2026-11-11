@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, FloppyDiskIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react';
+import { ArrowDownIcon, ArrowUpIcon, FloppyDiskIcon, PlusIcon, TrashIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeAttributeValueRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
 import { Button } from '@/components/ui/Button';
-import { inputClass } from '@/components/ui/Field';
+import { inputClass, monoInputClass } from '@/components/ui/Field';
+import { iconButtonClass } from '@/components/ui/IconButton';
 import { useToast } from '@/components/ui/Toast';
 import { useValueMutations, type Attribute, type AttributeValue, type ValueInput } from './api';
 import { Swatch } from './Swatch';
@@ -94,7 +95,7 @@ export function ValuesEditor({ attribute }: { attribute: Attribute }) {
     };
 
     return (
-        <section aria-labelledby="values-heading" className="space-y-4 rounded-md border border-line-default bg-surface p-5 shadow-e1 md:p-6">
+        <section aria-labelledby="values-heading" className="flex w-full max-w-4xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
             <div>
                 <h2 id="values-heading" className="t-admin-section text-fg-primary">
                     {t('attributes.values.title')}
@@ -139,7 +140,7 @@ export function ValuesEditor({ attribute }: { attribute: Attribute }) {
             {can(me, 'catalog.create') && (
                 <div className="space-y-2 border-t border-line-default pt-4">
                     <ValueFields draft={draft} errors={draftErrors} isColor={isColor} onChange={setDraft} idPrefix="new-value" />
-                    <Button variant="secondary" size="sm" onClick={add} disabled={mutations.add.isPending}>
+                    <Button variant="outline" size="sm" onClick={add} disabled={mutations.add.isPending}>
                         <PlusIcon size={16} aria-hidden />
                         {t('attributes.values.add')}
                     </Button>
@@ -167,7 +168,7 @@ function ValueRow({ value, isColor, first, last, busy, canEdit, canDelete, onMov
     const [draft, setDraft] = useState<Draft>(() => toDraft(value));
     const [errors, setErrors] = useState<Errors>({});
     const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(value));
-    const iconButton = 'inline-flex size-control-sm items-center justify-center rounded-sm text-fg-secondary hover:bg-subtle hover:text-fg-primary disabled:cursor-not-allowed disabled:opacity-40';
+    const iconButton = iconButtonClass('ghost', 'sm');
 
     const save = () => {
         const input = toInput(draft, isColor);
@@ -197,7 +198,7 @@ function ValueRow({ value, isColor, first, last, busy, canEdit, canDelete, onMov
                     </>
                 )}
                 {canDelete && (
-                    <button type="button" className={`${iconButton} hover:text-feedback-danger`} aria-label={t('attributes.values.delete', { name: value.value })} title={t('attributes.values.delete', { name: value.value })} disabled={busy} onClick={onDelete}>
+                    <button type="button" className={iconButton} aria-label={t('attributes.values.delete', { name: value.value })} title={t('attributes.values.delete', { name: value.value })} disabled={busy} onClick={onDelete}>
                         <TrashIcon size={16} aria-hidden />
                     </button>
                 )}
@@ -221,7 +222,7 @@ function ValueFields({ draft, errors, isColor, onChange, idPrefix, disabled }: F
         <div className={`grid gap-2 ${isColor ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
             {cells.map(({ field, label, lang, mono }) => (
                 <div key={field} className="space-y-1">
-                    <label htmlFor={`${idPrefix}-${field}`} className="t-admin-caption-strong text-fg-secondary">
+                    <label htmlFor={`${idPrefix}-${field}`} className="t-admin-caption-strong text-fg-primary">
                         {label}
                     </label>
                     <input
@@ -232,10 +233,11 @@ function ValueFields({ draft, errors, isColor, onChange, idPrefix, disabled }: F
                         onChange={set(field)}
                         aria-invalid={errors[field] ? true : undefined}
                         aria-describedby={errors[field] ? `${idPrefix}-${field}-error` : undefined}
-                        className={`h-control-sm ${mono ? 't-admin-mono' : ''} ${inputClass}`}
+                        className={`h-8 ${mono ? monoInputClass : inputClass}`}
                     />
                     {errors[field] && (
-                        <p id={`${idPrefix}-${field}-error`} className="t-admin-caption-strong text-feedback-danger">
+                        <p id={`${idPrefix}-${field}-error`} className="flex items-start gap-1 t-admin-caption text-fg-primary">
+                            <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
                             {errors[field]}
                         </p>
                     )}
@@ -243,7 +245,7 @@ function ValueFields({ draft, errors, isColor, onChange, idPrefix, disabled }: F
             ))}
             {isColor && (
                 <div className="space-y-1">
-                    <label htmlFor={`${idPrefix}-color_hex`} className="t-admin-caption-strong text-fg-secondary">
+                    <label htmlFor={`${idPrefix}-color_hex`} className="t-admin-caption-strong text-fg-primary">
                         {t('attributes.values.colorHex')}
                     </label>
                     <div className="flex items-center gap-2">
@@ -253,7 +255,7 @@ function ValueFields({ draft, errors, isColor, onChange, idPrefix, disabled }: F
                             value={/^#[0-9A-Fa-f]{6}$/.test(draft.color_hex) ? draft.color_hex.toLowerCase() : ''}
                             disabled={disabled}
                             onChange={(event) => onChange({ ...draft, color_hex: event.target.value.toUpperCase() })}
-                            className="h-control-sm w-control-md shrink-0 cursor-pointer rounded-sm border border-line-strong bg-surface"
+                            className="h-8 w-11 shrink-0 cursor-pointer rounded-sm border border-line-default bg-surface"
                         />
                         <input
                             id={`${idPrefix}-color_hex`}
@@ -263,11 +265,12 @@ function ValueFields({ draft, errors, isColor, onChange, idPrefix, disabled }: F
                             onChange={set('color_hex')}
                             aria-invalid={errors.color_hex ? true : undefined}
                             aria-describedby={errors.color_hex ? `${idPrefix}-color_hex-error` : undefined}
-                            className={`h-control-sm t-admin-mono ${inputClass}`}
+                            className={`h-8 ${monoInputClass}`}
                         />
                     </div>
                     {errors.color_hex && (
-                        <p id={`${idPrefix}-color_hex-error`} className="t-admin-caption-strong text-feedback-danger">
+                        <p id={`${idPrefix}-color_hex-error`} className="flex items-start gap-1 t-admin-caption text-fg-primary">
+                            <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
                             {errors.color_hex}
                         </p>
                     )}
