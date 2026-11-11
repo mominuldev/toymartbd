@@ -1,0 +1,100 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Problems;
+
+/**
+ * Stable, machine-readable RFC 9457 problem types (CLAUDE.md rule 18).
+ *
+ * Clients branch on `type`, never on `title` or `detail`. The URIs are part of the
+ * v1 contract: add new cases freely, but never rename or remove one.
+ */
+enum ProblemType: string
+{
+    case BadRequest = 'bad-request';
+    case Unauthenticated = 'unauthenticated';
+    case Forbidden = 'forbidden';
+    case NotFound = 'not-found';
+    case MethodNotAllowed = 'method-not-allowed';
+    case Conflict = 'conflict';
+    case CsrfTokenMismatch = 'csrf-token-mismatch';
+    case ValidationError = 'validation-error';
+    case TooManyRequests = 'too-many-requests';
+    case ServiceUnavailable = 'service-unavailable';
+    case ServerError = 'server-error';
+    /** Any other 4xx/5xx HttpException without a dedicated type. */
+    case HttpError = 'http-error';
+
+    public const string BASE_URI = 'https://toymartbd.com/problems/';
+
+    public function uri(): string
+    {
+        return self::BASE_URI.$this->value;
+    }
+
+    public function status(): int
+    {
+        return match ($this) {
+            self::BadRequest => 400,
+            self::Unauthenticated => 401,
+            self::Forbidden => 403,
+            self::NotFound => 404,
+            self::MethodNotAllowed => 405,
+            self::Conflict => 409,
+            self::CsrfTokenMismatch => 419,
+            self::ValidationError => 422,
+            self::TooManyRequests => 429,
+            self::ServiceUnavailable => 503,
+            self::ServerError, self::HttpError => 500,
+        };
+    }
+
+    public function title(): string
+    {
+        return match ($this) {
+            self::BadRequest => 'Bad request',
+            self::Unauthenticated => 'Unauthenticated',
+            self::Forbidden => 'Forbidden',
+            self::NotFound => 'Not found',
+            self::MethodNotAllowed => 'Method not allowed',
+            self::Conflict => 'Conflict',
+            self::CsrfTokenMismatch => 'CSRF token mismatch',
+            self::ValidationError => 'Validation failed',
+            self::TooManyRequests => 'Too many requests',
+            self::ServiceUnavailable => 'Service unavailable',
+            self::ServerError => 'Server error',
+            self::HttpError => 'HTTP error',
+        };
+    }
+
+    /** Safe default `detail`, used whenever the exception message could leak internals. */
+    public function defaultDetail(): string
+    {
+        return match ($this) {
+            self::BadRequest => 'The request could not be understood.',
+            self::Unauthenticated => 'Authentication is required to access this resource.',
+            self::Forbidden => 'You are not allowed to perform this action.',
+            self::NotFound => 'The requested resource was not found.',
+            self::MethodNotAllowed => 'This HTTP method is not supported for this resource.',
+            self::Conflict => 'The request conflicts with the current state of the resource.',
+            self::CsrfTokenMismatch => 'The CSRF token is missing or has expired. Refresh and try again.',
+            self::ValidationError => 'The given data was invalid.',
+            self::TooManyRequests => 'Too many requests. Please wait before trying again.',
+            self::ServiceUnavailable => 'The service is temporarily unavailable.',
+            self::ServerError => 'An unexpected error occurred. Please try again later.',
+            self::HttpError => 'The request could not be completed.',
+        };
+    }
+
+    public static function fromStatus(int $status): self
+    {
+        foreach (self::cases() as $case) {
+            if ($case !== self::HttpError && $case !== self::ServerError && $case->status() === $status) {
+                return $case;
+            }
+        }
+
+        return $status >= 500 ? self::ServerError : self::HttpError;
+    }
+}
