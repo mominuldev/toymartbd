@@ -3,15 +3,18 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\ResolveLocale;
 use App\Http\Problems\ProblemDetails;
 use App\Providers\ApiServiceProvider;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -30,7 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('api.v1.storefront.')
                 ->group(base_path('routes/api_v1_storefront.php'));
 
-            Route::middleware(['api', 'throttle:admin'])
+            // Sanctum's stateful stack (cookies, session, CSRF) on the admin group only, and
+            // only for requests from a SANCTUM_STATEFUL_DOMAINS origin (P3-API-05).
+            Route::middleware(['api', EnsureFrontendRequestsAreStateful::class, 'throttle:admin'])
                 ->prefix('api/v1/admin')
                 ->name('api.v1.admin.')
                 ->group(base_path('routes/api_v1_admin.php'));
@@ -50,14 +55,22 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Idempotency-Key guard for checkout, shipment booking and payment capture
+        // (CLAUDE.md rule 17). List it AFTER any auth middleware: the key is scoped by user.
+        $middleware->alias(['idempotent' => EnsureIdempotency::class]);
+
         // Locale from ?locale=, then Accept-Language (CLAUDE.md rule 35). Runs on every
         // API request; the staff-preference step needs the user, so it is prioritised
         // after authentication.
         $middleware->appendToGroup('api', ResolveLocale::class);
-        $middleware->priority([
-            Illuminate\Auth\Middleware\Authenticate::class,
-            ResolveLocale::class,
-        ]);
+        // Extend Laravel's default priority list — never replace it with priority([...]),
+        // which would drop the ordering of StartSession, SubstituteBindings, Authorize…
+        // Sanctum's stateful stack must start the session before auth:sanctum reads it;
+        // the locale's staff-preference step and the per-user idempotency scope both
+        // need the authenticated user.
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, EnsureFrontendRequestsAreStateful::class);
+        $middleware->appendToPriorityList(AuthenticatesRequests::class, ResolveLocale::class);
+        $middleware->appendToPriorityList(AuthenticatesRequests::class, EnsureIdempotency::class);
 
         // An API guest gets a 401 `unauthenticated` problem, never a redirect, whatever
         // its Accept header. Web guests go to a `login` route once one exists.

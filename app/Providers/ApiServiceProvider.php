@@ -4,7 +4,25 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureIdempotency;
+use App\Models\Enums\Permission;
+use App\Models\User;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Reference;
+use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
+use Dedoc\Scramble\Support\Generator\Server;
+use Dedoc\Scramble\Support\Generator\Tag;
+use Dedoc\Scramble\Support\Generator\Types\ArrayType;
+use Dedoc\Scramble\Support\Generator\Types\IntegerType;
+use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,6 +35,8 @@ use Illuminate\Support\ServiceProvider;
  * renders as a `too-many-requests` problem carrying `Retry-After`. The throttle
  * middleware md5-hashes every key, so a phone number never lands in the cache raw.
  * Webhooks are deliberately exempt (idempotency-guarded instead).
+ *
+ * Also wires the OpenAPI 3.1 document (P3-API-07, dedoc/scramble — see config/scramble.php).
  */
 class ApiServiceProvider extends ServiceProvider
 {
@@ -59,6 +79,133 @@ class ApiServiceProvider extends ServiceProvider
 
         RateLimiter::for('health', fn (Request $request): Limit => Limit::perMinute(self::HEALTH_PER_MINUTE)
             ->by('ip:'.$request->ip()));
+
+        $this->configureOpenApi();
+    }
+
+    /**
+     * OpenAPI 3.1 (P3-API-07). UI at /api/docs, JSON at /api/docs.json — open only when
+     * APP_ENV=local; elsewhere Scramble's RestrictedDocsAccess consults `viewApiDocs`
+     * (a signed-in staff user holding `settings.view`). Export: `php artisan scramble:export`.
+     *
+     * Everything set here must be deterministic, because tests/Feature/OpenApi compares a
+     * fresh export with the committed docs/api/openapi.json.
+     */
+    private function configureOpenApi(): void
+    {
+        // Deferred until the Gate is first resolved: resolving it here, during boot, would
+        // fix its state before AuthServiceProvider and spatie/laravel-permission hook in.
+        $this->callAfterResolving(GateContract::class, static function (GateContract $gate): void {
+            $gate->define('viewApiDocs', static fn (?User $user = null): bool => $user?->can(Permission::SettingsView->value) ?? false);
+        });
+
+        Scramble::configure()
+            ->expose(ui: 'api/docs', document: 'api/docs.json')
+            ->withOperationTransformers(static function (Operation $operation, RouteInfo $routeInfo): void {
+                $operation->setTags([self::audienceTag($routeInfo->route->uri())]);
+
+                $middleware = $routeInfo->route->gatherMiddleware();
+
+                if (in_array('idempotent', $middleware, true) || in_array(EnsureIdempotency::class, $middleware, true)) {
+                    $operation->setAttribute('idempotent', true);
+                }
+            })
+            ->withDocumentTransformers(static function (OpenApi $openApi): void {
+                self::documentProblemsAndIdempotency($openApi);
+            });
+    }
+
+    /** One tag per audience — the API is split by audience, not resource (SYSTEM-ARCHITECTURE §5). */
+    private static function audienceTag(string $uri): string
+    {
+        return match (preg_match('#^api/v1/(storefront|admin|webhooks)(/|$)#', $uri, $m) === 1 ? $m[1] : null) {
+            'storefront' => 'Storefront',
+            'admin' => 'Admin',
+            'webhooks' => 'Webhooks',
+            default => 'System',
+        };
+    }
+
+    private static function documentProblemsAndIdempotency(OpenApi $openApi): void
+    {
+        // A relative server keeps the document identical on every machine (no APP_URL).
+        $openApi->servers = [Server::make('/api/v1')->setDescription('This host')];
+
+        $openApi->tags = [
+            new Tag('Storefront', 'Next.js storefront server — static server token or customer Sanctum token.'),
+            new Tag('Admin', 'Admin SPA — Sanctum cookie session, CSRF token on every write.'),
+            new Tag('Webhooks', 'Courier and payment-gateway callbacks — signature-verified, idempotent on the provider event id.'),
+            new Tag('System', 'Health and other infrastructure endpoints.'),
+        ];
+
+        $problem = $openApi->components->addSchema('ProblemDetails', Schema::fromType(self::problemSchema()));
+
+        $openApi->components->parameters['IdempotencyKey'] = tap(new Parameter(EnsureIdempotency::HEADER, 'header'), static function (Parameter $p): void {
+            $p->required = true;
+            $p->description = 'Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. '
+                .'Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; '
+                .'the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`.';
+            $p->schema = Schema::fromType((new StringType)->setMin(8)->setMax(255)->pattern('^[\x21-\x7E]{8,255}$'));
+        });
+        $idempotencyKey = new Reference('parameters', 'IdempotencyKey', $openApi->components);
+
+        foreach ($openApi->paths as $path) {
+            foreach ($path->operations as $operation) {
+                if ($operation->getAttribute('idempotent') === true) {
+                    $operation->addParameters([$idempotencyKey]);
+
+                    foreach ([400 => 'Idempotency-Key missing or invalid', 409 => 'A request with this key is still in progress', 422 => 'Key reused with a different body, or validation failed'] as $code => $description) {
+                        if (! self::hasResponse($operation, $code)) {
+                            $operation->addResponse(Response::make($code)->setDescription($description));
+                        }
+                    }
+                }
+
+                foreach ($operation->responses ?? [] as $response) {
+                    if ($response instanceof Response && is_numeric($response->code) && (int) $response->code >= 400) {
+                        $response->content = ['application/problem+json' => $problem];
+                    }
+                }
+            }
+        }
+
+        foreach ($openApi->components->responses as $response) {
+            if ($response instanceof Response && is_numeric($response->code) && (int) $response->code >= 400) {
+                $response->content = ['application/problem+json' => $problem];
+            }
+        }
+    }
+
+    private static function hasResponse(Operation $operation, int $code): bool
+    {
+        foreach ($operation->responses ?? [] as $response) {
+            if ($response instanceof Response && (string) $response->code === (string) $code) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** The RFC 9457 document rendered by App\Http\Problems\ProblemDetails. */
+    private static function problemSchema(): ObjectType
+    {
+        $error = (new ObjectType)
+            ->addProperty('field', (new StringType)->setDescription('Dot-notation field path, e.g. `items.0.qty`.'))
+            ->addProperty('message', new StringType)
+            ->setRequired(['field', 'message']);
+
+        $type = (new ObjectType)
+            ->addProperty('type', (new StringType)->format('uri')->setDescription('Stable machine-readable problem type, e.g. `https://toymartbd.com/problems/validation-error`. Branch on this.'))
+            ->addProperty('title', new StringType)
+            ->addProperty('status', new IntegerType)
+            ->addProperty('detail', new StringType)
+            ->addProperty('errors', (new ArrayType)->setItems($error)->setDescription('Present on `validation-error` only.'))
+            ->setRequired(['type', 'title', 'status', 'detail']);
+
+        $type->setDescription('RFC 9457 problem details, served as `application/problem+json`.');
+
+        return $type;
     }
 
     /** Digits only, so "+8801712…" and "01712…" collapse to the same bucket suffix. */
