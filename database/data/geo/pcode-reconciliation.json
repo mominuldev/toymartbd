@@ -1,0 +1,1027 @@
+{
+ "divisions": [
+  {
+   "id": 1,
+   "name": "Chattagram",
+   "ocha_name": "Chattogram",
+   "pcode": "BD20",
+   "method": "alias"
+  },
+  {
+   "id": 4,
+   "name": "Barisal",
+   "ocha_name": "Barishal",
+   "pcode": "BD10",
+   "method": "alias"
+  }
+ ],
+ "districts": [
+  {
+   "id": 1,
+   "name": "Comilla",
+   "ocha_name": "Cumilla",
+   "pcode": "BD2019",
+   "method": "alias"
+  },
+  {
+   "id": 9,
+   "name": "Coxsbazar",
+   "ocha_name": "Cox's Bazar",
+   "pcode": "BD2022",
+   "method": "exact-normalised"
+  },
+  {
+   "id": 18,
+   "name": "Chapainawabganj",
+   "ocha_name": "Chapainababganj",
+   "pcode": "BD5070",
+   "method": "alias"
+  },
+  {
+   "id": 30,
+   "name": "Jhalakathi",
+   "ocha_name": "Jhalokati",
+   "pcode": "BD1042",
+   "method": "alias"
+  },
+  {
+   "id": 33,
+   "name": "Barisal",
+   "ocha_name": "Barishal",
+   "pcode": "BD1006",
+   "method": "alias"
+  },
+  {
+   "id": 64,
+   "name": "Netrokona",
+   "ocha_name": "Netrakona",
+   "pcode": "BD4572",
+   "method": "alias"
+  }
+ ],
+ "upazilas": [
+  {
+   "id": 11,
+   "district_id": 1,
+   "name": "Comilla Sadar",
+   "name_bn": "কুমিল্লা সদর",
+   "ocha_name": "Adarsha Sadar",
+   "pcode": "BD20190067",
+   "method": "manual: only remaining Cumilla upazila; official name \"Adarsha Sadar\" (Cumilla Adarsha Sadar)"
+  },
+  {
+   "id": 13,
+   "district_id": 1,
+   "name": "Monohargonj",
+   "name_bn": "মনোহরগঞ্জ",
+   "ocha_name": "Manoharganj",
+   "pcode": "BD20190074",
+   "method": "fuzzy:0.82"
+  },
+  {
+   "id": 14,
+   "district_id": 1,
+   "name": "Sadarsouth",
+   "name_bn": "সদর দক্ষিণ",
+   "ocha_name": "Sadar Dakkhin",
+   "pcode": "BD20190033",
+   "method": "manual: bn_name সদর দক্ষিণ = Sadar Dakkhin"
+  },
+  {
+   "id": 22,
+   "district_id": 2,
+   "name": "Parshuram",
+   "name_bn": "পরশুরাম",
+   "ocha_name": "Parashuram",
+   "pcode": "BD20300051",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 31,
+   "district_id": 3,
+   "name": "Bancharampur",
+   "name_bn": "বাঞ্ছারামপুর",
+   "ocha_name": "Banchharampur",
+   "pcode": "BD20120004",
+   "method": "fuzzy:0.96"
+  },
+  {
+   "id": 36,
+   "district_id": 4,
+   "name": "Baghaichari",
+   "name_bn": "বাঘাইছড়ি",
+   "ocha_name": "Baghaichhari",
+   "pcode": "BD20840007",
+   "method": "fuzzy:0.96"
+  },
+  {
+   "id": 40,
+   "district_id": 4,
+   "name": "Belaichari",
+   "name_bn": "বিলাইছড়ি",
+   "ocha_name": "Belaichhari",
+   "pcode": "BD20840029",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 41,
+   "district_id": 4,
+   "name": "Juraichari",
+   "name_bn": "জুরাছড়ি",
+   "ocha_name": "Jurachhari",
+   "pcode": "BD20840047",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 46,
+   "district_id": 5,
+   "name": "Hatia",
+   "name_bn": "হাতিয়া",
+   "ocha_name": "Hatiya",
+   "pcode": "BD20750036",
+   "method": "fuzzy:0.91"
+  },
+  {
+   "id": 49,
+   "district_id": 5,
+   "name": "Senbug",
+   "name_bn": "সেনবাগ",
+   "ocha_name": "Senbag",
+   "pcode": "BD20750080",
+   "method": "fuzzy:0.83"
+  },
+  {
+   "id": 51,
+   "district_id": 5,
+   "name": "Sonaimori",
+   "name_bn": "সোনাইমুড়ী",
+   "ocha_name": "Sonaimuri",
+   "pcode": "BD20750083",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 56,
+   "district_id": 6,
+   "name": "Matlab South",
+   "name_bn": "মতলব দক্ষিণ",
+   "ocha_name": "Matlab Dakkhin",
+   "pcode": "BD20130076",
+   "method": "manual: bn_name মতলব দক্ষিণ = Matlab Dakkhin (fuzzy matcher had paired it with Uttar)"
+  },
+  {
+   "id": 58,
+   "district_id": 6,
+   "name": "Matlab North",
+   "name_bn": "মতলব উত্তর",
+   "ocha_name": "Matlab Uttar",
+   "pcode": "BD20130079",
+   "method": "manual: bn_name মতলব উত্তর = Matlab Uttar"
+  },
+  {
+   "id": 59,
+   "district_id": 6,
+   "name": "Faridgonj",
+   "name_bn": "ফরিদগঞ্জ",
+   "ocha_name": "Faridganj",
+   "pcode": "BD20130045",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 67,
+   "district_id": 8,
+   "name": "Mirsharai",
+   "name_bn": "মীরসরাই",
+   "ocha_name": "Mirsarai",
+   "pcode": "BD20150053",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 79,
+   "district_id": 8,
+   "name": "Karnafuli",
+   "name_bn": "কর্ণফুলী",
+   "ocha_name": "Karnaphuli",
+   "pcode": "BD20150039",
+   "method": "fuzzy:0.84"
+  },
+  {
+   "id": 80,
+   "district_id": 9,
+   "name": "Coxsbazar Sadar",
+   "name_bn": "কক্সবাজার সদর",
+   "ocha_name": "Coxs Bazar Sadar",
+   "pcode": "BD20220024",
+   "method": "exact-normalised"
+  },
+  {
+   "id": 83,
+   "district_id": 9,
+   "name": "Ukhiya",
+   "name_bn": "উখিয়া",
+   "ocha_name": "Ukhia",
+   "pcode": "BD20220094",
+   "method": "fuzzy:0.91"
+  },
+  {
+   "id": 84,
+   "district_id": 9,
+   "name": "Moheshkhali",
+   "name_bn": "মহেশখালী",
+   "ocha_name": "Maheshkhali",
+   "pcode": "BD20220049",
+   "method": "fuzzy:0.91"
+  },
+  {
+   "id": 90,
+   "district_id": 10,
+   "name": "Panchari",
+   "name_bn": "পানছড়ি",
+   "ocha_name": "Panchhari",
+   "pcode": "BD20460077",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 91,
+   "district_id": 10,
+   "name": "Laxmichhari",
+   "name_bn": "লক্ষীছড়ি",
+   "ocha_name": "Lakkhichhari",
+   "pcode": "BD20460061",
+   "method": "fuzzy:0.78"
+  },
+  {
+   "id": 92,
+   "district_id": 10,
+   "name": "Mohalchari",
+   "name_bn": "মহালছড়ি",
+   "ocha_name": "Mahalchhari",
+   "pcode": "BD20460065",
+   "method": "fuzzy:0.86"
+  },
+  {
+   "id": 93,
+   "district_id": 10,
+   "name": "Manikchari",
+   "name_bn": "মানিকছড়ি",
+   "ocha_name": "Manikchhari",
+   "pcode": "BD20460067",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 99,
+   "district_id": 11,
+   "name": "Naikhongchhari",
+   "name_bn": "নাইক্ষ্যংছড়ি",
+   "ocha_name": "Naikkhongchhari",
+   "pcode": "BD20030073",
+   "method": "fuzzy:0.97"
+  },
+  {
+   "id": 105,
+   "district_id": 12,
+   "name": "Chauhali",
+   "name_bn": "চৌহালি",
+   "ocha_name": "Chouhali",
+   "pcode": "BD50880027",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 106,
+   "district_id": 12,
+   "name": "Kamarkhand",
+   "name_bn": "কামারখন্দ",
+   "ocha_name": "Kamarkhanda",
+   "pcode": "BD50880044",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 108,
+   "district_id": 12,
+   "name": "Raigonj",
+   "name_bn": "রায়গঞ্জ",
+   "ocha_name": "Rayganj",
+   "pcode": "BD50880061",
+   "method": "fuzzy:0.71"
+  },
+  {
+   "id": 114,
+   "district_id": 13,
+   "name": "Ishurdi",
+   "name_bn": "ঈশ্বরদী",
+   "ocha_name": "Ishwardi",
+   "pcode": "BD50760039",
+   "method": "fuzzy:0.80"
+  },
+  {
+   "id": 118,
+   "district_id": 13,
+   "name": "Atghoria",
+   "name_bn": "আটঘরিয়া",
+   "ocha_name": "Atgharia",
+   "pcode": "BD50760005",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 123,
+   "district_id": 14,
+   "name": "Bogra Sadar",
+   "name_bn": "বগুড়া সদর",
+   "ocha_name": "Bogura Sadar",
+   "pcode": "BD50100020",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 124,
+   "district_id": 14,
+   "name": "Shariakandi",
+   "name_bn": "সারিয়াকান্দি",
+   "ocha_name": "Sariakandi",
+   "pcode": "BD50100081",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 126,
+   "district_id": 14,
+   "name": "Dupchanchia",
+   "name_bn": "দুপচাচিঁয়া",
+   "ocha_name": "Dupchachia",
+   "pcode": "BD50100033",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 128,
+   "district_id": 14,
+   "name": "Nondigram",
+   "name_bn": "নন্দিগ্রাম",
+   "ocha_name": "Nandigram",
+   "pcode": "BD50100067",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 130,
+   "district_id": 14,
+   "name": "Dhunot",
+   "name_bn": "ধুনট",
+   "ocha_name": "Dhunat",
+   "pcode": "BD50100027",
+   "method": "fuzzy:0.83"
+  },
+  {
+   "id": 136,
+   "district_id": 15,
+   "name": "Mohonpur",
+   "name_bn": "মোহনপুর",
+   "ocha_name": "Mohanpur",
+   "pcode": "BD50810053",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 156,
+   "district_id": 18,
+   "name": "Gomostapur",
+   "name_bn": "গোমস্তাপুর",
+   "ocha_name": "Gomastapur",
+   "pcode": "BD50700037",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 157,
+   "district_id": 18,
+   "name": "Nachol",
+   "name_bn": "নাচোল",
+   "ocha_name": "Nachole",
+   "pcode": "BD50700056",
+   "method": "fuzzy:0.92"
+  },
+  {
+   "id": 160,
+   "district_id": 19,
+   "name": "Mohadevpur",
+   "name_bn": "মহাদেবপুর",
+   "ocha_name": "Mahadebpur",
+   "pcode": "BD50640050",
+   "method": "fuzzy:0.80"
+  },
+  {
+   "id": 161,
+   "district_id": 19,
+   "name": "Badalgachi",
+   "name_bn": "বদলগাছী",
+   "ocha_name": "Badalgachhi",
+   "pcode": "BD50640006",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 173,
+   "district_id": 20,
+   "name": "Bagherpara",
+   "name_bn": "বাঘারপাড়া",
+   "ocha_name": "Bagharpara",
+   "pcode": "BD40410009",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 174,
+   "district_id": 20,
+   "name": "Chougachha",
+   "name_bn": "চৌগাছা",
+   "ocha_name": "Chaugachha",
+   "pcode": "BD40410011",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 175,
+   "district_id": 20,
+   "name": "Jhikargacha",
+   "name_bn": "ঝিকরগাছা",
+   "ocha_name": "Jhikargachha",
+   "pcode": "BD40410023",
+   "method": "fuzzy:0.96"
+  },
+  {
+   "id": 177,
+   "district_id": 20,
+   "name": "Jessore Sadar",
+   "name_bn": "যশোর সদর",
+   "ocha_name": "Jashore Sadar",
+   "pcode": "BD40410047",
+   "method": "fuzzy:0.83"
+  },
+  {
+   "id": 179,
+   "district_id": 21,
+   "name": "Assasuni",
+   "name_bn": "আশাশুনি",
+   "ocha_name": "Ashashuni",
+   "pcode": "BD40870004",
+   "method": "fuzzy:0.82"
+  },
+  {
+   "id": 206,
+   "district_id": 27,
+   "name": "Paikgasa",
+   "name_bn": "পাইকগাছা",
+   "ocha_name": "Paikgachha",
+   "pcode": "BD40470064",
+   "method": "fuzzy:0.78"
+  },
+  {
+   "id": 207,
+   "district_id": 27,
+   "name": "Fultola",
+   "name_bn": "ফুলতলা",
+   "ocha_name": "Phultala",
+   "pcode": "BD40470069",
+   "method": "fuzzy:0.67"
+  },
+  {
+   "id": 208,
+   "district_id": 27,
+   "name": "Digholia",
+   "name_bn": "দিঘলিয়া",
+   "ocha_name": "Dighalia",
+   "pcode": "BD40470040",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 209,
+   "district_id": 27,
+   "name": "Rupsha",
+   "name_bn": "রূপসা",
+   "ocha_name": "Rupsa",
+   "pcode": "BD40470075",
+   "method": "fuzzy:0.91"
+  },
+  {
+   "id": 212,
+   "district_id": 27,
+   "name": "Botiaghata",
+   "name_bn": "বটিয়াঘাটা",
+   "ocha_name": "Batiaghata",
+   "pcode": "BD40470012",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 213,
+   "district_id": 27,
+   "name": "Dakop",
+   "name_bn": "দাকোপ",
+   "ocha_name": "Dacope",
+   "pcode": "BD40470017",
+   "method": "fuzzy:0.73"
+  },
+  {
+   "id": 218,
+   "district_id": 28,
+   "name": "Sarankhola",
+   "name_bn": "শরণখোলা",
+   "ocha_name": "Sharankhola",
+   "pcode": "BD40010077",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 220,
+   "district_id": 28,
+   "name": "Morrelganj",
+   "name_bn": "মোড়েলগঞ্জ",
+   "ocha_name": "Morelganj",
+   "pcode": "BD40010060",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 229,
+   "district_id": 29,
+   "name": "Moheshpur",
+   "name_bn": "মহেশপুর",
+   "ocha_name": "Maheshpur",
+   "pcode": "BD40440071",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 230,
+   "district_id": 30,
+   "name": "Jhalakathi Sadar",
+   "name_bn": "ঝালকাঠি সদর",
+   "ocha_name": "Jhalokathi Sadar",
+   "pcode": "BD10420040",
+   "method": "fuzzy:0.93"
+  },
+  {
+   "id": 231,
+   "district_id": 30,
+   "name": "Kathalia",
+   "name_bn": "কাঠালিয়া",
+   "ocha_name": "Kanthalia",
+   "pcode": "BD10420043",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 232,
+   "district_id": 30,
+   "name": "Nalchity",
+   "name_bn": "নলছিটি",
+   "ocha_name": "Nalchhity",
+   "pcode": "BD10420073",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 245,
+   "district_id": 32,
+   "name": "Zianagar",
+   "name_bn": "জিয়ানগর",
+   "ocha_name": "Indurkani",
+   "pcode": "BD10790090",
+   "method": "manual: only remaining Pirojpur upazila; Zianagar was renamed Indurkani — dataset keeps the old name"
+  },
+  {
+   "id": 248,
+   "district_id": 32,
+   "name": "Nesarabad",
+   "name_bn": "নেছারাবাদ",
+   "ocha_name": "Nesarabad (Swarupkathi)",
+   "pcode": "BD10790087",
+   "method": "fuzzy:0.62"
+  },
+  {
+   "id": 249,
+   "district_id": 33,
+   "name": "Barisal Sadar",
+   "name_bn": "বরিশাল সদর",
+   "ocha_name": "Barishal Sadar (Kotwali)",
+   "pcode": "BD10060051",
+   "method": "fuzzy:0.75"
+  },
+  {
+   "id": 252,
+   "district_id": 33,
+   "name": "Wazirpur",
+   "name_bn": "উজিরপুর",
+   "ocha_name": "Ujirpur",
+   "pcode": "BD10060094",
+   "method": "fuzzy:0.67"
+  },
+  {
+   "id": 254,
+   "district_id": 33,
+   "name": "Gournadi",
+   "name_bn": "গৌরনদী",
+   "ocha_name": "Gaurnadi",
+   "pcode": "BD10060032",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 258,
+   "district_id": 33,
+   "name": "Hizla",
+   "name_bn": "হিজলা",
+   "ocha_name": "Hijla",
+   "pcode": "BD10060036",
+   "method": "fuzzy:0.80"
+  },
+  {
+   "id": 260,
+   "district_id": 34,
+   "name": "Borhan Uddin",
+   "name_bn": "বোরহান উদ্দিন",
+   "ocha_name": "Borhanuddin",
+   "pcode": "BD10090021",
+   "method": "exact-normalised"
+  },
+  {
+   "id": 261,
+   "district_id": 34,
+   "name": "Charfesson",
+   "name_bn": "চরফ্যাশন",
+   "ocha_name": "Charfasson",
+   "pcode": "BD10090025",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 262,
+   "district_id": 34,
+   "name": "Doulatkhan",
+   "name_bn": "দৌলতখান",
+   "ocha_name": "Daulatkhan",
+   "pcode": "BD10090029",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 270,
+   "district_id": 35,
+   "name": "Pathorghata",
+   "name_bn": "পাথরঘাটা",
+   "ocha_name": "Patharghata",
+   "pcode": "BD10040085",
+   "method": "fuzzy:0.91"
+  },
+  {
+   "id": 279,
+   "district_id": 36,
+   "name": "Jaintiapur",
+   "name_bn": "জৈন্তাপুর",
+   "ocha_name": "Jaintapur",
+   "pcode": "BD60910053",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 283,
+   "district_id": 36,
+   "name": "Dakshinsurma",
+   "name_bn": "দক্ষিণ সুরমা",
+   "ocha_name": "Dakkhin Surma",
+   "pcode": "BD60910031",
+   "method": "fuzzy:0.92"
+  },
+  {
+   "id": 285,
+   "district_id": 37,
+   "name": "Barlekha",
+   "name_bn": "বড়লেখা",
+   "ocha_name": "Baralekha",
+   "pcode": "BD60580014",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 286,
+   "district_id": 37,
+   "name": "Kamolganj",
+   "name_bn": "কমলগঞ্জ",
+   "ocha_name": "Kamalganj",
+   "pcode": "BD60580056",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 302,
+   "district_id": 39,
+   "name": "Bishwambarpur",
+   "name_bn": "বিশ্বম্ভরপুর",
+   "ocha_name": "Bishwambharpur",
+   "pcode": "BD60900018",
+   "method": "fuzzy:0.96"
+  },
+  {
+   "id": 312,
+   "district_id": 40,
+   "name": "Monohardi",
+   "name_bn": "মনোহরদী",
+   "ocha_name": "Manohardi",
+   "pcode": "BD30680052",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 334,
+   "district_id": 44,
+   "name": "Bhuapur",
+   "name_bn": "ভুয়াপুর",
+   "ocha_name": "Bhuanpur",
+   "pcode": "BD30930019",
+   "method": "fuzzy:0.93"
+  },
+  {
+   "id": 353,
+   "district_id": 45,
+   "name": "Karimgonj",
+   "name_bn": "করিমগঞ্জ",
+   "ocha_name": "Karimganj",
+   "pcode": "BD30480042",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 356,
+   "district_id": 45,
+   "name": "Mithamoin",
+   "name_bn": "মিঠামইন",
+   "ocha_name": "Mithamain",
+   "pcode": "BD30480059",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 361,
+   "district_id": 46,
+   "name": "Gior",
+   "name_bn": "ঘিওর",
+   "ocha_name": "Ghior",
+   "pcode": "BD30560022",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 362,
+   "district_id": 46,
+   "name": "Shibaloy",
+   "name_bn": "শিবালয়",
+   "ocha_name": "Shibalay",
+   "pcode": "BD30560078",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 363,
+   "district_id": 46,
+   "name": "Doulatpur",
+   "name_bn": "দৌলতপুর",
+   "ocha_name": "Daulatpur",
+   "pcode": "BD30560010",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 364,
+   "district_id": 46,
+   "name": "Singiar",
+   "name_bn": "সিংগাইর",
+   "ocha_name": "Singair",
+   "pcode": "BD30560082",
+   "method": "fuzzy:0.86"
+  },
+  {
+   "id": 373,
+   "district_id": 48,
+   "name": "Louhajanj",
+   "name_bn": "লৌহজং",
+   "ocha_name": "Louhajang",
+   "pcode": "BD30590044",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 374,
+   "district_id": 48,
+   "name": "Gajaria",
+   "name_bn": "গজারিয়া",
+   "ocha_name": "Gazaria",
+   "pcode": "BD30590024",
+   "method": "fuzzy:0.86"
+  },
+  {
+   "id": 378,
+   "district_id": 49,
+   "name": "Pangsa",
+   "name_bn": "পাংশা",
+   "ocha_name": "Pangsha",
+   "pcode": "BD30820073",
+   "method": "fuzzy:0.92"
+  },
+  {
+   "id": 396,
+   "district_id": 52,
+   "name": "Charbhadrasan",
+   "name_bn": "চরভদ্রাসন",
+   "ocha_name": "Char Bhadrasan",
+   "pcode": "BD30290021",
+   "method": "exact-normalised"
+  },
+  {
+   "id": 402,
+   "district_id": 53,
+   "name": "Atwari",
+   "name_bn": "আটোয়ারী",
+   "ocha_name": "Atowari",
+   "pcode": "BD55770004",
+   "method": "fuzzy:0.92"
+  },
+  {
+   "id": 403,
+   "district_id": 53,
+   "name": "Tetulia",
+   "name_bn": "তেতুলিয়া",
+   "ocha_name": "Tentulia",
+   "pcode": "BD55770090",
+   "method": "fuzzy:0.93"
+  },
+  {
+   "id": 404,
+   "district_id": 54,
+   "name": "Nawabganj",
+   "name_bn": "নবাবগঞ্জ",
+   "ocha_name": "Nababganj",
+   "pcode": "BD55270069",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 410,
+   "district_id": 54,
+   "name": "Kaharol",
+   "name_bn": "কাহারোল",
+   "ocha_name": "Kaharole",
+   "pcode": "BD55270056",
+   "method": "fuzzy:0.93"
+  },
+  {
+   "id": 422,
+   "district_id": 56,
+   "name": "Syedpur",
+   "name_bn": "সৈয়দপুর",
+   "ocha_name": "Saidpur",
+   "pcode": "BD55730085",
+   "method": "fuzzy:0.71"
+  },
+  {
+   "id": 426,
+   "district_id": 56,
+   "name": "Kishorganj",
+   "name_bn": "কিশোরগঞ্জ",
+   "ocha_name": "Kishoreganj",
+   "pcode": "BD55730045",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 434,
+   "district_id": 57,
+   "name": "Phulchari",
+   "name_bn": "ফুলছড়ি",
+   "ocha_name": "Fulchhari",
+   "pcode": "BD55320021",
+   "method": "fuzzy:0.78"
+  },
+  {
+   "id": 437,
+   "district_id": 58,
+   "name": "Ranisankail",
+   "name_bn": "রাণীশংকৈল",
+   "ocha_name": "Ranishankail",
+   "pcode": "BD55940086",
+   "method": "fuzzy:0.96"
+  },
+  {
+   "id": 442,
+   "district_id": 59,
+   "name": "Taragonj",
+   "name_bn": "তারাগঞ্জ",
+   "ocha_name": "Taraganj",
+   "pcode": "BD55850092",
+   "method": "fuzzy:0.88"
+  },
+  {
+   "id": 443,
+   "district_id": 59,
+   "name": "Badargonj",
+   "name_bn": "বদরগঞ্জ",
+   "ocha_name": "Badarganj",
+   "pcode": "BD55850003",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 445,
+   "district_id": 59,
+   "name": "Pirgonj",
+   "name_bn": "পীরগঞ্জ",
+   "ocha_name": "Pirganj",
+   "pcode": "BD55850076",
+   "method": "fuzzy:0.86"
+  },
+  {
+   "id": 447,
+   "district_id": 59,
+   "name": "Pirgacha",
+   "name_bn": "পীরগাছা",
+   "ocha_name": "Pirgachha",
+   "pcode": "BD55850073",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 455,
+   "district_id": 60,
+   "name": "Rowmari",
+   "name_bn": "রৌমারী",
+   "ocha_name": "Roumari",
+   "pcode": "BD55490079",
+   "method": "fuzzy:0.86"
+  },
+  {
+   "id": 456,
+   "district_id": 60,
+   "name": "Charrajibpur",
+   "name_bn": "চর রাজিবপুর",
+   "ocha_name": "Rajibpur",
+   "pcode": "BD55490008",
+   "method": "fuzzy:0.80"
+  },
+  {
+   "id": 459,
+   "district_id": 61,
+   "name": "Sreebordi",
+   "name_bn": "শ্রীবরদী",
+   "ocha_name": "Sreebardi",
+   "pcode": "BD45890090",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 460,
+   "district_id": 61,
+   "name": "Nokla",
+   "name_bn": "নকলা",
+   "ocha_name": "Nakla",
+   "pcode": "BD45890067",
+   "method": "fuzzy:0.80"
+  },
+  {
+   "id": 465,
+   "district_id": 62,
+   "name": "Muktagacha",
+   "name_bn": "মুক্তাগাছা",
+   "ocha_name": "Muktagachha",
+   "pcode": "BD45610065",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 468,
+   "district_id": 62,
+   "name": "Phulpur",
+   "name_bn": "ফুলপুর",
+   "ocha_name": "Fulpur",
+   "pcode": "BD45610081",
+   "method": "fuzzy:0.77"
+  },
+  {
+   "id": 472,
+   "district_id": 62,
+   "name": "Iswarganj",
+   "name_bn": "ঈশ্বরগঞ্জ",
+   "ocha_name": "Ishwarganj",
+   "pcode": "BD45610031",
+   "method": "fuzzy:0.95"
+  },
+  {
+   "id": 476,
+   "district_id": 63,
+   "name": "Melandah",
+   "name_bn": "মেলান্দহ",
+   "ocha_name": "Melandaha",
+   "pcode": "BD45390061",
+   "method": "fuzzy:0.94"
+  },
+  {
+   "id": 478,
+   "district_id": 63,
+   "name": "Dewangonj",
+   "name_bn": "দেওয়ানগঞ্জ",
+   "ocha_name": "Dewanganj",
+   "pcode": "BD45390015",
+   "method": "fuzzy:0.89"
+  },
+  {
+   "id": 481,
+   "district_id": 63,
+   "name": "Bokshiganj",
+   "name_bn": "বকশীগঞ্জ",
+   "ocha_name": "Bakshiganj",
+   "pcode": "BD45390007",
+   "method": "fuzzy:0.90"
+  },
+  {
+   "id": 489,
+   "district_id": 64,
+   "name": "Mohongonj",
+   "name_bn": "মোহনগঞ্জ",
+   "ocha_name": "Mohanganj",
+   "pcode": "BD45720063",
+   "method": "fuzzy:0.78"
+  },
+  {
+   "id": 491,
+   "district_id": 64,
+   "name": "Netrokona Sadar",
+   "name_bn": "নেত্রকোণা সদর",
+   "ocha_name": "Netrakona Sadar",
+   "pcode": "BD45720074",
+   "method": "fuzzy:0.93"
+  }
+ ]
+}

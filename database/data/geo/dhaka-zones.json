@@ -1,0 +1,8 @@
+{
+ "_comment": "Delivery-zone flags on upazilas (DATABASE-DESIGN §3 geography, §5.1). PROVISIONAL — owner decision pending; see SOURCE.md 'Dhaka delivery zones'. Keyed by upazila id from upazilas.json, never by name.",
+ "is_inside_dhaka_metro": [],
+ "is_dhaka_subcity": [
+  365,
+  367
+ ]
+}
