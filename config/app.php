@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -68,6 +70,14 @@ return [
     'timezone' => 'UTC',
 
     /*
+    | Storage is UTC (above) and must stay UTC. Display and report day-boundaries
+    | use this zone, read through App\Support\DhakaDate. The two are not
+    | interchangeable: setting 'timezone' to Asia/Dhaka would make Eloquent write
+    | Dhaka-local datetimes. See docs/DATABASE-DESIGN.md §1 rule 8.
+    */
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Dhaka'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
@@ -81,6 +91,9 @@ return [
     'locale' => env('APP_LOCALE', 'en'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+
+    // English at the root, Bangla at /bn/ (CLAUDE.md rule 35). The first entry is the default.
+    'supported_locales' => explode(',', (string) env('APP_SUPPORTED_LOCALES', 'en,bn')),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 

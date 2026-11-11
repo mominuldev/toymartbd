@@ -1,0 +1,12 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Level 6 is the floor (SYSTEM-ARCHITECTURE.md §12). Raise it, never lower it.
+    level: 6
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    tmpDir: storage/framework/cache/phpstan

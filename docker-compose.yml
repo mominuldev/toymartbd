@@ -1,0 +1,56 @@
+# Local backing services. PHP and Node run on the host (PHP 8.4+, Node 24+), so
+# artisan, Pest and Vite stay fast and debuggable. `make up` starts these; `make setup`
+# does the first-run bootstrap. Ports are overridable when a host service already
+# holds the default, e.g. FORWARD_DB_PORT=3307 make up (then set DB_PORT to match).
+name: toymartbd
+
+services:
+  mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-toymartbd}
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./docker/mysql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-testing.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD:-secret}"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.15
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-local-master-key-change-me}
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "${FORWARD_MEILISEARCH_PORT:-7700}:7700"
+    volumes:
+      - meilisearch:/meili_data
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "${FORWARD_MAILPIT_PORT:-1025}:1025"
+      - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
+
+volumes:
+  mysql:
+  redis:
+  meilisearch:

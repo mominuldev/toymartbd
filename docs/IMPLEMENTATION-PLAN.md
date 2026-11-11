@@ -1,6 +1,6 @@
 # Toy Mart BD — Implementation Plan
 
-**Status:** Draft · **Date:** 2026-11-07
+**Status:** Active — Phase 3 in progress · **Date:** 2026-11-07 · **Updated:** 2026-11-11
 **Scope note:** Phases 3 and 4 are broken down to task level because they start first and the detail is actionable now. Phases 5–10 are broken to feature level; each is expanded to task level at the start of its own phase, when the preceding phase's reality is known. Writing task-level detail for Phase 8 today would be guesswork dressed as a plan.
 
 ---
@@ -17,37 +17,31 @@
 
 ## 1. Repository Layout
 
+**Superseded 2026-11-08 by the owner's "two frontends, two homes" decision (CLAUDE.md rule 25).** The admin SPA lives inside Laravel and is built by Laravel's Vite; only the storefront is a separate app. The npm workspaces root is the repo root.
+
 ```
 toymartbd/
-├── app/{Domain,Http,Support,Providers}/     ← Laravel 13 at the repo ROOT
-├── bootstrap/ · config/ · database/{migrations,seeders,factories}/
-├── routes/{api_v1_admin.php,api_v1_storefront.php,api_v1_webhooks.php,console.php}
-├── resources/views/            Blade for invoice PDFs and mail only — no SPA views
-├── storage/ · public/ · tests/{Unit,Feature,Integration}/
-├── composer.json
-├── toymartbd-app/              ALL frontend code — npm workspaces root
-│   ├── package.json
-│   ├── storefront/             Next.js 16 App Router
-│   │   └── app/{(shop),(account),(content)}/ · components/ · lib/
-│   ├── admin/                  React 19 + Vite
-│   │   └── src/{features,components/ui,shared,lib,routes}/
-│   └── packages/
-│       ├── tokens/             design tokens exported from Figma → Tailwind preset + CSS vars
-│       └── api-types/          generated from OpenAPI — never hand-edited
-├── docs/
-│   ├── _research/              Phase 1 raw research with sources
-│   └── _design/                Phase 2 build specifications
-├── e2e/                        Playwright — drives both frontends
+├── app/{Domain,Http,Support,Providers,Models}/   Laravel 13 at the repo root
+│   ├── Domain/{Catalog,Inventory,Cart,Ordering,Payment,Fulfilment,Risk,Finance,
+│   │          Customer,Marketing,Content,Seo,Tracking}/   boundaries enforced by deptrac.yaml
+│   └── Support/          Money (+ Casts/MoneyCast), PhoneNumber, DhakaDate, Slug, Locale/
+├── bootstrap/ · config/ · database/{migrations,seeders,factories}/ · lang/{en,bn}/
+├── routes/{api_v1_admin.php,api_v1_storefront.php,api_v1_webhooks.php,web.php,console.php}
+├── resources/
+│   ├── js/admin/         React 19 admin SPA (app/, components/, features/, lib/) — served at /admin
+│   ├── css/admin.css     Tailwind v4 entry, consumes packages/tokens
+│   └── views/            admin.blade.php shell, invoice PDFs, mail
+├── packages/
+│   ├── tokens/           Figma export → tokens.css, Tailwind theme, tokens.json (see its README)
+│   └── api-types/        generated from OpenAPI — never hand-edited
+├── toymartbd-app/storefront/   Next.js 16 App Router
+├── tests/{Arch,Unit,Feature}/  Pest; MySQL-only tests in group "mysql"
+├── docker-compose.yml · Makefile   local services and one-command setup
+├── docs/{_research,_design}/
 └── .github/workflows/
 ```
 
-**Layout decided by the owner, 2026-11-08: Laravel 13 at the repo root, all frontend under `toymartbd-app/`.** PHP commands run from the root; `npm install` and every JS script run from `toymartbd-app/`, which is the npm workspaces root.
-
-Two consequences of Laravel sitting at the root, both deliberate:
-1. **Laravel's own Vite scaffolding is removed** — root `package.json`, `vite.config.js`, `resources/js/`, `resources/css/`. Keeping them would create a second npm root at the repo root and invite frontend code to accumulate outside `toymartbd-app/`. `resources/views/` stays, because invoice PDFs and transactional email still render through Blade, and both use inline CSS anyway, as email clients require.
-2. **`public/` serves the API and the storage symlink only.** There is no Blade storefront; the customer-facing app is the Next.js workspace.
-
-One repository. A monorepo because the three apps share a contract and must change together in one reviewable PR; separate repos would make every contract change a two-PR dance. The two frontends sit side by side rather than merged because their requirements are opposite — the storefront is read-heavy, SEO-critical and CDN-cached for mid-range Android on 4G; the admin is write-heavy, behind a login, never indexed, and tuned for data density. Merging them would make the storefront carry the admin's bundle weight. They share `packages/` so tokens and API types cannot drift apart.
+One repository, because the API and both frontends share a contract and must change together in one reviewable PR. The storefront stays a separate app because its needs are the opposite of the admin's: read-heavy, SEO-critical, CDN-cached for mid-range Android on 4G, against write-heavy, logged-in, never indexed and tuned for data density.
 
 ---
 
@@ -58,7 +52,7 @@ One repository. A monorepo because the three apps share a contract and must chan
 |---|---|---|---|---|
 | P3-SET-01 | Monorepo skeleton, workspaces, Composer, EditorConfig, Pint, PHPStan L6, ESLint, Prettier, TS strict configs | M | — | lint and typecheck run clean on an empty project |
 | P3-SET-02 | `docker-compose.yml`: MySQL 8.4, Redis 7, Meilisearch, Mailpit; `.env.example`; one-command bootstrap script | M | 01 | `make up` yields a working stack from a clean clone |
-| P3-SET-03 | Laravel 13 install, `utf8mb4_0900_ai_ci` enforced, `Asia/Dhaka` app timezone, Horizon, Telescope (local only) | M | 02 | migration test asserts collation; a Bangla string round-trips |
+| P3-SET-03 | Laravel 13 install, `utf8mb4_0900_ai_ci` enforced, **UTC storage with `APP_DISPLAY_TIMEZONE=Asia/Dhaka`** (never `app.timezone=Asia/Dhaka` — `DATABASE-DESIGN.md` rule 8), Horizon, Telescope (local only) | M | 02 | migration test asserts collation; a Bangla string round-trips |
 | P3-SET-04 | Domain directory structure + `deptrac.yaml` encoding the boundary rules | M | 03 | `deptrac` fails on a deliberate `Domain → Http` import |
 
 ### Support layer
@@ -70,7 +64,7 @@ One repository. A monorepo because the three apps share a contract and must chan
 | P3-SUP-04 | Slug generator with Bangla transliteration and uniqueness | S | P3-SET-04 | Bangla name yields a usable ASCII slug; collisions suffix correctly; **one slug serves both locales** |
 | P3-I18N-01 | Laravel locale resolution, lang files, explicit-locale API contract (`?locale=` plus `Accept-Language` fallback), locale-aware date/number formatters pinned to Western digits | M | P3-SET-03 | a request resolves the right locale from each source; an unknown locale falls back to `en` without erroring |
 | P3-I18N-02 | Next.js locale routing — English at `/`, Bangla at `/bn/`; `hreflang` pair plus `x-default` emitted on every page; persisted toggle; Bangla suggested (never force-redirected) on a first BD visit | L | P3-STO-01, P3-I18N-01 | both locale trees render; `hreflang` is reciprocal on every template; a crawler is never redirected |
-| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `toymartbd-app/admin/src` and `toymartbd-app/storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
+| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `resources/js/admin` and `toymartbd-app/storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
 
 ### Data foundation
 | ID | Task | Size | Depends | Tests |
@@ -111,6 +105,20 @@ One repository. A monorepo because the three apps share a contract and must chan
 | P3-CI-02 | Staging deploy on merge to `main`: zero-downtime release swap, migrations, graceful Horizon restart | L | 01 | deploy and rollback both rehearsed |
 | P3-CI-03 | Automated encrypted backup to off-host storage **and a verified restore onto staging** | M | 02 | restore produces a working application — this is the acceptance criterion, not the backup itself |
 | P3-CI-04 | Sentry on all three apps, structured JSON logging, `X-Request-Id` propagated into queued jobs | M | 01 | a thrown error reaches Sentry with the request id attached |
+
+### Progress (updated 2026-11-11)
+
+**Done, with passing tests** (208 on SQLite, 210 on MySQL; PHPStan L6, Pint, deptrac clean):
+P3-SET-01 (PHP side: Pint, PHPStan, EditorConfig) · P3-SET-02 (`docker-compose.yml`, `Makefile`) · P3-SET-03 (UTC storage, collation test, Bangla round-trip) · P3-SET-04 (13 domain folders, `deptrac.yaml`, probe test) · P3-SUP-01…04 (`Money` + `MoneyCast`, `PhoneNumber`, `DhakaDate`, `Slug`) · P3-I18N-01 (`ResolveLocale`, `lang/bn`, `Support\Locale\Formatter`) · P3-DAT-01…02 (settings, activity log, insert-only `audit_sensitive`, 7 roles × 64 permissions) · P3-API-01, 02, 04, 08 (base classes, RFC 9457 problems, rate limiters, `/api/v1/health`) · P3-CI-01 (GitHub Actions: PHP job + frontend job). P3-ADM-01 partly: tokens wired into Tailwind, unverified until CI builds it.
+
+**Follow-ups found on the way:**
+- ESLint flat config + `typescript-eslint` (needs a working local npm to update the lockfile).
+- Trusted proxies: storefront and health rate limits key on client IP, so the Next.js server must forward the shopper's IP in `X-Forwarded-For` and Laravel must trust only that hop. Without it every shopper shares Vercel's IPs and one bucket.
+- Problem titles are English; `lang/*/app.php` has `problems.*` keys ready for the handler to translate.
+- All Bangla system strings in `lang/bn/` are marked for native-speaker review.
+- Owner: is the customer-facing default `৳2,450.50` (exact) or `৳2,451` (rounded retail)? `Formatter` has both.
+
+**Next:** P3-DAT-03 (BD geography with Bangla names, needs a sourced dataset) · P3-API-03 (idempotency) · P3-API-05…07 (Sanctum, policies + 403 matrix, OpenAPI) · P3-ADM-02…04 · P3-STO-* · P3-CI-02…04.
 
 **Phase 3 exit:** clone → one command → working stack with Bangla seed data · login with roles · OpenAPI published and types generated · CI green · staging deploying · a restore performed successfully. Then **Gate 3** — the storefront stack decision.
 
