@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\ResolveLocale;
 use App\Http\Problems\ProblemDetails;
@@ -15,6 +16,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -55,6 +57,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // X-Request-Id first, so every later log line, job and Sentry event carries it (P3-CI-04).
+        $middleware->prepend(AssignRequestId::class);
+
         // Idempotency-Key guard for checkout, shipment booking and payment capture
         // (CLAUDE.md rule 17). List it AFTER any auth middleware: the key is scoped by user.
         $middleware->alias(['idempotent' => EnsureIdempotency::class]);
@@ -79,6 +84,9 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Reported exceptions go to Sentry (a no-op while SENTRY_LARAVEL_DSN is empty).
+        Integration::handles($exceptions);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
