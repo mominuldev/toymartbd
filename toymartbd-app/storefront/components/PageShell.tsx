@@ -1,30 +1,45 @@
 import type { ReactNode } from 'react';
 
-import { getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
+import { buildMenu } from '@/lib/category-tree';
+import { getCategoryTree } from '@/lib/categories';
+import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
 import { LocaleSuggestion } from './LocaleSuggestion';
-import { LocaleToggle } from './LocaleToggle';
+import { MobileNav } from './layout/MobileNav';
+import { SiteFooter } from './layout/SiteFooter';
+import { SiteHeader } from './layout/SiteHeader';
 
 interface Props {
     locale: Locale;
-    /** Locale-independent path of this page (`/brands`), used for the language toggle. */
+    /**
+     * Locale-independent path of this page (`/brands`, `/search?q=lego`). The language toggle links
+     * to the same path in the other locale, and the mobile tab bar highlights from it. It is a prop
+     * rather than read from the request so that pages stay ISR-cacheable.
+     */
     path: string;
+    /** Pre-fills the header search bar (search page). */
+    searchQuery?: string;
     children: ReactNode;
 }
 
-const linkClass =
-    't-label inline-flex min-h-touch-min items-center rounded-sm px-3 text-fg-primary underline-offset-4 hover:underline';
-
-export function PageShell({ locale, path, children }: Props) {
+// The storefront chrome: skip link → (Bangla suggestion) → header + mega menu → main → footer →
+// mobile tab bar. Server-rendered; the only client islands are the mega menu's keyboard layer,
+// the language toggle's cookie and the suggestion banner.
+export async function PageShell({ locale, path, searchQuery, children }: Props) {
     const t = getMessages(locale);
-    const target = otherLocale(locale);
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
+    const tree = await getCategoryTree(); // never throws: an API failure renders no menu
+    const menu = buildMenu(tree, locale, {
+        viewAll: (category) => format(t.nav.viewAll, { category }),
+        more: t.nav.more,
+        allCategories: t.nav.allCategories,
+    });
 
     return (
         <>
             <a
                 href="#main"
-                className="t-label sr-only rounded-sm bg-surface px-4 py-3 text-fg-primary focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50"
+                className="t-label sr-only rounded-sm bg-surface px-4 py-3 text-fg-primary shadow-e2 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50"
             >
                 {t.nav.skipToContent}
             </a>
@@ -37,35 +52,16 @@ export function PageShell({ locale, path, children }: Props) {
                     region={bn.suggest.region}
                 />
             ) : null}
-            <header className="border-b border-line-default bg-surface">
-                <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-gutter-mobile py-2 md:px-gutter-tablet lg:px-gutter-desktop">
-                    <a
-                        href={localizedPath(locale, '/')}
-                        className="t-h4 inline-flex min-h-touch-min items-center rounded-sm text-fg-brand"
-                    >
-                        {t.site.name}
-                    </a>
-                    <nav aria-label={t.nav.primary} className="flex items-center gap-2">
-                        <a href={localizedPath(locale, '/brands')} className={linkClass}>
-                            {t.nav.brands}
-                        </a>
-                        <LocaleToggle
-                            target={target}
-                            href={localizedPath(target, path)}
-                            label={t.language[target]}
-                            accessibleLabel={t.language.switchLabel}
-                        />
-                    </nav>
-                </div>
-            </header>
-            <main id="main" className="mx-auto w-full max-w-content grow px-gutter-mobile py-section-mobile md:px-gutter-tablet lg:px-gutter-desktop lg:py-section-desktop">
+            <SiteHeader locale={locale} path={path} menu={menu} searchQuery={searchQuery} />
+            <main
+                id="main"
+                tabIndex={-1}
+                className="mx-auto w-full max-w-content grow px-gutter-mobile pt-section-mobile focus:outline-none md:px-gutter-tablet lg:px-gutter-desktop lg:pt-section-desktop"
+            >
                 {children}
             </main>
-            <footer className="border-t border-line-default bg-surface">
-                <p className="t-caption mx-auto max-w-content px-gutter-mobile py-6 text-fg-secondary md:px-gutter-tablet lg:px-gutter-desktop">
-                    {t.footer.copyright}
-                </p>
-            </footer>
+            <SiteFooter locale={locale} path={path} />
+            <MobileNav locale={locale} path={path} />
         </>
     );
 }

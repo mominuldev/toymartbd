@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     distDir: process.env.NEXT_DIST_DIR ?? '.next',
     reactStrictMode: true,
     poweredByHeader: false,
+    experimental: {
+        // app/global-not-found.tsx: a server-rendered, localised 404 for unmatched URLs. The root
+        // layout is the dynamic app/[locale], so there is no single layout to compose one from.
+        globalNotFound: true,
+    },
     // No `env` block and no NEXT_PUBLIC_* secrets: API credentials stay server-side (CLAUDE.md rule 28).
 };
 

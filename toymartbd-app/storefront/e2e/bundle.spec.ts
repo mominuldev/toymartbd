@@ -28,6 +28,7 @@ test('client bundles contain no credential, secret, env var name or API origin',
         'STOREFRONT_REVALIDATE_SECRET',
         MOCK_API_URL,
         'storefront/brands', // API paths are server-side only
+        'storefront/categories',
     ];
     const leaks: string[] = [];
     for (const file of all) {

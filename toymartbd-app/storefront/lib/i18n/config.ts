@@ -30,3 +30,28 @@ export function localizedPath(locale: Locale, path: string): string {
 export function otherLocale(locale: Locale): Locale {
     return locale === 'en' ? 'bn' : 'en';
 }
+
+/**
+ * Inverse of localizedPath for a PUBLIC URL path: `/bn/brands` → {bn, /brands}, `/brands` → {en, /brands}.
+ * Only `/bn` is a prefix on the public site (`/en/...` is redirected away by proxy.ts).
+ * Query strings and fragments pass through untouched.
+ */
+export function splitLocalePath(pathname: string): { locale: Locale; path: string } {
+    const clean = pathname.startsWith('/') ? pathname : `/${pathname}`;
+    for (const locale of locales) {
+        if (locale === defaultLocale) continue;
+        const prefix = `/${locale}`;
+        if (clean === prefix) return { locale, path: '/' };
+        const next = clean.charAt(prefix.length);
+        if (clean.startsWith(prefix) && (next === '/' || next === '?' || next === '#')) {
+            const rest = clean.slice(prefix.length);
+            return { locale, path: rest.startsWith('/') ? rest : `/${rest}` };
+        }
+    }
+    return { locale: defaultLocale, path: clean };
+}
+
+/** The same page in `target` — what the language toggle links to. */
+export function switchLocalePath(pathname: string, target: Locale): string {
+    return localizedPath(target, splitLocalePath(pathname).path);
+}

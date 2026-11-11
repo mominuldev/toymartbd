@@ -1,7 +1,9 @@
 // Bangla UI strings.
 // REVIEW(bn): every string in this file is a first draft and MUST be checked by a native Bangla
 // reader before launch (tone, conjunct rendering at 15px, length in buttons). Remove an entry's
-// key from `pendingNativeReview` below once it has been signed off.
+// key from `pendingNativeReview` below once it has been signed off. Strings taken from
+// 05-content-and-assets-spec.md carry that spec's wording; the rest are new drafts.
+// Numerals stay Western (0–9), rule 36.
 import type { Messages } from './en';
 
 export const bn: Messages = {
@@ -14,6 +16,23 @@ export const bn: Messages = {
         primary: 'প্রধান',
         home: 'হোম',
         brands: 'ব্র্যান্ড',
+        logoAria: 'টয় মার্ট বিডি — হোম',
+        categoriesMenu: 'ক্যাটাগরি অনুযায়ী কিনুন',
+        allCategories: 'সব ক্যাটাগরি',
+        more: 'আরও',
+        viewAll: '{category}-এর সবকিছু',
+        wishlist: 'পছন্দের তালিকা',
+        account: 'অ্যাকাউন্ট',
+        cartEmpty: 'কার্ট, খালি',
+        cartCount: 'কার্ট, {count}টি পণ্য',
+    },
+    tabs: {
+        label: 'শর্টকাট',
+        home: 'হোম',
+        categories: 'ক্যাটাগরি',
+        search: 'খুঁজুন',
+        cart: 'কার্ট',
+        account: 'প্রোফাইল',
     },
     language: {
         switchLabel: 'ভাষা বদলান',
@@ -25,6 +44,16 @@ export const bn: Messages = {
         accept: 'বাংলায় দেখুন',
         dismiss: 'ইংরেজিতেই থাকুন',
         region: 'ভাষার পরামর্শ',
+    },
+    search: {
+        label: 'খুঁজুন',
+        placeholder: 'খেলনা, ব্র্যান্ড বা বয়স লিখুন',
+        submit: 'খুঁজুন',
+        pageTitle: 'খুঁজুন',
+        resultsTitle: '"{query}" — যা পাওয়া গেল',
+        comingSoon: 'সার্চের ফলাফল শিগগিরই আসছে। ততক্ষণ ক্যাটাগরি থেকে দেখুন।',
+        emptyQuery: 'খুঁজতে খেলনা, ব্র্যান্ড বা বয়স লিখুন।',
+        metaDescription: 'টয় মার্ট বিডিতে খেলনা খুঁজুন।',
     },
     home: {
         title: 'টয় মার্ট বিডি',
@@ -38,13 +67,80 @@ export const bn: Messages = {
         backToAll: 'সব ব্র্যান্ড',
         logoAlt: '{name} লোগো',
     },
+    categories: {
+        title: 'সব ক্যাটাগরি',
+        metaDescription: 'টয় মার্ট বিডির সব খেলনার ক্যাটাগরি দেখুন।',
+        empty: 'ক্যাটাগরিগুলো শিগগিরই এখানে দেখা যাবে।',
+        inThisCategory: 'এই ক্যাটাগরিতে',
+        comingSoon: 'এই ক্যাটাগরির খেলনাগুলো যোগ করা হচ্ছে। ততক্ষণ নিচের ভাগগুলো দেখুন বা খুঁজুন।',
+        metaCategory: 'টয় মার্ট বিডিতে {category} কিনুন।',
+    },
     notFound: {
-        title: 'পাতাটি পাওয়া যায়নি',
-        body: 'আপনি যে পাতাটি খুঁজছেন সেটি আমরা খুঁজে পাইনি।',
-        back: 'হোম পেজে যান',
+        title: 'এই পাতাটি নেই',
+        body: 'লিংকটি পুরনো হতে পারে, বা টাইপ করতে ভুল হয়েছে। আপনার কার্ট বা অর্ডারের কিছুই হয়নি।',
+        home: 'হোম পেজে যান',
+        search: 'খেলনা খুঁজুন',
+        browse: 'সব খেলনা দেখুন',
+    },
+    serverError: {
+        title: 'আমাদের দিকে কিছু সমস্যা হয়েছে',
+        body: 'এটা আমাদের ভুল, আপনার নয়। কোনো টাকা কাটা হয়নি, আপনার কার্ট ঠিক আছে। এক মিনিট পর আবার চেষ্টা করুন — অথবা {phone} নম্বরে ফোন করুন, আমরাই অর্ডারটা করে দেব।',
+        retry: 'আবার চেষ্টা করুন',
+        call: 'ফোন করুন {phone}',
+        reassureMoney: 'কোনো টাকা কাটা হয়নি',
+        reassureCart: 'আপনার কার্ট ঠিক আছে',
+        reassureOrders: 'আগে করা অর্ডারে কোনো প্রভাব পড়েনি',
+        reassureLabel: 'যা বদলায়নি',
+    },
+    maintenance: {
+        title: 'কিছুক্ষণের মধ্যেই ফিরছি',
+        body: 'সাইট আপডেট করা হচ্ছে। আগে করা অর্ডারগুলো ঠিক আছে। এখনই কিছু দরকার হলে {phone} নম্বরে ফোন করুন।',
+        call: 'ফোন করুন {phone}',
+        whatsapp: 'হোয়াটসঅ্যাপে কথা বলুন',
     },
     footer: {
-        copyright: '© টয় মার্ট বিডি',
+        copyright: '© {year} টয় মার্ট বিডি। সর্বস্বত্ব সংরক্ষিত।',
+        aboutBody: 'এমন একটি খেলনার দোকান, যারা ফোন ধরে। ঢাকায় আমাদের অফিস, ডেলিভারি সারা দেশে।',
+        columns: {
+            shop: 'কিনুন',
+            help: 'সহায়তা',
+            company: 'প্রতিষ্ঠান',
+        },
+        links: {
+            allToys: 'সব খেলনা',
+            brands: 'ব্র্যান্ড',
+            newArrivals: 'নতুন এসেছে',
+            offers: 'ছাড় ও অফার',
+            byAge: 'বয়স অনুযায়ী',
+            track: 'অর্ডার ট্র্যাক করুন',
+            delivery: 'ডেলিভারি চার্জ',
+            returns: 'রিটার্ন কীভাবে হয়',
+            faq: 'সাধারণ প্রশ্ন',
+            contact: 'যোগাযোগ করুন',
+            about: 'আমাদের সম্পর্কে',
+            privacy: 'গোপনীয়তা নীতি',
+            terms: 'ব্যবহারের শর্তাবলি',
+            safety: 'খেলনার নিরাপত্তা',
+        },
+        contact: {
+            title: 'কথা বলুন',
+            hotline: 'হটলাইন',
+            whatsapp: 'হোয়াটসঅ্যাপ',
+            email: 'ইমেইল',
+            hours: 'সকাল 9টা – রাত 9টা, শনি থেকে বৃহস্পতি',
+            address: 'বাসা 12, রোড 7, ধানমন্ডি, ঢাকা 1205',
+        },
+        paymentTitle: 'পেমেন্টের মাধ্যম',
+        cod: 'ক্যাশ অন ডেলিভারি',
+        tradeLicence: 'ট্রেড লাইসেন্স {number} · বিআইএন {bin}',
+        legalPending: 'ট্রেড লাইসেন্স ও বিআইএন: যোগ করা হবে',
+        sample: 'নমুনা',
+        sampleNotice: '"নমুনা" চিহ্নিত যোগাযোগের তথ্যগুলো মালিক নিশ্চিত না করা পর্যন্ত অস্থায়ী।',
+    },
+    pages: {
+        draftNotice: 'খসড়া লেখা — চালুর আগে যাচাই করা হবে।',
+        browse: 'সব খেলনা দেখুন',
+        home: 'হোম পেজে যান',
     },
 };
 
@@ -52,10 +148,16 @@ export const bn: Messages = {
 export const pendingNativeReview: ReadonlyArray<keyof Messages> = [
     'site',
     'nav',
+    'tabs',
     'language',
     'suggest',
+    'search',
     'home',
     'brands',
+    'categories',
     'notFound',
+    'serverError',
+    'maintenance',
     'footer',
+    'pages',
 ];

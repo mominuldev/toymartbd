@@ -44,6 +44,12 @@ Every variable is **server-only**. Never give one a `NEXT_PUBLIC_` prefix and ne
 | API types | `lib/api-types.ts`. These are hand-typed for now (TODO: switch to `@toymart/api-types` once the brands schemas are generated) |
 | Revalidation | `app/api/revalidate/route.ts` + `lib/revalidate.ts`. It implements `docs/api/revalidation.md` exactly |
 | Catalog pages | `app/[locale]/brands` (tag `brands`) and `app/[locale]/brands/[slug]` (tags `brands`, `brand:{slug}`) |
+| Site chrome | `components/PageShell.tsx` composes skip link, `layout/SiteHeader` (logo, `SearchBar`, wishlist/account/cart links, language toggle), `layout/MegaMenu`, `<main>`, `layout/SiteFooter` and `layout/MobileNav`. It is rendered by each page (not a layout) because the toggle needs the page's path and pages must stay ISR-cacheable |
+| Mega menu | Data: `lib/categories.ts` (`GET storefront/categories/tree`, tag `categories`, never throws — an API failure renders no menu). View model and depth cap: `lib/category-tree.ts`. Keyboard contract (spec §A4.4): `lib/megamenu-keys.ts`. Without JS it is plain server-rendered links revealed by CSS hover/focus-within |
+| Business contact details | `lib/site-config.ts` only. Hotline, WhatsApp, email, address, licence and BIN are **placeholders** until the owner confirms them; they render with a visible "sample" tag and never as tel:/mailto: links |
+| Status and static pages | `app/global-not-found.tsx` (unmatched URLs, both locales, server-rendered), `app/[locale]/not-found.tsx` (route-level `notFound()`), `app/[locale]/error.tsx` + `app/global-error.tsx` (500), `app/[locale]/maintenance`, `components/StaticPage.tsx` + `lib/static-pages.ts` (first page: `/pages/about`, draft copy) |
+| Stubs | `/search` (echoes the query, noindex) until P4-STO-04; `/categories` and `/categories/{slug}` (name, parents, sub-categories from the tree; no products) until P4-STO-03 |
+| Icons | `components/icons/paths.ts`, generated from Phosphor by `scripts/extract-icons.mjs` |
 
 ### Adding a page
 
@@ -55,11 +61,13 @@ Every variable is **server-only**. Never give one a `NEXT_PUBLIC_` prefix and ne
 
 ## Known limitations
 
-- **404 HTML.** In Next 16.4.3, `notFound()` called from a page returns HTTP 404 with
-  `<meta name="robots" content="noindex">`. The HTML body, though, is Next's empty `__next_error__`
-  shell, and the localized not-found UI only appears once the client renders it. This also happens
-  in a plain `app/layout.tsx` app. Crawlers get the right status. Visitors with JavaScript disabled
-  see a blank page.
+- **404 HTML for `notFound()` from a page.** Unmatched URLs (`/no-such-page`, `/bn/x/y`, links to
+  pages not built yet) are fixed: `app/global-not-found.tsx` (`experimental.globalNotFound`) renders
+  the styled, localized 404 server-side; proxy.ts passes it the locale and path in request headers.
+  But in Next 16.4.3, `notFound()` called from a matched page (an unknown brand or category slug)
+  still returns HTTP 404 + noindex with Next's empty `__next_error__` shell; the localized UI only
+  appears once the client renders it. Moving the boundary into a nested layout does not change
+  this. Crawlers get the right status; visitors with JavaScript disabled see a blank page there.
 - **Fredoka has no 800 weight.** It tops out at 700, so `display-1`, `display-2` and `price-lg`
   render Latin at 700.
 - **Bengali font files are over the 40 KB target.** Each is a variable file covering the weights
