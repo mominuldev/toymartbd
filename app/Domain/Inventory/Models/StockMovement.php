@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Models;
 
+use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Exceptions\StockLedgerViolation;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -25,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $user_id
  * @property string|null $note
  * @property Carbon|null $created_at
+ * @property-read ProductVariant $variant
  */
 final class StockMovement extends Model
 {
@@ -42,6 +45,12 @@ final class StockMovement extends Model
         self::deleting(static fn (): never => throw StockLedgerViolation::appendOnly());
     }
 
+    /** @return BelongsTo<ProductVariant, $this> */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -51,6 +60,7 @@ final class StockMovement extends Model
             'type' => StockMovementType::class,
             'quantity' => 'integer',
             'balance_after' => 'integer',
+            'unit_cost' => 'decimal:4',
             'reference_id' => 'integer',
             'user_id' => 'integer',
         ];

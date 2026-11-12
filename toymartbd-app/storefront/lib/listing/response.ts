@@ -58,7 +58,7 @@ function availabilityOptions(raw: unknown): FacetOption[] {
     return [{ value: 'in_stock', label: null, labelBn: null, count: o.count, selected: o.selected === true }];
 }
 
-function isCard(v: unknown): v is ProductCard {
+export function isCard(v: unknown): v is ProductCard {
     const o = obj(v);
     return !!o && typeof o.id === 'number' && typeof o.slug === 'string' && typeof o.name === 'string' && typeof o.price === 'string';
 }

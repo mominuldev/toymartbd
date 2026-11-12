@@ -24,22 +24,54 @@ export function categoryIcon(name: string | null): IconName {
     return key in iconPaths ? (key as IconName) : 'puzzlePiece';
 }
 
-export function CategoryTile({ node, locale, index }: { node: CategoryNode; locale: Locale; index: number }) {
+/**
+ * One pastel tile link (Figma CategoryTile 110:701). `count` is the caption under the label
+ * ("58 toys"); it is part of the link's accessible name. `className` sets the size per placement.
+ */
+export function TileLink({
+    href,
+    icon,
+    label,
+    labelLang,
+    count,
+    index,
+    className = 'h-37 lg:h-45',
+}: {
+    href: string;
+    icon: IconName;
+    label: string;
+    labelLang?: 'en';
+    count?: string;
+    index: number;
+    className?: string;
+}) {
     const theme = themes[index % themes.length]!;
     return (
         <a
-            href={localizedPath(locale, categoryPath(node.slug))}
-            className={`flex h-37 flex-col items-center justify-center rounded-lg border-(length:--tm-border-width-rim) border-surface p-3 transition-[translate,box-shadow] duration-(--tm-duration-base) ease-standard hover:-translate-y-0.5 hover:shadow-e3 lg:h-45 lg:p-4 ${theme.ground}`}
+            href={href}
+            className={`flex flex-col items-center justify-center rounded-lg border-(length:--tm-border-width-rim) border-surface p-3 transition-[translate,box-shadow] duration-(--tm-duration-base) ease-standard hover:-translate-y-0.5 hover:shadow-e3 lg:p-4 ${theme.ground} ${className}`}
         >
             <span aria-hidden="true" className={`inline-flex size-16 shrink-0 items-center justify-center rounded-full bg-surface/85 lg:size-19 ${theme.ink}`}>
-                <Icon name={categoryIcon(node.icon)} className="size-10 lg:size-icon-category" />
+                <Icon name={icon} className="size-10 lg:size-icon-category" />
             </span>
-            <span
-                lang={categoryNameIsFallback(node, locale) ? 'en' : undefined}
-                className="t-h4 line-clamp-2 w-full pt-2 text-center text-fg-primary lg:pt-2.5"
-            >
-                {categoryName(node, locale)}
+            <span className="flex w-full flex-col items-center gap-0.5 pt-2 text-center lg:pt-2.5">
+                <span lang={labelLang} className="t-h4 line-clamp-2 w-full text-fg-primary">
+                    {label}
+                </span>
+                {count ? <span className="t-caption whitespace-nowrap text-fg-secondary">{count}</span> : null}
             </span>
         </a>
+    );
+}
+
+export function CategoryTile({ node, locale, index }: { node: CategoryNode; locale: Locale; index: number }) {
+    return (
+        <TileLink
+            href={localizedPath(locale, categoryPath(node.slug))}
+            icon={categoryIcon(node.icon)}
+            label={categoryName(node, locale)}
+            labelLang={categoryNameIsFallback(node, locale) ? 'en' : undefined}
+            index={index}
+        />
     );
 }

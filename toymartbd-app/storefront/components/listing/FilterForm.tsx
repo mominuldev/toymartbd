@@ -4,7 +4,7 @@ import { Icon } from '@/components/icons/Icon';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { priceBandLabel } from '@/lib/listing/format';
 import type { FacetOption, Facets } from '@/lib/listing/response';
-import { DEFAULT_SORT, hrefFor, type ListingScope, type ListingState } from '@/lib/listing/state';
+import { defaultSortFor, hrefFor, type ListingScope, type ListingState } from '@/lib/listing/state';
 
 // The facets of FilterPanel (storefront spec §A7, Figma FilterSidebar 116:857 / FilterOption
 // 116:856). A plain GET form: every option is a real checkbox named after its URL key, so the
@@ -24,6 +24,8 @@ export interface FilterFormProps {
     t: Messages['listing'];
     /** Mobile rows are 48 tall, desktop 40. */
     size: 'mobile' | 'desktop';
+    /** Extra GET fields the form must carry, e.g. the search text `q`. */
+    hidden?: Record<string, string>;
     children?: ReactNode;
 }
 
@@ -80,7 +82,7 @@ function OptionRow({ name, option, label, size, t, type }: { name: string; optio
 /** Long lists (Brand) show 6 rows, then "Show N more" (§A7.1). */
 const VISIBLE_OPTIONS = 6;
 
-export function FilterForm({ id, locale, path, scope, state, facets, t, size, children }: FilterFormProps) {
+export function FilterForm({ id, locale, path, scope, state, facets, t, size, hidden = {}, children }: FilterFormProps) {
     const ageLabels = t.ageBands as Record<string, string>;
     const genderLabels = t.genders as Record<string, string>;
     const brandRows = facets.brand.map((o) => <OptionRow key={o.value} name="brand" option={o} label={optionLabel(o, locale)} size={size} t={t} />);
@@ -89,7 +91,10 @@ export function FilterForm({ id, locale, path, scope, state, facets, t, size, ch
 
     return (
         <form id={id} method="get" action={localizedPath(locale, path)} className="group/filters flex flex-col">
-            {state.sort !== DEFAULT_SORT ? <input type="hidden" name="sort" value={state.sort} /> : null}
+            {Object.entries(hidden).map(([name, value]) => (
+                <input key={name} type="hidden" name={name} value={value} />
+            ))}
+            {state.sort !== defaultSortFor(scope) ? <input type="hidden" name="sort" value={state.sort} /> : null}
 
             {facets.age.length > 0 ? (
                 <Section title={t.facetAge} open>
@@ -118,8 +123,8 @@ export function FilterForm({ id, locale, path, scope, state, facets, t, size, ch
             ) : null}
 
             {facets.category.length > 0 ? (
-                <Section title={t.facetCategory} open={scope.kind === 'brand' && state.category !== null}>
-                    {scope.kind === 'brand'
+                <Section title={t.facetCategory} open={scope.kind !== 'category' && state.category !== null}>
+                    {scope.kind !== 'category'
                         ? facets.category.map((o) => <OptionRow key={o.value} name="category" type="radio" option={{ ...o, selected: o.value === state.category }} label={optionLabel(o, locale)} size={size} t={t} />)
                         : facets.category.map((o) => {
                               const label = optionLabel(o, locale);
@@ -135,7 +140,7 @@ export function FilterForm({ id, locale, path, scope, state, facets, t, size, ch
                 </Section>
             ) : null}
 
-            {facets.brand.length > 0 && scope.kind === 'category' ? (
+            {facets.brand.length > 0 && scope.kind !== 'brand' ? (
                 <Section title={t.facetBrand} open={anyIn(facets.brand)}>
                     {brandRows.slice(0, VISIBLE_OPTIONS)}
                     {brandRows.length > VISIBLE_OPTIONS ? (

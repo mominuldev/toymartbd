@@ -35,6 +35,10 @@ type Props = {
      */
     stockMode: StockMode;
     disabled: boolean;
+    /** Anchor id for the section navigation. */
+    id?: string;
+    /** Right side of the title row (the product-type select on a new product). */
+    aside?: ReactNode;
 };
 
 export type StockMode = 'opening' | 'readonly' | 'hidden';
@@ -47,7 +51,7 @@ export type StockMode = 'opening' | 'readonly' | 'hidden';
  * the column shows available stock read-only (changes are stock adjustments). A removed
  * value archives its variants on save; adding it back restores them.
  */
-export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled }: Props) {
+export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled, id, aside }: Props) {
     const { t, locale } = useI18n();
     const bn = locale === 'bn';
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -74,7 +78,12 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
     const removeValue = (attributeId: number, valueId: number) =>
         setOptions(value.options.map((o) => (o.attribute_id === attributeId ? { ...o, value_ids: o.value_ids.filter((id) => id !== valueId) } : o)));
 
-    const targets = selected.size > 0 ? combos.filter((c) => selected.has(c.key)) : combos;
+    const swapAttribute = (from: number, to: number) => setOptions(value.options.map((o) => (o.attribute_id === from ? { attribute_id: to, value_ids: [] } : o)));
+    // "2 attributes × 2 values = 4 combinations" when every attribute has the same number of values (Figma 201:1201).
+    const valueCounts = value.options.map((o) => o.value_ids.length);
+    const uniformValues = valueCounts.length > 0 && valueCounts.every((n) => n === valueCounts[0]) ? (valueCounts[0] ?? null) : null;
+
+    const targets = combos.filter((c) => selected.has(c.key));
     const applyBulk = () => {
         const rows = { ...value.rows };
         for (const combo of targets) rows[combo.key] = { ...rowOf(combo), [bulkField]: bulkValue.trim() };
@@ -140,7 +149,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
         }
         const mono = field === 'sku' || field === 'barcode';
         return (
-            <div className={field === 'sku' ? 'w-52' : field === 'barcode' ? 'w-36' : 'w-24'}>
+            <div className={field === 'sku' ? 'w-44' : field === 'barcode' ? 'w-28' : 'w-20'}>
                 <input
                     {...common}
                     aria-invalid={error ? true : undefined}
@@ -155,11 +164,14 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
     };
 
     return (
-        <section aria-labelledby={`${bulkId}-title`} className="flex flex-col overflow-hidden rounded-md border border-line-default bg-surface shadow-e1">
-            <div className="flex flex-col gap-2.5 px-5 pt-5 pb-4">
-                <h2 id={`${bulkId}-title`} className="t-admin-section text-fg-primary">
-                    {t('products.tab.variants')}
-                </h2>
+        <section id={id} aria-labelledby={`${bulkId}-title`} className="relative flex scroll-mt-6 flex-col overflow-hidden rounded-md border border-line-default bg-surface shadow-e1">
+            <div className="flex flex-col gap-3 px-5 pt-5 pb-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    <h2 id={`${bulkId}-title`} className="min-w-0 flex-1 t-admin-section text-fg-primary">
+                        {t('products.tab.variants')}
+                    </h2>
+                    {aside}
+                </div>
 
                 {value.options.length === 0 && <p className="t-admin-body text-fg-secondary">{t('products.matrix.noAttributes')}</p>}
 
@@ -169,7 +181,19 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                     const remaining = attribute.values.filter((v) => !option.value_ids.includes(v.id));
                     return (
                         <div key={option.attribute_id} className="flex flex-wrap items-center gap-2">
-                            <span className="flex h-8 w-40 items-center rounded-sm border border-line-default bg-surface px-3 t-admin-body text-fg-primary">{name(attribute)}</span>
+                            <Select
+                                aria-label={t('products.matrix.attribute')}
+                                value={attribute.id}
+                                disabled={disabled || !canPrice}
+                                onChange={(e) => swapAttribute(attribute.id, Number(e.target.value))}
+                                className="w-50"
+                            >
+                                {[attribute, ...freeAttributes].map((a) => (
+                                    <option key={a.id} value={a.id}>
+                                        {name(a)}
+                                    </option>
+                                ))}
+                            </Select>
                             {attribute.values
                                 .filter((v) => option.value_ids.includes(v.id))
                                 .map((v) => (
@@ -243,9 +267,11 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                 {!canPrice && <p className="t-admin-caption text-fg-tertiary">{t('products.matrix.priceLocked')}</p>}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 bg-brand-subtle px-5 py-3">
+            <div className="flex min-h-14 flex-wrap items-center gap-3 bg-brand-subtle px-5 py-3">
                 <p className="min-w-0 flex-1 t-admin-body text-fg-primary" aria-live="polite">
-                    {t('products.matrix.summary', { attributes: value.options.length, count: combos.length })}
+                    {uniformValues !== null
+                        ? t('products.matrix.summaryValues', { attributes: value.options.length, values: uniformValues, count: combos.length })
+                        : t('products.matrix.summary', { attributes: value.options.length, count: combos.length })}
                 </p>
                 {tooMany && (
                     <p className="flex items-center gap-1.5 t-admin-caption-strong text-feedback-danger">
@@ -268,6 +294,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
 
             {combos.length > 0 && (
                 <>
+                    {selected.size > 0 && (
                     <div className="flex flex-wrap items-center gap-3 border-t border-line-default px-4 py-2">
                         <label htmlFor={`${bulkId}-field`} className="t-admin-body text-fg-secondary">
                             {t('products.matrix.bulkSet')}
@@ -288,6 +315,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                     </option>
                                 ))}
                         </Select>
+                        <span className="t-admin-body text-fg-secondary">{t('products.matrix.bulkTo')}</span>
                         <div className="w-28">
                             <input
                                 aria-label={t('products.matrix.bulkValue')}
@@ -298,15 +326,14 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                 className={`${controlHeight.sm} ${inputClass} text-end tabular`}
                             />
                         </div>
-                        <span className="t-admin-body text-fg-secondary">
-                            {selected.size > 0 ? t('products.matrix.forSelected', { count: selected.size }) : t('products.matrix.forAll', { count: combos.length })}
-                        </span>
+                        <span className="t-admin-body text-fg-secondary">{t('products.matrix.forSelected', { count: selected.size })}</span>
                         <Button size="sm" onClick={applyBulk} disabled={disabled || bulkValue.trim() === ''}>
                             {t('products.matrix.apply')}
                         </Button>
                     </div>
+                    )}
 
-                    <div className="overflow-x-auto">
+                    <div className="relative overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead className="border-y border-line-strong bg-subtle">
                                 <tr className="text-left">
@@ -346,13 +373,13 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                                     {off ? t('products.matrix.disabled') : bn ? combo.attributeNamesBn : combo.attributeNames}
                                                 </p>
                                             </td>
-                                            <td className="px-3 py-2">{cell(combo, row, 'sku', t('products.field.sku'))}</td>
-                                            <td className="px-3 py-2">{cell(combo, row, 'price', t('products.field.price'))}</td>
-                                            <td className="px-3 py-2">{cell(combo, row, 'compare_at_price', t('products.field.compareAt'))}</td>
-                                            {canCost && <td className="px-3 py-2">{cell(combo, row, 'cost_price', t('products.field.cost'))}</td>}
-                                            {stockMode !== 'hidden' && <td className="px-3 py-2">{stockCell(combo, row)}</td>}
-                                            <td className="px-3 py-2">{cell(combo, row, 'weight_grams', t('products.field.weight'))}</td>
-                                            <td className="px-3 py-2">{cell(combo, row, 'barcode', t('products.field.barcode'))}</td>
+                                            <td className="px-2 py-2">{cell(combo, row, 'sku', t('products.field.sku'))}</td>
+                                            <td className="px-2 py-2">{cell(combo, row, 'price', t('products.field.price'))}</td>
+                                            <td className="px-2 py-2">{cell(combo, row, 'compare_at_price', t('products.field.compareAt'))}</td>
+                                            {canCost && <td className="px-2 py-2">{cell(combo, row, 'cost_price', t('products.field.cost'))}</td>}
+                                            {stockMode !== 'hidden' && <td className="px-2 py-2">{stockCell(combo, row)}</td>}
+                                            <td className="px-2 py-2">{cell(combo, row, 'weight_grams', t('products.field.weight'))}</td>
+                                            <td className="px-2 py-2">{cell(combo, row, 'barcode', t('products.field.barcode'))}</td>
                                         </MatrixRows>
                                     );
                                 })}
@@ -388,7 +415,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
 
 function Th({ children, end }: { children: ReactNode; end?: boolean }) {
     return (
-        <th scope="col" className={`h-9 px-3 t-admin-overline whitespace-nowrap text-fg-secondary ${end ? 'text-end' : 'text-start'}`}>
+        <th scope="col" className={`h-9 px-2 first:px-3 t-admin-overline whitespace-nowrap text-fg-secondary ${end ? 'text-end' : 'text-start'}`}>
             {children}
         </th>
     );

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
+use App\Http\Controllers\Api\V1\Storefront\CartController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
 use App\Http\Controllers\Api\V1\Storefront\DeliveryController;
 use App\Http\Controllers\Api\V1\Storefront\ProductController;
@@ -46,4 +47,18 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/districts', [DeliveryController::class, 'districts'])->name('districts.index');
     Route::get('/districts/{district}/upazilas', [DeliveryController::class, 'upazilas'])->whereNumber('district')->name('districts.upazilas');
     Route::get('/products/{slug}', [ProductDetailController::class, 'show'])->name('products.show');
+});
+
+// Cart (P4-CRT-01/02/04) — docs/api/cart.md. The cart is found by the opaque token the
+// Next.js server keeps in an httpOnly cookie and forwards as `X-Cart-Token`. Same server
+// token and ability as the catalog reads (the storefront token is the only credential
+// the Next.js server holds); every figure comes from the pricing pipeline.
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->prefix('cart')->name('cart.')->group(function (): void {
+    Route::post('/', [CartController::class, 'store'])->name('store');
+    Route::get('/', [CartController::class, 'show'])->name('show');
+    Route::post('/items', [CartController::class, 'addItem'])->name('items.store');
+    Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item')->name('items.update');
+    Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
+    Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.store');
+    Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.destroy');
 });

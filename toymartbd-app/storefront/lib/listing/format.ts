@@ -43,7 +43,9 @@ function years(months: number): string | null {
  * years → "a–b years" / "a+ years"; anything else falls back to months. Null when both bounds are
  * open (the toy is for every age; no pill).
  */
-export function ageLabel(min: number | null, max: number | null, t: Messages['listing']): string | null {
+export type AgeCopy = Pick<Messages['listing'], 'ageMonths' | 'ageMonthsPlus' | 'ageYears' | 'ageYearsPlus' | 'ageUpTo'>;
+
+export function ageLabel(min: number | null, max: number | null, t: AgeCopy): string | null {
     if (min === null && max === null) return null;
     const lo = min ?? 0;
     if (max !== null && max <= 12) return format(t.ageMonths, { min: String(lo), max: String(max) });

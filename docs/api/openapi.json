@@ -2242,6 +2242,1188 @@
                 }
             }
         },
+        "/admin/inventory/summary": {
+            "get": {
+                "operationId": "v1.admin.inventory.summary",
+                "summary": "`GET /inventory/summary` \u2014 stat cards, location cards and tab counts for one location",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[location_id]",
+                        "in": "query",
+                        "description": "Stock location; the default location when omitted.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InventorySummary`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InventorySummary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or an invalid value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inventory/stock": {
+            "get": {
+                "operationId": "v1.admin.inventory.stock",
+                "summary": "`GET /inventory/stock` \u2014 one row per variant at a location, cursor-paginated,\nordered by product then variant",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[location_id]",
+                        "in": "query",
+                        "description": "Stock location; the default location when omitted.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[state]",
+                        "in": "query",
+                        "description": "`low` (0 < available \u2264 reorder point), `out` (available \u2264 0) or `idle` (stock, but no movement for 90 days).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "out",
+                                "idle"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Contains-match on product name, name_bn, SKU or barcode.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[product_id]",
+                        "in": "query",
+                        "description": "Only this product's variants.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[variant_id]",
+                        "in": "query",
+                        "description": "Only this variant.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `InventoryStockRow`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InventoryStockRow"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter, a `sort`, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inventory/movements": {
+            "get": {
+                "operationId": "v1.admin.inventory.movements",
+                "summary": "`GET /inventory/movements` \u2014 the append-only stock ledger, newest first, cursor-paginated",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[variant_id]",
+                        "in": "query",
+                        "description": "Only this variant.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[product_id]",
+                        "in": "query",
+                        "description": "Only this product's variants.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[location_id]",
+                        "in": "query",
+                        "description": "Only this location (every location when omitted).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[type]",
+                        "in": "query",
+                        "description": "Comma-separated movement types, e.g. `damage_out,adjustment_out`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka calendar day, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka calendar day, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `InventoryMovement`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InventoryMovement"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter, a `sort`, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inventory/movements/reconciliation": {
+            "get": {
+                "operationId": "v1.admin.inventory.movements.reconciliation",
+                "summary": "`GET /inventory/movements/reconciliation` \u2014 opening / in / out / closing units for the\nperiod and the ledger-vs-levels invariant check, for the same scope as the ledger\n(the type filter does not apply: a balance needs every movement)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[variant_id]",
+                        "in": "query",
+                        "description": "Only this variant.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[product_id]",
+                        "in": "query",
+                        "description": "Only this product's variants.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[location_id]",
+                        "in": "query",
+                        "description": "Only this location (every location when omitted).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka calendar day, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka calendar day, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InventoryReconciliation`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InventoryReconciliation"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or an invalid value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inventory/adjustments": {
+            "post": {
+                "operationId": "v1.admin.inventory.adjustments.store",
+                "summary": "`POST /inventory/adjustments` \u2014 needs inventory.adjust and an `Idempotency-Key`.\n422 names each refused line: no change, a direction the reason does not allow\n(found only adds; damage, loss, expiry and gift/sample only remove), or on hand\ndropping below what is reserved for open orders",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStockAdjustmentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`InventoryAdjustment`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InventoryAdjustment"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Key reused with a different body, or validation failed",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing inventory.adjust (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "A request with this key is still in progress",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/coupons": {
+            "get": {
+                "operationId": "v1.admin.coupons.index",
+                "description": "Filters: `filter[search]` (code contains), `filter[status]` = `active|inactive`.\nSorts: `code`, `created_at`, `ends_at` (prefix `-` for descending; default `-created_at`).",
+                "summary": "`GET /coupons` \u2014 cursor-paginated, needs marketing.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Case-insensitive \"contains\" match on the code.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "description": "Only active or only inactive coupons.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "code",
+                                "-code",
+                                "created_at",
+                                "-created_at",
+                                "ends_at",
+                                "-ends_at"
+                            ],
+                            "default": "-created_at"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `Coupon`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Coupon"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.coupons.store",
+                "summary": "`POST /coupons` \u2014 needs marketing.manage",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCouponRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`Coupon`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Coupon"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/coupons/{coupon}": {
+            "get": {
+                "operationId": "v1.admin.coupons.show",
+                "summary": "`GET /coupons/{coupon}` \u2014 needs marketing.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "coupon",
+                        "in": "path",
+                        "required": true,
+                        "description": "The coupon ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Coupon`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Coupon"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.coupons.update",
+                "summary": "`PUT /coupons/{coupon}` \u2014 replace the coupon's terms; needs marketing.manage",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "coupon",
+                        "in": "path",
+                        "required": true,
+                        "description": "The coupon ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCouponRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Coupon`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Coupon"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.coupons.destroy",
+                "summary": "`DELETE /coupons/{coupon}` \u2014 deactivates (idempotent); needs marketing.manage",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "coupon",
+                        "in": "path",
+                        "required": true,
+                        "description": "The coupon ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Coupon`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Coupon"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders": {
+            "get": {
+                "operationId": "v1.admin.orders.index",
+                "description": "Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,\n`filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),\n`filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,\ninclusive), `filter[search]` (order number, the last 4+ phone digits, or the name).\nSorts: `created_at`, `grand_total`, each with `-` for descending (default\n`-created_at`). Anything else is a 400.",
+                "summary": "`GET /orders` \u2014 cursor-paginated, needs orders.view. `meta.counts` holds one count\nper status (plus `all`) under every filter except `status`, for the board's tabs",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "description": "Only orders in this status (the board tab).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[payment_status]",
+                        "in": "query",
+                        "description": "Only orders with this payment status.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[fulfillment_status]",
+                        "in": "query",
+                        "description": "Only orders with this fulfilment status.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[source]",
+                        "in": "query",
+                        "description": "web|admin|phone|facebook|whatsapp",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[risk_level]",
+                        "in": "query",
+                        "description": "low|medium|high",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[payment_method]",
+                        "in": "query",
+                        "description": "cod|sslcommerz|bkash|nagad|card|bank_transfer|cash",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[customer_id]",
+                        "in": "query",
+                        "description": "Only this customer's orders.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[placed_from]",
+                        "in": "query",
+                        "description": "First Dhaka date (Y-m-d), inclusive.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[placed_to]",
+                        "in": "query",
+                        "description": "Last Dhaka date (Y-m-d), inclusive.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Order number, last 4+ phone digits, or customer name.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "-created_at",
+                                "grand_total",
+                                "-grand_total"
+                            ],
+                            "default": "-created_at"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `OrderListItem`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderListItem"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                },
+                                                "counts": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "counts"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}": {
+            "get": {
+                "operationId": "v1.admin.orders.show",
+                "summary": "`GET /orders/{order}` \u2014 needs orders.view. Full phone and address only with\ncustomers.view_pii; item cost only with catalog.view_cost",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/storefront/ping": {
             "get": {
                 "operationId": "v1.storefront.ping",
@@ -3875,6 +5057,471 @@
                 }
             }
         },
+        "/storefront/cart": {
+            "post": {
+                "operationId": "v1.storefront.cart.store",
+                "summary": "`POST /cart` \u2014 start an empty cart; returns its token",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "v1.storefront.cart.show",
+                "summary": "`GET /cart` \u2014 the priced cart; pass `district_id` (and `upazila_id`) to include delivery",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "district_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "upazila_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token (`not-found`) \u2014 start a new one",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/cart/items": {
+            "post": {
+                "operationId": "v1.storefront.cart.items.store",
+                "summary": "`POST /cart/items` \u2014 add a variant (or raise its quantity). Without `X-Cart-Token`\na new cart is created and the response is 201",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "description": "The cart token; omit to start a new cart.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddCartItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Quantity beyond stock, item unavailable, or line limits (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/cart/items/{item}": {
+            "patch": {
+                "operationId": "v1.storefront.cart.items.update",
+                "summary": "`PATCH /cart/items/{item}` \u2014 set a line's quantity",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCartItemRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Quantity beyond stock (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token, or the line is not on it (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.storefront.cart.items.destroy",
+                "summary": "`DELETE /cart/items/{item}` \u2014 remove a line",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token, or the line is not on it (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/cart/coupon": {
+            "post": {
+                "operationId": "v1.storefront.cart.coupon.store",
+                "summary": "`POST /cart/coupon` \u2014 apply a coupon code (replaces any coupon already on the cart)",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplyCouponRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "The coupon does not apply; `errors[0].message` says why (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.storefront.cart.coupon.destroy",
+                "summary": "`DELETE /cart/coupon` \u2014 remove the coupon",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`Cart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Cart"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "v1.health",
@@ -3931,6 +5578,39 @@
     },
     "components": {
         "schemas": {
+            "AddCartItemRequest": {
+                "type": "object",
+                "description": "`POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is\ncreated (201) and its `token` returned for the storefront to store. Stock and\nsellability are checked by the Action (422 on `quantity` / `variant_id`).",
+                "properties": {
+                    "variant_id": {
+                        "type": "integer"
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99
+                    }
+                },
+                "required": [
+                    "variant_id",
+                    "quantity"
+                ],
+                "title": "AddCartItemRequest"
+            },
+            "ApplyCouponRequest": {
+                "type": "object",
+                "description": "`POST /cart/coupon` `{ code }` \u2014 case-insensitive. A rejected code is a 422 on `code` with the reason.",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "maxLength": 40
+                    }
+                },
+                "required": [
+                    "code"
+                ],
+                "title": "ApplyCouponRequest"
+            },
             "Attribute": {
                 "type": "object",
                 "properties": {
@@ -4149,6 +5829,284 @@
                 ],
                 "title": "Brand"
             },
+            "Cart": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "description": "Opaque cart token: store it in an httpOnly cookie and send it back as `X-Cart-Token`."
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC. Extended by every change."
+                    },
+                    "item_count": {
+                        "type": "integer"
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "One entry per line. `sellable` false: the item can no longer be bought (it is\nexcluded from every total; remove it). `in_stock` false: `quantity` exceeds\n`available_quantity` (checkout will refuse until it is lowered).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "product": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "slug": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "name_bn",
+                                        "slug"
+                                    ]
+                                },
+                                "variant": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sku": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "sku",
+                                        "name",
+                                        "name_bn"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "available_quantity": {
+                                    "type": "integer"
+                                },
+                                "in_stock": {
+                                    "type": "boolean"
+                                },
+                                "sellable": {
+                                    "type": "boolean"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "added_unit_price": {
+                                    "type": "string"
+                                },
+                                "price_changed": {
+                                    "type": "boolean"
+                                },
+                                "subtotal": {
+                                    "type": "string"
+                                },
+                                "discount": {
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "variant_id",
+                                "product",
+                                "variant",
+                                "quantity",
+                                "available_quantity",
+                                "in_stock",
+                                "sellable",
+                                "unit_price",
+                                "added_unit_price",
+                                "price_changed",
+                                "subtotal",
+                                "discount",
+                                "total"
+                            ]
+                        }
+                    },
+                    "coupon": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The coupon on the cart, if any. `applied` false: `reason` (stable code) and\n`message` (localised) say why; the cart keeps it so the customer sees why.",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "applied": {
+                                "type": "boolean"
+                            },
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "message": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "discount": {
+                                "type": "string"
+                            },
+                            "free_shipping": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "applied",
+                            "reason",
+                            "message",
+                            "discount",
+                            "free_shipping"
+                        ]
+                    },
+                    "adjustments": {
+                        "type": "array",
+                        "description": "Signed rows in pipeline order (subtotal, each promotion and the coupon as\nnegatives, then delivery) that sum exactly to `totals.grand_total`.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "subtotal",
+                                        "promotion",
+                                        "coupon",
+                                        "shipping"
+                                    ]
+                                },
+                                "id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "label_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "id",
+                                "label",
+                                "label_bn",
+                                "amount"
+                            ]
+                        }
+                    },
+                    "totals": {
+                        "type": "object",
+                        "description": "`shipping_charge` is null without a destination (`?district_id=`) or when it is not\nserviced; `grand_total` then excludes delivery.",
+                        "properties": {
+                            "subtotal": {
+                                "type": "string"
+                            },
+                            "promotion_discount": {
+                                "type": "string"
+                            },
+                            "coupon_discount": {
+                                "type": "string"
+                            },
+                            "discount_total": {
+                                "type": "string"
+                            },
+                            "shipping_charge": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "grand_total": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "subtotal",
+                            "promotion_discount",
+                            "coupon_discount",
+                            "discount_total",
+                            "shipping_charge",
+                            "grand_total"
+                        ]
+                    },
+                    "delivery": {
+                        "anyOf": [
+                            {
+                                "description": "The delivery quote for the requested destination \u2014 the same object `GET /delivery-quote` returns, for this cart.",
+                                "$ref": "#/components/schemas/DeliveryQuote"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "checkout_ready": {
+                        "type": "boolean",
+                        "description": "Every line sellable and in stock, the coupon (if any) applied and a serviced destination given."
+                    }
+                },
+                "required": [
+                    "token",
+                    "expires_at",
+                    "item_count",
+                    "items",
+                    "coupon",
+                    "adjustments",
+                    "totals",
+                    "delivery",
+                    "checkout_ready"
+                ],
+                "title": "Cart"
+            },
             "Category": {
                 "type": "object",
                 "properties": {
@@ -4257,6 +6215,158 @@
                     "archived"
                 ],
                 "title": "CategoryStatus"
+            },
+            "Coupon": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "fixed",
+                            "percent",
+                            "free_shipping"
+                        ]
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "max_discount": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "min_order_amount": {
+                        "type": "string"
+                    },
+                    "usage_limit_total": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "usage_limit_per_customer": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "used_count": {
+                        "type": "integer"
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "applies_to": {
+                        "type": "string",
+                        "enum": [
+                            "all",
+                            "products",
+                            "categories",
+                            "brands"
+                        ]
+                    },
+                    "scope_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "excludes": {
+                        "type": "object",
+                        "properties": {
+                            "product_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "category_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "brand_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "first_order_only": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "description",
+                    "type",
+                    "value",
+                    "max_discount",
+                    "min_order_amount",
+                    "usage_limit_total",
+                    "usage_limit_per_customer",
+                    "used_count",
+                    "starts_at",
+                    "ends_at",
+                    "applies_to",
+                    "scope_ids",
+                    "excludes",
+                    "first_order_only",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Coupon"
+            },
+            "CouponType": {
+                "type": "string",
+                "description": "`coupons.type` (DATABASE-DESIGN \u00a73.8).\n| |\n|---|\n| `fixed` <br/> `value` taka off the eligible goods, never more than they cost. |\n| `percent` <br/> `value` percent off the eligible goods, capped at `max_discount`. |\n| `free_shipping` <br/> Delivery becomes free (DATABASE-DESIGN \u00a75.1 step 1); goods are not discounted. |",
+                "enum": [
+                    "fixed",
+                    "percent",
+                    "free_shipping"
+                ],
+                "title": "CouponType"
             },
             "CropProductImageRequest": {
                 "type": "object",
@@ -4648,6 +6758,493 @@
                 ],
                 "title": "HealthReportResource"
             },
+            "InventoryAdjustment": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "ADJ-2026-0012."
+                    },
+                    "location_id": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "damage",
+                            "loss",
+                            "found",
+                            "recount",
+                            "expiry",
+                            "correction",
+                            "gift_sample"
+                        ]
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "const": "applied"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity_before": {
+                                    "type": "integer"
+                                },
+                                "quantity_after": {
+                                    "type": "integer"
+                                },
+                                "change": {
+                                    "type": "integer"
+                                },
+                                "unit_cost": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity_before",
+                                "quantity_after",
+                                "change"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "location_id",
+                    "reason",
+                    "note",
+                    "status",
+                    "created_at",
+                    "items"
+                ],
+                "title": "InventoryAdjustment"
+            },
+            "InventoryMovement": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "location_id": {
+                        "type": "integer"
+                    },
+                    "variant_id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "product_name": {
+                        "type": "string"
+                    },
+                    "product_name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "purchase_in",
+                            "sale_out",
+                            "sale_cancelled_in",
+                            "customer_return_in",
+                            "courier_return_in",
+                            "adjustment_in",
+                            "adjustment_out",
+                            "damage_out",
+                            "transfer_in",
+                            "transfer_out",
+                            "opening_balance"
+                        ]
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "description": "Signed units."
+                    },
+                    "balance_after": {
+                        "type": "integer"
+                    },
+                    "unit_cost": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Unit cost the units moved at, 4 dp; only with catalog.view_cost."
+                    },
+                    "reference_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The source document: `stock_adjustment`, `product` (opening stock), and later order, purchase, shipment, refund."
+                    },
+                    "reference_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "reference_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The document's human number where it has one (ADJ-2026-0012)."
+                    },
+                    "user_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Staff member who recorded it; null for the system."
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "created_at",
+                    "location_id",
+                    "variant_id",
+                    "product_id",
+                    "product_name",
+                    "product_name_bn",
+                    "variant_name",
+                    "variant_name_bn",
+                    "sku",
+                    "image_url",
+                    "type",
+                    "quantity",
+                    "balance_after",
+                    "reference_type",
+                    "reference_id",
+                    "reference_number",
+                    "user_name",
+                    "note"
+                ],
+                "title": "InventoryMovement"
+            },
+            "InventoryReconciliation": {
+                "type": "object",
+                "properties": {
+                    "opening": {
+                        "type": "integer",
+                        "description": "On hand before the period (0 without `from`)."
+                    },
+                    "in": {
+                        "type": "integer",
+                        "description": "Units in during the period (\u2265 0)."
+                    },
+                    "out": {
+                        "type": "integer",
+                        "description": "Units out during the period (\u2264 0)."
+                    },
+                    "closing": {
+                        "type": "integer",
+                        "description": "opening + in + out."
+                    },
+                    "variants_checked": {
+                        "type": "integer",
+                        "description": "Variants (with a stock level in scope) whose ledger was checked."
+                    },
+                    "drift_count": {
+                        "type": "integer"
+                    },
+                    "drift_variant_ids": {
+                        "type": "array",
+                        "description": "Up to 50 variant ids whose ledger sum differs from on_hand.",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "balanced": {
+                        "type": "boolean",
+                        "description": "True when the ledger matches the stock levels for every variant in scope."
+                    },
+                    "stock_value": {
+                        "type": "string",
+                        "description": "Current stock value at cost in scope; only with catalog.view_cost."
+                    }
+                },
+                "required": [
+                    "opening",
+                    "in",
+                    "out",
+                    "closing",
+                    "variants_checked",
+                    "drift_count",
+                    "drift_variant_ids",
+                    "balanced"
+                ],
+                "title": "InventoryReconciliation"
+            },
+            "InventoryStockRow": {
+                "type": "object",
+                "properties": {
+                    "variant_id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "product_name": {
+                        "type": "string"
+                    },
+                    "product_name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "on_hand": {
+                        "type": "integer"
+                    },
+                    "reserved": {
+                        "type": "integer"
+                    },
+                    "available": {
+                        "type": "integer",
+                        "description": "on_hand \u2212 reserved. May be negative only if the ledger has drifted."
+                    },
+                    "reorder_point": {
+                        "type": "integer"
+                    },
+                    "state": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`out` (available \u2264 0), `low` (0 < available \u2264 reorder point) or null.",
+                        "enum": [
+                            "low",
+                            "out",
+                            null
+                        ]
+                    },
+                    "unit_cost": {
+                        "type": "string",
+                        "description": "Unit cost basis (weighted-average cost, else current cost price), 4 dp; only with catalog.view_cost."
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "on_hand \u00d7 unit cost, 2 dp; only with catalog.view_cost."
+                    },
+                    "elsewhere": {
+                        "type": "array",
+                        "description": "On hand at the other active locations (empty while there is only one).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "location_id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "on_hand": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "location_id",
+                                "code",
+                                "on_hand"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "variant_id",
+                    "product_id",
+                    "product_name",
+                    "product_name_bn",
+                    "variant_name",
+                    "variant_name_bn",
+                    "sku",
+                    "image_url",
+                    "on_hand",
+                    "reserved",
+                    "available",
+                    "reorder_point",
+                    "state",
+                    "elsewhere"
+                ],
+                "title": "InventoryStockRow"
+            },
+            "InventorySummary": {
+                "type": "object",
+                "properties": {
+                    "location_id": {
+                        "type": "integer",
+                        "description": "The location the counts and the on-hand figures are for."
+                    },
+                    "counts": {
+                        "type": "object",
+                        "description": "Rows per tab: every variant, low (0 < available \u2264 reorder point), out (available \u2264 0), idle (stock but no movement for 90 days).",
+                        "properties": {
+                            "all": {
+                                "type": "integer"
+                            },
+                            "low": {
+                                "type": "integer"
+                            },
+                            "out": {
+                                "type": "integer"
+                            },
+                            "idle": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "all",
+                            "low",
+                            "out",
+                            "idle"
+                        ]
+                    },
+                    "on_hand": {
+                        "type": "integer"
+                    },
+                    "reserved": {
+                        "type": "integer",
+                        "description": "Units held for open orders, not yet shipped."
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Stock value at cost at this location; only with catalog.view_cost."
+                    },
+                    "total_value": {
+                        "type": "string",
+                        "description": "Stock value at cost across every active location; only with catalog.view_cost."
+                    },
+                    "locations": {
+                        "type": "array",
+                        "description": "Every active location, the default first. `value` only with catalog.view_cost.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "is_default": {
+                                    "type": "boolean"
+                                },
+                                "on_hand": {
+                                    "type": "integer"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "code",
+                                "name",
+                                "name_bn",
+                                "is_default",
+                                "on_hand"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "location_id",
+                    "counts",
+                    "on_hand",
+                    "reserved",
+                    "locations"
+                ],
+                "title": "InventorySummary"
+            },
             "LoginRequest": {
                 "type": "object",
                 "description": "`POST /api/v1/admin/auth/login` \u2014 `{ email, password, remember? }`.",
@@ -4692,6 +7289,715 @@
                     "position"
                 ],
                 "title": "MoveCategoryRequest"
+            },
+            "Order": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "on_hold",
+                            "confirmed",
+                            "processing",
+                            "ready_to_ship",
+                            "shipped",
+                            "delivered",
+                            "completed",
+                            "cancelled",
+                            "returned",
+                            "partially_returned"
+                        ]
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "enum": [
+                            "unpaid",
+                            "pending",
+                            "partially_paid",
+                            "paid",
+                            "partially_refunded",
+                            "refunded",
+                            "failed"
+                        ]
+                    },
+                    "fulfillment_status": {
+                        "type": "string",
+                        "enum": [
+                            "unfulfilled",
+                            "partially_fulfilled",
+                            "fulfilled",
+                            "returned"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "web",
+                            "admin",
+                            "phone",
+                            "facebook",
+                            "whatsapp"
+                        ]
+                    },
+                    "payment_method": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "pii_masked": {
+                        "type": "boolean"
+                    },
+                    "customer": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "orders_count": {
+                                "type": "integer"
+                            },
+                            "delivered_orders_count": {
+                                "type": "integer"
+                            },
+                            "total_spent": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "phone",
+                            "orders_count",
+                            "delivered_orders_count",
+                            "total_spent"
+                        ]
+                    },
+                    "shipping": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "alt_phone": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "division": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "district": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "upazila": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "area": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "landmark": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "postcode": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone",
+                            "alt_phone",
+                            "division",
+                            "district",
+                            "upazila",
+                            "area",
+                            "address",
+                            "landmark",
+                            "postcode"
+                        ]
+                    },
+                    "totals": {
+                        "type": "object",
+                        "properties": {
+                            "subtotal": {
+                                "type": "string"
+                            },
+                            "discount_total": {
+                                "type": "string"
+                            },
+                            "coupon_code": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "coupon_discount": {
+                                "type": "string"
+                            },
+                            "promotion_discount": {
+                                "type": "string"
+                            },
+                            "shipping_charge": {
+                                "type": "string"
+                            },
+                            "shipping_discount": {
+                                "type": "string"
+                            },
+                            "tax_total": {
+                                "type": "string"
+                            },
+                            "grand_total": {
+                                "type": "string"
+                            },
+                            "paid_total": {
+                                "type": "string"
+                            },
+                            "due_total": {
+                                "type": "string"
+                            },
+                            "refunded_total": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "subtotal",
+                            "discount_total",
+                            "coupon_code",
+                            "coupon_discount",
+                            "promotion_discount",
+                            "shipping_charge",
+                            "shipping_discount",
+                            "tax_total",
+                            "grand_total",
+                            "paid_total",
+                            "due_total",
+                            "refunded_total"
+                        ]
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "variant_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "product_name": {
+                                    "type": "string"
+                                },
+                                "product_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "sku": {
+                                    "type": "string"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "discount": {
+                                    "type": "string"
+                                },
+                                "line_total": {
+                                    "type": "string"
+                                },
+                                "cost_price_snapshot": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "quantity_shipped": {
+                                    "type": "integer"
+                                },
+                                "quantity_returned": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "variant_id",
+                                "product_id",
+                                "product_name",
+                                "product_name_bn",
+                                "variant_name",
+                                "sku",
+                                "unit_price",
+                                "quantity",
+                                "discount",
+                                "line_total",
+                                "cost_price_snapshot",
+                                "quantity_shipped",
+                                "quantity_returned"
+                            ]
+                        }
+                    },
+                    "payments": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cod",
+                                        "sslcommerz",
+                                        "bkash",
+                                        "nagad",
+                                        "card",
+                                        "bank_transfer",
+                                        "cash"
+                                    ]
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "pending",
+                                        "initiated",
+                                        "authorised",
+                                        "paid",
+                                        "failed",
+                                        "cancelled",
+                                        "expired"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string"
+                                },
+                                "fee_amount": {
+                                    "type": "string"
+                                },
+                                "transaction_id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "paid_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "method",
+                                "status",
+                                "amount",
+                                "fee_amount",
+                                "transaction_id",
+                                "paid_at"
+                            ]
+                        }
+                    },
+                    "timeline": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "placed",
+                                        "status_changed",
+                                        "payment_status_changed",
+                                        "fulfillment_status_changed",
+                                        "note"
+                                    ]
+                                },
+                                "field": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "from": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "to": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "user_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "is_customer_visible": {
+                                    "type": "boolean"
+                                },
+                                "created_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "type",
+                                "field",
+                                "from",
+                                "to",
+                                "description",
+                                "user_id",
+                                "is_customer_visible",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    "risk": {
+                        "type": "object",
+                        "properties": {
+                            "score": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "level": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "verification_status": {
+                                "type": "string",
+                                "enum": [
+                                    "not_required",
+                                    "pending",
+                                    "verified",
+                                    "failed"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "score",
+                            "level",
+                            "verification_status"
+                        ]
+                    },
+                    "customer_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "internal_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cancel_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cancel_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "placed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "confirmed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "shipped_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "delivered_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cancelled_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "status",
+                    "payment_status",
+                    "fulfillment_status",
+                    "source",
+                    "payment_method",
+                    "currency",
+                    "pii_masked",
+                    "customer",
+                    "shipping",
+                    "totals",
+                    "items",
+                    "payments",
+                    "timeline",
+                    "risk",
+                    "customer_note",
+                    "internal_note",
+                    "cancel_reason",
+                    "cancel_note",
+                    "placed_at",
+                    "confirmed_at",
+                    "shipped_at",
+                    "delivered_at",
+                    "cancelled_at"
+                ],
+                "title": "Order"
+            },
+            "OrderListItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "on_hold",
+                            "confirmed",
+                            "processing",
+                            "ready_to_ship",
+                            "shipped",
+                            "delivered",
+                            "completed",
+                            "cancelled",
+                            "returned",
+                            "partially_returned"
+                        ]
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "enum": [
+                            "unpaid",
+                            "pending",
+                            "partially_paid",
+                            "paid",
+                            "partially_refunded",
+                            "refunded",
+                            "failed"
+                        ]
+                    },
+                    "fulfillment_status": {
+                        "type": "string",
+                        "enum": [
+                            "unfulfilled",
+                            "partially_fulfilled",
+                            "fulfilled",
+                            "returned"
+                        ]
+                    },
+                    "payment_method": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "web",
+                            "admin",
+                            "phone",
+                            "facebook",
+                            "whatsapp"
+                        ]
+                    },
+                    "customer_id": {
+                        "type": "integer"
+                    },
+                    "customer_name": {
+                        "type": "string"
+                    },
+                    "customer_phone_masked": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "***"
+                                ]
+                            }
+                        ]
+                    },
+                    "district": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "items_count": {
+                        "type": "integer"
+                    },
+                    "grand_total": {
+                        "type": "string"
+                    },
+                    "due_total": {
+                        "type": "string"
+                    },
+                    "risk_level": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            null
+                        ]
+                    },
+                    "verification_status": {
+                        "type": "string",
+                        "enum": [
+                            "not_required",
+                            "pending",
+                            "verified",
+                            "failed"
+                        ]
+                    },
+                    "placed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "status",
+                    "payment_status",
+                    "fulfillment_status",
+                    "payment_method",
+                    "source",
+                    "customer_id",
+                    "customer_name",
+                    "customer_phone_masked",
+                    "district",
+                    "items_count",
+                    "grand_total",
+                    "due_total",
+                    "risk_level",
+                    "verification_status",
+                    "placed_at",
+                    "created_at"
+                ],
+                "title": "OrderListItem"
             },
             "ProblemDetails": {
                 "type": "object",
@@ -5335,6 +8641,17 @@
                 ],
                 "title": "ProductRelation"
             },
+            "ProductScopeType": {
+                "type": "string",
+                "description": "What a coupon or promotion applies to (`coupons.applies_to`, promotion `rules.scope.applies_to`).\n",
+                "enum": [
+                    "all",
+                    "products",
+                    "categories",
+                    "brands"
+                ],
+                "title": "ProductScopeType"
+            },
             "ProductStatus": {
                 "type": "string",
                 "description": "`products.status`. `draft` is invisible to the storefront; `active` is live once `published_at` has passed; `archived` is retired but kept (orders reference it).\n",
@@ -5553,6 +8870,20 @@
                 ],
                 "title": "StaffResource"
             },
+            "StockAdjustmentReason": {
+                "type": "string",
+                "description": "`stock_adjustments.reason` (DATABASE-DESIGN \u00a73.2), plus `gift_sample` \u2014 stock given away as a gift, giveaway or influencer sample, which is a real outflow but neither a loss nor a sale. Each reason fixes the direction it may move stock and the movement type it writes: damage \u2192 damage_out; loss, expiry, gift/sample \u2192 adjustment_out; found \u2192 adjustment_in; a recount or a correction may go either way.\n",
+                "enum": [
+                    "damage",
+                    "loss",
+                    "found",
+                    "recount",
+                    "expiry",
+                    "correction",
+                    "gift_sample"
+                ],
+                "title": "StockAdjustmentReason"
+            },
             "StoreAttributeRequest": {
                 "type": "object",
                 "description": "`POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)\nor `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).",
@@ -5738,6 +9069,123 @@
                     "name"
                 ],
                 "title": "StoreCategoryRequest"
+            },
+            "StoreCouponRequest": {
+                "type": "object",
+                "description": "`POST /coupons` \u2014 needs marketing.manage.",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "pattern": "^[A-Z0-9][A-Z0-9_-]*$",
+                        "maxLength": 40
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/CouponType"
+                    },
+                    "value": {
+                        "type": "string",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "max_discount": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "min_order_amount": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "usage_limit_total": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "usage_limit_per_customer": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "applies_to": {
+                        "$ref": "#/components/schemas/ProductScopeType"
+                    },
+                    "scope_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 500,
+                        "uniqueItems": true
+                    },
+                    "excludes": {
+                        "type": "object",
+                        "properties": {
+                            "product_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            },
+                            "category_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            },
+                            "brand_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            }
+                        }
+                    },
+                    "first_order_only": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "code",
+                    "type",
+                    "value",
+                    "applies_to"
+                ],
+                "title": "StoreCouponRequest"
             },
             "StoreProductImageRequest": {
                 "type": "object",
@@ -6143,6 +9591,69 @@
                     "category_ids"
                 ],
                 "title": "StoreProductRequest"
+            },
+            "StoreStockAdjustmentRequest": {
+                "type": "object",
+                "description": "`POST /inventory/adjustments` \u2014 needs inventory.adjust and an `Idempotency-Key`\n(a double-submitted adjustment would move the stock twice).\n\nEach line names a variant and EITHER `quantity` (a signed change, never 0: -2 for two\ndamaged units) OR `counted` (what a stock count found; the server works out the\nchange under the row lock). Which way a reason may move stock, and that on hand never\ndrops below what is reserved, is checked by AdjustStock against the locked row.",
+                "properties": {
+                    "location_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The stock location; the default location when omitted."
+                    },
+                    "reason": {
+                        "$ref": "#/components/schemas/StockAdjustmentReason"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "Signed change in units (e.g. -2). Omit when sending `counted`.",
+                                    "minimum": -100000,
+                                    "maximum": 100000
+                                },
+                                "counted": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "The on-hand quantity a stock count found. Omit when sending `quantity`.",
+                                    "minimum": 0,
+                                    "maximum": 100000
+                                }
+                            },
+                            "required": [
+                                "variant_id"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "reason",
+                    "lines"
+                ],
+                "title": "StoreStockAdjustmentRequest"
             },
             "StorefrontBrand": {
                 "type": "object",
@@ -7239,6 +10750,21 @@
                 },
                 "title": "UpdateBrandRequest"
             },
+            "UpdateCartItemRequest": {
+                "type": "object",
+                "description": "`PATCH /cart/items/{item}` `{ quantity }` \u2014 1\u202699; remove a line with DELETE.",
+                "properties": {
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99
+                    }
+                },
+                "required": [
+                    "quantity"
+                ],
+                "title": "UpdateCartItemRequest"
+            },
             "UpdateCategoryRequest": {
                 "type": "object",
                 "description": "`PATCH /categories/{category}` \u2014 every field optional; only the fields sent\nchange. `slug: null` (or omitted) keeps the current slug. The parent and order\nchange only through `POST /categories/{category}/move`.",
@@ -7295,6 +10821,123 @@
                     }
                 },
                 "title": "UpdateCategoryRequest"
+            },
+            "UpdateCouponRequest": {
+                "type": "object",
+                "description": "`PUT /coupons/{coupon}` \u2014 the whole document; needs marketing.manage.",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "pattern": "^[A-Z0-9][A-Z0-9_-]*$",
+                        "maxLength": 40
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/CouponType"
+                    },
+                    "value": {
+                        "type": "string",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "max_discount": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "min_order_amount": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "usage_limit_total": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "usage_limit_per_customer": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "applies_to": {
+                        "$ref": "#/components/schemas/ProductScopeType"
+                    },
+                    "scope_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 500,
+                        "uniqueItems": true
+                    },
+                    "excludes": {
+                        "type": "object",
+                        "properties": {
+                            "product_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            },
+                            "category_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            },
+                            "brand_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "maxItems": 500
+                            }
+                        }
+                    },
+                    "first_order_only": {
+                        "type": "boolean"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "code",
+                    "type",
+                    "value",
+                    "applies_to"
+                ],
+                "title": "UpdateCouponRequest"
             },
             "UpdateProductImageRequest": {
                 "type": "object",

@@ -10,6 +10,7 @@ import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductInfoPanel } from '@/components/product/ProductInfoPanel';
 import { AgeBlock, PriceBlock, ProductTitle, RatingRow, StockLine } from '@/components/product/ProductSummary';
 import { PurchasePanel } from '@/components/product/PurchasePanel';
+import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { RelatedProducts } from '@/components/product/RelatedProducts';
 import { TrustStrip } from '@/components/product/TrustStrip';
 import { VariantSelector } from '@/components/product/VariantSelector';
@@ -165,6 +166,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
             <div className="mt-12">
                 <RelatedProducts products={product.related} locale={locale} t={t} />
+            </div>
+
+            {/* Spaces itself: absent (no gap) until it has cards. */}
+            <div className="mt-12 empty:hidden">
+                <RecentlyViewed slug={product.slug} locale={locale} title={t.pdp.recentlyViewed} t={t.listing} />
             </div>
 
             <AddToCartBar

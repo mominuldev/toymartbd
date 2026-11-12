@@ -74,6 +74,10 @@ const ICONS = {
     warningCircle: 'WarningCircle',
     // ProductCard Stock=OutOfStock "Notify me" (Figma 100:741).
     bellFill: 'Bell:fill',
+    // Search suggestions (Figma 115:887) and the Home USP band (144:2033 / 144:2062).
+    storefront: 'Storefront',
+    arrowRight: 'ArrowRight',
+    arrowCounterClockwiseFill: 'ArrowCounterClockwise:fill',
 };
 
 const require = createRequire(import.meta.url);

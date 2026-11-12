@@ -436,6 +436,190 @@ export interface paths {
         patch: operations["v1.admin.attributes.values.update"];
         trace?: never;
     };
+    "/admin/inventory/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inventory/summary` — stat cards, location cards and tab counts for one location */
+        get: operations["v1.admin.inventory.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inventory/stock` — one row per variant at a location, cursor-paginated,
+         *     ordered by product then variant
+         */
+        get: operations["v1.admin.inventory.stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inventory/movements` — the append-only stock ledger, newest first, cursor-paginated */
+        get: operations["v1.admin.inventory.movements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/movements/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inventory/movements/reconciliation` — opening / in / out / closing units for the
+         *     period and the ledger-vs-levels invariant check, for the same scope as the ledger
+         *     (the type filter does not apply: a balance needs every movement)
+         */
+        get: operations["v1.admin.inventory.movements.reconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key`.
+         *     422 names each refused line: no change, a direction the reason does not allow
+         *     (found only adds; damage, loss, expiry and gift/sample only remove), or on hand
+         *     dropping below what is reserved for open orders
+         */
+        post: operations["v1.admin.inventory.adjustments.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/coupons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /coupons` — cursor-paginated, needs marketing.view
+         * @description Filters: `filter[search]` (code contains), `filter[status]` = `active|inactive`.
+         *     Sorts: `code`, `created_at`, `ends_at` (prefix `-` for descending; default `-created_at`).
+         */
+        get: operations["v1.admin.coupons.index"];
+        put?: never;
+        /** `POST /coupons` — needs marketing.manage */
+        post: operations["v1.admin.coupons.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/coupons/{coupon}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /coupons/{coupon}` — needs marketing.view */
+        get: operations["v1.admin.coupons.show"];
+        /** `PUT /coupons/{coupon}` — replace the coupon's terms; needs marketing.manage */
+        put: operations["v1.admin.coupons.update"];
+        post?: never;
+        /** `DELETE /coupons/{coupon}` — deactivates (idempotent); needs marketing.manage */
+        delete: operations["v1.admin.coupons.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /orders` — cursor-paginated, needs orders.view. `meta.counts` holds one count
+         *     per status (plus `all`) under every filter except `status`, for the board's tabs
+         * @description Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,
+         *     `filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),
+         *     `filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,
+         *     inclusive), `filter[search]` (order number, the last 4+ phone digits, or the name).
+         *     Sorts: `created_at`, `grand_total`, each with `-` for descending (default
+         *     `-created_at`). Anything else is a 400.
+         */
+        get: operations["v1.admin.orders.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /orders/{order}` — needs orders.view. Full phone and address only with
+         *     customers.view_pii; item cost only with catalog.view_cost
+         */
+        get: operations["v1.admin.orders.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/ping": {
         parameters: {
             query?: never;
@@ -696,6 +880,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /cart` — the priced cart; pass `district_id` (and `upazila_id`) to include delivery */
+        get: operations["v1.storefront.cart.show"];
+        put?: never;
+        /** `POST /cart` — start an empty cart; returns its token */
+        post: operations["v1.storefront.cart.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/cart/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /cart/items` — add a variant (or raise its quantity). Without `X-Cart-Token`
+         *     a new cart is created and the response is 201
+         */
+        post: operations["v1.storefront.cart.items.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/cart/items/{item}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /cart/items/{item}` — remove a line */
+        delete: operations["v1.storefront.cart.items.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /cart/items/{item}` — set a line's quantity */
+        patch: operations["v1.storefront.cart.items.update"];
+        trace?: never;
+    };
+    "/storefront/cart/coupon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /cart/coupon` — apply a coupon code (replaces any coupon already on the cart) */
+        post: operations["v1.storefront.cart.coupon.store"];
+        /** `DELETE /cart/coupon` — remove the coupon */
+        delete: operations["v1.storefront.cart.coupon.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -732,6 +990,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AddCartItemRequest
+         * @description `POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is
+         *     created (201) and its `token` returned for the storefront to store. Stock and
+         *     sellability are checked by the Action (422 on `quantity` / `variant_id`).
+         */
+        AddCartItemRequest: {
+            variant_id: number;
+            quantity: number;
+        };
+        /**
+         * ApplyCouponRequest
+         * @description `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason.
+         */
+        ApplyCouponRequest: {
+            code: string;
+        };
         /** Attribute */
         Attribute: {
             id: number;
@@ -795,6 +1070,86 @@ export interface components {
              */
             updated_at: string;
         };
+        /** Cart */
+        Cart: {
+            /** @description Opaque cart token: store it in an httpOnly cookie and send it back as `X-Cart-Token`. */
+            token: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC. Extended by every change.
+             */
+            expires_at: string;
+            item_count: number;
+            /**
+             * @description One entry per line. `sellable` false: the item can no longer be bought (it is
+             *     excluded from every total; remove it). `in_stock` false: `quantity` exceeds
+             *     `available_quantity` (checkout will refuse until it is lowered).
+             */
+            items: {
+                id: number;
+                variant_id: number;
+                product: {
+                    id: number;
+                    name: string;
+                    name_bn: string | null;
+                    slug: string;
+                };
+                variant: {
+                    sku: string;
+                    name: string | null;
+                    name_bn: string | null;
+                };
+                quantity: number;
+                available_quantity: number;
+                in_stock: boolean;
+                sellable: boolean;
+                unit_price: string;
+                added_unit_price: string;
+                price_changed: boolean;
+                subtotal: string;
+                discount: string;
+                total: string;
+            }[];
+            /**
+             * @description The coupon on the cart, if any. `applied` false: `reason` (stable code) and
+             *     `message` (localised) say why; the cart keeps it so the customer sees why.
+             */
+            coupon: {
+                code: string;
+                applied: boolean;
+                reason: string | null;
+                message: string | null;
+                discount: string;
+                free_shipping: boolean;
+            } | null;
+            /**
+             * @description Signed rows in pipeline order (subtotal, each promotion and the coupon as
+             *     negatives, then delivery) that sum exactly to `totals.grand_total`.
+             */
+            adjustments: {
+                /** @enum {string} */
+                type: "subtotal" | "promotion" | "coupon" | "shipping";
+                id: number | null;
+                label: string | null;
+                label_bn: string | null;
+                amount: string;
+            }[];
+            /**
+             * @description `shipping_charge` is null without a destination (`?district_id=`) or when it is not
+             *     serviced; `grand_total` then excludes delivery.
+             */
+            totals: {
+                subtotal: string;
+                promotion_discount: string;
+                coupon_discount: string;
+                discount_total: string;
+                shipping_charge: string | null;
+                grand_total: string;
+            };
+            delivery: components["schemas"]["DeliveryQuote"] | null;
+            /** @description Every line sellable and in stock, the coupon (if any) applied and a serviced destination given. */
+            checkout_ready: boolean;
+        };
         /** Category */
         Category: {
             id: number;
@@ -829,6 +1184,45 @@ export interface components {
          * @enum {string}
          */
         CategoryStatus: "active" | "archived";
+        /** Coupon */
+        Coupon: {
+            id: number;
+            code: string;
+            description: string | null;
+            /** @enum {string} */
+            type: "fixed" | "percent" | "free_shipping";
+            value: string;
+            max_discount: string | null;
+            min_order_amount: string;
+            usage_limit_total: number | null;
+            usage_limit_per_customer: number | null;
+            used_count: number;
+            starts_at: string | null;
+            ends_at: string | null;
+            /** @enum {string} */
+            applies_to: "all" | "products" | "categories" | "brands";
+            scope_ids: number[];
+            excludes: {
+                product_ids?: number[];
+                category_ids?: number[];
+                brand_ids?: number[];
+            };
+            first_order_only: boolean;
+            is_active: boolean;
+            created_at: string | null;
+            updated_at: string | null;
+        };
+        /**
+         * CouponType
+         * @description `coupons.type` (DATABASE-DESIGN §3.8).
+         *     | |
+         *     |---|
+         *     | `fixed` <br/> `value` taka off the eligible goods, never more than they cost. |
+         *     | `percent` <br/> `value` percent off the eligible goods, capped at `max_discount`. |
+         *     | `free_shipping` <br/> Delivery becomes free (DATABASE-DESIGN §5.1 step 1); goods are not discounted. |
+         * @enum {string}
+         */
+        CouponType: "fixed" | "percent" | "free_shipping";
         /**
          * CropProductImageRequest
          * @description `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the
@@ -937,6 +1331,143 @@ export interface components {
             last_courier_sync: null;
             checked_at: string;
         };
+        /** InventoryAdjustment */
+        InventoryAdjustment: {
+            id: number;
+            /** @description ADJ-2026-0012. */
+            number: string;
+            location_id: number;
+            /** @enum {string} */
+            reason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample";
+            note: string | null;
+            /** @constant */
+            status: "applied";
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            items: {
+                variant_id: number;
+                quantity_before: number;
+                quantity_after: number;
+                change: number;
+                unit_cost?: string | null;
+            }[];
+        };
+        /** InventoryMovement */
+        InventoryMovement: {
+            id: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            location_id: number;
+            variant_id: number;
+            product_id: number;
+            product_name: string;
+            product_name_bn: string | null;
+            variant_name: string | null;
+            variant_name_bn: string | null;
+            sku: string;
+            image_url: string | null;
+            /** @enum {string} */
+            type: "purchase_in" | "sale_out" | "sale_cancelled_in" | "customer_return_in" | "courier_return_in" | "adjustment_in" | "adjustment_out" | "damage_out" | "transfer_in" | "transfer_out" | "opening_balance";
+            /** @description Signed units. */
+            quantity: number;
+            balance_after: number;
+            /** @description Unit cost the units moved at, 4 dp; only with catalog.view_cost. */
+            unit_cost?: string | null;
+            /** @description The source document: `stock_adjustment`, `product` (opening stock), and later order, purchase, shipment, refund. */
+            reference_type: string | null;
+            reference_id: number | null;
+            /** @description The document's human number where it has one (ADJ-2026-0012). */
+            reference_number: string | null;
+            /** @description Staff member who recorded it; null for the system. */
+            user_name: string | null;
+            note: string | null;
+        };
+        /** InventoryReconciliation */
+        InventoryReconciliation: {
+            /** @description On hand before the period (0 without `from`). */
+            opening: number;
+            /** @description Units in during the period (≥ 0). */
+            in: number;
+            /** @description Units out during the period (≤ 0). */
+            out: number;
+            /** @description opening + in + out. */
+            closing: number;
+            /** @description Variants (with a stock level in scope) whose ledger was checked. */
+            variants_checked: number;
+            drift_count: number;
+            /** @description Up to 50 variant ids whose ledger sum differs from on_hand. */
+            drift_variant_ids: number[];
+            /** @description True when the ledger matches the stock levels for every variant in scope. */
+            balanced: boolean;
+            /** @description Current stock value at cost in scope; only with catalog.view_cost. */
+            stock_value?: string;
+        };
+        /** InventoryStockRow */
+        InventoryStockRow: {
+            variant_id: number;
+            product_id: number;
+            product_name: string;
+            product_name_bn: string | null;
+            variant_name: string | null;
+            variant_name_bn: string | null;
+            sku: string;
+            image_url: string | null;
+            on_hand: number;
+            reserved: number;
+            /** @description on_hand − reserved. May be negative only if the ledger has drifted. */
+            available: number;
+            reorder_point: number;
+            /**
+             * @description `out` (available ≤ 0), `low` (0 < available ≤ reorder point) or null.
+             * @enum {string|null}
+             */
+            state: "low" | "out" | null;
+            /** @description Unit cost basis (weighted-average cost, else current cost price), 4 dp; only with catalog.view_cost. */
+            unit_cost?: string;
+            /** @description on_hand × unit cost, 2 dp; only with catalog.view_cost. */
+            value?: string;
+            /** @description On hand at the other active locations (empty while there is only one). */
+            elsewhere: {
+                location_id: number;
+                code: string;
+                on_hand: number;
+            }[];
+        };
+        /** InventorySummary */
+        InventorySummary: {
+            /** @description The location the counts and the on-hand figures are for. */
+            location_id: number;
+            /** @description Rows per tab: every variant, low (0 < available ≤ reorder point), out (available ≤ 0), idle (stock but no movement for 90 days). */
+            counts: {
+                all: number;
+                low: number;
+                out: number;
+                idle: number;
+            };
+            on_hand: number;
+            /** @description Units held for open orders, not yet shipped. */
+            reserved: number;
+            /** @description Stock value at cost at this location; only with catalog.view_cost. */
+            value?: string;
+            /** @description Stock value at cost across every active location; only with catalog.view_cost. */
+            total_value?: string;
+            /** @description Every active location, the default first. `value` only with catalog.view_cost. */
+            locations: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                is_default: boolean;
+                on_hand: number;
+                value?: string;
+            }[];
+        };
         /**
          * LoginRequest
          * @description `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`.
@@ -957,6 +1488,137 @@ export interface components {
         MoveCategoryRequest: {
             parent_id: number | null;
             position: number;
+        };
+        /** Order */
+        Order: {
+            id: number;
+            number: string;
+            /** @enum {string} */
+            status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+            /** @enum {string} */
+            payment_status: "unpaid" | "pending" | "partially_paid" | "paid" | "partially_refunded" | "refunded" | "failed";
+            /** @enum {string} */
+            fulfillment_status: "unfulfilled" | "partially_fulfilled" | "fulfilled" | "returned";
+            /** @enum {string} */
+            source: "web" | "admin" | "phone" | "facebook" | "whatsapp";
+            payment_method: string | null;
+            currency: string;
+            pii_masked: boolean;
+            customer: {
+                id: number;
+                name: string;
+                phone: string;
+                orders_count: number;
+                delivered_orders_count: number;
+                total_spent: string;
+            };
+            shipping: {
+                name: string;
+                phone: string;
+                alt_phone: string | null;
+                division: string | null;
+                district: string | null;
+                upazila: string | null;
+                area: string | null;
+                address: string | null;
+                landmark: string | null;
+                postcode: string | null;
+            };
+            totals: {
+                subtotal: string;
+                discount_total: string;
+                coupon_code: string | null;
+                coupon_discount: string;
+                promotion_discount: string;
+                shipping_charge: string;
+                shipping_discount: string;
+                tax_total: string;
+                grand_total: string;
+                paid_total: string;
+                due_total: string;
+                refunded_total: string;
+            };
+            items: {
+                id: number;
+                variant_id: number | null;
+                product_id: number | null;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                sku: string;
+                unit_price: string;
+                quantity: number;
+                discount: string;
+                line_total: string;
+                cost_price_snapshot: string | null;
+                quantity_shipped: number;
+                quantity_returned: number;
+            }[];
+            payments: {
+                id: number;
+                /** @enum {string} */
+                method: "cod" | "sslcommerz" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
+                /** @enum {string} */
+                status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
+                amount: string;
+                fee_amount: string;
+                transaction_id: string | null;
+                paid_at: string | null;
+            }[];
+            timeline: {
+                id: number;
+                /** @enum {string} */
+                type: "placed" | "status_changed" | "payment_status_changed" | "fulfillment_status_changed" | "note";
+                field: string | null;
+                from: string | null;
+                to: string | null;
+                description: string | null;
+                user_id: number | null;
+                is_customer_visible: boolean;
+                created_at: string | null;
+            }[];
+            risk: {
+                score: number | null;
+                level: string | null;
+                /** @enum {string} */
+                verification_status: "not_required" | "pending" | "verified" | "failed";
+            };
+            customer_note: string | null;
+            internal_note: string | null;
+            cancel_reason: string | null;
+            cancel_note: string | null;
+            placed_at: string | null;
+            confirmed_at: string | null;
+            shipped_at: string | null;
+            delivered_at: string | null;
+            cancelled_at: string | null;
+        };
+        /** OrderListItem */
+        OrderListItem: {
+            id: number;
+            number: string;
+            /** @enum {string} */
+            status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+            /** @enum {string} */
+            payment_status: "unpaid" | "pending" | "partially_paid" | "paid" | "partially_refunded" | "refunded" | "failed";
+            /** @enum {string} */
+            fulfillment_status: "unfulfilled" | "partially_fulfilled" | "fulfilled" | "returned";
+            payment_method: string | null;
+            /** @enum {string} */
+            source: "web" | "admin" | "phone" | "facebook" | "whatsapp";
+            customer_id: number;
+            customer_name: string;
+            customer_phone_masked: string | "***";
+            district: string | null;
+            items_count: number;
+            grand_total: string;
+            due_total: string;
+            /** @enum {string|null} */
+            risk_level: "low" | "medium" | "high" | null;
+            /** @enum {string} */
+            verification_status: "not_required" | "pending" | "verified" | "failed";
+            placed_at: string | null;
+            created_at: string | null;
         };
         /**
          * ProblemDetails
@@ -1119,6 +1781,12 @@ export interface components {
             is_auto: boolean;
         };
         /**
+         * ProductScopeType
+         * @description What a coupon or promotion applies to (`coupons.applies_to`, promotion `rules.scope.applies_to`).
+         * @enum {string}
+         */
+        ProductScopeType: "all" | "products" | "categories" | "brands";
+        /**
          * ProductStatus
          * @description `products.status`. `draft` is invisible to the storefront; `active` is live once `published_at` has passed; `archived` is retired but kept (orders reference it).
          * @enum {string}
@@ -1195,6 +1863,12 @@ export interface components {
             roles: string[];
         };
         /**
+         * StockAdjustmentReason
+         * @description `stock_adjustments.reason` (DATABASE-DESIGN §3.2), plus `gift_sample` — stock given away as a gift, giveaway or influencer sample, which is a real outflow but neither a loss nor a sale. Each reason fixes the direction it may move stock and the movement type it writes: damage → damage_out; loss, expiry, gift/sample → adjustment_out; found → adjustment_in; a recount or a correction may go either way.
+         * @enum {string}
+         */
+        StockAdjustmentReason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample";
+        /**
          * StoreAttributeRequest
          * @description `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)
          *     or `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).
@@ -1248,6 +1922,33 @@ export interface components {
             icon?: string | null;
             is_featured?: boolean;
             show_in_menu?: boolean;
+            is_active?: boolean;
+        };
+        /**
+         * StoreCouponRequest
+         * @description `POST /coupons` — needs marketing.manage.
+         */
+        StoreCouponRequest: {
+            code: string;
+            description?: string | null;
+            type: components["schemas"]["CouponType"];
+            value: string;
+            max_discount?: string | null;
+            min_order_amount?: string | null;
+            usage_limit_total?: number | null;
+            usage_limit_per_customer?: number | null;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+            applies_to: components["schemas"]["ProductScopeType"];
+            scope_ids?: number[];
+            excludes?: {
+                product_ids?: number[];
+                category_ids?: number[];
+                brand_ids?: number[];
+            };
+            first_order_only?: boolean;
             is_active?: boolean;
         };
         /**
@@ -1339,6 +2040,29 @@ export interface components {
                 type: components["schemas"]["RelationType"];
                 position?: number | null;
                 reason_note?: string | null;
+            }[];
+        };
+        /**
+         * StoreStockAdjustmentRequest
+         * @description `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key`
+         *     (a double-submitted adjustment would move the stock twice).
+         *
+         *     Each line names a variant and EITHER `quantity` (a signed change, never 0: -2 for two
+         *     damaged units) OR `counted` (what a stock count found; the server works out the
+         *     change under the row lock). Which way a reason may move stock, and that on hand never
+         *     drops below what is reserved, is checked by AdjustStock against the locked row.
+         */
+        StoreStockAdjustmentRequest: {
+            /** @description The stock location; the default location when omitted. */
+            location_id?: number | null;
+            reason: components["schemas"]["StockAdjustmentReason"];
+            note?: string | null;
+            lines: {
+                variant_id: number;
+                /** @description Signed change in units (e.g. -2). Omit when sending `counted`. */
+                quantity?: number | null;
+                /** @description The on-hand quantity a stock count found. Omit when sending `quantity`. */
+                counted?: number | null;
             }[];
         };
         /** StorefrontBrand */
@@ -1586,6 +2310,13 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * UpdateCartItemRequest
+         * @description `PATCH /cart/items/{item}` `{ quantity }` — 1…99; remove a line with DELETE.
+         */
+        UpdateCartItemRequest: {
+            quantity: number;
+        };
+        /**
          * UpdateCategoryRequest
          * @description `PATCH /categories/{category}` — every field optional; only the fields sent
          *     change. `slug: null` (or omitted) keeps the current slug. The parent and order
@@ -1600,6 +2331,33 @@ export interface components {
             icon?: string | null;
             is_featured?: boolean;
             show_in_menu?: boolean;
+            is_active?: boolean;
+        };
+        /**
+         * UpdateCouponRequest
+         * @description `PUT /coupons/{coupon}` — the whole document; needs marketing.manage.
+         */
+        UpdateCouponRequest: {
+            code: string;
+            description?: string | null;
+            type: components["schemas"]["CouponType"];
+            value: string;
+            max_discount?: string | null;
+            min_order_amount?: string | null;
+            usage_limit_total?: number | null;
+            usage_limit_per_customer?: number | null;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+            applies_to: components["schemas"]["ProductScopeType"];
+            scope_ids?: number[];
+            excludes?: {
+                product_ids?: number[];
+                category_ids?: number[];
+                brand_ids?: number[];
+            };
+            first_order_only?: boolean;
             is_active?: boolean;
         };
         /**
@@ -2963,6 +3721,543 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.inventory.summary": {
+        parameters: {
+            query?: {
+                /** @description Stock location; the default location when omitted. */
+                "filter[location_id]"?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InventorySummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventorySummary"];
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.stock": {
+        parameters: {
+            query?: {
+                /** @description Stock location; the default location when omitted. */
+                "filter[location_id]"?: number;
+                /** @description `low` (0 < available ≤ reorder point), `out` (available ≤ 0) or `idle` (stock, but no movement for 90 days). */
+                "filter[state]"?: "low" | "out" | "idle";
+                /** @description Contains-match on product name, name_bn, SKU or barcode. */
+                "filter[search]"?: string;
+                /** @description Only this product's variants. */
+                "filter[product_id]"?: number;
+                /** @description Only this variant. */
+                "filter[variant_id]"?: number;
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InventoryStockRow` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryStockRow"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a `sort`, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.movements": {
+        parameters: {
+            query?: {
+                /** @description Only this variant. */
+                "filter[variant_id]"?: number;
+                /** @description Only this product's variants. */
+                "filter[product_id]"?: number;
+                /** @description Only this location (every location when omitted). */
+                "filter[location_id]"?: number;
+                /** @description Comma-separated movement types, e.g. `damage_out,adjustment_out`. */
+                "filter[type]"?: string;
+                /** @description First Dhaka calendar day, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka calendar day, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InventoryMovement` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryMovement"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a `sort`, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.movements.reconciliation": {
+        parameters: {
+            query?: {
+                /** @description Only this variant. */
+                "filter[variant_id]"?: number;
+                /** @description Only this product's variants. */
+                "filter[product_id]"?: number;
+                /** @description Only this location (every location when omitted). */
+                "filter[location_id]"?: number;
+                /** @description First Dhaka calendar day, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka calendar day, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InventoryReconciliation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryReconciliation"];
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.adjustments.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreStockAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description `InventoryAdjustment` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAdjustment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inventory.adjust (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.coupons.index": {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive "contains" match on the code. */
+                "filter[search]"?: string;
+                /** @description Only active or only inactive coupons. */
+                "filter[status]"?: "active" | "inactive";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "code" | "-code" | "created_at" | "-created_at" | "ends_at" | "-ends_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Coupon` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Coupon"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.coupons.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCouponRequest"];
+            };
+        };
+        responses: {
+            /** @description `Coupon` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Coupon"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.coupons.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The coupon ID */
+                coupon: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Coupon` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Coupon"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.coupons.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The coupon ID */
+                coupon: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCouponRequest"];
+            };
+        };
+        responses: {
+            /** @description `Coupon` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Coupon"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.coupons.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The coupon ID */
+                coupon: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Coupon` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Coupon"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.orders.index": {
+        parameters: {
+            query?: {
+                /** @description Only orders in this status (the board tab). */
+                "filter[status]"?: string;
+                /** @description Only orders with this payment status. */
+                "filter[payment_status]"?: string;
+                /** @description Only orders with this fulfilment status. */
+                "filter[fulfillment_status]"?: string;
+                /** @description web|admin|phone|facebook|whatsapp */
+                "filter[source]"?: string;
+                /** @description low|medium|high */
+                "filter[risk_level]"?: string;
+                /** @description cod|sslcommerz|bkash|nagad|card|bank_transfer|cash */
+                "filter[payment_method]"?: string;
+                /** @description Only this customer's orders. */
+                "filter[customer_id]"?: number;
+                /** @description First Dhaka date (Y-m-d), inclusive. */
+                "filter[placed_from]"?: string;
+                /** @description Last Dhaka date (Y-m-d), inclusive. */
+                "filter[placed_to]"?: string;
+                /** @description Order number, last 4+ phone digits, or customer name. */
+                "filter[search]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "created_at" | "-created_at" | "grand_total" | "-grand_total";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `OrderListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                [key: string]: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.orders.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "v1.storefront.ping": {
         parameters: {
             query?: never;
@@ -3666,6 +4961,337 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+        };
+    };
+    "v1.storefront.cart.show": {
+        parameters: {
+            query?: {
+                district_id?: number | null;
+                upazila_id?: number | null;
+            };
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token (`not-found`) — start a new one */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.cart.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Cart` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.cart.items.store": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The cart token; omit to start a new cart. */
+                "X-Cart-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddCartItemRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Quantity beyond stock, item unavailable, or line limits (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.cart.items.destroy": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path: {
+                item: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token, or the line is not on it (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.cart.items.update": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path: {
+                item: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCartItemRequest"];
+            };
+        };
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token, or the line is not on it (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Quantity beyond stock (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.cart.coupon.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyCouponRequest"];
+            };
+        };
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The coupon does not apply; `errors[0].message` says why (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.cart.coupon.destroy": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.health": {

@@ -7,6 +7,10 @@ use App\Http\Controllers\Api\V1\Admin\AttributeValueController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Admin\BrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController;
+use App\Http\Controllers\Api\V1\Admin\CouponController;
+use App\Http\Controllers\Api\V1\Admin\InventoryAdjustmentController;
+use App\Http\Controllers\Api\V1\Admin\InventoryController;
+use App\Http\Controllers\Api\V1\Admin\OrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
 use App\Http\Controllers\Api\V1\Admin\ProductImageController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
@@ -84,4 +88,23 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/attributes/{attribute}/values/reorder', [AttributeValueController::class, 'reorder'])->name('attributes.values.reorder');
     Route::patch('/attributes/{attribute}/values/{value}', [AttributeValueController::class, 'update'])->scopeBindings()->name('attributes.values.update');
     Route::delete('/attributes/{attribute}/values/{value}', [AttributeValueController::class, 'destroy'])->scopeBindings()->name('attributes.values.destroy');
+
+    // Inventory (06-admin-feature-checklist §2.7): overview, append-only ledger + reconciliation,
+    // adjustments. An adjustment moves stock, so a double submit must replay, not apply twice.
+    Route::get('/inventory/summary', [InventoryController::class, 'summary'])->name('inventory.summary');
+    Route::get('/inventory/stock', [InventoryController::class, 'stock'])->name('inventory.stock');
+    Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
+    Route::get('/inventory/movements/reconciliation', [InventoryController::class, 'reconciliation'])->name('inventory.movements.reconciliation');
+    Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'store'])->middleware('idempotent')->name('inventory.adjustments.store');
+
+    // Coupons (P4-CRT-04). DELETE deactivates; usages keep the per-customer limits.
+    Route::get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
+    Route::post('/coupons', [CouponController::class, 'store'])->name('coupons.store');
+    Route::get('/coupons/{coupon}', [CouponController::class, 'show'])->name('coupons.show');
+    Route::put('/coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
+    Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');
+
+    // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });

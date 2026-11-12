@@ -13,7 +13,7 @@ export function ImagesPanel({ product, disabled }: { product?: Product; disabled
 
     if (!product) {
         return (
-            <FormSection title={t('products.tab.images')} description={t('products.images.hint')}>
+            <FormSection title={t('products.section.images')} description={t('products.images.hint')}>
                 <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-line-strong bg-subtle p-8 text-center">
                     <ImageIcon size={24} aria-hidden className="text-fg-tertiary" />
                     <p className="t-admin-body text-fg-secondary">{t('products.images.saveFirst')}</p>

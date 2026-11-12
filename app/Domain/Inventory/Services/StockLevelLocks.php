@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * level row is created first with INSERT … IGNORE, so two first writers for the same
  * variant cannot both insert, and then locked like any other.
  *
- * @internal for StockLedger and StockReservations only
+ * @internal for StockLedger, StockReservations and AdjustStock (which locks first to read on_hand and reserved before deciding)
  */
 final class StockLevelLocks
 {

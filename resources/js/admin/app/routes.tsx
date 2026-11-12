@@ -15,9 +15,11 @@ import { AttributesPage } from '@/features/catalog/attributes/AttributesPage';
 import { AttributeFormPage } from '@/features/catalog/attributes/AttributeFormPage';
 import { ProductsPage } from '@/features/catalog/products/ProductsPage';
 import { ProductFormPage } from '@/features/catalog/products/ProductFormPage';
+import { InventoryPage } from '@/features/inventory/InventoryPage';
+import { MovementsPage } from '@/features/inventory/MovementsPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products']);
+const built = new Set(['/products', '/inventory']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -51,6 +53,9 @@ export const routes: RouteObject[] = [
                     // outside the catalog tab strip. Static siblings (categories, brands …) still win.
                     { path: 'products/new', element: <ProductFormPage /> },
                     { path: 'products/:productId', element: <ProductFormPage /> },
+                    // Inventory overview (Figma 213:6955) and the movement ledger (213:7516).
+                    { path: 'inventory', element: <InventoryPage /> },
+                    { path: 'inventory/movements', element: <MovementsPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

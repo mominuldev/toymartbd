@@ -84,21 +84,22 @@ describe('product form', () => {
         expect((await screen.findAllByText('This field is required.')).length).toBeGreaterThan(0);
         expect(screen.getByLabelText(/^Name \(English\)/).getAttribute('aria-invalid')).toBe('true');
         expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'POST')).toBe(false);
-        // The tab with the error is marked.
-        expect(screen.getByRole('tab', { name: /General.*has errors/ })).toBeTruthy();
+        // The section tab with the error is marked.
+        expect(screen.getByRole('link', { name: /General.*has errors/ })).toBeTruthy();
     });
 
     it('rejects a malformed money string on the field (generated money pattern)', async () => {
         const calls = productApi(owner);
         renderApp('/products/new?tab=pricing');
 
-        fireEvent.change(await screen.findByLabelText('Price'), { target: { value: '1,250' } });
+        fireEvent.change(await screen.findByLabelText(/^Price/), { target: { value: '1,250' } });
         fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
-        // The first tab with an error opens (General: the name is missing); Pricing is marked too.
-        fireEvent.click(await screen.findByRole('tab', { name: /Pricing.*has errors/ }));
+        // Every section is on the page; General (the name is missing) and Pricing are both marked.
+        expect(await screen.findByRole('link', { name: /Pricing.*has errors/ })).toBeTruthy();
+        expect(screen.getByRole('link', { name: /General.*has errors/ })).toBeTruthy();
 
         expect(await screen.findByText('This format is not valid.')).toBeTruthy();
-        expect(screen.getByLabelText('Price').getAttribute('aria-invalid')).toBe('true');
+        expect(screen.getByLabelText(/^Price/).getAttribute('aria-invalid')).toBe('true');
         expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'POST')).toBe(false);
     });
 
@@ -114,11 +115,11 @@ describe('product form', () => {
         renderApp('/products/new');
 
         fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Wooden Puzzle' } });
-        fireEvent.change(screen.getByLabelText(/Name \(Bangla\)/), { target: { value: 'কাঠের ধাঁধা' } });
-        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
-        fireEvent.click(screen.getByRole('tab', { name: /Pricing/ }));
-        fireEvent.change(screen.getByLabelText('Price'), { target: { value: '650' } });
-        fireEvent.change(screen.getByLabelText(/^Cost/), { target: { value: '400.50' } });
+        fireEvent.change(screen.getByLabelText('নাম (বাংলা)'), { target: { value: 'কাঠের ধাঁধা' } });
+        await screen.findByRole('option', { name: /Building & Construction/ });
+        fireEvent.change(screen.getByLabelText('Category'), { target: { value: '5' } });
+        fireEvent.change(screen.getByLabelText(/^Price/), { target: { value: '650' } });
+        fireEvent.change(screen.getByLabelText(/^Cost price/), { target: { value: '400.50' } });
         fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
 
         await waitFor(() => expect(posted).not.toBeNull());
@@ -140,10 +141,11 @@ describe('product form', () => {
         productApi(owner);
         renderApp('/products/42');
 
-        expect(((await screen.findByRole('checkbox', { name: 'Building & Construction' })) as HTMLInputElement).checked).toBe(true);
-        await waitFor(() => expect((screen.getByLabelText('Primary category') as HTMLSelectElement).value).toBe('5'));
+        await screen.findByRole('option', { name: /Building & Construction/ });
+        await waitFor(() => expect((screen.getByLabelText('Category') as HTMLSelectElement).value).toBe('5'));
         expect((screen.getByLabelText(/^Brand/) as HTMLSelectElement).value).toBe('3');
-        expect(screen.getByText('= 4 years 0 months')).toBeTruthy();
+        expect((screen.getByLabelText('Minimum age') as HTMLSelectElement).value).toBe('48');
+        expect(screen.getByRole('option', { name: '4 years', selected: true })).toBeTruthy();
     });
 
     it('duplicates and opens the copy', async () => {
@@ -188,13 +190,15 @@ describe('product form', () => {
         });
         renderApp('/products/42?tab=related');
 
-        fireEvent.change(await screen.findByRole('searchbox', { name: 'Search products to add to Upsell' }), { target: { value: 'puz' } });
+        fireEvent.click(await screen.findByRole('button', { name: 'Add product' }));
+        fireEvent.change(screen.getByLabelText('Recommendation type'), { target: { value: 'upsell' } });
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search products to add to Upsell' }), { target: { value: 'puz' } });
         fireEvent.click(await screen.findByRole('button', { name: /Puzzle 100/ }));
         fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
         const alert = await screen.findByText('An upsell must cost more than this product.');
         expect(alert.closest('li')?.textContent).toContain('Puzzle 100');
-        expect(screen.getByRole('tab', { name: /Related.*has errors/ })).toBeTruthy();
+        expect(screen.getByRole('link', { name: /Related.*has errors/ })).toBeTruthy();
     });
 
     it('embeds the image uploader on a saved product, and asks to save first on a new one', async () => {
@@ -208,10 +212,34 @@ describe('product form', () => {
         expect(await screen.findByText('Save the product first to add images.')).toBeTruthy();
     });
 
+    it('shows every section on one page (Figma 241:37883) and saves Featured from its switch', async () => {
+        const calls = productApi(owner, (url, init) => (url.endsWith('/products/42') && init?.method === 'PUT' ? { status: 200, body: product } : undefined));
+        renderApp('/products/42');
+
+        // Tabs jump to sections; General, Media, Variants and Recommendations are all rendered.
+        expect(await screen.findByRole('link', { name: 'General' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Media' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Related' })).toBeTruthy();
+        expect(await screen.findByRole('region', { name: 'Product images' })).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'Recommendations' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Variants' })).toBeTruthy();
+
+        const featured = screen.getByRole('switch', { name: 'Featured on the store' });
+        const before = featured.getAttribute('aria-checked') === 'true';
+        fireEvent.click(featured);
+        expect(screen.getByText('1 unsaved change')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Save and add another' }));
+
+        await waitFor(() => expect(sentBody(calls, 'PUT')).not.toBeNull());
+        expect(sentBody(calls, 'PUT')).toMatchObject({ is_featured: !before });
+        expect(await screen.findByRole('heading', { name: 'Add product' })).toBeTruthy();
+    });
+
     it('shows the form in Bangla', async () => {
         productApi(owner);
         renderApp('/products/new', { locale: 'bn' });
         expect(await screen.findByLabelText(/^নাম \(ইংরেজি\)/)).toBeTruthy();
-        expect(screen.getByRole('tab', { name: 'দাম' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'দাম' })).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'মিডিয়া' })).toBeTruthy();
     });
 });

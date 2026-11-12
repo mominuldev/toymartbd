@@ -163,6 +163,8 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 **`customers`** `id` · `user_id` FK NULL (set when they register) · `name` · `phone` UNIQUE (normalised `01XXXXXXXXX`) · `phone_verified_at` NULL · `email` NULL · `email_verified_at` · `date_of_birth` NULL · `gender` NULL · `preferred_language` (`bn`|`en`) · `source` (`web`|`facebook`|`phone`|`walk_in`|`whatsapp`) · `tags` JSON · `first_order_at` · `last_order_at` · `orders_count` · `delivered_orders_count` · `total_spent` · `avg_order_value` · `status` · timestamps · `deleted_at`
 
 > The aggregate columns are maintained by a queued listener on order state change. They are a projection, rebuildable from `orders`. They exist because the customer list must sort by lifetime value without scanning the order table.
+>
+> **As built (P4-ORD-01/10).** `phone` is stored **E.164** (`+8801XXXXXXXXX`, rule 30), not `01XXXXXXXXX`. `user_id` is a plain nullable id (storefront accounts arrive with P4-STO-11). Added `aggregates_refreshed_at`. Definitions: `orders_count` excludes cancelled orders; `delivered_orders_count` counts delivered, completed and partially_returned; `total_spent` = Σ(`grand_total` − `refunded_total`) over those; `avg_order_value` = total_spent ÷ delivered count; first/last over every order's `placed_at`. Customer reads orders through its `CustomerOrderHistory` contract (implemented by Ordering). Rebuild: `toymart:customers:rebuild-aggregates`. `addresses.phone` is E.164 too.
 
 **`children_profiles`** `id` · `customer_id` · `name` NULL · `birth_date` · `gender` · `interests` JSON
 > Optional, opt-in. Enables age-appropriate recommendations and birthday reminders — the highest-value retention feature available in this category and absent from every competitor checked. Must be clearly consented to; it is children's data.
@@ -187,6 +189,8 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 **`cart_items`** `id` · `cart_id` · `variant_id` · `quantity` · `unit_price` (snapshot at add) · `line_total` · `added_at`
 
 > Server-side cart keyed by an opaque token in an httpOnly cookie. Totals are always the API's answer. `abandoned_at` plus `recovered_order_id` makes abandoned-cart recovery measurable rather than anecdotal.
+
+> **As built (P4-CRT-01):** also `converted_at` + `order_id` (§4.1 "mark cart converted") and `merged_into_cart_id` (a guest cart merged into the customer's on login); `cart_items` is UNIQUE `(cart_id, variant_id)` — one line per variant, so a re-add or a merge raises the quantity. The token travels as the `X-Cart-Token` header from the Next.js server. `customer_id`, `order_id`, `recovered_order_id`, `shipping_address_id` have no FK until their tables exist. Pricing: `App\Domain\Cart\Services\PricingPipeline` — docs/api/cart.md.
 
 **`orders`**
 `id` · `number` UNIQUE (`TMB-26-00001`) · `customer_id` FK · `cart_id` NULL · `status` · `payment_status` · `fulfillment_status` · `source` (`web`|`admin`|`phone`|`facebook`|`whatsapp`) · `channel_reference` NULL ·
@@ -217,12 +221,16 @@ money: `unit_price` · `quantity` · `discount` · `tax` · `line_total` · **`c
 **`order_financials`** (one row per order, projection) `order_id` PK · `revenue` · `cogs` · `gross_profit` · `discount_cost` · `courier_charge` · `courier_cod_fee` · `courier_return_charge` · `gateway_fee` · `packaging_cost` · `allocated_marketing_cost` · `refund_amount` · `return_loss` · `net_profit` · `margin_percent` · `computed_at`
 > Recomputed by a queued job on every order state change, refund, and shipment event. Stored because order-wise and product-wise profitability screens must be fast, and because the invariant test compares it against the ledger.
 
+> **As built (P4-ORD-01, batch 4).** `orders`: added `shipping_division_id`/`shipping_district_id`/`shipping_upazila_id` (geography ids beside the name snapshot, so courier mapping never joins on a name, rule 32), `shipping_postcode`, `payment_method` (denormalised from the first payment for the board), `currency`, `completed_at`, `cancel_note`; `cancel_reason` holds a `CancellationReason` value; `billing_*` are nullable (null = same as shipping); `cart_id` carries no FK (Cart owns carts); there is no `deleted_at` (rule 12). Order numbers come from **`order_number_sequences`** (`year` PK, `last_value`), locked `FOR UPDATE` per Dhaka year. `order_items`: §3.4's `attributes` is **`variant_attributes`** (`attributes` shadows Eloquent's internal property); `recommendation_source` added (rule 25d); `cost_price_snapshot` stays DECIMAL(14,4) and the model refuses to change it. `order_events`: added `field` (`status`|`payment_status`|`fulfillment_status`) so all three state machines share the timeline. `order_financials` is created but not yet computed (Finance, Phase 5). The three state machines and the PlaceOrder outline: `docs/api/orders.md`.
+
 ### 3.5 Payments, Refunds, Invoices
 
 **`payments`** `id` · `order_id` · `method` (`cod`|`sslcommerz`|`bkash`|`nagad`|`card`|`bank_transfer`|`cash`) · `gateway` NULL · `amount` · `currency` · `status` (`pending`|`initiated`|`authorised`|`paid`|`failed`|`cancelled`|`expired`) · `transaction_id` NULL · `gateway_reference` NULL · `gateway_payload` JSON · `fee_amount` · `net_amount` · `paid_at` · `failure_reason` · `collected_by` NULL · `verified_at` NULL · timestamps
 Index: `(order_id)`, `(transaction_id)` UNIQUE where not null, `(status, created_at)`
 
 > `fee_amount` recorded per payment, not estimated at report time, so gateway charges are real numbers in the P&L.
+>
+> **As built (P4-PAY-01).** Every method — COD included — opens at `pending` and moves only through `PaymentStatus::allowedTransitions()` (`docs/api/orders.md`); `payments.gateway` is the driver code. `refunds.status` is `requested`|`approved`|`processing`|`completed`|`failed`|`rejected`; `refund_items` has its own id and UNIQUE (`refund_id`, `order_item_id`).
 
 **`refunds`** `id` · `order_id` · `payment_id` NULL · `amount` · `reason` · `type` (`full`|`partial`) · `method` · `status` · `gateway_reference` · `restock` BOOL · `requested_by` · `approved_by` NULL · `approved_at` · `processed_at` · `note` · timestamps
 **`refund_items`** `refund_id` · `order_item_id` · `quantity` · `amount`
@@ -283,6 +291,8 @@ Index: `(occurred_on, type)`, `(source_type, source_id)`, `(type, occurred_on)`
 **`coupon_usages`** `coupon_id` · `order_id` · `customer_id` · `phone` · `discount_amount` · `used_at` — `phone` is stored so per-customer limits survive guest checkout.
 **`promotions`** `id` · `name` · `type` (`flash_sale`|`bundle`|`buy_x_get_y`|`category_discount`|`tiered`) · `priority` · `is_stackable` BOOL · `rules` JSON · `starts_at` · `ends_at` · `is_active` · `banner_path` · `usage_count`
 > `priority` and `is_stackable` exist because overlapping promotions are the main source of "the price on the page was wrong" incidents. The pricing pipeline applies promotions in priority order and stops at the first non-stackable match; the resolved breakdown is written to the order so any later dispute is answerable.
+
+> **As built (P4-CRT-02/04):** `promotions.name_bn` added (shown in the cart breakdown); `coupons.description` added; `coupons.code` stored upper-case; `coupons.conditions` = `{ids: [...]}` for `applies_to`, `excludes` = `{product_ids, category_ids, brand_ids}` (category ids cover the subtree). Priority is **descending** (higher first, ties oldest first); a non-stackable promotion stops the chain only if it actually discounted something. `coupon_usages` has `id`/timestamps, UNIQUE `(coupon_id, order_id)`, and no FK on `order_id`/`customer_id` until those tables exist. `customer_segment_id` is stored but not evaluated (segments are Phase 5). Rules shapes: docs/api/cart.md.
 
 **`customer_segments`** `id` · `name` · `type` (`dynamic`|`static`) · `rules` JSON · `customer_count` · `last_computed_at`
 **`campaigns`** `id` · `name` · `channel` (`sms`|`whatsapp`|`email`) · `segment_id` · `template_id` · `scheduled_at` · `status` · `sent_count` · `delivered_count` · `failed_count` · `cost`

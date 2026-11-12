@@ -34,6 +34,8 @@ export class ApiConfigError extends Error {
 
 interface RequestOptions {
     locale?: Locale;
+    /** Seconds; `cached` only. Defaults to the ISR ceiling. */
+    revalidate?: number;
 }
 
 function serverConfig(): { baseUrl: string; token: string } {
@@ -93,7 +95,7 @@ async function request<T>(path: string, init: RequestInit, options: RequestOptio
  * the tag vocabulary there, e.g. `['brands']` or `['brands', 'brand:lego']`.
  */
 export function cached<T>(path: string, tags: string[], options: RequestOptions = {}): Promise<T> {
-    return request<T>(path, { next: { tags, revalidate: DEFAULT_REVALIDATE_SECONDS } }, options);
+    return request<T>(path, { next: { tags, revalidate: options.revalidate ?? DEFAULT_REVALIDATE_SECONDS } }, options);
 }
 
 /** Uncached GET for per-request data (cart, stock at checkout, order tracking). */

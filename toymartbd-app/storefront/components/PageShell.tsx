@@ -31,13 +31,15 @@ interface Props {
     top?: 'section' | 'tight' | 'crumb';
     /** The page has a fixed mobile bar above MobileNav (PDP AddToCartBar, 76): reserve its height below the footer. */
     bottomBar?: boolean;
+    /** Children lay out their own gutters and 1280 cap (Home: full-bleed bands). */
+    bleed?: boolean;
     children: ReactNode;
 }
 
 // The storefront chrome: skip link → (Bangla suggestion) → header + mega menu → main → footer →
 // mobile tab bar. Server-rendered; the only client islands are the mega menu's keyboard layer,
 // the language toggle's cookie and the suggestion banner.
-export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', bottomBar = false, children }: Props) {
+export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', bottomBar = false, bleed = false, children }: Props) {
     const t = getMessages(locale);
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
@@ -71,9 +73,9 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
             <main
                 id="main"
                 tabIndex={-1}
-                className={`w-full grow px-gutter-mobile focus:outline-none md:px-gutter-tablet lg:px-gutter-desktop ${top === 'tight' ? 'pt-4 lg:pt-8' : top === 'crumb' ? 'pt-2 lg:pt-6' : 'pt-section-mobile lg:pt-section-desktop'}`}
+                className={`w-full grow focus:outline-none ${bleed ? '' : 'px-gutter-mobile md:px-gutter-tablet lg:px-gutter-desktop'} ${top === 'tight' ? 'pt-4 lg:pt-8' : top === 'crumb' ? 'pt-2 lg:pt-6' : 'pt-section-mobile lg:pt-section-desktop'}`}
             >
-                <div className="mx-auto max-w-content">{children}</div>
+                {bleed ? children : <div className="mx-auto max-w-content">{children}</div>}
             </main>
             <SiteFooter locale={locale} path={path} />
             {bottomBar ? <div aria-hidden="true" className="h-19 shrink-0 lg:hidden" /> : null}

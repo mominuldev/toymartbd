@@ -2,10 +2,12 @@ import 'server-only';
 
 import type { Schema } from '@toymart/api-types';
 
-import { ApiError, cached } from './api';
+import { ApiError, cached, noStore } from './api';
 import type { Locale } from './i18n/config';
 import { normalizeListing, type Listing } from './listing/response';
-import { toApiQuery, type ListingScope, type ListingState } from './listing/state';
+import { emptyState, toApiQuery, type ListingScope, type ListingState, type Sort } from './listing/state';
+import { toSearchApiQuery } from './search/query';
+import { normalizeSearch, type SearchResults } from './search/response';
 
 export type StorefrontCategory = Schema<'StorefrontCategory'>;
 
@@ -20,7 +22,9 @@ export const productTags = {
  */
 export async function fetchListing(state: ListingState, scope: ListingScope, locale: Locale): Promise<Listing> {
     const query = toApiQuery(state, scope).toString();
-    const tags = [productTags.list, scope.kind === 'category' ? `category:${scope.slug}` : `brand:${scope.slug}`];
+    const tags: string[] = [productTags.list];
+    if (scope.kind === 'category') tags.push(`category:${scope.slug}`);
+    if (scope.kind === 'brand') tags.push(`brand:${scope.slug}`);
     return normalizeListing(await cached<unknown>(`storefront/products?${query}`, tags, { locale }));
 }
 
@@ -36,5 +40,30 @@ export async function getCategoryPage(slug: string, locale: Locale): Promise<Sto
     } catch (error) {
         if (error instanceof ApiError && error.isNotFound) return null;
         throw error;
+    }
+}
+
+/**
+ * One page of search results (`GET /storefront/search`, P4-CAT-14). Not tag-cached: results
+ * depend on free text and the index is kept fresh by queued sync, not by revalidation
+ * (SearchController). The query and state are sanitised by the page, so a 400 cannot be reached
+ * from a URL.
+ */
+export async function fetchSearch(q: string, state: ListingState, page: number, locale: Locale): Promise<SearchResults> {
+    return normalizeSearch(await noStore<unknown>(`storefront/search?${toSearchApiQuery(q, state, page).toString()}`, { locale }));
+}
+
+/**
+ * A Home rail: the first page of the whole catalogue in one order (`featured` = best sellers until
+ * orders exist — the API's BestSellers ranks featured first too; `newest` = new arrivals). Tagged
+ * `products`, so any product write refreshes Home. Null when the API cannot answer: the section
+ * hides rather than taking the page down.
+ */
+export async function fetchRail(sort: Sort, locale: Locale): Promise<Listing | null> {
+    try {
+        return await fetchListing({ ...emptyState(), sort }, { kind: 'all' }, locale);
+    } catch (error) {
+        console.error(`[home] ${sort} rail unavailable:`, error instanceof Error ? error.message : error);
+        return null;
     }
 }

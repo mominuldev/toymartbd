@@ -9,6 +9,11 @@
 //        MOCK_PER_PAGE (4) per page so "load more" is reachable with a dozen fixtures
 //   GET  /api/v1/storefront/products/{slug} → StorefrontProduct (fixtures/product-detail.json, P4-STO-05;
 //        `related` are the listing cards named in its `_related`) or 404 problem+json
+//   GET  /api/v1/storefront/search          → P4-CAT-14 search over the same fixtures: `q` matched as a
+//        case-insensitive substring of the EN/BN name or brand (plus a tiny synonym table), the
+//        listing's filters and facets, `page` paging (MOCK_PER_PAGE), `related_searches` from the
+//        top-level categories of the hits; zero hits → `suggestions` + `best_sellers`
+//   GET  /api/v1/storefront/search/suggest  → header autocomplete (≤5 products, ≤3 categories, ≤3 brands)
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
 //   GET  /__control/hits                    → {path: count} of authorised API reads
@@ -64,17 +69,20 @@ const subtreeSlugs = (node) => [node.slug, ...node.children.flatMap(subtreeSlugs
 const inBand = (p, [, lo, hi]) => (p.age_max_months === null || p.age_max_months >= lo) && (hi === null || p.age_min_months === null || p.age_min_months < hi);
 const inPrice = (p, [, lo, hi]) => Number(p.price) >= lo && (hi === null || Number(p.price) < hi);
 
-function listProducts(res, query) {
+function listProducts(res, query, search = null) {
     const filter = {};
+    const params = search ? ['q', 'sort', 'page'] : ['sort', 'cursor'];
     for (const [key, value] of query) {
         const m = key.match(/^filter\[([a-z_]+)\]$/);
         if (m) {
             if (!FILTERS.includes(m[1])) return badRequest(res, `Unlisted filter(s): ${m[1]}.`);
             filter[m[1]] = value;
-        } else if (!['sort', 'cursor'].includes(key)) return badRequest(res, `Unknown query parameter(s): ${key}.`);
+        } else if (!params.includes(key)) return badRequest(res, `Unknown query parameter(s): ${key}.`);
     }
-    const sort = query.get('sort') ?? 'featured';
-    if (!SORTS.includes(sort)) return badRequest(res, 'sort must be one of: ' + SORTS.join(', '));
+    const sort = query.get('sort') ?? (search ? 'relevance' : 'featured');
+    const sorts = search ? ['relevance', ...SORTS] : SORTS;
+    if (!sorts.includes(sort)) return badRequest(res, 'sort must be one of: ' + sorts.join(', '));
+    const pool = search ? productFixtures.filter((p) => matchesQuery(p, search)) : productFixtures;
     const list = (k) => (filter[k] ? filter[k].split(',') : []);
     const category = filter.category ? findCategory(categoryTree.data, filter.category, []) : null;
     const catSlugs = category ? subtreeSlugs(category.node) : null;
@@ -86,10 +94,11 @@ function listProducts(res, query) {
         price: (p) => !filter.price_band || PRICE_BANDS.filter(([v]) => list('price_band').includes(v)).some((b) => inPrice(p, b)),
         gender: (p) => !filter.gender || list('gender').some((g) => p._gender === g || (g === 'unisex' && p._gender === null)),
     };
-    const matching = (except) => productFixtures.filter((p) => Object.entries(tests).every(([k, t]) => k === except || t(p)));
+    const matching = (except) => pool.filter((p) => Object.entries(tests).every(([k, t]) => k === except || t(p)));
 
     const results = matching(null);
     const by = {
+        relevance: (a, b) => a.id - b.id,
         featured: (a, b) => Number(b.is_featured) - Number(a.is_featured) || b._published_at.localeCompare(a._published_at) || b.id - a.id,
         newest: (a, b) => b._published_at.localeCompare(a._published_at) || b.id - a.id,
         price_asc: (a, b) => Number(a.price) - Number(b.price) || a.id - b.id,
@@ -99,8 +108,9 @@ function listProducts(res, query) {
     }[sort];
     results.sort(by);
 
+    const pageNo = Number(query.get('page') ?? '1');
     const cursor = query.get('cursor');
-    let offset = 0;
+    let offset = search ? (pageNo - 1) * MOCK_PER_PAGE : 0;
     if (cursor) {
         try {
             offset = JSON.parse(Buffer.from(cursor, 'base64url').toString()).offset ?? 0;
@@ -116,19 +126,7 @@ function listProducts(res, query) {
     for (const p of matching('brand')) if (p.brand) brandCounts.set(p.brand.slug, { brand: p.brand, count: (brandCounts.get(p.brand.slug)?.count ?? 0) + 1 });
     const children = category ? category.node.children : categoryTree.data;
     const forCategory = matching('category');
-    const card = ({ _categories, _gender, _published_at, ...rest }) => rest;
-
-    return send(res, 200, {
-        data: page.map(card),
-        links: { first: null, last: null, prev: null, next: null },
-        meta: {
-            path: '/api/v1/storefront/products',
-            per_page: MOCK_PER_PAGE,
-            next_cursor: next,
-            prev_cursor: null,
-            total: results.length,
-            sort,
-            facets: {
+    const facets = {
                 category: children.map((c) => {
                     const slugs = subtreeSlugs(c);
                     return { value: c.slug, label: c.name, label_bn: c.name_bn, count: forCategory.filter((p) => p._categories.some((s) => slugs.includes(s))).length, selected: false };
@@ -146,9 +144,88 @@ function listProducts(res, query) {
                 })),
                 rating: [4, 3, 2, 1].map((r) => ({ value: r, count: 0, selected: false })),
                 educational: { count: 0, selected: false },
+            };
+
+    if (search) {
+        const related = categoryTree.data
+            .map((c) => ({ category: c.slug, label: c.name, label_bn: c.name_bn, count: results.filter((p) => p._categories.some((s) => subtreeSlugs(c).includes(s))).length, selected: filter.category === c.slug }))
+            .filter((r) => r.count > 0);
+        const zero = results.length === 0;
+        const suggestions = zero ? Object.entries(CORRECTIONS).filter(([typo]) => search.toLowerCase().includes(typo)).map(([, fixed]) => ({ query: fixed, count: productFixtures.filter((p) => matchesQuery(p, fixed)).length })) : [];
+        const bestSellers = zero ? [...productFixtures].sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || a.id - b.id).slice(0, 4).map(card) : [];
+        const last = Math.max(1, Math.ceil(results.length / MOCK_PER_PAGE));
+        return send(res, 200, {
+            data: page.map(card),
+            links: { first: null, last: null, prev: null, next: null },
+            meta: {
+                current_page: pageNo, from: page.length ? offset + 1 : null, last_page: last, path: '/api/v1/storefront/search', per_page: MOCK_PER_PAGE, to: page.length ? offset + page.length : null, total: results.length,
+                query: search, sort, degraded: false, facets, related_searches: related, suggestions, best_sellers: bestSellers,
             },
+        });
+    }
+
+    return send(res, 200, {
+        data: page.map(card),
+        links: { first: null, last: null, prev: null, next: null },
+        meta: {
+            path: '/api/v1/storefront/products',
+            per_page: MOCK_PER_PAGE,
+            next_cursor: next,
+            prev_cursor: null,
+            total: results.length,
+            sort,
+            facets,
         },
     });
+}
+
+const card = ({ _categories, _gender, _published_at, ...rest }) => rest;
+
+// Banglish/Bangla → English, and the typo corrections the spelling suggester would offer.
+const SYNONYMS = { gari: 'car', 'গাড়ি': 'car', 'লেগো': 'lego' };
+const CORRECTIONS = { lgo: 'lego', puzle: 'puzzle', helicoptar: 'car' };
+function matchesQuery(p, q) {
+    const text = q.trim().toLowerCase();
+    const terms = [text, SYNONYMS[text]].filter(Boolean);
+    const hay = [p.name, p.name_bn ?? '', p.brand?.name ?? '', p.brand?.name_bn ?? '', ...p._categories].join(' ').toLowerCase();
+    return terms.some((t) => hay.includes(t));
+}
+
+/** Any other listing fixture as a one-variant product page (recently viewed reads these). */
+function simpleDetail(p) {
+    const { _related, ...base } = productDetail;
+    const variantId = 9000 + p.id;
+    return {
+        ...base,
+        id: p.id, slug: p.slug, name: p.name, name_bn: p.name_bn, brand: p.brand, type: 'simple',
+        age_min_months: p.age_min_months, age_max_months: p.age_max_months,
+        rating_avg: null, rating_count: 0, in_stock: p.in_stock ?? true, default_variant_id: variantId, images: [], attributes: [],
+        variants: [{ id: variantId, sku: `TMB-${p.id}`, name: null, name_bn: null, attribute_value_ids: [], price: p.price, compare_at_price: p.compare_at_price, discount_percent: p.discount_percent, saving: null, weight_grams: 500, is_default: true, status: 'active', available: 5, stock_state: 'in_stock' }],
+        related: [],
+    };
+}
+
+function searchProducts(res, query) {
+    const q = (query.get('q') ?? '').trim();
+    if (q.length < 1 || q.length > 100) return badRequest(res, 'q must be 1 to 100 characters.');
+    const page = query.get('page');
+    if (page !== null && !/^[1-9]\d*$/.test(page)) return badRequest(res, 'page must be a whole number.');
+    return listProducts(res, query, q);
+}
+
+function suggest(res, query) {
+    for (const key of query.keys()) if (key !== 'q') return badRequest(res, `Unknown query parameter(s): ${key}.`);
+    const q = (query.get('q') ?? '').trim();
+    if (q.length < 2 || q.length > 100) return badRequest(res, 'q must be 2 to 100 characters.');
+    const hits = productFixtures.filter((p) => matchesQuery(p, q));
+    const flat = (nodes) => nodes.flatMap((n) => [n, ...flat(n.children)]);
+    const categories = flat(categoryTree.data)
+        .map((c) => ({ slug: c.slug, name: c.name, name_bn: c.name_bn, icon: c.icon ?? null, count: hits.filter((p) => p._categories.some((s) => subtreeSlugs(c).includes(s))).length }))
+        .filter((c) => c.count > 0)
+        .slice(0, 3);
+    const brandMap = new Map();
+    for (const p of hits) if (p.brand) brandMap.set(p.brand.slug, { ...p.brand, count: (brandMap.get(p.brand.slug)?.count ?? 0) + 1 });
+    return send(res, 200, { query: q, products: hits.slice(0, 5).map(card), categories, brands: [...brandMap.values()].slice(0, 3), total: hits.length, degraded: false });
 }
 
 createServer(async (req, res) => {
@@ -179,11 +256,16 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     if (url.pathname === '/api/v1/storefront/products') return listProducts(res, url.searchParams);
+    if (url.pathname === '/api/v1/storefront/search') return searchProducts(res, url.searchParams);
+    if (url.pathname === '/api/v1/storefront/search/suggest') return suggest(res, url.searchParams);
     const product = url.pathname.match(/^\/api\/v1\/storefront\/products\/([^/]+)$/);
     if (product) {
-        if (decodeURIComponent(product[1]) !== productDetail.slug) return problem(res, 404, 'Not Found', `No product "${product[1]}".`);
+        const slug = decodeURIComponent(product[1]);
+        const simple = productFixtures.find((p) => p.slug === slug);
+        if (slug !== productDetail.slug && simple) return send(res, 200, simpleDetail(simple));
+        if (slug !== productDetail.slug) return problem(res, 404, 'Not Found', `No product "${product[1]}".`);
         const { _related, ...detail } = productDetail;
-        const related = _related.map((slug) => productFixtures.find((p) => p.slug === slug)).filter(Boolean).map(({ _categories, _gender, _published_at, ...card }) => card);
+        const related = _related.map((slug) => productFixtures.find((p) => p.slug === slug)).filter(Boolean).map(card);
         return send(res, 200, { ...detail, related });
     }
     const category = url.pathname.match(/^\/api\/v1\/storefront\/categories\/([^/]+)$/);
