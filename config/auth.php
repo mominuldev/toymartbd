@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Customer\Models\Customer;
 use App\Models\User;
 
 return [
@@ -44,6 +45,14 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Storefront customers (P4-STO-11): Sanctum personal access tokens owned by a
+        // Customer, held only by the Next.js server in an httpOnly cookie (rule 28).
+        // The provider check refuses any token whose owner is not a Customer.
+        'customer' => [
+            'driver' => 'sanctum',
+            'provider' => 'customers',
+        ],
     ],
 
     /*
@@ -67,6 +76,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => Customer::class,
         ],
 
         // 'users' => [

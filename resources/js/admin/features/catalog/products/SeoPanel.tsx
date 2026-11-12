@@ -239,7 +239,7 @@ export function SeoPanel({ id, form, product, price, errorOf }: Props) {
                 {tab === 'schema' && (
                     <>
                         <Field label={t('products.seo.schemaOverride')} hint={t('products.seo.schemaOverrideHint')} error={errorOf('seo.schema_override')}>
-                            {(ids) => <textarea {...inputProps(ids)} rows={6} spellCheck={false} placeholder={'{ "brand": { "@type": "Brand", "name": "…" } }'} className={`${monoInputClass} py-2`} {...register('seo.schema_override')} />}
+                            {(ids) => <textarea {...inputProps(ids)} rows={6} spellCheck={false} /* i18n-ignore: a JSON-LD code sample, not copy */ placeholder={'{ "brand": { "@type": "Brand", "name": "…" } }'} className={`${monoInputClass} py-2`} {...register('seo.schema_override')} />}
                         </Field>
                         {saved && (
                             <div className="flex flex-col gap-1.5">

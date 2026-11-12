@@ -19,10 +19,15 @@ import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { MovementsPage } from '@/features/inventory/MovementsPage';
 import { OrdersPage } from '@/features/orders/OrdersPage';
 import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
+import { OrderCreatePage } from '@/features/orders/OrderCreatePage';
+import { OrderEditPage } from '@/features/orders/OrderEditPage';
 import { MediaLibraryPage } from '@/features/media/MediaLibraryPage';
+import { AutomationsPage } from '@/features/notifications/AutomationsPage';
+import { NotificationLogPage } from '@/features/notifications/NotificationLogPage';
+import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/orders', '/store']);
+const built = new Set(['/products', '/inventory', '/orders', '/store', '/automations']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -50,6 +55,7 @@ export const routes: RouteObject[] = [
                             { path: 'attributes', element: <AttributesPage /> },
                             { path: 'attributes/new', element: <AttributeFormPage /> },
                             { path: 'attributes/:attributeId', element: <AttributeFormPage /> },
+                            { path: 'reviews', element: <ReviewsPage /> },
                         ],
                     },
                     // The product form has its own header and tabs (Figma 241:37883), so it sits
@@ -61,12 +67,18 @@ export const routes: RouteObject[] = [
                     { path: 'inventory/movements', element: <MovementsPage /> },
                     // Order board (Figma 205:681) and order detail (206:1475).
                     { path: 'orders', element: <OrdersPage /> },
+                    // Create order (207:2243) and edit after placement (P4-ORD-06/07).
+                    { path: 'orders/new', element: <OrderCreatePage /> },
                     { path: 'orders/:orderId', element: <OrderDetailPage /> },
+                    { path: 'orders/:orderId/edit', element: <OrderEditPage /> },
                     // Online store: the media library (Figma 303:53185) is its first screen; the
                     // section's other pages are still to come.
                     { path: 'store', element: <Navigate to="/store/media" replace /> },
                     { path: 'store/media', element: <MediaLibraryPage /> },
                     { path: 'store/*', element: <ComingSoon title="nav.store" /> },
+                    // Settings → Automations (Figma 223:15784): notification templates; the message log is not drawn.
+                    { path: 'automations', element: <AutomationsPage /> },
+                    { path: 'automations/log', element: <NotificationLogPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

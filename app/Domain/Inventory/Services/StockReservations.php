@@ -81,6 +81,50 @@ final readonly class StockReservations
     }
 
     /**
+     * Change several reservations at once (an order edited after placement, P4-ORD-07):
+     * positive deltas reserve more, negative ones give stock back. Every affected row is
+     * locked in ONE ascending-variant-id pass (rule 9) — a separate release() then
+     * reserve() could lock out of order and deadlock against a concurrent checkout —
+     * and every increase is checked before anything changes (all or nothing).
+     *
+     * @param  array<int, int>  $deltas  variant id → signed quantity change (zeros ignored)
+     *
+     * @throws InsufficientStock listing every line whose increase cannot be reserved
+     */
+    public function adjust(array $deltas, ?int $locationId = null): void
+    {
+        if (DB::transactionLevel() === 0) {
+            throw StockLedgerViolation::outsideTransaction();
+        }
+        $deltas = array_filter($deltas, static fn (int $delta): bool => $delta !== 0);
+        if ($deltas === []) {
+            return;
+        }
+        $levels = $this->locks->lock(array_keys($deltas), $locationId ??= StockLocation::defaultId());
+
+        $short = [];
+        foreach ($levels as $variantId => $level) {
+            $delta = $deltas[$variantId];
+            if ($delta > 0 && $level->available() < $delta) {
+                $short[$variantId] = ['requested' => $delta, 'available' => max(0, $level->available())];
+            }
+            if ($delta < 0 && $level->reserved < -$delta) {
+                throw StockLedgerViolation::releaseExceedsReserved($variantId);
+            }
+        }
+        if ($short !== []) {
+            throw InsufficientStock::forLines($short);
+        }
+
+        foreach ($levels as $variantId => $level) {
+            $level->reserved += $deltas[$variantId];
+            $level->save();
+        }
+
+        $this->locks->announce(array_keys($levels));
+    }
+
+    /**
      * @param  array<int, int>  $lines
      * @return bool false when there is nothing to do
      */

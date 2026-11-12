@@ -16,6 +16,8 @@ interface Props {
     locale: Locale;
     t: Messages;
     rates: DeliveryRates | null;
+    /** The fifth desktop tab's label ("Reviews 42"); it scrolls to the Reviews section (#reviews). */
+    reviewsTab?: string;
 }
 
 type Size = 'desktop' | 'mobile';
@@ -40,8 +42,9 @@ const pick = (locale: Locale, en: string | null, bn: string | null): string | nu
 // Content is what the API holds. Figma also draws "Why kids love it" tiles, a "What's in the box"
 // checklist, a parent tip, a "most loved by" line, skill chips, three safety tiles and care text —
 // the catalogue has no fields for those yet, so they are omitted rather than invented (reported).
-// The fifth desktop tab, "Reviews", scrolls to a Reviews section that does not exist yet: omitted.
-export function ProductInfoPanel({ product, variant, locale, t, rates }: Props) {
+// The fifth desktop tab, "Reviews", is a plain link to the Reviews section (#reviews, P4-CAT-12): it
+// is not a panel, so it carries neither `pdp-tab` nor role=tab and the TabsEnhancer leaves it alone.
+export function ProductInfoPanel({ product, variant, locale, t, rates, reviewsTab }: Props) {
     const range = ageRange(product.age_min_months, product.age_max_months, t);
     const under3 = (product.age_min_months ?? 0) < 36;
     // "From ৳70": the API lists zones cheapest first (inside Dhaka); no comparison of money here (rule 1).
@@ -103,6 +106,11 @@ export function ProductInfoPanel({ product, variant, locale, t, rates }: Props) 
                             <span aria-hidden="true" className="pdp-tab-bar absolute inset-x-0 bottom-0 hidden h-0.5 rounded-full bg-brand" />
                         </a>
                     ))}
+                    {reviewsTab ? (
+                        <a href="#reviews" className="t-body-strong relative flex h-11 min-w-18 items-center justify-center px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle">
+                            {reviewsTab}
+                        </a>
+                    ) : null}
                 </div>
                 {sections.map((s, i) => (
                     <div key={s.id} id={`pdp-tab-${s.id}`} role="tabpanel" aria-label={s.tab} data-first={i === 0 ? '' : undefined} className="pdp-panel flex scroll-mt-48 items-start gap-12 pt-8 pb-10">

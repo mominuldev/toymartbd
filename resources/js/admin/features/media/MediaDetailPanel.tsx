@@ -226,6 +226,7 @@ function DetailBody({ media, folders, canManage, canDelete, onDeleted }: { media
                         <ul className="flex flex-col gap-2">
                             {shownRenditions.map((r) => (
                                 <li key={`${r.format}-${r.width}`} className="flex gap-2 t-admin-caption tabular">
+                                    {/* i18n-ignore: file-format names are the same in both languages */}
                                     <span className="w-12 shrink-0 t-admin-caption-strong text-fg-primary">{r.format === 'avif' ? 'AVIF' : 'WebP'}</span>
                                     <span className="flex-1 text-fg-secondary">{t('media.detail.renditionWidth', { width: r.width })}</span>
                                     <span className="text-fg-primary">{formatBytes(r.bytes)}</span>

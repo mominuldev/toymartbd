@@ -56,6 +56,21 @@ final class OrderPolicy extends Policy
         return $this->allows($user, Permission::OrdersUpdate);
     }
 
+    /** Bulk "mark packed" from the board (P4-ORD-08): the same permission as one move. */
+    public function progressMany(User $user): bool
+    {
+        return $this->allows($user, Permission::OrdersUpdate);
+    }
+
+    /**
+     * Invoice / packing slip PDF (P4-ORD-08). The slip carries the full phone and street
+     * address, so it needs customers.view_pii as well as orders.view (rule 20).
+     */
+    public function printInvoices(User $user): bool
+    {
+        return $this->allows($user, Permission::OrdersView) && $this->allows($user, Permission::CustomersViewPii);
+    }
+
     /** Append an internal note (P4-ORD-05). */
     public function addNote(User $user, Order $order): bool
     {

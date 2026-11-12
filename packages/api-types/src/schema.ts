@@ -131,6 +131,181 @@ export interface paths {
         patch: operations["v1.admin.brands.update"];
         trace?: never;
     };
+    "/admin/products/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1.admin.products.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/product-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /product-imports` — store the file and queue its preview (202) */
+        post: operations["v1.admin.product-imports.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/product-imports/{import}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /product-imports/{import}` — status, progress, counts and the first problems. Poll while running */
+        get: operations["v1.admin.product-imports.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/product-imports/{import}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /product-imports/{import}/commit` — import the previewed file's valid rows (202) */
+        post: operations["v1.admin.product-imports.commit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/product-imports/{import}/errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /product-imports/{import}/errors` — the full row-level report as CSV
+         *     (UTF-8 with BOM): row, sku, column, message
+         */
+        get: operations["v1.admin.product-imports.errors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /reviews` — newest first, cursor-paginated; `meta.counts` holds the number in
+         *     each status (for the tabs), unaffected by the filters
+         */
+        get: operations["v1.admin.reviews.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reviews/{review}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reviews/{review}` — needs catalog.view */
+        get: operations["v1.admin.reviews.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reviews/{review}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /reviews/{review}/approve` — publish it and recount the product's rating. Idempotent */
+        post: operations["v1.admin.reviews.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reviews/{review}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /reviews/{review}/reject` — hide it (it stays on record) and recount the rating. Idempotent */
+        post: operations["v1.admin.reviews.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reviews/{review}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /reviews/{review}/reply` — set or clear the shop's public reply */
+        put: operations["v1.admin.reviews.reply"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/products": {
         parameters: {
             query?: never;
@@ -880,7 +1055,12 @@ export interface paths {
          */
         get: operations["v1.admin.orders.index"];
         put?: never;
-        post?: never;
+        /**
+         * `POST /orders` — place a phone / Facebook / WhatsApp order. Requires an
+         *     `Idempotency-Key`: a double submit returns the first order. 201 with the order as
+         *     `GET /orders/{order}` returns it
+         */
+        post: operations["v1.admin.orders.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -899,7 +1079,12 @@ export interface paths {
          *     customers.view_pii; item cost only with catalog.view_cost
          */
         get: operations["v1.admin.orders.show"];
-        put?: never;
+        /**
+         * `PUT /orders/{order}` — apply the edit. The stock reservation follows the new lines,
+         *     existing lines keep their cost snapshot, and the timeline gets one `edited` row with
+         *     the before and after. Returns the order as `GET /orders/{order}` does
+         */
+        put: operations["v1.admin.orders.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1045,6 +1230,299 @@ export interface paths {
         put?: never;
         /** `POST /orders/{order}/notes` — needs orders.update. 201 with the note */
         post: operations["v1.admin.orders.notes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/compose/customer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/compose/customer?phone=` — who this number is, saved addresses, open orders */
+        get: operations["v1.admin.orders.compose.customer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/compose/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/compose/variants?q=` — sellable variants by name (EN/BN), SKU or barcode, with stock available now */
+        get: operations["v1.admin.orders.compose.variants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/compose/districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/compose/districts` — the 64 districts, Dhaka division first (the storefront's list and rules) */
+        get: operations["v1.admin.orders.compose.districts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/compose/districts/{district}/upazilas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/compose/districts/{district}/upazilas` — each with `serviceable` */
+        get: operations["v1.admin.orders.compose.upazilas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/quote` — price the lines (and, once given, the destination and phone)
+         *     through the checkout pipeline. Writes nothing. `blockers` says what stops it
+         *     becoming an order; `grand_total` is what `POST /orders` expects back
+         */
+        post: operations["v1.admin.orders.quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/edit-quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/edit-quote` — what the edit would cost, without writing anything */
+        post: operations["v1.admin.orders.edit-quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/bulk/pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/bulk/pack` — moves each order to `ready_to_ship` on its own; returns
+         *     one result per id (`done`, `conflict` with the current status, `not_found`) and
+         *     `meta.done` / `meta.failed`. A partial failure is a 200 with per-order results.
+         *     Needs orders.update
+         */
+        post: operations["v1.admin.orders.bulk.pack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/bulk/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/bulk/invoices` — the selected orders' invoices in one PDF, in the order
+         *     requested. Never all-or-nothing: ids that do not exist are left out and listed in
+         *     the `X-Orders-Not-Found` header (comma-separated); if none exist it is a 404
+         */
+        post: operations["v1.admin.orders.bulk.invoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/{order}/invoice` — one order's invoice as `application/pdf` */
+        get: operations["v1.admin.orders.invoice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /notifications/templates` — every template, ordered by key then channel; needs
+         *     settings.view. Filters: `filter[channel]` = sms|whatsapp|email, `filter[category]`
+         */
+        get: operations["v1.admin.notifications.templates.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/templates/{template}` — needs settings.view */
+        get: operations["v1.admin.notifications.templates.show"];
+        /** `PUT /notifications/templates/{template}` — replace both bodies; re-measured on save. Needs settings.update */
+        put: operations["v1.admin.notifications.templates.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /notifications/templates/{template}/preview` — measure unsaved bodies; writes nothing. Needs settings.view */
+        post: operations["v1.admin.notifications.templates.preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /notifications/logs` — newest first, cursor-paginated; needs settings.view.
+         *     Filters: `filter[status]`, `filter[channel]`, `filter[template]`, `filter[order_id]`
+         */
+        get: operations["v1.admin.notifications.logs.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/logs/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/logs/summary` — this Dhaka month's spend per channel + dead letters; needs settings.view */
+        get: operations["v1.admin.notifications.logs.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/logs/{log}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /notifications/logs/{log}/retry` — re-queue a dead letter; needs settings.update */
+        post: operations["v1.admin.notifications.logs.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/customers/{customer}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/customers/{customer}/preferences` — needs customers.view */
+        get: operations["v1.admin.notifications.preferences.show"];
+        /** `PUT /notifications/customers/{customer}/preferences` — needs customers.update */
+        put: operations["v1.admin.notifications.preferences.update"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1311,6 +1789,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/products/{slug}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /products/{slug}/reviews` — approved reviews, newest first, cursor-paginated,
+         *     with `meta.summary` = `{ rating_avg, rating_count, distribution: {"5": n … "1": n} }`
+         *     (the same figures as the product's `rating_avg` / `rating_count`)
+         */
+        get: operations["v1.storefront.products.reviews.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/cart": {
         parameters: {
             query?: never;
@@ -1442,6 +1941,220 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/auth/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/otp` — text a 6-digit code. Same answer whether or not the phone has an
+         *     account. SMS only, never WhatsApp (rule 32b)
+         */
+        post: operations["v1.storefront.auth.otp.request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/otp/verify` — check the code; on success return the customer's token and
+         *     merge the guest cart named by `X-Cart-Token` into the customer's cart
+         */
+        post: operations["v1.storefront.auth.otp.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account` — profile plus the counts for the account home */
+        get: operations["v1.storefront.account.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** `PATCH /account` — name, email, language. The phone is the identity and not editable here */
+        patch: operations["v1.storefront.account.update"];
+        trace?: never;
+    };
+    "/storefront/account/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /account/logout` — revoke the token this request carries */
+        post: operations["v1.storefront.account.logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/orders` — newest first, cursor-paginated, optionally one `group`; plus the per-group counts */
+        get: operations["v1.storefront.account.orders.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/orders/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/orders/{number}` — one of the customer's own orders, full detail */
+        get: operations["v1.storefront.account.orders.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/addresses` — default first */
+        get: operations["v1.storefront.account.addresses.index"];
+        put?: never;
+        /** `POST /account/addresses`. The first address becomes the default */
+        post: operations["v1.storefront.account.addresses.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/addresses/{address}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /account/addresses/{address}`. Placed orders keep their own copy */
+        delete: operations["v1.storefront.account.addresses.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /account/addresses/{address}` — replace the address fields */
+        patch: operations["v1.storefront.account.addresses.update"];
+        trace?: never;
+    };
+    "/storefront/account/addresses/{address}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /account/addresses/{address}/default` */
+        post: operations["v1.storefront.account.addresses.default"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/wishlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/wishlist` — newest first */
+        get: operations["v1.storefront.account.wishlist.index"];
+        put?: never;
+        /** `POST /account/wishlist` — save a toy; saving it again is a no-op (200) */
+        post: operations["v1.storefront.account.wishlist.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/wishlist/{product}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /account/wishlist/{product}` — unsave; a no-op when it was not saved */
+        delete: operations["v1.storefront.account.wishlist.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /account/reviews` — 201 with the pending review */
+        post: operations["v1.storefront.account.reviews.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1478,6 +2191,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountReview */
+        AccountReview: {
+            id: number;
+            product_id: number;
+            rating: number;
+            title: string | null;
+            body: string | null;
+            reviewer_name: string;
+            is_verified_purchase: boolean;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+        };
         /**
          * AddCartItemRequest
          * @description `POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is
@@ -1487,6 +2212,71 @@ export interface components {
         AddCartItemRequest: {
             variant_id: number;
             quantity: number;
+        };
+        /**
+         * AddressRequest
+         * @description `POST /storefront/account/addresses` and `PATCH …/{address}` (P4-STO-11). The same
+         *     address rules as checkout (rule 31): district → upazila → area + line + landmark; the
+         *     upazila is required unless the district offers its city as the empty option. The
+         *     division follows from the district.
+         */
+        AddressRequest: {
+            /** @enum {string} */
+            type?: "home" | "office" | "other";
+            /** @description A short name of the customer's own ("Grandparents"). */
+            label?: string | null;
+            recipient_name: string;
+            phone: string;
+            district_id: number;
+            upazila_id?: number | null;
+            area: string;
+            address_line: string;
+            landmark?: string | null;
+            is_default?: boolean | null;
+        };
+        /**
+         * AddressType
+         * @enum {string}
+         */
+        AddressType: "home" | "office" | "other";
+        /** AdminReview */
+        AdminReview: {
+            id: number;
+            product: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+                image_url: string | null;
+            };
+            /** @description The reviewing customer, phone masked. */
+            customer: {
+                id: number;
+                name: string;
+                phone: string | "***";
+            } | null;
+            reviewer_name: string;
+            /** @description 1–5 stars. */
+            rating: number;
+            title: string | null;
+            body: string | null;
+            /** @description Derived on submission from a delivered order line of the reviewer's own order. */
+            is_verified_purchase: boolean;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            /** @enum {string} */
+            locale: "en" | "bn";
+            admin_reply: string | null;
+            /** Format: date-time */
+            admin_reply_at: string | null;
+            moderated_by: {
+                id: number;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            moderated_at: string | null;
+            /** Format: date-time */
+            created_at: string;
         };
         /**
          * ApplyCouponRequest
@@ -1584,6 +2374,14 @@ export interface components {
         BulkMoveMediaRequest: {
             ids: number[];
             folder_id: number | null;
+        };
+        /**
+         * BulkPackOrdersRequest
+         * @description `POST /orders/bulk/pack` — mark many orders packed (→ ready to ship), needs
+         *     orders.update. Up to 100 ids; unknown ids come back as `not_found` results.
+         */
+        BulkPackOrdersRequest: {
+            order_ids: number[];
         };
         /**
          * CancelOrderRequest
@@ -2218,6 +3016,108 @@ export interface components {
             parent_id: number | null;
             position: number;
         };
+        /**
+         * NotificationChannel
+         * @enum {string}
+         */
+        NotificationChannel: "sms" | "whatsapp" | "email";
+        /** NotificationLog */
+        NotificationLog: {
+            id: number;
+            /** @enum {string} */
+            channel: "sms" | "whatsapp" | "email";
+            template: string;
+            /** @enum {string} */
+            category: "security" | "order_updates" | "marketing";
+            locale: string;
+            recipient: string | null;
+            order_number: string | null;
+            order_id: number | null;
+            /** @enum {string} */
+            status: "queued" | "sent" | "failed" | "dead_lettered" | "skipped";
+            provider: string | null;
+            provider_message_id: string | null;
+            segments: number | null;
+            encoding: string | null;
+            cost: string;
+            error: string | null;
+            attempts: number;
+            fallback_of_id: number | null;
+            queued_at: string | null;
+            sent_at: string | null;
+            failed_at: string | null;
+            created_at: string | null;
+        };
+        /** NotificationPreference */
+        NotificationPreference: {
+            /** @enum {string} */
+            channel: "sms" | "whatsapp" | "email";
+            /** @enum {string} */
+            category: "security" | "order_updates" | "marketing";
+            enabled: string;
+            is_default: string;
+            can_opt_out: string;
+        };
+        /** NotificationSummary */
+        NotificationSummary: {
+            /** @description Dhaka month, Y-m */
+            month: string;
+            dead_lettered: number;
+            channels: {
+                /** @enum {string} */
+                channel: "sms" | "whatsapp" | "email";
+                sent: number;
+                segments: number;
+                cost: string;
+            }[];
+            total_cost: string;
+        };
+        /** NotificationTemplate */
+        NotificationTemplate: {
+            id: number;
+            key: string;
+            /** @enum {string} */
+            channel: "sms" | "whatsapp" | "email";
+            /** @enum {string} */
+            category: "security" | "order_updates" | "marketing";
+            can_opt_out: boolean;
+            subject_en: string | null;
+            subject_bn: string | null;
+            preheader_en: string | null;
+            preheader_bn: string | null;
+            body_en: string;
+            body_bn: string;
+            provider_template: string | null;
+            is_active: boolean;
+            variables: string[];
+            chars_en: number | null;
+            chars_bn: number | null;
+            segments_en: number | null;
+            segments_bn: number | null;
+            encoding_en: string | null;
+            encoding_bn: string | null;
+            updated_at: string | null;
+        };
+        /** NotificationTemplatePreview */
+        NotificationTemplatePreview: {
+            en: {
+                rendered: string;
+                chars: number;
+                encoding: string;
+                segments: number | null;
+                per_segment_limit: number | null;
+                cost: string;
+            };
+            bn: {
+                rendered: string;
+                chars: number;
+                encoding: string;
+                segments: number | null;
+                per_segment_limit: number | null;
+                cost: string;
+            };
+            unknown_variables: string[];
+        };
         /** Order */
         Order: {
             id: number;
@@ -2250,6 +3150,9 @@ export interface components {
                 name: string;
                 phone: string;
                 alt_phone: string | null;
+                division_id: number | null;
+                district_id: number | null;
+                upazila_id: number | null;
                 division: string | null;
                 district: string | null;
                 upazila: string | null;
@@ -2302,7 +3205,7 @@ export interface components {
             timeline: {
                 id: number;
                 /** @enum {string} */
-                type: "placed" | "status_changed" | "payment_status_changed" | "fulfillment_status_changed" | "note";
+                type: "placed" | "status_changed" | "payment_status_changed" | "fulfillment_status_changed" | "note" | "edited";
                 field: string | null;
                 from: string | null;
                 to: string | null;
@@ -2335,6 +3238,10 @@ export interface components {
              *     decided here so the client never re-derives a transition rule.
              */
             available_actions: ("confirm" | "hold" | "release" | "processing" | "ready_to_ship" | "cancel" | "add_note")[];
+            /** @description Whether this user may edit the order now (P4-ORD-07: pre-packing status and orders.update). */
+            editable: boolean;
+            /** @description Whether this user may print the invoice / packing slip (orders.view + customers.view_pii). */
+            can_print_invoice: boolean;
             customer_note: string | null;
             internal_note: string | null;
             cancel_reason: string | null;
@@ -2353,6 +3260,67 @@ export interface components {
             outcome: "done" | "conflict" | "not_found";
             status: string | null;
             detail: string | null;
+        };
+        /** OrderComposerCustomer */
+        OrderComposerCustomer: {
+            /** @description E.164 — the number as it will be stored. */
+            phone: string;
+            pii_masked: boolean;
+            customer: {
+                id: number;
+                name: string;
+                /** @enum {string} */
+                preferred_language: "en" | "bn";
+                orders_count: number;
+                delivered_orders_count: number;
+                total_spent: string;
+                last_order_at: string | null;
+            } | null;
+            addresses: {
+                id: number;
+                recipient_name: string;
+                division_id: number;
+                district_id: number;
+                upazila_id: number | null;
+                division: string;
+                district: string;
+                upazila: string | null;
+                area: string | null;
+                address_line: string | null;
+                landmark: string | null;
+                is_default: boolean;
+            }[];
+            open_orders: {
+                id: number;
+                number: string;
+                status: string;
+                grand_total: string;
+                placed_at: string | null;
+            }[];
+        };
+        /** OrderComposerVariant */
+        OrderComposerVariant: {
+            variant_id: number;
+            product_id: number;
+            product_name: string;
+            product_name_bn: string | null;
+            variant_name: string | null;
+            sku: string;
+            price: string;
+            available: number;
+            image_url: string | null;
+        };
+        /**
+         * OrderInvoicesRequest
+         * @description `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice /
+         *     packing-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip
+         *     carries the full phone and street address the rider needs. `locale` picks the
+         *     language (default: each customer's preferred language).
+         */
+        OrderInvoicesRequest: {
+            order_ids: number[];
+            /** @enum {string|null} */
+            locale?: "en" | "bn" | null;
         };
         /** OrderListItem */
         OrderListItem: {
@@ -2398,6 +3366,67 @@ export interface components {
             user_name: string | null;
             created_at: string | null;
         };
+        /** OrderQuote */
+        OrderQuote: {
+            lines: {
+                variant_id: number;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                sku: string;
+                quantity: number;
+                unit_price: string;
+                subtotal: string;
+                discount: string;
+                total: string;
+                available: number;
+            }[];
+            unavailable_variant_ids: number[];
+            subtotal: string;
+            promotion_discount: string;
+            coupon: {
+                code: string;
+                applied: boolean;
+                discount: string;
+                message: string | null;
+            } | null;
+            delivery: {
+                serviceable: boolean;
+                /** @enum {string|null} */
+                zone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka" | null;
+                weight_grams: number;
+                free_shipping: boolean;
+                cod_advance: string | null;
+            } | null;
+            /** @description null without a destination, or when it is not serviced */
+            shipping_charge: string | null;
+            discount_total: string;
+            grand_total: string;
+            item_count: number;
+            ready: boolean;
+            blockers: {
+                field: string;
+                message: string;
+            }[];
+        };
+        /**
+         * OrderQuoteRequest
+         * @description `POST /orders/quote` — price a new staff order through the checkout pipeline without
+         *     writing anything (P4-ORD-06). Needs orders.create. Everything but the lines is
+         *     optional: without a district there is no delivery line; without a phone the
+         *     per-customer coupon checks wait for the save.
+         */
+        OrderQuoteRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            coupon_code?: string | null;
+            /** @description Optional; enables the per-customer and first-order coupon checks. Ignored when not a valid number yet. */
+            phone?: string | null;
+            district_id?: number | null;
+            upazila_id?: number | null;
+        };
         /**
          * OrderTrackRequest
          * @description `POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone
@@ -2418,6 +3447,15 @@ export interface components {
         OrderWorkflowRequest: {
             /** @description Shown on the order's activity timeline next to the change. */
             note?: string | null;
+        };
+        /**
+         * PreviewNotificationTemplateRequest
+         * @description `POST /notifications/templates/{template}/preview` — measure an unsaved body (the
+         *     editor's live character/segment/cost counter). Writes nothing; needs settings.view.
+         */
+        PreviewNotificationTemplateRequest: {
+            body_en: string;
+            body_bn: string;
         };
         /**
          * ProblemDetails
@@ -2613,6 +3651,40 @@ export interface components {
             alt_text_bn: string | null;
             position: number;
             is_primary: boolean;
+        };
+        /** ProductImport */
+        ProductImport: {
+            id: number;
+            original_name: string;
+            /** @enum {string} */
+            format: "csv" | "xlsx";
+            /** @enum {string} */
+            status: "queued" | "previewing" | "previewed" | "importing" | "completed" | "failed";
+            total_rows: number;
+            processed_rows: number;
+            /** @description Rows that create (preview: would create) a product. */
+            create_count: number;
+            /** @description Rows that update (preview: would update) a product. */
+            update_count: number;
+            /** @description Rows with at least one problem; they are not written. */
+            error_count: number;
+            failure_message: string | null;
+            errors: {
+                /** @description Spreadsheet row number (the header is row 1); 0 for a problem with the file itself. */
+                row: number;
+                sku: string | null;
+                /** @description The column the problem belongs to; null for the row (or file) as a whole. */
+                column: string | null;
+                message: string;
+            }[];
+            /** Format: date-time */
+            previewed_at: string | null;
+            /** Format: date-time */
+            committed_at: string | null;
+            /** Format: date-time */
+            completed_at: string | null;
+            /** Format: date-time */
+            created_at: string;
         };
         /** ProductListItem */
         ProductListItem: {
@@ -2833,6 +3905,22 @@ export interface components {
             file: string;
         };
         /**
+         * ReplyToReviewRequest
+         * @description `PUT /reviews/{review}/reply` — the shop's public reply; null or "" removes it. Needs reviews.moderate.
+         */
+        ReplyToReviewRequest: {
+            reply: string | null;
+        };
+        /**
+         * RequestOtpRequest
+         * @description `POST /storefront/auth/otp` (P4-STO-11) — text a sign-in code. Called by the Next.js
+         *     server with its storefront token; the route's ability authorises it.
+         */
+        RequestOtpRequest: {
+            /** @description A Bangladeshi mobile, 013–019 (e.g. "01712345678" or "+8801712345678"). */
+            phone: string;
+        };
+        /**
          * RobotsDirective
          * @description The robots meta values the admin may choose (SeoPanel "Advanced").
          * @enum {string}
@@ -2981,6 +4069,39 @@ export interface components {
             is_customer_visible?: boolean;
         };
         /**
+         * StoreOrderRequest
+         * @description `POST /orders` — a phone / Facebook / WhatsApp order keyed in by staff (P4-ORD-06).
+         *     Needs orders.create and an `Idempotency-Key`. Payment is cash on delivery (the only
+         *     driver until a gateway is chosen, Gate 1 decision 5). `expected_total` is the total
+         *     from `POST /orders/quote` that the operator read to the customer.
+         */
+        StoreOrderRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            name: string;
+            phone: string;
+            alt_phone?: string | null;
+            division_id?: number | null;
+            district_id: number;
+            upazila_id?: number | null;
+            area: string;
+            address_line: string;
+            landmark: string;
+            /**
+             * @description Where the order came from.
+             * @enum {string}
+             */
+            source: "phone" | "facebook" | "whatsapp" | "admin";
+            coupon_code?: string | null;
+            /** @description Printed on the packing slip (e.g. "gift wrap please"). */
+            customer_note?: string | null;
+            /** @description Staff only — never shown to the customer. */
+            internal_note?: string | null;
+            expected_total: string;
+        };
+        /**
          * StoreProductImageRequest
          * @description `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP
          *     or AVIF by content, ≤ 10 MB, ≤ 8000 px per side), optional `alt_text`,
@@ -3006,6 +4127,19 @@ export interface components {
                 width?: number;
                 height?: number;
             };
+        };
+        /**
+         * StoreProductImportRequest
+         * @description `POST /product-imports` — a CSV (UTF-8, with or without BOM) or XLSX file of up to
+         *     10 MB, in the columns of a product export. Needs catalog.import. The file is only
+         *     stored here; its rows are checked by the queued preview.
+         */
+        StoreProductImportRequest: {
+            /**
+             * Format: binary
+             * @description A `.csv` or `.xlsx` file.
+             */
+            file: string;
         };
         /**
          * StoreProductRequest
@@ -3142,6 +4276,63 @@ export interface components {
                 counted?: number | null;
             }[];
         };
+        /** StorefrontAccount */
+        StorefrontAccount: {
+            id: number;
+            /** @description Empty until the customer adds it (OTP sign-up asks only for the phone). */
+            name: string;
+            phone: string;
+            email: string | null;
+            /** @enum {string} */
+            preferred_language: "en" | "bn";
+            phone_verified_at: string | null;
+            member_since: string | null;
+            counts: {
+                orders: number;
+                wishlist: number;
+                addresses: number;
+            };
+        };
+        /** StorefrontAccountSession */
+        StorefrontAccountSession: {
+            /** @description Sanctum bearer token for `/storefront/account/*`. Shown once. */
+            token: string;
+            expires_at: string;
+            is_new_customer: boolean;
+            customer: components["schemas"]["StorefrontAccount"];
+            cart: {
+                token: string;
+                item_count: number;
+            } | null;
+        };
+        /** StorefrontAddress */
+        StorefrontAddress: {
+            id: number;
+            /** @enum {string} */
+            type: "home" | "office" | "other";
+            label: string | null;
+            recipient_name: string;
+            phone: string;
+            division: {
+                id: number;
+                name: string;
+                name_bn: string;
+            };
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            };
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            area: string | null;
+            address_line: string;
+            landmark: string | null;
+            is_default: boolean;
+        };
         /** StorefrontBrand */
         StorefrontBrand: {
             name: string;
@@ -3273,6 +4464,37 @@ export interface components {
                 stage: string;
                 at: string | null;
             }[];
+        };
+        /** StorefrontOrderSummary */
+        StorefrontOrderSummary: {
+            number: string;
+            /** @enum {string} */
+            stage: "placed" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
+            placed_at: string | null;
+            /** @description Units across all lines. */
+            item_count: number;
+            grand_total: string;
+            payment: {
+                method: string | null;
+                status: string;
+            };
+            preview: {
+                name: string;
+                name_bn: string | null;
+                image: {
+                    url: string;
+                    alt: string | null;
+                    alt_bn: string | null;
+                } | null;
+            }[];
+            /** @description Lines beyond the preview ("+1"). */
+            more_items: number;
+        };
+        /** StorefrontOtpIssued */
+        StorefrontOtpIssued: {
+            expires_in: number;
+            resend_in: number;
+            length: number;
         };
         /** StorefrontProduct */
         StorefrontProduct: {
@@ -3411,6 +4633,25 @@ export interface components {
                 height: number | null;
             } | null;
         };
+        /** StorefrontReview */
+        StorefrontReview: {
+            id: number;
+            reviewer_name: string;
+            /** @description 1–5 stars. */
+            rating: number;
+            title: string | null;
+            body: string | null;
+            is_verified_purchase: boolean;
+            /**
+             * @description The language the shopper wrote in.
+             * @enum {string}
+             */
+            locale: "en" | "bn";
+            /** @description The shop's public reply, if any. */
+            admin_reply: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
         /** StorefrontSearchSuggestions */
         StorefrontSearchSuggestions: {
             query: string;
@@ -3437,6 +4678,30 @@ export interface components {
             name: string;
             name_bn: string;
             serviceable: boolean;
+        };
+        /** StorefrontWishlistItem */
+        StorefrontWishlistItem: {
+            product_id: number;
+            saved_at: string | null;
+            available: boolean;
+            product: components["schemas"]["StorefrontProductCard"] | null;
+        };
+        /**
+         * SubmitReviewRequest
+         * @description `POST /storefront/account/reviews` (P4-CAT-12) — the signed-in customer reviews a
+         *     live product. `order_item_id` is optional; when given it must be a delivered line
+         *     of this customer's own order for the product. `is_verified_purchase` is
+         *     prohibited: verification is derived on the server, never claimed by a client.
+         */
+        SubmitReviewRequest: {
+            product_id: number;
+            rating: number;
+            title?: string | null;
+            body: string;
+            /** @description The name shown on the review; defaults to the first name and last initial ("Nusrat J."). */
+            reviewer_name?: string | null;
+            order_item_id?: number | null;
+            is_verified_purchase?: string;
         };
         /**
          * TwitterCard
@@ -3542,6 +4807,60 @@ export interface components {
             alt_text_bn?: string | null;
             caption?: string | null;
             folder_id?: number | null;
+        };
+        /**
+         * UpdateNotificationPreferencesRequest
+         * @description `PUT /notifications/customers/{customer}/preferences` — one or more (channel, category)
+         *     switches; needs customers.update. `security` is not accepted: OTP cannot be opted out of.
+         */
+        UpdateNotificationPreferencesRequest: {
+            preferences: {
+                channel: components["schemas"]["NotificationChannel"];
+                /** @enum {string} */
+                category: "order_updates" | "marketing";
+                enabled: boolean;
+            }[];
+        };
+        /**
+         * UpdateNotificationTemplateRequest
+         * @description `PUT /notifications/templates/{template}` — both bodies (EN + BN) in one document;
+         *     needs settings.update. A `{variable}` outside the template's allowlist is a 422 on that
+         *     field. Subject and preheader are required for email and ignored otherwise.
+         */
+        UpdateNotificationTemplateRequest: {
+            body_en: string;
+            body_bn: string;
+            is_active: boolean;
+            subject_en?: string | null;
+            subject_bn?: string | null;
+            preheader_en?: string | null;
+            preheader_bn?: string | null;
+        };
+        /**
+         * UpdateOrderRequest
+         * @description `PUT /orders/{order}` and `POST /orders/{order}/edit-quote` — edit a placed order
+         *     (P4-ORD-07). Needs orders.update. The body is the whole editable state: every line
+         *     the order should have afterwards (one left out is removed), the recipient and the
+         *     address. `expected_total` (required to save, ignored by the quote) is the re-quoted
+         *     total the operator was shown.
+         */
+        UpdateOrderRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            name: string;
+            phone: string;
+            alt_phone?: string | null;
+            division_id?: number | null;
+            district_id: number;
+            upazila_id?: number | null;
+            area: string;
+            address_line: string;
+            landmark: string;
+            expected_total: string;
+            /** @description Why the order was edited — shown on the activity timeline. */
+            note?: string | null;
         };
         /**
          * UpdateProductImageRequest
@@ -3670,11 +4989,39 @@ export interface components {
             acknowledge_slug_redirect?: boolean;
         };
         /**
+         * UpdateProfileRequest
+         * @description `PATCH /storefront/account` — the customer's own name, email and language.
+         */
+        UpdateProfileRequest: {
+            name?: string;
+            /** Format: email */
+            email?: string | null;
+            /** @enum {string} */
+            preferred_language?: "en" | "bn";
+        };
+        /**
          * VariantStatus
          * @description `product_variants.status`. A variant is archived, never deleted: stock movements and order lines reference it.
          * @enum {string}
          */
         VariantStatus: "active" | "archived";
+        /**
+         * VerifyOtpRequest
+         * @description `POST /storefront/auth/otp/verify` (P4-STO-11). An optional `X-Cart-Token` names the
+         *     guest cart to merge into the customer's cart on sign-in.
+         */
+        VerifyOtpRequest: {
+            phone: string;
+            /** @description The 6-digit code from the SMS. */
+            code: string;
+        };
+        /**
+         * WishlistRequest
+         * @description `POST /storefront/account/wishlist` — save a live (published) product.
+         */
+        WishlistRequest: {
+            product_id: number;
+        };
     };
     responses: {
         /** @description Unauthenticated */
@@ -4023,6 +5370,376 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.export": {
+        parameters: {
+            query?: {
+                /** @description File format. */
+                format?: "csv" | "xlsx";
+                /** @description As on GET /products. */
+                "filter[search]"?: string;
+                /** @description As on GET /products. */
+                "filter[status]"?: "draft" | "active" | "archived";
+                /** @description As on GET /products. */
+                "filter[type]"?: "simple" | "variable";
+                /** @description As on GET /products. */
+                "filter[brand_id]"?: number;
+                /** @description As on GET /products. */
+                "filter[category_id]"?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Unknown format, or an unlisted filter or sort (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.product-imports.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreProductImportRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductImport` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImport"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing catalog.import (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.product-imports.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The import ID */
+                import: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductImport` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImport"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.product-imports.commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The import ID */
+                import: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductImport` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductImport"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not previewed yet, already committed, or no valid rows (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.product-imports.errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The import ID */
+                import: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=-errors.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.reviews.index": {
+        parameters: {
+            query?: {
+                /** @description Only reviews in this status. */
+                "filter[status]"?: "pending" | "approved" | "rejected";
+                /** @description Only reviews of this product. */
+                "filter[product_id]"?: number;
+                /** @description Only reviews with this many stars (1–5). */
+                "filter[rating]"?: number;
+                /** @description Only verified (1) or unverified (0) purchases. */
+                "filter[verified]"?: "0" | "1";
+                /** @description Contains, on the title, body or reviewer name. */
+                "filter[search]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `AdminReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminReview"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                pending: number;
+                                approved: number;
+                                rejected: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.reviews.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The review ID */
+                review: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.reviews.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The review ID */
+                review: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reviews.moderate (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.reviews.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The review ID */
+                review: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reviews.moderate (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.reviews.reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The review ID */
+                review: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyToReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reviews.moderate (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
@@ -6227,6 +7944,61 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "v1.admin.orders.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreOrderRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The total changed since the quote (`price-changed`), stock ran out (`insufficient-stock`), or the key is in flight (`request-in-progress`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid field, unknown coupon, unsellable line or address not serviced (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.admin.orders.show": {
         parameters: {
             query?: never;
@@ -6251,6 +8023,54 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.orders.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"] | Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not editable in this status or payment in progress (`conflict`), total changed (`price-changed`), or stock ran out (`insufficient-stock`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid field, unsellable line, coupon lost or address not serviced (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.orders.bulk.confirm": {
@@ -6549,6 +8369,610 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderNote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.compose.customer": {
+        parameters: {
+            query?: {
+                /** @description The customer's phone, as typed (customer lookup). */
+                phone?: string;
+                /** @description Name, Bangla name or SKU, at least 2 characters (variant search). */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `OrderComposerCustomer` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderComposerCustomer"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not a valid Bangladeshi mobile number (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.orders.compose.variants": {
+        parameters: {
+            query?: {
+                /** @description The customer's phone, as typed (customer lookup). */
+                phone?: string;
+                /** @description Name, Bangla name or SKU, at least 2 characters (variant search). */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `OrderComposerVariant` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderComposerVariant"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.compose.districts": {
+        parameters: {
+            query?: {
+                /** @description The customer's phone, as typed (customer lookup). */
+                phone?: string;
+                /** @description Name, Bangla name or SKU, at least 2 characters (variant search). */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontDistrict` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontDistrict"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.compose.upazilas": {
+        parameters: {
+            query?: {
+                /** @description The customer's phone, as typed (customer lookup). */
+                phone?: string;
+                /** @description Name, Bangla name or SKU, at least 2 characters (variant search). */
+                q?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The district ID */
+                district: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontUpazila` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontUpazila"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.edit-quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order can no longer be edited (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.bulk.pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkPackOrdersRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `OrderBulkResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderBulkResult"][];
+                        meta: {
+                            done: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.bulk.invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderInvoicesRequest"];
+            };
+        };
+        responses: {
+            /** @description The invoices PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description None of the requested orders exist (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.invoice": {
+        parameters: {
+            query: {
+                "order_ids[]": number[];
+                locale?: "en" | "bn" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The invoice PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.templates.index": {
+        parameters: {
+            query?: {
+                filter?: string;
+                /** @description Only one channel. */
+                "filter[channel]"?: "sms" | "whatsapp" | "email";
+                /** @description Only one category. */
+                "filter[category]"?: "security" | "order_updates" | "marketing";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationTemplate"][];
+                    };
+                };
+            };
+            /** @description Unlisted filter or invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.notifications.templates.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplate"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.notifications.templates.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplate"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.templates.preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewNotificationTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description `NotificationTemplatePreview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplatePreview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.logs.index": {
+        parameters: {
+            query?: {
+                /** @description One status. */
+                "filter[status]"?: "queued" | "sent" | "failed" | "dead_lettered" | "skipped";
+                /** @description One channel. */
+                "filter[channel]"?: "sms" | "whatsapp" | "email";
+                /** @description Template key, e.g. order.placed. */
+                "filter[template]"?: string;
+                /** @description Messages about one order. */
+                "filter[order_id]"?: number;
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `NotificationLog` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationLog"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.notifications.logs.summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `NotificationSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSummary"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.notifications.logs.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The log ID */
+                log: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `NotificationLog` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationLog"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The message is not dead-lettered (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.preferences.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `NotificationPreference` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationPreference"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.notifications.preferences.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationPreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `NotificationPreference` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationPreference"][];
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -7262,6 +9686,51 @@ export interface operations {
             };
         };
     };
+    "v1.storefront.products.reviews.index": {
+        parameters: {
+            query?: {
+                cursor?: string;
+                per_page?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontReview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontReview"][];
+                        meta: {
+                            summary: {
+                                rating_avg: string | null;
+                                rating_count: string;
+                                distribution: number[];
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No live product has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.cart.show": {
         parameters: {
             query?: {
@@ -7791,6 +10260,692 @@ export interface operations {
             422: components["responses"]["ValidationException"];
             /** @description Too many lookups */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.otp.request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontOtpIssued` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOtpIssued"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a valid 013–019 mobile number (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A code was sent under a minute ago, five this hour, or three in 10 minutes (`too-many-requests`, `Retry-After`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.otp.verify": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The guest cart to merge into the customer's cart. */
+                "X-Cart-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Wrong, expired or used code — the same `code` error for each (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many verification attempts for this phone */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontAccount` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccount"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccount` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccount"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description A field is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.orders.index": {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string | null;
+                group?: "active" | "delivered" | "cancelled" | "returned";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `StorefrontOrderSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontOrderSummary"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                        summary: {
+                            [key: string]: number;
+                        };
+                    };
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Unknown `group` or an unlisted query parameter (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.orders.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontOrder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOrder"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description No order with this number belongs to the customer (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.addresses.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontAddress` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontAddress"][];
+                    };
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.addresses.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAddress` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAddress"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description A field is invalid, or the book is full (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.addresses.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not one of the customer's addresses (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.addresses.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAddress` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAddress"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not one of the customer's addresses (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A field is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.addresses.default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                address: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontAddress` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAddress"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not one of the customer's addresses (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.wishlist.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontWishlistItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontWishlistItem"][];
+                    };
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.wishlist.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WishlistRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Unknown or unpublished product, or the list is full (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.wishlist.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.reviews.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description `AccountReview` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountReview"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Already reviewed this product, or this purchase (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid fields, an unavailable product, an order line that is not your delivered purchase, or `is_verified_purchase` sent (`validation-error`) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

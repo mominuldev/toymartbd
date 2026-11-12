@@ -48,6 +48,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Customer declares what it reads from orders; Ordering implements it (deptrac).
         $this->app->bind(CustomerOrderHistory::class, EloquentCustomerOrderHistory::class);
+        // Reviews ask Ordering whether a line is a delivered purchase (P4-CAT-12, deptrac).
+        $this->app->bind(\App\Domain\Catalog\Reviews\Contracts\DeliveredPurchases::class, \App\Domain\Ordering\Queries\EloquentDeliveredPurchases::class);
+        // The product import writes rows through the product FormRequests (P4-CAT-10).
+        $this->app->bind(\App\Domain\Catalog\Import\Contracts\ProductRowWriter::class, \App\Http\Imports\FormRequestProductRowWriter::class);
         // first_order_only coupons read real order history (replaces NoCustomerOrderHistory).
         $this->app->bind(\App\Domain\Marketing\Contracts\CustomerOrderHistory::class, \App\Domain\Ordering\Queries\PhoneOrderHistory::class);
 

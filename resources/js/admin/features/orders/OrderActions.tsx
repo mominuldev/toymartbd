@@ -1,14 +1,16 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowClockwiseIcon, CheckIcon, PackageIcon, PauseIcon, PlayIcon, ProhibitIcon, WarningIcon } from '@phosphor-icons/react';
+import { Link } from 'react-router';
+import { ArrowClockwiseIcon, CheckIcon, PackageIcon, PauseIcon, PencilSimpleIcon, PlayIcon, PrinterIcon, ProhibitIcon, WarningIcon } from '@phosphor-icons/react';
 import { cancelOrderRequestSchema, holdOrderRequestSchema } from '@toymart/api-types/zod';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { ApiError } from '@/lib/api';
 import { cancelReasons, useOrderMove, type CancelReason, type Order, type WorkflowMove } from './api';
+import { openInvoices } from './composeApi';
 
 /** A refused move (409) or any other API failure, as one sentence for a toast. */
 export function problemText(error: unknown, fallback: string): string {
@@ -44,8 +46,28 @@ export function OrderActions({ order }: { order: Order }) {
             },
         );
 
+    const [printing, setPrinting] = useState(false);
+    const print = () => {
+        setPrinting(true);
+        openInvoices([order.id])
+            .catch((error: unknown) => toast.notify(problemText(error, t('orders.invoice.failed')), 'danger'))
+            .finally(() => setPrinting(false));
+    };
+
     return (
         <>
+            {order.can_print_invoice && (
+                <Button variant="outline" onClick={print} disabled={printing} aria-busy={printing || undefined}>
+                    <PrinterIcon size={16} aria-hidden />
+                    {printing ? t('orders.invoice.printing') : t('orders.invoice.print')}
+                </Button>
+            )}
+            {order.editable && (
+                <Link to={`/orders/${order.id}/edit`} className={buttonClass('outline')}>
+                    <PencilSimpleIcon size={16} aria-hidden />
+                    {t('orders.edit.action')}
+                </Link>
+            )}
             {actions.includes('cancel') && (
                 <Button variant="outline" onClick={() => setDialog('cancel')}>
                     <ProhibitIcon size={16} aria-hidden className="text-feedback-danger" />

@@ -1,0 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Catalog\Reviews\Enums;
+
+/** A review's moderation state. Only approved reviews are public and counted in the rating. */
+enum ReviewStatus: string
+{
+    case Pending = 'pending';
+    case Approved = 'approved';
+    case Rejected = 'rejected';
+}

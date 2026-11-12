@@ -13,14 +13,24 @@ use App\Http\Controllers\Api\V1\Admin\InventoryController;
 use App\Http\Controllers\Api\V1\Admin\MediaBulkController;
 use App\Http\Controllers\Api\V1\Admin\MediaController;
 use App\Http\Controllers\Api\V1\Admin\MediaFolderController;
+use App\Http\Controllers\Api\V1\Admin\NotificationLogController;
+use App\Http\Controllers\Api\V1\Admin\NotificationPreferenceController;
+use App\Http\Controllers\Api\V1\Admin\NotificationTemplateController;
+use App\Http\Controllers\Api\V1\Admin\OrderComposerController;
 use App\Http\Controllers\Api\V1\Admin\OrderController;
+use App\Http\Controllers\Api\V1\Admin\OrderEditController;
+use App\Http\Controllers\Api\V1\Admin\OrderInvoiceController;
 use App\Http\Controllers\Api\V1\Admin\OrderNoteController;
+use App\Http\Controllers\Api\V1\Admin\OrderPackingController;
 use App\Http\Controllers\Api\V1\Admin\OrderWorkflowController;
 use App\Http\Controllers\Api\V1\Admin\ProductComplianceController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
+use App\Http\Controllers\Api\V1\Admin\ProductExportController;
 use App\Http\Controllers\Api\V1\Admin\ProductImageController;
+use App\Http\Controllers\Api\V1\Admin\ProductImportController;
 use App\Http\Controllers\Api\V1\Admin\ProductPricingController;
 use App\Http\Controllers\Api\V1\Admin\ProductSeoController;
+use App\Http\Controllers\Api\V1\Admin\ReviewController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Middleware\EnsureActiveStaffSession;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +73,21 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
 
     // Products: one document (fields, categories, variant matrix, relations) per PUT.
     // DELETE archives; variants and SKUs are never deleted.
+    // Bulk import/export (P4-CAT-10). The export is the list with its filters; the import
+    // previews every row (dry run) before a separate commit. Before /products/{product}.
+    Route::get('/products/export', ProductExportController::class)->name('products.export');
+    Route::post('/product-imports', [ProductImportController::class, 'store'])->name('product-imports.store');
+    Route::get('/product-imports/{import}', [ProductImportController::class, 'show'])->whereNumber('import')->name('product-imports.show');
+    Route::post('/product-imports/{import}/commit', [ProductImportController::class, 'commit'])->whereNumber('import')->name('product-imports.commit');
+    Route::get('/product-imports/{import}/errors', [ProductImportController::class, 'errors'])->whereNumber('import')->name('product-imports.errors');
+
+    // Review moderation (P4-CAT-12). Approve/reject recompute the product's rating aggregates.
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/reviews/{review}', [ReviewController::class, 'show'])->whereNumber('review')->name('reviews.show');
+    Route::post('/reviews/{review}/approve', [ReviewController::class, 'approve'])->whereNumber('review')->name('reviews.approve');
+    Route::post('/reviews/{review}/reject', [ReviewController::class, 'reject'])->whereNumber('review')->name('reviews.reject');
+    Route::put('/reviews/{review}/reply', [ReviewController::class, 'reply'])->whereNumber('review')->name('reviews.reply');
+
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
@@ -153,4 +178,31 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/orders/{order}/ready-to-ship', [OrderWorkflowController::class, 'readyToShip'])->name('orders.ready-to-ship');
     Route::post('/orders/{order}/cancel', [OrderWorkflowController::class, 'cancel'])->name('orders.cancel');
     Route::post('/orders/{order}/notes', [OrderNoteController::class, 'store'])->name('orders.notes.store');
+
+    // Manual orders (P4-ORD-06): lookups, a live quote and the order itself, all through the
+    // checkout pricing pipeline and PlaceOrder. Edit after placement (P4-ORD-07). Bulk pack
+    // and invoice PDFs (P4-ORD-08) report per order, never all-or-nothing.
+    Route::get('/orders/compose/customer', [OrderComposerController::class, 'customer'])->name('orders.compose.customer');
+    Route::get('/orders/compose/variants', [OrderComposerController::class, 'variants'])->name('orders.compose.variants');
+    Route::get('/orders/compose/districts', [OrderComposerController::class, 'districts'])->name('orders.compose.districts');
+    Route::get('/orders/compose/districts/{district}/upazilas', [OrderComposerController::class, 'upazilas'])->whereNumber('district')->name('orders.compose.upazilas');
+    Route::post('/orders/quote', [OrderComposerController::class, 'quote'])->name('orders.quote');
+    Route::post('/orders', [OrderComposerController::class, 'store'])->middleware('idempotent')->name('orders.store');
+    Route::post('/orders/{order}/edit-quote', [OrderEditController::class, 'quote'])->name('orders.edit-quote');
+    Route::put('/orders/{order}', [OrderEditController::class, 'update'])->name('orders.update');
+    Route::post('/orders/bulk/pack', [OrderPackingController::class, 'bulkPack'])->name('orders.bulk.pack');
+    Route::post('/orders/bulk/invoices', [OrderInvoiceController::class, 'bulk'])->name('orders.bulk.invoices');
+    Route::get('/orders/{order}/invoice', [OrderInvoiceController::class, 'show'])->name('orders.invoice');
+
+    // Notifications (P4-NOT-01..03): templates (EN + BN, server-measured segments), the
+    // message log with per-message cost and dead letters, and customer opt-outs.
+    Route::get('/notifications/templates', [NotificationTemplateController::class, 'index'])->name('notifications.templates.index');
+    Route::get('/notifications/templates/{template}', [NotificationTemplateController::class, 'show'])->name('notifications.templates.show');
+    Route::put('/notifications/templates/{template}', [NotificationTemplateController::class, 'update'])->name('notifications.templates.update');
+    Route::post('/notifications/templates/{template}/preview', [NotificationTemplateController::class, 'preview'])->name('notifications.templates.preview');
+    Route::get('/notifications/logs', [NotificationLogController::class, 'index'])->name('notifications.logs.index');
+    Route::get('/notifications/logs/summary', [NotificationLogController::class, 'summary'])->name('notifications.logs.summary');
+    Route::post('/notifications/logs/{log}/retry', [NotificationLogController::class, 'retry'])->whereNumber('log')->name('notifications.logs.retry');
+    Route::get('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'show'])->name('notifications.preferences.show');
+    Route::put('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'update'])->name('notifications.preferences.update');
 });

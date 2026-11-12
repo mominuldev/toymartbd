@@ -175,7 +175,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const form = useForm<FormValues>({ defaultValues: toForm(product) });
     const { register, formState, setError, clearErrors, setValue, control, reset, getValues } = form;
     const type = useWatch({ control, name: 'type' });
-    const categoryIds = useWatch({ control, name: 'category_ids' });
     const primaryId = useWatch({ control, name: 'primary_category_id' });
     const ageMin = useWatch({ control, name: 'age_min_months' });
     const ageMax = useWatch({ control, name: 'age_max_months' });
@@ -347,7 +346,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
             );
             if (first && sections.includes(first)) goTab(first);
             // Errors in the "More details" fields open it.
-            if (next.form.some((f) => ['short_description', 'short_description_bn', 'category_ids', 'gender', 'is_educational'].includes(f.field))) setMoreOpen(true);
+            if (next.form.some((f) => ['short_description', 'short_description_bn', 'gender', 'is_educational'].includes(f.field))) setMoreOpen(true);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [combos, relations, getValues, setError, goTab, sectionKey],
@@ -445,19 +444,10 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         return () => window.removeEventListener('keydown', onKey);
     });
 
-    /** The Category select is the primary category; it is always one of the product's categories. */
+    /** The Category select is the product's only category in the form; it is also the primary one. */
     const choosePrimary = (value: string) => {
-        const previous = primaryId === '' ? null : Number(primaryId);
-        const others = categoryIds.filter((c) => c !== previous);
-        const next = value === '' ? others : [Number(value), ...others.filter((c) => c !== Number(value))];
-        setValue('category_ids', next, { shouldDirty: true });
+        setValue('category_ids', value === '' ? [] : [Number(value)], { shouldDirty: true });
         setValue('primary_category_id', value, { shouldDirty: true });
-    };
-
-    const toggleCategory = (categoryId: number, on: boolean) => {
-        const next = on ? [...categoryIds, categoryId] : categoryIds.filter((c) => c !== categoryId);
-        setValue('category_ids', next, { shouldDirty: true });
-        if (on && primaryId === '') setValue('primary_category_id', String(categoryId), { shouldDirty: true });
     };
 
     const errorOf = (field: FieldPath<FormValues>): string | undefined => {
@@ -699,21 +689,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                                 {(ids) => <textarea {...inputProps(ids)} rows={2} lang="bn" className={`${inputClass} py-2`} {...register('short_description_bn')} />}
                                             </Field>
                                         </div>
-                                        <fieldset className="flex flex-col gap-1.5">
-                                            <legend className="t-admin-body-strong text-fg-primary">{t('products.field.categories')}</legend>
-                                            <p className="t-admin-caption text-fg-secondary">{t('products.field.categoriesHint')}</p>
-                                            <div className="max-h-56 overflow-y-auto rounded-sm border border-line-default p-2">
-                                                {flatCategories
-                                                    .filter(({ node }) => String(node.id) !== primaryId)
-                                                    .map(({ node, depth }) => (
-                                                        <label key={node.id} className="flex min-h-8 items-center gap-2 rounded-xs px-2 t-admin-body text-fg-primary hover:bg-subtle" style={{ paddingInlineStart: `${0.5 + depth * 1.25}rem` }}>
-                                                            <input type="checkbox" className="size-4 accent-brand" checked={categoryIds.includes(node.id)} onChange={(e) => toggleCategory(node.id, e.target.checked)} />
-                                                            <span lang={bn && node.name_bn ? 'bn' : undefined}>{categoryName(node)}</span>
-                                                            {!node.is_active && <span className="t-admin-caption text-fg-tertiary">{t('common.archived')}</span>}
-                                                        </label>
-                                                    ))}
-                                            </div>
-                                        </fieldset>
                                         <div className="grid items-end gap-4 lg:grid-cols-2">
                                             <Field label={t('products.field.gender')} error={errorOf('gender')}>
                                                 {(ids) => (

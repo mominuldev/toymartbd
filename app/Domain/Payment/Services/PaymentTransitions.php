@@ -110,6 +110,37 @@ final readonly class PaymentTransitions
         return $cancelled;
     }
 
+    /**
+     * Re-amount an order's still-`pending` payments after the order total changed before
+     * any money moved (an order edit, P4-ORD-07). Only `pending` rows change: a payment
+     * that was initiated, authorised or paid is never re-amounted — the caller must refuse
+     * the edit instead (see {@see hasMoneyInFlight()}).
+     *
+     * @return int how many payments were re-amounted
+     */
+    public function reamountPending(int $orderId, Money $amount): int
+    {
+        self::guard();
+
+        $pending = Payment::query()->where('order_id', $orderId)
+            ->where('status', PaymentStatus::Pending->value)
+            ->orderBy('id')->lockForUpdate()->get();
+        foreach ($pending as $payment) {
+            $payment->amount = $amount;
+            $payment->save();
+        }
+
+        return $pending->count();
+    }
+
+    /** True when some payment of the order is past `pending` and not closed unpaid. */
+    public static function hasMoneyInFlight(int $orderId): bool
+    {
+        return Payment::query()->where('order_id', $orderId)
+            ->whereIn('status', [PaymentStatus::Initiated->value, PaymentStatus::Authorised->value, PaymentStatus::Paid->value])
+            ->exists();
+    }
+
     private static function guard(): void
     {
         if (DB::transactionLevel() === 0) {
