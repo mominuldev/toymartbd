@@ -126,7 +126,7 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
     }
 
     test('links to pages not built yet get the same styled 404', async ({ page }) => {
-        for (const path of ['/pages/privacy', '/cart', '/bn/wishlist']) {
+        for (const path of ['/pages/privacy', '/bn/wishlist']) {
             const res = await page.goto(path);
             expect(res?.status(), path).toBe(404);
             await expect(page.locator('h1'), path).toHaveText(path.startsWith('/bn') ? 'এই পাতাটি নেই' : "This page isn't here");

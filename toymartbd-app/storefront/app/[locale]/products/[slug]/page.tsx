@@ -137,7 +137,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
                         variant={variant}
                         name={name.text}
                         t={t}
-                        action={localPath}
+                        locale={locale}
+                        back={variantHref(basePath, variant.id)}
                         estimator={<DeliveryEstimator locale={locale} variantId={variant.id} quantity={1} />}
                         trust={<TrustStrip t={t} />}
                     />

@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { PlusIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react';
+import { ImageIcon, PlusIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { relationTypes, useProductSearch, type RelationType } from './api';
@@ -8,7 +8,8 @@ import { IconButton } from '@/components/ui/IconButton';
 import { SearchField } from '@/components/ui/SearchField';
 import { Select } from '@/components/ui/Select';
 import { ProductSection } from './ProductSection';
-import type { RelationRow } from './document';
+import { formatMoney, type RelationRow } from './document';
+import { TAKA } from './parts';
 
 const typeLabel: Record<RelationType, MessageKey> = {
     related: 'products.relation.related',
@@ -59,9 +60,20 @@ export function RelationsEditor({ id, productId, value, onChange, errors, disabl
                         return (
                             <li key={row.uid} className="flex flex-col gap-1.5">
                                 <div className="flex items-center gap-2.5">
+                                    {/* 36 px thumbnail (241:38005) — the API's 160 px rendition. */}
+                                    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xs bg-subtle">
+                                        {row.image_url ? <img src={row.image_url} alt="" loading="lazy" className="size-full object-cover" /> : <ImageIcon size={16} aria-hidden className="text-fg-tertiary" />}
+                                    </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate t-admin-body text-fg-primary" lang={locale === 'bn' && row.name_bn ? 'bn' : undefined}>
                                             {name}
+                                            {row.price !== null && (
+                                                <>
+                                                    {' — '}
+                                                    <span className="t-admin-currency-num">{TAKA}</span>
+                                                    {formatMoney(row.price)}
+                                                </>
+                                            )}
                                         </p>
                                         <p className="t-admin-caption text-fg-tertiary">
                                             {t(typeLabel[row.type])}
@@ -119,6 +131,8 @@ export function RelationsEditor({ id, productId, value, onChange, errors, disabl
                                                     name: product.name,
                                                     name_bn: product.name_bn,
                                                     product_status: product.status,
+                                                    image_url: product.image_url,
+                                                    price: product.price_min,
                                                     type,
                                                     position: String(value.filter((r) => r.type === type).length),
                                                     reason_note: '',

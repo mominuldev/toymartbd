@@ -183,7 +183,20 @@ One repository, because the API and both frontends share a contract and must cha
 - **P4-STO-04 / P4-STO-02 / P4-STO-07 (part)** — search results with suggestions dropdown and zero-results state, home page from live data, `/toys` all-toys listing, recently-viewed rail.
 - **Figma fidelity** — admin product add/edit rebuilt as Figma's one-page layout (Theme B `241:37883`, 768 `230:22079`).
 
-**Next (batch 5):** `PlaceOrder` + checkout (P4-ORD-02, P4-STO-09/10), cart page (P4-STO-08), order board/detail screens (P4-ORD-04/05), product SEO fields + stock-by-branch for the product form.
+**Batch 5:** see below.
+
+### Progress — Phase 4 batch 5 (2026-11-12)
+
+**Done, with passing tests** (1303 PHP on SQLite; 114 admin Vitest; 200 storefront unit; PHPStan L6, Pint, deptrac clean):
+- **P4-ORD-02** — `PlaceOrder`: re-price (409 `price-changed` on a mismatch with `expected_total`), all-or-nothing reservation, find-or-create customer by E.164, cost snapshot, COD payment, coupon usage, `OrderPlaced`; retries up to 3× on a MySQL deadlock. Launch risk rule: first order from an unknown phone above `RISK_FIRST_ORDER_HOLD_THRESHOLD` (placeholder ৳3,000) → `on_hold`. Contract: `docs/api/checkout.md`.
+- **Inventory fix** — `StockLevelLocks::lock()` ran `INSERT IGNORE` on existing rows, taking shared locks that deadlocked 6 of 10 concurrent checkouts on MySQL 8.4. Now only missing rows are inserted. `CheckoutConcurrencyTest` (group `mysql`) needs a passing CI run to confirm.
+- **P4-STO-08/09/10** — cart page, no-JS add to cart, single-page checkout (division → district → upazila, landmark, server-generated Idempotency-Key per render), confirmation (placing cart's token only), tracking (number + last 4 digits, POST, generic 404).
+- **P4-ORD-04/05** — admin order board (status tabs, URL filters, cursor paging, bulk confirm with per-order results) and detail (three-track stepper, risk card + "provider not connected" courier panel, masked phone, notes/activity, confirm/hold/release/cancel with typed order number); `order_notes`.
+- **Product form gaps** — `seo_meta` + SEO panel with server checklist, `slug_history` + slug-change acknowledgement, stock by branch, sales channels, BSTI certificate, VAT, server-computed margin (`catalog.view_cost` only), recommendation thumbnails.
+
+**API gaps found:** cart lines carry no image/attributes (storefront fetches each product); `StorefrontOrder` has no ETA/courier (Phase 6); no `StorefrontOrder` OpenAPI schema (type mirrored by hand); `recommendation_source` not yet stamped from cart lines; rate limits keyed by IP see the Next server's IP (needs trusted forwarded IP).
+
+**Owner decisions open (batch 5):** first-order hold threshold; VAT wording (Figma says toys are VAT-exempt, research says standard VAT probably applies); admin order board defaults to all dates rather than Figma's "Last 7 days"; extra On hold / Processing tabs.
 
 **Owner decisions open:** coupon after a non-stackable promotion (applies today); customer aggregates (orders count excludes cancelled, total spent = delivered only); partial COD collection (refused today); `cost_price_snapshot` precision 14,4 (§3.4) vs rule 6; Theme B primary colour in the product-edit frame (coral in Figma, indigo in the build); `throttle:search-suggest` is keyed by IP but all shoppers arrive via the Next server.
 

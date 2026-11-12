@@ -75,6 +75,9 @@ function zodFor(schema, path) {
             return `    ${JSON.stringify(key)}: ${inner}${required.has(key) ? '' : '.optional()'},`;
         });
         out = `z.object({\n${fields.join('\n')}\n})`;
+    } else if (Object.keys(schema).length === 0) {
+        // `{}`: any JSON value (e.g. the values of a free-form JSON-LD override).
+        out = 'z.unknown()';
     } else {
         throw new Error(`Unsupported schema at ${path}: ${JSON.stringify(schema)}`);
     }

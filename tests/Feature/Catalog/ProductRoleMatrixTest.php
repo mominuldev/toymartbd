@@ -138,3 +138,36 @@ it('refuses a guest with 401 on duplicate', function (): void {
 
     $this->postJson("/api/v1/admin/products/{$product->id}/duplicate")->assertUnauthorized();
 });
+
+it('guards POST /products/margin-preview with catalog.view_cost', function (): void {
+    RoleMatrix::assert($this, Permission::CatalogViewCost, fn () => $this->postJson('/api/v1/admin/products/margin-preview', ['rows' => [['price' => '100', 'cost_price' => '60']]]));
+});
+
+it('guards POST /products/seo-measure with catalog.view', function (): void {
+    RoleMatrix::assert($this, Permission::CatalogView, fn () => $this->postJson('/api/v1/admin/products/seo-measure', ['title' => 'Wooden Train Set']));
+});
+
+it('guards the BSTI certificate endpoints: view to download, update to attach or remove', function (): void {
+    Illuminate\Support\Facades\Storage::fake(App\Domain\Catalog\Services\MediaUrls::originalsDisk());
+    $product = Product::factory()->create();
+    $pdf = static fn (): Illuminate\Http\UploadedFile => Illuminate\Http\UploadedFile::fake()->createWithContent('c.pdf', "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n");
+
+    RoleMatrix::assert($this, Permission::CatalogUpdate, fn () => $this->post("/api/v1/admin/products/{$product->id}/compliance/certificate", ['file' => $pdf()], ['Accept' => 'application/json']));
+    RoleMatrix::assert($this, Permission::CatalogView, fn () => $this->get("/api/v1/admin/products/{$product->id}/compliance/certificate", ['Accept' => 'application/json']));
+    RoleMatrix::assert($this, Permission::CatalogUpdate, fn () => $this->deleteJson("/api/v1/admin/products/{$product->id}/compliance/certificate"));
+});
+
+it('shows stock by location only with inventory.view', function (): void {
+    $product = Product::factory()->create();
+
+    foreach (Role::cases() as $role) {
+        if (! RoleMatrix::allows($role, Permission::CatalogView)) {
+            continue;
+        }
+
+        RoleMatrix::assertFor($this, $role, true, fn () => $this->getJson("/api/v1/admin/products/{$product->id}"));
+        $json = $this->getJson("/api/v1/admin/products/{$product->id}")->json();
+
+        expect(array_key_exists('stock_by_location', $json))->toBe(RoleMatrix::allows($role, Permission::InventoryView), $role->value);
+    }
+});

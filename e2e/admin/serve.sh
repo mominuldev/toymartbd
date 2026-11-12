@@ -16,6 +16,8 @@ export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
 # The demo catalogue without its Figma photos: 16 × 9 image encodes would slow every run.
 export DEMO_SEED_IMAGES=false
+# Every spec signs in; the production limit (5/min) would throttle the sixth.
+export AUTH_LOGIN_PER_MINUTE=60
 
 "$PHP_BIN" artisan migrate:fresh --seed --force >/dev/null
 exec "$PHP_BIN" artisan serve --host=localhost --port=8124 --no-reload

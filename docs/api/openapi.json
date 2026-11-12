@@ -823,11 +823,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -874,7 +874,7 @@
             },
             "put": {
                 "operationId": "v1.admin.products.update",
-                "summary": "`PUT /products/{product}` \u2014 replaces the whole document; needs catalog.update.\nChanging a selling price or adding a variant also needs catalog.update_price;\nsending `cost_price` needs catalog.view_cost",
+                "summary": "`PUT /products/{product}` \u2014 replaces the whole document; needs catalog.update.\nChanging a selling price or adding a variant also needs catalog.update_price;\nsending `cost_price` needs catalog.view_cost. Changing a live product's slug needs\n`acknowledge_slug_redirect: true` and records the old slug in `slug_history`",
                 "tags": [
                     "Admin"
                 ],
@@ -910,14 +910,14 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "403": {
                         "description": "Missing catalog.update, a price change without catalog.update_price, or `cost_price` without catalog.view_cost (`forbidden`)",
@@ -1004,6 +1004,329 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/margin-preview": {
+            "post": {
+                "operationId": "v1.admin.products.margin-preview",
+                "summary": "`POST /products/margin-preview` \u2014 per-unit margin for each `rows[i]` (price and\ncost as decimal strings) at `vat_rate`; null where the price or cost is missing.\nNeeds catalog.view_cost",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MarginPreviewRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": [
+                                                    "object",
+                                                    "null"
+                                                ],
+                                                "properties": {
+                                                    "percent": {
+                                                        "type": "string"
+                                                    },
+                                                    "profit": {
+                                                        "type": "string"
+                                                    },
+                                                    "net_price": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "percent",
+                                                    "profit",
+                                                    "net_price"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "rows"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/seo-measure": {
+            "post": {
+                "operationId": "v1.admin.products.seo-measure",
+                "summary": "`POST /products/seo-measure` \u2014 estimated rendered width of a meta title (20 px)\nand description (14 px) at Google's desktop metric, with the truncation limits",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SeoMeasureRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {
+                                            "type": "object",
+                                            "properties": {
+                                                "px": {
+                                                    "type": "integer"
+                                                },
+                                                "chars": {
+                                                    "type": "integer"
+                                                },
+                                                "max": {
+                                                    "type": "integer"
+                                                },
+                                                "fits": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "px",
+                                                "chars",
+                                                "max",
+                                                "fits"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "object",
+                                            "properties": {
+                                                "px": {
+                                                    "type": "integer"
+                                                },
+                                                "chars": {
+                                                    "type": "integer"
+                                                },
+                                                "max": {
+                                                    "type": "integer"
+                                                },
+                                                "fits": {
+                                                    "type": "boolean"
+                                                },
+                                                "fits_mobile": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "px",
+                                                "chars",
+                                                "max",
+                                                "fits",
+                                                "fits_mobile"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "title",
+                                        "description"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/compliance/certificate": {
+            "get": {
+                "operationId": "v1.admin.products.compliance.certificate.show",
+                "summary": "`GET /products/{product}/compliance/certificate` \u2014 the PDF as an attachment; needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Transfer-Encoding": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chunked"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "description": "The product has no certificate (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.products.compliance.certificate.store",
+                "summary": "`POST /products/{product}/compliance/certificate` \u2014 attach or replace; needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreComplianceCertificateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProductCompliance`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductCompliance"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Not a PDF by content, over 10 MB, or carrying scripts, attachments or interactive content (`validation-error` on `file`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.products.compliance.certificate.destroy",
+                "summary": "`DELETE /products/{product}/compliance/certificate` \u2014 detach (idempotent); needs catalog.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProductCompliance`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductCompliance"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -3151,7 +3474,7 @@
         "/admin/orders": {
             "get": {
                 "operationId": "v1.admin.orders.index",
-                "description": "Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,\n`filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),\n`filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,\ninclusive), `filter[search]` (order number, the last 4+ phone digits, or the name).\nSorts: `created_at`, `grand_total`, each with `-` for descending (default\n`-created_at`). Anything else is a 400.",
+                "description": "Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,\n`filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),\n`filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,\ninclusive), `filter[search]` (order number, the last 4+ phone digits, or the name),\n`filter[verification_status]`, `filter[anomaly]=1`. `meta.counts` also carries\n`verify` (verification pending) and `anomalies`, under every filter except the\ntab-defining ones (status, verification_status, anomaly).\nSorts: `created_at`, `grand_total`, each with `-` for descending (default\n`-created_at`). Anything else is a 400.",
                 "summary": "`GET /orders` \u2014 cursor-paginated, needs orders.view. `meta.counts` holds one count\nper status (plus `all`) under every filter except `status`, for the board's tabs",
                 "tags": [
                     "Admin"
@@ -3233,6 +3556,22 @@
                         "name": "filter[search]",
                         "in": "query",
                         "description": "Order number, last 4+ phone digits, or customer name.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[verification_status]",
+                        "in": "query",
+                        "description": "not_required|pending|verified|failed \u2014 `pending` is the board's Verify tab.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[anomaly]",
+                        "in": "query",
+                        "description": "`1`: only status combinations that should not exist (the Anomalies tab).",
                         "schema": {
                             "type": "string"
                         }
@@ -3420,6 +3759,507 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/bulk/confirm": {
+            "post": {
+                "operationId": "v1.admin.orders.bulk.confirm",
+                "summary": "`POST /orders/bulk/confirm` \u2014 confirms each order on its own; returns one result per\nrequested id (`done`, `conflict` with the current status, or `not_found`) and\n`meta.done` / `meta.failed`. A partial failure is a 200 with per-order results, never\na silent all-or-nothing. Needs orders.confirm",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkConfirmOrdersRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Array of `OrderBulkResult`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/OrderBulkResult"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "done": {
+                                                    "type": "integer"
+                                                },
+                                                "failed": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "done",
+                                                "failed"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/confirm": {
+            "post": {
+                "operationId": "v1.admin.orders.confirm",
+                "summary": "`POST /orders/{order}/confirm` \u2014 pending or on hold \u2192 confirmed. Needs orders.confirm",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConfirmOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order is not pending or on hold any more (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/hold": {
+            "post": {
+                "operationId": "v1.admin.orders.hold",
+                "summary": "`POST /orders/{order}/hold` \u2014 any pre-shipment status \u2192 on hold, with a `reason`. Needs orders.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HoldOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order cannot be held from its current status (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/release": {
+            "post": {
+                "operationId": "v1.admin.orders.release",
+                "summary": "`POST /orders/{order}/release` \u2014 on hold \u2192 pending. Needs orders.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order is not on hold (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/processing": {
+            "post": {
+                "operationId": "v1.admin.orders.processing",
+                "summary": "`POST /orders/{order}/processing` \u2014 confirmed \u2192 processing. Needs orders.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order is not confirmed (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/ready-to-ship": {
+            "post": {
+                "operationId": "v1.admin.orders.ready-to-ship",
+                "summary": "`POST /orders/{order}/ready-to-ship` \u2014 confirmed or processing \u2192 ready to ship (packed). Needs orders.update",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderWorkflowRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order is not confirmed or processing (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/cancel": {
+            "post": {
+                "operationId": "v1.admin.orders.cancel",
+                "summary": "`POST /orders/{order}/cancel` \u2014 before shipping only. Releases the stock reservation and\ncancels open payments in the same transaction. Needs orders.cancel",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CancelOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`Order`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Order"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The order has shipped or is already cancelled (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/orders/{order}/notes": {
+            "post": {
+                "operationId": "v1.admin.orders.notes.store",
+                "summary": "`POST /orders/{order}/notes` \u2014 needs orders.update. 201 with the note",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreOrderNoteRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`OrderNote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderNote"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -5522,6 +6362,281 @@
                 }
             }
         },
+        "/storefront/checkout": {
+            "post": {
+                "operationId": "v1.storefront.checkout.store",
+                "summary": "`POST /checkout` \u2014 place the cart as a cash-on-delivery order. Requires an\n`Idempotency-Key`: a double submit returns the first order, never a second one",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CheckoutRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`StorefrontOrder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontOrder"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Invalid field, or the cart is not checkout-ready (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token, or it was already ordered (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The total changed (`price-changed`), stock ran out (`insufficient-stock`), or the key is in flight (`request-in-progress`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "More than 10 checkouts a minute for one cart",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/orders/track": {
+            "post": {
+                "operationId": "v1.storefront.orders.track",
+                "summary": "`POST /orders/track` \u2014 public tracking by order number plus the last 4 digits of the\nphone (or the full number). No street address in the answer",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrderTrackRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontOrder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/StorefrontOrder"
+                                        },
+                                        {
+                                            "type": "string"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "A field is empty or malformed (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No order matches that number and phone (`not-found`) \u2014 same answer for either mismatch",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "More than 5 attempts in 10 minutes for this order number",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/orders/{number}": {
+            "get": {
+                "operationId": "v1.storefront.orders.show",
+                "summary": "`GET /orders/{number}` \u2014 the confirmation page, for the cart that placed the order",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The token of the cart that placed the order.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontOrder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontOrder"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown number, wrong token, or older than 30 days (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many lookups",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "operationId": "v1.health",
@@ -5828,6 +6943,63 @@
                     "updated_at"
                 ],
                 "title": "Brand"
+            },
+            "BulkConfirmOrdersRequest": {
+                "type": "object",
+                "description": "`POST /orders/bulk/confirm` \u2014 needs orders.confirm. Up to 100 ids (one board page is\n25). Unknown ids are not a validation error: they come back as `not_found` results,\nso a stale selection still reports per order.",
+                "properties": {
+                    "order_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "order_ids"
+                ],
+                "title": "BulkConfirmOrdersRequest"
+            },
+            "CancelOrderRequest": {
+                "type": "object",
+                "description": "`POST /orders/{order}/cancel` \u2014 needs orders.cancel. `reason` is the fixed list\n(cancellations are counted by cause); `note` is required when the reason is `other`.",
+                "properties": {
+                    "reason": {
+                        "$ref": "#/components/schemas/CancellationReason"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Required when `reason` is `other`.",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "CancelOrderRequest"
+            },
+            "CancellationReason": {
+                "type": "string",
+                "description": "Why an order was cancelled (P4-ORD-09). A fixed list so cancellations can be counted by cause; `Other` requires a free-text note. Feeds the risk profile through OrderCancelled \u2014 `FakeOrder` and `CustomerUnreachable` are the signals that matter there.\n",
+                "enum": [
+                    "customer_request",
+                    "customer_unreachable",
+                    "fake_order",
+                    "duplicate_order",
+                    "out_of_stock",
+                    "pricing_error",
+                    "address_unserviceable",
+                    "payment_failed",
+                    "other"
+                ],
+                "title": "CancellationReason"
             },
             "Cart": {
                 "type": "object",
@@ -6215,6 +7387,139 @@
                     "archived"
                 ],
                 "title": "CategoryStatus"
+            },
+            "CheckoutRequest": {
+                "type": "object",
+                "description": "`POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from\n`X-Cart-Token`; the body is what the customer typed plus `expected_total`, the grand\ntotal they were shown \u2014 compared, never used, by PlaceOrder.\n\nAddress: division \u2192 district \u2192 upazila \u2192 area + line + landmark (rule 31). The\nupazila is required unless the district offers its city as the empty option\n(`city_option` on GET /districts \u2014 Dhaka city is not an upazila).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 160
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "alt_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 32
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 191
+                    },
+                    "division_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "district_id": {
+                        "type": "integer"
+                    },
+                    "upazila_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "area": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 160
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 500
+                    },
+                    "landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "postcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{4}$"
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "enum": [
+                            "cod"
+                        ]
+                    },
+                    "customer_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "expected_total": {
+                        "type": "string",
+                        "description": "The grand total the customer was shown, e.g. \"1930.00\".",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "utm_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 128
+                    },
+                    "utm_medium": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 128
+                    },
+                    "utm_campaign": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "name",
+                    "phone",
+                    "district_id",
+                    "area",
+                    "address_line",
+                    "payment_method",
+                    "expected_total"
+                ],
+                "title": "CheckoutRequest"
+            },
+            "ConfirmOrderRequest": {
+                "type": "object",
+                "description": "`POST /orders/{order}/confirm` \u2014 needs orders.confirm; optional `note`.",
+                "properties": {
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Shown on the order's activity timeline next to the change.",
+                        "maxLength": 500
+                    }
+                },
+                "title": "ConfirmOrderRequest"
             },
             "Coupon": {
                 "type": "object",
@@ -6758,6 +8063,21 @@
                 ],
                 "title": "HealthReportResource"
             },
+            "HoldOrderRequest": {
+                "type": "object",
+                "description": "`POST /orders/{order}/hold` \u2014 needs orders.update. A hold always says why (`reason`),\nso whoever picks the order up next knows what is being waited on.",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Why the order is paused, e.g. \"Customer asked to deliver after Friday\".",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "HoldOrderRequest"
+            },
             "InventoryAdjustment": {
                 "type": "object",
                 "properties": {
@@ -7268,6 +8588,47 @@
                 ],
                 "title": "LoginRequest"
             },
+            "MarginPreviewRequest": {
+                "type": "object",
+                "description": "`POST /products/margin-preview` \u2014 margins for prices and costs the form has not\nsaved yet, so the admin never computes one (rule 1). Needs catalog.view_cost.\nMoney is a decimal string; `rows[i]` answers `rows[i]`.",
+                "properties": {
+                    "vat_rate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{1,3}(\\.\\d{1,2})?$"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "cost_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                }
+                            }
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                    }
+                },
+                "required": [
+                    "rows"
+                ],
+                "title": "MarginPreviewRequest"
+            },
             "MoveCategoryRequest": {
                 "type": "object",
                 "description": "`POST /categories/{category}/move` \u2014 `{ parent_id, position }`. The category\nbecomes the child of `parent_id` (null = a root) at sibling index `position`\n(0-based; past the end means last). Up/down keeps the parent and changes the\nposition; indent/outdent changes the parent.",
@@ -7357,6 +8718,21 @@
                     },
                     "pii_masked": {
                         "type": "boolean"
+                    },
+                    "anomaly": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why this status combination should not exist, or null (spec A12).",
+                        "enum": [
+                            "delivered_unpaid",
+                            "refund_pending",
+                            "goods_before_shipping",
+                            "shipped_unfulfilled",
+                            "payment_failed",
+                            null
+                        ]
                     },
                     "customer": {
                         "type": "object",
@@ -7709,6 +9085,12 @@
                                         "null"
                                     ]
                                 },
+                                "user_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "is_customer_visible": {
                                     "type": "boolean"
                                 },
@@ -7727,6 +9109,7 @@
                                 "to",
                                 "description",
                                 "user_id",
+                                "user_name",
                                 "is_customer_visible",
                                 "created_at"
                             ]
@@ -7755,13 +9138,81 @@
                                     "verified",
                                     "failed"
                                 ]
+                            },
+                            "flags": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "Our advisory signals as stored at scoring time \u2014 never a courier's data (rule 24).",
+                                "additionalProperties": {}
                             }
                         },
                         "required": [
                             "score",
                             "level",
-                            "verification_status"
+                            "verification_status",
+                            "flags"
                         ]
+                    },
+                    "notes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "body": {
+                                    "type": "string"
+                                },
+                                "is_customer_visible": {
+                                    "type": "boolean"
+                                },
+                                "user_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "user_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "created_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "body",
+                                "is_customer_visible",
+                                "user_id",
+                                "user_name",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    "available_actions": {
+                        "type": "array",
+                        "description": "What this user may do to the order now \u2014 the state machine and their permissions,\ndecided here so the client never re-derives a transition rule.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "confirm",
+                                "hold",
+                                "release",
+                                "processing",
+                                "ready_to_ship",
+                                "cancel",
+                                "add_note"
+                            ]
+                        }
                     },
                     "customer_note": {
                         "type": [
@@ -7828,6 +9279,7 @@
                     "payment_method",
                     "currency",
                     "pii_masked",
+                    "anomaly",
                     "customer",
                     "shipping",
                     "totals",
@@ -7835,6 +9287,8 @@
                     "payments",
                     "timeline",
                     "risk",
+                    "notes",
+                    "available_actions",
                     "customer_note",
                     "internal_note",
                     "cancel_reason",
@@ -7846,6 +9300,48 @@
                     "cancelled_at"
                 ],
                 "title": "Order"
+            },
+            "OrderBulkResult": {
+                "type": "object",
+                "properties": {
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "enum": [
+                            "done",
+                            "conflict",
+                            "not_found"
+                        ]
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "detail": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "order_id",
+                    "number",
+                    "outcome",
+                    "status",
+                    "detail"
+                ],
+                "title": "OrderBulkResult"
             },
             "OrderListItem": {
                 "type": "object",
@@ -7943,6 +9439,18 @@
                     "due_total": {
                         "type": "string"
                     },
+                    "paid_total": {
+                        "type": "string"
+                    },
+                    "refunded_total": {
+                        "type": "string"
+                    },
+                    "risk_score": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "risk_level": {
                         "type": [
                             "string",
@@ -7962,6 +9470,21 @@
                             "pending",
                             "verified",
                             "failed"
+                        ]
+                    },
+                    "anomaly": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why this status combination should not exist, or null (spec A12 anomaly list).",
+                        "enum": [
+                            "delivered_unpaid",
+                            "refund_pending",
+                            "goods_before_shipping",
+                            "shipped_unfulfilled",
+                            "payment_failed",
+                            null
                         ]
                     },
                     "placed_at": {
@@ -7992,12 +9515,93 @@
                     "items_count",
                     "grand_total",
                     "due_total",
+                    "paid_total",
+                    "refunded_total",
+                    "risk_score",
                     "risk_level",
                     "verification_status",
+                    "anomaly",
                     "placed_at",
                     "created_at"
                 ],
                 "title": "OrderListItem"
+            },
+            "OrderNote": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "is_customer_visible": {
+                        "type": "boolean"
+                    },
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "user_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "body",
+                    "is_customer_visible",
+                    "user_id",
+                    "user_name",
+                    "created_at"
+                ],
+                "title": "OrderNote"
+            },
+            "OrderTrackRequest": {
+                "type": "object",
+                "description": "`POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone\ndigits \u2014 the last 4 (B7.1) or the full number. The number is forgiving about case,\nspaces, the `TMB-` prefix and Bengali digits.",
+                "properties": {
+                    "number": {
+                        "type": "string",
+                        "description": "e.g. \"TMB-26-00042\" (also \"26-00042\").",
+                        "maxLength": 32
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "The last 4 digits of the phone the order was placed with, or the full number.",
+                        "maxLength": 32
+                    }
+                },
+                "required": [
+                    "number",
+                    "phone"
+                ],
+                "title": "OrderTrackRequest"
+            },
+            "OrderWorkflowRequest": {
+                "type": "object",
+                "description": "Release from hold, start processing, mark ready to ship \u2014 needs orders.update. An\noptional `note` lands on the order's timeline row with the move.",
+                "properties": {
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Shown on the order's activity timeline next to the change.",
+                        "maxLength": 500
+                    }
+                },
+                "title": "OrderWorkflowRequest"
             },
             "ProblemDetails": {
                 "type": "object",
@@ -8232,6 +9836,194 @@
                     "is_featured": {
                         "type": "boolean"
                     },
+                    "is_live": {
+                        "type": "boolean",
+                        "description": "Live on the storefront now (active and `published_at` reached): its slug\nchanges only with `acknowledge_slug_redirect`."
+                    },
+                    "sales_channels": {
+                        "type": "object",
+                        "description": "Where the product is sold (stored flags).",
+                        "properties": {
+                            "online_store": {
+                                "type": "boolean"
+                            },
+                            "pos": {
+                                "type": "boolean"
+                            },
+                            "facebook_instagram": {
+                                "type": "boolean"
+                            },
+                            "google_merchant": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "online_store",
+                            "pos",
+                            "facebook_instagram",
+                            "google_merchant"
+                        ]
+                    },
+                    "vat_rate": {
+                        "type": "string",
+                        "description": "VAT included in the selling price, percent, decimal string (\"0.00\")."
+                    },
+                    "compliance": {
+                        "type": "object",
+                        "description": "BSTI certification. `certificate` is the uploaded PDF (download it from\n`GET /products/{product}/compliance/certificate`), null when none.\n`expired`: the expiry date is before today (Dhaka).",
+                        "properties": {
+                            "bsti_certificate_no": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "bsti_expires_on": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "expired": {
+                                "type": "boolean"
+                            },
+                            "certificate": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "size_bytes": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "size_bytes"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "bsti_certificate_no",
+                            "bsti_expires_on",
+                            "expired",
+                            "certificate"
+                        ]
+                    },
+                    "margin": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Margin of the default variant (a simple product's price), computed by the\nserver; only with catalog.view_cost. Null when its price or cost is not set.",
+                        "properties": {
+                            "percent": {
+                                "type": "string"
+                            },
+                            "profit": {
+                                "type": "string"
+                            },
+                            "net_price": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "percent",
+                            "profit",
+                            "net_price"
+                        ]
+                    },
+                    "margin_lowest": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The lowest variant margin (archived variants included) and its variant;\nonly with catalog.view_cost. Null when no variant has a margin.",
+                        "properties": {
+                            "percent": {
+                                "type": "string"
+                            },
+                            "variant_id": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "percent",
+                            "variant_id"
+                        ]
+                    },
+                    "stock_by_location": {
+                        "type": "array",
+                        "description": "Stock of all the product's variants per location (on hand, reserved,\navailable); only with inventory.view. Read-only \u2014 change it with a stock\nadjustment.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "location_id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "is_default": {
+                                    "type": "boolean"
+                                },
+                                "on_hand": {
+                                    "type": "integer"
+                                },
+                                "reserved": {
+                                    "type": "integer"
+                                },
+                                "available": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "location_id",
+                                "code",
+                                "name",
+                                "name_bn",
+                                "is_default",
+                                "on_hand",
+                                "reserved",
+                                "available"
+                            ]
+                        }
+                    },
+                    "slug_history": {
+                        "type": "array",
+                        "description": "Retired slugs that now 301 to this product (newest first).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "old_slug": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "old_slug",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    "seo": {
+                        "description": "Search & social (seo_meta), with the server's defaults, measurement and checklist.",
+                        "$ref": "#/components/schemas/ProductSeo"
+                    },
                     "published_at": {
                         "type": [
                             "string",
@@ -8316,6 +10108,12 @@
                     "safety_note_bn",
                     "warranty_months",
                     "is_featured",
+                    "is_live",
+                    "sales_channels",
+                    "vat_rate",
+                    "compliance",
+                    "slug_history",
+                    "seo",
                     "published_at",
                     "options",
                     "variants",
@@ -8325,6 +10123,51 @@
                     "updated_at"
                 ],
                 "title": "Product"
+            },
+            "ProductCompliance": {
+                "type": "object",
+                "properties": {
+                    "bsti_certificate_no": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "bsti_expires_on": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "expired": {
+                        "type": "boolean"
+                    },
+                    "certificate": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "size_bytes": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "size_bytes"
+                        ]
+                    }
+                },
+                "required": [
+                    "bsti_certificate_no",
+                    "bsti_expires_on",
+                    "expired",
+                    "certificate"
+                ],
+                "title": "ProductCompliance"
             },
             "ProductImage": {
                 "type": "object",
@@ -8574,6 +10417,7 @@
                     },
                     "related_product": {
                         "type": "object",
+                        "description": "`image_url`: the primary image's 160 px rendition (null when none is ready);\n`price`: the default variant's selling price, decimal string.",
                         "properties": {
                             "id": {
                                 "type": "integer"
@@ -8597,6 +10441,18 @@
                                     "active",
                                     "archived"
                                 ]
+                            },
+                            "image_url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "price": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             }
                         },
                         "required": [
@@ -8604,7 +10460,9 @@
                             "name",
                             "name_bn",
                             "slug",
-                            "status"
+                            "status",
+                            "image_url",
+                            "price"
                         ]
                     },
                     "type": {
@@ -8651,6 +10509,262 @@
                     "brands"
                 ],
                 "title": "ProductScopeType"
+            },
+            "ProductSeo": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "title_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "canonical_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "robots": {
+                        "type": "string",
+                        "enum": [
+                            "index,follow",
+                            "noindex,follow",
+                            "index,nofollow",
+                            "noindex,nofollow"
+                        ]
+                    },
+                    "sitemap_exclude": {
+                        "type": "boolean"
+                    },
+                    "og_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "og_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "og_image": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "twitter_card": {
+                        "type": "string",
+                        "enum": [
+                            "summary_large_image",
+                            "summary"
+                        ]
+                    },
+                    "schema_override": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
+                    },
+                    "focus_keyword": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "defaults": {
+                        "type": "object",
+                        "description": "What an empty override falls back to.",
+                        "properties": {
+                            "title": {
+                                "type": "string"
+                            },
+                            "title_bn": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "description_bn": {
+                                "type": "string"
+                            },
+                            "og_image": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "title",
+                            "title_bn",
+                            "description",
+                            "description_bn",
+                            "og_image"
+                        ]
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "The canonical storefront URL of the product."
+                    },
+                    "measure": {
+                        "type": "object",
+                        "description": "Estimated rendered widths of the effective title and description at Google's\ndesktop metric (see POST /products/seo-measure for unsaved text).",
+                        "properties": {
+                            "title": {
+                                "type": "object",
+                                "properties": {
+                                    "px": {
+                                        "type": "integer"
+                                    },
+                                    "chars": {
+                                        "type": "integer"
+                                    },
+                                    "max": {
+                                        "type": "integer"
+                                    },
+                                    "fits": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "px",
+                                    "chars",
+                                    "max",
+                                    "fits"
+                                ]
+                            },
+                            "description": {
+                                "type": "object",
+                                "properties": {
+                                    "px": {
+                                        "type": "integer"
+                                    },
+                                    "chars": {
+                                        "type": "integer"
+                                    },
+                                    "max": {
+                                        "type": "integer"
+                                    },
+                                    "fits": {
+                                        "type": "boolean"
+                                    },
+                                    "fits_mobile": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "px",
+                                    "chars",
+                                    "max",
+                                    "fits",
+                                    "fits_mobile"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "title",
+                            "description"
+                        ]
+                    },
+                    "checklist": {
+                        "type": "object",
+                        "description": "The saved product's SEO checklist. `key` \u2208 title_fits, description_fits,\nprimary_image, image_alt, slug, product_schema, sitemap.",
+                        "properties": {
+                            "passed": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "pass",
+                                                "warn",
+                                                "fail"
+                                            ]
+                                        },
+                                        "params": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": [
+                                                    "integer",
+                                                    "string"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "key",
+                                        "status",
+                                        "params"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "passed",
+                            "total",
+                            "items"
+                        ]
+                    },
+                    "schema": {
+                        "type": "object",
+                        "description": "The effective Product JSON-LD (generated, with `schema_override` merged on top).",
+                        "additionalProperties": {}
+                    }
+                },
+                "required": [
+                    "title",
+                    "title_bn",
+                    "description",
+                    "description_bn",
+                    "canonical_url",
+                    "robots",
+                    "sitemap_exclude",
+                    "og_title",
+                    "og_description",
+                    "og_image",
+                    "twitter_card",
+                    "schema_override",
+                    "focus_keyword",
+                    "defaults",
+                    "url",
+                    "measure",
+                    "checklist",
+                    "schema"
+                ],
+                "title": "ProductSeo"
             },
             "ProductStatus": {
                 "type": "string",
@@ -8711,6 +10825,29 @@
                     "cost_price": {
                         "type": "string",
                         "description": "Current replacement cost; only with catalog.view_cost."
+                    },
+                    "margin": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Per-unit margin at this price and cost, VAT taken out, before delivery and COD\ncosts \u2014 computed by the server. Only with catalog.view_cost; null when the\nprice or the cost is not set.",
+                        "properties": {
+                            "percent": {
+                                "type": "string"
+                            },
+                            "profit": {
+                                "type": "string"
+                            },
+                            "net_price": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "percent",
+                            "profit",
+                            "net_price"
+                        ]
                     },
                     "wholesale_price": {
                         "type": [
@@ -8838,6 +10975,38 @@
                     "ids"
                 ],
                 "title": "ReorderProductImagesRequest"
+            },
+            "RobotsDirective": {
+                "type": "string",
+                "description": "The robots meta values the admin may choose (SeoPanel \"Advanced\").\n",
+                "enum": [
+                    "index,follow",
+                    "noindex,follow",
+                    "index,nofollow",
+                    "noindex,nofollow"
+                ],
+                "title": "RobotsDirective"
+            },
+            "SeoMeasureRequest": {
+                "type": "object",
+                "description": "`POST /products/seo-measure` \u2014 the server's pixel measurement of an unsaved meta\ntitle and description (the SeoPanel meters). Read-only; needs catalog.view.",
+                "properties": {
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "title": "SeoMeasureRequest"
             },
             "StaffResource": {
                 "type": "object",
@@ -9070,6 +11239,22 @@
                 ],
                 "title": "StoreCategoryRequest"
             },
+            "StoreComplianceCertificateRequest": {
+                "type": "object",
+                "description": "`POST /products/{product}/compliance/certificate` \u2014 `multipart/form-data` with `file`:\nthe BSTI certificate as a PDF (by content, \u2264 10 MB, no scripts or attachments).\nReplaces any previous certificate. Needs catalog.update.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "Maximum file size: 10240 kilobytes."
+                    }
+                },
+                "required": [
+                    "file"
+                ],
+                "title": "StoreComplianceCertificateRequest"
+            },
             "StoreCouponRequest": {
                 "type": "object",
                 "description": "`POST /coupons` \u2014 needs marketing.manage.",
@@ -9186,6 +11371,24 @@
                     "applies_to"
                 ],
                 "title": "StoreCouponRequest"
+            },
+            "StoreOrderNoteRequest": {
+                "type": "object",
+                "description": "`POST /orders/{order}/notes` \u2014 needs orders.update. Notes are append-only.",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "is_customer_visible": {
+                        "type": "boolean",
+                        "description": "Private by default; true lets the customer's tracking page show it."
+                    }
+                },
+                "required": [
+                    "body"
+                ],
+                "title": "StoreOrderNoteRequest"
             },
             "StoreProductImageRequest": {
                 "type": "object",
@@ -9581,6 +11784,159 @@
                             ]
                         },
                         "maxItems": 50
+                    },
+                    "sales_channels": {
+                        "type": "object",
+                        "description": "Where the product is sold. Omitted: keep the current flags.",
+                        "properties": {
+                            "online_store": {
+                                "type": "boolean"
+                            },
+                            "pos": {
+                                "type": "boolean"
+                            },
+                            "facebook_instagram": {
+                                "type": "boolean"
+                            },
+                            "google_merchant": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "vat_rate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "VAT included in the selling price, percent as a decimal string (\"0\", \"15\").\nOmitted or null: keep the current rate.",
+                        "pattern": "^\\d{1,3}(\\.\\d{1,2})?$"
+                    },
+                    "compliance": {
+                        "type": "object",
+                        "description": "BSTI certification. Omitted: keep the current values. The PDF is uploaded separately.",
+                        "properties": {
+                            "bsti_certificate_no": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9\\/ ._-]*$",
+                                "maxLength": 64
+                            },
+                            "bsti_expires_on": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date"
+                            }
+                        }
+                    },
+                    "seo": {
+                        "type": "object",
+                        "description": "Search & social (seo_meta). Omitted: keep the current values; sent: replaces them.",
+                        "properties": {
+                            "title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "title_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "description_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "canonical_url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uri",
+                                "maxLength": 2048
+                            },
+                            "robots": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/RobotsDirective"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "sitemap_exclude": {
+                                "type": "boolean"
+                            },
+                            "og_title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "og_description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "og_image": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uri",
+                                "maxLength": 2048
+                            },
+                            "twitter_card": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/TwitterCard"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "schema_override": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "JSON-LD merged over the generated Product schema; a JSON object.",
+                                "additionalProperties": {}
+                            },
+                            "focus_keyword": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 120
+                            }
+                        }
+                    },
+                    "acknowledge_slug_redirect": {
+                        "type": "boolean",
+                        "description": "Required (true) to change the slug of a published product: the old URL then\n301s to the new one (slug_history)."
                     }
                 },
                 "required": [
@@ -9889,6 +12245,384 @@
                     "city_option"
                 ],
                 "title": "StorefrontDistrict"
+            },
+            "StorefrontOrder": {
+                "type": "object",
+                "properties": {
+                    "number": {
+                        "type": "string"
+                    },
+                    "stage": {
+                        "type": "string",
+                        "description": "Customer-facing status code; localise the label in the storefront.",
+                        "enum": [
+                            "placed",
+                            "confirmed",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled",
+                            "returned"
+                        ]
+                    },
+                    "placed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "payment": {
+                        "type": "object",
+                        "description": "`next_action` is null for cash on delivery.",
+                        "properties": {
+                            "method": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "status": {
+                                "type": "string"
+                            },
+                            "next_action": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "type",
+                                    "url"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "method",
+                            "status",
+                            "next_action"
+                        ]
+                    },
+                    "contact": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone_masked": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone_masked",
+                            "email"
+                        ]
+                    },
+                    "shipping": {
+                        "type": "object",
+                        "description": "Tracking (`POST /orders/track`) returns `address_line`, `landmark` and `postcode` as null.",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone_masked": {
+                                "type": "string"
+                            },
+                            "division": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_bn": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "name_bn"
+                                ]
+                            },
+                            "district": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_bn": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "name_bn"
+                                ]
+                            },
+                            "upazila": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_bn": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "name_bn"
+                                ]
+                            },
+                            "area": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address_line": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "landmark": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "postcode": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone_masked",
+                            "division",
+                            "district",
+                            "upazila",
+                            "area",
+                            "address_line",
+                            "landmark",
+                            "postcode"
+                        ]
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "slug": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "sku": {
+                                    "type": "string"
+                                },
+                                "image": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "alt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "alt_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "url",
+                                        "alt",
+                                        "alt_bn"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "discount": {
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "product_id",
+                                "slug",
+                                "name",
+                                "name_bn",
+                                "variant_name",
+                                "sku",
+                                "image",
+                                "quantity",
+                                "unit_price",
+                                "discount",
+                                "total"
+                            ]
+                        }
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "totals": {
+                        "type": "object",
+                        "properties": {
+                            "subtotal": {
+                                "type": "string"
+                            },
+                            "promotion_discount": {
+                                "type": "string"
+                            },
+                            "coupon_discount": {
+                                "type": "string"
+                            },
+                            "discount_total": {
+                                "type": "string"
+                            },
+                            "shipping_charge": {
+                                "type": "string"
+                            },
+                            "grand_total": {
+                                "type": "string"
+                            },
+                            "paid_total": {
+                                "type": "string"
+                            },
+                            "due_total": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "subtotal",
+                            "promotion_discount",
+                            "coupon_discount",
+                            "discount_total",
+                            "shipping_charge",
+                            "grand_total",
+                            "paid_total",
+                            "due_total"
+                        ]
+                    },
+                    "timeline": {
+                        "type": "array",
+                        "description": "Customer-visible events, oldest first.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "stage": {
+                                    "type": "string"
+                                },
+                                "at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "stage",
+                                "at"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "number",
+                    "stage",
+                    "placed_at",
+                    "payment",
+                    "contact",
+                    "shipping",
+                    "items",
+                    "coupon_code",
+                    "totals",
+                    "timeline"
+                ],
+                "title": "StorefrontOrder"
             },
             "StorefrontProduct": {
                 "type": "object",
@@ -10634,6 +13368,14 @@
                 ],
                 "title": "StorefrontUpazila"
             },
+            "TwitterCard": {
+                "type": "string",
+                "enum": [
+                    "summary_large_image",
+                    "summary"
+                ],
+                "title": "TwitterCard"
+            },
             "UpdateAttributeRequest": {
                 "type": "object",
                 "description": "`PATCH /attributes/{attribute}` \u2014 every field optional; only the fields sent\nchange. Changing `type` away from `color` clears the values' swatches.",
@@ -11306,6 +14048,159 @@
                             ]
                         },
                         "maxItems": 50
+                    },
+                    "sales_channels": {
+                        "type": "object",
+                        "description": "Where the product is sold. Omitted: keep the current flags.",
+                        "properties": {
+                            "online_store": {
+                                "type": "boolean"
+                            },
+                            "pos": {
+                                "type": "boolean"
+                            },
+                            "facebook_instagram": {
+                                "type": "boolean"
+                            },
+                            "google_merchant": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "vat_rate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "VAT included in the selling price, percent as a decimal string (\"0\", \"15\").\nOmitted or null: keep the current rate.",
+                        "pattern": "^\\d{1,3}(\\.\\d{1,2})?$"
+                    },
+                    "compliance": {
+                        "type": "object",
+                        "description": "BSTI certification. Omitted: keep the current values. The PDF is uploaded separately.",
+                        "properties": {
+                            "bsti_certificate_no": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9\\/ ._-]*$",
+                                "maxLength": 64
+                            },
+                            "bsti_expires_on": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date"
+                            }
+                        }
+                    },
+                    "seo": {
+                        "type": "object",
+                        "description": "Search & social (seo_meta). Omitted: keep the current values; sent: replaces them.",
+                        "properties": {
+                            "title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "title_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "description_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "canonical_url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uri",
+                                "maxLength": 2048
+                            },
+                            "robots": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/RobotsDirective"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "sitemap_exclude": {
+                                "type": "boolean"
+                            },
+                            "og_title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 191
+                            },
+                            "og_description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500
+                            },
+                            "og_image": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uri",
+                                "maxLength": 2048
+                            },
+                            "twitter_card": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/TwitterCard"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ]
+                            },
+                            "schema_override": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "JSON-LD merged over the generated Product schema; a JSON object.",
+                                "additionalProperties": {}
+                            },
+                            "focus_keyword": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 120
+                            }
+                        }
+                    },
+                    "acknowledge_slug_redirect": {
+                        "type": "boolean",
+                        "description": "Required (true) to change the slug of a published product: the old URL then\n301s to the new one (slug_history)."
                     }
                 },
                 "required": [

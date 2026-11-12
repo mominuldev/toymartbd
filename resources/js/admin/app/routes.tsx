@@ -17,9 +17,11 @@ import { ProductsPage } from '@/features/catalog/products/ProductsPage';
 import { ProductFormPage } from '@/features/catalog/products/ProductFormPage';
 import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { MovementsPage } from '@/features/inventory/MovementsPage';
+import { OrdersPage } from '@/features/orders/OrdersPage';
+import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory']);
+const built = new Set(['/products', '/inventory', '/orders']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -56,6 +58,9 @@ export const routes: RouteObject[] = [
                     // Inventory overview (Figma 213:6955) and the movement ledger (213:7516).
                     { path: 'inventory', element: <InventoryPage /> },
                     { path: 'inventory/movements', element: <MovementsPage /> },
+                    // Order board (Figma 205:681) and order detail (206:1475).
+                    { path: 'orders', element: <OrdersPage /> },
+                    { path: 'orders/:orderId', element: <OrderDetailPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

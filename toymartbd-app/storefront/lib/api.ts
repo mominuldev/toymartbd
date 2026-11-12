@@ -36,6 +36,8 @@ interface RequestOptions {
     locale?: Locale;
     /** Seconds; `cached` only. Defaults to the ISR ceiling. */
     revalidate?: number;
+    /** Extra request headers (`X-Cart-Token`, `Idempotency-Key`). Never cached: use with noStore/send. */
+    headers?: Record<string, string>;
 }
 
 function serverConfig(): { baseUrl: string; token: string } {
@@ -85,7 +87,7 @@ export async function toApiError(response: Response): Promise<ApiError> {
 }
 
 async function request<T>(path: string, init: RequestInit, options: RequestOptions): Promise<T> {
-    const response = await fetch(apiUrl(path), { ...init, method: 'GET', headers: headers(options.locale) });
+    const response = await fetch(apiUrl(path), { ...init, method: 'GET', headers: { ...headers(options.locale), ...options.headers } });
     if (!response.ok) throw await toApiError(response);
     return (await response.json()) as T;
 }
@@ -101,4 +103,47 @@ export function cached<T>(path: string, tags: string[], options: RequestOptions 
 /** Uncached GET for per-request data (cart, stock at checkout, order tracking). */
 export function noStore<T>(path: string, options: RequestOptions = {}): Promise<T> {
     return request<T>(path, { cache: 'no-store' }, options);
+}
+
+export interface SendResult<T> {
+    status: number;
+    data: T;
+    headers: Headers;
+}
+
+/**
+ * Uncached write (POST / PATCH / DELETE) with an optional JSON body. A non-2xx response throws an
+ * ApiError carrying the problem document (and its `errors[]`); a 204 resolves with `data: null`.
+ */
+export async function send<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, options: Omit<RequestOptions, 'revalidate'> & { body?: unknown } = {}): Promise<SendResult<T>> {
+    const init: RequestInit = {
+        method,
+        cache: 'no-store',
+        headers: {
+            ...headers(options.locale),
+            ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+            ...options.headers,
+        },
+        ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
+    };
+    const response = await fetch(apiUrl(path), init);
+    if (!response.ok) throw await toApiError(response);
+    const text = response.status === 204 ? '' : await response.text();
+    return { status: response.status, data: (text ? JSON.parse(text) : null) as T, headers: response.headers };
+}
+
+/** `errors[]` of a 422 / 409 problem (`[{field, message}]`), tolerating a missing or malformed list. */
+export function problemErrors(error: ApiError): Array<{ field: string; message: string }> {
+    const raw = error.problem.errors;
+    if (!Array.isArray(raw)) return [];
+    return raw.flatMap((e: unknown) => {
+        if (typeof e !== 'object' || e === null) return [];
+        const { field, message } = e as { field?: unknown; message?: unknown };
+        return typeof message === 'string' ? [{ field: typeof field === 'string' ? field : '', message }] : [];
+    });
+}
+
+/** The stable problem code: `https://toymartbd.com/problems/price-changed` → `price-changed`. */
+export function problemType(error: ApiError): string {
+    return error.problem.type.split('/').pop() ?? '';
 }

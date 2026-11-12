@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type { StoreProductRequestInput } from '@toymart/api-types/zod';
-import { api } from '@/lib/api';
+import { ApiError, api, apiLocale, csrfToken, isProblem } from '@/lib/api';
 import type { Brand } from '../brands/api';
 
 export type Product = Schema<'Product'>;
@@ -14,6 +15,17 @@ export type RelationType = ProductRelation['type'];
 export type Gender = NonNullable<Product['gender']>;
 /** The POST/PUT document — the generated request type, never a hand-written copy (rule 27). */
 export type ProductInput = StoreProductRequestInput;
+export type ProductSeo = Product['seo'];
+export type SeoChecklistItem = ProductSeo['checklist']['items'][number];
+export type ProductCompliance = Product['compliance'];
+export type StockByLocation = NonNullable<Product['stock_by_location']>[number];
+/** A server-computed per-unit margin (rule 1: the admin never computes one). */
+export type Margin = NonNullable<Product['margin']>;
+export type SeoMeasure = ProductSeo['measure'];
+export type RobotsDirective = ProductSeo['robots'];
+export type TwitterCard = ProductSeo['twitter_card'];
+export const robotsDirectives: RobotsDirective[] = ['index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow'];
+export const twitterCards: TwitterCard[] = ['summary_large_image', 'summary'];
 
 export const productStatuses: ProductStatus[] = ['active', 'draft', 'archived'];
 export const productTypes: ProductType[] = ['simple', 'variable'];
@@ -139,5 +151,101 @@ export function useBrandOptions() {
             return all;
         },
         staleTime: 5 * 60_000,
+    });
+}
+
+/** A value that settles `ms` after the last change — for the server-side previews below. */
+export function useDebouncedValue<T>(value: T, ms = 300): T {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebounced(value), ms);
+        return () => window.clearTimeout(timer);
+    }, [value, ms]);
+    return debounced;
+}
+
+export type MarginRow = { price: string; cost_price: string };
+
+/**
+ * Margins for unsaved prices and costs, computed by the API (`POST /products/margin-preview`,
+ * catalog.view_cost). `rows[i]` answers `rows[i]`; null where a price or cost is missing.
+ */
+export function useMarginPreview(rows: MarginRow[], vatRate: string, enabled: boolean) {
+    const input = useDebouncedValue(JSON.stringify({ rows, vat: vatRate }));
+    return useQuery({
+        queryKey: ['products', 'margin-preview', input],
+        queryFn: () => {
+            const { rows: sent, vat } = JSON.parse(input) as { rows: MarginRow[]; vat: string };
+            return api<{ rows: (Margin | null)[] }>('/products/margin-preview', {
+                method: 'POST',
+                body: JSON.stringify({
+                    vat_rate: /^\d{1,3}(\.\d{1,2})?$/.test(vat.trim()) ? vat.trim() : null,
+                    rows: sent.map((r) => ({ price: clean(r.price), cost_price: clean(r.cost_price) })),
+                }),
+            }).then((result) => result.rows);
+        },
+        enabled: enabled && rows.length > 0,
+        placeholderData: keepPreviousData,
+        staleTime: 60_000,
+        retry: false,
+    });
+}
+
+/** A money string the API accepts, or null (an unfinished edit simply has no margin yet). */
+function clean(value: string): string | null {
+    const v = value.trim().replace(/,/g, '');
+    return /^\d{1,12}(\.\d{1,2})?$/.test(v) ? v : null;
+}
+
+/** The server's SERP pixel measurement of an unsaved meta title and description. */
+export function useSeoMeasure(title: string, description: string) {
+    const input = useDebouncedValue(JSON.stringify([title, description]));
+    return useQuery({
+        queryKey: ['products', 'seo-measure', input],
+        queryFn: () => {
+            const [t, d] = JSON.parse(input) as [string, string];
+            return api<SeoMeasure>('/products/seo-measure', { method: 'POST', body: JSON.stringify({ title: t.slice(0, 500), description: d.slice(0, 1000) }) });
+        },
+        placeholderData: keepPreviousData,
+        staleTime: 5 * 60_000,
+        retry: false,
+    });
+}
+
+/** Where the certificate PDF downloads from (a cookie-session GET; served as an attachment). */
+export const certificateUrl = (productId: number) => `/api/v1/admin/products/${productId}/compliance/certificate`;
+
+function patchCompliance(client: ReturnType<typeof useQueryClient>, productId: number, compliance: ProductCompliance) {
+    client.setQueryData<Product>(keys.one(productId), (current) => (current ? { ...current, compliance } : current));
+}
+
+/** Attach or replace the BSTI certificate PDF (multipart; content-sniffed by the server). */
+export function useUploadCertificate(productId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: async (file: File) => {
+            const body = new FormData();
+            body.append('file', file);
+            const response = await fetch(`/api/v1/admin/products/${productId}/compliance/certificate`, {
+                method: 'POST',
+                body,
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'Accept-Language': apiLocale(), 'X-XSRF-TOKEN': csrfToken() },
+            });
+            const payload: unknown = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new ApiError(response.status, isProblem(payload) ? payload : { type: 'about:blank', title: response.statusText || 'Upload failed', status: response.status });
+            }
+            return payload as ProductCompliance;
+        },
+        onSuccess: (compliance) => patchCompliance(client, productId, compliance),
+    });
+}
+
+export function useRemoveCertificate(productId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: () => api<ProductCompliance>(`/products/${productId}/compliance/certificate`, { method: 'DELETE' }),
+        onSuccess: (compliance) => patchCompliance(client, productId, compliance),
     });
 }

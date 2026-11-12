@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 import { Icon } from '@/components/icons/Icon';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
-import { format, type Messages } from '@/lib/i18n';
+import { AddToCartEnhancer } from '@/components/cart/AddToCartEnhancer';
+import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { CART_FORM_ID, INLINE_CTA_ID } from '@/lib/product/ids';
 import type { ProductVariant } from '@/lib/product/variants';
 import { QuantityStepper } from './QuantityStepper';
@@ -11,8 +12,9 @@ interface Props {
     variant: ProductVariant;
     name: string;
     t: Messages;
-    /** Locale-prefixed product URL with the selected variant (`/products/x?variant=5`). */
-    action: string;
+    locale: Locale;
+    /** Locale-independent product path with the selected variant (`/products/x?variant=5`): where "Notify me" returns. */
+    back: string;
     /** DeliveryEstimator slot (P4-STO-06, agent-owned component). */
     estimator: ReactNode;
     trust: ReactNode;
@@ -23,16 +25,18 @@ interface Props {
 // 1440 (135:1222): [Stepper | Add to cart | Wishlist] · Buy now · DeliveryEstimator · TrustStrip, 20 apart.
 // One grid; `order` and explicit placement switch between them, so there is one quantity input.
 //
-// TODO(P4-CRT-01): the cart does not exist yet. The form is a deliberate no-op — it re-requests this
-// same page (GET, nothing is stored, no "added" message is faked) and, with JavaScript, PurchaseEnhancer
-// cancels the submit. Wire it to the cart endpoint (Idempotency-Key not needed for cart lines) then.
-export function PurchasePanel({ variant, name, t, action, estimator, trust }: Props) {
+// The form POSTs to /api/cart/items (P4-STO-08): without JavaScript, Add → the cart page and Buy
+// now → checkout (303s); with it, AddToCartEnhancer sends Add in place and announces the result.
+// Cart lines need no Idempotency-Key (cart.md): a repeated add raises the quantity, as it should.
+export function PurchasePanel({ variant, name, t, locale, back, estimator, trust }: Props) {
     const soldOut = variant.stock_state === 'out_of_stock';
 
     return (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-x-3 lg:gap-y-5">
-            <form id={CART_FORM_ID} method="get" action={action} data-todo="P4-CRT-01" className="contents">
-                <input type="hidden" name="variant" value={variant.id} />
+            <form id={CART_FORM_ID} method="post" action="/api/cart/items" className="contents">
+                <input type="hidden" name="variant_id" value={variant.id} />
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="back" value={back} />
                 <div className="order-1 flex items-center justify-between gap-3 lg:order-none lg:col-start-1 lg:row-start-1">
                     <span className="t-body-strong text-fg-primary lg:sr-only">{t.pdp.quantity}</span>
                     <QuantityStepper
@@ -76,6 +80,11 @@ export function PurchasePanel({ variant, name, t, action, estimator, trust }: Pr
             </button>
             <div className={`order-2 lg:order-none lg:col-span-3 ${soldOut ? 'lg:row-start-2' : 'lg:row-start-3'}`}>{estimator}</div>
             <div className={`order-5 lg:order-none lg:col-span-3 ${soldOut ? 'lg:row-start-3' : 'lg:row-start-4'}`}>{trust}</div>
+            <AddToCartEnhancer
+                formId={CART_FORM_ID}
+                cartHref={localizedPath(locale, '/cart')}
+                labels={{ added: t.cart.added, viewCart: t.cart.viewCart, failed: t.cart.notices.addFailed, notices: t.cart.notices }}
+            />
         </div>
     );
 }

@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const attributeTypeSchema = z.enum(["select","color","text"]);
 export type AttributeType = z.infer<typeof attributeTypeSchema>;
 
+export const cancellationReasonSchema = z.enum(["customer_request","customer_unreachable","fake_order","duplicate_order","out_of_stock","pricing_error","address_unserviceable","payment_failed","other"]);
+export type CancellationReason = z.infer<typeof cancellationReasonSchema>;
+
 export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
 export type CouponType = z.infer<typeof couponTypeSchema>;
 
@@ -22,8 +25,14 @@ export type ProductType = z.infer<typeof productTypeSchema>;
 export const relationTypeSchema = z.enum(["related","upsell","cross_sell","bundle","age_progression"]);
 export type RelationType = z.infer<typeof relationTypeSchema>;
 
+export const robotsDirectiveSchema = z.enum(["index,follow","noindex,follow","index,nofollow","noindex,nofollow"]);
+export type RobotsDirective = z.infer<typeof robotsDirectiveSchema>;
+
 export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample"]);
 export type StockAdjustmentReason = z.infer<typeof stockAdjustmentReasonSchema>;
+
+export const twitterCardSchema = z.enum(["summary_large_image","summary"]);
+export type TwitterCard = z.infer<typeof twitterCardSchema>;
 
 export const variantStatusSchema = z.enum(["active","archived"]);
 export type VariantStatus = z.infer<typeof variantStatusSchema>;
@@ -41,6 +50,47 @@ export const applyCouponRequestSchema = z.object({
 });
 export type ApplyCouponRequestInput = z.input<typeof applyCouponRequestSchema>;
 
+/** `POST /orders/bulk/confirm` — needs orders.confirm. Up to 100 ids (one board page is */
+export const bulkConfirmOrdersRequestSchema = z.object({
+    "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
+});
+export type BulkConfirmOrdersRequestInput = z.input<typeof bulkConfirmOrdersRequestSchema>;
+
+/** `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list */
+export const cancelOrderRequestSchema = z.object({
+    "reason": cancellationReasonSchema,
+    "note": z.string().max(500).nullable().optional(),
+});
+export type CancelOrderRequestInput = z.input<typeof cancelOrderRequestSchema>;
+
+/** `POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from */
+export const checkoutRequestSchema = z.object({
+    "name": z.string().min(2).max(160),
+    "phone": z.string().min(1).max(32),
+    "alt_phone": z.string().max(32).nullable().optional(),
+    "email": z.email().max(191).nullable().optional(),
+    "division_id": z.number().int().nullable().optional(),
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().min(2).max(160),
+    "address_line": z.string().min(5).max(500),
+    "landmark": z.string().max(255).nullable().optional(),
+    "postcode": z.string().regex(new RegExp("^\\d{4}$")).nullable().optional(),
+    "payment_method": z.enum(["cod"]),
+    "customer_note": z.string().max(500).nullable().optional(),
+    "expected_total": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "utm_source": z.string().max(128).nullable().optional(),
+    "utm_medium": z.string().max(128).nullable().optional(),
+    "utm_campaign": z.string().max(128).nullable().optional(),
+});
+export type CheckoutRequestInput = z.input<typeof checkoutRequestSchema>;
+
+/** `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`. */
+export const confirmOrderRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type ConfirmOrderRequestInput = z.input<typeof confirmOrderRequestSchema>;
+
 /** `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the */
 export const cropProductImageRequestSchema = z.object({
     "x": z.number().int().min(0),
@@ -50,6 +100,12 @@ export const cropProductImageRequestSchema = z.object({
 });
 export type CropProductImageRequestInput = z.input<typeof cropProductImageRequestSchema>;
 
+/** `POST /orders/{order}/hold` — needs orders.update. A hold always says why (`reason`), */
+export const holdOrderRequestSchema = z.object({
+    "reason": z.string().min(1).max(500),
+});
+export type HoldOrderRequestInput = z.input<typeof holdOrderRequestSchema>;
+
 /** `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`. */
 export const loginRequestSchema = z.object({
     "email": z.email().min(1).max(255),
@@ -58,12 +114,35 @@ export const loginRequestSchema = z.object({
 });
 export type LoginRequestInput = z.input<typeof loginRequestSchema>;
 
+/** `POST /products/margin-preview` — margins for prices and costs the form has not */
+export const marginPreviewRequestSchema = z.object({
+    "vat_rate": z.string().regex(new RegExp("^\\d{1,3}(\\.\\d{1,2})?$")).nullable().optional(),
+    "rows": z.array(z.object({
+    "price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "cost_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+})).min(1).max(100),
+});
+export type MarginPreviewRequestInput = z.input<typeof marginPreviewRequestSchema>;
+
 /** `POST /categories/{category}/move` — `{ parent_id, position }`. The category */
 export const moveCategoryRequestSchema = z.object({
     "parent_id": z.number().int().nullable(),
     "position": z.number().int().min(0).max(10000),
 });
 export type MoveCategoryRequestInput = z.input<typeof moveCategoryRequestSchema>;
+
+/** `POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone */
+export const orderTrackRequestSchema = z.object({
+    "number": z.string().min(1).max(32),
+    "phone": z.string().min(1).max(32),
+});
+export type OrderTrackRequestInput = z.input<typeof orderTrackRequestSchema>;
+
+/** Release from hold, start processing, mark ready to ship — needs orders.update. An */
+export const orderWorkflowRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type OrderWorkflowRequestInput = z.input<typeof orderWorkflowRequestSchema>;
 
 /** `POST /attributes/{attribute}/values/reorder` — `{ ids: [3, 1, 2] }`, every value */
 export const reorderAttributeValuesRequestSchema = z.object({
@@ -76,6 +155,13 @@ export const reorderProductImagesRequestSchema = z.object({
     "ids": z.array(z.number().int()).max(100),
 });
 export type ReorderProductImagesRequestInput = z.input<typeof reorderProductImagesRequestSchema>;
+
+/** `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta */
+export const seoMeasureRequestSchema = z.object({
+    "title": z.string().max(500).nullable().optional(),
+    "description": z.string().max(1000).nullable().optional(),
+});
+export type SeoMeasureRequestInput = z.input<typeof seoMeasureRequestSchema>;
 
 /** `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch) */
 export const storeAttributeRequestSchema = z.object({
@@ -123,6 +209,12 @@ export const storeCategoryRequestSchema = z.object({
 });
 export type StoreCategoryRequestInput = z.input<typeof storeCategoryRequestSchema>;
 
+/** `POST /products/{product}/compliance/certificate` — `multipart/form-data` with `file`: */
+export const storeComplianceCertificateRequestSchema = z.object({
+    "file": z.instanceof(Blob),
+});
+export type StoreComplianceCertificateRequestInput = z.input<typeof storeComplianceCertificateRequestSchema>;
+
 /** `POST /coupons` — needs marketing.manage. */
 export const storeCouponRequestSchema = z.object({
     "code": z.string().min(1).max(40).regex(new RegExp("^[A-Z0-9][A-Z0-9_-]*$")),
@@ -146,6 +238,13 @@ export const storeCouponRequestSchema = z.object({
     "is_active": z.boolean().optional(),
 });
 export type StoreCouponRequestInput = z.input<typeof storeCouponRequestSchema>;
+
+/** `POST /orders/{order}/notes` — needs orders.update. Notes are append-only. */
+export const storeOrderNoteRequestSchema = z.object({
+    "body": z.string().min(1).max(2000),
+    "is_customer_visible": z.boolean().optional(),
+});
+export type StoreOrderNoteRequestInput = z.input<typeof storeOrderNoteRequestSchema>;
 
 /** `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP */
 export const storeProductImageRequestSchema = z.object({
@@ -215,6 +314,33 @@ export const storeProductRequestSchema = z.object({
     "position": z.number().int().min(0).max(1000).nullable().optional(),
     "reason_note": z.string().max(500).nullable().optional(),
 })).max(50).optional(),
+    "sales_channels": z.object({
+    "online_store": z.boolean().optional(),
+    "pos": z.boolean().optional(),
+    "facebook_instagram": z.boolean().optional(),
+    "google_merchant": z.boolean().optional(),
+}).optional(),
+    "vat_rate": z.string().regex(new RegExp("^\\d{1,3}(\\.\\d{1,2})?$")).nullable().optional(),
+    "compliance": z.object({
+    "bsti_certificate_no": z.string().max(64).regex(new RegExp("^[A-Za-z0-9][A-Za-z0-9\\/ ._-]*$")).nullable().optional(),
+    "bsti_expires_on": z.string().nullable().optional(),
+}).optional(),
+    "seo": z.object({
+    "title": z.string().max(191).nullable().optional(),
+    "title_bn": z.string().max(191).nullable().optional(),
+    "description": z.string().max(500).nullable().optional(),
+    "description_bn": z.string().max(500).nullable().optional(),
+    "canonical_url": z.url().max(2048).nullable().optional(),
+    "robots": robotsDirectiveSchema.nullable().optional(),
+    "sitemap_exclude": z.boolean().optional(),
+    "og_title": z.string().max(191).nullable().optional(),
+    "og_description": z.string().max(500).nullable().optional(),
+    "og_image": z.url().max(2048).nullable().optional(),
+    "twitter_card": twitterCardSchema.nullable().optional(),
+    "schema_override": z.record(z.string(), z.unknown()).nullable().optional(),
+    "focus_keyword": z.string().max(120).nullable().optional(),
+}).optional(),
+    "acknowledge_slug_redirect": z.boolean().optional(),
 });
 export type StoreProductRequestInput = z.input<typeof storeProductRequestSchema>;
 
@@ -369,5 +495,32 @@ export const updateProductRequestSchema = z.object({
     "position": z.number().int().min(0).max(1000).nullable().optional(),
     "reason_note": z.string().max(500).nullable().optional(),
 })).max(50).optional(),
+    "sales_channels": z.object({
+    "online_store": z.boolean().optional(),
+    "pos": z.boolean().optional(),
+    "facebook_instagram": z.boolean().optional(),
+    "google_merchant": z.boolean().optional(),
+}).optional(),
+    "vat_rate": z.string().regex(new RegExp("^\\d{1,3}(\\.\\d{1,2})?$")).nullable().optional(),
+    "compliance": z.object({
+    "bsti_certificate_no": z.string().max(64).regex(new RegExp("^[A-Za-z0-9][A-Za-z0-9\\/ ._-]*$")).nullable().optional(),
+    "bsti_expires_on": z.string().nullable().optional(),
+}).optional(),
+    "seo": z.object({
+    "title": z.string().max(191).nullable().optional(),
+    "title_bn": z.string().max(191).nullable().optional(),
+    "description": z.string().max(500).nullable().optional(),
+    "description_bn": z.string().max(500).nullable().optional(),
+    "canonical_url": z.url().max(2048).nullable().optional(),
+    "robots": robotsDirectiveSchema.nullable().optional(),
+    "sitemap_exclude": z.boolean().optional(),
+    "og_title": z.string().max(191).nullable().optional(),
+    "og_description": z.string().max(500).nullable().optional(),
+    "og_image": z.url().max(2048).nullable().optional(),
+    "twitter_card": twitterCardSchema.nullable().optional(),
+    "schema_override": z.record(z.string(), z.unknown()).nullable().optional(),
+    "focus_keyword": z.string().max(120).nullable().optional(),
+}).optional(),
+    "acknowledge_slug_redirect": z.boolean().optional(),
 });
 export type UpdateProductRequestInput = z.input<typeof updateProductRequestSchema>;

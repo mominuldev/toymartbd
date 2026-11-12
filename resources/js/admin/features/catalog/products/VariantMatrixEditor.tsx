@@ -1,5 +1,5 @@
 import { useId, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
-import { ArrowCounterClockwiseIcon, ArrowSquareOutIcon, PlusIcon, TrashIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react';
+import { ArrowCounterClockwiseIcon, ArrowSquareOutIcon, PlusIcon, TrashIcon, WarningCircleIcon, WarningIcon, XIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { controlHeight, inputClass, monoInputClass } from '@/components/ui/Field';
@@ -7,6 +7,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import type { Attribute } from '../attributes/api';
+import type { Margin } from './api';
 import { TAKA, Toggle } from './parts';
 import { emptyRow, labelFor, type Combination, type MatrixRow, type MatrixState, type PlacedErrors, type VariantFields } from './document';
 
@@ -35,6 +36,8 @@ type Props = {
      */
     stockMode: StockMode;
     disabled: boolean;
+    /** Per-combination margin computed by the API (catalog.view_cost); undefined while it loads. */
+    margins?: Record<string, Margin | null>;
     /** Anchor id for the section navigation. */
     id?: string;
     /** Right side of the title row (the product-type select on a new product). */
@@ -51,7 +54,7 @@ export type StockMode = 'opening' | 'readonly' | 'hidden';
  * the column shows available stock read-only (changes are stock adjustments). A removed
  * value archives its variants on save; adding it back restores them.
  */
-export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled, id, aside }: Props) {
+export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled, id, aside, margins }: Props) {
     const { t, locale } = useI18n();
     const bn = locale === 'bn';
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -105,7 +108,26 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
         { value: 'cost_price', label: t('products.field.cost'), allowed: canCost },
         { value: 'weight_grams', label: t('products.field.weight'), allowed: true },
     ];
-    const columnCount = 8 + (canCost ? 1 : 0) + (stockMode === 'hidden' ? 0 : 1);
+    const columnCount = 8 + (canCost ? 2 : 0) + (stockMode === 'hidden' ? 0 : 1);
+    // The lowest of the API's margins — picking one of the server's numbers, not computing one.
+    const lowest = canCost && margins
+        ? combos.reduce<{ percent: string; off: boolean } | null>((low, combo) => {
+              const m = margins[combo.key];
+              if (!m) return low;
+              return low === null || Number(m.percent) < Number(low.percent) ? { percent: m.percent, off: rowOf(combo).status === 'archived' } : low;
+          }, null)
+        : null;
+
+    const marginCell = (combo: Combination) => {
+        const m = margins?.[combo.key];
+        const negative = m?.percent.startsWith('-') ?? false;
+        return (
+            <span className={`flex items-center justify-end gap-1 t-admin-body tabular whitespace-nowrap ${m ? 'text-fg-secondary' : 'text-fg-tertiary'} ${negative ? 'font-semibold text-fg-primary' : ''}`}>
+                {negative && <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />}
+                {m ? `${m.percent}%` : '—'}
+            </span>
+        );
+    };
     const totalStock = stockMode === 'readonly' ? combos.reduce((sum, combo) => sum + (rowOf(combo).stock?.available ?? 0), 0) : null;
 
     const stockCell = (combo: Combination, row: MatrixRow) => {
@@ -346,6 +368,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                     <Th end>{t('products.field.price')}</Th>
                                     <Th end>{t('products.field.compareAt')}</Th>
                                     {canCost && <Th end>{t('products.field.cost')}</Th>}
+                                    {canCost && <Th end>{t('products.matrix.margin')}</Th>}
                                     {stockMode !== 'hidden' && <Th end>{stockMode === 'opening' ? t('products.field.openingStock') : t('products.field.stock')}</Th>}
                                     <Th end>{t('products.field.weight')}</Th>
                                     <Th>{t('products.field.barcode')}</Th>
@@ -377,6 +400,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                             <td className="px-2 py-2">{cell(combo, row, 'price', t('products.field.price'))}</td>
                                             <td className="px-2 py-2">{cell(combo, row, 'compare_at_price', t('products.field.compareAt'))}</td>
                                             {canCost && <td className="px-2 py-2">{cell(combo, row, 'cost_price', t('products.field.cost'))}</td>}
+                                            {canCost && <td className="px-2 py-2">{marginCell(combo)}</td>}
                                             {stockMode !== 'hidden' && <td className="px-2 py-2">{stockCell(combo, row)}</td>}
                                             <td className="px-2 py-2">{cell(combo, row, 'weight_grams', t('products.field.weight'))}</td>
                                             <td className="px-2 py-2">{cell(combo, row, 'barcode', t('products.field.barcode'))}</td>
@@ -390,6 +414,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                         {totalStock === null
                             ? t('products.matrix.footer', { count: combos.length, enabled: enabledCount })
                             : t('products.matrix.footerStock', { count: combos.length, enabled: enabledCount, stock: totalStock })}
+                        {lowest && (lowest.off ? t('products.matrix.lowestMarginOff', { percent: lowest.percent }) : t('products.matrix.lowestMargin', { percent: lowest.percent }))}
                     </p>
                 </>
             )}

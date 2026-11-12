@@ -27,6 +27,10 @@ enum ProblemType: string
     case IdempotencyKeyInvalid = 'idempotency-key-invalid';
     case IdempotencyKeyReused = 'idempotency-key-reused';
     case RequestInProgress = 'request-in-progress';
+    /** Checkout (P4-ORD-02, docs/api/checkout.md): the re-priced total differs from the one shown. */
+    case PriceChanged = 'price-changed';
+    /** Checkout: the stock reservation failed for at least one line; `errors[]` lists each. */
+    case InsufficientStock = 'insufficient-stock';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -54,6 +58,7 @@ enum ProblemType: string
             self::IdempotencyKeyMissing, self::IdempotencyKeyInvalid => 400,
             self::IdempotencyKeyReused => 422,
             self::RequestInProgress => 409,
+            self::PriceChanged, self::InsufficientStock => 409,
             self::ServerError, self::HttpError => 500,
         };
     }
@@ -75,6 +80,8 @@ enum ProblemType: string
             self::IdempotencyKeyInvalid => 'Idempotency-Key invalid',
             self::IdempotencyKeyReused => 'Idempotency-Key reused',
             self::RequestInProgress => 'Request in progress',
+            self::PriceChanged => 'Price changed',
+            self::InsufficientStock => 'Insufficient stock',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -98,6 +105,8 @@ enum ProblemType: string
             self::IdempotencyKeyInvalid => 'The Idempotency-Key must be 8 to 255 printable ASCII characters without spaces.',
             self::IdempotencyKeyReused => 'This Idempotency-Key was already used with a different request.',
             self::RequestInProgress => 'A request with this Idempotency-Key is still being processed. Retry shortly.',
+            self::PriceChanged => 'The order total has changed. Review the cart and place the order again.',
+            self::InsufficientStock => 'Some items are no longer available in the quantity requested.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

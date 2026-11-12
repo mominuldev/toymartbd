@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use App\Http\Controllers\Api\V1\Storefront\CartController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
+use App\Http\Controllers\Api\V1\Storefront\CheckoutController;
 use App\Http\Controllers\Api\V1\Storefront\DeliveryController;
+use App\Http\Controllers\Api\V1\Storefront\OrderController;
 use App\Http\Controllers\Api\V1\Storefront\ProductController;
 use App\Http\Controllers\Api\V1\Storefront\ProductDetailController;
 use App\Http\Controllers\Api\V1\Storefront\SearchController;
@@ -61,4 +63,13 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
     Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
     Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.store');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.destroy');
+});
+
+// Checkout, confirmation and tracking (P4-ORD-02, P4-STO-09/10) — docs/api/checkout.md.
+// Checkout needs an Idempotency-Key (rule 17; `idempotent` runs after auth, so the key is
+// scoped to this token) and is limited per cart. Tracking needs number + phone (rule 22).
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
+    Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['throttle:checkout', 'idempotent'])->name('checkout.store');
+    Route::post('/orders/track', [OrderController::class, 'track'])->middleware('throttle:order-track')->name('orders.track');
+    Route::get('/orders/{number}', [OrderController::class, 'show'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
 });

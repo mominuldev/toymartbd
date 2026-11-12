@@ -17,17 +17,11 @@ interface Props {
 // ≥1024): 76 tall, fixed directly above MobileNav. Its CTA submits the page's cart form (the same
 // control as the inline one, via `form=`), so it works without JavaScript — where it simply stays
 // up. Once hydrated it slides away while the inline CTA is on screen, and the hidden one is inert.
-//
-// TODO(P4-CRT-01): this effect also cancels the cart form's submit — the cart does not exist yet,
-// and a no-op is honest where a fake "Added" would not be.
+// The add itself is the cart form's (AddToCartEnhancer), whichever button submits it.
 export function AddToCartBar({ price, summary, soldOut, labels }: Props) {
     const bar = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const form = document.getElementById(CART_FORM_ID);
-        const noop = (event: Event) => event.preventDefault();
-        form?.addEventListener('submit', noop);
-
         const inline = document.getElementById(INLINE_CTA_ID);
         const el = bar.current;
         let observer: IntersectionObserver | undefined;
@@ -41,7 +35,6 @@ export function AddToCartBar({ price, summary, soldOut, labels }: Props) {
             observer.observe(inline);
         }
         return () => {
-            form?.removeEventListener('submit', noop);
             observer?.disconnect();
         };
     }, []);

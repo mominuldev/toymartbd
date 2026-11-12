@@ -33,13 +33,15 @@ interface Props {
     bottomBar?: boolean;
     /** Children lay out their own gutters and 1280 cap (Home: full-bleed bands). */
     bleed?: boolean;
+    /** Cart count the page knows server-side (cart page); cached pages leave it to the CartLink island. */
+    cartCount?: number;
     children: ReactNode;
 }
 
 // The storefront chrome: skip link → (Bangla suggestion) → header + mega menu → main → footer →
 // mobile tab bar. Server-rendered; the only client islands are the mega menu's keyboard layer,
 // the language toggle's cookie and the suggestion banner.
-export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', bottomBar = false, bleed = false, children }: Props) {
+export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', bottomBar = false, bleed = false, cartCount = 0, children }: Props) {
     const t = getMessages(locale);
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
@@ -68,7 +70,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
                 />
             ) : null}
             {announcement ? <AnnouncementBar message={t.announcement.cod} /> : null}
-            <SiteHeader locale={locale} path={path} menu={menu} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} />
+            <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} />
             {/* Gutters outside, content capped at 1280 inside: at 1440 that is the design's 80px margin. */}
             <main
                 id="main"
@@ -79,7 +81,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
             </main>
             <SiteFooter locale={locale} path={path} />
             {bottomBar ? <div aria-hidden="true" className="h-19 shrink-0 lg:hidden" /> : null}
-            <MobileNav locale={locale} path={path} />
+            <MobileNav locale={locale} path={path} cartCount={cartCount} />
         </>
     );
 }

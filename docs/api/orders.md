@@ -137,38 +137,65 @@ Customer, shipping snapshot, totals, items, payments, timeline, risk. **PII mask
 without `customers.view_pii`, phones are `017****5678` and `address`, `landmark`, `postcode` are
 `null` (`pii_masked: true`). `items[].cost_price_snapshot` only with `catalog.view_cost`.
 
-## PlaceOrder (batch 5) — the transaction outline against this schema
+## PlaceOrder as built (batch 5, P4-ORD-02)
 
-`OrderFixtures::place()` (tests/Feature/Ordering/Support) is a test-only stand-in for steps 3–9.
+`App\Domain\Ordering\Actions\PlaceOrder::handle(CheckoutData): Order`. The storefront contract
+(request, `StorefrontOrder`, errors) is `docs/api/checkout.md`. `OrderFixtures::place()`
+(tests/Feature/Ordering/Support) stays as a test-only shortcut for admin-side tests that need an
+order without a cart.
 
 ```
-POST /checkout  (Idempotency-Key required, rule 17)
-outside the transaction:
-  1. resolve/validate the cart and address; normalise the phone (PhoneNumber::parse → E.164)
-BEGIN (PlaceOrder Action — the only DB::transaction)
-  2. re-price the cart via the pricing pipeline (never client totals); re-validate coupon and
-     promotions; DeliveryChargeResolver::quote() for shipping (same path as the estimator)
-  3. StockReservations::reserve(lines)  — FOR UPDATE on stock_levels, ascending variant_id,
-     all-or-nothing; InsufficientStock (409) lists every short line → whole order fails
-  4. Customer: find by phone (E.164) or create (source = order source)
-  5. number = OrderNumberGenerator::next()  — locks the year row
-  6. INSERT orders: status pending, payment_status unpaid, fulfillment_status unfulfilled,
-     money columns (grand_total = subtotal − discount_total + shipping_charge + tax_total, §7.3;
-     due_total = grand_total), address snapshot incl. landmark + geography ids, payment_method,
-     coupon_code, cart_id, utm/ip/user_agent, placed_at
-  7. INSERT order_items with every snapshot and cost_price_snapshot = the variant's
-     weighted-average cost (stock_levels.avg_cost once purchases exist; variant cost_price
-     today) — written once, never again (rule 7); recommendation_source from the cart line
-  8. PaymentTransitions::open(order, method, grand_total)  → payments row, status pending
-  9. Marketing: INSERT coupon_usages + coupons.used_count++ (its service, same transaction)
- 10. risk score → risk_score/risk_level/risk_flags; high → verification_status pending and
-     OrderTransitions::transition(order, on_hold) (never cancel, rule 24b)
- 11. OrderTransitions::placed(order)  → order_events "placed" + OrderPlaced (after commit)
- 12. mark the cart converted (Cart's service: converted_at, order_id)
+POST /storefront/checkout  (Idempotency-Key required — `idempotent` middleware, rule 17)
+outside the transaction (CheckoutRequest):
+  validate the form; PhoneNumber::parse → E.164 (rule 30); district/upazila consistency
+  (upazila may be null only for a city_option district)
+BEGIN (PlaceOrder — the only DB::transaction)
+  1. CartResolver::lock(token) — FOR UPDATE on the cart; a cart that already has an order
+     → CartNotFound (404). A second checkout of the same cart waits here, then finds it ordered.
+  2. PricingPipeline::price(PricingInput) — lines, the cart's coupon, district/upazila, phone
+     and the phone's existing customer id (so per-phone coupon limits apply now).
+     not isCheckoutReady() → CheckoutNotReady (422, per-field errors: cart / items.<id> /
+       coupon / upazila_id or district_id)
+     grandTotal ≠ expected_total → PriceChanged (409 price-changed). Never silently re-priced.
+  3. StockReservations::reserve(lines, default location) — FOR UPDATE, ascending variant_id,
+     all-or-nothing; InsufficientStock (409) lists every short line
+  4. CheckoutCustomers::findOrCreate (by E.164 phone; createOrFirst for the first-order race;
+     a soft-deleted customer is restored; an existing name is never overwritten) + address():
+     reuse an identical address-book row, else add one (default shipping/billing if first)
+  5. OrderRiskAssessor::assess(RiskInput) — computed before the INSERT so the row is written
+     once (risk_score, risk_level, risk_flags {signals, hold_reasons, computed_at})
+  6. OrderNumberGenerator::next(); INSERT orders (status pending; money columns from the
+     breakdown; grand_total = subtotal − discount_total + shipping_charge + tax_total (§7.3);
+     due_total = grand_total; address snapshot incl. landmark + geography ids and names;
+     cart_id, utm/ip/user_agent, placed_at)
+  7. OrderItemSnapshots::build → INSERT order_items with every snapshot and
+     cost_price_snapshot = StockValuation::costBasis(stock_levels.avg_cost, variant.cost_price),
+     written once (rule 7). recommendation_source = null: cart lines do not carry a placement
+     yet (recommendation attribution adds it).
+  8. PaymentTransitions::open(order, cod, grand_total)
+  9. CouponUsages::record(...) — re-checks total and per-phone limits under the coupon lock;
+     CouponRejected → 422 on `coupon`
+ 10. OrderTransitions::placed(order) → order_events "placed" + OrderPlaced (after commit)
+ 11. hold reasons present → verification_status pending and
+     OrderTransitions::transition(order, on_hold, meta {reasons}) — never cancel (rule 24b)
 COMMIT
 after commit:
- 13. InitiatePayment for an online method (driver HTTP, then a short transaction) → redirect URL
-     COD: nothing to call; the order stays unpaid until CollectCodPayment at delivery
- 14. listeners on OrderPlaced: notifications, order_financials, customer aggregates (wired),
-     search re-index
+ 12. MarkCartConverted::handle(cart_id, order_id) — the token stops resolving as a cart but
+     still opens GET /storefront/orders/{number} for 30 days
+ 13. (P4-PAY-02) InitiatePayment for an online method — driver HTTP, never inside the
+     transaction (rule 4). COD: nothing to call; unpaid until CollectCodPayment at delivery.
+ 14. listeners on OrderPlaced (notifications, order_financials, customer aggregates, search)
 ```
+
+### Launch risk rule (rule 33b) — `App\Domain\Risk\Services\OrderRiskAssessor`
+
+Our own order history only (no courier data yet). Signal `first_order` (weight 10) when the phone
+has no earlier order (as the customer's phone or as a shipping phone). Hold reasons:
+
+- `first_order_above_threshold` — first order with grand total ≥
+  `config('risk.first_order_hold_threshold')`, default ৳3,000 (**provisional — owner to set**;
+  env `RISK_FIRST_ORDER_HOLD_THRESHOLD`);
+- `cod_advance_required` — the delivery quote asks for a COD advance, which staff arrange by phone;
+- `high_risk_score` — score ≥ 70 (unreachable with today's single signal; ready for more).
+
+The customer still sees `stage: placed`; risk is never shown to them.

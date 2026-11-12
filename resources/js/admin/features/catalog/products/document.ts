@@ -1,5 +1,5 @@
 import type { Attribute } from '../attributes/api';
-import type { Gender, Product, ProductInput, ProductStatus, ProductType, ProductVariant, RelationType } from './api';
+import type { Gender, Product, ProductInput, ProductStatus, ProductType, ProductVariant, RelationType, RobotsDirective, TwitterCard } from './api';
 
 /**
  * The product document as the form edits it, and its translation to the API payload.
@@ -49,10 +49,33 @@ export type RelationRow = {
     name: string;
     name_bn: string | null;
     product_status: ProductStatus;
+    /** The target's 160 px thumbnail and default price, as the API sent them (display only). */
+    image_url: string | null;
+    price: string | null;
     type: RelationType;
     position: string;
     reason_note: string;
     is_auto: boolean;
+};
+
+export type SalesChannels = { online_store: boolean; pos: boolean; facebook_instagram: boolean; google_merchant: boolean };
+
+/** The `seo` block (seo_meta) as edited; empty text means "use the server default". */
+export type SeoFields = {
+    title: string;
+    title_bn: string;
+    description: string;
+    description_bn: string;
+    canonical_url: string;
+    robots: RobotsDirective;
+    sitemap_exclude: boolean;
+    og_title: string;
+    og_description: string;
+    og_image: string;
+    twitter_card: TwitterCard;
+    /** JSON text of the JSON-LD override object; parsed on submit. */
+    schema_override: string;
+    focus_keyword: string;
 };
 
 export type FormValues = {
@@ -76,6 +99,15 @@ export type FormValues = {
     safety_note_bn: string;
     warranty_months: string;
     is_featured: boolean;
+    sales_channels: SalesChannels;
+    /** VAT included in the price, percent, as text. */
+    vat_rate: string;
+    bsti_certificate_no: string;
+    /** `YYYY-MM-DD` or ''. */
+    bsti_expires_on: string;
+    seo: SeoFields;
+    /** The SlugField redirect acknowledgement (a live product's slug change). */
+    acknowledge_slug_redirect: boolean;
     simple: VariantFields;
     /** The saved simple variant's stock, for the read-only display on edit. */
     simple_stock: VariantStock | null;
@@ -87,6 +119,7 @@ export const generalFields = [
     'name', 'name_bn', 'slug', 'type', 'status', 'brand_id', 'category_ids', 'primary_category_id',
     'short_description', 'short_description_bn', 'description', 'description_bn', 'age_min_months', 'age_max_months',
     'gender', 'is_educational', 'safety_note', 'safety_note_bn', 'warranty_months', 'is_featured',
+    'vat_rate', 'bsti_certificate_no', 'bsti_expires_on', 'acknowledge_slug_redirect',
 ] as const satisfies readonly (keyof FormValues)[];
 
 /** The identity of a combination: its sorted attribute value ids (App\Domain\Catalog\Services\VariantMatrix::key). */
@@ -137,8 +170,37 @@ export function toForm(product?: Product): FormValues {
         safety_note_bn: product?.safety_note_bn ?? '',
         warranty_months: str(product?.warranty_months),
         is_featured: product?.is_featured ?? false,
+        sales_channels: product?.sales_channels ?? { online_store: true, pos: true, facebook_instagram: false, google_merchant: false },
+        vat_rate: product ? stripZeros(product.vat_rate) : '0',
+        bsti_certificate_no: product?.compliance.bsti_certificate_no ?? '',
+        bsti_expires_on: product?.compliance.bsti_expires_on ?? '',
+        seo: toSeoFields(product?.seo),
+        acknowledge_slug_redirect: false,
         simple: variantToFields(simple),
         simple_stock: simple?.stock ?? null,
+    };
+}
+
+/** "15.00" → "15", "7.50" → "7.5" — a display trim of the decimal string, not arithmetic. */
+function stripZeros(decimal: string): string {
+    return decimal.includes('.') ? decimal.replace(/\.?0+$/, '') : decimal;
+}
+
+function toSeoFields(seo?: Product['seo']): SeoFields {
+    return {
+        title: seo?.title ?? '',
+        title_bn: seo?.title_bn ?? '',
+        description: seo?.description ?? '',
+        description_bn: seo?.description_bn ?? '',
+        canonical_url: seo?.canonical_url ?? '',
+        robots: seo?.robots ?? 'index,follow',
+        sitemap_exclude: seo?.sitemap_exclude ?? false,
+        og_title: seo?.og_title ?? '',
+        og_description: seo?.og_description ?? '',
+        og_image: seo?.og_image ?? '',
+        twitter_card: seo?.twitter_card ?? 'summary_large_image',
+        schema_override: seo?.schema_override ? JSON.stringify(seo.schema_override, null, 2) : '',
+        focus_keyword: seo?.focus_keyword ?? '',
     };
 }
 
@@ -175,6 +237,8 @@ export function toRelations(product?: Product): RelationRow[] {
         name: relation.related_product.name,
         name_bn: relation.related_product.name_bn,
         product_status: relation.related_product.status,
+        image_url: relation.related_product.image_url,
+        price: relation.related_product.price,
         type: relation.type,
         position: String(relation.position),
         reason_note: relation.reason_note ?? '',
@@ -294,6 +358,12 @@ export function toPayload(values: FormValues, ctx: BuildContext): ProductInput {
         safety_note_bn: text(values.safety_note_bn),
         warranty_months: int(values.warranty_months),
         is_featured: values.is_featured,
+        sales_channels: values.sales_channels,
+        vat_rate: text(values.vat_rate),
+        compliance: { bsti_certificate_no: text(values.bsti_certificate_no), bsti_expires_on: text(values.bsti_expires_on) },
+        seo: seoPayload(values.seo),
+        // Only meaningful (and only required) when a live product's slug changes.
+        ...(ctx.product?.is_live && text(values.slug) !== null && text(values.slug) !== ctx.product.slug ? { acknowledge_slug_redirect: values.acknowledge_slug_redirect } : {}),
         // Fields this form does not edit travel back unchanged: PUT replaces the document.
         specifications: ctx.product?.specifications ?? null,
         published_at: ctx.product?.published_at ?? null,
@@ -316,11 +386,38 @@ export function toPayload(values: FormValues, ctx: BuildContext): ProductInput {
     };
 }
 
+/** The JSON-LD override as an object; text that is not a JSON object is sent as-is so the schema check names the field. */
+function seoPayload(seo: SeoFields): NonNullable<ProductInput['seo']> {
+    let override: unknown = null;
+    if (seo.schema_override.trim() !== '') {
+        try {
+            override = JSON.parse(seo.schema_override);
+        } catch {
+            override = seo.schema_override;
+        }
+    }
+    return {
+        title: text(seo.title),
+        title_bn: text(seo.title_bn),
+        description: text(seo.description),
+        description_bn: text(seo.description_bn),
+        canonical_url: text(seo.canonical_url),
+        robots: seo.robots,
+        sitemap_exclude: seo.sitemap_exclude,
+        og_title: text(seo.og_title),
+        og_description: text(seo.og_description),
+        og_image: text(seo.og_image),
+        twitter_card: seo.twitter_card,
+        schema_override: override as Record<string, unknown> | null,
+        focus_keyword: text(seo.focus_keyword),
+    };
+}
+
 export type FieldError = { field: string; message: string };
 
 export type PlacedErrors = {
     /** Top-level form fields and `simple.*`. */
-    form: { field: keyof FormValues | `simple.${keyof VariantFields}`; message: string }[];
+    form: { field: keyof FormValues | `simple.${keyof VariantFields}` | `seo.${keyof SeoFields}` | `sales_channels.${keyof SalesChannels}`; message: string }[];
     rows: Record<string, Partial<Record<keyof VariantFields | 'row', string>>>;
     relations: Record<string, string>;
     matrix: string[];
@@ -332,6 +429,11 @@ export type PlacedErrors = {
  * `options.1.value_ids`) on the control that owns them. Used for both the generated
  * Zod schema's issues and the server's 422, so both land in the same place.
  */
+const seoKeys: Record<keyof SeoFields, true> = {
+    title: true, title_bn: true, description: true, description_bn: true, canonical_url: true, robots: true, sitemap_exclude: true,
+    og_title: true, og_description: true, og_image: true, twitter_card: true, schema_override: true, focus_keyword: true,
+};
+
 export function placeErrors(errors: FieldError[], type: ProductType, combos: Combination[], relations: RelationRow[]): PlacedErrors {
     const placed: PlacedErrors = { form: [], rows: {}, relations: {}, matrix: [], other: [] };
     const curated = relations.filter((r) => !r.is_auto);
@@ -368,6 +470,15 @@ export function placeErrors(errors: FieldError[], type: ProductType, combos: Com
             const relation = curated[Number(index)];
             if (relation) placed.relations[relation.uid] ??= message;
             else placed.other.push(message);
+            continue;
+        }
+
+        if (head === 'seo' && index !== undefined && index in seoKeys) {
+            placed.form.push({ field: `seo.${index as keyof SeoFields}`, message });
+            continue;
+        }
+        if (head === 'compliance' && (index === 'bsti_certificate_no' || index === 'bsti_expires_on')) {
+            placed.form.push({ field: index, message });
             continue;
         }
 

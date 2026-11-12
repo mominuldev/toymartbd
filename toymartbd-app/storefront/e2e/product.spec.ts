@@ -30,8 +30,9 @@ test.describe('desktop', () => {
         await expect(page.getByText('Only 3 left', { exact: true })).toBeVisible();
         await expect(page.getByText('For ages 4–12', { exact: true })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Add to cart' }).first()).toBeVisible();
-        // The cart is not built yet (P4-CRT-01): the form is a marked no-op, never a fake success.
-        await expect(page.locator('form#pdp-cart-form')).toHaveAttribute('data-todo', 'P4-CRT-01');
+        // The cart form is a real POST to the cart Route Handler, so it works without JavaScript (P4-STO-08).
+        await expect(page.locator('form#pdp-cart-form')).toHaveAttribute('action', '/api/cart/items');
+        await expect(page.locator('form#pdp-cart-form')).toHaveAttribute('method', 'post');
 
         // SEO: self-canonical without ?variant=, reciprocal hreflang, Product JSON-LD with offers.
         await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', abs(PATH));

@@ -8,6 +8,9 @@ use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Queries\ProductStockByLocation;
+use App\Domain\Seo\Models\SeoMeta;
+use App\Domain\Seo\Models\SlugHistory;
 use App\Http\Resources\ApiResource;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -26,7 +29,8 @@ use Illuminate\Http\Request;
 final class ProductResource extends ApiResource
 {
     public const array RELATIONS = [
-        'brand', 'categories', 'variants.attributeValues', 'images', 'productRelations.relatedProduct',
+        'brand', 'categories', 'variants.attributeValues', 'images',
+        'productRelations.relatedProduct.images', 'productRelations.relatedProduct.activeVariants',
     ];
 
     /**
@@ -35,6 +39,9 @@ final class ProductResource extends ApiResource
     public function toArray(Request $request): array
     {
         $product = $this->resource;
+        // Variants read the product's VAT rate for their margin without a query each.
+        $product->variants->each(static fn (ProductVariant $v) => $v->setRelation('product', $product));
+        $canCost = ProductVariantResource::canViewCost($request);
 
         return [
             'id' => $product->id,
@@ -85,6 +92,70 @@ final class ProductResource extends ApiResource
             /** @var int|null */
             'warranty_months' => $product->warranty_months,
             'is_featured' => $product->is_featured,
+            /**
+             * Live on the storefront now (active and `published_at` reached): its slug
+             * changes only with `acknowledge_slug_redirect`.
+             */
+            'is_live' => $product->isLive(),
+            /**
+             * Where the product is sold (stored flags).
+             *
+             * @var array{online_store: bool, pos: bool, facebook_instagram: bool, google_merchant: bool}
+             */
+            'sales_channels' => [
+                'online_store' => $product->channel_online_store,
+                'pos' => $product->channel_pos,
+                'facebook_instagram' => $product->channel_social,
+                'google_merchant' => $product->channel_google_merchant,
+            ],
+            /**
+             * VAT included in the selling price, percent, decimal string ("0.00").
+             *
+             * @var string
+             */
+            'vat_rate' => (string) $product->vat_rate,
+            /**
+             * BSTI certification. `certificate` is the uploaded PDF (download it from
+             * `GET /products/{product}/compliance/certificate`), null when none.
+             * `expired`: the expiry date is before today (Dhaka).
+             *
+             * @var array{bsti_certificate_no: string|null, bsti_expires_on: string|null, expired: bool, certificate: array{name: string, size_bytes: int}|null}
+             */
+            'compliance' => ProductComplianceResource::block($product),
+            /**
+             * Margin of the default variant (a simple product's price), computed by the
+             * server; only with catalog.view_cost. Null when its price or cost is not set.
+             *
+             * @var array{percent: string, profit: string, net_price: string}|null
+             */
+            'margin' => $this->when($canCost, fn (): ?array => self::defaultMargin($product)),
+            /**
+             * The lowest variant margin (archived variants included) and its variant;
+             * only with catalog.view_cost. Null when no variant has a margin.
+             *
+             * @var array{percent: string, variant_id: int}|null
+             */
+            'margin_lowest' => $this->when($canCost, fn (): ?array => self::lowestMargin($product)),
+            /**
+             * Stock of all the product's variants per location (on hand, reserved,
+             * available); only with inventory.view. Read-only — change it with a stock
+             * adjustment.
+             *
+             * @var list<array{location_id: int, code: string, name: string, name_bn: string|null, is_default: bool, on_hand: int, reserved: int, available: int}>
+             */
+            'stock_by_location' => $this->when(ProductVariantResource::canViewStock($request), fn (): array => app(ProductStockByLocation::class)->forProduct($product->id)),
+            /**
+             * Retired slugs that now 301 to this product (newest first).
+             *
+             * @var list<array{old_slug: string, created_at: string}>
+             */
+            'slug_history' => SlugHistory::query()
+                ->where('sluggable_type', SeoMeta::TYPE_PRODUCT)->where('sluggable_id', $product->id)
+                ->orderByDesc('id')->limit(10)->get()
+                ->map(static fn (SlugHistory $h): array => ['old_slug' => $h->old_slug, 'created_at' => self::utcIso($h->created_at)])
+                ->values()->all(),
+            /** Search & social (seo_meta), with the server's defaults, measurement and checklist. */
+            'seo' => new ProductSeoResource($product, SeoMeta::forProduct($product->id)->first()),
             /**
              * ISO 8601, UTC.
              *
@@ -148,6 +219,30 @@ final class ProductResource extends ApiResource
         }
 
         return $options;
+    }
+
+    /** @return array{percent: string, profit: string, net_price: string}|null */
+    private static function defaultMargin(Product $product): ?array
+    {
+        $default = $product->variants->first(static fn (ProductVariant $v): bool => $v->is_default) ?? $product->variants->first();
+
+        return $default === null ? null : ProductVariantResource::marginFor($default);
+    }
+
+    /** @return array{percent: string, variant_id: int}|null */
+    private static function lowestMargin(Product $product): ?array
+    {
+        $lowest = null;
+
+        foreach ($product->variants as $variant) {
+            /** @var ProductVariant $variant */
+            $margin = ProductVariantResource::marginFor($variant);
+            if ($margin !== null && ($lowest === null || bccomp($margin['percent'], $lowest['percent'], 1) < 0)) {
+                $lowest = ['percent' => $margin['percent'], 'variant_id' => $variant->id];
+            }
+        }
+
+        return $lowest;
     }
 
     /** `2026-11-11T09:30:00Z`. */

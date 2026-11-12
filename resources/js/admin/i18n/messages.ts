@@ -10,12 +10,14 @@
  */
 import { inventoryBn, inventoryEn } from './messages.inventory';
 import { mediaBn, mediaEn } from './messages.media';
+import { ordersBn, ordersEn } from './messages.orders';
 import { productsBn, productsEn } from './messages.products';
 
 export const en = {
     ...productsEn,
     ...mediaEn,
     ...inventoryEn,
+    ...ordersEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -274,6 +276,7 @@ export const bn: Messages = {
     ...productsBn,
     ...mediaBn,
     ...inventoryBn,
+    ...ordersBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

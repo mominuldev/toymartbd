@@ -60,7 +60,7 @@ describe('app shell', () => {
 
     it('renders a placeholder for designed-but-unbuilt sections', async () => {
         signedInAs(viewer);
-        renderApp('/orders');
+        renderApp('/customers');
 
         expect(await screen.findByText('This section is being built.')).toBeTruthy();
     });

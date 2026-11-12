@@ -173,7 +173,8 @@ export interface paths {
         /**
          * `PUT /products/{product}` — replaces the whole document; needs catalog.update.
          *     Changing a selling price or adding a variant also needs catalog.update_price;
-         *     sending `cost_price` needs catalog.view_cost
+         *     sending `cost_price` needs catalog.view_cost. Changing a live product's slug needs
+         *     `acknowledge_slug_redirect: true` and records the old slug in `slug_history`
          */
         put: operations["v1.admin.products.update"];
         post?: never;
@@ -199,6 +200,66 @@ export interface paths {
          */
         post: operations["v1.admin.products.duplicate"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/margin-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /products/margin-preview` — per-unit margin for each `rows[i]` (price and
+         *     cost as decimal strings) at `vat_rate`; null where the price or cost is missing.
+         *     Needs catalog.view_cost
+         */
+        post: operations["v1.admin.products.margin-preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/seo-measure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /products/seo-measure` — estimated rendered width of a meta title (20 px)
+         *     and description (14 px) at Google's desktop metric, with the truncation limits
+         */
+        post: operations["v1.admin.products.seo-measure"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/compliance/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /products/{product}/compliance/certificate` — the PDF as an attachment; needs catalog.view */
+        get: operations["v1.admin.products.compliance.certificate.show"];
+        put?: never;
+        /** `POST /products/{product}/compliance/certificate` — attach or replace; needs catalog.update */
+        post: operations["v1.admin.products.compliance.certificate.store"];
+        /** `DELETE /products/{product}/compliance/certificate` — detach (idempotent); needs catalog.update */
+        delete: operations["v1.admin.products.compliance.certificate.destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -587,7 +648,10 @@ export interface paths {
          * @description Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,
          *     `filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),
          *     `filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,
-         *     inclusive), `filter[search]` (order number, the last 4+ phone digits, or the name).
+         *     inclusive), `filter[search]` (order number, the last 4+ phone digits, or the name),
+         *     `filter[verification_status]`, `filter[anomaly]=1`. `meta.counts` also carries
+         *     `verify` (verification pending) and `anomalies`, under every filter except the
+         *     tab-defining ones (status, verification_status, anomaly).
          *     Sorts: `created_at`, `grand_total`, each with `-` for descending (default
          *     `-created_at`). Anything else is a 400.
          */
@@ -614,6 +678,150 @@ export interface paths {
         get: operations["v1.admin.orders.show"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/bulk/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/bulk/confirm` — confirms each order on its own; returns one result per
+         *     requested id (`done`, `conflict` with the current status, or `not_found`) and
+         *     `meta.done` / `meta.failed`. A partial failure is a 200 with per-order results, never
+         *     a silent all-or-nothing. Needs orders.confirm
+         */
+        post: operations["v1.admin.orders.bulk.confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/confirm` — pending or on hold → confirmed. Needs orders.confirm */
+        post: operations["v1.admin.orders.confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/hold` — any pre-shipment status → on hold, with a `reason`. Needs orders.update */
+        post: operations["v1.admin.orders.hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/release` — on hold → pending. Needs orders.update */
+        post: operations["v1.admin.orders.release"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/processing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/processing` — confirmed → processing. Needs orders.update */
+        post: operations["v1.admin.orders.processing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/ready-to-ship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/ready-to-ship` — confirmed or processing → ready to ship (packed). Needs orders.update */
+        post: operations["v1.admin.orders.ready-to-ship"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/{order}/cancel` — before shipping only. Releases the stock reservation and
+         *     cancels open payments in the same transaction. Needs orders.cancel
+         */
+        post: operations["v1.admin.orders.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/notes` — needs orders.update. 201 with the note */
+        post: operations["v1.admin.orders.notes.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -954,6 +1162,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /checkout` — place the cart as a cash-on-delivery order. Requires an
+         *     `Idempotency-Key`: a double submit returns the first order, never a second one
+         */
+        post: operations["v1.storefront.checkout.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/orders/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/track` — public tracking by order number plus the last 4 digits of the
+         *     phone (or the full number). No street address in the answer
+         */
+        post: operations["v1.storefront.orders.track"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/orders/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/{number}` — the confirmation page, for the cart that placed the order */
+        get: operations["v1.storefront.orders.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1070,6 +1335,31 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * BulkConfirmOrdersRequest
+         * @description `POST /orders/bulk/confirm` — needs orders.confirm. Up to 100 ids (one board page is
+         *     25). Unknown ids are not a validation error: they come back as `not_found` results,
+         *     so a stale selection still reports per order.
+         */
+        BulkConfirmOrdersRequest: {
+            order_ids: number[];
+        };
+        /**
+         * CancelOrderRequest
+         * @description `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list
+         *     (cancellations are counted by cause); `note` is required when the reason is `other`.
+         */
+        CancelOrderRequest: {
+            reason: components["schemas"]["CancellationReason"];
+            /** @description Required when `reason` is `other`. */
+            note?: string | null;
+        };
+        /**
+         * CancellationReason
+         * @description Why an order was cancelled (P4-ORD-09). A fixed list so cancellations can be counted by cause; `Other` requires a free-text note. Feeds the risk profile through OrderCancelled — `FakeOrder` and `CustomerUnreachable` are the signals that matter there.
+         * @enum {string}
+         */
+        CancellationReason: "customer_request" | "customer_unreachable" | "fake_order" | "duplicate_order" | "out_of_stock" | "pricing_error" | "address_unserviceable" | "payment_failed" | "other";
         /** Cart */
         Cart: {
             /** @description Opaque cart token: store it in an httpOnly cookie and send it back as `X-Cart-Token`. */
@@ -1184,6 +1474,46 @@ export interface components {
          * @enum {string}
          */
         CategoryStatus: "active" | "archived";
+        /**
+         * CheckoutRequest
+         * @description `POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from
+         *     `X-Cart-Token`; the body is what the customer typed plus `expected_total`, the grand
+         *     total they were shown — compared, never used, by PlaceOrder.
+         *
+         *     Address: division → district → upazila → area + line + landmark (rule 31). The
+         *     upazila is required unless the district offers its city as the empty option
+         *     (`city_option` on GET /districts — Dhaka city is not an upazila).
+         */
+        CheckoutRequest: {
+            name: string;
+            phone: string;
+            alt_phone?: string | null;
+            /** Format: email */
+            email?: string | null;
+            division_id?: number | null;
+            district_id: number;
+            upazila_id?: number | null;
+            area: string;
+            address_line: string;
+            landmark?: string | null;
+            postcode?: string | null;
+            /** @enum {string} */
+            payment_method: "cod";
+            customer_note?: string | null;
+            /** @description The grand total the customer was shown, e.g. "1930.00". */
+            expected_total: string;
+            utm_source?: string | null;
+            utm_medium?: string | null;
+            utm_campaign?: string | null;
+        };
+        /**
+         * ConfirmOrderRequest
+         * @description `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`.
+         */
+        ConfirmOrderRequest: {
+            /** @description Shown on the order's activity timeline next to the change. */
+            note?: string | null;
+        };
         /** Coupon */
         Coupon: {
             id: number;
@@ -1330,6 +1660,15 @@ export interface components {
              */
             last_courier_sync: null;
             checked_at: string;
+        };
+        /**
+         * HoldOrderRequest
+         * @description `POST /orders/{order}/hold` — needs orders.update. A hold always says why (`reason`),
+         *     so whoever picks the order up next knows what is being waited on.
+         */
+        HoldOrderRequest: {
+            /** @description Why the order is paused, e.g. "Customer asked to deliver after Friday". */
+            reason: string;
         };
         /** InventoryAdjustment */
         InventoryAdjustment: {
@@ -1479,6 +1818,19 @@ export interface components {
             remember?: boolean;
         };
         /**
+         * MarginPreviewRequest
+         * @description `POST /products/margin-preview` — margins for prices and costs the form has not
+         *     saved yet, so the admin never computes one (rule 1). Needs catalog.view_cost.
+         *     Money is a decimal string; `rows[i]` answers `rows[i]`.
+         */
+        MarginPreviewRequest: {
+            vat_rate?: string | null;
+            rows: {
+                price?: string | null;
+                cost_price?: string | null;
+            }[];
+        };
+        /**
          * MoveCategoryRequest
          * @description `POST /categories/{category}/move` — `{ parent_id, position }`. The category
          *     becomes the child of `parent_id` (null = a root) at sibling index `position`
@@ -1504,6 +1856,11 @@ export interface components {
             payment_method: string | null;
             currency: string;
             pii_masked: boolean;
+            /**
+             * @description Why this status combination should not exist, or null (spec A12).
+             * @enum {string|null}
+             */
+            anomaly: "delivered_unpaid" | "refund_pending" | "goods_before_shipping" | "shipped_unfulfilled" | "payment_failed" | null;
             customer: {
                 id: number;
                 name: string;
@@ -1574,6 +1931,7 @@ export interface components {
                 to: string | null;
                 description: string | null;
                 user_id: number | null;
+                user_name: string | null;
                 is_customer_visible: boolean;
                 created_at: string | null;
             }[];
@@ -1582,7 +1940,24 @@ export interface components {
                 level: string | null;
                 /** @enum {string} */
                 verification_status: "not_required" | "pending" | "verified" | "failed";
+                /** @description Our advisory signals as stored at scoring time — never a courier's data (rule 24). */
+                flags: {
+                    [key: string]: unknown;
+                } | null;
             };
+            notes: {
+                id: number;
+                body: string;
+                is_customer_visible: boolean;
+                user_id: number | null;
+                user_name: string | null;
+                created_at: string | null;
+            }[];
+            /**
+             * @description What this user may do to the order now — the state machine and their permissions,
+             *     decided here so the client never re-derives a transition rule.
+             */
+            available_actions: ("confirm" | "hold" | "release" | "processing" | "ready_to_ship" | "cancel" | "add_note")[];
             customer_note: string | null;
             internal_note: string | null;
             cancel_reason: string | null;
@@ -1592,6 +1967,15 @@ export interface components {
             shipped_at: string | null;
             delivered_at: string | null;
             cancelled_at: string | null;
+        };
+        /** OrderBulkResult */
+        OrderBulkResult: {
+            order_id: number;
+            number: string | null;
+            /** @enum {string} */
+            outcome: "done" | "conflict" | "not_found";
+            status: string | null;
+            detail: string | null;
         };
         /** OrderListItem */
         OrderListItem: {
@@ -1613,12 +1997,50 @@ export interface components {
             items_count: number;
             grand_total: string;
             due_total: string;
+            paid_total: string;
+            refunded_total: string;
+            risk_score: number | null;
             /** @enum {string|null} */
             risk_level: "low" | "medium" | "high" | null;
             /** @enum {string} */
             verification_status: "not_required" | "pending" | "verified" | "failed";
+            /**
+             * @description Why this status combination should not exist, or null (spec A12 anomaly list).
+             * @enum {string|null}
+             */
+            anomaly: "delivered_unpaid" | "refund_pending" | "goods_before_shipping" | "shipped_unfulfilled" | "payment_failed" | null;
             placed_at: string | null;
             created_at: string | null;
+        };
+        /** OrderNote */
+        OrderNote: {
+            id: number;
+            body: string;
+            is_customer_visible: boolean;
+            user_id: number | null;
+            user_name: string | null;
+            created_at: string | null;
+        };
+        /**
+         * OrderTrackRequest
+         * @description `POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone
+         *     digits — the last 4 (B7.1) or the full number. The number is forgiving about case,
+         *     spaces, the `TMB-` prefix and Bengali digits.
+         */
+        OrderTrackRequest: {
+            /** @description e.g. "TMB-26-00042" (also "26-00042"). */
+            number: string;
+            /** @description The last 4 digits of the phone the order was placed with, or the full number. */
+            phone: string;
+        };
+        /**
+         * OrderWorkflowRequest
+         * @description Release from hold, start processing, mark ready to ship — needs orders.update. An
+         *     optional `note` lands on the order's timeline row with the move.
+         */
+        OrderWorkflowRequest: {
+            /** @description Shown on the order's activity timeline next to the change. */
+            note?: string | null;
         };
         /**
          * ProblemDetails
@@ -1681,6 +2103,73 @@ export interface components {
             warranty_months: number | null;
             is_featured: boolean;
             /**
+             * @description Live on the storefront now (active and `published_at` reached): its slug
+             *     changes only with `acknowledge_slug_redirect`.
+             */
+            is_live: boolean;
+            /** @description Where the product is sold (stored flags). */
+            sales_channels: {
+                online_store: boolean;
+                pos: boolean;
+                facebook_instagram: boolean;
+                google_merchant: boolean;
+            };
+            /** @description VAT included in the selling price, percent, decimal string ("0.00"). */
+            vat_rate: string;
+            /**
+             * @description BSTI certification. `certificate` is the uploaded PDF (download it from
+             *     `GET /products/{product}/compliance/certificate`), null when none.
+             *     `expired`: the expiry date is before today (Dhaka).
+             */
+            compliance: {
+                bsti_certificate_no: string | null;
+                bsti_expires_on: string | null;
+                expired: boolean;
+                certificate: {
+                    name: string;
+                    size_bytes: number;
+                } | null;
+            };
+            /**
+             * @description Margin of the default variant (a simple product's price), computed by the
+             *     server; only with catalog.view_cost. Null when its price or cost is not set.
+             */
+            margin?: {
+                percent: string;
+                profit: string;
+                net_price: string;
+            } | null;
+            /**
+             * @description The lowest variant margin (archived variants included) and its variant;
+             *     only with catalog.view_cost. Null when no variant has a margin.
+             */
+            margin_lowest?: {
+                percent: string;
+                variant_id: number;
+            } | null;
+            /**
+             * @description Stock of all the product's variants per location (on hand, reserved,
+             *     available); only with inventory.view. Read-only — change it with a stock
+             *     adjustment.
+             */
+            stock_by_location?: {
+                location_id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                is_default: boolean;
+                on_hand: number;
+                reserved: number;
+                available: number;
+            }[];
+            /** @description Retired slugs that now 301 to this product (newest first). */
+            slug_history: {
+                old_slug: string;
+                created_at: string;
+            }[];
+            /** @description Search & social (seo_meta), with the server's defaults, measurement and checklist. */
+            seo: components["schemas"]["ProductSeo"];
+            /**
              * Format: date-time
              * @description ISO 8601, UTC.
              */
@@ -1706,6 +2195,16 @@ export interface components {
              * @description ISO 8601, UTC.
              */
             updated_at: string;
+        };
+        /** ProductCompliance */
+        ProductCompliance: {
+            bsti_certificate_no: string | null;
+            bsti_expires_on: string | null;
+            expired: boolean;
+            certificate: {
+                name: string;
+                size_bytes: number;
+            } | null;
         };
         /** ProductImage */
         ProductImage: {
@@ -1766,6 +2265,10 @@ export interface components {
         ProductRelation: {
             id: number;
             related_product_id: number;
+            /**
+             * @description `image_url`: the primary image's 160 px rendition (null when none is ready);
+             *     `price`: the default variant's selling price, decimal string.
+             */
             related_product: {
                 id: number;
                 name: string;
@@ -1773,6 +2276,8 @@ export interface components {
                 slug: string;
                 /** @enum {string} */
                 status: "draft" | "active" | "archived";
+                image_url: string | null;
+                price: string | null;
             };
             /** @enum {string} */
             type: "related" | "upsell" | "cross_sell" | "bundle" | "age_progression";
@@ -1786,6 +2291,75 @@ export interface components {
          * @enum {string}
          */
         ProductScopeType: "all" | "products" | "categories" | "brands";
+        /** ProductSeo */
+        ProductSeo: {
+            title: string | null;
+            title_bn: string | null;
+            description: string | null;
+            description_bn: string | null;
+            canonical_url: string | null;
+            /** @enum {string} */
+            robots: "index,follow" | "noindex,follow" | "index,nofollow" | "noindex,nofollow";
+            sitemap_exclude: boolean;
+            og_title: string | null;
+            og_description: string | null;
+            og_image: string | null;
+            /** @enum {string} */
+            twitter_card: "summary_large_image" | "summary";
+            schema_override: {
+                [key: string]: unknown;
+            } | null;
+            focus_keyword: string | null;
+            /** @description What an empty override falls back to. */
+            defaults: {
+                title: string;
+                title_bn: string;
+                description: string;
+                description_bn: string;
+                og_image: string | null;
+            };
+            /** @description The canonical storefront URL of the product. */
+            url: string;
+            /**
+             * @description Estimated rendered widths of the effective title and description at Google's
+             *     desktop metric (see POST /products/seo-measure for unsaved text).
+             */
+            measure: {
+                title: {
+                    px: number;
+                    chars: number;
+                    max: number;
+                    fits: boolean;
+                };
+                description: {
+                    px: number;
+                    chars: number;
+                    max: number;
+                    fits: boolean;
+                    fits_mobile: boolean;
+                };
+            };
+            /**
+             * @description The saved product's SEO checklist. `key` ∈ title_fits, description_fits,
+             *     primary_image, image_alt, slug, product_schema, sitemap.
+             */
+            checklist: {
+                passed: number;
+                total: number;
+                items: {
+                    key: string;
+                    /** @enum {string} */
+                    status: "pass" | "warn" | "fail";
+                    params: {
+                        [key: string]: number | string;
+                    };
+                }[];
+            };
+            /** @description The effective Product JSON-LD (generated, with `schema_override` merged on top). */
+            schema: {
+                [key: string]: unknown;
+            };
+        };
         /**
          * ProductStatus
          * @description `products.status`. `draft` is invisible to the storefront; `active` is live once `published_at` has passed; `archived` is retired but kept (orders reference it).
@@ -1810,6 +2384,16 @@ export interface components {
             compare_at_price: string | null;
             /** @description Current replacement cost; only with catalog.view_cost. */
             cost_price?: string;
+            /**
+             * @description Per-unit margin at this price and cost, VAT taken out, before delivery and COD
+             *     costs — computed by the server. Only with catalog.view_cost; null when the
+             *     price or the cost is not set.
+             */
+            margin?: {
+                percent: string;
+                profit: string;
+                net_price: string;
+            } | null;
             wholesale_price: string | null;
             weight_grams: number;
             /**
@@ -1853,6 +2437,21 @@ export interface components {
          */
         ReorderProductImagesRequest: {
             ids: number[];
+        };
+        /**
+         * RobotsDirective
+         * @description The robots meta values the admin may choose (SeoPanel "Advanced").
+         * @enum {string}
+         */
+        RobotsDirective: "index,follow" | "noindex,follow" | "index,nofollow" | "noindex,nofollow";
+        /**
+         * SeoMeasureRequest
+         * @description `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta
+         *     title and description (the SeoPanel meters). Read-only; needs catalog.view.
+         */
+        SeoMeasureRequest: {
+            title?: string | null;
+            description?: string | null;
         };
         /** StaffResource */
         StaffResource: {
@@ -1925,6 +2524,19 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * StoreComplianceCertificateRequest
+         * @description `POST /products/{product}/compliance/certificate` — `multipart/form-data` with `file`:
+         *     the BSTI certificate as a PDF (by content, ≤ 10 MB, no scripts or attachments).
+         *     Replaces any previous certificate. Needs catalog.update.
+         */
+        StoreComplianceCertificateRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 10240 kilobytes.
+             */
+            file: string;
+        };
+        /**
          * StoreCouponRequest
          * @description `POST /coupons` — needs marketing.manage.
          */
@@ -1950,6 +2562,15 @@ export interface components {
             };
             first_order_only?: boolean;
             is_active?: boolean;
+        };
+        /**
+         * StoreOrderNoteRequest
+         * @description `POST /orders/{order}/notes` — needs orders.update. Notes are append-only.
+         */
+        StoreOrderNoteRequest: {
+            body: string;
+            /** @description Private by default; true lets the customer's tracking page show it. */
+            is_customer_visible?: boolean;
         };
         /**
          * StoreProductImageRequest
@@ -2041,6 +2662,50 @@ export interface components {
                 position?: number | null;
                 reason_note?: string | null;
             }[];
+            /** @description Where the product is sold. Omitted: keep the current flags. */
+            sales_channels?: {
+                online_store?: boolean;
+                pos?: boolean;
+                facebook_instagram?: boolean;
+                google_merchant?: boolean;
+            };
+            /**
+             * @description VAT included in the selling price, percent as a decimal string ("0", "15").
+             *     Omitted or null: keep the current rate.
+             */
+            vat_rate?: string | null;
+            /** @description BSTI certification. Omitted: keep the current values. The PDF is uploaded separately. */
+            compliance?: {
+                bsti_certificate_no?: string | null;
+                /** Format: date */
+                bsti_expires_on?: string | null;
+            };
+            /** @description Search & social (seo_meta). Omitted: keep the current values; sent: replaces them. */
+            seo?: {
+                title?: string | null;
+                title_bn?: string | null;
+                description?: string | null;
+                description_bn?: string | null;
+                /** Format: uri */
+                canonical_url?: string | null;
+                robots?: components["schemas"]["RobotsDirective"] | null;
+                sitemap_exclude?: boolean;
+                og_title?: string | null;
+                og_description?: string | null;
+                /** Format: uri */
+                og_image?: string | null;
+                twitter_card?: components["schemas"]["TwitterCard"] | null;
+                /** @description JSON-LD merged over the generated Product schema; a JSON object. */
+                schema_override?: {
+                    [key: string]: unknown;
+                } | null;
+                focus_keyword?: string | null;
+            };
+            /**
+             * @description Required (true) to change the slug of a published product: the old URL then
+             *     301s to the new one (slug_history).
+             */
+            acknowledge_slug_redirect?: boolean;
         };
         /**
          * StoreStockAdjustmentRequest
@@ -2114,6 +2779,88 @@ export interface components {
             };
             upazila_required: string;
             city_option: boolean;
+        };
+        /** StorefrontOrder */
+        StorefrontOrder: {
+            number: string;
+            /**
+             * @description Customer-facing status code; localise the label in the storefront.
+             * @enum {string}
+             */
+            stage: "placed" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
+            placed_at: string | null;
+            /** @description `next_action` is null for cash on delivery. */
+            payment: {
+                method: string | null;
+                status: string;
+                next_action: {
+                    type: string;
+                    url: string;
+                } | null;
+            };
+            contact: {
+                name: string;
+                phone_masked: string;
+                email: string | null;
+            };
+            /** @description Tracking (`POST /orders/track`) returns `address_line`, `landmark` and `postcode` as null. */
+            shipping: {
+                name: string;
+                phone_masked: string;
+                division: {
+                    id: number;
+                    name: string;
+                    name_bn: string;
+                } | null;
+                district: {
+                    id: number;
+                    name: string;
+                    name_bn: string;
+                } | null;
+                upazila: {
+                    id: number;
+                    name: string;
+                    name_bn: string;
+                } | null;
+                area: string | null;
+                address_line: string | null;
+                landmark: string | null;
+                postcode: string | null;
+            };
+            items: {
+                variant_id: number | null;
+                product_id: number | null;
+                slug: string | null;
+                name: string;
+                name_bn: string | null;
+                variant_name: string | null;
+                sku: string;
+                image: {
+                    url: string;
+                    alt: string | null;
+                    alt_bn: string | null;
+                } | null;
+                quantity: number;
+                unit_price: string;
+                discount: string;
+                total: string;
+            }[];
+            coupon_code: string | null;
+            totals: {
+                subtotal: string;
+                promotion_discount: string;
+                coupon_discount: string;
+                discount_total: string;
+                shipping_charge: string;
+                grand_total: string;
+                paid_total: string;
+                due_total: string;
+            };
+            /** @description Customer-visible events, oldest first. */
+            timeline: {
+                stage: string;
+                at: string | null;
+            }[];
         };
         /** StorefrontProduct */
         StorefrontProduct: {
@@ -2271,6 +3018,11 @@ export interface components {
             name_bn: string;
             serviceable: boolean;
         };
+        /**
+         * TwitterCard
+         * @enum {string}
+         */
+        TwitterCard: "summary_large_image" | "summary";
         /**
          * UpdateAttributeRequest
          * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
@@ -2441,6 +3193,50 @@ export interface components {
                 position?: number | null;
                 reason_note?: string | null;
             }[];
+            /** @description Where the product is sold. Omitted: keep the current flags. */
+            sales_channels?: {
+                online_store?: boolean;
+                pos?: boolean;
+                facebook_instagram?: boolean;
+                google_merchant?: boolean;
+            };
+            /**
+             * @description VAT included in the selling price, percent as a decimal string ("0", "15").
+             *     Omitted or null: keep the current rate.
+             */
+            vat_rate?: string | null;
+            /** @description BSTI certification. Omitted: keep the current values. The PDF is uploaded separately. */
+            compliance?: {
+                bsti_certificate_no?: string | null;
+                /** Format: date */
+                bsti_expires_on?: string | null;
+            };
+            /** @description Search & social (seo_meta). Omitted: keep the current values; sent: replaces them. */
+            seo?: {
+                title?: string | null;
+                title_bn?: string | null;
+                description?: string | null;
+                description_bn?: string | null;
+                /** Format: uri */
+                canonical_url?: string | null;
+                robots?: components["schemas"]["RobotsDirective"] | null;
+                sitemap_exclude?: boolean;
+                og_title?: string | null;
+                og_description?: string | null;
+                /** Format: uri */
+                og_image?: string | null;
+                twitter_card?: components["schemas"]["TwitterCard"] | null;
+                /** @description JSON-LD merged over the generated Product schema; a JSON object. */
+                schema_override?: {
+                    [key: string]: unknown;
+                } | null;
+                focus_keyword?: string | null;
+            };
+            /**
+             * @description Required (true) to change the slug of a published product: the old URL then
+             *     301s to the new one (slug_history).
+             */
+            acknowledge_slug_redirect?: boolean;
         };
         /**
          * VariantStatus
@@ -3013,6 +3809,177 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.margin-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarginPreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        rows: ({
+                            percent: string;
+                            profit: string;
+                            net_price: string;
+                        } | null)[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.seo-measure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SeoMeasureRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        title: {
+                            px: number;
+                            chars: number;
+                            max: number;
+                            fits: boolean;
+                        };
+                        description: {
+                            px: number;
+                            chars: number;
+                            max: number;
+                            fits: boolean;
+                            fits_mobile: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.compliance.certificate.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    "Transfer-Encoding": "chunked";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The product has no certificate (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.products.compliance.certificate.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreComplianceCertificateRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductCompliance` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompliance"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a PDF by content, over 10 MB, or carrying scripts, attachments or interactive content (`validation-error` on `file`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.products.compliance.certificate.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductCompliance` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCompliance"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "v1.admin.products.images.index": {
@@ -4178,6 +5145,10 @@ export interface operations {
                 "filter[placed_to]"?: string;
                 /** @description Order number, last 4+ phone digits, or customer name. */
                 "filter[search]"?: string;
+                /** @description not_required|pending|verified|failed — `pending` is the board's Verify tab. */
+                "filter[verification_status]"?: string;
+                /** @description `1`: only status combinations that should not exist (the Anomalies tab). */
+                "filter[anomaly]"?: string;
                 /** @description Sort field; prefix `-` for descending. */
                 sort?: "created_at" | "-created_at" | "grand_total" | "-grand_total";
                 /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
@@ -4256,6 +5227,310 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.orders.bulk.confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkConfirmOrdersRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `OrderBulkResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderBulkResult"][];
+                        meta: {
+                            done: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfirmOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not pending or on hold any more (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order cannot be held from its current status (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OrderWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not on hold (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.processing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OrderWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not confirmed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.ready-to-ship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OrderWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not confirmed or processing (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order has shipped or is already cancelled (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.notes.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreOrderNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderNote` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderNote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.storefront.ping": {
@@ -5292,6 +6567,213 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.checkout.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckoutRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description `StorefrontOrder` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOrder"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token, or it was already ordered (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The total changed (`price-changed`), stock ran out (`insufficient-stock`), or the key is in flight (`request-in-progress`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid field, or the cart is not checkout-ready (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description More than 10 checkouts a minute for one cart */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.orders.track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderTrackRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontOrder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOrder"] | string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No order matches that number and phone (`not-found`) — same answer for either mismatch */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A field is empty or malformed (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description More than 5 attempts in 10 minutes for this order number */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.orders.show": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The token of the cart that placed the order. */
+                "X-Cart-Token": string;
+            };
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontOrder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOrder"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unknown number, wrong token, or older than 30 days (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many lookups */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.health": {

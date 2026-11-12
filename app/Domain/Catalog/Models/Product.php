@@ -31,8 +31,8 @@ use Laravel\Scout\Searchable;
  *
  * The slug is ASCII and shared by both locales (rule 37).
  *
- * TODO(P4-SEO): write `slug_history` on a slug change; ProductChanged carries the
- * previous slug.
+ * A change to a published slug is recorded in `slug_history` by the Seo domain's
+ * SaveProductWithSeo (the 301 middleware that serves it is Phase 7).
  *
  * @property int $id
  * @property string $name
@@ -55,6 +55,16 @@ use Laravel\Scout\Searchable;
  * @property int|null $warranty_months
  * @property ProductStatus $status
  * @property bool $is_featured
+ * @property bool $channel_online_store
+ * @property bool $channel_pos
+ * @property bool $channel_social
+ * @property bool $channel_google_merchant
+ * @property string $vat_rate percent, decimal string ("0.00", "15.00")
+ * @property string|null $bsti_certificate_no
+ * @property Carbon|null $bsti_expires_on
+ * @property string|null $bsti_certificate_path private originals-disk key of the certificate PDF
+ * @property string|null $bsti_certificate_name
+ * @property int|null $bsti_certificate_size bytes
  * @property string|null $rating_avg
  * @property int $rating_count
  * @property int $view_count
@@ -89,6 +99,8 @@ final class Product extends Model
         'short_description', 'short_description_bn', 'description', 'description_bn', 'specifications',
         'age_min_months', 'age_max_months', 'gender', 'is_educational', 'safety_note', 'safety_note_bn',
         'warranty_months', 'status', 'is_featured', 'published_at',
+        'channel_online_store', 'channel_pos', 'channel_social', 'channel_google_merchant',
+        'vat_rate', 'bsti_certificate_no', 'bsti_expires_on',
     ];
 
     /** @var array<string, mixed> */
@@ -96,6 +108,11 @@ final class Product extends Model
         'status' => 'draft',
         'is_educational' => false,
         'is_featured' => false,
+        'channel_online_store' => true,
+        'channel_pos' => true,
+        'channel_social' => false,
+        'channel_google_merchant' => false,
+        'vat_rate' => '0.00',
         'rating_count' => 0,
         'view_count' => 0,
     ];
@@ -118,6 +135,13 @@ final class Product extends Model
             'rating_count' => 'integer',
             'view_count' => 'integer',
             'published_at' => 'datetime',
+            'channel_online_store' => 'boolean',
+            'channel_pos' => 'boolean',
+            'channel_social' => 'boolean',
+            'channel_google_merchant' => 'boolean',
+            'vat_rate' => 'decimal:2',
+            'bsti_expires_on' => 'date',
+            'bsti_certificate_size' => 'integer',
         ];
     }
 
@@ -181,6 +205,12 @@ final class Product extends Model
     public function isActive(): bool
     {
         return $this->status === ProductStatus::Active;
+    }
+
+    /** Live on the storefront now: active with `published_at` reached (the `published` scope, for one row). */
+    public function isLive(): bool
+    {
+        return $this->isActive() && $this->published_at !== null && $this->published_at->lessThanOrEqualTo(now());
     }
 
     /**

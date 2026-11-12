@@ -28,9 +28,12 @@ use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderEvent;
 use App\Domain\Ordering\Models\OrderFinancial;
 use App\Domain\Ordering\Models\OrderItem;
+use App\Domain\Ordering\Models\OrderNote;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Refund;
 use App\Domain\Payment\Models\RefundItem;
+use App\Domain\Seo\Models\SeoMeta;
+use App\Domain\Seo\Models\SlugHistory;
 use App\Models\Enums\Role;
 use App\Models\User;
 use App\Policies\BrandPolicy;
@@ -48,6 +51,7 @@ use App\Policies\ProductPartPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PromotionPolicy;
 use App\Policies\RefundPolicy;
+use App\Policies\SeoPolicy;
 use App\Policies\StockPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -79,6 +83,7 @@ class AuthServiceProvider extends ServiceProvider
         Order::class => OrderPolicy::class,
         OrderItem::class => OrderPartPolicy::class,
         OrderEvent::class => OrderPartPolicy::class,
+        OrderNote::class => OrderPartPolicy::class,
         OrderFinancial::class => OrderFinancialPolicy::class,
         Payment::class => PaymentPolicy::class,
         Refund::class => RefundPolicy::class,
@@ -90,6 +95,8 @@ class AuthServiceProvider extends ServiceProvider
         Promotion::class => PromotionPolicy::class,
         StockAdjustment::class => StockPolicy::class,
         StockAdjustmentItem::class => StockPolicy::class,
+        SeoMeta::class => SeoPolicy::class,
+        SlugHistory::class => SeoPolicy::class,
     ];
 
     /**

@@ -64,6 +64,24 @@ final readonly class ProductWriter
             'is_featured' => $data->isFeatured,
         ]);
 
+        if ($data->salesChannels !== null) {
+            $product->fill([
+                'channel_online_store' => $data->salesChannels->onlineStore,
+                'channel_pos' => $data->salesChannels->pos,
+                'channel_social' => $data->salesChannels->facebookInstagram,
+                'channel_google_merchant' => $data->salesChannels->googleMerchant,
+            ]);
+        }
+
+        if ($data->vatRate !== null) {
+            $product->vat_rate = $data->vatRate;
+        }
+
+        if ($data->compliance !== null) {
+            $product->bsti_certificate_no = $data->compliance->bstiCertificateNo;
+            $product->bsti_expires_on = $data->compliance->bstiExpiresOn === null ? null : Carbon::instance($data->compliance->bstiExpiresOn)->startOfDay();
+        }
+
         if ($data->slug !== null) {
             $product->slug = $data->slug;
         } elseif (! $product->exists) {
