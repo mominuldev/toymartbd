@@ -49,12 +49,13 @@ it('pins the matrix shape so a change is deliberate', function (): void {
         ->all();
 
     expect($counts)->toBe([
-        'super_admin' => 65,
-        'manager' => 62,
+        // P4-CAT-12: + reviews.moderate (super_admin, manager, content_editor).
+        'super_admin' => 66,
+        'manager' => 63,
         'order_operator' => 23,
         'inventory_staff' => 12,
         'accountant' => 20,
-        'content_editor' => 9,
+        'content_editor' => 10,
         'viewer' => 13,
     ]);
 });

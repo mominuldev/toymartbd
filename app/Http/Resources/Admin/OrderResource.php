@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
+use App\Domain\Ordering\Actions\EditOrder;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderEvent;
@@ -75,6 +76,12 @@ final class OrderResource extends ApiResource
                 'phone' => $phone($order->shipping_phone),
                 /** @var string|null */
                 'alt_phone' => $phone($order->shipping_alt_phone),
+                /** @var int|null */
+                'division_id' => $order->shipping_division_id,
+                /** @var int|null */
+                'district_id' => $order->shipping_district_id,
+                /** @var int|null */
+                'upazila_id' => $order->shipping_upazila_id,
                 /** @var string|null */
                 'division' => $order->shipping_division,
                 /** @var string|null */
@@ -187,6 +194,10 @@ final class OrderResource extends ApiResource
              * @var list<'confirm'|'hold'|'release'|'processing'|'ready_to_ship'|'cancel'|'add_note'>
              */
             'available_actions' => self::availableActions($order, $user instanceof User ? $user : null),
+            /** Whether this user may edit the order now (P4-ORD-07: pre-packing status and orders.update). */
+            'editable' => $user instanceof User && EditOrder::isEditable($order) && $user->can('update', $order),
+            /** Whether this user may print the invoice / packing slip (orders.view + customers.view_pii). */
+            'can_print_invoice' => $user instanceof User && $user->can('printInvoices', Order::class),
             /** @var string|null */
             'customer_note' => $order->customer_note,
             /** @var string|null */

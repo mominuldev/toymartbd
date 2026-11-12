@@ -1,6 +1,7 @@
+import { formatNoBreak } from '@/components/FormatNoBreak';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
-import { format, type Messages } from '@/lib/i18n';
+import { type Messages } from '@/lib/i18n';
 import { contact } from '@/lib/site-config';
 
 // "Why parents shop with us" — Figma USP band 134:960 (1440) / 127:444 (390), Gradient/Bloom-sky,
@@ -33,7 +34,7 @@ export function UspBand({ t }: { t: Messages['home'] }) {
                                 <Icon name={f.icon} className="size-icon-md lg:size-7" />
                             </span>
                             <span className="t-h4 text-fg-primary">{t[f.title]}</span>
-                            <span className="t-caption text-fg-secondary lg:t-body-sm">{format(t[f.detail], { phone: contact.hotline.display })}</span>
+                            <span className="t-caption text-fg-secondary lg:t-body-sm">{formatNoBreak(t[f.detail], { phone: contact.hotline.display }, ['phone'])}</span>
                         </li>
                     ))}
                 </ul>

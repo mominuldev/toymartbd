@@ -8,6 +8,7 @@ import { PageShell } from '@/components/PageShell';
 import { AddToCartBar } from '@/components/product/AddToCartBar';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductInfoPanel } from '@/components/product/ProductInfoPanel';
+import { ProductReviews, type ReviewOutcome } from '@/components/product/ProductReviews';
 import { AgeBlock, PriceBlock, ProductTitle, RatingRow, StockLine } from '@/components/product/ProductSummary';
 import { PurchasePanel } from '@/components/product/PurchasePanel';
 import { RecentlyViewed } from '@/components/product/RecentlyViewed';
@@ -20,6 +21,8 @@ import { formatPrice } from '@/lib/listing/format';
 import { getDeliveryRates, getProduct } from '@/lib/product/fetch';
 import { beforeCutoff, cutoffLabel } from '@/lib/product/format';
 import { jsonLdScript, productJsonLd } from '@/lib/product/seo';
+import { getReviews, validCursor } from '@/lib/reviews/fetch';
+import { reviewMessages } from '@/lib/reviews/messages';
 import { isExplicitVariant, resolveVariant, variantHref, variantSummary, VARIANT_PARAM, type StorefrontProduct } from '@/lib/product/variants';
 import { alternatesFor } from '@/lib/seo';
 import '@/components/product/product.css';
@@ -78,6 +81,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
     if (!product) notFound();
     const variant = resolveVariant(product, query[VARIANT_PARAM]);
     if (!variant) notFound();
+    // Approved reviews + summary (P4-CAT-12), same cache tags as the product; `?reviews=` pages them.
+    const reviewCursor = validCursor(query.reviews);
+    const reviews = await getReviews(product.slug, locale, reviewCursor);
+    const rm = reviewMessages(locale);
+    const reviewOutcome = (['sent', 'duplicate', 'invalid', 'failed'] as const).find((o) => o === query.review) ?? null;
+    const nextReviews = reviews?.meta.next_cursor ? `/products/${product.slug}?reviews=${encodeURIComponent(reviews.meta.next_cursor)}#reviews` : null;
 
     const t = getMessages(locale);
     const name = productName(product, locale);
@@ -162,8 +171,21 @@ export default async function ProductPage({ params, searchParams }: Props) {
             ) : null}
 
             <div className="mt-8 lg:mt-12">
-                <ProductInfoPanel product={product} variant={variant} locale={locale} t={t} rates={rates} />
+                <ProductInfoPanel
+                    product={product}
+                    variant={variant}
+                    locale={locale}
+                    t={t}
+                    rates={rates}
+                    reviewsTab={reviews ? (product.rating_count > 0 ? `${rm.tab} ${product.rating_count}` : rm.tab) : undefined}
+                />
             </div>
+
+            {reviews ? (
+                <div className="mt-12">
+                    <ProductReviews page={reviews} productId={product.id} slug={product.slug} locale={locale} m={rm} moreHref={nextReviews} outcome={reviewOutcome satisfies ReviewOutcome | null} />
+                </div>
+            ) : null}
 
             <div className="mt-12">
                 <RelatedProducts products={product.related} locale={locale} t={t} />

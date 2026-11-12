@@ -189,6 +189,10 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 
 **`customer_notes`** `id` · `customer_id` · `user_id` · `body` · `is_pinned` · `created_at`
 
+**`customer_otps`** (as built, Phase 4 batch 6) `id` · `phone_hash` (HMAC of the E.164 phone with the app key) · `code_hash` (HMAC) · `purpose` (`login`) · `attempts` · `expires_at` · `consumed_at` NULL · `ip_hash` NULL · timestamps — neither the code nor the phone is stored in plain; 5 wrong guesses burn the code.
+
+**`wishlist_items`** (as built) `id` · `customer_id` FK · `product_id` FK · `created_at` — UNIQUE(`customer_id`, `product_id`); price and stock are read live, never copied.
+
 ### 3.4 Cart & Orders
 
 **`carts`** `id` · `token` UUID UNIQUE · `customer_id` NULL · `coupon_id` NULL · `currency` · `subtotal` · `discount_total` · `shipping_total` · `grand_total` · `item_count` · `shipping_address_id` NULL · `notes` · `abandoned_at` NULL · `recovery_email_sent_at` NULL · `recovered_order_id` NULL · `expires_at` · timestamps
@@ -304,6 +308,8 @@ Index: `(occurred_on, type)`, `(source_type, source_id)`, `(type, occurred_on)`
 **`campaigns`** `id` · `name` · `channel` (`sms`|`whatsapp`|`email`) · `segment_id` · `template_id` · `scheduled_at` · `status` · `sent_count` · `delivered_count` · `failed_count` · `cost`
 **`notification_logs`** `id` · `channel` · `recipient` · `template` · `payload` JSON · `status` · `provider_message_id` · `cost` · `error` · `notifiable_type`/`notifiable_id` · `sent_at`
 > Per-message cost logged so SMS/WhatsApp spend lands in the P&L as a real figure.
+
+> **As built (P4-NOT-01..03, P4-I18N-03):** `notification_logs` adds `category` (`security`|`order_updates`|`marketing`), `locale`, `recipient_hash` (SHA-256 of the E.164 phone / lower-cased email), `provider`, `segments`, `encoding`, `attempts`, `fallback_of_id` (SMS fallback of a failed WhatsApp send), `queued_at`/`failed_at`; `recipient` is stored **masked** (rule 20) and the full address is re-read from the order at send time. `status` = `queued`|`sent`|`failed`|`dead_lettered`|`skipped` (skipped = opted out, kept as proof). `notifiable_type` is the alias `order`. New **`notification_templates`** (`key`+`channel` UNIQUE, `body_en`/`body_bn`, email `subject_*`/`preheader_*`, WhatsApp `provider_template`, `is_active`, server-measured `chars_*`/`segments_*`/`encoding_*`) — the variable allowlist lives in code (`TemplateCatalog`). New **`notification_preferences`** (`customer_id`, `channel`, `category`, `enabled`, `source`; no row = default: order updates on, marketing off; `security` cannot be opted out). No FKs to `orders`/`customers` (earlier migration timestamps).
 
 ### 3.9 Content & SEO
 

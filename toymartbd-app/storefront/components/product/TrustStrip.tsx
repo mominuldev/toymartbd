@@ -1,17 +1,20 @@
+import type { ReactNode } from 'react';
+
+import { formatNoBreak } from '@/components/FormatNoBreak';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
-import { format, type Messages } from '@/lib/i18n';
+import { type Messages } from '@/lib/i18n';
 import { contact } from '@/lib/site-config';
 
 // TrustStrip — Figma 117:2678: Layout=Grid2x2 at 390 (128:1028, two columns, icon beside the text)
 // and Row4 at 1440 (135:1515, four columns, icon above). Brand-subtle panel, white icon bubbles,
 // coral icons. The hotline is the one site-config value (a placeholder until the owner confirms).
 export function TrustStrip({ t }: { t: Messages }) {
-    const items: Array<{ icon: IconName; label: string; detail: string }> = [
+    const items: Array<{ icon: IconName; label: ReactNode; detail: string }> = [
         { icon: 'money', label: t.pdp.trustCod, detail: t.pdp.trustCodDetail },
         { icon: 'arrowCounterClockwise', label: t.pdp.trustReturn, detail: t.pdp.trustReturnDetail },
         { icon: 'shieldCheck', label: t.pdp.trustAuthentic, detail: t.pdp.trustAuthenticDetail },
-        { icon: 'phone', label: format(t.pdp.trustCall, { phone: contact.hotline.display }), detail: t.pdp.trustCallDetail },
+        { icon: 'phone', label: formatNoBreak(t.pdp.trustCall, { phone: contact.hotline.display }, ['phone']), detail: t.pdp.trustCallDetail },
     ];
     return (
         <ul className="grid grid-cols-2 gap-4 rounded-sm bg-brand-subtle p-4 lg:grid-cols-4">

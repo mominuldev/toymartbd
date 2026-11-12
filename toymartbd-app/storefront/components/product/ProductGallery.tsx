@@ -33,7 +33,7 @@ export function ProductGallery({ product, name, locale, t, discountPercent }: Pr
         (locale === 'bn' ? image.alt_bn : image.alt) ?? format(t.pdp.galleryImage, { product: name, n: String(n), total: String(total) });
 
     return (
-        <div id="pdp-gallery" className="flex flex-col gap-4" role="group" aria-roledescription="carousel" aria-label={format(t.pdp.gallery, { product: name })}>
+        <div id="pdp-gallery" className="flex flex-col gap-4" role="group" aria-roledescription={t.pdp.galleryRole} aria-label={format(t.pdp.gallery, { product: name })}>
             <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-tile-pink lg:border lg:border-line-brand-subtle">
                 {total > 0 ? (
                     <ul data-gallery-track tabIndex={0} className="pdp-track flex size-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain focus-visible:shadow-none lg:overflow-hidden">

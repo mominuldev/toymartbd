@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { ACCOUNT_FLASH_COOKIE } from './lib/account/cookies';
 import { CHECKOUT_FLASH_COOKIE, FLASH_COOKIE, TRACK_COOKIE } from './lib/cart/cookies';
 import { splitLocalePath } from './lib/i18n/config';
 import { LOCALE_HEADER, LOCALE_REWRITE_HEADER, PATH_HEADER, resolveLocaleRoute } from './lib/locale-route';
@@ -36,7 +37,7 @@ export function proxy(request: NextRequest) {
     // them from the request, so the response expires them and a reload does not repeat them.
     // A raw Set-Cookie on purpose: `response.cookies.delete()` would also strip the cookie from THIS
     // request (Next mirrors proxy cookies into the render), so the page would never see it.
-    for (const name of [FLASH_COOKIE, CHECKOUT_FLASH_COOKIE, TRACK_COOKIE]) {
+    for (const name of [FLASH_COOKIE, CHECKOUT_FLASH_COOKIE, TRACK_COOKIE, ACCOUNT_FLASH_COOKIE]) {
         if (request.cookies.has(name)) response.headers.append('Set-Cookie', `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
     }
     return response;

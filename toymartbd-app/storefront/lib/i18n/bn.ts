@@ -371,6 +371,7 @@ export const bn: Messages = {
         galleryThumb: '{n} নম্বর ছবি দেখুন',
         galleryPrev: 'আগের ছবি',
         galleryNext: 'পরের ছবি',
+        galleryRole: 'ছবির স্লাইডার',
         details: 'পণ্যের বিস্তারিত',
         tabDescription: 'বিবরণ',
         tabSpecifications: 'স্পেসিফিকেশন',

@@ -13,6 +13,9 @@ export type CouponType = z.infer<typeof couponTypeSchema>;
 export const genderSchema = z.enum(["boys","girls","unisex"]);
 export type Gender = z.infer<typeof genderSchema>;
 
+export const notificationChannelSchema = z.enum(["sms","whatsapp","email"]);
+export type NotificationChannel = z.infer<typeof notificationChannelSchema>;
+
 export const productScopeTypeSchema = z.enum(["all","products","categories","brands"]);
 export type ProductScopeType = z.infer<typeof productScopeTypeSchema>;
 
@@ -44,6 +47,21 @@ export const addCartItemRequestSchema = z.object({
 });
 export type AddCartItemRequestInput = z.input<typeof addCartItemRequestSchema>;
 
+/** `POST /storefront/account/addresses` and `PATCH …/{address}` (P4-STO-11). The same */
+export const addressRequestSchema = z.object({
+    "type": z.enum(["home","office","other"]).optional(),
+    "label": z.string().max(64).nullable().optional(),
+    "recipient_name": z.string().min(2).max(160),
+    "phone": z.string().min(1).max(32),
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().min(2).max(160),
+    "address_line": z.string().min(5).max(500),
+    "landmark": z.string().max(255).nullable().optional(),
+    "is_default": z.boolean().nullable().optional(),
+});
+export type AddressRequestInput = z.input<typeof addressRequestSchema>;
+
 /** `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason. */
 export const applyCouponRequestSchema = z.object({
     "code": z.string().min(1).max(40),
@@ -68,6 +86,12 @@ export const bulkMoveMediaRequestSchema = z.object({
     "folder_id": z.number().int().nullable(),
 });
 export type BulkMoveMediaRequestInput = z.input<typeof bulkMoveMediaRequestSchema>;
+
+/** `POST /orders/bulk/pack` — mark many orders packed (→ ready to ship), needs */
+export const bulkPackOrdersRequestSchema = z.object({
+    "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
+});
+export type BulkPackOrdersRequestInput = z.input<typeof bulkPackOrdersRequestSchema>;
 
 /** `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list */
 export const cancelOrderRequestSchema = z.object({
@@ -150,6 +174,26 @@ export const moveCategoryRequestSchema = z.object({
 });
 export type MoveCategoryRequestInput = z.input<typeof moveCategoryRequestSchema>;
 
+/** `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice / */
+export const orderInvoicesRequestSchema = z.object({
+    "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
+    "locale": z.enum(["en","bn"]).nullable().optional(),
+});
+export type OrderInvoicesRequestInput = z.input<typeof orderInvoicesRequestSchema>;
+
+/** `POST /orders/quote` — price a new staff order through the checkout pipeline without */
+export const orderQuoteRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(99),
+})).min(1).max(50),
+    "coupon_code": z.string().max(64).nullable().optional(),
+    "phone": z.string().max(32).nullable().optional(),
+    "district_id": z.number().int().nullable().optional(),
+    "upazila_id": z.number().int().nullable().optional(),
+});
+export type OrderQuoteRequestInput = z.input<typeof orderQuoteRequestSchema>;
+
 /** `POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone */
 export const orderTrackRequestSchema = z.object({
     "number": z.string().min(1).max(32),
@@ -162,6 +206,13 @@ export const orderWorkflowRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type OrderWorkflowRequestInput = z.input<typeof orderWorkflowRequestSchema>;
+
+/** `POST /notifications/templates/{template}/preview` — measure an unsaved body (the */
+export const previewNotificationTemplateRequestSchema = z.object({
+    "body_en": z.string().min(1).max(2000),
+    "body_bn": z.string().min(1).max(2000),
+});
+export type PreviewNotificationTemplateRequestInput = z.input<typeof previewNotificationTemplateRequestSchema>;
 
 /** `POST /attributes/{attribute}/values/reorder` — `{ ids: [3, 1, 2] }`, every value */
 export const reorderAttributeValuesRequestSchema = z.object({
@@ -180,6 +231,18 @@ export const replaceMediaRequestSchema = z.object({
     "file": z.instanceof(Blob),
 });
 export type ReplaceMediaRequestInput = z.input<typeof replaceMediaRequestSchema>;
+
+/** `PUT /reviews/{review}/reply` — the shop's public reply; null or "" removes it. Needs reviews.moderate. */
+export const replyToReviewRequestSchema = z.object({
+    "reply": z.string().min(1).max(2000).nullable(),
+});
+export type ReplyToReviewRequestInput = z.input<typeof replyToReviewRequestSchema>;
+
+/** `POST /storefront/auth/otp` (P4-STO-11) — text a sign-in code. Called by the Next.js */
+export const requestOtpRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+});
+export type RequestOtpRequestInput = z.input<typeof requestOtpRequestSchema>;
 
 /** `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta */
 export const seoMeasureRequestSchema = z.object({
@@ -281,6 +344,29 @@ export const storeOrderNoteRequestSchema = z.object({
 });
 export type StoreOrderNoteRequestInput = z.input<typeof storeOrderNoteRequestSchema>;
 
+/** `POST /orders` — a phone / Facebook / WhatsApp order keyed in by staff (P4-ORD-06). */
+export const storeOrderRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(99),
+})).min(1).max(50),
+    "name": z.string().min(2).max(160),
+    "phone": z.string().min(1).max(32),
+    "alt_phone": z.string().max(32).nullable().optional(),
+    "division_id": z.number().int().nullable().optional(),
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().min(2).max(160),
+    "address_line": z.string().min(5).max(500),
+    "landmark": z.string().min(2).max(255),
+    "source": z.enum(["phone","facebook","whatsapp","admin"]),
+    "coupon_code": z.string().max(64).nullable().optional(),
+    "customer_note": z.string().max(500).nullable().optional(),
+    "internal_note": z.string().max(1000).nullable().optional(),
+    "expected_total": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+});
+export type StoreOrderRequestInput = z.input<typeof storeOrderRequestSchema>;
+
 /** `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP */
 export const storeProductImageRequestSchema = z.object({
     "file": z.instanceof(Blob).optional(),
@@ -296,6 +382,12 @@ export const storeProductImageRequestSchema = z.object({
 }).optional(),
 });
 export type StoreProductImageRequestInput = z.input<typeof storeProductImageRequestSchema>;
+
+/** `POST /product-imports` — a CSV (UTF-8, with or without BOM) or XLSX file of up to */
+export const storeProductImportRequestSchema = z.object({
+    "file": z.instanceof(Blob),
+});
+export type StoreProductImportRequestInput = z.input<typeof storeProductImportRequestSchema>;
 
 /** `POST /products` — needs catalog.create. Setting the initial prices is part of */
 export const storeProductRequestSchema = z.object({
@@ -393,6 +485,18 @@ export const storeStockAdjustmentRequestSchema = z.object({
 });
 export type StoreStockAdjustmentRequestInput = z.input<typeof storeStockAdjustmentRequestSchema>;
 
+/** `POST /storefront/account/reviews` (P4-CAT-12) — the signed-in customer reviews a */
+export const submitReviewRequestSchema = z.object({
+    "product_id": z.number().int().min(1),
+    "rating": z.number().int().min(1).max(5),
+    "title": z.string().max(160).nullable().optional(),
+    "body": z.string().min(10).max(5000),
+    "reviewer_name": z.string().max(120).nullable().optional(),
+    "order_item_id": z.number().int().min(1).nullable().optional(),
+    "is_verified_purchase": z.string().optional(),
+});
+export type SubmitReviewRequestInput = z.input<typeof submitReviewRequestSchema>;
+
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({
     "name": z.string().max(80).optional(),
@@ -477,6 +581,48 @@ export const updateMediaRequestSchema = z.object({
     "folder_id": z.number().int().nullable().optional(),
 });
 export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
+
+/** `PUT /notifications/customers/{customer}/preferences` — one or more (channel, category) */
+export const updateNotificationPreferencesRequestSchema = z.object({
+    "preferences": z.array(z.object({
+    "channel": notificationChannelSchema,
+    "category": z.enum(["order_updates","marketing"]),
+    "enabled": z.boolean(),
+})).min(1).max(20),
+});
+export type UpdateNotificationPreferencesRequestInput = z.input<typeof updateNotificationPreferencesRequestSchema>;
+
+/** `PUT /notifications/templates/{template}` — both bodies (EN + BN) in one document; */
+export const updateNotificationTemplateRequestSchema = z.object({
+    "body_en": z.string().min(1).max(2000),
+    "body_bn": z.string().min(1).max(2000),
+    "is_active": z.boolean(),
+    "subject_en": z.string().max(150).nullable().optional(),
+    "subject_bn": z.string().max(150).nullable().optional(),
+    "preheader_en": z.string().max(200).nullable().optional(),
+    "preheader_bn": z.string().max(200).nullable().optional(),
+});
+export type UpdateNotificationTemplateRequestInput = z.input<typeof updateNotificationTemplateRequestSchema>;
+
+/** `PUT /orders/{order}` and `POST /orders/{order}/edit-quote` — edit a placed order */
+export const updateOrderRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(99),
+})).min(1).max(50),
+    "name": z.string().min(2).max(160),
+    "phone": z.string().min(1).max(32),
+    "alt_phone": z.string().max(32).nullable().optional(),
+    "division_id": z.number().int().nullable().optional(),
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().min(2).max(160),
+    "address_line": z.string().min(5).max(500),
+    "landmark": z.string().min(2).max(255),
+    "expected_total": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type UpdateOrderRequestInput = z.input<typeof updateOrderRequestSchema>;
 
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({
@@ -569,3 +715,24 @@ export const updateProductRequestSchema = z.object({
     "acknowledge_slug_redirect": z.boolean().optional(),
 });
 export type UpdateProductRequestInput = z.input<typeof updateProductRequestSchema>;
+
+/** `PATCH /storefront/account` — the customer's own name, email and language. */
+export const updateProfileRequestSchema = z.object({
+    "name": z.string().min(2).max(160).optional(),
+    "email": z.email().max(191).nullable().optional(),
+    "preferred_language": z.enum(["en","bn"]).optional(),
+});
+export type UpdateProfileRequestInput = z.input<typeof updateProfileRequestSchema>;
+
+/** `POST /storefront/auth/otp/verify` (P4-STO-11). An optional `X-Cart-Token` names the */
+export const verifyOtpRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+    "code": z.string().min(1).regex(new RegExp("^\\d{6}$")),
+});
+export type VerifyOtpRequestInput = z.input<typeof verifyOtpRequestSchema>;
+
+/** `POST /storefront/account/wishlist` — save a live (published) product. */
+export const wishlistRequestSchema = z.object({
+    "product_id": z.number().int().min(1),
+});
+export type WishlistRequestInput = z.input<typeof wishlistRequestSchema>;

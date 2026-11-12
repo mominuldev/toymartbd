@@ -84,6 +84,16 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Tracking\\(?!Events\\)#'
+    # Notifications (P4-NOT-01..03). Contracts + DTOs are their own layer so any domain
+    # (Customer OTP login) can send an SMS without depending on the rest of Notification.
+    - name: NotificationContracts
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Notification\\(Contracts|DTOs)\\#'
+    - name: Notification
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Notification\\(?!Events\\|Contracts\\|DTOs\\)#'
     # Product search (P4-CAT-14). Reads the catalog and stock availability to build index
     # documents; nothing depends on it except Http and Providers.
     - name: Search
@@ -91,10 +101,10 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Domain\\Search\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -108,10 +118,14 @@ deptrac:
     Fulfilment: [Support, Models, DomainEvents, Catalog, Customer]
     Risk: [Support, Models, DomainEvents, Catalog, Customer]
     Finance: [Support, Models, DomainEvents, Catalog, Customer]
-    Customer: [Support, Models, DomainEvents, Catalog]
+    Customer: [Support, Models, DomainEvents, Catalog, NotificationContracts]
     # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
     Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
     Content: [Support, Models, DomainEvents, Catalog, Customer]
     Seo: [Support, Models, DomainEvents, Catalog, Customer]
     Tracking: [Support, Models, DomainEvents, Catalog, Customer]
     Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]
+    NotificationContracts: [Support]
+    # Notification reads orders and customers to render messages; nothing depends back on it
+    # except through NotificationContracts. It writes only its own tables.
+    Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, NotificationContracts]

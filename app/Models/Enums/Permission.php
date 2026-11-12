@@ -64,6 +64,8 @@ enum Permission: string
     /** Selling price changes are audited (audit_sensitive) and separated from content edits. */
     case CatalogUpdatePrice = 'catalog.update_price';
     case CatalogViewCost = 'catalog.view_cost';
+    /** Approve, reject and reply to product reviews (P4-CAT-12). Reading them needs only catalog.view. */
+    case ReviewsModerate = 'reviews.moderate';
 
     // Inventory
     case InventoryView = 'inventory.view';

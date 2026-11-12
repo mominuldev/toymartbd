@@ -1,10 +1,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ArrowLeftIcon, ArrowRightIcon, CalendarBlankIcon, CheckCircleIcon, CheckIcon, ShieldWarningIcon, WarningCircleIcon, WarningIcon, XIcon } from '@phosphor-icons/react';
+import {
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    CalendarBlankIcon,
+    CheckCircleIcon,
+    CheckIcon,
+    PackageIcon,
+    PlusIcon,
+    PrinterIcon,
+    ShieldWarningIcon,
+    TruckIcon,
+    WarningCircleIcon,
+    WarningIcon,
+    XIcon,
+} from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { CountBadge } from '@/components/ui/CountBadge';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
@@ -30,6 +44,8 @@ import {
     type PaymentStatus,
     type RiskLevel,
 } from './api';
+import { openInvoices, useBulkPack } from './composeApi';
+import { Soon } from './OrderComposer';
 import { Taka, ageLabel, dhakaDate, dhakaParts, isZeroAmount, rangeLabel } from './format';
 import { OrderStatusBadge, PaymentChip, RiskPill, paymentLabel, sourceLabel } from './parts';
 
@@ -89,6 +105,10 @@ export function OrdersPage() {
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [result, setResult] = useState<{ done: number; failed: BulkResult[] } | null>(null);
     const canConfirm = can(me, 'orders.confirm');
+    const pack = useBulkPack();
+    const [printing, setPrinting] = useState(false);
+    const canPack = can(me, 'orders.update');
+    const canPrint = can(me, 'orders.view') && can(me, 'customers.view_pii');
 
     const rows = orders.data?.data ?? [];
     const counts = orders.data?.meta.counts ?? {};
@@ -144,6 +164,29 @@ export function OrdersPage() {
         });
     };
 
+    const packSelected = () => {
+        const ids = [...selected];
+        pack.mutate(ids, {
+            onSuccess: (response) => {
+                const failed = response.data.filter((r) => r.outcome !== 'done');
+                setSelected(new Set(failed.map((r) => r.order_id)));
+                setResult({ done: response.meta.done, failed });
+                if (failed.length === 0) toast.notify(t('orders.bulk.packedAll', { count: response.meta.done }));
+            },
+            onError: (error) => toast.notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger'),
+        });
+    };
+
+    const printSelected = () => {
+        setPrinting(true);
+        openInvoices([...selected])
+            .then(({ missing }) => {
+                if (missing.length > 0) toast.notify(t('orders.invoice.missing', { count: missing.length }), 'danger');
+            })
+            .catch((error: unknown) => toast.notify(error instanceof ApiError ? (error.problem.detail ?? error.problem.title) : t('orders.invoice.failed'), 'danger'))
+            .finally(() => setPrinting(false));
+    };
+
     const rangeText = (value: Range): string =>
         value === 'all' ? t('orders.range.all') : value === '1' ? t('orders.range.today', { range: rangeLabel(today, today) }) : t(`orders.range.${value}` as MessageKey, { range: rangeLabel(dhakaDate(Number(value) - 1), today) });
 
@@ -157,6 +200,7 @@ export function OrdersPage() {
                 title={t('orders.title')}
                 subtitle={orders.data && t('orders.subtitle', { count: subtitleCount, range: rangeText(range) })}
                 actions={
+                    <>
                     <label className="relative flex w-full sm:w-65">
                         <span className="sr-only">{t('orders.range')}</span>
                         <CalendarBlankIcon size={16} aria-hidden className="pointer-events-none absolute start-3 top-1/2 z-10 -translate-y-1/2 text-fg-secondary" />
@@ -168,6 +212,13 @@ export function OrdersPage() {
                             ))}
                         </Select>
                     </label>
+                    {can(me, 'orders.create') && (
+                        <Link to="/orders/new" className={buttonClass('primary')}>
+                            <PlusIcon size={16} aria-hidden />
+                            {t('orders.new')}
+                        </Link>
+                    )}
+                    </>
                 }
             />
 
@@ -291,8 +342,15 @@ export function OrdersPage() {
                     count={selected.size}
                     highRisk={highRisk}
                     pending={bulk.isPending}
+                    packing={pack.isPending}
+                    printing={printing}
+                    canConfirm={canConfirm}
+                    canPack={canPack}
+                    canPrint={canPrint}
                     result={result}
                     onConfirm={confirmSelected}
+                    onPack={packSelected}
+                    onPrint={printSelected}
                     onClear={() => {
                         setSelected(new Set());
                         setResult(null);
@@ -388,22 +446,37 @@ function OrderRowView({ row, selectable, selected, onToggle }: { row: OrderRow; 
 
 /**
  * Figma BulkActionBar 193:740 — floating over the content at 1440/1024, docked at 768.
- * Confirm only (the other bulk actions belong to later phases). The result is always two
+ * Confirm · Mark packed · Book courier (Phase 6: disabled, with a tooltip) · Print invoices
+ * (P4-ORD-08), each shown only with its permission. The result is always two
  * numbers, never "done": the failures stay selected and are listed with the server's reason.
  */
 function BulkActionBar({
     count,
     highRisk,
     pending,
+    packing,
+    printing,
+    canConfirm,
+    canPack,
+    canPrint,
     result,
     onConfirm,
+    onPack,
+    onPrint,
     onClear,
 }: {
     count: number;
     highRisk: number;
     pending: boolean;
+    packing: boolean;
+    printing: boolean;
+    canConfirm: boolean;
+    canPack: boolean;
+    canPrint: boolean;
     result: { done: number; failed: BulkResult[] } | null;
     onConfirm: () => void;
+    onPack: () => void;
+    onPrint: () => void;
     onClear: () => void;
 }) {
     const { t } = useI18n();
@@ -430,10 +503,32 @@ function BulkActionBar({
                     </p>
                 )}
                 <div className="ms-auto flex items-center gap-2">
-                    <Button onClick={onConfirm} disabled={count === 0 || pending}>
-                        <CheckIcon size={16} aria-hidden />
-                        {pending ? t('orders.bulk.confirming', { count }) : t('orders.bulk.confirm', { count })}
-                    </Button>
+                    {canConfirm && (
+                        <Button onClick={onConfirm} disabled={count === 0 || pending}>
+                            <CheckIcon size={16} aria-hidden />
+                            {pending ? t('orders.bulk.confirming', { count }) : t('orders.bulk.confirm', { count })}
+                        </Button>
+                    )}
+                    {canPack && (
+                        <Button variant="outline" onClick={onPack} disabled={count === 0 || packing}>
+                            <PackageIcon size={16} aria-hidden />
+                            {packing ? t('orders.bulk.packing', { count }) : t('orders.bulk.pack')}
+                        </Button>
+                    )}
+                    <Soon label={t('orders.bulk.bookCourierSoon')}>
+                        {(id) => (
+                            <Button variant="outline" aria-disabled="true" aria-describedby={id} onClick={(e) => e.preventDefault()} className="cursor-not-allowed !text-fg-disabled hover:!bg-surface">
+                                <TruckIcon size={16} aria-hidden />
+                                {t('orders.bulk.bookCourier')}
+                            </Button>
+                        )}
+                    </Soon>
+                    {canPrint && (
+                        <Button variant="outline" onClick={onPrint} disabled={count === 0 || printing} aria-busy={printing || undefined}>
+                            <PrinterIcon size={16} aria-hidden />
+                            {printing ? t('orders.invoice.printing') : t('orders.bulk.printInvoices')}
+                        </Button>
+                    )}
                     <span aria-hidden className="h-8 w-px bg-line-default" />
                     <IconButton aria-label={t('orders.bulk.clear')} onClick={onClear}>
                         <XIcon size={18} aria-hidden />

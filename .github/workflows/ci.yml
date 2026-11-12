@@ -72,6 +72,8 @@ jobs:
         run: npm run api-types:generate && git diff --exit-code packages/api-types/src
       - name: Typecheck
         run: npm run typecheck
+      - name: i18n — gate self-tests, no hardcoded admin copy, every admin key in en and bn
+        run: node --test scripts/i18n/i18n.test.mjs && npm run lint:i18n:admin
       - name: Vitest (admin)
         run: npm test
       - name: Build admin bundle
@@ -95,11 +97,13 @@ jobs:
         run: npx playwright install chromium  # browser only: the runner image already has its system libraries, and apt mirrors are not always reachable
       - name: Typecheck
         run: npm run typecheck:storefront
+      - name: i18n — no hardcoded storefront copy, every storefront key in en and bn
+        run: npm run lint:i18n:storefront
       - name: Unit tests (revalidation HMAC, API client, i18n)
         run: npm run test:storefront
       - name: Build
         run: npm run build:storefront
-      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles
+      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles, Bangla layout at 390/1440, golden path in both locales
         env:
           CI: '1'
         run: npm run test:e2e:storefront

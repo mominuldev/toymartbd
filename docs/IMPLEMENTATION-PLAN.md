@@ -213,6 +213,19 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 
 **Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed and AI write in the description toolbar.
 
+### Progress — Phase 4 batch 6 (2026-11-12)
+
+**Done, with passing tests** (1546 PHP; 171 admin Vitest; 240 storefront unit; PHPStan, Pint, deptrac, i18n lint clean):
+- **P4-STO-11** — customer account: phone + SMS OTP (HMAC-stored code, 5-min expiry, 60 s cooldown, 5/hour, 5 wrong guesses burn it), `customer` Sanctum guard, guest cart merged on verify, account home, orders + detail (another customer's order is a 404), addresses, wishlist (`wishlist_items`), profile. Storefront keeps the token in the httpOnly `tm_account` cookie; every form works without JS.
+- **P4-NOT-01/02/03, P4-I18N-03** — `Notification` domain: `SmsGateway`/`WhatsAppGateway` contracts, log/null drivers (SMS provider driver is an unverified skeleton that refuses to send), `notification_logs` with segments and cost, dead-letter after 3 tries with admin retry, preferences (security category cannot be opted out), DB templates EN + BN with server-measured segments (UCS-2 70/67, GSM-7 160/153), order emails in both locales, admin Automations + message log.
+- **P4-ORD-06/07/08** — phone/manual orders through `PlaceOrder` (`source=phone`), `EditOrder` up to `processing` (reservation deltas in one ascending lock pass, cost snapshots kept, before/after audit without PII), bulk mark packed, invoice PDF via mPDF + Hind Siliguri (dompdf cannot shape Bangla). Courier booking disabled until Phase 6.
+- **P4-CAT-10** — CSV/XLSX import (openspout) previewed row by row through the real FormRequests + actions inside rolled-back transactions, then committed; row/column error report; upsert by SKU; export with the list filters; BOM + formula guard.
+- **P4-CAT-12** — reviews with verified purchase derived from a delivered `order_item_id` (Catalog → `DeliveredPurchases` contract implemented by Ordering), moderation queue, aggregates from approved reviews only, PDP reviews section, `reviews.moderate` permission.
+- **P4-I18N-01/02** — `scripts/i18n/lint.mjs` (hardcoded JSX text and literal a11y props) and `check-keys.mjs` (en/bn key parity, placeholders, no Bengali digits) in CI; Bangla layout audit Playwright spec (14 screens + checkout flow, both locales, 390/1440); Phase 4 golden-path spec.
+- Admin product form: the "Also list in" multi-category list is removed (owner, 2026-11-12); the Category select is the product's one category.
+
+**Open / owner decisions:** SMS provider and WhatsApp Business account (all rates placeholders); TrustProxies so per-IP OTP limits mean something; order edit re-prices at today's price; packed orders not editable; risk not re-scored after edit; `reviews.moderate` for content_editor; export needs only `catalog.view`; import creates simple products only; reviewer display name "First L."; unlisted account-order filters return 422 not 400; account pages not yet in the Bangla layout spec; wishlist hearts on cards/PDP not wired; Figma Bangla-frame comparison still owed. **Blocked:** P4-PAY-02/03/04 wait on the payment-gateway decision (Gate 1 decision 5).
+
 ### Catalog (CAT)
 | ID | Task | Size | Tests |
 |---|---|---|---|

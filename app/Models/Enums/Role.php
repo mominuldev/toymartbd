@@ -81,7 +81,7 @@ enum Role: string
             // Banners, blog, pages, product copy and SEO — never price, cost or PII.
             self::ContentEditor => [
                 P::DashboardView,
-                P::CatalogView, P::CatalogUpdate,
+                P::CatalogView, P::CatalogUpdate, P::ReviewsModerate,
                 P::ContentView, P::ContentManage, P::MediaManage,
                 P::SeoView, P::SeoManage,
                 P::MarketingView,

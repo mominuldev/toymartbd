@@ -48,6 +48,16 @@ class ApiServiceProvider extends ServiceProvider
 
     public const int OTP_PER_TEN_MINUTES = 3;
 
+    /**
+     * Sign-in codes requested per IP per hour (P4-STO-11). Generous on purpose: until
+     * TrustProxies forwards the shopper's IP, every request arrives from the Next.js
+     * server, so this caps the whole storefront — the per-phone limits are the real guard.
+     */
+    public const int OTP_PER_IP_PER_HOUR = 300;
+
+    /** Code checks per phone per 10 minutes, on top of the 5-guesses-per-code burn. */
+    public const int OTP_VERIFY_PER_TEN_MINUTES = 10;
+
     public const int CHECKOUT_PER_MINUTE = 10;
 
     public const int HEALTH_PER_MINUTE = 60;
@@ -63,6 +73,9 @@ class ApiServiceProvider extends ServiceProvider
 
     /** GET /storefront/orders/{number} (confirmation page, cart token required). */
     public const int ORDER_LOOKUP_PER_MINUTE = 30;
+
+    /** POST /storefront/account/reviews (P4-CAT-12): per customer per hour. */
+    public const int REVIEWS_PER_HOUR = 10;
 
     public function boot(): void
     {
@@ -86,6 +99,12 @@ class ApiServiceProvider extends ServiceProvider
         RateLimiter::for('otp', fn (Request $request): Limit => Limit::perMinutes(10, self::OTP_PER_TEN_MINUTES)
             ->by(($phone = self::phoneKey($request)) !== '' ? 'phone:'.$phone : 'ip:'.$request->ip()));
 
+        RateLimiter::for('otp-ip', fn (Request $request): Limit => Limit::perHour(self::OTP_PER_IP_PER_HOUR)
+            ->by('otp-ip:'.$request->ip()));
+
+        RateLimiter::for('otp-verify', fn (Request $request): Limit => Limit::perMinutes(10, self::OTP_VERIFY_PER_TEN_MINUTES)
+            ->by(($phone = self::phoneKey($request)) !== '' ? 'otp-verify:'.$phone : 'otp-verify-ip:'.$request->ip()));
+
         RateLimiter::for('checkout', fn (Request $request): Limit => Limit::perMinute(self::CHECKOUT_PER_MINUTE)
             ->by(($cart = self::cartKey($request)) !== '' ? 'cart:'.$cart : 'ip:'.$request->ip()));
 
@@ -105,6 +124,13 @@ class ApiServiceProvider extends ServiceProvider
 
         RateLimiter::for('order-lookup', fn (Request $request): Limit => Limit::perMinute(self::ORDER_LOOKUP_PER_MINUTE)
             ->by('ip:'.$request->ip()));
+
+        RateLimiter::for('reviews', function (Request $request): Limit {
+            $customer = $request->user('customer');
+
+            return Limit::perHour(self::REVIEWS_PER_HOUR)
+                ->by($customer !== null ? 'customer:'.$customer->getAuthIdentifier() : 'ip:'.$request->ip());
+        });
 
         $this->configureOpenApi();
     }

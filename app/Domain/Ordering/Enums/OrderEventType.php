@@ -12,4 +12,6 @@ enum OrderEventType: string
     case PaymentStatusChanged = 'payment_status_changed';
     case FulfillmentStatusChanged = 'fulfillment_status_changed';
     case Note = 'note';
+    /** Lines, address or delivery changed after placement (P4-ORD-07); `meta` holds before/after. */
+    case Edited = 'edited';
 }

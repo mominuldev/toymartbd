@@ -8,9 +8,12 @@
  *
  * Digits stay Western in both locales (rule 36), so interpolated numbers never change.
  */
+import { catalogIoBn, catalogIoEn } from './messages.catalogIo';
 import { inventoryBn, inventoryEn } from './messages.inventory';
 import { mediaBn, mediaEn, mediaLibraryBn, mediaLibraryEn } from './messages.media';
 import { mediaPickerBn, mediaPickerEn } from './messages.mediaPicker';
+import { notificationsBn, notificationsEn } from './messages.notifications';
+import { orderComposeBn, orderComposeEn } from './messages.orderCompose';
 import { ordersBn, ordersEn } from './messages.orders';
 import { productsBn, productsEn } from './messages.products';
 
@@ -21,6 +24,9 @@ export const en = {
     ...mediaPickerEn,
     ...inventoryEn,
     ...ordersEn,
+    ...orderComposeEn,
+    ...notificationsEn,
+    ...catalogIoEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -283,6 +289,9 @@ export const bn: Messages = {
     ...mediaPickerBn,
     ...inventoryBn,
     ...ordersBn,
+    ...orderComposeBn,
+    ...notificationsBn,
+    ...catalogIoBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

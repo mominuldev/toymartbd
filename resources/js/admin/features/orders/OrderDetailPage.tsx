@@ -135,15 +135,17 @@ function CardHeader({ id, title, sub, action }: { id: string; title: string; sub
 
 function ItemsCard({ order }: { order: Order }) {
     const { t, locale } = useI18n();
+    // A line removed by an edit stays on the order at quantity 0 (items are never deleted, P4-ORD-07).
+    const lines = order.items.filter((item) => item.quantity > 0);
     const anyCost = order.items.some((item) => item.cost_price_snapshot !== null);
     const tot = order.totals;
     const delivered = order.status === 'delivered' || order.status === 'completed';
 
     return (
         <section className={card} aria-labelledby="order-items">
-            <CardHeader id="order-items" title={t('orders.items.title', { count: order.items.length })} sub={anyCost ? t('orders.items.costNote') : undefined} />
+            <CardHeader id="order-items" title={t('orders.items.title', { count: lines.length })} sub={anyCost ? t('orders.items.costNote') : undefined} />
             <ul className="flex flex-col">
-                {order.items.map((item) => {
+                {lines.map((item) => {
                     const name = locale === 'bn' ? (item.product_name_bn ?? item.product_name) : item.product_name;
                     return (
                         <li key={item.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-line-default py-3 first:border-t-0 sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,13.75rem)_auto]">

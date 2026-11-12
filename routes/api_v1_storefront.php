@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Storefront\Account\AccountController;
+use App\Http\Controllers\Api\V1\Storefront\Account\AddressController as AccountAddressController;
+use App\Http\Controllers\Api\V1\Storefront\Account\AuthController as AccountAuthController;
+use App\Http\Controllers\Api\V1\Storefront\Account\OrderController as AccountOrderController;
+use App\Http\Controllers\Api\V1\Storefront\Account\ReviewController as AccountReviewController;
+use App\Http\Controllers\Api\V1\Storefront\Account\WishlistController as AccountWishlistController;
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use App\Http\Controllers\Api\V1\Storefront\CartController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
@@ -10,7 +16,9 @@ use App\Http\Controllers\Api\V1\Storefront\DeliveryController;
 use App\Http\Controllers\Api\V1\Storefront\OrderController;
 use App\Http\Controllers\Api\V1\Storefront\ProductController;
 use App\Http\Controllers\Api\V1\Storefront\ProductDetailController;
+use App\Http\Controllers\Api\V1\Storefront\ReviewController;
 use App\Http\Controllers\Api\V1\Storefront\SearchController;
+use App\Http\Middleware\EnsureActiveCustomer;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
@@ -49,6 +57,8 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/districts', [DeliveryController::class, 'districts'])->name('districts.index');
     Route::get('/districts/{district}/upazilas', [DeliveryController::class, 'upazilas'])->whereNumber('district')->name('districts.upazilas');
     Route::get('/products/{slug}', [ProductDetailController::class, 'show'])->name('products.show');
+    // Approved reviews + rating summary for the product page (P4-CAT-12).
+    Route::get('/products/{slug}/reviews', [ReviewController::class, 'index'])->name('products.reviews.index');
 });
 
 // Cart (P4-CRT-01/02/04) — docs/api/cart.md. The cart is found by the opaque token the
@@ -72,4 +82,34 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['throttle:checkout', 'idempotent'])->name('checkout.store');
     Route::post('/orders/track', [OrderController::class, 'track'])->middleware('throttle:order-track')->name('orders.track');
     Route::get('/orders/{number}', [OrderController::class, 'show'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
+});
+
+// Customer sign-in (P4-STO-11) — docs/api/account.md. Phone + SMS code (never WhatsApp,
+// rule 32b), called by the Next.js server with its storefront token. Limited per phone
+// (3 codes / 10 min, 10 checks / 10 min) and per IP, on top of the Action's own
+// 60-second resend cooldown, 5-codes-an-hour cap and 5-guesses-per-code burn.
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->prefix('auth')->name('auth.')->group(function (): void {
+    Route::post('/otp', [AccountAuthController::class, 'requestOtp'])->middleware(['throttle:otp', 'throttle:otp-ip'])->name('otp.request');
+    Route::post('/otp/verify', [AccountAuthController::class, 'verify'])->middleware('throttle:otp-verify')->name('otp.verify');
+});
+
+// The signed-in customer's account (P4-STO-11): the customer's own Sanctum token (guard
+// `customer`, ability `customer`), which the Next.js server keeps in an httpOnly cookie.
+// Every read and write is scoped to that customer.
+Route::middleware(['auth:customer', CheckAbilities::class.':customer', EnsureActiveCustomer::class])->prefix('account')->name('account.')->group(function (): void {
+    Route::get('/', [AccountController::class, 'show'])->name('show');
+    Route::patch('/', [AccountController::class, 'update'])->name('update');
+    Route::post('/logout', [AccountAuthController::class, 'logout'])->name('logout');
+    Route::get('/orders', [AccountOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{number}', [AccountOrderController::class, 'show'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
+    Route::get('/addresses', [AccountAddressController::class, 'index'])->name('addresses.index');
+    Route::post('/addresses', [AccountAddressController::class, 'store'])->name('addresses.store');
+    Route::patch('/addresses/{address}', [AccountAddressController::class, 'update'])->whereNumber('address')->name('addresses.update');
+    Route::delete('/addresses/{address}', [AccountAddressController::class, 'destroy'])->whereNumber('address')->name('addresses.destroy');
+    Route::post('/addresses/{address}/default', [AccountAddressController::class, 'makeDefault'])->whereNumber('address')->name('addresses.default');
+    Route::get('/wishlist', [AccountWishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist', [AccountWishlistController::class, 'store'])->name('wishlist.store');
+    Route::delete('/wishlist/{product}', [AccountWishlistController::class, 'destroy'])->whereNumber('product')->name('wishlist.destroy');
+    // Write a review (P4-CAT-12): pending until moderated; verification derived server-side.
+    Route::post('/reviews', [AccountReviewController::class, 'store'])->middleware('throttle:reviews')->name('reviews.store');
 });

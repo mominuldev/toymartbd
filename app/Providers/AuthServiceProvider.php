@@ -18,6 +18,8 @@ use App\Domain\Catalog\Models\ProductRelation;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Customer\Models\Address;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerOtp;
+use App\Domain\Customer\Models\WishlistItem;
 use App\Domain\Inventory\Models\StockAdjustment;
 use App\Domain\Inventory\Models\StockAdjustmentItem;
 use App\Domain\Inventory\Models\StockLevel;
@@ -42,6 +44,7 @@ use App\Policies\BrandPolicy;
 use App\Policies\CartPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CouponPolicy;
+use App\Policies\CustomerOtpPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\MediaFolderPolicy;
 use App\Policies\MediaPolicy;
@@ -86,6 +89,9 @@ class AuthServiceProvider extends ServiceProvider
         StockLocation::class => StockPolicy::class,
         Customer::class => CustomerPolicy::class,
         Address::class => CustomerPolicy::class,
+        // Storefront customers reach their own wishlist through the `customer` guard, scoped by query.
+        WishlistItem::class => CustomerPolicy::class,
+        CustomerOtp::class => CustomerOtpPolicy::class,
         Order::class => OrderPolicy::class,
         OrderItem::class => OrderPartPolicy::class,
         OrderEvent::class => OrderPartPolicy::class,
@@ -103,6 +109,9 @@ class AuthServiceProvider extends ServiceProvider
         StockAdjustmentItem::class => StockPolicy::class,
         SeoMeta::class => SeoPolicy::class,
         SlugHistory::class => SeoPolicy::class,
+        \App\Domain\Catalog\Import\Models\ProductImport::class => \App\Policies\ProductImportPolicy::class,
+        \App\Domain\Catalog\Import\Models\ProductImportError::class => \App\Policies\ProductImportPolicy::class,
+        \App\Domain\Catalog\Reviews\Models\Review::class => \App\Policies\ReviewPolicy::class,
     ];
 
     /**

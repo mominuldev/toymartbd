@@ -28,7 +28,15 @@ function storedLocale(): Locale {
 }
 
 export function translate(locale: Locale, key: MessageKey, vars?: Vars): string {
-    const template = catalogs[locale][key];
+    // A dynamic key (`orders.status.${s}` as MessageKey) escapes the type check. In dev and
+    // tests a key missing from either catalog throws, so CI fails instead of a screen showing
+    // a raw key or nothing (P4-I18N-01; scripts/i18n/check-keys.mjs covers the static side).
+    // A production build falls back to English rather than breaking the screen.
+    if (import.meta.env.DEV) {
+        const missing = (['en', 'bn'] as const).filter((l) => typeof catalogs[l][key] !== 'string');
+        if (missing.length > 0) throw new Error(`Missing i18n key "${key}" in ${missing.join(' and ')}`);
+    }
+    const template: string = catalogs[locale][key] ?? catalogs.en[key] ?? '';
     if (!vars) return template;
     return template.replace(/\{(\w+)\}/g, (match, name: string) =>
         name in vars ? String(vars[name]) : match,

@@ -7,28 +7,23 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Domain\Catalog\Actions\ArchiveProduct;
 use App\Domain\Catalog\Actions\DuplicateProduct;
 use App\Domain\Catalog\Actions\UpdateProduct;
-use App\Domain\Catalog\Enums\ProductStatus;
-use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Inventory\Actions\CreateProductWithOpeningStock;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Seo\Actions\SaveProductWithSeo;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Product\DuplicateProductRequest;
+use App\Http\Requests\Admin\Product\ProductListFilters;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
 use App\Http\Requests\Admin\Product\UpdateProductRequest;
 use App\Http\Resources\Admin\ProductListItemResource;
 use App\Http\Resources\Admin\ProductResource;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
-use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Products (P4-CAT-01..03). One document per product: `PUT` replaces fields,
@@ -60,52 +55,7 @@ final class ProductController extends ApiController
     {
         $this->authorize('viewAny', Product::class);
 
-        $sort = $request->query('sort');
-        $descending = ! is_string($sort) || str_starts_with($sort, '-');
-
-        $products = QueryBuilder::for(Product::class, $request)
-            ->allowedFilters(
-                AllowedFilter::callback('search', static function (Builder $query, mixed $value): void {
-                    $term = is_array($value) ? implode(',', array_map(strval(...), $value)) : (string) $value;
-                    $like = '%'.addcslashes($term, '\\%_').'%';
-
-                    $query->where(static function (Builder $q) use ($like): void {
-                        $q->where('name', 'like', $like)
-                            ->orWhere('name_bn', 'like', $like)
-                            ->orWhere('slug', 'like', $like)
-                            ->orWhereHas('variants', static fn (Builder $v) => $v->where('sku', 'like', $like));
-                    });
-                }),
-                AllowedFilter::callback('status', static function (Builder $query, mixed $value): void {
-                    $status = is_string($value) ? ProductStatus::tryFrom($value) : null;
-
-                    if ($status === null) {
-                        throw new BadRequestHttpException('filter[status] must be one of: draft, active, archived.');
-                    }
-
-                    $query->where('status', $status->value);
-                }),
-                AllowedFilter::callback('type', static function (Builder $query, mixed $value): void {
-                    $type = is_string($value) ? ProductType::tryFrom($value) : null;
-
-                    if ($type === null) {
-                        throw new BadRequestHttpException('filter[type] must be one of: simple, variable.');
-                    }
-
-                    $query->where('type', $type->value);
-                }),
-                AllowedFilter::callback('brand_id', static function (Builder $query, mixed $value): void {
-                    $query->where('brand_id', self::id('brand_id', $value));
-                }),
-                AllowedFilter::callback('category_id', static function (Builder $query, mixed $value): void {
-                    $id = self::id('category_id', $value);
-                    $query->whereHas('categories', static fn (Builder $c) => $c->where('categories.id', $id));
-                }),
-            )
-            ->allowedSorts('name', 'created_at', 'updated_at')
-            ->defaultSort('-updated_at')
-            // A unique tiebreaker keeps cursor pagination stable.
-            ->orderBy('id', $descending ? 'desc' : 'asc')
+        $products = ProductListFilters::query($request)
             ->with(ProductListItemResource::RELATIONS)
             ->cursorPaginate(self::PER_PAGE)
             ->withQueryString();
@@ -184,14 +134,5 @@ final class ProductController extends ApiController
         $archiveProduct->handle($product);
 
         return response()->noContent();
-    }
-
-    private static function id(string $filter, mixed $value): int
-    {
-        if (! is_string($value) || ! ctype_digit($value)) {
-            throw new BadRequestHttpException("filter[{$filter}] must be a positive integer id.");
-        }
-
-        return (int) $value;
     }
 }

@@ -10,11 +10,14 @@ use App\Support\Casts\MoneyCast;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 use Database\Factories\CustomerFactory;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * A shopper, identified by phone (DATABASE-DESIGN §1.4, §3.3). Most never register:
@@ -23,6 +26,9 @@ use Illuminate\Support\Carbon;
  *
  * The aggregate columns are a projection of `orders` (P4-ORD-10), written only by
  * {@see \App\Domain\Customer\Services\CustomerAggregates}.
+ *
+ * Authenticatable for the `customer` guard (P4-STO-11): a storefront account signs in
+ * with phone + SMS OTP and holds a Sanctum token — there is no password.
  *
  * @property int $id
  * @property int|null $user_id
@@ -44,8 +50,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-final class Customer extends Model
+final class Customer extends Model implements AuthenticatableContract
 {
+    use Authenticatable;
+    use HasApiTokens;
+
     /** @use HasFactory<CustomerFactory> */
     use HasFactory;
 
@@ -107,6 +116,18 @@ final class Customer extends Model
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    /** @return HasMany<WishlistItem, $this> */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    /** No remember-me: customers authenticate by bearer token only. */
+    public function getRememberTokenName(): string
+    {
+        return '';
     }
 
     protected static function newFactory(): CustomerFactory

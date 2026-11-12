@@ -91,7 +91,7 @@ export const detail: Order = {
     pii_masked: true,
     anomaly: null,
     customer: { id: 9, name: 'Shahriar Kabir', phone: '01712•••318', orders_count: 1, delivered_orders_count: 0, total_spent: '0.00' },
-    shipping: { name: 'Shahriar Kabir', phone: '01712•••318', alt_phone: null, division: 'Dhaka', district: 'Dhaka', upazila: 'Bashundhara', area: null, address: null, landmark: null, postcode: null },
+    shipping: { name: 'Shahriar Kabir', phone: '01712•••318', alt_phone: null, division_id: 6, district_id: 47, upazila_id: 410, division: 'Dhaka', district: 'Dhaka', upazila: 'Bashundhara', area: null, address: null, landmark: null, postcode: null },
     totals: {
         subtotal: '6200.00',
         discount_total: '0.00',
@@ -136,6 +136,8 @@ export const detail: Order = {
     },
     notes: [{ id: 5, body: 'কল করেছি, ধরেননি', is_customer_visible: false, user_id: 7, user_name: 'Rina Akter', created_at: '2026-11-07T15:00:00Z' }],
     available_actions: ['confirm', 'hold', 'cancel', 'add_note'],
+    editable: true,
+    can_print_invoice: true,
     customer_note: null,
     internal_note: null,
     cancel_reason: null,

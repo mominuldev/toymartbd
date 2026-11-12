@@ -379,6 +379,7 @@ export const en = {
         galleryThumb: 'Show image {n}',
         galleryPrev: 'Previous image',
         galleryNext: 'Next image',
+        galleryRole: 'carousel', // aria-roledescription: screen readers announce it
         details: 'Product details',
         tabDescription: 'Description',
         tabSpecifications: 'Specifications',
