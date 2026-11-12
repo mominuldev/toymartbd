@@ -17,15 +17,21 @@ export const GENDERS = ['unisex', 'boys', 'girls'] as const;
 export const AVAILABILITY = ['in_stock'] as const;
 export const SORTS = ['featured', 'newest', 'price_asc', 'price_desc', 'rating', 'name'] as const;
 export const DEFAULT_SORT = 'featured';
+/** Search results (P4-STO-04) sort by relevance by default; "featured" is not offered there. */
+export const SEARCH_SORTS = ['relevance', 'newest', 'price_asc', 'price_desc', 'rating', 'name'] as const;
+export const SEARCH_DEFAULT_SORT = 'relevance';
 
 export type AgeBand = (typeof AGE_BANDS)[number];
 export type PriceBand = (typeof PRICE_BANDS)[number];
 export type Gender = (typeof GENDERS)[number];
 export type Availability = (typeof AVAILABILITY)[number];
-export type Sort = (typeof SORTS)[number];
+export type Sort = (typeof SORTS)[number] | (typeof SEARCH_SORTS)[number];
 
-/** `category`: a listing scoped by the path (a category page) has no category filter. */
-export type ListingScope = { kind: 'category'; slug: string } | { kind: 'brand'; slug: string };
+/**
+ * What the path already scopes. A category page has no category filter and a brand page no brand
+ * filter; the all-toys listing (`/toys`) and search results take both, as filters.
+ */
+export type ListingScope = { kind: 'category'; slug: string } | { kind: 'brand'; slug: string } | { kind: 'all' } | { kind: 'search' };
 
 export interface ListingState {
     age: AgeBand[];
@@ -34,7 +40,7 @@ export interface ListingState {
     gender: Gender[];
     /** `in_stock`: only products with an active variant in stock (P4-CAT-13). */
     availability: Availability[];
-    /** Brand pages only: narrow to one category. */
+    /** Every scope but a category page: narrow to one category. */
     category: string | null;
     sort: Sort;
     cursor: string | null;
@@ -73,6 +79,15 @@ function first(raw: string | string[] | undefined): string | null {
     return v === undefined || v.trim() === '' ? null : v.trim();
 }
 
+/** The sorts a scope offers, in menu order, and its default. */
+export function sortsFor(scope: ListingScope): readonly Sort[] {
+    return scope.kind === 'search' ? SEARCH_SORTS : SORTS;
+}
+
+export function defaultSortFor(scope: ListingScope): Sort {
+    return scope.kind === 'search' ? SEARCH_DEFAULT_SORT : DEFAULT_SORT;
+}
+
 export function parseListingState(params: RawSearchParams, scope: ListingScope): ListingState {
     const sort = first(params.sort);
     const cursor = first(params.cursor);
@@ -83,13 +98,17 @@ export function parseListingState(params: RawSearchParams, scope: ListingScope):
         brand: scope.kind === 'brand' ? [] : values(params.brand).filter((s) => SLUG.test(s)).sort(),
         gender: oneOf(GENDERS, params.gender),
         availability: oneOf(AVAILABILITY, params.availability),
-        category: scope.kind === 'brand' && category !== null && SLUG.test(category) ? category : null,
-        sort: sort !== null && (SORTS as readonly string[]).includes(sort) ? (sort as Sort) : DEFAULT_SORT,
+        category: scope.kind !== 'category' && category !== null && SLUG.test(category) ? category : null,
+        sort: sort !== null && (sortsFor(scope) as readonly string[]).includes(sort) ? (sort as Sort) : defaultSortFor(scope),
         cursor: cursor !== null && CURSOR.test(cursor) ? cursor : null,
     };
 }
 
-/** Canonical query: fixed key order, comma lists, default sort and empty lists omitted. */
+/**
+ * Canonical query: fixed key order, comma lists, default sort and empty lists omitted. Each
+ * default ("featured" in listings, "relevance" in search) is only valid in its own scope, so
+ * omitting both is unambiguous.
+ */
 export function toSearchParams(state: ListingState): URLSearchParams {
     const out = new URLSearchParams();
     if (state.age.length) out.set('age', state.age.join(','));
@@ -98,32 +117,34 @@ export function toSearchParams(state: ListingState): URLSearchParams {
     if (state.brand.length) out.set('brand', state.brand.join(','));
     if (state.gender.length) out.set('gender', state.gender.join(','));
     if (state.availability.length) out.set('availability', state.availability.join(','));
-    if (state.sort !== DEFAULT_SORT) out.set('sort', state.sort);
+    if (state.sort !== DEFAULT_SORT && state.sort !== SEARCH_DEFAULT_SORT) out.set('sort', state.sort);
     if (state.cursor) out.set('cursor', state.cursor);
     return out;
 }
 
-/** `path` + canonical query, e.g. `/categories/lego?age=24-48`. Commas stay readable. */
+/**
+ * `path` + canonical query, e.g. `/categories/lego?age=24-48`. Commas stay readable. A path that
+ * already carries a query (`/search?q=lego`) is extended with `&`.
+ */
 export function hrefFor(path: string, state: ListingState): string {
     const query = toSearchParams(state).toString().replace(/%2C/g, ',');
-    return query ? `${path}?${query}` : path;
+    if (!query) return path;
+    return `${path}${path.includes('?') ? '&' : '?'}${query}`;
 }
 
 /** The API query for this state (P4-CAT-13 contract: `filter[...]`, `sort`, `cursor`). */
 export function toApiQuery(state: ListingState, scope: ListingScope): URLSearchParams {
     const q = new URLSearchParams();
     if (scope.kind === 'category') q.set('filter[category]', scope.slug);
-    else {
-        q.set('filter[brand]', scope.slug);
-        if (state.category) q.set('filter[category]', state.category);
-    }
-    if (scope.kind === 'category' && state.brand.length) q.set('filter[brand]', state.brand.join(','));
+    else if (state.category) q.set('filter[category]', state.category);
+    if (scope.kind === 'brand') q.set('filter[brand]', scope.slug);
+    else if (state.brand.length) q.set('filter[brand]', state.brand.join(','));
     if (state.age.length) q.set('filter[age_band]', state.age.join(','));
     if (state.price.length) q.set('filter[price_band]', state.price.join(','));
     if (state.gender.length) q.set('filter[gender]', state.gender.join(','));
     if (state.availability.includes('in_stock')) q.set('filter[availability]', 'in_stock');
-    if (state.sort !== DEFAULT_SORT) q.set('sort', state.sort);
-    if (state.cursor) q.set('cursor', state.cursor);
+    if (state.sort !== defaultSortFor(scope)) q.set('sort', state.sort);
+    if (state.cursor && scope.kind !== 'search') q.set('cursor', state.cursor);
     return q;
 }
 

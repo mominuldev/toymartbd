@@ -53,17 +53,84 @@ export const en = {
         label: 'Search', // search.aria.label
         placeholder: 'Search toys, brands or age', // Figma SearchBar 111:853
         submit: 'Search', // search.submit
+        clear: 'Clear', // search.clear
         pageTitle: 'Search',
-        resultsTitle: 'Results for "{query}"', // search.results.title
-        // PLACEHOLDER copy until P4-STO-04 (search results) ships.
-        comingSoon: 'Search results are on their way. Until then, browse by category.',
+        resultsTitle: 'Results for “{query}”', // search.results.title (Figma 161:15294)
+        crumb: 'Search results',
+        intro: '{count} toys match your search across names, brands and categories. Narrow it down with a related search or the filters.',
+        introOne: '1 toy matches your search across names, brands and categories. Narrow it down with a related search or the filters.',
+        countHead: '{count} results', // Figma 132:3350
+        countHeadOne: '1 result',
+        forQuery: 'for “{query}”',
+        countOf: '{shown} of {total} results',
+        allResults: 'All results',
+        showingRange: 'Showing {from}–{to} of {total} results',
+        pagination: 'Pages',
+        page: 'Page {page}',
+        pageCurrent: 'Page {page}, current page',
+        pageOf: 'Page {page} of {total}',
+        previous: 'Previous page',
+        next: 'Next page',
+        noResults: 'No results',
+        zeroLabel: 'Nothing found',
+        zeroTitle: 'No toys found for “{query}”', // Figma EmptyState 161:16255
+        zeroBody: 'Check the spelling, or try a shorter word like “lego” or “blocks”.',
+        clearSearch: 'Clear search',
+        browseAll: 'Browse all toys',
+        didYouMean: 'Did you mean',
+        popularSearches: 'Popular searches',
+        popular: { lego: 'LEGO', rc: 'Remote control cars', puzzles: 'Puzzles', dolls: 'Dolls' },
+        filteredZeroTitle: 'No toys match those filters', // Figma 132:3465
+        filteredZeroBody: 'Try removing a filter, or browse by age instead.',
+        clearFilters: 'Clear all filters',
+        shopByAge: 'Shop by age',
+        popularNow: 'Popular right now', // Figma 161:16310
+        seeAll: 'See all',
         emptyQuery: 'Type a toy, a brand or an age to search.',
         metaDescription: 'Search toys at Toy Mart BD.',
+        // Header suggestions (Figma SearchSuggestions 115:887).
+        suggestProducts: 'Products',
+        suggestCategories: 'Categories',
+        suggestBrands: 'Brands',
+        suggestSeeAll: 'See all {count} results for “{query}”',
+        suggestNoMatch: 'No quick matches — press Enter for full search',
+        suggestCount: '{count} suggestions', // search.suggestions.aria
+        recentTitle: 'Recent searches', // search.recent.title
+        recentClear: 'Clear all', // search.recent.clear
+        recentRemove: 'Remove “{query}”',
     },
     home: {
         title: 'Toy Mart BD',
-        intro: 'Toys for every age, delivered across Bangladesh.',
-        browseBrands: 'Browse brands',
+        metaDescription: 'Toys for 0–12 years with the age, price and stock stated on every one. Cash on delivery across Bangladesh.',
+        // Hero (Figma 133:188 / 126:101).
+        overline: 'Shop by age',
+        headline: 'Tell us the age. See the right toys.',
+        sub: 'Toys for 0–12 years. Age, price and stock stated on every one.',
+        heroAlt: 'A wooden pound-and-tap bench, a box of building bricks and a plush puppy',
+        ageChooser: 'Choose an age',
+        agePills: { '0-12': '0–1 yr', '12-24': '1–2 yrs', '24-48': '2–4 yrs', '48-72': '4–6 yrs', '72-96': '6–8 yrs', '96-144': '8–12 yrs', '144-': '12+' },
+        browseAll: 'Browse all toys',
+        // Sections.
+        categoriesTitle: 'Shop by category',
+        seeAll: 'See all',
+        seeAllLabel: 'See all: {section}',
+        ageTitle: 'Shop by age',
+        ageTiles: { '0-12': '0–1 year', '12-24': '1–2 years', '24-48': '2–4 years', '48-72': '4–6 years', '72-96': '6–8 years', '96-144': '8–12 years', '144-': '12+ years' },
+        toyCount: '{count} toys',
+        toyCountOne: '1 toy',
+        bestSellers: 'Best sellers',
+        newArrivals: 'New arrivals',
+        // USP band (Figma 134:960 / 127:444, TrustStrip Feature2x2 144:2033 / FeatureRow4 144:2062).
+        uspEyebrow: 'Our promise',
+        uspTitle: 'Why parents shop with us',
+        uspCod: 'Cash on delivery',
+        uspCodDetail: 'Pay when it arrives — anywhere in Bangladesh',
+        uspReturn: '7-day easy return',
+        uspReturnDetail: 'Unopened? Send it back, no questions',
+        uspAuthentic: '100% authentic',
+        uspAuthenticDetail: 'Genuine brands with full warranty',
+        uspPeople: 'Real people, 9 to 9',
+        uspPeopleDetail: 'Call {phone} or WhatsApp us',
     },
     brands: {
         title: 'Brands',
@@ -179,6 +246,10 @@ export const en = {
         home: 'Home',
         all: 'All',
         subcategories: 'Sub-categories',
+        relatedSearches: 'Related searches',
+        allToys: 'All toys',
+        allToysIntro: 'Every toy in the shop. Narrow it down by age, price, brand or category.',
+        metaAll: 'Shop every toy at Toy Mart BD — prices in taka, cash on delivery.',
         countOf: '{shown} of {total} products',
         products: '{count} products',
         showing: 'Showing {shown} of {total} products',
@@ -223,6 +294,7 @@ export const en = {
         sortLabel: 'Sort: {value}',
         sortBy: 'Sort by',
         sorts: {
+            relevance: 'Relevance',
             featured: 'Featured',
             newest: 'Newest first',
             price_asc: 'Price: low to high',
@@ -347,6 +419,7 @@ export const en = {
         // PLACEHOLDER policy wording (storefront spec B2: return policy to be confirmed by the owner).
         returnsNote: 'Unopened toys can be returned for any reason. Opened toys can be returned if a part is missing or broken. Policy details to be confirmed by Toy Mart BD.',
         similar: 'Similar toys',
+        recentlyViewed: 'You looked at these', // pdp.recently_viewed.title
     },
     delivery: {
         // P4-STO-06 DeliveryEstimator — Figma 119:1329 (states 119:1195 … 119:1317), storefront spec §A12.
@@ -395,5 +468,6 @@ export const en = {
     },
 } as const;
 
-type Widen<T> = { -readonly [K in keyof T]: T[K] extends string ? string : T[K] extends readonly string[] ? readonly string[] : Widen<T[K]> };
+// Literal strings widen to `string` so bn can differ; tuples (delivery.months) stay readonly tuples.
+type Widen<T> = T extends readonly unknown[] ? { readonly [K in keyof T]: T[K] extends string ? string : Widen<T[K]> } : { -readonly [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 export type Messages = Widen<typeof en>;

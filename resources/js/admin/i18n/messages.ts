@@ -8,12 +8,14 @@
  *
  * Digits stay Western in both locales (rule 36), so interpolated numbers never change.
  */
+import { inventoryBn, inventoryEn } from './messages.inventory';
 import { mediaBn, mediaEn } from './messages.media';
 import { productsBn, productsEn } from './messages.products';
 
 export const en = {
     ...productsEn,
     ...mediaEn,
+    ...inventoryEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -271,6 +273,7 @@ export type Messages = Record<MessageKey, string>;
 export const bn: Messages = {
     ...productsBn,
     ...mediaBn,
+    ...inventoryBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

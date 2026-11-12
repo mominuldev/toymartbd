@@ -81,12 +81,12 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         await page.locator('#search-desktop').fill('lego');
         await page.locator('#search-desktop').press('Enter');
         await expect(page).toHaveURL(/\/search\?q=lego$/);
-        await expect(page.locator('h1')).toHaveText('Results for "lego"');
+        await expect(page.locator('h1')).toHaveText('Results for “lego”');
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
         await expect(page.locator('header a[hreflang="bn"]')).toHaveAttribute('href', '/bn/search?q=lego');
 
         await page.goto('/bn/search?q=লেগো');
-        await expect(page.locator('h1')).toHaveText('"লেগো" — যা পাওয়া গেল');
+        await expect(page.locator('h1')).toHaveText('“লেগো” — যা পাওয়া গেল');
         await expect(page.locator('#search-desktop')).toHaveValue('লেগো');
     });
 
@@ -158,7 +158,7 @@ test.describe('static pages', () => {
 test.describe('320px reflow: no horizontal scroll', () => {
     test.use({ viewport: { width: 320, height: 640 } });
 
-    for (const path of ['/', '/bn', '/brands', '/bn/brands', '/categories', '/bn/categories/lego-sets', '/no-such-page', '/bn/no-such-page', '/bn/pages/about', '/bn/search?q=লেগো', '/maintenance']) {
+    for (const path of ['/', '/bn', '/brands', '/bn/brands', '/categories', '/bn/categories/lego-sets', '/no-such-page', '/bn/no-such-page', '/bn/pages/about', '/bn/search?q=লেগো', '/search?q=zzqx', '/toys', '/bn/toys?age=24-48', '/maintenance']) {
         test(path, async ({ page }) => {
             await page.goto(path);
             const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));

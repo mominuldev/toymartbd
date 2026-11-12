@@ -1,10 +1,12 @@
 import './listing.css';
 
+import type { ReactNode } from 'react';
+
 import { Icon } from '@/components/icons/Icon';
 import { Reveal } from '@/components/motion/Reveal';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import type { Listing } from '@/lib/listing/response';
-import { activeCount, cleared, hrefFor, withCursor, type ListingScope, type ListingState } from '@/lib/listing/state';
+import { activeCount, cleared, hrefFor, sortsFor, withCursor, type ListingScope, type ListingState } from '@/lib/listing/state';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import { FilterAutoApply } from './FilterAutoApply';
 import { FilterForm } from './FilterForm';
@@ -12,8 +14,12 @@ import { ProductCard } from './ProductCard';
 import { SortMenu } from './SortMenu';
 
 // Category / brand listing (P4-STO-03) — Figma "Category listing" 129:1572 (390) and 136:2172
-// (1440); the brand page uses the same layout. Server-rendered from the URL: the filtered grid is
-// in the first HTML, with no flash of unfiltered content (§A7.5).
+// (1440); the brand page and the all-toys listing use the same layout. Search results (P4-STO-04,
+// Figma 161:15289 / 132:3269) are a clone of it: `query` carries the search text through every
+// link and form, related-search chips take the sub-category row, numbered `pagination` replaces
+// "load more", and on mobile the page head collapses to one "N results for …" line under the
+// filter bar (`mobileHead`). Server-rendered from the URL: the filtered grid is in the first HTML,
+// with no flash of unfiltered content (§A7.5).
 
 export interface Crumb {
     label: string;
@@ -43,23 +49,35 @@ interface Props {
     crumbs: Crumb[];
     subLinks: SubLink[];
     emptyHref: string;
+    /** Search text: kept in every link and filter form (`/search?q=…`). */
+    query?: string;
+    /** Search: replaces breadcrumb, title, intro and chips below 1024 with this one-line head. */
+    mobileHead?: ReactNode;
+    /** Replaces the "load more" block (search uses numbered pages). */
+    pagination?: ReactNode;
+    /** Replaces the default empty block. */
+    empty?: ReactNode;
 }
 
 const SIDEBAR_FORM = 'listing-filters-desktop';
 const SHEET_FORM = 'listing-filters-mobile';
 
-export function ListingView({ locale, t, path, scope, state, listing, title, titleLang, intro, crumbs, subLinks, emptyHref }: Props) {
-    const href = localizedPath(locale, path);
+export function ListingView({ locale, t, path, scope, state, listing, title, titleLang, intro, crumbs, subLinks, emptyHref, query, mobileHead, pagination, empty }: Props) {
+    const base = localizedPath(locale, path);
+    const href = query !== undefined ? `${base}?${new URLSearchParams({ q: query }).toString()}` : base;
     const filters = activeCount(state);
     const { products, total, facets, nextCursor } = listing;
-    const formProps = { locale, path, scope, state, facets, t };
+    const formProps = { locale, path, scope, state, facets, t, hidden: query !== undefined ? { q: query } : undefined };
+    const sorts = sortsFor(scope);
+    // Search hides the desktop head below 1024 (Figma 132:3269 opens on the filter bar).
+    const head = mobileHead ? 'max-lg:hidden' : '';
     const countLine = format(t.countOf, { shown: String(products.length), total: String(total) });
     const status = nextCursor || state.cursor ? format(t.showing, { shown: String(products.length), total: String(total) }) : format(t.showingAll, { total: String(total) });
 
     return (
         <div className="flex flex-col">
             {/* PageHead */}
-            <nav aria-label={t.breadcrumb} className="overflow-x-auto overflow-y-hidden">
+            <nav aria-label={t.breadcrumb} className={`overflow-x-auto overflow-y-hidden ${head}`}>
                 <ol className="flex min-h-6 items-center gap-2 whitespace-nowrap">
                     {crumbs.map((crumb, i) => (
                         <li key={`${crumb.path ?? 'current'}-${i}`} className="flex items-center gap-2">
@@ -77,12 +95,12 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                     ))}
                 </ol>
             </nav>
-            <h1 className="t-h1 mt-2.5 text-fg-primary lg:mt-5" lang={titleLang}>
+            <h1 className={`t-h1 mt-2.5 text-fg-primary lg:mt-5 ${mobileHead ? 'max-lg:sr-only' : ''}`} lang={titleLang}>
                 {title}
             </h1>
-            {intro ? <p className="t-body-sm mt-2.5 max-w-210 text-fg-secondary lg:mt-5">{intro}</p> : null}
+            {intro ? <p className={`t-body-sm mt-2.5 max-w-210 text-fg-secondary lg:mt-5 ${head}`}>{intro}</p> : null}
             {subLinks.length > 0 ? (
-                <nav aria-label={t.subcategories} className="-mx-gutter-mobile mt-2.5 overflow-x-auto px-gutter-mobile md:mx-0 md:px-0 lg:mt-5">
+                <nav aria-label={mobileHead ? t.relatedSearches : t.subcategories} className={`-mx-gutter-mobile mt-2.5 overflow-x-auto px-gutter-mobile md:mx-0 md:px-0 lg:mt-5 ${head}`}>
                     <ul className="flex gap-2 pb-1 lg:flex-wrap lg:gap-3">
                         {subLinks.map((link) => (
                             <li key={link.href}>
@@ -101,7 +119,7 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
             ) : null}
 
             {/* FilterBar — mobile and tablet (<1024): sticky under the header. */}
-            <div className="sticky top-14 z-20 -mx-gutter-mobile has-[.filter-sheet[open]]:z-50 mt-4 flex items-center gap-3 border-b border-line-brand-subtle bg-surface px-gutter-mobile py-2 md:-mx-gutter-tablet md:px-gutter-tablet lg:hidden">
+            <div className={`sticky top-14 z-20 -mx-gutter-mobile has-[.filter-sheet[open]]:z-50 ${mobileHead ? '-mt-2' : 'mt-4'} flex items-center gap-3 border-b border-line-brand-subtle bg-surface px-gutter-mobile py-2 md:-mx-gutter-tablet md:px-gutter-tablet lg:hidden`}>
                 <details className="filter-sheet min-w-0 flex-1">
                     <summary className="flex h-control-md cursor-pointer list-none items-center justify-center gap-2 rounded-full border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-4 text-fg-primary [&::-webkit-details-marker]:hidden">
                         <Icon name="funnel" className="size-4.5" />
@@ -139,7 +157,7 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                         </div>
                     </div>
                 </details>
-                <SortMenu href={href} state={state} t={t} context="mobile" />
+                <SortMenu href={href} state={state} t={t} context="mobile" sorts={sorts} />
             </div>
 
             {/* Toolbar — desktop */}
@@ -147,13 +165,13 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                 <p className="t-body-sm text-fg-secondary" aria-live="polite">
                     {countLine}
                 </p>
-                <SortMenu href={href} state={state} t={t} context="desktop" />
+                <SortMenu href={href} state={state} t={t} context="desktop" sorts={sorts} />
             </div>
 
             <div className="mt-3 lg:mt-5">
                 <ActiveFilterChips href={href} state={state} facets={facets} locale={locale} t={t} />
             </div>
-            <p className="t-body-sm mt-3 text-fg-secondary lg:hidden">{countLine}</p>
+            {mobileHead ? <div className={`lg:hidden ${filters > 0 ? 'mt-3' : 'mt-1'}`}>{mobileHead}</div> : <p className="t-body-sm mt-3 text-fg-secondary lg:hidden">{countLine}</p>}
 
             <div className="mt-3 lg:mt-5 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start lg:gap-8">
                 <aside aria-labelledby="filter-sidebar-title" className="sticky top-34 hidden max-h-[calc(100dvh-9.5rem)] overflow-y-auto rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface p-5 shadow-e1 lg:block">
@@ -188,6 +206,7 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                                     </Reveal>
                                 ))}
                             </ul>
+                            {pagination ?? (
                             <div className="mx-auto flex w-full max-w-90 flex-col items-center gap-3 pt-8 pb-12 lg:max-w-none">
                                 <p className="t-body-sm text-center text-fg-secondary">{status}</p>
                                 {nextCursor ? (
@@ -200,7 +219,10 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                                     </a>
                                 ) : null}
                             </div>
+                            )}
                         </>
+                    ) : empty ? (
+                        empty
                     ) : (
                         <div className="flex flex-col items-start gap-4 rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface p-6 shadow-e1">
                             <Icon name="puzzlePiece" className="size-icon-category text-fg-brand" />

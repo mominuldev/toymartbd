@@ -4,8 +4,14 @@ import { z } from 'zod';
 export const attributeTypeSchema = z.enum(["select","color","text"]);
 export type AttributeType = z.infer<typeof attributeTypeSchema>;
 
+export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
+export type CouponType = z.infer<typeof couponTypeSchema>;
+
 export const genderSchema = z.enum(["boys","girls","unisex"]);
 export type Gender = z.infer<typeof genderSchema>;
+
+export const productScopeTypeSchema = z.enum(["all","products","categories","brands"]);
+export type ProductScopeType = z.infer<typeof productScopeTypeSchema>;
 
 export const productStatusSchema = z.enum(["draft","active","archived"]);
 export type ProductStatus = z.infer<typeof productStatusSchema>;
@@ -16,8 +22,24 @@ export type ProductType = z.infer<typeof productTypeSchema>;
 export const relationTypeSchema = z.enum(["related","upsell","cross_sell","bundle","age_progression"]);
 export type RelationType = z.infer<typeof relationTypeSchema>;
 
+export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample"]);
+export type StockAdjustmentReason = z.infer<typeof stockAdjustmentReasonSchema>;
+
 export const variantStatusSchema = z.enum(["active","archived"]);
 export type VariantStatus = z.infer<typeof variantStatusSchema>;
+
+/** `POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is */
+export const addCartItemRequestSchema = z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(99),
+});
+export type AddCartItemRequestInput = z.input<typeof addCartItemRequestSchema>;
+
+/** `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason. */
+export const applyCouponRequestSchema = z.object({
+    "code": z.string().min(1).max(40),
+});
+export type ApplyCouponRequestInput = z.input<typeof applyCouponRequestSchema>;
 
 /** `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the */
 export const cropProductImageRequestSchema = z.object({
@@ -101,6 +123,30 @@ export const storeCategoryRequestSchema = z.object({
 });
 export type StoreCategoryRequestInput = z.input<typeof storeCategoryRequestSchema>;
 
+/** `POST /coupons` — needs marketing.manage. */
+export const storeCouponRequestSchema = z.object({
+    "code": z.string().min(1).max(40).regex(new RegExp("^[A-Z0-9][A-Z0-9_-]*$")),
+    "description": z.string().max(255).nullable().optional(),
+    "type": couponTypeSchema,
+    "value": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "max_discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "min_order_amount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "usage_limit_total": z.number().int().min(1).nullable().optional(),
+    "usage_limit_per_customer": z.number().int().min(1).nullable().optional(),
+    "starts_at": z.string().nullable().optional(),
+    "ends_at": z.string().nullable().optional(),
+    "applies_to": productScopeTypeSchema,
+    "scope_ids": z.array(z.number().int()).max(500).optional(),
+    "excludes": z.object({
+    "product_ids": z.array(z.number().int()).max(500).optional(),
+    "category_ids": z.array(z.number().int()).max(500).optional(),
+    "brand_ids": z.array(z.number().int()).max(500).optional(),
+}).optional(),
+    "first_order_only": z.boolean().optional(),
+    "is_active": z.boolean().optional(),
+});
+export type StoreCouponRequestInput = z.input<typeof storeCouponRequestSchema>;
+
 /** `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP */
 export const storeProductImageRequestSchema = z.object({
     "file": z.instanceof(Blob),
@@ -172,6 +218,19 @@ export const storeProductRequestSchema = z.object({
 });
 export type StoreProductRequestInput = z.input<typeof storeProductRequestSchema>;
 
+/** `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key` */
+export const storeStockAdjustmentRequestSchema = z.object({
+    "location_id": z.number().int().nullable().optional(),
+    "reason": stockAdjustmentReasonSchema,
+    "note": z.string().max(500).nullable().optional(),
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(-100000).max(100000).nullable().optional(),
+    "counted": z.number().int().min(0).max(100000).nullable().optional(),
+})).min(1).max(100),
+});
+export type StoreStockAdjustmentRequestInput = z.input<typeof storeStockAdjustmentRequestSchema>;
+
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({
     "name": z.string().max(80).optional(),
@@ -204,6 +263,12 @@ export const updateBrandRequestSchema = z.object({
 });
 export type UpdateBrandRequestInput = z.input<typeof updateBrandRequestSchema>;
 
+/** `PATCH /cart/items/{item}` `{ quantity }` — 1…99; remove a line with DELETE. */
+export const updateCartItemRequestSchema = z.object({
+    "quantity": z.number().int().min(1).max(99),
+});
+export type UpdateCartItemRequestInput = z.input<typeof updateCartItemRequestSchema>;
+
 /** `PATCH /categories/{category}` — every field optional; only the fields sent */
 export const updateCategoryRequestSchema = z.object({
     "name": z.string().max(120).optional(),
@@ -217,6 +282,30 @@ export const updateCategoryRequestSchema = z.object({
     "is_active": z.boolean().optional(),
 });
 export type UpdateCategoryRequestInput = z.input<typeof updateCategoryRequestSchema>;
+
+/** `PUT /coupons/{coupon}` — the whole document; needs marketing.manage. */
+export const updateCouponRequestSchema = z.object({
+    "code": z.string().min(1).max(40).regex(new RegExp("^[A-Z0-9][A-Z0-9_-]*$")),
+    "description": z.string().max(255).nullable().optional(),
+    "type": couponTypeSchema,
+    "value": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "max_discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "min_order_amount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "usage_limit_total": z.number().int().min(1).nullable().optional(),
+    "usage_limit_per_customer": z.number().int().min(1).nullable().optional(),
+    "starts_at": z.string().nullable().optional(),
+    "ends_at": z.string().nullable().optional(),
+    "applies_to": productScopeTypeSchema,
+    "scope_ids": z.array(z.number().int()).max(500).optional(),
+    "excludes": z.object({
+    "product_ids": z.array(z.number().int()).max(500).optional(),
+    "category_ids": z.array(z.number().int()).max(500).optional(),
+    "brand_ids": z.array(z.number().int()).max(500).optional(),
+}).optional(),
+    "first_order_only": z.boolean().optional(),
+    "is_active": z.boolean().optional(),
+});
+export type UpdateCouponRequestInput = z.input<typeof updateCouponRequestSchema>;
 
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({

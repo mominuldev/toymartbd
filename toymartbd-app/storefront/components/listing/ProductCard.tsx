@@ -24,7 +24,8 @@ interface Props {
     priority?: boolean;
 }
 
-function ageIcon(min: number | null): IconName {
+/** The age pill's icon (also the Home age tiles): baby → puzzle → smiley → graduation cap. */
+export function ageIcon(min: number | null): IconName {
     const lo = min ?? 0;
     if (lo < 12) return 'baby';
     if (lo < 48) return 'puzzlePiece';

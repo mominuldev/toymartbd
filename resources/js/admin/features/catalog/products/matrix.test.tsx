@@ -9,12 +9,21 @@ afterEach(() => {
     localStorage.clear();
 });
 
+/** The matrix "On" switches (the rail's Featured switch is a switch too). */
+const sellSwitches = () => screen.getAllByRole('switch', { name: /^Sell / });
+const findSellSwitches = () => screen.findAllByRole('switch', { name: /^Sell / });
+
+/** Category on a new product: the select is the primary category (Figma "Category"). */
+async function chooseCategory() {
+    await screen.findByRole('option', { name: /Building & Construction/ });
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: '5' } });
+}
+
 const addValue = (attribute: string, valueId: number) => fireEvent.change(screen.getByLabelText(`Add a ${attribute} value`), { target: { value: String(valueId) } });
 
 /** On /products/new: switch to a variable product and build Color (3) × Size (4). */
 async function buildTwelve() {
     fireEvent.change(await screen.findByLabelText('Product type'), { target: { value: 'variable' } });
-    fireEvent.click(screen.getByRole('tab', { name: /Variants/ }));
     const addAttribute = await screen.findByLabelText('Add attribute');
     fireEvent.change(addAttribute, { target: { value: '1' } });
     for (const id of [10, 11, 12]) addValue('Color', id);
@@ -41,15 +50,18 @@ describe('combinations', () => {
 });
 
 describe('VariantMatrixEditor', () => {
-    it('3 colours × 4 sizes makes 12 rows, and bulk apply fills every row', async () => {
+    it('3 colours × 4 sizes makes 12 rows, and bulk apply fills every selected row', async () => {
         productApi(owner);
         renderApp('/products/new');
         await buildTwelve();
 
         expect(screen.getByText(/2 attributes = 12 combinations/)).toBeTruthy();
-        expect(screen.getAllByRole('switch')).toHaveLength(12);
+        expect(sellSwitches()).toHaveLength(12);
         expect(screen.getByLabelText('Sell Green / Extra Large')).toBeTruthy();
 
+        // The bulk bar appears once rows are selected (A9).
+        expect(screen.queryByLabelText('Value to apply')).toBeNull();
+        fireEvent.click(screen.getByLabelText('Select all variants'));
         fireEvent.change(screen.getByLabelText('Value to apply'), { target: { value: '499' } });
         fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
@@ -87,7 +99,7 @@ describe('VariantMatrixEditor', () => {
         renderApp('/products/new');
 
         fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Racing Car' } });
-        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
+        await chooseCategory();
         await buildTwelve();
         fireEvent.change(screen.getByLabelText('SKU — Red / Small'), { target: { value: 'RC-RED-S' } });
         fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
@@ -108,14 +120,15 @@ describe('VariantMatrixEditor', () => {
         expect(screen.getByLabelText('SKU — Red / Small').getAttribute('aria-invalid')).toBe('true');
         expect(screen.getByText('SKU: This SKU is already in use.')).toBeTruthy();
         expect(screen.getByLabelText('Price — Red / Small').getAttribute('aria-invalid')).toBeNull();
-        expect(screen.getByRole('tab', { name: /Variants.*has errors/ })).toBeTruthy();
+        expect(screen.getByRole('link', { name: /Variants.*has errors/ })).toBeTruthy();
     });
 
     it('edits an existing matrix: disabling a row and removing a value archive, re-adding restores', async () => {
         const calls = productApi(owner, (url, init) => (url.endsWith('/products/42') && init?.method === 'PUT' ? { status: 200, body: product } : undefined));
         renderApp('/products/42?tab=variants');
 
-        expect(await screen.findAllByRole('switch')).toHaveLength(4);
+        expect(await findSellSwitches()).toHaveLength(4);
+        expect(screen.getByText(/2 attributes × 2 values = 4 combinations/)).toBeTruthy();
         expect((screen.getByLabelText('SKU — Red / Small') as HTMLInputElement).value).toBe('TM-00042-100');
         expect((screen.getByLabelText('Price — Red / Small') as HTMLInputElement).value).toBe('1250.00');
 
@@ -124,13 +137,13 @@ describe('VariantMatrixEditor', () => {
 
         // Removing Small leaves 2 rows; its variants are listed as archived, with their SKUs.
         fireEvent.click(screen.getByRole('button', { name: 'Remove Small' }));
-        expect(screen.getAllByRole('switch')).toHaveLength(2);
+        expect(sellSwitches()).toHaveLength(2);
         const archived = screen.getByRole('heading', { name: 'Archived variants' }).parentElement!;
         expect(within(archived).getByText('TM-00042-100')).toBeTruthy();
 
         // Adding it back restores them, prices intact.
         addValue('Size', 20);
-        expect(screen.getAllByRole('switch')).toHaveLength(4);
+        expect(sellSwitches()).toHaveLength(4);
         expect((screen.getByLabelText('Price — Red / Small') as HTMLInputElement).value).toBe('1250.00');
 
         fireEvent.change(screen.getByLabelText('Price — Red / Small'), { target: { value: '1300' } });
@@ -148,7 +161,7 @@ describe('VariantMatrixEditor', () => {
         );
         renderApp('/products/42?tab=variants');
 
-        await screen.findAllByRole('switch');
+        await findSellSwitches();
         expect(screen.queryByRole('columnheader', { name: 'Cost' })).toBeNull();
         expect(screen.queryByLabelText(/^Cost — /)).toBeNull();
         expect(screen.getByRole('columnheader', { name: 'Price' })).toBeTruthy();
@@ -182,7 +195,7 @@ describe('VariantMatrixEditor', () => {
         renderApp('/products/new');
 
         fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Racing Car' } });
-        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
+        await chooseCategory();
         await buildTwelve();
         expect(screen.getByRole('columnheader', { name: 'Opening stock' })).toBeTruthy();
         fireEvent.change(screen.getByLabelText('Opening stock — Blue / Medium'), { target: { value: '7' } });
@@ -199,7 +212,7 @@ describe('VariantMatrixEditor', () => {
         renderApp('/products/new');
 
         fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Racing Car' } });
-        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
+        await chooseCategory();
         await buildTwelve();
         expect(screen.queryByRole('columnheader', { name: 'Opening stock' })).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
@@ -218,7 +231,7 @@ describe('VariantMatrixEditor', () => {
         });
         renderApp('/products/42?tab=variants');
 
-        await screen.findAllByRole('switch');
+        await findSellSwitches();
         expect(screen.getByRole('columnheader', { name: 'Stock' })).toBeTruthy();
         expect(screen.queryByLabelText(/^Opening stock — /)).toBeNull();
         expect(screen.getByText('10 available · 11 on hand · 1 reserved')).toBeTruthy();

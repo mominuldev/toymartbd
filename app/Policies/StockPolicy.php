@@ -10,7 +10,8 @@ use App\Models\User;
 /**
  * Stock levels, movements and locations (inventory). The ledger is append-only, so
  * there is no update or delete ability: a change is a new movement, which needs
- * inventory.adjust (opening stock today; adjustments in Phase 5).
+ * inventory.adjust (opening stock and stock adjustments). Seeing cost or valuation
+ * additionally needs catalog.view_cost (ProductPolicy::viewCost).
  */
 final class StockPolicy extends Policy
 {

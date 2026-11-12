@@ -172,7 +172,20 @@ One repository, because the API and both frontends share a contract and must cha
 - **P4-CAT-14** — Meilisearch via Scout with a database fallback engine, queued sync on save, zero-gap rebuild command, Bangla/Banglish synonyms, spelling suggestions, index-lag check; storefront search + suggestions API.
 - **P4-STO-05** — product detail page: gallery, variant selector with disabled out-of-stock options, price block, stock state, info tabs, trust strip, sticky add-to-cart bar, related products.
 
-**Open:** the storefront `/search` page is still the static shell (API is ready — P4-STO-04); best sellers rank by recency until orders exist.
+**Open:** best sellers rank by recency until orders exist.
+
+### Progress — Phase 4 batch 4 (PR #8, 2026-11-12)
+
+**Done, with passing tests** (1208 PHP on SQLite; 91 admin Vitest; 177 storefront unit + 77 storefront Playwright; PHPStan L6, Pint, deptrac clean):
+- **P4-CRT-01/02/04** — carts by httpOnly token (`X-Cart-Token`), line add/update/remove with stock checks, `MergeGuestCart`; `PricingPipeline` (base → promotions → coupon → shipping via `DeliveryChargeResolver` → total, breakdown must sum); coupons with window, minimum, total and per-phone limits, scope and exclusions; admin coupons API. `first_order_only` reads real orders (`Ordering\Queries\PhoneOrderHistory`).
+- **P4-ORD-01/03/09/10, P4-PAY-01** — customers, addresses, orders (three status columns, `TMB-YY-NNNNN` numbers), items with `cost_price_snapshot`, events, payments/refunds; guarded state machines for all three statuses; COD driver behind `PaymentGatewayRegistry`; `CancelOrder` releases stock; customer aggregates + rebuild command; admin orders read API with PII masking. PlaceOrder outline in `docs/api/orders.md`.
+- **Admin inventory** — `AdjustStock` (ordered locks, never below reserved), stock overview, movements ledger with reconciliation, adjustment dialog (Figma 213:6955 / 213:7516, Theme B).
+- **P4-STO-04 / P4-STO-02 / P4-STO-07 (part)** — search results with suggestions dropdown and zero-results state, home page from live data, `/toys` all-toys listing, recently-viewed rail.
+- **Figma fidelity** — admin product add/edit rebuilt as Figma's one-page layout (Theme B `241:37883`, 768 `230:22079`).
+
+**Next (batch 5):** `PlaceOrder` + checkout (P4-ORD-02, P4-STO-09/10), cart page (P4-STO-08), order board/detail screens (P4-ORD-04/05), product SEO fields + stock-by-branch for the product form.
+
+**Owner decisions open:** coupon after a non-stackable promotion (applies today); customer aggregates (orders count excludes cancelled, total spent = delivered only); partial COD collection (refused today); `cost_price_snapshot` precision 14,4 (§3.4) vs rule 6; Theme B primary colour in the product-edit frame (coral in Figma, indigo in the build); `throttle:search-suggest` is keyed by IP but all shoppers arrive via the Next server.
 
 ### Catalog (CAT)
 | ID | Task | Size | Tests |

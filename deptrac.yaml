@@ -4,6 +4,9 @@
 #   Http      → any Domain, Support, Models
 #   Domain X  → itself, Catalog, Customer, Support, Models, and any domain's Events
 #               (cross-domain writes go through events only)
+#   Ordering  → also Inventory (reserve/release inside the order's own transaction, §4.1/§4.4)
+#               and Payment (open/cancel payments in the same transaction; drivers, rule 5).
+#               Neither depends back on Ordering: Payment reports through PaymentStatusChanged.
 #   Support   → nothing in the app (pure value objects and helpers)
 deptrac:
   paths:
@@ -95,14 +98,18 @@ deptrac:
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
-    Cart: [Support, Models, DomainEvents, Catalog, Customer]
-    Ordering: [Support, Models, DomainEvents, Catalog, Customer]
+    # Cart prices through Marketing (promotions, coupons), Fulfilment (DeliveryChargeResolver)
+    # and reads Inventory availability (P4-CRT-01/02).
+    Cart: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Fulfilment, Marketing]
+    # Ordering implements Marketing's order-history seam; batch 5 PlaceOrder prices through Cart.
+    Ordering: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Payment, Cart, Marketing, Fulfilment]
     Payment: [Support, Models, DomainEvents, Catalog, Customer]
     Fulfilment: [Support, Models, DomainEvents, Catalog, Customer]
     Risk: [Support, Models, DomainEvents, Catalog, Customer]
     Finance: [Support, Models, DomainEvents, Catalog, Customer]
     Customer: [Support, Models, DomainEvents, Catalog]
-    Marketing: [Support, Models, DomainEvents, Catalog, Customer]
+    # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
+    Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
     Content: [Support, Models, DomainEvents, Catalog, Customer]
     Seo: [Support, Models, DomainEvents, Catalog, Customer]
     Tracking: [Support, Models, DomainEvents, Catalog, Customer]

@@ -1,6 +1,6 @@
 import { Icon } from '@/components/icons/Icon';
 import { format, type Messages } from '@/lib/i18n';
-import { hrefFor, SORTS, withSort, type ListingState } from '@/lib/listing/state';
+import { hrefFor, SORTS, withSort, type ListingState, type Sort } from '@/lib/listing/state';
 
 // SortTrigger 115:906 + SortMenu 115:986 (storefront spec §A8). A <details> disclosure whose
 // options are plain links to the same listing with `sort=` — no JavaScript needed, every sorted
@@ -14,9 +14,11 @@ interface Props {
     t: Messages['listing'];
     /** Mobile: half of the filter bar (fill, 44 tall). Desktop: hug pill, 40 tall. */
     context: 'mobile' | 'desktop';
+    /** The scope's sorts (search adds "Best match" and drops "Featured"). */
+    sorts?: readonly Sort[];
 }
 
-export function SortMenu({ href, state, t, context }: Props) {
+export function SortMenu({ href, state, t, context, sorts: options = SORTS }: Props) {
     const sorts = t.sorts as Record<string, string>;
     const mobile = context === 'mobile';
     return (
@@ -31,7 +33,7 @@ export function SortMenu({ href, state, t, context }: Props) {
             <div className="absolute top-full right-0 z-30 mt-2 w-62 max-w-[calc(100vw-2rem)] rounded-lg bg-surface-raised p-2 shadow-e3">
                 <p className="t-caption px-3 py-2 text-fg-secondary">{t.sortBy}</p>
                 <ul>
-                    {SORTS.map((sort) => {
+                    {options.map((sort) => {
                         const current = sort === state.sort;
                         return (
                             <li key={sort}>
