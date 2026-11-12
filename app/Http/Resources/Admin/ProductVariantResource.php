@@ -7,6 +7,8 @@ namespace App\Http\Resources\Admin;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Inventory\Services\StockAvailability;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
@@ -53,6 +55,14 @@ final class ProductVariantResource extends ApiResource
             /** @var string|null */
             'wholesale_price' => $variant->wholesale_price?->toDecimal(),
             'weight_grams' => $variant->weight_grams,
+            /**
+             * Current stock at all locations; only with inventory.view. Read-only here:
+             * opening stock is set on create (`opening_stock`), later changes are
+             * stock adjustments (Phase 5).
+             *
+             * @var array{on_hand: int, reserved: int, available: int}
+             */
+            'stock' => $this->when(self::canViewStock($request), fn (): array => self::stockFor($request, $variant)),
             'is_default' => $variant->is_default,
             'position' => $variant->position,
             /** @var 'active'|'archived' */
@@ -69,6 +79,29 @@ final class ProductVariantResource extends ApiResource
                 ])->values()->all()
                 : [],
         ];
+    }
+
+    public static function canViewStock(Request $request): bool
+    {
+        return $request->user()?->can('viewAny', StockLevel::class) ?? false;
+    }
+
+    /**
+     * One query per product per request: the first variant loads every sibling's level.
+     *
+     * @return array{on_hand: int, reserved: int, available: int}
+     */
+    private static function stockFor(Request $request, ProductVariant $variant): array
+    {
+        $key = 'admin.stock.product.'.$variant->product_id;
+        if (! $request->attributes->has($key)) {
+            $request->attributes->set($key, app(StockAvailability::class)->levelsForProduct($variant->product_id));
+        }
+
+        /** @var array<int, array{on_hand: int, reserved: int, available: int}> $levels */
+        $levels = $request->attributes->get($key);
+
+        return $levels[$variant->id] ?? ['on_hand' => 0, 'reserved' => 0, 'available' => 0];
     }
 
     public static function canViewCost(Request $request): bool

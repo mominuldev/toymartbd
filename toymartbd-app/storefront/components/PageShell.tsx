@@ -29,13 +29,15 @@ interface Props {
      * (8 / 24) is for pages that open with a breadcrumb (Category listing 129:1572 / 136:2172).
      */
     top?: 'section' | 'tight' | 'crumb';
+    /** The page has a fixed mobile bar above MobileNav (PDP AddToCartBar, 76): reserve its height below the footer. */
+    bottomBar?: boolean;
     children: ReactNode;
 }
 
 // The storefront chrome: skip link → (Bangla suggestion) → header + mega menu → main → footer →
 // mobile tab bar. Server-rendered; the only client islands are the mega menu's keyboard layer,
 // the language toggle's cookie and the suggestion banner.
-export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', children }: Props) {
+export async function PageShell({ locale, path, searchQuery, announcement = false, mobileSearch = false, top = 'section', bottomBar = false, children }: Props) {
     const t = getMessages(locale);
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
@@ -74,6 +76,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
                 <div className="mx-auto max-w-content">{children}</div>
             </main>
             <SiteFooter locale={locale} path={path} />
+            {bottomBar ? <div aria-hidden="true" className="h-19 shrink-0 lg:hidden" /> : null}
             <MobileNav locale={locale} path={path} />
         </>
     );

@@ -1,0 +1,53 @@
+{
+    "id": 101,
+    "slug": "lego-classic-creative-bricks",
+    "name": "LEGO Classic Creative Bricks 484 pcs",
+    "name_bn": "লেগো ক্লাসিক ক্রিয়েটিভ ব্রিকস 484 পিস",
+    "type": "variable",
+    "brand": { "name": "LEGO", "name_bn": "লেগো", "slug": "lego" },
+    "breadcrumbs": [
+        { "name": "Building Blocks", "name_bn": "বিল্ডিং ব্লক", "slug": "building-blocks" },
+        { "name": "LEGO", "name_bn": "লেগো", "slug": "lego" },
+        { "name": "LEGO Classic", "name_bn": null, "slug": "lego-classic" }
+    ],
+    "short_description": "484 colourful bricks in 35 shapes\nIncludes wheels, windows and eyes",
+    "short_description_bn": "35টি আকারের 484টি রঙিন ব্রিক\nচাকা, জানালা আর চোখ সহ",
+    "description": "A big tub of classic bricks in bright colours.",
+    "description_bn": "উজ্জ্বল রঙের ক্লাসিক ব্রিকের বড় টাব।",
+    "specifications": [{ "key": "Material", "value": "ABS plastic" }],
+    "age_min_months": 48,
+    "age_max_months": 144,
+    "gender": "unisex",
+    "is_educational": true,
+    "safety_note": "Contains small parts. Not for children under 3 years.",
+    "safety_note_bn": "ছোট অংশ আছে। 3 বছরের কম বয়সী শিশুর জন্য নয়।",
+    "warranty_months": null,
+    "rating_avg": "4.70",
+    "rating_count": 42,
+    "in_stock": true,
+    "default_variant_id": 503,
+    "images": [],
+    "attributes": [
+        {
+            "id": 1, "name": "Set", "name_bn": "সেট", "slug": "set", "type": "select",
+            "values": [
+                { "id": 11, "value": "90 pcs", "value_bn": "90 পিস", "slug": "90-pcs", "color_hex": null },
+                { "id": 12, "value": "484 pcs", "value_bn": "484 পিস", "slug": "484-pcs", "color_hex": null }
+            ]
+        },
+        {
+            "id": 2, "name": "Packaging", "name_bn": "প্যাকিং", "slug": "packaging", "type": "select",
+            "values": [
+                { "id": 21, "value": "Box", "value_bn": "বক্স", "slug": "box", "color_hex": null },
+                { "id": 22, "value": "Tub", "value_bn": "টাব", "slug": "tub", "color_hex": null }
+            ]
+        }
+    ],
+    "variants": [
+        { "id": 501, "sku": "TMB-LEG-CL90-B", "name": null, "name_bn": null, "attribute_value_ids": [11, 21], "price": "1450.00", "compare_at_price": null, "discount_percent": null, "saving": null, "weight_grams": 450, "is_default": false, "status": "active", "available": 12, "stock_state": "in_stock" },
+        { "id": 502, "sku": "TMB-LEG-CL90-T", "name": null, "name_bn": null, "attribute_value_ids": [11, 22], "price": "1450.00", "compare_at_price": null, "discount_percent": null, "saving": null, "weight_grams": 450, "is_default": false, "status": "active", "available": 8, "stock_state": "in_stock" },
+        { "id": 503, "sku": "TMB-LEG-CL484", "name": null, "name_bn": null, "attribute_value_ids": [12, 21], "price": "4250.00", "compare_at_price": "4990.00", "discount_percent": 14, "saving": "740.00", "weight_grams": 1450, "is_default": true, "status": "active", "available": 3, "stock_state": "low_stock" },
+        { "id": 504, "sku": "TMB-LEG-CL484-T", "name": null, "name_bn": null, "attribute_value_ids": [12, 22], "price": "4250.00", "compare_at_price": "4990.00", "discount_percent": 14, "saving": "740.00", "weight_grams": 1450, "is_default": false, "status": "active", "available": 0, "stock_state": "out_of_stock" }
+    ],
+    "_related": ["lego-city-fire-station", "duplo-animal-train", "hape-wooden-stacker", "mega-blocks-bucket"]
+}

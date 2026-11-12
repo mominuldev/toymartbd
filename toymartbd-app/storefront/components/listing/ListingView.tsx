@@ -1,6 +1,7 @@
 import './listing.css';
 
 import { Icon } from '@/components/icons/Icon';
+import { Reveal } from '@/components/motion/Reveal';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import type { Listing } from '@/lib/listing/response';
 import { activeCount, cleared, hrefFor, withCursor, type ListingScope, type ListingState } from '@/lib/listing/state';
@@ -182,9 +183,9 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
                         <>
                             <ul className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-3 md:gap-x-4 lg:gap-x-6 lg:gap-y-8 2xl:grid-cols-4">
                                 {products.map((product, i) => (
-                                    <li key={product.id}>
+                                    <Reveal as="li" key={product.id}>
                                         <ProductCard product={product} locale={locale} t={t} priority={i < 2} />
-                                    </li>
+                                    </Reveal>
                                 ))}
                             </ul>
                             <div className="mx-auto flex w-full max-w-90 flex-col items-center gap-3 pt-8 pb-12 lg:max-w-none">

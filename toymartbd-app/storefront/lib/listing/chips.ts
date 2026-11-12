@@ -6,6 +6,7 @@ import type { FilterKey } from './state';
 /** Chip text for one active filter ("Age: 2–4 years", "Brand: LEGO", "৳1,000–2,500"). */
 export function chipLabel(key: FilterKey, value: string, facets: Facets, locale: Locale, t: Messages['listing']): { text: string; lang?: 'en' } {
     if (key === 'age') return { text: format(t.chipAge, { label: (t.ageBands as Record<string, string>)[value] ?? value }) };
+    if (key === 'availability') return { text: t.chipInStock };
     if (key === 'gender') return { text: format(t.chipGender, { label: (t.genders as Record<string, string>)[value] ?? value }) };
     if (key === 'price') {
         const band = facets.price.find((o) => o.value === value);

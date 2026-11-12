@@ -19,11 +19,17 @@ export type VariantFields = {
     cost_price: string;
     wholesale_price: string;
     weight_grams: string;
+    /** Sent only when creating the product (an `opening_balance` movement); prohibited on update. */
+    opening_stock: string;
 };
+
+/** Read-only stock of a saved variant (needs inventory.view; absent otherwise). */
+export type VariantStock = NonNullable<ProductVariant['stock']>;
 
 export type MatrixRow = VariantFields & {
     /** The existing variant, or null for a combination the server has not created yet. */
     id: number | null;
+    stock: VariantStock | null;
     value_ids: number[];
     status: 'active' | 'archived';
 };
@@ -71,9 +77,11 @@ export type FormValues = {
     warranty_months: string;
     is_featured: boolean;
     simple: VariantFields;
+    /** The saved simple variant's stock, for the read-only display on edit. */
+    simple_stock: VariantStock | null;
 };
 
-export const variantFields: (keyof VariantFields)[] = ['sku', 'barcode', 'price', 'compare_at_price', 'cost_price', 'wholesale_price', 'weight_grams'];
+export const variantFields: (keyof VariantFields)[] = ['sku', 'barcode', 'price', 'compare_at_price', 'cost_price', 'wholesale_price', 'weight_grams', 'opening_stock'];
 
 export const generalFields = [
     'name', 'name_bn', 'slug', 'type', 'status', 'brand_id', 'category_ids', 'primary_category_id',
@@ -95,11 +103,12 @@ function variantToFields(variant?: ProductVariant): VariantFields {
         cost_price: variant?.cost_price ?? '',
         wholesale_price: variant?.wholesale_price ?? '',
         weight_grams: variant ? String(variant.weight_grams) : '',
+        opening_stock: '',
     };
 }
 
 export function emptyRow(valueIds: number[]): MatrixRow {
-    return { ...variantToFields(), id: null, value_ids: valueIds, status: 'active' };
+    return { ...variantToFields(), id: null, stock: null, value_ids: valueIds, status: 'active' };
 }
 
 const str = (value: string | number | null | undefined) => (value === null || value === undefined ? '' : String(value));
@@ -129,6 +138,7 @@ export function toForm(product?: Product): FormValues {
         warranty_months: str(product?.warranty_months),
         is_featured: product?.is_featured ?? false,
         simple: variantToFields(simple),
+        simple_stock: simple?.stock ?? null,
     };
 }
 
@@ -149,6 +159,7 @@ export function toMatrix(product?: Product): MatrixState {
         rows[comboKey(valueIds)] = {
             ...variantToFields(variant),
             id: variant.id,
+            stock: variant.stock ?? null,
             value_ids: valueIds,
             status: inMatrix ? variant.status : 'active',
         };
@@ -228,6 +239,8 @@ export function labelFor(valueIds: number[], attributes: Attribute[], bn: boolea
 
 export type BuildContext = {
     canCost: boolean;
+    /** inventory.adjust on a new product: send `opening_stock`. Never on update (the server refuses it). */
+    canOpeningStock?: boolean;
     combos: Combination[];
     matrix: MatrixState;
     relations: RelationRow[];
@@ -237,8 +250,9 @@ export type BuildContext = {
 const text = (value: string): string | null => (value.trim() === '' ? null : value.trim());
 const int = (value: string): number | null => (value.trim() === '' ? null : Number(value.trim()));
 
-function variantPayload(fields: VariantFields, canCost: boolean) {
+function variantPayload(fields: VariantFields, canCost: boolean, openingStock: boolean) {
     return {
+        ...(openingStock ? { opening_stock: int(fields.opening_stock) } : {}),
         sku: text(fields.sku),
         barcode: text(fields.barcode),
         price: text(fields.price),
@@ -257,6 +271,7 @@ function variantPayload(fields: VariantFields, canCost: boolean) {
  */
 export function toPayload(values: FormValues, ctx: BuildContext): ProductInput {
     const categories = values.category_ids;
+    const opening = ctx.product === undefined && ctx.canOpeningStock === true;
 
     return {
         name: values.name.trim(),
@@ -285,10 +300,10 @@ export function toPayload(values: FormValues, ctx: BuildContext): ProductInput {
         options: values.type === 'variable' ? ctx.matrix.options.filter((o) => o.value_ids.length > 0) : [],
         variants:
             values.type === 'simple'
-                ? [variantPayload(values.simple, ctx.canCost)]
+                ? [variantPayload(values.simple, ctx.canCost, opening)]
                 : ctx.combos.map((combo) => {
                       const row = ctx.matrix.rows[combo.key] ?? emptyRow(combo.valueIds);
-                      return { attribute_value_ids: combo.valueIds, ...variantPayload(row, ctx.canCost), status: row.status };
+                      return { attribute_value_ids: combo.valueIds, ...variantPayload(row, ctx.canCost, opening), status: row.status };
                   }),
         relations: ctx.relations
             .filter((r) => !r.is_auto)

@@ -10,9 +10,11 @@ import type { ProductCard as Card } from '@/lib/listing/response';
 // struck was-price, then "Buy now" + the cart icon button.
 //
 // Not wired yet, by design: there is no cart or wishlist (later batches), so "Buy now" links to the
-// product page and the cart / wishlist controls render disabled with their final look. Stock and
-// free-delivery pills need inventory and delivery data that do not exist yet. Money is shown
-// exactly as the API sends it (rule 1) — `discount_percent` is computed by the API.
+// product page and the cart / wishlist controls render disabled with their final look. Out of stock
+// (Figma 100:741, from the API's `in_stock`): the photo fades to 60%, an "Out of stock" pill joins
+// the badge stack, and the actions become one outline "Notify me" (to the product page until
+// back-in-stock alerts exist). "Only N left" and the free-delivery pill need per-card data the
+// listing does not carry yet. Money is shown exactly as the API sends it (rule 1).
 
 interface Props {
     product: Card;
@@ -39,11 +41,12 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
     const alt = image ? ((locale === 'bn' ? image.alt_bn : image.alt) ?? name) : '';
     const price = formatPrice(product.price);
     const ranged = !sameAmount(product.price, product.price_max);
+    const soldOut = product.in_stock === false;
 
     return (
         <article className="flex h-full flex-col rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-1.5 pt-2 pb-3 shadow-e1 sm:px-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-xs bg-tile-pink">
-                <a href={href} tabIndex={-1} className="absolute inset-0">
+                <a href={href} tabIndex={-1} className={`absolute inset-0 ${soldOut ? 'opacity-60' : ''}`}>
                     {image ? (
                         <picture>
                             {image.srcset_avif ? <source type="image/avif" srcSet={image.srcset_avif} sizes="(min-width: 64rem) 19rem, 50vw" /> : null}
@@ -66,11 +69,19 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         </span>
                     )}
                 </a>
-                {product.discount_percent ? (
+                {product.discount_percent || soldOut ? (
                     <div className="pointer-events-none absolute top-2.5 left-2 flex flex-col items-start gap-1">
-                        <span className="t-badge inline-flex h-6 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-fg-on-brand">
-                            {format(t.discount, { percent: String(product.discount_percent) })}
-                        </span>
+                        {product.discount_percent ? (
+                            <span className="t-badge inline-flex h-6 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-fg-on-brand">
+                                {format(t.discount, { percent: String(product.discount_percent) })}
+                            </span>
+                        ) : null}
+                        {soldOut ? (
+                            <span className="t-caption-strong inline-flex h-5 items-center gap-2 rounded-full bg-surface px-2 text-fg-tertiary">
+                                <span aria-hidden="true" className="size-2 rounded-full bg-status-out-of-stock" />
+                                {t.outOfStock}
+                            </span>
+                        ) : null}
                     </div>
                 ) : null}
                 <button
@@ -89,13 +100,13 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                 ) : null}
             </div>
             <div className="flex w-full grow flex-col gap-1.5 pt-3 sm:px-1">
-                <h3 className="t-card-title line-clamp-2 h-[2lh] text-fg-primary" lang={nameLang}>
+                <h3 className={`t-card-title line-clamp-2 h-[2lh] ${soldOut ? 'text-fg-secondary' : 'text-fg-primary'}`} lang={nameLang}>
                     <a href={href} className="rounded-xs hover:text-fg-link">
                         {name}
                     </a>
                 </h3>
                 <p className="flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
-                    <span className="t-price text-fg-discount">{ranged ? format(t.from, { price }) : price}</span>
+                    <span className={`t-price ${soldOut ? 'text-fg-secondary' : 'text-fg-discount'}`}>{ranged ? format(t.from, { price }) : price}</span>
                     {product.compare_at_price ? (
                         <>
                             <span className="sr-only">{format(t.was, { price: formatPrice(product.compare_at_price) })}</span>
@@ -106,6 +117,16 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                     ) : null}
                 </p>
                 <div className="mt-auto flex items-center gap-1.5 pt-2 sm:gap-2">
+                    {soldOut ? (
+                        <a
+                            href={href}
+                            className="t-button-small relative flex h-control-sm min-w-24 grow items-center justify-center gap-3 whitespace-nowrap rounded-full border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface px-4 text-fg-brand"
+                        >
+                            <Icon name="bellFill" className="size-icon-sm" />
+                            {t.notifyMe}
+                        </a>
+                    ) : (
+                    <>
                     <a
                         href={href}
                         className="t-chip relative flex h-control-sm min-w-0 grow items-center justify-center whitespace-nowrap rounded-full bg-(image:--tm-gradient-button-primary) px-2 sm:min-w-24 sm:px-4 text-fg-on-brand shadow-[inset_0_var(--tm-border-width-control)_0_0_color-mix(in_srgb,var(--tm-color-bg-surface)_28%,transparent)] "
@@ -120,6 +141,8 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                     >
                         <Icon name="shoppingCartFill" className="size-icon-sm lg:size-icon-md" />
                     </button>
+                    </>
+                    )}
                 </div>
             </div>
         </article>

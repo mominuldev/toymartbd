@@ -24,6 +24,8 @@ export interface Facets {
     age: FacetOption[];
     price: FacetOption[];
     gender: FacetOption[];
+    /** One option, `in_stock`, from the API's `availability` facet ({count, selected}). */
+    availability: FacetOption[];
 }
 
 export interface Listing {
@@ -50,6 +52,12 @@ function options(raw: unknown): FacetOption[] {
     });
 }
 
+function availabilityOptions(raw: unknown): FacetOption[] {
+    const o = obj(raw);
+    if (!o || typeof o.count !== 'number') return [];
+    return [{ value: 'in_stock', label: null, labelBn: null, count: o.count, selected: o.selected === true }];
+}
+
 function isCard(v: unknown): v is ProductCard {
     const o = obj(v);
     return !!o && typeof o.id === 'number' && typeof o.slug === 'string' && typeof o.name === 'string' && typeof o.price === 'string';
@@ -70,6 +78,7 @@ export function normalizeListing(body: unknown): Listing {
             age: options(facets.age_band),
             price: options(facets.price_band),
             gender: options(facets.gender),
+            availability: availabilityOptions(facets.availability),
         },
     };
 }

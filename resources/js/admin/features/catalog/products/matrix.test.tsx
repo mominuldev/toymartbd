@@ -176,4 +176,57 @@ describe('VariantMatrixEditor', () => {
         const variants = sentBody(calls, 'PUT')!.variants as Record<string, unknown>[];
         expect(variants.map((v) => v.price)).toEqual(['1250.00', '1250.00', '1250.00', '1250.00']);
     });
+
+    it('takes opening stock per row on create (inventory.adjust) and sends it with the row', async () => {
+        const calls = productApi({ ...owner, permissions: [...owner.permissions, 'inventory.adjust'] });
+        renderApp('/products/new');
+
+        fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Racing Car' } });
+        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
+        await buildTwelve();
+        expect(screen.getByRole('columnheader', { name: 'Opening stock' })).toBeTruthy();
+        fireEvent.change(screen.getByLabelText('Opening stock — Blue / Medium'), { target: { value: '7' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+        await waitFor(() => expect(sentBody(calls, 'POST')).not.toBeNull());
+        const variants = sentBody(calls, 'POST')!.variants as Record<string, unknown>[];
+        expect(variants[5]).toMatchObject({ attribute_value_ids: [11, 21], opening_stock: 7 });
+        expect(variants[0]).toMatchObject({ opening_stock: null });
+    });
+
+    it('without inventory.adjust there is no opening-stock column and nothing is sent', async () => {
+        const calls = productApi(owner);
+        renderApp('/products/new');
+
+        fireEvent.change(await screen.findByLabelText(/^Name \(English\)/), { target: { value: 'Racing Car' } });
+        fireEvent.click(await screen.findByRole('checkbox', { name: 'Building & Construction' }));
+        await buildTwelve();
+        expect(screen.queryByRole('columnheader', { name: 'Opening stock' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+        await waitFor(() => expect(sentBody(calls, 'POST')).not.toBeNull());
+        const variants = sentBody(calls, 'POST')!.variants as Record<string, unknown>[];
+        expect(variants.every((v) => !('opening_stock' in v))).toBe(true);
+    });
+
+    it('shows saved stock read-only on edit and never sends opening stock', async () => {
+        const stocked = { ...product, variants: product.variants.map((v, i) => ({ ...v, stock: { on_hand: 10 + i, reserved: i, available: 10 } })) };
+        const calls = productApi({ ...owner, permissions: [...owner.permissions, 'inventory.view', 'inventory.adjust'] }, (url, init) => {
+            if (url.endsWith('/products/42') && (!init?.method || init.method === 'GET')) return { status: 200, body: stocked };
+            if (url.endsWith('/products/42') && init?.method === 'PUT') return { status: 200, body: stocked };
+            return undefined;
+        });
+        renderApp('/products/42?tab=variants');
+
+        await screen.findAllByRole('switch');
+        expect(screen.getByRole('columnheader', { name: 'Stock' })).toBeTruthy();
+        expect(screen.queryByLabelText(/^Opening stock — /)).toBeNull();
+        expect(screen.getByText('10 available · 11 on hand · 1 reserved')).toBeTruthy();
+        expect(screen.getByText(/total stock 40/)).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await waitFor(() => expect(sentBody(calls, 'PUT')).not.toBeNull());
+        const variants = sentBody(calls, 'PUT')!.variants as Record<string, unknown>[];
+        expect(variants.every((v) => !('opening_stock' in v))).toBe(true);
+    });
 });

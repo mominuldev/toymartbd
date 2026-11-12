@@ -12,6 +12,9 @@ use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductRelation;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Inventory\Models\StockLocation;
+use App\Domain\Inventory\Models\StockMovement;
 use App\Models\Enums\Role;
 use App\Models\User;
 use App\Policies\BrandPolicy;
@@ -20,6 +23,7 @@ use App\Policies\ProductAttributePolicy;
 use App\Policies\ProductAttributeValuePolicy;
 use App\Policies\ProductPartPolicy;
 use App\Policies\ProductPolicy;
+use App\Policies\StockPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -42,6 +46,9 @@ class AuthServiceProvider extends ServiceProvider
         ProductVariant::class => ProductPartPolicy::class,
         ProductImage::class => ProductPartPolicy::class,
         ProductRelation::class => ProductPartPolicy::class,
+        StockLevel::class => StockPolicy::class,
+        StockMovement::class => StockPolicy::class,
+        StockLocation::class => StockPolicy::class,
     ];
 
     /**

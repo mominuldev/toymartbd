@@ -148,7 +148,12 @@ export interface paths {
          */
         get: operations["v1.admin.products.index"];
         put?: never;
-        /** `POST /products` — needs catalog.create (and catalog.view_cost to send `cost_price`) */
+        /**
+         * `POST /products` — needs catalog.create (and catalog.view_cost to send `cost_price`).
+         *     `variants[i].opening_stock` records each variant's opening on-hand as an
+         *     `opening_balance` stock movement in the same transaction; above zero it needs
+         *     inventory.adjust
+         */
         post: operations["v1.admin.products.store"];
         delete?: never;
         options?: never;
@@ -535,10 +540,154 @@ export interface paths {
          *     `meta.facets` (each facet ignores its own filter) and the result-set size in
          *     `meta.total`
          * @description Lists are comma-separated. Unlisted parameters, filters or sorts and
-         *     malformed values are a 400. Availability ("in stock") arrives with the
-         *     inventory tables (P4-INV).
+         *     malformed values are a 400. Each card carries `in_stock`; sold-out products
+         *     stay listed unless `filter[availability]=in_stock`.
          */
         get: operations["v1.storefront.products.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /search` — products matching `q` (typo-tolerant; Bangla, Banglish and English
+         *     synonyms), 24 per page, as listing cards in relevance order
+         * @description `filter[...]` takes exactly the listing's filters (GET /products) with the same
+         *     semantics; `meta.facets` has the listing's shape and disjunctive counts.
+         *     `meta.related_searches` are category refinements of the query. On zero results,
+         *     `meta.suggestions` offers corrected queries that do return products and
+         *     `meta.best_sellers` a fallback row.
+         *
+         *     When Meilisearch is unavailable the endpoint still answers 200 from a simple database
+         *     name match with `meta.degraded: true` (no facets, no typo tolerance).
+         */
+        get: operations["v1.storefront.search.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/search/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /search/suggest` — header autocomplete: up to 5 products, 3 categories and 3
+         *     brands for a partial query (2+ characters), and the total for "See all N results".
+         *     Rate-limited per client (`throttle:search-suggest`)
+         */
+        get: operations["v1.storefront.search.suggest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/delivery-quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /delivery-quote` — the charge, free-delivery progress, delivery window and
+         *     cut-off for one destination and (optionally) one variant × quantity. Not cached:
+         *     the window moves at the cut-off and the free-delivery figure follows the price
+         */
+        get: operations["v1.storefront.delivery.quote"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/delivery-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /delivery-rates` — the published rate table (zone charges, ETAs, free-delivery threshold) */
+        get: operations["v1.storefront.delivery.rates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /districts` — all 64 districts, Dhaka division first, then by division and district name */
+        get: operations["v1.storefront.districts.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/districts/{district}/upazilas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /districts/{district}/upazilas` — the district's upazilas by name, each with `serviceable` */
+        get: operations["v1.storefront.districts.upazilas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/products/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /products/{slug}` — one live product (active, published, with an active
+         *     variant): content in both languages, breadcrumbs, images, variant axes, every
+         *     active variant with its price, discount, saving and stock, and up to 8 in-stock
+         *     related product cards — curated `related` pairs first, then the same category
+         * @description Slugs are ASCII and shared by both locales (rule 37).
+         */
+        get: operations["v1.storefront.products.show"];
         put?: never;
         post?: never;
         delete?: never;
@@ -690,6 +839,85 @@ export interface components {
             y: number;
             width: number;
             height: number;
+        };
+        /** DeliveryQuote */
+        DeliveryQuote: {
+            serviceable: boolean;
+            /** @enum {string|null} */
+            zone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka" | null;
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            };
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            /** @description The district alone does not settle the charge: ask for the upazila. */
+            upazila_required: boolean;
+            courier: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            /** @description The goods value the quote is for (variant price × quantity). */
+            subtotal: string;
+            weight_grams: number;
+            base_charge: string | null;
+            weight_surcharge: string | null;
+            /** @description What the customer pays for delivery — "0.00" when free. */
+            charge: string | null;
+            /**
+             * @description base_charge + weight_surcharge: the charge before any free delivery (struck
+             *     through when free).
+             */
+            standard_charge: string | null;
+            /**
+             * @description `progress_percent` is the subtotal as a whole percent of the threshold (0–100,
+             *     rounded down) for the free-delivery meter; null when there is no threshold.
+             */
+            free_shipping: {
+                applied: boolean;
+                /** @enum {string|null} */
+                reason: "threshold" | "promotion" | null;
+                threshold: string | null;
+                remaining: string | null;
+                progress_percent: number | null;
+            };
+            eta: {
+                dispatch_date: string;
+                earliest: string;
+                latest: string;
+                min_days: number;
+                max_days: number;
+                cutoff_time: string;
+                cutoff_passed: boolean;
+                timezone: string;
+            } | null;
+            /** @description Advance payment a COD order of this value needs in this zone, or null. */
+            cod_advance: string | null;
+        };
+        /** DeliveryRates */
+        DeliveryRates: {
+            courier: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            zones: {
+                /** @enum {string} */
+                zone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka";
+                charge: string;
+                min_days: number;
+                max_days: number;
+            }[];
+            free_shipping_threshold: string | null;
+            included_weight_grams: number;
+            per_kg_charge: string;
+            cutoff_time: string;
+            timezone: string;
         };
         /**
          * Gender
@@ -916,6 +1144,16 @@ export interface components {
             cost_price?: string;
             wholesale_price: string | null;
             weight_grams: number;
+            /**
+             * @description Current stock at all locations; only with inventory.view. Read-only here:
+             *     opening stock is set on create (`opening_stock`), later changes are
+             *     stock adjustments (Phase 5).
+             */
+            stock?: {
+                on_hand: number;
+                reserved: number;
+                available: number;
+            };
             is_default: boolean;
             position: number;
             /** @enum {string} */
@@ -1040,6 +1278,7 @@ export interface components {
          * @description `POST /products` — needs catalog.create. Setting the initial prices is part of
          *     creating; a `cost_price` anywhere in the document needs catalog.view_cost.
          *     When `slug` is omitted it is generated from `name` (or `name_bn`).
+         *     `variants[i].opening_stock` > 0 also needs inventory.adjust.
          */
         StoreProductRequest: {
             name: string;
@@ -1089,6 +1328,11 @@ export interface components {
                 wholesale_price?: string | null;
                 weight_grams?: number | null;
                 status?: components["schemas"]["VariantStatus"] | null;
+                /**
+                 * @description Opening stock is set once, at creation (an `opening_balance` movement). After
+                 *     that, stock changes only through purchases, sales and adjustments (Phase 5).
+                 */
+                opening_stock?: number | null;
             }[];
             relations?: {
                 related_product_id: number;
@@ -1134,6 +1378,112 @@ export interface components {
             image_url: string | null;
             children: components["schemas"]["StorefrontCategoryNode"][];
         };
+        /** StorefrontDistrict */
+        StorefrontDistrict: {
+            id: number;
+            name: string;
+            name_bn: string;
+            division: {
+                id: number;
+                name: string;
+                name_bn: string;
+            };
+            upazila_required: string;
+            city_option: boolean;
+        };
+        /** StorefrontProduct */
+        StorefrontProduct: {
+            id: number;
+            slug: string;
+            name: string;
+            name_bn: string | null;
+            /** @enum {string} */
+            type: "simple" | "variable";
+            brand: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            } | null;
+            /**
+             * @description The primary category's path, root first, ending with the primary category.
+             *     Empty when that category is archived.
+             */
+            breadcrumbs: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            }[];
+            short_description: string | null;
+            short_description_bn: string | null;
+            description: string | null;
+            description_bn: string | null;
+            /**
+             * @description Free-form key/value pairs from the product's specifications, in their stored
+             *     order; empty values are dropped.
+             */
+            specifications: {
+                key: string;
+                value: string;
+            }[];
+            age_min_months: number | null;
+            age_max_months: number | null;
+            /** @enum {string|null} */
+            gender: "boys" | "girls" | "unisex" | null;
+            is_educational: boolean;
+            safety_note: string | null;
+            safety_note_bn: string | null;
+            warranty_months: number | null;
+            rating_avg: string | null;
+            rating_count: number;
+            /** @description True when at least one variant has stock. */
+            in_stock: boolean;
+            default_variant_id: number | null;
+            images: {
+                id: number;
+                url: string;
+                thumb_url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            }[];
+            attributes: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+                /** @enum {string} */
+                type: "select" | "color" | "text";
+                values: {
+                    id: number;
+                    value: string;
+                    value_bn: string | null;
+                    slug: string;
+                    color_hex: string | null;
+                }[];
+            }[];
+            variants: {
+                id: number;
+                sku: string;
+                name: string | null;
+                name_bn: string | null;
+                attribute_value_ids: number[];
+                price: string;
+                compare_at_price: string | null;
+                discount_percent: number | null;
+                saving: string | null;
+                weight_grams: number;
+                is_default: boolean;
+                /** @constant */
+                status: "active";
+                available: number;
+                /** @enum {string} */
+                stock_state: "in_stock" | "low_stock" | "out_of_stock";
+            }[];
+            related: components["schemas"]["StorefrontProductCard"][];
+        };
         /** StorefrontProductCard */
         StorefrontProductCard: {
             id: number;
@@ -1155,6 +1505,11 @@ export interface components {
             rating_count: number;
             is_featured: boolean;
             variant_count: number;
+            /**
+             * @description An active variant has available stock (on_hand − reserved > 0). Sold-out
+             *     cards stay listed and show their out-of-stock state.
+             */
+            in_stock: boolean;
             image: {
                 url: string;
                 srcset_webp: string | null;
@@ -1164,6 +1519,33 @@ export interface components {
                 width: number | null;
                 height: number | null;
             } | null;
+        };
+        /** StorefrontSearchSuggestions */
+        StorefrontSearchSuggestions: {
+            query: string;
+            products: components["schemas"]["StorefrontProductCard"][];
+            categories: {
+                slug: string;
+                name: string;
+                name_bn: string | null;
+                icon: string | null;
+                count: number | null;
+            }[];
+            brands: {
+                slug: string;
+                name: string;
+                name_bn: string | null;
+                count: number | null;
+            }[];
+            total: string;
+            degraded: string;
+        };
+        /** StorefrontUpazila */
+        StorefrontUpazila: {
+            id: number;
+            name: string;
+            name_bn: string;
+            serviceable: boolean;
         };
         /**
          * UpdateAttributeRequest
@@ -1289,6 +1671,11 @@ export interface components {
                 wholesale_price?: string | null;
                 weight_grams?: number | null;
                 status?: components["schemas"]["VariantStatus"] | null;
+                /**
+                 * @description Opening stock is set once, at creation (an `opening_balance` movement). After
+                 *     that, stock changes only through purchases, sales and adjustments (Phase 5).
+                 */
+                opening_stock?: number | null;
             }[];
             relations?: {
                 related_product_id: number;
@@ -1323,8 +1710,8 @@ export interface components {
                 "application/problem+json": components["schemas"]["ProblemDetails"];
             };
         };
-        /** @description Authorization error */
-        AuthorizationException: {
+        /** @description Not found */
+        ModelNotFoundException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1332,8 +1719,8 @@ export interface components {
                 "application/problem+json": components["schemas"]["ProblemDetails"];
             };
         };
-        /** @description Not found */
-        ModelNotFoundException: {
+        /** @description Authorization error */
+        AuthorizationException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1742,7 +2129,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            /** @description Missing catalog.create, or `cost_price` sent without catalog.view_cost (`forbidden`) */
+            /** @description Missing catalog.create, `cost_price` sent without catalog.view_cost, or `opening_stock` without inventory.adjust (`forbidden`) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2771,6 +3158,8 @@ export interface operations {
                 "filter[rating]"?: number;
                 /** @description Only educational (true) or only non-educational (false) products. */
                 "filter[educational]"?: "true" | "false" | "1" | "0";
+                /** @description Only products with an active variant in stock (available = on_hand − reserved > 0). */
+                "filter[availability]"?: "in_stock";
                 /** @description Listing order. */
                 sort?: "featured" | "newest" | "price_asc" | "price_desc" | "rating" | "name";
                 /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
@@ -2858,6 +3247,10 @@ export interface operations {
                                     count: number;
                                     selected: boolean;
                                 };
+                                availability: {
+                                    count: number;
+                                    selected: boolean;
+                                };
                             };
                         };
                     };
@@ -2875,6 +3268,397 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             /** @description The token lacks the `storefront:read` ability */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.search.index": {
+        parameters: {
+            query: {
+                /**
+                 * @description Search text, 1–100 characters.
+                 * @example gari
+                 */
+                q: string;
+                /** @description Category slug; includes every active descendant category. */
+                "filter[category]"?: string;
+                /** @description Brand slugs, comma-separated (any of). */
+                "filter[brand]"?: string;
+                /** @description A child's age in months (0–216). */
+                "filter[age]"?: number;
+                /** @description Age bands, comma-separated: 0-12, 12-24, 24-48, 48-72, 72-96, 96-144, 144-. */
+                "filter[age_band]"?: string;
+                /** @description Lowest listing price, inclusive; a decimal string. */
+                "filter[price_min]"?: string;
+                /** @description Highest listing price, inclusive; a decimal string. */
+                "filter[price_max]"?: string;
+                /** @description Price bands, comma-separated: 0-500, 500-1000, 1000-2500, 2500-5000, 5000-. */
+                "filter[price_band]"?: string;
+                /** @description Comma-separated: unisex, boys, girls. */
+                "filter[gender]"?: string;
+                /** @description Minimum average rating, 1–5. */
+                "filter[rating]"?: number;
+                /** @description Only educational (true) or non-educational (false) products. */
+                "filter[educational]"?: "true" | "false" | "1" | "0";
+                /** @description Result order. */
+                sort?: "relevance" | "featured" | "newest" | "price_asc" | "price_desc" | "rating" | "name";
+                /** @description 1-based page; at most 41 (Meilisearch returns the first 1000 hits). */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `StorefrontProductCard` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontProductCard"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                            query: string;
+                            /** @enum {string} */
+                            sort: "relevance" | "featured" | "newest" | "price_asc" | "price_desc" | "rating" | "name";
+                            degraded: boolean;
+                            facets: {
+                                category: string[];
+                                brand: string[];
+                                age_band: unknown[];
+                                price_band: unknown[];
+                                gender: unknown[];
+                                rating: unknown[];
+                                educational: {
+                                    count: unknown;
+                                    selected: boolean;
+                                };
+                            } | {
+                                category: string[];
+                                brand: string[];
+                                age_band: string[];
+                                price_band: string[];
+                                gender: string[];
+                                rating: string[];
+                                educational: {
+                                    /** @constant */
+                                    count: 0;
+                                    selected: boolean;
+                                };
+                            };
+                            related_searches: {
+                                category: string;
+                                label: string;
+                                label_bn: string | null;
+                                count: number;
+                                selected: boolean;
+                            }[];
+                            suggestions: {
+                                query: string;
+                                count: number;
+                            }[];
+                            best_sellers: components["schemas"]["StorefrontProductCard"][];
+                        };
+                    };
+                };
+            };
+            /** @description Missing or over-long `q`, an unlisted parameter, filter or sort, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.search.suggest": {
+        parameters: {
+            query: {
+                /**
+                 * @description Partial search text, 2–100 characters.
+                 * @example puz
+                 */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontSearchSuggestions` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontSearchSuggestions"];
+                };
+            };
+            /** @description Missing, too short or over-long `q`, or an unlisted parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many suggestion requests (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.delivery.quote": {
+        parameters: {
+            query: {
+                district_id: number;
+                upazila_id?: number | null;
+                variant_id?: number | null;
+                quantity?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `DeliveryQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description No active courier provider is configured (`service-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.delivery.rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `DeliveryRates` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryRates"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No active courier provider is configured (`service-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.districts.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontDistrict` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontDistrict"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.districts.upazilas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The district ID */
+                district: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontUpazila` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontUpazila"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No district has this id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.products.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontProduct` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontProduct"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No live product has this slug (unknown, draft, archived, scheduled or without an active variant) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

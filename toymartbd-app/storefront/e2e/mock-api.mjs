@@ -7,6 +7,8 @@
 //   GET  /api/v1/storefront/products        → P4-CAT-13 listing over fixtures/products.json: the same
 //        filter allowlist (unlisted → 400), sorts, disjunctive facets and an opaque cursor — but
 //        MOCK_PER_PAGE (4) per page so "load more" is reachable with a dozen fixtures
+//   GET  /api/v1/storefront/products/{slug} → StorefrontProduct (fixtures/product-detail.json, P4-STO-05;
+//        `related` are the listing cards named in its `_related`) or 404 problem+json
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
 //   GET  /__control/hits                    → {path: count} of authorised API reads
@@ -22,6 +24,7 @@ if (!expectedToken) throw new Error('EXPECTED_TOKEN is required');
 const fixtures = JSON.parse(readFileSync(new URL('./fixtures/brands.json', import.meta.url), 'utf8')).data;
 const categoryTree = JSON.parse(readFileSync(new URL('./fixtures/categories.json', import.meta.url), 'utf8'));
 const productFixtures = JSON.parse(readFileSync(new URL('./fixtures/products.json', import.meta.url), 'utf8')).data;
+const productDetail = JSON.parse(readFileSync(new URL('./fixtures/product-detail.json', import.meta.url), 'utf8'));
 let brands = structuredClone(fixtures);
 let hits = {};
 
@@ -176,6 +179,13 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     if (url.pathname === '/api/v1/storefront/products') return listProducts(res, url.searchParams);
+    const product = url.pathname.match(/^\/api\/v1\/storefront\/products\/([^/]+)$/);
+    if (product) {
+        if (decodeURIComponent(product[1]) !== productDetail.slug) return problem(res, 404, 'Not Found', `No product "${product[1]}".`);
+        const { _related, ...detail } = productDetail;
+        const related = _related.map((slug) => productFixtures.find((p) => p.slug === slug)).filter(Boolean).map(({ _categories, _gender, _published_at, ...card }) => card);
+        return send(res, 200, { ...detail, related });
+    }
     const category = url.pathname.match(/^\/api\/v1\/storefront\/categories\/([^/]+)$/);
     if (category) {
         const found = findCategory(categoryTree.data, decodeURIComponent(category[1]), []);

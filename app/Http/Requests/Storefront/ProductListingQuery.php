@@ -29,8 +29,11 @@ final class ProductListingQuery
 
     /** @var list<string> */
     public const array FILTERS = [
-        'category', 'brand', 'age', 'age_band', 'price_min', 'price_max', 'price_band', 'gender', 'rating', 'educational',
+        'category', 'brand', 'age', 'age_band', 'price_min', 'price_max', 'price_band', 'gender', 'rating', 'educational', 'availability',
     ];
+
+    /** `filter[availability]` values. Only `in_stock` today; pre-order arrives with its dates. */
+    public const string IN_STOCK = 'in_stock';
 
     public const int MAX_LIST = 20;
 
@@ -103,6 +106,7 @@ final class ProductListingQuery
                 genders: self::enums($filter, 'gender', Gender::class),
                 minRating: self::integer($filter, 'rating', 1, 5),
                 educational: self::boolean($filter, 'educational'),
+                inStock: self::availability($filter),
             ),
             $sort,
             $cursor,
@@ -208,6 +212,17 @@ final class ProductListingQuery
         }
 
         return bcadd($value, '0', 2);
+    }
+
+    /** @param  array<array-key, mixed>  $filter */
+    private static function availability(array $filter): ?bool
+    {
+        $value = self::scalar($filter, 'availability');
+        if ($value !== null && $value !== self::IN_STOCK) {
+            throw new BadRequestHttpException('filter[availability] must be: '.self::IN_STOCK.'.');
+        }
+
+        return $value === null ? null : true;
     }
 
     /** @param  array<array-key, mixed>  $filter */

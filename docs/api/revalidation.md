@@ -39,7 +39,8 @@ X-Revalidate-Signature: sha256=<hex>          (HMAC-SHA256 over "<timestamp>.<ra
 | `brand:{slug}` | one brand page |
 | `categories` | the category tree (mega menu, `GET /categories/tree`) and any category list; sent on every category create, edit, move or archive |
 | `category:{slug}` | one category page. Sent for the changed category, its old slug after a slug change, and — after a move, rename or slug change — every descendant, whose breadcrumbs changed with it. Category slugs are ≤ 91 characters so the tag fits the 100-character limit |
-| `products` | any product list or grid (listings, home rails, search results); sent on every product create, edit, variant/price change or archive |
-| `product:{slug}` | one product page; after a slug change the old slug is sent too. Product slugs are ≤ 92 characters so the tag fits the 100-character limit |
+| `products` | any product list or grid (listings, home rails, search results); sent on every product create, edit, variant/price change or archive, and on every stock change (`StockLevelChanged`: cards carry `in_stock`, listings an availability facet) |
+| `product:{slug}` | one product page; after a slug change the old slug is sent too; also on every stock change of one of its variants. Product slugs are ≤ 92 characters so the tag fits the 100-character limit |
+| `delivery` | delivery reference data — `GET /delivery-rates`, `/districts`, `/districts/{id}/upazilas` (P4-STO-06). Nothing sends it yet: there is no admin editor for the rate card or `delivery.*` settings; the editor (Phase 6 courier settings) must send it on save |
 
 New tags are added here first, then on both sides.

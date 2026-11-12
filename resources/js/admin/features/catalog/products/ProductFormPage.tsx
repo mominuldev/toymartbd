@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
-import { CopyIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, CopyIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeProductRequestSchema, updateProductRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -36,7 +36,7 @@ import {
     type VariantFields,
 } from './document';
 import { ProductStatusChip, TAKA } from './parts';
-import { VariantMatrixEditor } from './VariantMatrixEditor';
+import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
 import { RelationsEditor } from './RelationsEditor';
 import { ImagesPanel } from './ImagesPanel';
 
@@ -104,6 +104,9 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const canCost = can(me, 'catalog.view_cost');
     // Setting the first prices is part of creating; changing them later needs update_price.
     const canPrice = id === null || can(me, 'catalog.update_price');
+    // Stock: opening stock on create (inventory.adjust), read-only afterwards (inventory.view).
+    const simpleStock = toForm(product).simple_stock;
+    const stockMode: StockMode = id === null ? (can(me, 'inventory.adjust') ? 'opening' : 'hidden') : can(me, 'inventory.view') ? 'readonly' : 'hidden';
 
     const initialMatrix = useMemo(() => toMatrix(product), [product]);
     const initialRelations = useMemo(() => toRelations(product), [product]);
@@ -179,7 +182,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         clearErrors();
         setPlaced(noErrors);
         const values = getValues();
-        const payload = toPayload(values, { canCost, combos, matrix, relations, product });
+        const payload = toPayload(values, { canCost, canOpeningStock: stockMode === 'opening', combos, matrix, relations, product });
 
         // Shape check with the schema generated from the API's FormRequest (rule 27).
         const schema = id === null ? storeProductRequestSchema : updateProductRequestSchema;
@@ -494,6 +497,21 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                         <Field label={t('products.field.weight')} error={errorOf('simple.weight_grams')} optional>
                                             {(ids) => <input {...inputProps(ids)} inputMode="numeric" className={`${controlHeight.md} ${inputClass} text-end tabular`} {...register('simple.weight_grams')} />}
                                         </Field>
+                                        {stockMode === 'opening' && (
+                                            <Field label={t('products.field.openingStock')} hint={t('products.field.openingStockHint')} error={errorOf('simple.opening_stock')} optional>
+                                                {(ids) => <input {...inputProps(ids)} inputMode="numeric" className={`${controlHeight.md} ${inputClass} text-end tabular`} {...register('simple.opening_stock')} />}
+                                            </Field>
+                                        )}
+                                        {stockMode === 'readonly' && (
+                                            <div className="flex flex-col gap-1">
+                                                <span className="t-admin-body-strong text-fg-primary">{t('products.field.stock')}</span>
+                                                <p className="flex items-center gap-1 t-admin-num tabular text-fg-primary">
+                                                    {simpleStock ? t('products.stock.summary', { available: simpleStock.available, onHand: simpleStock.on_hand, reserved: simpleStock.reserved }) : '—'}
+                                                    <ArrowSquareOutIcon size={12} aria-hidden className="text-fg-tertiary" />
+                                                </p>
+                                                <p className="t-admin-caption text-fg-tertiary">{t('products.stock.readOnly')}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </FormSection>
                             )}
@@ -511,6 +529,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                         matrixErrors={placed.matrix}
                                         canCost={canCost}
                                         canPrice={canPrice}
+                                        stockMode={stockMode}
                                         disabled={!editable || save.isPending}
                                     />
                                 ))}

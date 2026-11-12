@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Catalog\Actions\ArchiveProduct;
-use App\Domain\Catalog\Actions\CreateProduct;
 use App\Domain\Catalog\Actions\DuplicateProduct;
 use App\Domain\Catalog\Actions\UpdateProduct;
 use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Models\Product;
+use App\Domain\Inventory\Actions\CreateProductWithOpeningStock;
+use App\Domain\Inventory\Models\StockLevel;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Product\DuplicateProductRequest;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
@@ -111,11 +112,20 @@ final class ProductController extends ApiController
         return ProductListItemResource::collection($products);
     }
 
-    /** `POST /products` — needs catalog.create (and catalog.view_cost to send `cost_price`). */
-    #[OpenApiResponse(403, 'Missing catalog.create, or `cost_price` sent without catalog.view_cost (`forbidden`)')]
-    public function store(StoreProductRequest $request, CreateProduct $createProduct): JsonResponse
+    /**
+     * `POST /products` — needs catalog.create (and catalog.view_cost to send `cost_price`).
+     * `variants[i].opening_stock` records each variant's opening on-hand as an
+     * `opening_balance` stock movement in the same transaction; above zero it needs
+     * inventory.adjust.
+     */
+    #[OpenApiResponse(403, 'Missing catalog.create, `cost_price` sent without catalog.view_cost, or `opening_stock` without inventory.adjust (`forbidden`)')]
+    public function store(StoreProductRequest $request, CreateProductWithOpeningStock $createProduct): JsonResponse
     {
-        $product = $createProduct->handle($request->toData(), $request->writeContext());
+        if ($request->setsOpeningStock()) {
+            $this->authorize('adjust', StockLevel::class);
+        }
+
+        $product = $createProduct->handle($request->toData(), $request->writeContext(), $request->openingStock());
 
         return (new ProductResource($product->load(ProductResource::RELATIONS)))->response()->setStatusCode(201);
     }

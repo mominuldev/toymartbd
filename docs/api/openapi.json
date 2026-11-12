@@ -788,7 +788,7 @@
             },
             "post": {
                 "operationId": "v1.admin.products.store",
-                "summary": "`POST /products` \u2014 needs catalog.create (and catalog.view_cost to send `cost_price`)",
+                "summary": "`POST /products` \u2014 needs catalog.create (and catalog.view_cost to send `cost_price`).\n`variants[i].opening_stock` records each variant's opening on-hand as an\n`opening_balance` stock movement in the same transaction; above zero it needs\ninventory.adjust",
                 "tags": [
                     "Admin"
                 ],
@@ -813,14 +813,8 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "403": {
-                        "description": "Missing catalog.create, or `cost_price` sent without catalog.view_cost (`forbidden`)",
+                        "description": "Missing catalog.create, `cost_price` sent without catalog.view_cost, or `opening_stock` without inventory.adjust (`forbidden`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -828,6 +822,12 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -2476,7 +2476,7 @@
         "/storefront/products": {
             "get": {
                 "operationId": "v1.storefront.products.index",
-                "description": "Lists are comma-separated. Unlisted parameters, filters or sorts and\nmalformed values are a 400. Availability (\"in stock\") arrives with the\ninventory tables (P4-INV).",
+                "description": "Lists are comma-separated. Unlisted parameters, filters or sorts and\nmalformed values are a 400. Each card carries `in_stock`; sold-out products\nstay listed unless `filter[availability]=in_stock`.",
                 "summary": "`GET /products` \u2014 active, published products with at least one active\nvariant, 24 per page by cursor, with disjunctive facet counts in\n`meta.facets` (each facet ignores its own filter) and the result-set size in\n`meta.total`",
                 "tags": [
                     "Storefront"
@@ -2567,6 +2567,15 @@
                                 "1",
                                 "0"
                             ]
+                        }
+                    },
+                    {
+                        "name": "filter[availability]",
+                        "in": "query",
+                        "description": "Only products with an active variant in stock (available = on_hand \u2212 reserved > 0).",
+                        "schema": {
+                            "type": "string",
+                            "const": "in_stock"
                         }
                     },
                     {
@@ -2904,6 +2913,21 @@
                                                                 "count",
                                                                 "selected"
                                                             ]
+                                                        },
+                                                        "availability": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "count": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "selected": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "count",
+                                                                "selected"
+                                                            ]
                                                         }
                                                     },
                                                     "required": [
@@ -2913,7 +2937,8 @@
                                                         "price_band",
                                                         "gender",
                                                         "rating",
-                                                        "educational"
+                                                        "educational",
+                                                        "availability"
                                                     ]
                                                 }
                                             },
@@ -2952,6 +2977,893 @@
                     },
                     "403": {
                         "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/search": {
+            "get": {
+                "operationId": "v1.storefront.search.index",
+                "description": "`filter[...]` takes exactly the listing's filters (GET /products) with the same\nsemantics; `meta.facets` has the listing's shape and disjunctive counts.\n`meta.related_searches` are category refinements of the query. On zero results,\n`meta.suggestions` offers corrected queries that do return products and\n`meta.best_sellers` a fallback row.\n\nWhen Meilisearch is unavailable the endpoint still answers 200 from a simple database\nname match with `meta.degraded: true` (no facets, no typo tolerance).",
+                "summary": "`GET /search` \u2014 products matching `q` (typo-tolerant; Bangla, Banglish and English\nsynonyms), 24 per page, as listing cards in relevance order",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "description": "Search text, 1\u2013100 characters.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "gari"
+                    },
+                    {
+                        "name": "filter[category]",
+                        "in": "query",
+                        "description": "Category slug; includes every active descendant category.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[brand]",
+                        "in": "query",
+                        "description": "Brand slugs, comma-separated (any of).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[age]",
+                        "in": "query",
+                        "description": "A child's age in months (0\u2013216).",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[age_band]",
+                        "in": "query",
+                        "description": "Age bands, comma-separated: 0-12, 12-24, 24-48, 48-72, 72-96, 96-144, 144-.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[price_min]",
+                        "in": "query",
+                        "description": "Lowest listing price, inclusive; a decimal string.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[price_max]",
+                        "in": "query",
+                        "description": "Highest listing price, inclusive; a decimal string.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[price_band]",
+                        "in": "query",
+                        "description": "Price bands, comma-separated: 0-500, 500-1000, 1000-2500, 2500-5000, 5000-.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[gender]",
+                        "in": "query",
+                        "description": "Comma-separated: unisex, boys, girls.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[rating]",
+                        "in": "query",
+                        "description": "Minimum average rating, 1\u20135.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[educational]",
+                        "in": "query",
+                        "description": "Only educational (true) or non-educational (false) products.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false",
+                                "1",
+                                "0"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Result order.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "relevance",
+                                "featured",
+                                "newest",
+                                "price_asc",
+                                "price_desc",
+                                "rating",
+                                "name"
+                            ],
+                            "default": "relevance"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "1-based page; at most 41 (Meilisearch returns the first 1000 hits).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `StorefrontProductCard`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StorefrontProductCard"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                },
+                                                "query": {
+                                                    "type": "string"
+                                                },
+                                                "sort": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "relevance",
+                                                        "featured",
+                                                        "newest",
+                                                        "price_asc",
+                                                        "price_desc",
+                                                        "rating",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "degraded": {
+                                                    "type": "boolean"
+                                                },
+                                                "facets": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "category": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "brand": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "age_band": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                },
+                                                                "price_band": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                },
+                                                                "gender": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                },
+                                                                "rating": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                },
+                                                                "educational": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "count": {},
+                                                                        "selected": {
+                                                                            "type": "boolean"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "count",
+                                                                        "selected"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "category",
+                                                                "brand",
+                                                                "age_band",
+                                                                "price_band",
+                                                                "gender",
+                                                                "rating",
+                                                                "educational"
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "category": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "brand": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "age_band": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "price_band": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "gender": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "rating": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "minItems": 0,
+                                                                    "maxItems": 0
+                                                                },
+                                                                "educational": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "count": {
+                                                                            "type": "integer",
+                                                                            "const": 0
+                                                                        },
+                                                                        "selected": {
+                                                                            "type": "boolean"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "count",
+                                                                        "selected"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "category",
+                                                                "brand",
+                                                                "age_band",
+                                                                "price_band",
+                                                                "gender",
+                                                                "rating",
+                                                                "educational"
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                "related_searches": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "category": {
+                                                                "type": "string"
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "label_bn": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "selected": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "category",
+                                                            "label",
+                                                            "label_bn",
+                                                            "count",
+                                                            "selected"
+                                                        ]
+                                                    }
+                                                },
+                                                "suggestions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "query": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "query",
+                                                            "count"
+                                                        ]
+                                                    }
+                                                },
+                                                "best_sellers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/StorefrontProductCard"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total",
+                                                "query",
+                                                "sort",
+                                                "degraded",
+                                                "facets",
+                                                "related_searches",
+                                                "suggestions",
+                                                "best_sellers"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Missing or over-long `q`, an unlisted parameter, filter or sort, or an invalid value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/search/suggest": {
+            "get": {
+                "operationId": "v1.storefront.search.suggest",
+                "summary": "`GET /search/suggest` \u2014 header autocomplete: up to 5 products, 3 categories and 3\nbrands for a partial query (2+ characters), and the total for \"See all N results\".\nRate-limited per client (`throttle:search-suggest`)",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "description": "Partial search text, 2\u2013100 characters.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "puz"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontSearchSuggestions`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontSearchSuggestions"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Missing, too short or over-long `q`, or an unlisted parameter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many suggestion requests (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/delivery-quote": {
+            "get": {
+                "operationId": "v1.storefront.delivery.quote",
+                "summary": "`GET /delivery-quote` \u2014 the charge, free-delivery progress, delivery window and\ncut-off for one destination and (optionally) one variant \u00d7 quantity. Not cached:\nthe window moves at the cut-off and the free-delivery figure follows the price",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "district_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "upazila_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "variant_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 99
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DeliveryQuote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryQuote"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "No active courier provider is configured (`service-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/delivery-rates": {
+            "get": {
+                "operationId": "v1.storefront.delivery.rates",
+                "summary": "`GET /delivery-rates` \u2014 the published rate table (zone charges, ETAs, free-delivery threshold)",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DeliveryRates`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryRates"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "No active courier provider is configured (`service-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/districts": {
+            "get": {
+                "operationId": "v1.storefront.districts.index",
+                "summary": "`GET /districts` \u2014 all 64 districts, Dhaka division first, then by division and district name",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StorefrontDistrict`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StorefrontDistrict"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/districts/{district}/upazilas": {
+            "get": {
+                "operationId": "v1.storefront.districts.upazilas",
+                "summary": "`GET /districts/{district}/upazilas` \u2014 the district's upazilas by name, each with `serviceable`",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "district",
+                        "in": "path",
+                        "required": true,
+                        "description": "The district ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StorefrontUpazila`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StorefrontUpazila"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No district has this id",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/products/{slug}": {
+            "get": {
+                "operationId": "v1.storefront.products.show",
+                "description": "Slugs are ASCII and shared by both locales (rule 37).",
+                "summary": "`GET /products/{slug}` \u2014 one live product (active, published, with an active\nvariant): content in both languages, breadcrumbs, images, variant axes, every\nactive variant with its price, discount, saving and stock, and up to 8 in-stock\nrelated product cards \u2014 curated `related` pairs first, then the same category",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontProduct`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontProduct"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No live product has this slug (unknown, draft, archived, scheduled or without an active variant)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -3374,6 +4286,327 @@
                     "height"
                 ],
                 "title": "CropProductImageRequest"
+            },
+            "DeliveryQuote": {
+                "type": "object",
+                "properties": {
+                    "serviceable": {
+                        "type": "boolean"
+                    },
+                    "zone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "inside_dhaka_metro",
+                            "dhaka_suburb",
+                            "outside_dhaka",
+                            null
+                        ]
+                    },
+                    "district": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila_required": {
+                        "type": "boolean",
+                        "description": "The district alone does not settle the charge: ask for the upazila."
+                    },
+                    "courier": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "subtotal": {
+                        "type": "string",
+                        "description": "The goods value the quote is for (variant price \u00d7 quantity)."
+                    },
+                    "weight_grams": {
+                        "type": "integer"
+                    },
+                    "base_charge": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "weight_surcharge": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "charge": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What the customer pays for delivery \u2014 \"0.00\" when free."
+                    },
+                    "standard_charge": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "base_charge + weight_surcharge: the charge before any free delivery (struck\nthrough when free)."
+                    },
+                    "free_shipping": {
+                        "type": "object",
+                        "description": "`progress_percent` is the subtotal as a whole percent of the threshold (0\u2013100,\nrounded down) for the free-delivery meter; null when there is no threshold.",
+                        "properties": {
+                            "applied": {
+                                "type": "boolean"
+                            },
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "threshold",
+                                    "promotion",
+                                    null
+                                ]
+                            },
+                            "threshold": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "remaining": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "progress_percent": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "applied",
+                            "reason",
+                            "threshold",
+                            "remaining",
+                            "progress_percent"
+                        ]
+                    },
+                    "eta": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "dispatch_date": {
+                                "type": "string"
+                            },
+                            "earliest": {
+                                "type": "string"
+                            },
+                            "latest": {
+                                "type": "string"
+                            },
+                            "min_days": {
+                                "type": "integer"
+                            },
+                            "max_days": {
+                                "type": "integer"
+                            },
+                            "cutoff_time": {
+                                "type": "string"
+                            },
+                            "cutoff_passed": {
+                                "type": "boolean"
+                            },
+                            "timezone": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "dispatch_date",
+                            "earliest",
+                            "latest",
+                            "min_days",
+                            "max_days",
+                            "cutoff_time",
+                            "cutoff_passed",
+                            "timezone"
+                        ]
+                    },
+                    "cod_advance": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Advance payment a COD order of this value needs in this zone, or null."
+                    }
+                },
+                "required": [
+                    "serviceable",
+                    "zone",
+                    "district",
+                    "upazila",
+                    "upazila_required",
+                    "courier",
+                    "subtotal",
+                    "weight_grams",
+                    "base_charge",
+                    "weight_surcharge",
+                    "charge",
+                    "standard_charge",
+                    "free_shipping",
+                    "eta",
+                    "cod_advance"
+                ],
+                "title": "DeliveryQuote"
+            },
+            "DeliveryRates": {
+                "type": "object",
+                "properties": {
+                    "courier": {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "zones": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "zone": {
+                                    "type": "string",
+                                    "enum": [
+                                        "inside_dhaka_metro",
+                                        "dhaka_suburb",
+                                        "outside_dhaka"
+                                    ]
+                                },
+                                "charge": {
+                                    "type": "string"
+                                },
+                                "min_days": {
+                                    "type": "integer"
+                                },
+                                "max_days": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "zone",
+                                "charge",
+                                "min_days",
+                                "max_days"
+                            ]
+                        }
+                    },
+                    "free_shipping_threshold": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "included_weight_grams": {
+                        "type": "integer"
+                    },
+                    "per_kg_charge": {
+                        "type": "string"
+                    },
+                    "cutoff_time": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "courier",
+                    "zones",
+                    "free_shipping_threshold",
+                    "included_weight_grams",
+                    "per_kg_charge",
+                    "cutoff_time",
+                    "timezone"
+                ],
+                "title": "DeliveryRates"
             },
             "Gender": {
                 "type": "string",
@@ -4171,6 +5404,26 @@
                     "weight_grams": {
                         "type": "integer"
                     },
+                    "stock": {
+                        "type": "object",
+                        "description": "Current stock at all locations; only with inventory.view. Read-only here:\nopening stock is set on create (`opening_stock`), later changes are\nstock adjustments (Phase 5).",
+                        "properties": {
+                            "on_hand": {
+                                "type": "integer"
+                            },
+                            "reserved": {
+                                "type": "integer"
+                            },
+                            "available": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "on_hand",
+                            "reserved",
+                            "available"
+                        ]
+                    },
                     "is_default": {
                         "type": "boolean"
                     },
@@ -4545,7 +5798,7 @@
             },
             "StoreProductRequest": {
                 "type": "object",
-                "description": "`POST /products` \u2014 needs catalog.create. Setting the initial prices is part of\ncreating; a `cost_price` anywhere in the document needs catalog.view_cost.\nWhen `slug` is omitted it is generated from `name` (or `name_bn`).",
+                "description": "`POST /products` \u2014 needs catalog.create. Setting the initial prices is part of\ncreating; a `cost_price` anywhere in the document needs catalog.view_cost.\nWhen `slug` is omitted it is generated from `name` (or `name_bn`).\n`variants[i].opening_stock` > 0 also needs inventory.adjust.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -4833,6 +6086,15 @@
                                             "type": "null"
                                         }
                                     ]
+                                },
+                                "opening_stock": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "Opening stock is set once, at creation (an `opening_balance` movement). After\nthat, stock changes only through purchases, sales and adjustments (Phase 5).",
+                                    "minimum": 0,
+                                    "maximum": 1000000
                                 }
                             }
                         },
@@ -5069,6 +6331,504 @@
                 ],
                 "title": "StorefrontCategoryNode"
             },
+            "StorefrontDistrict": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": "string"
+                    },
+                    "division": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila_required": {
+                        "type": "string"
+                    },
+                    "city_option": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "division",
+                    "upazila_required",
+                    "city_option"
+                ],
+                "title": "StorefrontDistrict"
+            },
+            "StorefrontProduct": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "simple",
+                            "variable"
+                        ]
+                    },
+                    "brand": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "slug": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "name_bn",
+                            "slug"
+                        ]
+                    },
+                    "breadcrumbs": {
+                        "type": "array",
+                        "description": "The primary category's path, root first, ending with the primary category.\nEmpty when that category is archived.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "slug": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "name_bn",
+                                "slug"
+                            ]
+                        }
+                    },
+                    "short_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "short_description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "specifications": {
+                        "type": "array",
+                        "description": "Free-form key/value pairs from the product's specifications, in their stored\norder; empty values are dropped.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "value"
+                            ]
+                        }
+                    },
+                    "age_min_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "age_max_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "gender": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "boys",
+                            "girls",
+                            "unisex",
+                            null
+                        ]
+                    },
+                    "is_educational": {
+                        "type": "boolean"
+                    },
+                    "safety_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "safety_note_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "warranty_months": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "rating_avg": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rating_count": {
+                        "type": "integer"
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "description": "True when at least one variant has stock."
+                    },
+                    "default_variant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "url": {
+                                    "type": "string"
+                                },
+                                "thumb_url": {
+                                    "type": "string"
+                                },
+                                "srcset_webp": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "srcset_avif": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "alt": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "alt_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "width": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "height": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "url",
+                                "thumb_url",
+                                "srcset_webp",
+                                "srcset_avif",
+                                "alt",
+                                "alt_bn",
+                                "width",
+                                "height"
+                            ]
+                        }
+                    },
+                    "attributes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "select",
+                                        "color",
+                                        "text"
+                                    ]
+                                },
+                                "values": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            },
+                                            "value_bn": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "slug": {
+                                                "type": "string"
+                                            },
+                                            "color_hex": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "value",
+                                            "value_bn",
+                                            "slug",
+                                            "color_hex"
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "name_bn",
+                                "slug",
+                                "type",
+                                "values"
+                            ]
+                        }
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "sku": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "attribute_value_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "price": {
+                                    "type": "string"
+                                },
+                                "compare_at_price": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "discount_percent": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "saving": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "weight_grams": {
+                                    "type": "integer"
+                                },
+                                "is_default": {
+                                    "type": "boolean"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "const": "active"
+                                },
+                                "available": {
+                                    "type": "integer"
+                                },
+                                "stock_state": {
+                                    "type": "string",
+                                    "enum": [
+                                        "in_stock",
+                                        "low_stock",
+                                        "out_of_stock"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "sku",
+                                "name",
+                                "name_bn",
+                                "attribute_value_ids",
+                                "price",
+                                "compare_at_price",
+                                "discount_percent",
+                                "saving",
+                                "weight_grams",
+                                "is_default",
+                                "status",
+                                "available",
+                                "stock_state"
+                            ]
+                        }
+                    },
+                    "related": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontProductCard"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "name_bn",
+                    "type",
+                    "brand",
+                    "breadcrumbs",
+                    "short_description",
+                    "short_description_bn",
+                    "description",
+                    "description_bn",
+                    "specifications",
+                    "age_min_months",
+                    "age_max_months",
+                    "gender",
+                    "is_educational",
+                    "safety_note",
+                    "safety_note_bn",
+                    "warranty_months",
+                    "rating_avg",
+                    "rating_count",
+                    "in_stock",
+                    "default_variant_id",
+                    "images",
+                    "attributes",
+                    "variants",
+                    "related"
+                ],
+                "title": "StorefrontProduct"
+            },
             "StorefrontProductCard": {
                 "type": "object",
                 "properties": {
@@ -5157,6 +6917,10 @@
                     "variant_count": {
                         "type": "integer"
                     },
+                    "in_stock": {
+                        "type": "boolean",
+                        "description": "An active variant has available stock (on_hand \u2212 reserved > 0). Sold-out\ncards stay listed and show their out-of-stock state."
+                    },
                     "image": {
                         "type": [
                             "object",
@@ -5230,9 +6994,134 @@
                     "rating_count",
                     "is_featured",
                     "variant_count",
+                    "in_stock",
                     "image"
                 ],
                 "title": "StorefrontProductCard"
+            },
+            "StorefrontSearchSuggestions": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontProductCard"
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "icon": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "count": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "slug",
+                                "name",
+                                "name_bn",
+                                "icon",
+                                "count"
+                            ]
+                        }
+                    },
+                    "brands": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "slug": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "count": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "slug",
+                                "name",
+                                "name_bn",
+                                "count"
+                            ]
+                        }
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "degraded": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "query",
+                    "products",
+                    "categories",
+                    "brands",
+                    "total",
+                    "degraded"
+                ],
+                "title": "StorefrontSearchSuggestions"
+            },
+            "StorefrontUpazila": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": "string"
+                    },
+                    "serviceable": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "serviceable"
+                ],
+                "title": "StorefrontUpazila"
             },
             "UpdateAttributeRequest": {
                 "type": "object",
@@ -5727,6 +7616,15 @@
                                             "type": "null"
                                         }
                                     ]
+                                },
+                                "opening_stock": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "description": "Opening stock is set once, at creation (an `opening_balance` movement). After\nthat, stock changes only through purchases, sales and adjustments (Phase 5).",
+                                    "minimum": 0,
+                                    "maximum": 1000000
                                 }
                             }
                         },
@@ -5807,8 +7705,8 @@
                     }
                 }
             },
-            "AuthorizationException": {
-                "description": "Authorization error",
+            "ModelNotFoundException": {
+                "description": "Not found",
                 "content": {
                     "application/problem+json": {
                         "schema": {
@@ -5817,8 +7715,8 @@
                     }
                 }
             },
-            "ModelNotFoundException": {
-                "description": "Not found",
+            "AuthorizationException": {
+                "description": "Authorization error",
                 "content": {
                     "application/problem+json": {
                         "schema": {

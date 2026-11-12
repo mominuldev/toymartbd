@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
+use App\Http\Controllers\Api\V1\Storefront\DeliveryController;
 use App\Http\Controllers\Api\V1\Storefront\ProductController;
+use App\Http\Controllers\Api\V1\Storefront\ProductDetailController;
+use App\Http\Controllers\Api\V1\Storefront\SearchController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
@@ -34,4 +37,13 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/categories/tree', [CategoryController::class, 'tree'])->name('categories.tree');
     Route::get('/categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    // Product search (P4-CAT-14) — docs/api/search.md. Autocomplete has its own, tighter limit.
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::get('/search/suggest', [SearchController::class, 'suggest'])->middleware('throttle:search-suggest')->name('search.suggest');
+    // Delivery charge and time (P4-STO-06) — DeliveryChargeResolver, the checkout code path.
+    Route::get('/delivery-quote', [DeliveryController::class, 'quote'])->name('delivery.quote');
+    Route::get('/delivery-rates', [DeliveryController::class, 'rates'])->name('delivery.rates');
+    Route::get('/districts', [DeliveryController::class, 'districts'])->name('districts.index');
+    Route::get('/districts/{district}/upazilas', [DeliveryController::class, 'upazilas'])->whereNumber('district')->name('districts.upazilas');
+    Route::get('/products/{slug}', [ProductDetailController::class, 'show'])->name('products.show');
 });

@@ -13,9 +13,9 @@ use App\Domain\Catalog\Enums\PriceBand;
  * layer from `filter[...]`; every list is de-duplicated. Money bounds are decimal
  * strings ("1000.00").
  *
- * TODO(P4-INV): `availability` (in stock) needs the inventory tables
- * (`stock_levels`), which do not exist yet — the filter and its facet are added
- * with them.
+ * `inStock` true lists only products with an active variant whose available stock
+ * (on_hand − reserved) is above zero; null lists everything (sold-out cards show
+ * their out-of-stock state).
  */
 final readonly class ProductListingFilters
 {
@@ -34,6 +34,8 @@ final readonly class ProductListingFilters
 
     public const string EDUCATIONAL = 'educational';
 
+    public const string AVAILABILITY = 'availability';
+
     /**
      * @param  list<string>  $brands  brand slugs (any of)
      * @param  list<AgeBand>  $ageBands  any of
@@ -51,5 +53,6 @@ final readonly class ProductListingFilters
         public array $genders = [],
         public ?int $minRating = null,
         public ?bool $educational = null,
+        public ?bool $inStock = null,
     ) {}
 }

@@ -77,7 +77,7 @@ it('returns cards in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe(['data', 'links', 'meta'])
         ->and(array_keys($response->json('data.0')))->toBe([
             'id', 'slug', 'name', 'name_bn', 'brand', 'price', 'compare_at_price', 'price_max', 'discount_percent', 'age_min_months',
-            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'image',
+            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'in_stock', 'image',
         ])
         ->and($response->json('data.0'))->toMatchArray([
             'slug' => 'rainbow-stacker',
@@ -98,7 +98,7 @@ it('returns cards in exactly the agreed shape', function (): void {
         ->and($response->json('meta.total'))->toBe(1)
         ->and($response->json('meta.per_page'))->toBe(24)
         ->and($response->json('meta.sort'))->toBe('featured')
-        ->and(array_keys($response->json('meta.facets')))->toBe(['category', 'brand', 'age_band', 'price_band', 'gender', 'rating', 'educational']);
+        ->and(array_keys($response->json('meta.facets')))->toBe(['category', 'brand', 'age_band', 'price_band', 'gender', 'rating', 'educational', 'availability']);
 });
 
 it('drops a was-price that is not above the price', function (): void {
@@ -357,7 +357,8 @@ it('rejects an unlisted filter, sort or parameter with a 400 problem', function 
         ->assertHeader('Content-Type', 'application/problem+json')
         ->assertJsonPath('type', 'https://toymartbd.com/problems/bad-request');
 })->with([
-    'unlisted filter' => [['filter[availability]' => 'in_stock']],
+    'unlisted filter' => [['filter[stock]' => 'in_stock']],
+    'bad availability' => [['filter[availability]' => 'pre_order']],
     'unlisted sort' => [['sort' => 'popular']],
     'spatie-style sort' => [['sort' => '-price']],
     'unknown parameter' => [['page' => '2']],
@@ -372,6 +373,7 @@ it('rejects an unlisted filter, sort or parameter with a 400 problem', function 
     'bad gender' => [['filter[gender]' => 'kids']],
     'bad rating' => [['filter[rating]' => '6']],
     'bad educational' => [['filter[educational]' => 'yes']],
+    'empty availability' => [['filter[availability]' => '']],
     'bad brand slug' => [['filter[brand]' => 'LEGO!']],
     'bad category slug' => [['filter[category]' => 'Toys/x']],
     'empty filter' => [['filter[brand]' => '']],
@@ -429,4 +431,35 @@ it('refuses a staff member\'s token that carries admin abilities only', function
     $this->withToken($admin->createToken('admin', ['catalog.view'])->plainTextToken)
         ->getJson('/api/v1/storefront/products')
         ->assertForbidden();
+});
+
+it('filters to in-stock products and counts them in the availability facet (P4-CAT-13)', function (): void {
+    $stocked = listed(['slug' => 'stocked', 'name' => 'Stocked']);
+    $soldOut = listed(['slug' => 'sold-out', 'name' => 'Sold out']);
+    $reserved = listed(['slug' => 'all-reserved', 'name' => 'All reserved']);
+    $archivedStock = listed(['slug' => 'archived-stock', 'name' => 'Archived stock']);
+    listed(['slug' => 'never-stocked', 'name' => 'Never stocked']);
+    $archivedVariant = ProductVariant::factory()->for($archivedStock)->archived()->create();
+
+    $locationId = (int) DB::table('stock_locations')->value('id');
+    $level = fn (Product|ProductVariant $of, int $onHand, int $reserved = 0) => DB::table('stock_levels')->insert([
+        'variant_id' => $of instanceof Product ? $of->variants()->value('id') : $of->id,
+        'location_id' => $locationId, 'on_hand' => $onHand, 'reserved' => $reserved, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $level($stocked, 3);
+    $level($soldOut, 0);
+    $level($reserved, 2, 2);
+    $level($archivedVariant, 9);
+
+    $all = listing(['sort' => 'name'])->assertOk();
+    expect(collect($all->json('data'))->pluck('in_stock', 'slug')->all())->toBe([
+        'all-reserved' => false, 'archived-stock' => false, 'never-stocked' => false, 'sold-out' => false, 'stocked' => true,
+    ])
+        ->and($all->json('meta.facets.availability'))->toBe(['count' => 1, 'selected' => false]);
+
+    $only = listing(['filter[availability]' => 'in_stock'])->assertOk();
+    expect(slugs($only))->toBe(['stocked'])
+        ->and($only->json('meta.total'))->toBe(1)
+        // Disjunctive: the facet ignores its own filter.
+        ->and($only->json('meta.facets.availability'))->toBe(['count' => 1, 'selected' => true]);
 });

@@ -110,6 +110,11 @@ export const productsEn = {
     'products.field.skuHint': 'Leave empty and the server generates one',
     'products.field.barcode': 'Barcode',
     'products.field.weight': 'Weight (g)',
+    'products.field.stock': 'Stock',
+    'products.field.openingStock': 'Opening stock',
+    'products.field.openingStockHint': 'Units on hand now. Recorded once, as the opening balance.',
+    'products.stock.summary': '{available} available · {onHand} on hand · {reserved} reserved',
+    'products.stock.readOnly': 'Stock is read-only here. Changes are made through stock adjustments, which are coming soon.',
     'products.pricing.locked': 'Prices are read-only: changing a price needs the “Update prices” permission.',
 
     'products.matrix.noAttributes': 'Add a variant-defining attribute, such as Color or Size, then pick its values.',
@@ -134,6 +139,7 @@ export const productsEn = {
     'products.matrix.disabled': 'Disabled · not sold',
     'products.matrix.skuAuto': 'Generated on save',
     'products.matrix.footer': '{count} combinations · {enabled} enabled',
+    'products.matrix.footerStock': '{count} combinations · {enabled} enabled · total stock {stock}',
     'products.matrix.archivedTitle': 'Archived variants',
     'products.matrix.archivedHint': 'Their value was removed. Add the value back to restore them with their SKU and prices.',
 
@@ -283,6 +289,11 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.field.skuHint': 'খালি রাখলে সার্ভার তৈরি করবে',
     'products.field.barcode': 'বারকোড',
     'products.field.weight': 'ওজন (গ্রাম)',
+    'products.field.stock': 'স্টক',
+    'products.field.openingStock': 'শুরুর স্টক',
+    'products.field.openingStockHint': 'এখন হাতে থাকা ইউনিট। শুরুর ব্যালান্স হিসেবে একবারই লেখা হয়।',
+    'products.stock.summary': '{available}টি পাওয়া যাবে · হাতে {onHand}টি · সংরক্ষিত {reserved}টি',
+    'products.stock.readOnly': 'এখানে স্টক শুধু দেখা যাবে। স্টক বদলানো হবে স্টক সমন্বয়ের মাধ্যমে, যা শীঘ্রই আসছে।',
     'products.pricing.locked': 'দাম শুধু দেখা যাবে: দাম বদলাতে “দাম হালনাগাদ” অনুমতি লাগে।',
 
     'products.matrix.noAttributes': 'রং বা সাইজের মতো একটি ভ্যারিয়েন্ট-নির্ধারক অ্যাট্রিবিউট যোগ করুন, তারপর মান বাছুন।',
@@ -307,6 +318,7 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.matrix.disabled': 'বন্ধ · বিক্রি হয় না',
     'products.matrix.skuAuto': 'সংরক্ষণে তৈরি হবে',
     'products.matrix.footer': '{count}টি সমন্বয় · {enabled}টি চালু',
+    'products.matrix.footerStock': '{count}টি সমন্বয় · {enabled}টি চালু · মোট স্টক {stock}',
     'products.matrix.archivedTitle': 'আর্কাইভ করা ভ্যারিয়েন্ট',
     'products.matrix.archivedHint': 'এদের মান সরানো হয়েছে। মানটি আবার যোগ করলে SKU ও দামসহ ফিরে আসবে।',
 

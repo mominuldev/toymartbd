@@ -90,10 +90,14 @@ What follows is a conservative rule:
   §5.1 resolver therefore needs a rule for a Dhaka-city address, for example district Dhaka with no upazila
   (`addresses.upazila_id` is NULLable). Alternatively, a city-corporation/thana level could be added. **Owner
   decision.**
-- **`is_dhaka_subcity`: Savar (365) and Keraniganj (367) only.** These two are named as "Dhaka suburb" in the
-  design fixtures (docs/_design/04-admin-spec.md). Courier rate cards also list Narayanganj and Gazipur as
-  suburb, but those are districts, and they don't say which upazilas count. They are **not** flagged. Nor are
-  Dhamrai, Nawabganj and Dohar.
+- **`is_dhaka_subcity`: all five upazilas of Dhaka district** — Savar (365), Dhamrai (366), Keraniganj (367),
+  Nawabganj (368), Dohar (369). Savar, Keraniganj, Dohar and Nawabganj are the design's `DhakaOuter` list
+  (docs/_design/03-storefront-spec.md A12.4); Dhamrai is not named there but lies between Savar and Manikganj,
+  so pricing it at the outside-Dhaka tier would be the odd one out. **Owner to confirm Dhamrai.** (Updated
+  2026-11-12, P4-CRT-03; previously only Savar and Keraniganj.)
+- **Whole districts as suburb** (Gazipur, Narayanganj, Narsingdi, Munshiganj, Manikganj, per A12.4) are not
+  flagged per upazila: they are the `delivery.suburb_district_ids` setting, and a district-level Dhaka address
+  (no upazila) is the city, via `delivery.metro_district_ids`. See `App\Domain\Fulfilment\Services\DeliverySettings`.
 - Every other upazila therefore falls to `outside_dhaka`, the highest tier. Edit `dhaka-zones.json`, which is
   keyed by id, and re-run the seeder to change this.
 - These flags are **our** charge tier only. They say nothing about any courier's zone coverage.
