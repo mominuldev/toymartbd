@@ -115,7 +115,8 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 - [S] Page builder (live visual editor): section list (drag reorder), canvas with desktop/mobile toggle, section settings panel, schedule & publish, version history
 - [S] Pages & navigation: page list (home, landing pages, custom pages) + menu editor (header, footer, mobile) with nested drag items
 - [S] Blog editor: rich text, featured image, categories, SEO panel, schedule
-- [C] Media library picker, block library
+- [S] Media library (2026-11-12): folders + type + "missing Bangla/English alt" filters, storage meter, grid with detail drawer (renditions, alt EN + বাংলা, Used in, Replace keeps URL, delete blocked while in use), list view + BulkActionBar, drag-and-drop + upload queue with real failure reasons, empty / no-results / delete-blocked states, 1024 + 768, Theme B + Admin Dark
+- [C] Media library picker (`MediaPickerModal`, Library / Upload tabs, ordered multi-select, ratio hint, alt warning) — drawn open over Product edit; block library
 
 ### 2.11 SEO
 - [S] SEO center: site health score, issues list (missing meta, missing Bangla alt, broken links, duplicate titles), Search Console metrics (clicks, impressions, CTR, position, top queries), sitemap status, robots.txt editor
@@ -159,6 +160,7 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 | 06 | Forms & content | FormSection · FormActions · ImageUploader · VariantMatrixEditor · SlugField · SeoPanel · RichTextToolbar |
 | 07 | Communication | ConversationRow · ChatBubble (customer / agent / AI / system) · ChannelBadge · AISuggestion · HandoverBanner |
 | 08 | Feedback & overlays | ConfirmDialog · AdminEmptyState · ActivityFeed · AdminToast · PermissionMatrix · IntegrationCard |
+| 09 | Media library | MediaFilterItem · MediaTile · MediaDetailPanel · UploadQueueItem · UploadQueue · MediaDeleteDialog · MediaPickerModal |
 
 ## 4. States every screen covers
 
@@ -201,3 +203,10 @@ Decisions made in this pass that differ from `04-admin-spec.md`: sidebar active 
 Placeholders to confirm with the owner: delivery charges ৳70/৳100/৳130, hotline 09610-123456, trade licence and BIN numbers, bKash merchant number, Nagad fee, loyalty rates, branch addresses.
 
 **Adopted and exported (2026-11-11).** Owner: "looks good, now start develop" → Theme B is the admin theme and Gate 2 is signed off. Two Figma fixes made during the export: `color/bg/overlay` in Admin Light/Dark was opaque and now carries alpha (#0F172A at 60%, #000 at 72%, matching the storefront scrims); and new effect styles `Elevation/Admin Dark/e1–e4` (slate inset ring + black drop shadow), since dark admin surfaces had no elevation of their own. All variables, effect styles and admin text styles were exported to `packages/tokens/src/figma-variables.json` and built into `packages/tokens/dist/` (120 contrast pairs pass AA in all four modes). The React shell (`resources/js/admin/app/Shell.tsx`) now uses the tokens, with the sidebar in `admin-dark`. Component → file map: `UI-UX-DESIGN-SPEC.md` §9.
+
+**Media library (2026-11-12).** Owner: "The Media Library feature is missing — add it first in the Figma design." Design only; nothing built.
+- Page `04 Admin Components`: new section `09 Media library` `288:1904` (components frame `288:1910`): `MediaFilterItem` `289:1910` (Default / Active / Warning), `MediaTile` `289:2121` (State Default / Selected / Ordered × Type Image / Video / Document), `MediaDetailPanel` `291:2353` (InUse `291:1991` / Unused `291:2185`), `UploadQueueItem` `292:2169` (Uploading / Processing / Done / Failed), `UploadQueue` `292:2170`, `MediaDeleteDialog` `292:2359` (Blocked `292:2248` / Confirm `292:2310`), `MediaPickerModal` `294:2661` (Library `294:2219` / Upload `294:2517`). Five Phosphor fill icons added to the Admin icons grid `181:2`: `icon/folder-simple` `288:1889`, `icon/file-pdf` `288:1892`, `icon/film-strip` `288:1895`, `icon/cloud-arrow-up` `288:1898`, `icon/images` `288:1901`.
+- Page `07 Admin — Desktop`: new section `15 · Media library` `296:46898` (Theme A, like sections 01–13). Row `screens` `296:46904`: 42 Media library (grid + detail) `296:46905`, 43 list view `297:47758`, 44 drag and drop `298:48279`, 45 upload queue `298:49030`, 46 picker over Product edit `298:49917`, 47 empty `300:50828`, 48 no search results `300:51309`, 49 delete blocked `300:51914`. Row `screens — responsive`: 1024 `301:52247`, 768 `301:52924`.
+- Section `14 · Theme B`: new group `B · Media library` `303:53182` (row `303:53184`) with Admin Light copies B · 42 `303:53185`, B · 43 `303:53979`, B · 44 `303:54740`, B · 45 `303:55296`, B · 46 `303:55922`, B · 47 `303:57286`, B · 48 `303:57572`, B · 49 `303:57984`, and an Admin Dark sample B · 42 `303:58825` (shadows `Elevation/Admin Dark/*`). Same Theme B recipe as the rest: screen in Admin Light, Sidebar in Admin Dark, primary buttons solid `bg/brand`, `Elevation/Neutral/*`.
+- Every colour, spacing, radius and stroke weight on new layers is bound to a variable; text uses `Admin/*` styles with Bangla runs set in Anek Bangla. Contrast audit (4.5:1 body / 3:1 large, actual painted background incl. translucent fills and both gradient stops, resolved per mode): 3,471 text layers, 0 failures. Overlap audit: no intersecting sections, screens or components; no absolutely positioned overlay leaves its screen.
+- Spec: `04-admin-spec.md` A25 (components and the three rules — alt EN + বাংলা required to publish, delete blocked while in use, Replace keeps the URL) and B9 (screen). Open questions there: video limits, folder model; and A8 / `ImageUploader` still say 5 MB while the API allows 10 MB.

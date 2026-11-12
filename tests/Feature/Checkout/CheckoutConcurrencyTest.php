@@ -119,7 +119,10 @@ it('sells exactly 5 units to 10 parallel checkouts', function (): void {
     @unlink($go);
     @rmdir($dir);
 
-    expect(array_count_values($results))->toBe(['placed' => 5, 'insufficient' => 5]);
+    // Children finish in any order, so compare the tally, not the key order.
+    $tally = array_count_values($results);
+    ksort($tally);
+    expect($tally)->toBe(['insufficient' => 5, 'placed' => 5]);
 
     $level = StockLevel::query()->where('variant_id', $variant->id)->sole();
     expect(Order::query()->count())->toBe(5)
