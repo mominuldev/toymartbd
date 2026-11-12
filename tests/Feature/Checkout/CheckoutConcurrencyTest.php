@@ -76,13 +76,18 @@ it('sells exactly 5 units to 10 parallel checkouts', function (): void {
     mkdir($dir);
     $go = $dir.'/go';
 
+    // The fixtures above are models bound to the RACE_CONNECTION name, so a child that
+    // inherited the parent's open PDO would query over the parent's socket — ten
+    // processes on one MySQL stream ("Premature end of data"). Close it before forking:
+    // each child then lazily opens its own connection, and the parent reconnects after.
+    DB::disconnect(RACE_CONNECTION);
+
     $pids = [];
     foreach ($inputs as $i => $input) {
         $pid = pcntl_fork();
         if ($pid === 0) {
-            // Child: its own connection (never touch the parent's PDO — SIGKILL below
-            // ends the process without its destructor closing the shared socket).
-            useRaceConnection(RACE_CONNECTION.'_'.$i);
+            // Child: no inherited socket is open (see above); SIGKILL below ends the
+            // process without destructors touching anything the parent still holds.
             $deadline = microtime(true) + 10;
             while (! file_exists($go) && microtime(true) < $deadline) {
                 usleep(1000);
