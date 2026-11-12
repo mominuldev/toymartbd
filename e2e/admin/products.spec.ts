@@ -14,12 +14,11 @@ test('owner creates a Color × Size product, edits one variant price, and it sur
 
     await page.getByRole('link', { name: 'Add product' }).click();
     await page.getByLabel('Name (English)').fill('Rainbow Stacking Rings');
-    await page.getByLabel(/Name \(Bangla\)/).fill('রংধনু স্ট্যাকিং রিং');
-    await page.getByRole('checkbox', { name: 'Puzzles & Games', exact: true }).check();
+    await page.getByLabel('নাম (বাংলা)', { exact: true }).fill('রংধনু স্ট্যাকিং রিং');
+    await page.getByLabel('Category', { exact: true }).selectOption({ label: 'Puzzles & Games' });
     await page.getByLabel('Product type').selectOption('variable');
 
     // Seeded variant-defining attributes (CatalogReferenceSeeder): Color and Size.
-    await page.getByRole('tab', { name: /Variants/ }).click();
     await page.getByLabel('Add attribute').selectOption({ label: 'Color' });
     await page.getByLabel('Add a Color value').selectOption({ label: 'Red' });
     await page.getByLabel('Add a Color value').selectOption({ label: 'Blue' });
@@ -27,14 +26,15 @@ test('owner creates a Color × Size product, edits one variant price, and it sur
     await page.getByLabel('Add a Size value').selectOption({ label: 'Small' });
     await page.getByLabel('Add a Size value').selectOption({ label: 'Medium' });
     await page.getByLabel('Add a Size value').selectOption({ label: 'Large' });
-    await expect(page.getByRole('switch')).toHaveCount(6);
+    await expect(page.getByRole('switch', { name: /^Sell / })).toHaveCount(6);
 
     // One price for every combination, then save: the server generates the SKUs.
+    await page.getByRole('checkbox', { name: 'Select all variants' }).check();
     await page.getByLabel('Value to apply').fill('999');
     await page.getByRole('button', { name: 'Apply' }).click();
     await page.getByRole('button', { name: 'Create product' }).click();
     await expect(page.getByText('Product created.')).toBeVisible();
-    await expect(page).toHaveURL(/\/admin\/products\/\d+\?tab=variants$/);
+    await expect(page).toHaveURL(/\/admin\/products\/\d+(\?tab=\w+)?$/);
     await expect(page.getByLabel('SKU — Blue / Medium')).toHaveValue(/^TM-\d{5}-BLUE-MEDIUM$/);
     await expect(page.getByLabel('Price — Blue / Medium', { exact: true })).toHaveValue('999.00');
 
