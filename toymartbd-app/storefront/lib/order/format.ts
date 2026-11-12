@@ -4,7 +4,8 @@ import type { OrderStage, StorefrontOrder } from '../cart/types';
 // Display helpers for the confirmation and tracking pages (P4-STO-10). Dates are shown in Dhaka
 // time with Western digits (rules 11, 36); figures are the API's strings.
 
-const parts = (iso: string) => {
+const parts = (iso: string | null) => {
+    if (!iso) return null;
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return null;
     const fields = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'numeric', hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date);
@@ -12,10 +13,10 @@ const parts = (iso: string) => {
     return { day: pick('day'), month: pick('month'), hour: pick('hour'), minute: pick('minute') };
 };
 
-/** "10 Nov" in Dhaka. */
-export function orderDate(iso: string, t: Messages): string {
+/** "10 Nov" in Dhaka (empty when the API has no date). */
+export function orderDate(iso: string | null, t: Messages): string {
     const p = parts(iso);
-    if (!p) return iso;
+    if (!p) return iso ?? '';
     return format(t.order.dayMonth, { day: String(p.day), month: t.delivery.months[p.month - 1] ?? String(p.month) });
 }
 

@@ -107,8 +107,13 @@ it('filters orders by an allowlisted group only (rule 16)', function (): void {
 
     account()->getJson('/api/v1/storefront/account/orders?group=delivered')->assertOk()
         ->assertJsonCount(1, 'data')->assertJsonPath('data.0.number', $delivered->number)->assertJsonPath('data.0.stage', 'delivered');
-    account()->getJson('/api/v1/storefront/account/orders?group=everything')->assertUnprocessable();
-    account()->getJson('/api/v1/storefront/account/orders?customer_id='.$this->other->id)->assertUnprocessable();
+    // Rule 16: an unknown group or an unlisted parameter is a 400 `bad-request`, never a 422.
+    account()->getJson('/api/v1/storefront/account/orders?group=everything')->assertStatus(400)->assertJsonPath('status', 400);
+    account()->getJson('/api/v1/storefront/account/orders?group[]=active')->assertStatus(400);
+    account()->getJson('/api/v1/storefront/account/orders?customer_id='.$this->other->id)->assertStatus(400)
+        ->assertHeader('Content-Type', 'application/problem+json');
+    account()->getJson('/api/v1/storefront/account/orders?filter[status]=delivered')->assertStatus(400);
+    account()->getJson('/api/v1/storefront/account/orders?group=&locale=bn')->assertOk();
 });
 
 it('never lets a customer read another customer\'s order', function (): void {

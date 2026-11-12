@@ -75,6 +75,12 @@ export default async function OrderConfirmationPage({ params }: Props) {
                     <aside className="flex flex-col gap-4 lg:w-100 lg:shrink-0">
                         <OrderItems order={order} locale={locale} t={t} totals />
                         <div className="flex flex-col gap-3">
+                            {/* An unpaid online order: its payment page re-reads the status and offers a retry (P4-PAY-04). */}
+                            {order.payment.online && !['paid', 'partially_refunded', 'refunded'].includes(order.payment.status) && order.stage !== 'cancelled' ? (
+                                <a href={localizedPath(locale, `/orders/${order.number}/payment`)} className={`${buttonClass('primary')} w-full`}>
+                                    {t.payment.continuePayment}
+                                </a>
+                            ) : null}
                             <a href={trackHref} className={`${buttonClass('secondary')} w-full`}>
                                 {o.track}
                             </a>

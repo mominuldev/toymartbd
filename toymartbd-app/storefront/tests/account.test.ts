@@ -51,6 +51,10 @@ describe('redirect target after sign-in', () => {
         expect(safeNext('/checkout')).toBe('/checkout');
     });
 
+    it('keeps the page a wishlist heart was on', () => {
+        for (const path of ['/', '/products/lego-classic', '/categories/building-toys', '/brands/lego', '/toys/3-5-years', '/search']) expect(safeNext(path)).toBe(path);
+    });
+
     it.each(['https://evil.example', '//evil.example', '/account/../x', '/admin', null, ''])('sends %s to the account home', (value) => {
         expect(safeNext(value)).toBe('/account');
     });

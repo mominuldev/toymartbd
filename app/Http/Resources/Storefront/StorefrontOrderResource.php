@@ -14,6 +14,9 @@ use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderEvent;
 use App\Domain\Ordering\Models\OrderItem;
+use App\Domain\Payment\Enums\PaymentMethod;
+use App\Domain\Payment\Enums\PaymentStatus;
+use App\Domain\Payment\Models\Payment;
 use App\Http\Resources\ApiResource;
 use App\Support\PhoneNumber;
 use DateTimeImmutable;
@@ -68,15 +71,14 @@ final class StorefrontOrderResource extends ApiResource
             /** @var string|null */
             'placed_at' => self::iso($order->placed_at),
             /**
-             * `next_action` is null for cash on delivery.
+             * `next_action` is null for cash on delivery; for an online order whose live
+             * gateway session is still open it is `{type: "redirect", url}`. `retry_allowed`:
+             * the payment-failed page may offer `POST /orders/{number}/payment` again.
+             * `expires_at`: when the unpaid online order's stock hold lapses (null for COD).
              *
-             * @var array{method: string|null, status: string, next_action: array{type: string, url: string}|null}
+             * @var array{method: string|null, status: string, next_action: array{type: string, url: string}|null, online: bool, retry_allowed: bool, expires_at: string|null}
              */
-            'payment' => [
-                'method' => $order->payment_method,
-                'status' => $order->payment_status->value,
-                'next_action' => null,
-            ],
+            'payment' => self::payment($order, $this->public),
             /** @var array{name: string, phone_masked: string, email: string|null} */
             'contact' => [
                 'name' => $name,
@@ -117,9 +119,32 @@ final class StorefrontOrderResource extends ApiResource
             /**
              * Customer-visible events, oldest first.
              *
-             * @var list<array{stage: string, at: string|null}>
+             * @var list<array{stage: 'placed'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled'|'returned', at: string|null}>
              */
             'timeline' => self::timeline($order->events),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function payment(Order $order, bool $public): array
+    {
+        $method = PaymentMethod::tryFrom((string) $order->payment_method);
+        $online = $method !== null && $method->isOnline();
+        /** @var Payment|null $latest */
+        $latest = $online ? $order->payments()->reorder()->orderByDesc('id')->first() : null;
+        $url = $latest?->status === PaymentStatus::Initiated ? ($latest->gateway_payload['GatewayPageURL'] ?? null) : null;
+        // Public tracking (number + 4 digits) never gets a session URL or a retry.
+        $open = ! $public && in_array($order->status, [OrderStatus::Pending, OrderStatus::OnHold], true);
+        $retry = $online && $open && $latest !== null && $latest->review_reason === null
+            && in_array($latest->status, [PaymentStatus::Pending, PaymentStatus::Failed, PaymentStatus::Cancelled], true);
+
+        return [
+            'method' => $order->payment_method,
+            'status' => $order->payment_status->value,
+            'next_action' => $open && is_string($url) && $url !== '' ? ['type' => 'redirect', 'url' => $url] : null,
+            'online' => $online,
+            'retry_allowed' => $retry,
+            'expires_at' => $online && $open ? self::iso($latest?->expires_at) : null,
         ];
     }
 

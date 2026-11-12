@@ -36,6 +36,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $failure_reason
  * @property int|null $collected_by
  * @property Carbon|null $verified_at
+ * @property Carbon|null $expires_at
+ * @property string|null $review_reason
+ * @property Carbon|null $review_flagged_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -48,7 +51,7 @@ final class Payment extends Model
     protected $fillable = [
         'order_id', 'method', 'gateway', 'amount', 'currency', 'status', 'transaction_id',
         'gateway_reference', 'gateway_payload', 'fee_amount', 'net_amount', 'paid_at',
-        'failure_reason', 'collected_by', 'verified_at',
+        'failure_reason', 'collected_by', 'verified_at', 'expires_at',
     ];
 
     /** @var array<string, mixed> */
@@ -78,6 +81,8 @@ final class Payment extends Model
             'paid_at' => 'datetime',
             'collected_by' => 'integer',
             'verified_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'review_flagged_at' => 'datetime',
         ];
     }
 

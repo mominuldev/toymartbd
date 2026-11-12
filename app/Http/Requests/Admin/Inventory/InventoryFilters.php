@@ -124,6 +124,29 @@ final readonly class InventoryFilters
         return $types;
     }
 
+    /**
+     * A comma-separated list of allowed values (`filter[reason]=damage,theft`).
+     *
+     * @param  list<string>  $allowed
+     * @return list<string>
+     */
+    public function listOf(string $name, array $allowed): array
+    {
+        $value = $this->values[$name] ?? null;
+        if ($value === null) {
+            return [];
+        }
+
+        $items = array_values(array_unique(array_map(trim(...), explode(',', $value))));
+        foreach ($items as $item) {
+            if (! in_array($item, $allowed, true)) {
+                throw new BadRequestHttpException("filter[{$name}] must be a comma-separated list of: ".implode(', ', $allowed).'.');
+            }
+        }
+
+        return $items;
+    }
+
     /** Start of the `from` Dhaka day, as a UTC instant. */
     public function fromInstant(): ?CarbonImmutable
     {

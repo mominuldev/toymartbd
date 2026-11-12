@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Enums\StockAdjustmentReason;
 use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Models\StockLocation;
@@ -115,6 +116,7 @@ final class InventoryController extends ApiController
     #[QueryParameter('filter[product_id]', 'Only this product\'s variants.', type: 'int')]
     #[QueryParameter('filter[location_id]', 'Only this location (every location when omitted).', type: 'int')]
     #[QueryParameter('filter[type]', 'Comma-separated movement types, e.g. `damage_out,adjustment_out`.', type: 'string')]
+    #[QueryParameter('filter[reason]', 'Comma-separated adjustment reasons, e.g. `damage,theft` — only adjustment movements with one of them.', type: 'string')]
     #[QueryParameter('filter[from]', 'First Dhaka calendar day, YYYY-MM-DD (inclusive).', type: 'string', format: 'date')]
     #[QueryParameter('filter[to]', 'Last Dhaka calendar day, YYYY-MM-DD (inclusive).', type: 'string', format: 'date')]
     #[QueryParameter('cursor', 'Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.', type: 'string')]
@@ -122,9 +124,12 @@ final class InventoryController extends ApiController
     public function movements(Request $request, StockLedgerReport $report): AnonymousResourceCollection
     {
         $this->authorize('viewAny', StockMovement::class);
-        $filters = InventoryFilters::from($request, ['variant_id', 'product_id', 'location_id', 'type', 'from', 'to']);
+        $filters = InventoryFilters::from($request, ['variant_id', 'product_id', 'location_id', 'type', 'reason', 'from', 'to']);
 
         $query = $report->movements();
+        if (($reasons = $filters->listOf('reason', array_map(static fn (StockAdjustmentReason $r): string => $r->value, StockAdjustmentReason::cases()))) !== []) {
+            $query->whereIn('stock_adjustments.reason', $reasons);
+        }
         if (($variantId = $filters->id('variant_id')) !== null) {
             $query->where('stock_movements.variant_id', $variantId);
         }

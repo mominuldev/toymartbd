@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { isZero, itemsLabel, lineProblem, lowStockLabel, minusPrice, signedPrice } from '@/lib/cart/format';
+import { isZero, itemsLabel, lineProblem, lowStockLabel, minusPrice, signedPrice, variantName } from '@/lib/cart/format';
 import { cartPath, decodeNotice, encodeNotice, parseDestination, serializeDestination, validToken } from '@/lib/cart/server';
 import type { CartLine } from '@/lib/cart/types';
 import { getMessages } from '@/lib/i18n';
@@ -16,7 +16,8 @@ const line = (over: Partial<CartLine> = {}): CartLine => ({
     id: 12,
     variant_id: 40,
     product: { id: 9, name: 'Remote Control Car', name_bn: 'রিমোট কন্ট্রোল গাড়ি', slug: 'remote-control-car' },
-    variant: { sku: 'RCC-RED', name: 'Red', name_bn: 'লাল' },
+    variant: { sku: 'RCC-RED', name: 'Red', name_bn: 'লাল', attributes: [{ name: 'Colour', name_bn: 'রং', value: 'Red', value_bn: 'লাল' }] },
+    image: { url: 'https://cdn.test/products/rcc/160.webp', alt: 'Red car', alt_bn: 'লাল গাড়ি' },
     quantity: 2,
     available_quantity: 5,
     in_stock: true,
@@ -62,6 +63,14 @@ describe('cart display helpers (no arithmetic)', () => {
         expect(isZero('0.00')).toBe(true);
         expect(isZero('0.50')).toBe(false);
         expect(isZero(null)).toBe(false);
+    });
+
+    it('captions a variant by its name, else its attribute values from the cart line', () => {
+        expect(variantName(line(), 'bn')).toBe('লাল');
+        const unnamed = line({ variant: { sku: 'X', name: null, name_bn: null, attributes: [{ name: 'Size', name_bn: null, value: 'Large', value_bn: null }, { name: 'Colour', name_bn: 'রং', value: 'Red', value_bn: 'লাল' }] } });
+        expect(variantName(unnamed, 'en')).toBe('Large · Red');
+        expect(variantName(unnamed, 'bn')).toBe('Large · লাল');
+        expect(variantName(line({ variant: { sku: 'X', name: null, name_bn: null, attributes: [] } }), 'en')).toBeNull();
     });
 
     it('names a line’s problem from the API flags only', () => {
@@ -133,6 +142,15 @@ describe('POST /api/cart/items', () => {
         const res = await POST(formRequest('/api/cart/items', { variant_id: '40', quantity: '1', locale: 'en', intent: 'buy_now' }, { cookie: `tm_cart=${TOKEN}` }));
         expect(res.headers.get('location')).toBe('/checkout');
         expect((calls[0]?.init.headers as Record<string, string>)['X-Cart-Token']).toBe(TOKEN);
+    });
+
+    it('passes a known recommendation placement through and drops an unknown one (rule 25d)', async () => {
+        const calls = stubApi(() => json(200, cartBody()));
+        const { POST } = await import('@/app/api/cart/items/route');
+        await POST(formRequest('/api/cart/items', { variant_id: '40', quantity: '1', locale: 'en', recommendation_source: 'pdp_cross_sell' }, { cookie: `tm_cart=${TOKEN}` }));
+        await POST(formRequest('/api/cart/items', { variant_id: '40', quantity: '1', locale: 'en', recommendation_source: 'checkout_upsell' }, { cookie: `tm_cart=${TOKEN}` }));
+        expect(JSON.parse(String(calls[0]?.init.body))).toEqual({ variant_id: 40, quantity: 1, recommendation_source: 'pdp_cross_sell' });
+        expect(JSON.parse(String(calls[1]?.init.body))).toEqual({ variant_id: 40, quantity: 1 });
     });
 
     it('answers JSON with the API’s own stock message (never the token)', async () => {

@@ -3,14 +3,15 @@ import type { IconName } from '@/components/icons/paths';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { ageLabel, formatPrice, sameAmount } from '@/lib/listing/format';
 import type { ProductCard as Card } from '@/lib/listing/response';
+import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
 
 // ProductCard, Layout=Grid / GridDesktop — Figma 100:852 (owner-chosen Version B; storefront spec
 // §A1 owner note). Photo framed inside a soft-pink-bordered card; discount badge top-left,
 // wishlist top-right, derived age pill bottom-left; title (2-line clamp), coral price beside the
 // struck was-price, then "Buy now" + the cart icon button.
 //
-// Not wired yet, by design: there is no cart or wishlist (later batches), so "Buy now" links to the
-// product page and the cart / wishlist controls render disabled with their final look. Out of stock
+// The wishlist heart is live (WishlistHeart, a form that works without JS). Not wired yet: "Buy now"
+// links to the product page and the cart icon renders disabled with its final look. Out of stock
 // (Figma 100:741, from the API's `in_stock`): the photo fades to 60%, an "Out of stock" pill joins
 // the badge stack, and the actions become one outline "Notify me" (to the product page until
 // back-in-stock alerts exist). "Only N left" and the free-delivery pill need per-card data the
@@ -85,14 +86,15 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         ) : null}
                     </div>
                 ) : null}
-                <button
-                    type="button"
-                    disabled
-                    aria-label={format(t.wishlist, { name })}
-                    className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 lg:size-8 before:absolute before:size-touch-min before:content-['']"
-                >
-                    <Icon name="heart" className="size-icon-sm" />
-                </button>
+                <WishlistHeart
+                    productId={product.id}
+                    label={format(t.wishlist, { name })}
+                    locale={locale}
+                    back={`/products/${product.slug}`}
+                    className="absolute top-2 right-2"
+                    buttonClassName="flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 lg:size-8 before:absolute before:size-touch-min before:content-['']"
+                    iconClassName="size-icon-sm"
+                />
                 {age ? (
                     <span className="t-caption-strong pointer-events-none absolute bottom-2 left-2 inline-flex h-5.5 items-center gap-1 rounded-full bg-surface px-2 text-fg-primary">
                         <Icon name={ageIcon(product.age_min_months)} className="size-3.5" />

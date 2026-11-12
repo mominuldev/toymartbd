@@ -45,6 +45,7 @@ import {
     type RiskLevel,
 } from './api';
 import { openInvoices, useBulkPack } from './composeApi';
+import { useBulkFulfil, type FulfilMove } from './fulfilmentApi';
 import { Soon } from './OrderComposer';
 import { Taka, ageLabel, dhakaDate, dhakaParts, isZeroAmount, rangeLabel } from './format';
 import { OrderStatusBadge, PaymentChip, RiskPill, paymentLabel, sourceLabel } from './parts';
@@ -108,6 +109,10 @@ export function OrdersPage() {
     const pack = useBulkPack();
     const [printing, setPrinting] = useState(false);
     const canPack = can(me, 'orders.update');
+    // Manual fulfilment (P5, until Phase 6 courier booking): orders.update + shipments.book.
+    const shipBulk = useBulkFulfil('ship');
+    const deliverBulk = useBulkFulfil('deliver');
+    const canFulfil = canPack && can(me, 'shipments.book');
     const canPrint = can(me, 'orders.view') && can(me, 'customers.view_pii');
 
     const rows = orders.data?.data ?? [];
@@ -172,6 +177,19 @@ export function OrdersPage() {
                 setSelected(new Set(failed.map((r) => r.order_id)));
                 setResult({ done: response.meta.done, failed });
                 if (failed.length === 0) toast.notify(t('orders.bulk.packedAll', { count: response.meta.done }));
+            },
+            onError: (error) => toast.notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger'),
+        });
+    };
+
+    const fulfilSelected = (move: FulfilMove) => {
+        const ids = [...selected];
+        (move === 'ship' ? shipBulk : deliverBulk).mutate(ids, {
+            onSuccess: (response) => {
+                const failed = response.data.filter((r) => r.outcome !== 'done');
+                setSelected(new Set(failed.map((r) => r.order_id)));
+                setResult({ done: response.meta.done, failed });
+                if (failed.length === 0) toast.notify(t(move === 'ship' ? 'orders.bulk.shippedAll' : 'orders.bulk.deliveredAll', { count: response.meta.done }));
             },
             onError: (error) => toast.notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger'),
         });
@@ -343,13 +361,17 @@ export function OrdersPage() {
                     highRisk={highRisk}
                     pending={bulk.isPending}
                     packing={pack.isPending}
+                    shipping={shipBulk.isPending}
+                    delivering={deliverBulk.isPending}
                     printing={printing}
                     canConfirm={canConfirm}
                     canPack={canPack}
+                    canFulfil={canFulfil}
                     canPrint={canPrint}
                     result={result}
                     onConfirm={confirmSelected}
                     onPack={packSelected}
+                    onFulfil={fulfilSelected}
                     onPrint={printSelected}
                     onClear={() => {
                         setSelected(new Set());
@@ -446,7 +468,8 @@ function OrderRowView({ row, selectable, selected, onToggle }: { row: OrderRow; 
 
 /**
  * Figma BulkActionBar 193:740 — floating over the content at 1440/1024, docked at 768.
- * Confirm · Mark packed · Book courier (Phase 6: disabled, with a tooltip) · Print invoices
+ * Confirm · Mark packed · Mark shipped / delivered (manual, P5) · Book courier (Phase 6:
+ * disabled, with a tooltip) · Print invoices
  * (P4-ORD-08), each shown only with its permission. The result is always two
  * numbers, never "done": the failures stay selected and are listed with the server's reason.
  */
@@ -455,13 +478,17 @@ function BulkActionBar({
     highRisk,
     pending,
     packing,
+    shipping,
+    delivering,
     printing,
     canConfirm,
     canPack,
+    canFulfil,
     canPrint,
     result,
     onConfirm,
     onPack,
+    onFulfil,
     onPrint,
     onClear,
 }: {
@@ -469,13 +496,17 @@ function BulkActionBar({
     highRisk: number;
     pending: boolean;
     packing: boolean;
+    shipping: boolean;
+    delivering: boolean;
     printing: boolean;
     canConfirm: boolean;
     canPack: boolean;
+    canFulfil: boolean;
     canPrint: boolean;
     result: { done: number; failed: BulkResult[] } | null;
     onConfirm: () => void;
     onPack: () => void;
+    onFulfil: (move: FulfilMove) => void;
     onPrint: () => void;
     onClear: () => void;
 }) {
@@ -502,7 +533,7 @@ function BulkActionBar({
                         {t('orders.bulk.highRisk', { count: highRisk })}
                     </p>
                 )}
-                <div className="ms-auto flex items-center gap-2">
+                <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
                     {canConfirm && (
                         <Button onClick={onConfirm} disabled={count === 0 || pending}>
                             <CheckIcon size={16} aria-hidden />
@@ -514,6 +545,18 @@ function BulkActionBar({
                             <PackageIcon size={16} aria-hidden />
                             {packing ? t('orders.bulk.packing', { count }) : t('orders.bulk.pack')}
                         </Button>
+                    )}
+                    {canFulfil && (
+                        <>
+                            <Button variant="outline" onClick={() => onFulfil('ship')} disabled={count === 0 || shipping}>
+                                <TruckIcon size={16} aria-hidden />
+                                {shipping ? t('orders.bulk.shipping', { count }) : t('orders.bulk.ship')}
+                            </Button>
+                            <Button variant="outline" onClick={() => onFulfil('deliver')} disabled={count === 0 || delivering}>
+                                <CheckCircleIcon size={16} aria-hidden />
+                                {delivering ? t('orders.bulk.delivering', { count }) : t('orders.bulk.deliver')}
+                            </Button>
+                        </>
                     )}
                     <Soon label={t('orders.bulk.bookCourierSoon')}>
                         {(id) => (

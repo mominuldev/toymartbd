@@ -71,6 +71,8 @@ enum Permission: string
     case InventoryView = 'inventory.view';
     case InventoryAdjust = 'inventory.adjust';
     case InventoryTransfer = 'inventory.transfer';
+    /** Approve or reject a stock adjustment above the approval threshold (P5-INV; config/inventory.php). */
+    case InventoryApproveAdjustments = 'inventory.approve_adjustments';
 
     // Purchasing
     case PurchasingView = 'purchasing.view';

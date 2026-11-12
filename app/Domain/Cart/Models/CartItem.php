@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Cart\Models;
 
+use App\Domain\Catalog\Enums\RecommendationPlacement;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Support\Casts\MoneyCast;
 use App\Support\Money;
@@ -15,7 +16,9 @@ use Illuminate\Support\Carbon;
  * One cart line — one per variant per cart (unique key), so adding the same variant
  * again or merging a guest cart raises the quantity instead of duplicating the line.
  * `unit_price` is the price when first added; `line_total` caches the last priced
- * line total after discounts.
+ * line total after discounts. `recommendation_source` is the placement that added the
+ * line (last placement wins on a re-add; a plain re-add keeps it), copied onto the order
+ * item at checkout (rule 25d).
  *
  * @property int $id
  * @property int $cart_id
@@ -23,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property int $quantity
  * @property Money $unit_price
  * @property Money $line_total
+ * @property RecommendationPlacement|null $recommendation_source
  * @property Carbon $added_at
  * @property-read Cart $cart
  * @property-read ProductVariant $variant
@@ -30,7 +34,7 @@ use Illuminate\Support\Carbon;
 final class CartItem extends Model
 {
     /** @var list<string> */
-    protected $fillable = ['cart_id', 'variant_id', 'quantity', 'unit_price', 'line_total', 'added_at'];
+    protected $fillable = ['cart_id', 'variant_id', 'quantity', 'unit_price', 'line_total', 'recommendation_source', 'added_at'];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -41,6 +45,7 @@ final class CartItem extends Model
             'quantity' => 'integer',
             'unit_price' => MoneyCast::class,
             'line_total' => MoneyCast::class,
+            'recommendation_source' => RecommendationPlacement::class,
             'added_at' => 'datetime',
         ];
     }

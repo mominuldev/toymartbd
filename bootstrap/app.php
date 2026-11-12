@@ -60,6 +60,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // X-Request-Id first, so every later log line, job and Sentry event carries it (P3-CI-04).
         $middleware->prepend(AssignRequestId::class);
 
+        // Trusted proxies come from config/trustedproxy.php (env TRUSTED_PROXIES, default none,
+        // wildcards refused). Only the client IP and scheme are taken from a trusted proxy —
+        // never X-Forwarded-Host/Port/Prefix, which would let it rewrite generated URLs.
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+
         // Idempotency-Key guard for checkout, shipment booking and payment capture
         // (CLAUDE.md rule 17). List it AFTER any auth middleware: the key is scoped by user.
         $middleware->alias(['idempotent' => EnsureIdempotency::class]);

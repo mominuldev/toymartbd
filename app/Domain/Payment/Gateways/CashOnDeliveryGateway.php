@@ -22,8 +22,9 @@ use App\Support\Money;
  *  - `verify` answers with what we already know — the authority for a COD payment is the
  *    courier's delivery, recorded through CollectCodPayment (the same PaymentTransitions
  *    path an online gateway's verified result takes: pending → paid);
- *  - `refund` is a manual payout by staff (cash, bKash send-money): `processing` until
- *    staff mark it done in the refund flow (Phase 5).
+ *  - `refund` is a manual payout by staff (cash, bKash / Nagad send-money, bank):
+ *    `processing` until staff record it through {@see manualPayout()} with the method and
+ *    the transaction reference they used (the refund flow's PayRefund).
  *
  * COD remittance by the courier (cash actually reaching us) is Finance's `cod_received`
  * (§4.5), not a payment status — revenue and cash stay separate (rule 10).
@@ -52,6 +53,20 @@ final readonly class CashOnDeliveryGateway implements PaymentGateway
     public function refund(Payment $payment, Money $amount, string $reason): RefundResult
     {
         return new RefundResult(RefundStatus::Processing, payload: ['driver' => 'cod', 'manual_payout' => true]);
+    }
+
+    /**
+     * Staff sent the money back by hand and entered how. There is no provider to ask, so
+     * the staff-entered method and reference ARE the record; the result is `completed`.
+     */
+    public function manualPayout(Payment $payment, Money $amount, PaymentMethod $via, ?string $reference): RefundResult
+    {
+        return new RefundResult(RefundStatus::Completed, $reference, [
+            'driver' => 'cod',
+            'manual_payout' => true,
+            'via' => $via->value,
+            'amount' => $amount->toDecimal(),
+        ]);
     }
 
     /** The courier collected the cash on delivery. */

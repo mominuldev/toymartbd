@@ -66,7 +66,7 @@ final class InventoryMovementResource extends ApiResource
              */
             'unit_cost' => $this->when(InventoryVariantPart::canViewCost($request), $movement->unit_cost),
             /**
-             * The source document: `stock_adjustment`, `product` (opening stock), and later order, purchase, shipment, refund.
+             * The source document: `stock_adjustment`, `stock_transfer`, `product` (opening stock), and later order, purchase, shipment, refund.
              *
              * @var string|null
              */
@@ -74,11 +74,17 @@ final class InventoryMovementResource extends ApiResource
             /** @var int|null */
             'reference_id' => $movement->reference_id,
             /**
-             * The document's human number where it has one (ADJ-2026-0012).
+             * The document's human number where it has one (ADJ-2026-0012, TRF-2026-0003).
              *
              * @var string|null
              */
             'reference_number' => is_string($referenceNumber) ? $referenceNumber : null,
+            /**
+             * The adjustment's reason, for an adjustment movement.
+             *
+             * @var 'damage'|'loss'|'theft'|'found'|'recount'|'expiry'|'correction'|'gift_sample'|null
+             */
+            'adjustment_reason' => is_string($reason = $movement->getAttribute('adjustment_reason')) ? $reason : null,
             /**
              * Staff member who recorded it; null for the system.
              *

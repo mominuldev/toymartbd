@@ -23,4 +23,10 @@ final class PaymentPolicy extends Policy
     {
         return $this->allows($user, Permission::OrdersView);
     }
+
+    /** Re-query the gateway for an online payment's authoritative status (P4-PAY-03). */
+    public function verify(User $user, Payment $payment): bool
+    {
+        return $this->allows($user, Permission::OrdersUpdate);
+    }
 }

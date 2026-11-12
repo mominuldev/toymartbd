@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Webhooks\SslcommerzWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,3 +26,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/ping', fn () => ['ok' => true, 'audience' => 'webhooks'])->name('ping');
+
+// SSLCommerz IPN (P4-PAY-03): signature first, receipt (replay = no-op), queued re-query.
+Route::post('/payments/sslcommerz/ipn', [SslcommerzWebhookController::class, 'ipn'])->name('payments.sslcommerz.ipn');

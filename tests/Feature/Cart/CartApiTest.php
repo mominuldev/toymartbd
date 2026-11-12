@@ -234,3 +234,42 @@ it('flags a line whose variant became unsellable or whose stock dropped, and its
         ->and($response->json('totals.subtotal'))->toBe('900.00')
         ->and($response->json('checkout_ready'))->toBeFalse();
 });
+
+it('carries a photo and the variant attribute labels on each line, without N+1 queries', function (): void {
+    $colour = App\Domain\Catalog\Models\ProductAttribute::factory()->create(['name' => 'Colour', 'name_bn' => 'রং', 'position' => 1]);
+    $size = App\Domain\Catalog\Models\ProductAttribute::factory()->create(['name' => 'Size', 'name_bn' => null, 'position' => 0]);
+    $red = App\Domain\Catalog\Models\ProductAttributeValue::factory()->for($colour, 'attribute')->create(['value' => 'Red', 'value_bn' => 'লাল']);
+    $large = App\Domain\Catalog\Models\ProductAttributeValue::factory()->for($size, 'attribute')->create(['value' => 'Large', 'value_bn' => null]);
+
+    $variant = CartTestKit::variant('1250.00', 5);
+    $variant->attributeValues()->attach($red->id, ['attribute_id' => $colour->id]);
+    $variant->attributeValues()->attach($large->id, ['attribute_id' => $size->id]);
+    $ready = ['rendition_widths' => [160, 480, 1200], 'width' => 1600, 'height' => 1600];
+    App\Domain\Catalog\Models\ProductImage::factory()->for($variant->product)->create(['position' => 0, 'is_primary' => true, 'path' => 'products/p/main', ...$ready, 'alt_text' => 'Car', 'alt_text_bn' => 'গাড়ি']);
+    App\Domain\Catalog\Models\ProductImage::factory()->for($variant->product)->create(['position' => 1, 'variant_id' => $variant->id, 'path' => 'products/p/red', ...$ready, 'alt_text' => 'Red car', 'alt_text_bn' => 'লাল গাড়ি']);
+    $plain = CartTestKit::variant('300.00', 5);
+
+    $cart = newCartWith($variant->id);
+    cartApi()->postJson('/api/v1/storefront/cart/items', ['variant_id' => $plain->id, 'quantity' => 1], [CartTestKit::HEADER => $cart])->assertOk();
+
+    Illuminate\Support\Facades\DB::enableQueryLog();
+    $items = cartApi()->getJson('/api/v1/storefront/cart', [CartTestKit::HEADER => $cart])->assertOk()->json('items');
+    $queries = count(Illuminate\Support\Facades\DB::getQueryLog());
+
+    $line = collect($items)->firstWhere('variant_id', $variant->id);
+    expect($line['image']['url'])->toContain('products/p/red')->toEndWith('/160.webp')
+        ->and($line['image']['alt_bn'])->toBe('লাল গাড়ি')
+        ->and($line['variant']['attributes'])->toBe([
+            ['name' => 'Size', 'name_bn' => null, 'value' => 'Large', 'value_bn' => null],
+            ['name' => 'Colour', 'name_bn' => 'রং', 'value' => 'Red', 'value_bn' => 'লাল'],
+        ]);
+    $other = collect($items)->firstWhere('variant_id', $plain->id);
+    expect($other['image'])->toBeNull()->and($other['variant']['attributes'])->toBe([]);
+
+    // A third line must not add queries (display data is eager-loaded).
+    $third = CartTestKit::variant('200.00', 5);
+    cartApi()->postJson('/api/v1/storefront/cart/items', ['variant_id' => $third->id, 'quantity' => 1], [CartTestKit::HEADER => $cart])->assertOk();
+    Illuminate\Support\Facades\DB::flushQueryLog();
+    cartApi()->getJson('/api/v1/storefront/cart', [CartTestKit::HEADER => $cart])->assertOk();
+    expect(count(Illuminate\Support\Facades\DB::getQueryLog()))->toBeLessThanOrEqual($queries);
+});

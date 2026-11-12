@@ -7,6 +7,7 @@ namespace App\Domain\Inventory\Services;
 use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Models\StockAdjustment;
 use App\Domain\Inventory\Models\StockMovement;
+use App\Domain\Inventory\Models\StockTransfer;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -31,8 +32,9 @@ final readonly class StockLedgerReport
     public function __construct(private StockOverview $overview) {}
 
     /**
-     * Movements newest first, with `user_name` and `reference_number` (an adjustment's
-     * ADJ-… number) selected alongside.
+     * Movements newest first, with `user_name`, `reference_number` (an adjustment's
+     * ADJ-… or a transfer's TRF-… number) and `adjustment_reason` selected alongside.
+     * Filter by adjustment reason on `stock_adjustments.reason`.
      *
      * @return Builder<StockMovement>
      */
@@ -44,7 +46,12 @@ final readonly class StockLedgerReport
                 $join->on('stock_adjustments.id', '=', 'stock_movements.reference_id')
                     ->where('stock_movements.reference_type', '=', StockAdjustment::REFERENCE_TYPE);
             })
-            ->select('stock_movements.*', 'users.name as user_name', 'stock_adjustments.number as reference_number');
+            ->leftJoin('stock_transfers', static function (JoinClause $join): void {
+                $join->on('stock_transfers.id', '=', 'stock_movements.reference_id')
+                    ->where('stock_movements.reference_type', '=', StockTransfer::REFERENCE_TYPE);
+            })
+            ->select('stock_movements.*', 'users.name as user_name', 'stock_adjustments.reason as adjustment_reason')
+            ->selectRaw('COALESCE(stock_adjustments.number, stock_transfers.number) as reference_number');
     }
 
     /**

@@ -35,8 +35,17 @@ export function draftId(value: string | undefined): number | null {
     return value && ID.test(value) ? Number(value) : null;
 }
 
-/** The POST /checkout body (checkout.md): the customer's text as typed, ids as numbers, COD. */
-export function checkoutBody(draft: CheckoutDraft, expectedTotal: string): Record<string, unknown> {
+/**
+ * The chosen payment method: `cod` unless the form names one of `allowed` (the methods the API
+ * listed when the page rendered). COD stays the default (rule 33); the API re-checks anyway.
+ */
+export function readPaymentMethod(form: FormData, allowed: readonly string[] = []): string {
+    const value = String(form.get('payment_method') ?? 'cod');
+    return value !== 'cod' && allowed.includes(value) ? value : 'cod';
+}
+
+/** The POST /checkout body (checkout.md): the customer's text as typed, ids as numbers, COD unless chosen otherwise. */
+export function checkoutBody(draft: CheckoutDraft, expectedTotal: string, paymentMethod = 'cod'): Record<string, unknown> {
     const opt = (key: DraftField) => draft[key] ?? null;
     return {
         name: draft.name ?? '',
@@ -49,7 +58,7 @@ export function checkoutBody(draft: CheckoutDraft, expectedTotal: string): Recor
         address_line: draft.address_line ?? '',
         landmark: opt('landmark'),
         postcode: null,
-        payment_method: 'cod',
+        payment_method: paymentMethod,
         customer_note: opt('customer_note'),
         expected_total: expectedTotal,
     };

@@ -122,6 +122,21 @@ final class Cart extends Model
         return $lines;
     }
 
+    /**
+     * The placement that added each line, by variant id (rule 25d); null = an ordinary add.
+     *
+     * @return array<int, string|null>
+     */
+    public function recommendationSources(): array
+    {
+        $sources = [];
+        foreach ($this->items as $item) {
+            $sources[$item->variant_id] = $item->recommendation_source?->value;
+        }
+
+        return $sources;
+    }
+
     public function extendLifetime(): void
     {
         $this->expires_at = now()->addDays(self::LIFETIME_DAYS);

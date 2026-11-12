@@ -7,6 +7,9 @@ namespace App\Http\Resources\Storefront;
 use App\Domain\Cart\DTOs\LineBreakdown;
 use App\Domain\Cart\DTOs\PricedCart;
 use App\Domain\Cart\Models\CartItem;
+use App\Domain\Catalog\Models\ProductAttributeValue;
+use App\Domain\Catalog\Models\ProductImage;
+use App\Domain\Catalog\Models\ProductVariant;
 use App\Http\Resources\ApiResource;
 use App\Support\Money;
 use DateTimeImmutable;
@@ -25,12 +28,18 @@ use Illuminate\Http\Request;
 #[SchemaName('Cart')]
 final class CartResource extends ApiResource
 {
+    /** Cart line photo width: 88px on the page, 2x for dense screens. */
+    public const int IMAGE_WIDTH = 160;
+
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         $cart = $this->resource->cart;
         $breakdown = $this->resource->breakdown;
         $available = $this->resource->available;
+        // Display data for each line (photo, attribute labels), so the storefront never fetches
+        // the products one by one. Products are already loaded withTrashed by CartPricing.
+        $cart->loadMissing(['items.variant.attributeValues.attribute', 'items.variant.product.images.media']);
 
         /** @var array<int, LineBreakdown> $lines */
         $lines = [];
@@ -60,9 +69,12 @@ final class CartResource extends ApiResource
             /**
              * One entry per line. `sellable` false: the item can no longer be bought (it is
              * excluded from every total; remove it). `in_stock` false: `quantity` exceeds
-             * `available_quantity` (checkout will refuse until it is lowered).
+             * `available_quantity` (checkout will refuse until it is lowered). `image` is the
+             * variant's own photo, else the product's primary, else its first (a 160px rendition;
+             * null until one is processed). `variant.attributes` are the variant-defining values,
+             * in attribute order (e.g. Colour: Red), each with its Bangla label when set.
              *
-             * @var list<array{id: int, variant_id: int, product: array{id: int, name: string, name_bn: string|null, slug: string}, variant: array{sku: string, name: string|null, name_bn: string|null}, quantity: int, available_quantity: int, in_stock: bool, sellable: bool, unit_price: string, added_unit_price: string, price_changed: bool, subtotal: string, discount: string, total: string}>
+             * @var list<array{id: int, variant_id: int, product: array{id: int, name: string, name_bn: string|null, slug: string}, variant: array{sku: string, name: string|null, name_bn: string|null, attributes: list<array{name: string, name_bn: string|null, value: string, value_bn: string|null}>}, image: array{url: string, alt: string|null, alt_bn: string|null}|null, quantity: int, available_quantity: int, in_stock: bool, sellable: bool, unit_price: string, added_unit_price: string, price_changed: bool, subtotal: string, discount: string, total: string}>
              */
             'items' => $cart->items->map(fn (CartItem $item): array => self::item($item, $lines[$item->variant_id] ?? null, $available[$item->variant_id] ?? 0))->values()->all(),
             /**
@@ -122,7 +134,8 @@ final class CartResource extends ApiResource
             'id' => $item->id,
             'variant_id' => $item->variant_id,
             'product' => ['id' => $product->id, 'name' => $product->name, 'name_bn' => $product->name_bn, 'slug' => $product->slug],
-            'variant' => ['sku' => $variant->sku, 'name' => $variant->name, 'name_bn' => $variant->name_bn],
+            'variant' => ['sku' => $variant->sku, 'name' => $variant->name, 'name_bn' => $variant->name_bn, 'attributes' => self::variantAttributes($variant)],
+            'image' => self::image($variant),
             'quantity' => $item->quantity,
             'available_quantity' => $available,
             'in_stock' => $item->quantity <= $available,
@@ -134,5 +147,36 @@ final class CartResource extends ApiResource
             'discount' => $line?->discount()->toDecimal() ?? $zero,
             'total' => $line?->total->toDecimal() ?? $zero,
         ];
+    }
+
+    /** @return list<array{name: string, name_bn: string|null, value: string, value_bn: string|null}> */
+    private static function variantAttributes(ProductVariant $variant): array
+    {
+        return $variant->attributeValues
+            ->sortBy(static fn (ProductAttributeValue $v): array => [$v->attribute->position, $v->attribute->id])
+            ->map(static fn (ProductAttributeValue $v): array => [
+                'name' => $v->attribute->name,
+                'name_bn' => $v->attribute->name_bn,
+                'value' => $v->value,
+                'value_bn' => $v->value_bn,
+            ])->values()->all();
+    }
+
+    /**
+     * The variant's own image, else the product's primary, else its first — the same choice
+     * an order item snapshots at checkout.
+     *
+     * @return array{url: string, alt: string|null, alt_bn: string|null}|null
+     */
+    private static function image(ProductVariant $variant): ?array
+    {
+        $images = $variant->product->images->sortBy('position');
+        /** @var ProductImage|null $image */
+        $image = $images->firstWhere('variant_id', $variant->id)
+            ?? $images->firstWhere('is_primary', true)
+            ?? $images->first();
+        $url = $image?->url(self::IMAGE_WIDTH);
+
+        return $image === null || $url === null ? null : ['url' => $url, 'alt' => $image->alt('en'), 'alt_bn' => $image->alt('bn')];
     }
 }

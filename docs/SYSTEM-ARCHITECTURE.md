@@ -164,7 +164,9 @@ app/
 | Couriers / gateways | Unauthenticated routes with signature verification + IP allowlist where published | See §8 |
 
 ### Rate limiting
-`login` 5/min per IP+phone · `otp` 3/10min per phone · storefront reads 120/min per IP · `checkout` 10/min per cart · admin 300/min per user · webhooks exempt from throttling but idempotency-guarded.
+`login` 5/min per IP+phone · `otp` 3/10min per phone (+ `otp-ip` 30/hour per shopper IP) · storefront reads 120/min per IP · `checkout` 10/min per cart · admin 300/min per user · webhooks exempt from throttling but idempotency-guarded.
+
+**Shopper IP behind the Next.js server.** Every storefront call reaches Laravel from the Next server, so its uncached calls (`noStore` / `send` in `lib/api.ts`) forward the shopper's IP as `X-Forwarded-For` — taken from `X-Real-IP`, else the rightmost `X-Forwarded-For` entry its own reverse proxy appended. Laravel honours that header only when the TCP peer is listed in `TRUSTED_PROXIES` (`config/trustedproxy.php`: comma-separated IPs/CIDRs, **default none, wildcards refused**), and takes only the client IP and scheme from it, never the host. Production must list the Next server (and any load balancer) there, or every per-IP limit is keyed on one address. Cached (ISR) reads never forward it, so they share one cache entry.
 
 ### Idempotency
 `POST /checkout`, `POST /shipments`, and all payment captures require an `Idempotency-Key` header. Keys are stored with the response hash for 24h in Redis; a replay returns the original response. This is what prevents a double-tap on a flaky 4G connection from creating two orders and double-decrementing stock.

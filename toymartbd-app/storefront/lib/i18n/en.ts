@@ -322,6 +322,13 @@ export const en = {
         metaCategory: 'Shop {category} toys at Toy Mart BD — prices in taka, cash on delivery.',
         metaBrand: 'Shop {brand} toys at Toy Mart BD — prices in taka, cash on delivery.',
     },
+    wishlist: {
+        // WishlistButton (storefront spec §A22) on cards and the product page; the heart's own
+        // label is `listing.wishlist` / `pdp.wishlist`.
+        saved: 'Saved to your wishlist',
+        removed: 'Removed from your wishlist',
+        failed: "Couldn't update your wishlist. Please try again.",
+    },
     pdp: {
         // P4-STO-05 product page — Figma "Product detail" 135:1022 (1440) / 128:625 (390); copy from the
         // frames, then 05-content §A.4 / §A.13 where the frames show none.
@@ -655,6 +662,38 @@ export const en = {
         timePm: '{h}:{m} pm',
         dateTime: '{date}, {time}',
         dayMonth: '{day} {month}',
+    },
+    payment: {
+        // P4-PAY-02/03/04 — online payment (SSLCommerz) at checkout and the payment page after the
+        // gateway. No Figma frame of its own yet: built from the checkout RadioCard and order parts.
+        online: 'Pay online — card, bKash, Nagad, Rocket',
+        onlineShort: 'Online payment',
+        onlineNote: 'You pay on SSLCommerz’s secure page, then come back here. We hold your items while you pay.',
+        sandbox: 'Test mode — no real money is taken.',
+        title: 'Payment for order {number}',
+        successTitle: 'Payment received — thank you!',
+        successBody: 'We have received {amount} for order {number}. We will call {phone} to confirm delivery.',
+        pendingTitle: 'We are confirming your payment',
+        pendingBody: 'This can take a minute. Check again shortly. If you didn’t finish paying, continue to the payment page.',
+        continuePayment: 'Continue to payment',
+        checkAgain: 'Check again',
+        failedTitle: 'Payment didn’t go through',
+        failedBody: 'No money was taken for order {number}. Your items are still held — you can try again.',
+        retry: 'Try payment again · {total}',
+        expiredTitle: 'This order was cancelled',
+        expiredBody: 'The payment for order {number} wasn’t completed in time, so we released the items. You are welcome to order again.',
+        reviewTitle: 'We are checking your payment',
+        reviewBody: 'A payment on this order needs a person to check it. We will call {phone} soon — please don’t pay again.',
+        viewOrder: 'View order details',
+        shopAgain: 'Back to the shop',
+        reasons: {
+            gateway_unavailable: 'Online payment isn’t available right now. Please call {phone} and we will help.',
+            too_many_attempts: 'Too many payment attempts for this order. Please call {phone}.',
+            already_paid: 'This order is already paid.',
+            order_closed: 'This order can no longer be paid online.',
+            under_review: 'We are checking a payment on this order. We will call you soon.',
+            failed: 'We couldn’t open the payment page. Please try again, or call {phone}.',
+        },
     },
     track: {
         title: 'Track your order',

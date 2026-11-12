@@ -11,8 +11,12 @@ export function lineName(line: Pick<CartLine, 'product'>, locale: Locale): { tex
     return { text: line.product.name };
 }
 
+/** The variant's own name, else its attribute values ("Large · Red"), in the page's language. */
 export function variantName(line: Pick<CartLine, 'variant'>, locale: Locale): string | null {
-    return (locale === 'bn' ? (line.variant.name_bn ?? line.variant.name) : line.variant.name) ?? null;
+    const name = (locale === 'bn' ? (line.variant.name_bn ?? line.variant.name) : line.variant.name) ?? null;
+    if (name) return name;
+    const values = (line.variant.attributes ?? []).map((a) => (locale === 'bn' ? (a.value_bn ?? a.value) : a.value));
+    return values.length > 0 ? values.join(' · ') : null;
 }
 
 /** "3 items" / "1 item" / "3টি পণ্য". */

@@ -14,4 +14,10 @@ enum PaymentMethod: string
     case Card = 'card';
     case BankTransfer = 'bank_transfer';
     case Cash = 'cash';
+
+    /** Paid through a hosted gateway session before dispatch (P4-PAY-02); reserves stock until paid or expired. */
+    public function isOnline(): bool
+    {
+        return in_array($this, [self::Sslcommerz, self::Bkash, self::Nagad, self::Card], true);
+    }
 }

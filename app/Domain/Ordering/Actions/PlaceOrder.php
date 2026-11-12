@@ -175,7 +175,8 @@ final readonly class PlaceOrder
             ]);
 
             // 7. Items with every snapshot, cost_price_snapshot written once (rule 7).
-            foreach ($this->snapshots->build($breakdown->lines, $locationId) as $item) {
+            //    `recommendation_source` comes from the cart line that added it (rule 25d).
+            foreach ($this->snapshots->build($breakdown->lines, $locationId, $cart->recommendationSources()) as $item) {
                 OrderItem::query()->create(['order_id' => $order->id] + $item);
             }
 

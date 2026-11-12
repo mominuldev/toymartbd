@@ -316,6 +316,11 @@ export const bn: Messages = {
         metaCategory: 'টয় মার্ট বিডিতে {category} খেলনা কিনুন — টাকায় দাম, ক্যাশ অন ডেলিভারি।',
         metaBrand: 'টয় মার্ট বিডিতে {brand} খেলনা কিনুন — টাকায় দাম, ক্যাশ অন ডেলিভারি।',
     },
+    wishlist: {
+        saved: 'পছন্দের তালিকায় রাখা হলো',
+        removed: 'পছন্দের তালিকা থেকে সরানো হয়েছে',
+        failed: 'পছন্দের তালিকা বদলানো যায়নি। আবার চেষ্টা করুন।',
+    },
     pdp: {
         metaDescription: '{name} — {price}, টয় মার্ট বিডিতে। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
         ratingCount: '({count}টি রিভিউ)',
@@ -642,6 +647,36 @@ export const bn: Messages = {
         dateTime: '{date}, {time}',
         dayMonth: '{day} {month}',
     },
+    payment: {
+        online: 'অনলাইনে পেমেন্ট — কার্ড, বিকাশ, নগদ, রকেট',
+        onlineShort: 'অনলাইন পেমেন্ট',
+        onlineNote: 'SSLCommerz-এর নিরাপদ পেজে পেমেন্ট করে আবার এখানে ফিরবেন। পেমেন্ট চলাকালীন আপনার পণ্য রেখে দেওয়া হবে।',
+        sandbox: 'টেস্ট মোড — কোনো আসল টাকা কাটা হবে না।',
+        title: 'অর্ডার {number}-এর পেমেন্ট',
+        successTitle: 'পেমেন্ট পেয়েছি — ধন্যবাদ!',
+        successBody: 'অর্ডার {number}-এর জন্য {amount} পেয়েছি। ডেলিভারি নিশ্চিত করতে আমরা {phone} নম্বরে ফোন করব।',
+        pendingTitle: 'আপনার পেমেন্ট যাচাই করা হচ্ছে',
+        pendingBody: 'এক মিনিট লাগতে পারে। একটু পরে আবার দেখুন। পেমেন্ট শেষ না করে থাকলে পেমেন্ট পেজে যান।',
+        continuePayment: 'পেমেন্ট পেজে যান',
+        checkAgain: 'আবার দেখুন',
+        failedTitle: 'পেমেন্ট হয়নি',
+        failedBody: 'অর্ডার {number}-এর জন্য কোনো টাকা কাটা হয়নি। আপনার পণ্য এখনো রাখা আছে — আবার চেষ্টা করতে পারেন।',
+        retry: 'আবার পেমেন্ট করুন · {total}',
+        expiredTitle: 'অর্ডারটি বাতিল হয়েছে',
+        expiredBody: 'অর্ডার {number}-এর পেমেন্ট সময়মতো শেষ হয়নি, তাই পণ্যগুলো ছেড়ে দেওয়া হয়েছে। চাইলে আবার অর্ডার করতে পারেন।',
+        reviewTitle: 'আপনার পেমেন্ট যাচাই করা হচ্ছে',
+        reviewBody: 'এই অর্ডারের একটি পেমেন্ট একজন কর্মীকে যাচাই করতে হবে। শিগগিরই {phone} নম্বরে ফোন করব — অনুগ্রহ করে আবার পেমেন্ট করবেন না।',
+        viewOrder: 'অর্ডারের বিস্তারিত দেখুন',
+        shopAgain: 'শপে ফিরে যান',
+        reasons: {
+            gateway_unavailable: 'এই মুহূর্তে অনলাইন পেমেন্ট চালু নেই। {phone} নম্বরে ফোন করুন, আমরা সাহায্য করব।',
+            too_many_attempts: 'এই অর্ডারে অনেকবার পেমেন্টের চেষ্টা হয়েছে। {phone} নম্বরে ফোন করুন।',
+            already_paid: 'এই অর্ডারের মূল্য ইতিমধ্যে পরিশোধ করা হয়েছে।',
+            order_closed: 'এই অর্ডারের মূল্য আর অনলাইনে পরিশোধ করা যাবে না।',
+            under_review: 'এই অর্ডারের একটি পেমেন্ট যাচাই করা হচ্ছে। শিগগিরই আপনাকে ফোন করব।',
+            failed: 'পেমেন্ট পেজ খোলা যায়নি। আবার চেষ্টা করুন, বা {phone} নম্বরে ফোন করুন।',
+        },
+    },
     track: {
         title: 'অর্ডার ট্র্যাক করুন',
         metaDescription: 'অর্ডার নম্বর আর ফোন নম্বর দিয়ে টয় মার্ট বিডি-র অর্ডার ট্র্যাক করুন।',
@@ -663,6 +698,7 @@ export const bn: Messages = {
 
 /** Top-level groups whose Bangla is still awaiting native review. Empty this list to sign off. */
 export const pendingNativeReview: ReadonlyArray<keyof Messages> = [
+    'wishlist',
     'site',
     'announcement',
     'nav',
@@ -684,5 +720,6 @@ export const pendingNativeReview: ReadonlyArray<keyof Messages> = [
     'cart',
     'checkout',
     'order',
+    'payment',
     'track',
 ];

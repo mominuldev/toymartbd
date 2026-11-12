@@ -143,6 +143,20 @@ final class OrderResource extends ApiResource
                 'transaction_id' => $p->transaction_id,
                 /** @var string|null */
                 'paid_at' => $p->paid_at?->toIso8601String(),
+                /** Online gateway ids and state (P4-PAY-02/03); null/false for COD. @var string|null */
+                'gateway_reference' => $p->gateway_reference,
+                /** @var string|null */
+                'val_id' => is_string($p->gateway_payload['val_id'] ?? null) ? $p->gateway_payload['val_id'] : null,
+                /** @var string|null */
+                'failure_reason' => $p->failure_reason,
+                /** @var string|null */
+                'review_reason' => $p->review_reason,
+                /** @var string|null */
+                'expires_at' => $p->expires_at?->toIso8601String(),
+                /** @var string|null */
+                'verified_at' => $p->verified_at?->toIso8601String(),
+                /** @var array{enabled: bool, verified: bool, sandbox: bool, reason: string|null}|null */
+                'gateway' => $p->method->isOnline() ? self::gateway($p->method) : null,
             ])->all(),
             'timeline' => $order->events->map(static fn (OrderEvent $e): array => [
                 'id' => $e->id,
@@ -191,7 +205,7 @@ final class OrderResource extends ApiResource
              * What this user may do to the order now — the state machine and their permissions,
              * decided here so the client never re-derives a transition rule.
              *
-             * @var list<'confirm'|'hold'|'release'|'processing'|'ready_to_ship'|'cancel'|'add_note'>
+             * @var list<'confirm'|'hold'|'release'|'processing'|'ready_to_ship'|'ship'|'deliver'|'cancel'|'add_note'>
              */
             'available_actions' => self::availableActions($order, $user instanceof User ? $user : null),
             /** Whether this user may edit the order now (P4-ORD-07: pre-packing status and orders.update). */
@@ -232,6 +246,9 @@ final class OrderResource extends ApiResource
             'release' => $status === OrderStatus::OnHold && $user->can('progress', $order),
             'processing' => $status->canTransitionTo(OrderStatus::Processing) && $user->can('progress', $order),
             'ready_to_ship' => $status->canTransitionTo(OrderStatus::ReadyToShip) && $user->can('progress', $order),
+            // Manual fulfilment (P5) until Phase 6 courier booking.
+            'ship' => $status->canTransitionTo(OrderStatus::Shipped) && $user->can('fulfil', $order),
+            'deliver' => $status->canTransitionTo(OrderStatus::Delivered) && $user->can('fulfil', $order),
             'cancel' => $status->isCancellable() && $user->can('cancel', $order),
             'add_note' => $user->can('addNote', $order),
         ];
@@ -252,5 +269,13 @@ final class OrderResource extends ApiResource
 
         /** @var array<int, string> */
         return User::query()->whereKey($ids)->pluck('name', 'id')->all();
+    }
+
+    /** @return array{enabled: bool, verified: bool, sandbox: bool, reason: string|null} */
+    private static function gateway(\App\Domain\Payment\Enums\PaymentMethod $method): array
+    {
+        $status = app(\App\Domain\Payment\Services\OnlineGateways::class)->status($method);
+
+        return ['enabled' => $status['enabled'], 'verified' => $status['verified'], 'sandbox' => $status['sandbox'], 'reason' => $status['reason']];
     }
 }

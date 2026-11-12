@@ -50,7 +50,7 @@ it('places a guest COD order with Bangla name and address, and returns the confi
     $response->assertHeader('Location', '/api/v1/storefront/orders/'.$order->number);
     expect($response->json('number'))->toBe($order->number)->toMatch('/^TMB-\d{2}-\d{5}$/')
         ->and($response->json('stage'))->toBe('placed')
-        ->and($response->json('payment'))->toBe(['method' => 'cod', 'status' => 'unpaid', 'next_action' => null])
+        ->and($response->json('payment'))->toBe(['method' => 'cod', 'status' => 'unpaid', 'next_action' => null, 'online' => false, 'retry_allowed' => false, 'expires_at' => null])
         ->and($response->json('contact.name'))->toBe('রাহেলা খাতুন')
         ->and($response->json('contact.phone_masked'))->not->toContain('12345')
         ->and($response->json('shipping.address_line'))->toBe('বাড়ি ১২, রোড ৫, ব্লক সি')

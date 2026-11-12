@@ -49,11 +49,12 @@ class ApiServiceProvider extends ServiceProvider
     public const int OTP_PER_TEN_MINUTES = 3;
 
     /**
-     * Sign-in codes requested per IP per hour (P4-STO-11). Generous on purpose: until
-     * TrustProxies forwards the shopper's IP, every request arrives from the Next.js
-     * server, so this caps the whole storefront — the per-phone limits are the real guard.
+     * Sign-in codes requested per shopper IP per hour (P4-STO-11). The Next.js server forwards
+     * the shopper's IP and Laravel trusts it only from TRUSTED_PROXIES (config/trustedproxy.php),
+     * so this is a real per-client cap. Not lower: Bangladeshi mobile carriers put many
+     * subscribers behind one carrier-grade NAT address. The per-phone limits stay the main guard.
      */
-    public const int OTP_PER_IP_PER_HOUR = 300;
+    public const int OTP_PER_IP_PER_HOUR = 30;
 
     /** Code checks per phone per 10 minutes, on top of the 5-guesses-per-code burn. */
     public const int OTP_VERIFY_PER_TEN_MINUTES = 10;
@@ -79,8 +80,8 @@ class ApiServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Attached to the whole storefront group. Behind the Next.js server, $request->ip()
-        // is only the shopper's IP if trusted proxies forward X-Forwarded-For.
+        // Attached to the whole storefront group. Behind the Next.js server, $request->ip() is
+        // the shopper's IP only because that server is in TRUSTED_PROXIES (config/trustedproxy.php).
         RateLimiter::for('storefront', fn (Request $request): Limit => Limit::perMinute(self::STOREFRONT_PER_MINUTE)
             ->by('ip:'.$request->ip()));
 

@@ -17,8 +17,9 @@ use InvalidArgumentException;
  *
  * The others have one and so have their own Action, which calls OrderTransitions inside
  * its own transaction: cancel → {@see CancelOrder} (releases the reservation); shipped →
- * the courier booking flow (consumes stock, §4.2); delivered / returned → Fulfilment
- * (ledger rows, §4.3–4.4).
+ * {@see MarkOrderShipped} (consumes stock, §4.2; Phase 6 courier booking later); delivered →
+ * {@see MarkOrderDelivered} (COD collected; Finance recognises revenue, §4.3); returned →
+ * the returns flow (§4.4).
  */
 final readonly class TransitionOrder
 {

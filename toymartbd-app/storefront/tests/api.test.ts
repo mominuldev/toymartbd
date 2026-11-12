@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiConfigError, ApiError, cached, noStore } from '@/lib/api';
+import { ApiConfigError, ApiError, cached, noStore, send } from '@/lib/api';
+import { clientIpFrom } from '@/lib/client-ip';
 import { brandName, brandNameIsFallback, getBrand, listBrands } from '@/lib/brands';
 import type { Brand } from '@/lib/api-types';
 
@@ -15,6 +16,15 @@ const lego: Brand = {
 const noBangla: Brand = { ...lego, name: 'Barbie', name_bn: null, slug: 'barbie', description_bn: null };
 
 const fetchMock = vi.fn<typeof fetch>();
+
+// The incoming request's headers as next/headers would return them; null = no request scope.
+let incoming: Headers | null = null;
+vi.mock('next/headers', () => ({
+    headers: async () => {
+        if (!incoming) throw new Error('headers() was called outside a request scope');
+        return incoming;
+    },
+}));
 
 function json(body: unknown, status = 200, contentType = 'application/json') {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': contentType } });
@@ -114,5 +124,52 @@ describe('lib/brands', () => {
         expect(brandName(noBangla, 'bn')).toBe('Barbie');
         expect(brandNameIsFallback(noBangla, 'bn')).toBe(true);
         expect(brandNameIsFallback(lego, 'bn')).toBe(false);
+    });
+});
+
+describe('client IP forwarding (trusted proxy)', () => {
+    beforeEach(() => {
+        fetchMock.mockReset();
+        vi.stubGlobal('fetch', fetchMock);
+        vi.stubEnv('API_URL', 'https://api.test/');
+        vi.stubEnv('STOREFRONT_API_TOKEN', 'tok_123');
+        incoming = null;
+    });
+
+    it('prefers X-Real-IP, else the rightmost X-Forwarded-For entry, and drops non-IPs', () => {
+        expect(clientIpFrom(new Headers({ 'x-real-ip': '203.0.113.9', 'x-forwarded-for': '1.2.3.4' }))).toBe('203.0.113.9');
+        expect(clientIpFrom(new Headers({ 'x-forwarded-for': '1.2.3.4, 203.0.113.9' }))).toBe('203.0.113.9');
+        expect(clientIpFrom(new Headers({ 'x-forwarded-for': '2001:db8::1' }))).toBe('2001:db8::1');
+        expect(clientIpFrom(new Headers({ 'x-forwarded-for': '203.0.113.9, evil.example' }))).toBeNull();
+        expect(clientIpFrom(new Headers({ 'x-real-ip': 'not-an-ip' }))).toBeNull();
+        expect(clientIpFrom(new Headers())).toBeNull();
+    });
+
+    it('noStore() and send() forward the shopper IP as X-Forwarded-For', async () => {
+        incoming = new Headers({ 'x-forwarded-for': '198.51.100.1, 203.0.113.9' });
+        fetchMock.mockImplementation(async () => json({ ok: true }));
+        await noStore('storefront/cart');
+        await send('POST', 'storefront/account/otp', { body: { phone: '01712345678' } });
+
+        for (const call of fetchMock.mock.calls) {
+            expect((call[1]!.headers as Record<string, string>)['X-Forwarded-For']).toBe('203.0.113.9');
+        }
+    });
+
+    it('cached() never forwards it (one ISR entry for every shopper)', async () => {
+        incoming = new Headers({ 'x-real-ip': '203.0.113.9' });
+        fetchMock.mockResolvedValue(json({ data: [] }));
+        await cached('storefront/brands', ['brands']);
+        expect((fetchMock.mock.calls[0]![1]!.headers as Record<string, string>)['X-Forwarded-For']).toBeUndefined();
+    });
+
+    it('sends no X-Forwarded-For outside a request scope or without a usable address', async () => {
+        fetchMock.mockImplementation(async () => json({ ok: true }));
+        await noStore('storefront/cart');
+        incoming = new Headers({ 'x-forwarded-for': 'garbage' });
+        await noStore('storefront/cart');
+        for (const call of fetchMock.mock.calls) {
+            expect((call[1]!.headers as Record<string, string>)['X-Forwarded-For']).toBeUndefined();
+        }
     });
 });

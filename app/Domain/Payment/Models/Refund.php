@@ -15,13 +15,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
- * A refund against an order (DATABASE-DESIGN §3.5). Schema only in this batch — the
- * refund Action (§4.7: approval threshold, restock, ledger, audit_sensitive) is Phase 5.
+ * A refund against an order (DATABASE-DESIGN §3.5). Written by the return/refund Actions
+ * in App\Domain\Ordering\Actions\Returns (§4.7: approval threshold, restock, ledger,
+ * audit_sensitive). `amount` includes `shipping_amount` (the delivery-charge part).
  *
  * @property int $id
  * @property int $order_id
  * @property int|null $payment_id
  * @property Money $amount
+ * @property Money $shipping_amount
  * @property string $reason
  * @property RefundType $type
  * @property PaymentMethod $method
@@ -38,7 +40,7 @@ final class Refund extends Model
 {
     /** @var list<string> */
     protected $fillable = [
-        'order_id', 'payment_id', 'amount', 'reason', 'type', 'method', 'status', 'gateway_reference',
+        'order_id', 'payment_id', 'amount', 'shipping_amount', 'reason', 'type', 'method', 'status', 'gateway_reference',
         'restock', 'requested_by', 'approved_by', 'approved_at', 'processed_at', 'note',
     ];
 
@@ -49,6 +51,9 @@ final class Refund extends Model
             'order_id' => 'integer',
             'payment_id' => 'integer',
             'amount' => MoneyCast::class,
+            'shipping_amount' => MoneyCast::class,
+            'requested_by' => 'integer',
+            'approved_by' => 'integer',
             'type' => RefundType::class,
             'method' => PaymentMethod::class,
             'status' => RefundStatus::class,

@@ -58,7 +58,7 @@ const order = (over: Partial<StorefrontOrder> = {}): StorefrontOrder => ({
     number: 'TMB-26-00042',
     stage: 'placed',
     placed_at: '2026-11-12T05:02:00Z',
-    payment: { method: 'cod', status: 'unpaid', next_action: null },
+    payment: { method: 'cod', status: 'unpaid', next_action: null, online: false, retry_allowed: false, expires_at: null },
     contact: { name: 'Sabrina', phone_masked: '017****5678', email: null },
     shipping: { name: 'Sabrina', phone_masked: '017****5678', division: null, district: null, upazila: null, area: 'Dhanmondi', address_line: null, landmark: null, postcode: null },
     items: [],
