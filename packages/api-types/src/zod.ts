@@ -56,6 +56,19 @@ export const bulkConfirmOrdersRequestSchema = z.object({
 });
 export type BulkConfirmOrdersRequestInput = z.input<typeof bulkConfirmOrdersRequestSchema>;
 
+/** `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct */
+export const bulkMediaRequestSchema = z.object({
+    "ids": z.array(z.number().int()).min(1).max(200),
+});
+export type BulkMediaRequestInput = z.input<typeof bulkMediaRequestSchema>;
+
+/** `POST /media/bulk/move` — `{ ids, folder_id }`: 1–200 distinct existing media ids and */
+export const bulkMoveMediaRequestSchema = z.object({
+    "ids": z.array(z.number().int()).min(1).max(200),
+    "folder_id": z.number().int().nullable(),
+});
+export type BulkMoveMediaRequestInput = z.input<typeof bulkMoveMediaRequestSchema>;
+
 /** `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list */
 export const cancelOrderRequestSchema = z.object({
     "reason": cancellationReasonSchema,
@@ -124,6 +137,12 @@ export const marginPreviewRequestSchema = z.object({
 });
 export type MarginPreviewRequestInput = z.input<typeof marginPreviewRequestSchema>;
 
+/** `POST /media/folders` and `PATCH /media/folders/{folder}` — `{ name }`, 1–60 */
+export const mediaFolderRequestSchema = z.object({
+    "name": z.string().min(1).max(60),
+});
+export type MediaFolderRequestInput = z.input<typeof mediaFolderRequestSchema>;
+
 /** `POST /categories/{category}/move` — `{ parent_id, position }`. The category */
 export const moveCategoryRequestSchema = z.object({
     "parent_id": z.number().int().nullable(),
@@ -155,6 +174,12 @@ export const reorderProductImagesRequestSchema = z.object({
     "ids": z.array(z.number().int()).max(100),
 });
 export type ReorderProductImagesRequestInput = z.input<typeof reorderProductImagesRequestSchema>;
+
+/** `POST /media/{media}/replace` — `multipart/form-data`, `file` of the same kind as the */
+export const replaceMediaRequestSchema = z.object({
+    "file": z.instanceof(Blob),
+});
+export type ReplaceMediaRequestInput = z.input<typeof replaceMediaRequestSchema>;
 
 /** `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta */
 export const seoMeasureRequestSchema = z.object({
@@ -239,6 +264,16 @@ export const storeCouponRequestSchema = z.object({
 });
 export type StoreCouponRequestInput = z.input<typeof storeCouponRequestSchema>;
 
+/** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a */
+export const storeMediaRequestSchema = z.object({
+    "file": z.instanceof(Blob),
+    "folder_id": z.number().int().nullable().optional(),
+    "alt_text": z.string().max(255).nullable().optional(),
+    "alt_text_bn": z.string().max(255).nullable().optional(),
+    "caption": z.string().max(500).nullable().optional(),
+});
+export type StoreMediaRequestInput = z.input<typeof storeMediaRequestSchema>;
+
 /** `POST /orders/{order}/notes` — needs orders.update. Notes are append-only. */
 export const storeOrderNoteRequestSchema = z.object({
     "body": z.string().min(1).max(2000),
@@ -248,7 +283,8 @@ export type StoreOrderNoteRequestInput = z.input<typeof storeOrderNoteRequestSch
 
 /** `POST /products/{product}/images` — `multipart/form-data`: `file` (JPEG, PNG, WebP */
 export const storeProductImageRequestSchema = z.object({
-    "file": z.instanceof(Blob),
+    "file": z.instanceof(Blob).optional(),
+    "media_id": z.number().int().nullable().optional(),
     "alt_text": z.string().max(255).nullable().optional(),
     "alt_text_bn": z.string().max(255).nullable().optional(),
     "variant_id": z.number().int().nullable().optional(),
@@ -432,6 +468,15 @@ export const updateCouponRequestSchema = z.object({
     "is_active": z.boolean().optional(),
 });
 export type UpdateCouponRequestInput = z.input<typeof updateCouponRequestSchema>;
+
+/** `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500), */
+export const updateMediaRequestSchema = z.object({
+    "alt_text": z.string().max(255).nullable().optional(),
+    "alt_text_bn": z.string().max(255).nullable().optional(),
+    "caption": z.string().max(500).nullable().optional(),
+    "folder_id": z.number().int().nullable().optional(),
+});
+export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
 
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({

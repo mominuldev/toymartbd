@@ -21,13 +21,12 @@ async function chooseCategory() {
 
 const addValue = (attribute: string, valueId: number) => fireEvent.change(screen.getByLabelText(`Add a ${attribute} value`), { target: { value: String(valueId) } });
 
-/** On /products/new: switch to a variable product and build Color (3) × Size (4). */
+/** On /products/new: the first option makes the product variable; build Color (3) × Size (4). */
 async function buildTwelve() {
-    fireEvent.change(await screen.findByLabelText('Product type'), { target: { value: 'variable' } });
-    const addAttribute = await screen.findByLabelText('Add attribute');
-    fireEvent.change(addAttribute, { target: { value: '1' } });
+    const addOption = await screen.findByLabelText('Add option');
+    fireEvent.change(addOption, { target: { value: '1' } });
     for (const id of [10, 11, 12]) addValue('Color', id);
-    fireEvent.change(screen.getByLabelText('Add attribute'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Add option'), { target: { value: '2' } });
     for (const id of [20, 21, 22, 23]) addValue('Size', id);
 }
 

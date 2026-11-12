@@ -8,6 +8,7 @@ use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Services\ProductDescription;
 use App\Domain\Inventory\Queries\ProductStockByLocation;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Domain\Seo\Models\SlugHistory;
@@ -72,10 +73,20 @@ final class ProductResource extends ApiResource
             'short_description' => $product->short_description,
             /** @var string|null */
             'short_description_bn' => $product->short_description_bn,
-            /** @var string|null */
-            'description' => $product->description,
-            /** @var string|null */
-            'description_bn' => $product->description_bn,
+            /**
+             * Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             * a[href] and img[src, alt, width, height] from our own media only.
+             *
+             * @var string|null
+             */
+            'description' => ProductDescription::html($product->description),
+            /**
+             * Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             * a[href] and img[src, alt, width, height] from our own media only.
+             *
+             * @var string|null
+             */
+            'description_bn' => ProductDescription::html($product->description_bn),
             /** @var array<string, string|null>|null */
             'specifications' => $product->specifications,
             /** @var int|null */

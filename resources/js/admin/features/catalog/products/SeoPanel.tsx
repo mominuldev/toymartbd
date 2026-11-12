@@ -118,7 +118,7 @@ export function SeoPanel({ id, form, product, price, errorOf }: Props) {
     );
 
     return (
-        <section id={id} aria-labelledby={`${baseId}-title`} className="flex scroll-mt-6 flex-col rounded-md border border-line-default bg-surface shadow-e1">
+        <section id={id} aria-labelledby={`${baseId}-title`} className="flex scroll-mt-32 flex-col rounded-md border border-line-default bg-surface shadow-e1">
             <div className="flex flex-col gap-1 px-5 pt-5">
                 <h2 id={`${baseId}-title`} className="t-admin-section text-fg-primary">
                     {t('products.seo.title')}

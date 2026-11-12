@@ -1,11 +1,15 @@
 import { NavLink } from 'react-router';
 import { ShoppingBagOpenIcon, SidebarSimpleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { MessageKey } from '@/i18n/messages';
+import { CountBadge } from '@/components/ui/CountBadge';
 import { Avatar } from './Avatar';
 import { visibleNavigation } from './nav';
 
 type SidebarProps = {
     permissions: readonly string[];
+    /** Live counts by nav path (`/inventory` → low-stock variants); a zero or missing count shows no badge. */
+    counts?: Readonly<Record<string, number | undefined>>;
     /** The user's choice at ≥1280px. Below that the rail is forced (Figma section 10, 1024). */
     collapsed: boolean;
     onToggleCollapsed?: () => void;
@@ -24,7 +28,10 @@ type SidebarProps = {
  * Active item: bg/brand-subtle + brand icon + semibold label (06-admin-feature-checklist §0).
  * The nav scrolls without a visible scrollbar (owner request).
  */
-export function Sidebar({ permissions, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user }: SidebarProps) {
+/** Screen-reader wording for a nav item's count badge. */
+const badgeLabels: Partial<Record<string, MessageKey>> = { '/inventory': 'nav.inventoryBadge' };
+
+export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user }: SidebarProps) {
     const { t } = useI18n();
     const groups = visibleNavigation(permissions);
     const drawer = variant === 'drawer';
@@ -80,12 +87,25 @@ export function Sidebar({ permissions, collapsed, onToggleCollapsed, onNavigate,
                                             ].join(' ')
                                         }
                                     >
-                                        {({ isActive }) => (
-                                            <>
-                                                <item.icon size={20} aria-hidden className={`shrink-0 ${isActive ? 'text-fg-brand' : 'text-fg-primary'}`} />
-                                                <span className={`min-w-0 flex-1 truncate ${label}`}>{t(item.key)}</span>
-                                            </>
-                                        )}
+                                        {({ isActive }) => {
+                                            const count = counts[item.path];
+                                            const badgeLabel = badgeLabels[item.path];
+                                            return (
+                                                <>
+                                                    <item.icon size={20} aria-hidden className={`shrink-0 ${isActive ? 'text-fg-brand' : 'text-fg-primary'}`} />
+                                                    <span className={`min-w-0 flex-1 truncate ${label}`}>{t(item.key)}</span>
+                                                    {count !== undefined && count > 0 && (
+                                                        <>
+                                                            {/* Figma CountBadge 185:43: bg/subtle, on the active item bg/surface. Labels only where the item shows its label. */}
+                                                            <span aria-hidden className={onlyExpanded}>
+                                                                <CountBadge count={count} tone={isActive ? 'onBrand' : 'neutral'} />
+                                                            </span>
+                                                            {badgeLabel && <span className="sr-only">{`, ${t(badgeLabel, { count })}`}</span>}
+                                                        </>
+                                                    )}
+                                                </>
+                                            );
+                                        }}
                                     </NavLink>
                                 </li>
                             ))}

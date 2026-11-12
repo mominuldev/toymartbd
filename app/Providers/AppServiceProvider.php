@@ -8,6 +8,9 @@ use App\Domain\Catalog\Contracts\AvailableStockQuery;
 use App\Domain\Catalog\Events\BrandChanged;
 use App\Domain\Catalog\Events\CategoryChanged;
 use App\Domain\Catalog\Events\ProductChanged;
+use App\Domain\Catalog\Media\Contracts\MediaUsageProvider;
+use App\Domain\Catalog\Media\Services\MediaUsages;
+use App\Domain\Catalog\Services\ProductImageMediaUsages;
 use App\Domain\Content\Listeners\RevalidateBrandPages;
 use App\Domain\Content\Listeners\RevalidateCategoryPages;
 use App\Domain\Content\Listeners\RevalidateProductPages;
@@ -16,6 +19,7 @@ use App\Domain\Customer\Contracts\CustomerOrderHistory;
 use App\Domain\Customer\Listeners\RefreshAggregatesOnOrderChange;
 use App\Domain\Fulfilment\Contracts\FreeShippingPromotion;
 use App\Domain\Inventory\Events\StockLevelChanged;
+use App\Domain\Inventory\Listeners\ForgetLowStockCount;
 use App\Domain\Inventory\Services\StockAvailability;
 use App\Domain\Marketing\Services\CouponFreeShipping;
 use App\Domain\Ordering\Events\OrderPlaced;
@@ -47,6 +51,11 @@ class AppServiceProvider extends ServiceProvider
         // first_order_only coupons read real order history (replaces NoCustomerOrderHistory).
         $this->app->bind(\App\Domain\Marketing\Contracts\CustomerOrderHistory::class, \App\Domain\Ordering\Queries\PhoneOrderHistory::class);
 
+        // Media usage resolver (docs/api/media-library.md): every place a media row can be
+        // referenced is a tagged provider. Blog covers, pages and banners add a line here.
+        $this->app->tag([ProductImageMediaUsages::class], MediaUsageProvider::TAG);
+        $this->app->bind(MediaUsages::class, static fn ($app): MediaUsages => new MediaUsages($app->tagged(MediaUsageProvider::TAG)));
+
         // Payment drivers (rule 5): a new gateway is a driver class plus one line here.
         $this->app->singleton(PaymentGatewayRegistry::class, static function ($app): PaymentGatewayRegistry {
             $registry = new PaymentGatewayRegistry($app);
@@ -67,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(CategoryChanged::class, RevalidateCategoryPages::class);
         Event::listen(ProductChanged::class, RevalidateProductPages::class);
         Event::listen(StockLevelChanged::class, RevalidateStockPages::class);
+        Event::listen(StockLevelChanged::class, ForgetLowStockCount::class);
 
         // Orders → customer aggregate projection (P4-ORD-10); every status transition
         // event implements OrderStatusTransition. Payments → order payment_status.

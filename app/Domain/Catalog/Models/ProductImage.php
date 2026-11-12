@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Models;
 
 use App\Domain\Catalog\Enums\ImageProcessingStatus;
+use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Services\MediaUrls;
 use Database\Factories\ProductImageFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,9 +20,18 @@ use Illuminate\Support\Carbon;
  * (P4-CAT-07). It is null on rows with no file (seeded demo rows) — `url()` returns
  * null and consumers render a placeholder.
  *
+ * **Linked to the media library** (`media_id`, docs/api/media-library.md): the media row
+ * is the one source of truth for the file and the alt text. For a linked row, `path`,
+ * `width`, `height`, `processing_status`, `rendition_widths`, `alt_text` and
+ * `alt_text_bn` read from the media (accessors below), so a library edit or Replace
+ * shows on every product at once. The row's own columns are a write-through mirror
+ * (ProductImageMediaMirror) kept only for a safe rollback; an unlinked row (no file,
+ * or not yet backfilled) still reads its own columns.
+ *
  * @property int $id
  * @property int $product_id
  * @property int|null $variant_id
+ * @property int|null $media_id
  * @property string|null $path
  * @property int|null $width
  * @property int|null $height
@@ -34,6 +45,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Product $product
  * @property-read ProductVariant|null $variant
+ * @property-read Media|null $media
  */
 final class ProductImage extends Model
 {
@@ -48,9 +60,12 @@ final class ProductImage extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'product_id', 'variant_id', 'path', 'width', 'height', 'processing_status', 'rendition_widths',
+        'product_id', 'variant_id', 'media_id', 'path', 'width', 'height', 'processing_status', 'rendition_widths',
         'alt_text', 'alt_text_bn', 'position', 'is_primary',
     ];
+
+    /** The media is read on every access to the file or alt fields. */
+    protected $with = ['media'];
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -65,6 +80,7 @@ final class ProductImage extends Model
         return [
             'product_id' => 'integer',
             'variant_id' => 'integer',
+            'media_id' => 'integer',
             'position' => 'integer',
             'is_primary' => 'boolean',
             'width' => 'integer',
@@ -78,6 +94,87 @@ final class ProductImage extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<Media, $this> */
+    public function media(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'media_id');
+    }
+
+    /** The linked media, or null for an unlinked row. */
+    public function linkedMedia(): ?Media
+    {
+        return $this->media_id === null ? null : $this->media;
+    }
+
+    /** @return Attribute<string|null, mixed> */
+    protected function path(): Attribute
+    {
+        return Attribute::get(function (?string $value): ?string {
+            $media = $this->linkedMedia();
+
+            return $media !== null ? $media->base_path : $value;
+        })->withoutObjectCaching();
+    }
+
+    /** @return Attribute<int|null, mixed> */
+    protected function width(): Attribute
+    {
+        return Attribute::get(fn (mixed $value): ?int => $this->linkedMedia() !== null ? $this->linkedMedia()->width : self::intOrNull($value))->withoutObjectCaching();
+    }
+
+    /** @return Attribute<int|null, mixed> */
+    protected function height(): Attribute
+    {
+        return Attribute::get(fn (mixed $value): ?int => $this->linkedMedia() !== null ? $this->linkedMedia()->height : self::intOrNull($value))->withoutObjectCaching();
+    }
+
+    /** @return Attribute<ImageProcessingStatus, mixed> */
+    protected function processingStatus(): Attribute
+    {
+        return Attribute::get(function (mixed $value): ImageProcessingStatus {
+            $media = $this->linkedMedia();
+
+            if ($media !== null) {
+                return $media->processing_status;
+            }
+
+            return $value instanceof ImageProcessingStatus ? $value : (ImageProcessingStatus::tryFrom(is_string($value) ? $value : '') ?? ImageProcessingStatus::Ready);
+        })->withoutObjectCaching();
+    }
+
+    /** @return Attribute<list<int>|null, mixed> */
+    protected function renditionWidths(): Attribute
+    {
+        return Attribute::get(function (mixed $value): ?array {
+            $media = $this->linkedMedia();
+
+            if ($media !== null) {
+                return $media->renditions === null ? null : $media->renditionWidths();
+            }
+
+            $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+            return is_array($decoded) ? array_values(array_map(intval(...), $decoded)) : null;
+        })->withoutObjectCaching();
+    }
+
+    /** @return Attribute<string|null, mixed> */
+    protected function altText(): Attribute
+    {
+        return Attribute::get(fn (?string $value): ?string => $this->media_id !== null && $this->media !== null ? $this->media->alt_text : $value)->withoutObjectCaching();
+    }
+
+    /** @return Attribute<string|null, mixed> */
+    protected function altTextBn(): Attribute
+    {
+        return Attribute::get(fn (?string $value): ?string => $this->media_id !== null && $this->media !== null ? $this->media->alt_text_bn : $value)->withoutObjectCaching();
+    }
+
+    private static function intOrNull(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int) $value : null;
     }
 
     /** @return BelongsTo<ProductVariant, $this> */
@@ -99,7 +196,7 @@ final class ProductImage extends Model
             return null;
         }
 
-        $chosen = MediaUrls::pick($this->renditionWidths(), $width);
+        $chosen = MediaUrls::pick($this->renditionWidthList(), $width);
 
         return $chosen === null ? null : MediaUrls::url(MediaUrls::renditionPath($this->path, $chosen, $format));
     }
@@ -117,12 +214,12 @@ final class ProductImage extends Model
 
         return implode(', ', array_map(
             static fn (int $w): string => MediaUrls::url(MediaUrls::renditionPath($path, $w, $format))." {$w}w",
-            $this->renditionWidths(),
+            $this->renditionWidthList(),
         ));
     }
 
     /** @return list<int> the widths that exist on disk, ascending */
-    public function renditionWidths(): array
+    public function renditionWidthList(): array
     {
         $widths = array_map(intval(...), $this->rendition_widths ?? []);
         sort($widths);

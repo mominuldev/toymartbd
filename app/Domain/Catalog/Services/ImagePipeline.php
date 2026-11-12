@@ -46,18 +46,22 @@ final class ImagePipeline
         $size = @filesize($path);
 
         if ($size === false || $size === 0) {
-            throw new InvalidImage('The file is empty or unreadable.');
+            throw new InvalidImage('The file is empty or unreadable.', 'empty');
         }
 
         if ($size > $this->maxBytes()) {
-            throw new InvalidImage(sprintf('The image is %.1f MB; the limit is %d MB.', $size / 1048576, intdiv($this->maxBytes(), 1048576)));
+            throw new InvalidImage(
+                sprintf('The image is %.1f MB; the limit is %d MB.', $size / 1048576, intdiv($this->maxBytes(), 1048576)),
+                'too_large',
+                ['size' => sprintf('%.1f', $size / 1048576), 'limit' => intdiv($this->maxBytes(), 1048576)],
+            );
         }
 
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path);
         $head = (string) @file_get_contents($path, false, null, 0, 32);
 
         if (! is_string($mime) || ! in_array($mime, $this->acceptedTypes(), true) || self::magicType($head) !== $mime) {
-            throw new InvalidImage('Only JPEG, PNG, WebP or AVIF images are accepted.');
+            throw new InvalidImage('Only JPEG, PNG, WebP or AVIF images are accepted.', 'wrong_type');
         }
 
         $bytes = (string) file_get_contents($path);
@@ -65,20 +69,20 @@ final class ImagePipeline
 
         foreach (self::PAYLOAD_MARKERS as $marker) {
             if (str_contains($lower, $marker)) {
-                throw new InvalidImage('The file contains embedded script or markup and was refused.');
+                throw new InvalidImage('The file contains embedded script or markup and was refused.', 'payload');
             }
         }
 
         $info = @getimagesizefromstring($bytes);
 
         if ($info === false || $info[0] < 1 || $info[1] < 1) {
-            throw new InvalidImage('The image could not be read.');
+            throw new InvalidImage('The image could not be read.', 'unreadable');
         }
 
         $max = $this->maxDimension();
 
         if ($info[0] > $max || $info[1] > $max) {
-            throw new InvalidImage("The image is {$info[0]}×{$info[1]} px; the limit is {$max} px per side.");
+            throw new InvalidImage("The image is {$info[0]}×{$info[1]} px; the limit is {$max} px per side.", 'too_wide', ['width' => $info[0], 'height' => $info[1], 'limit' => $max]);
         }
 
         return ['mime' => $mime, 'width' => $info[0], 'height' => $info[1]];
@@ -110,7 +114,7 @@ final class ImagePipeline
         } catch (InvalidImage $e) {
             throw $e;
         } catch (Throwable $e) {
-            throw new InvalidImage('The image could not be decoded.', previous: $e);
+            throw new InvalidImage('The image could not be decoded.', 'undecodable', previous: $e);
         }
 
         return ['bytes' => $bytes, 'width' => $image->width(), 'height' => $image->height()];

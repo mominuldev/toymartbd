@@ -256,11 +256,11 @@ A `StatCard` whose number drills through is a real link (`<a>`), not a click han
 ### A8 · `ImageUploader`
 
 **Variant axes** — `state`: `empty` | `dragover` | `uploading` | `populated` | `error` · `tile`: `default` | `primary` | `dragging` | `selected`
-**Properties** — `images[]`, `maxCount` (10), `maxBytes` (5 MB), `acceptedTypes` (jpg/png/webp/avif), `requireAltBoth` (bool, default true)
+**Properties** — `images[]`, `maxCount` (10), `maxBytes` (10 MB — matches `StoreProductImageRequest` `max:10240`), `acceptedTypes` (jpg/png/webp/avif), `requireAltBoth` (bool, default true)
 
 | Element | Geometry (1440, inside a 744 form column) | Auto-layout | Tokens |
 |---|---|---|---|
-| Dropzone `empty` | Fill × 180 | Vertical, gap `spacing/3`, centred, padding `spacing/6` | `color/bg/subtle`, 2px dashed `color/border/default`, `radius/lg`; icon `image-plus` 32 `color/text/tertiary`; headline `admin/body-strong` "Drop images here or browse"; help `admin/caption` `color/text/secondary` "JPG, PNG, WebP or AVIF · max 5 MB each · up to 10 · square 1:1, minimum 1200×1200" |
+| Dropzone `empty` | Fill × 180 | Vertical, gap `spacing/3`, centred, padding `spacing/6` | `color/bg/subtle`, 2px dashed `color/border/default`, `radius/lg`; icon `image-plus` 32 `color/text/tertiary`; headline `admin/body-strong` "Drop images here or browse"; help `admin/caption` `color/text/secondary` "JPG, PNG, WebP or AVIF · max 10 MB each · up to 10 · square 1:1, minimum 1200×1200" |
 | Dropzone `dragover` | — | — | bg `color/bg/brand-subtle`, 2px solid `color/bg/brand`, headline `color/text/primary`; scale 1.01 over `motion/fast` |
 | Dropzone `populated` | Fill × 96 | Horizontal, centred | shrinks to a slim bar below the grid, same tokens as `empty` at 96 tall |
 | Tile grid | Fill × Hug | Wrap, gap `spacing/4` | 4 per row at 744: tile W (744 − 3×16)/4 = **174**, H 174 + 96 meta = 270 |
@@ -274,7 +274,7 @@ A `StatCard` whose number drills through is a real link (`<a>`), not a click han
 | Alt field BN | 174 × 32 | — | prefix chip "বাং"; placeholder "ব্রিক বক্স ৫০০ — ছবি ১"; font `Hind Siliguri`, line-height ×1.15 per §3.2 |
 | Alt missing | — | — | field border 1px `color/feedback/warning`, and the tile shows a 16px `alert-triangle` tinted `color/feedback/warning` at top-right with tooltip "Bangla alt text missing". ~~Not blocking~~ **Superseded (P4-CAT-06, 2026-11-11): missing alt text in either language blocks publishing** — the product API refuses `status: active` (422 on `status`) and the uploader shows a "required before publish" line. Still counted in the SEO checklist. |
 | `uploading` tile | 174 × 174 | — | `color/bg/subtle` fill, `ProgressBar` 4px at the bottom in `color/bg/brand`, centred `admin/caption` "62% · 1.4 MB" |
-| `error` tile | — | — | 1px `color/feedback/danger` border, centred `alert-circle` 20 tinted `color/feedback/danger`, `admin/caption` `color/text/primary` with the actual reason ("8.2 MB — over the 5 MB limit"), and a `Button ghost sm` "Remove" |
+| `error` tile | — | — | 1px `color/feedback/danger` border, centred `alert-circle` 20 tinted `color/feedback/danger`, `admin/caption` `color/text/primary` with the actual reason ("12.4 MB — over the 10 MB limit"), and a `Button ghost sm` "Remove" |
 | Crop modal | W 680 × H 560 | Vertical | `radius/xl`, `e4`; 1:1 locked by default with a `NativeSelect` offering 1:1 / 4:5 / 16:9; grid overlay 3×3 in 1px `color/border/default` at 40% ; footer `Button ghost` Cancel + `Button primary` "Apply crop" |
 
 Alt text in **both** languages per image is the spec, because the storefront ships Bangla and an English-only alt is a blank alt for half the audience. The auto-composed value from §7 (`{product} — {variant} — image {n}`) pre-fills both and is overridable.
@@ -916,7 +916,7 @@ Copy rules, which are the whole component: **name the reason, then the next acti
 
 ### A25 · Media library parts (`MediaTile`, `MediaFilterItem`, `MediaDetailPanel`, `UploadQueueItem`, `UploadQueue`, `MediaDeleteDialog`, `MediaPickerModal`)
 
-Added 2026-11-12 (Figma page `04 Admin Components`, section `09 Media library` `288:1904`). One library holds product photos, category banners, blog and page images, product videos and BSTI certificate PDFs. Three rules carry the whole feature and are enforced by the API, not the UI:
+Added 2026-11-12 (Figma page `04 Admin Components`, section `09 Media library` `288:1904`). One library holds product photos, category banners, blog and page images, and BSTI certificate PDFs. **Video is deferred past v1** (owner decision, 2026-11-12): no Videos filter, no video tile, no video upload. Three rules carry the whole feature and are enforced by the API, not the UI:
 
 1. **Alt text in English and বাংলা is required on every image.** A product (or page/post) that uses an image missing either alt cannot be published — the same 422 as A8. The library surfaces the gap (`Missing Bangla alt` / `Missing English alt` filters with Danger counts, a Warning chip on the tile) but never blocks the upload itself.
 2. **An asset that is used anywhere cannot be deleted.** Delete is disabled with the reason and the usages are listed; the server refuses with 409. Bulk delete skips in-use files and says how many it skipped.
@@ -925,14 +925,14 @@ Added 2026-11-12 (Figma page `04 Admin Components`, section `09 Media library` `
 | Component | Variants / properties | Geometry (1440) | Tokens and notes |
 |---|---|---|---|
 | `MediaFilterItem` `289:1910` | `State` Default · Active · Warning · props `label`, `icon` (swap) + nested `CountBadge` | 224 × 36, padding `space/2` `space/3`, gap `space/2`, `radius/sm` | Active = `bg/brand-subtle` + `text/brand` icon (same as the sidebar). Warning = `feedback/warning` icon + Danger count — used for the alt-text gaps. |
-| `MediaTile` `289:2121` | `State` Default · Selected · Ordered × `Type` Image · Video · Document · props `filename`, `meta` | 160 wide (resizable; thumb is aspect-locked 1:1), padding `space/2`, `radius/sm-plus`, 1px `border/default` | Selected = 2px `border/brand` + `bg/brand-subtle` + checked checkbox. Ordered = numbered `bg/brand` badge (picker multi-select; 1 = primary image). Top-right `Used in N` / `Unused` badge on `bg/surface`. Alt chip = `StatusChip`: Success "Alt EN · বাং", Warning "বাং alt missing" / "Not 1:1 — will crop", Danger "Alt missing", Neutral "No alt needed" (PDF). Video shows a play badge on `bg/overlay` and the duration. |
+| `MediaTile` `289:2121` | `State` Default · Selected · Ordered × `Type` Image · Document (Video variants removed 2026-11-12 — video deferred past v1) · props `filename`, `meta` | 160 wide (resizable; thumb is aspect-locked 1:1), padding `space/2`, `radius/sm-plus`, 1px `border/default` | Selected = 2px `border/brand` + `bg/brand-subtle` + checked checkbox. Ordered = numbered `bg/brand` badge (picker multi-select; 1 = primary image). Top-right `Used in N` / `Unused` badge on `bg/surface`. Alt chip = `StatusChip`: Success "Alt EN · বাং", Warning "বাং alt missing" / "Not 1:1 — will crop", Danger "Alt missing", Neutral "No alt needed" (PDF). |
 | `MediaDetailPanel` `291:2353` | `State` InUse · Unused | 360 (344 in the 1440 grid layout), `radius/md`, `Elevation/*/e1` | Preview 1:1 · filename + CDN URL (`Admin/mono-sm`) · Copy URL / Replace file / Download · type, dimensions, size (served vs original), uploader + Dhaka time, folder · renditions box (AVIF + WebP 1600/800/400 with sizes; "EXIF and GPS data removed · checked by content") · alt EN + বাংলা (`AdminField`, both required; missing → Error state with the publish consequence) · caption · folder `AdminSelect` · Used-in list (icon, title, context, `arrow-square-out` link) · Delete: InUse = Danger disabled + lock + reason; Unused = Danger enabled. |
 | `UploadQueueItem` `292:2169` | `State` Uploading · Processing · Done · Failed · prop `filename` | 400 × ~64, padding `space/3` `space/4` | 4px progress on `bg/subtle` with `bg/brand` fill. Failed thumb `bg/danger-subtle` + `warning-circle`; the reason is `text/primary` caption (feedback colours never carry 12–14px text) and states the real cause: "Not a real image file — the content is not JPG, PNG, WebP or AVIF", "11.4 MB — over the 10 MB limit", "900 × 900 — below the 1200 × 1200 minimum for product images". |
 | `UploadQueue` `292:2170` | — | 400 wide floating panel, bottom-right, `radius/md`, `e4` | Header "Uploading 7 files to Products" + per-state counts; collapsible; footer explains content check + EXIF strip + AVIF/WebP. |
 | `MediaDeleteDialog` `292:2359` | `State` Blocked · Confirm | 520, `radius/lg`, `e4` (A23 geometry) | Blocked: lock icon on `bg/warning-subtle`, lists each usage with a link, actions Close + Replace file. Confirm (unused files only): consequences box, Cancel + Danger "Delete N files". |
 | `MediaPickerModal` `294:2661` | `Tab` Library · Upload | 1000 wide, `radius/lg`, `e4` | Header with the calling context ("Brick Box 500 pcs · gallery has 1 of 10 images"), `AdminTab`s, ratio hint bar for the context (product = 1:1, min 1200 × 1200, 10 MB), folder rail 240 + search/type/sort + 4-up `MediaTile` grid, alt warning bar on `bg/warning-subtle` when a selected image lacks বাংলা alt (insert allowed, publish blocked), footer "3 selected · numbers set the gallery order" + Insert N. Upload tab: dashed dropzone + inline queue; failed files are never inserted. Single-select contexts (blog featured image, category banner) use `State=Selected` tiles instead of numbers. |
 
-**Limits.** Product images: JPG, PNG, WebP or AVIF by content, ≤ 10 MB, ≤ 8000 px a side, square 1:1, min 1200 × 1200 (`StoreProductImageRequest`, `max:10240`). Certificates: PDF by content, ≤ 10 MB, no scripts or attachments. A8 and the `ImageUploader` component still say "max 5 MB" — align them to 10 MB. Video limits are not specified anywhere yet (open question 5).
+**Limits.** Product images: JPG, PNG, WebP or AVIF by content, ≤ 10 MB, ≤ 8000 px a side, square 1:1, min 1200 × 1200 (`StoreProductImageRequest`, `max:10240`). Certificates: PDF by content, ≤ 10 MB, no scripts or attachments. A8 and the `ImageUploader` component (`201:1035`) say 10 MB too (aligned 2026-11-12; they said 5 MB before). No video: deferred past v1 (open question 5, resolved).
 
 ---
 
@@ -1436,9 +1436,9 @@ Added 2026-11-12. Sidebar **Online store** active; breadcrumb `Store / Online st
 
 | Region | Content |
 |---|---|
-| `ContentHeader` | "Media library" · "1,284 files · 3.2 GB of 10 GB used · 37 images missing Bangla alt text" · New folder (Outline) · Upload files (Primary) |
+| `ContentHeader` | "Media library" · "1,262 files · 3.2 GB of 10 GB used · 37 images missing Bangla alt text" · New folder (Outline) · Upload files (Primary) |
 | Toolbar | `SearchField` (filename, alt text in both languages, product name) · type `AdminSelect` · sort `AdminSelect` · Grid / List `SegmentedControl` |
-| Rail (cards) | Folders: All media, Products, Category banners, Blog, Pages, Unused (+ New folder) · Type: Images, Videos, PDFs & certificates · Needs attention: Missing Bangla alt, Missing English alt (Warning) · Storage meter (3.2 GB of 10 GB, originals vs renditions) |
+| Rail (cards) | Folders: All media, Products, Category banners, Blog, Pages, Unused (+ New folder) · Type: Images (1,198), PDFs & certificates (64) — All media 1,262 = Images + PDFs; video deferred past v1 · Needs attention: Missing Bangla alt, Missing English alt (Warning) · Storage meter (3.2 GB of 10 GB, originals vs renditions) |
 | Grid | `MediaTile`s, cursor pagination ("Showing 15 of 846" + Load more — no page numbers) |
 | Detail | `MediaDetailPanel` for the selected tile |
 
@@ -1628,5 +1628,6 @@ Reconciling cash to the ৳717 accrual profit: + ৳8,210 COGS (goods paid for i
 2. **`color/feedback/*` have no `-subtle` companions.** Every status treatment above therefore fills with `color/bg/subtle` and tints only icons and 2px edges. Adding `color/feedback/success-subtle` etc. would let chips carry tinted fills and would simplify A12; it is a token-set decision, not a component one.
 3. **The admin type tokens in Part 0 §5 are new** (`admin/page-title` … `admin/mono`). They are overrides of §3.2, not replacements. They need to exist as Figma text styles bound to the same families before A1 is built.
 4. **Steadfast credentials.** Everything in A14 Panel B and the B6 banner is written for the state the business is actually in. When a merchant account exists, Panel B's `fresh` / `stale` / `scoring-disabled` states activate and the B6 banner disappears on its own; no redesign is needed.
-5. **Media library video limits** (2026-11-12). The library has a Videos filter and a video tile, but no accepted formats, size cap or duration cap exist in code or docs. The drop overlay therefore only states image and PDF limits. Decide before building upload for video (or drop video from v1).
+5. ~~**Media library video limits**~~ — **Resolved 2026-11-12 (owner): no video in v1.** Video is deferred past v1; the Videos filter, the `MediaTile` Video variants and the sample video tile were removed from Figma. Revisit formats, size and duration caps when video is scheduled.
+5a. ~~**Upload size limit (A8 said 5 MB, the API allows 10 MB)**~~ — **Resolved 2026-11-12 (owner): 10 MB everywhere**, matching `StoreProductImageRequest` `max:10240`. A8, the `ImageUploader` component and its screen instances now say 10 MB.
 6. **Media library folders** (2026-11-12) are drawn as flat, user-creatable folders plus smart filters (Unused, Missing alt). Whether an asset may live in more than one folder, and whether folders can nest, is not decided.

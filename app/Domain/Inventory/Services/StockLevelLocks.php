@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * are never touched by the INSERT (its duplicate-key S lock would deadlock with a
  * concurrent FOR UPDATE on the same row).
  *
- * @internal for StockLedger, StockReservations and AdjustStock (which locks first to read on_hand and reserved before deciding)
+ * @internal for StockLedger, StockReservations, AdjustStock (which locks first to read on_hand and reserved before deciding) and SetReorderLevels
  */
 final class StockLevelLocks
 {

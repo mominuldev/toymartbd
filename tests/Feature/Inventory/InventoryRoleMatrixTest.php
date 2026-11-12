@@ -27,7 +27,7 @@ beforeEach(function (): void {
 
 it('guards the inventory read endpoints with inventory.view', function (string $uri): void {
     RoleMatrix::assert($this, Permission::InventoryView, fn () => $this->getJson('/api/v1/admin/inventory/'.$uri));
-})->with(['summary', 'stock', 'movements', 'movements/reconciliation']);
+})->with(['summary', 'stock', 'low-stock-count', 'movements', 'movements/reconciliation']);
 
 it('guards POST /inventory/adjustments with inventory.adjust', function (): void {
     RoleMatrix::assert($this, Permission::InventoryAdjust, fn () => $this->postJson(
@@ -47,6 +47,7 @@ it('refuses a guest with 401 on every admin inventory endpoint', function (strin
 })->with([
     ['GET', 'summary'],
     ['GET', 'stock'],
+    ['GET', 'low-stock-count'],
     ['GET', 'movements'],
     ['GET', 'movements/reconciliation'],
     ['POST', 'adjustments'],

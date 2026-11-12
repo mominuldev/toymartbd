@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from 'react';
+import { useId, type ComponentType, type ReactNode } from 'react';
 import {
     ArrowLineDownIcon,
     ArrowLineUpIcon,
@@ -14,6 +14,7 @@ import {
 } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
+import { Button, type ButtonSize, type ButtonVariant } from '@/components/ui/Button';
 import type { InventoryLocation, MovementType, StockRow } from './api';
 
 /** The taka sign — a currency symbol, not translatable copy. */
@@ -68,7 +69,11 @@ export function StatCard({ label, value, hint, edge }: { label: string; value: R
     );
 }
 
-/** The location cards row (Inventory 213:6955 "branches"): the selected one in brand-subtle with a 2px brand edge. */
+/**
+ * The location cards row (B · 14 Inventory 241:39526 "branches"): one card per active
+ * location, equal widths, the selected one in brand-subtle with a 2px brand edge. Name,
+ * what the location is for (its description), units and value at cost.
+ */
 export function LocationCards({ locations, selected, showValue, onSelect }: { locations: InventoryLocation[]; selected: number; showValue: boolean; onSelect: (id: number) => void }) {
     const { t, locale } = useI18n();
     return (
@@ -89,10 +94,13 @@ export function LocationCards({ locations, selected, showValue, onSelect }: { lo
                         <Icon size={22} aria-hidden className="shrink-0 text-fg-secondary" />
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="truncate t-admin-body-strong text-fg-primary">{locale === 'bn' ? (location.name_bn ?? location.name) : location.name}</span>
-                            <span className="truncate t-admin-caption text-fg-tertiary">{location.is_default ? t('inventory.location.default') : location.code.toUpperCase()}</span>
+                            <span className="truncate t-admin-caption text-fg-tertiary">
+                                {(locale === 'bn' ? (location.description_bn ?? location.description) : location.description) ??
+                                    (location.is_default ? t('inventory.location.default') : location.code.toUpperCase())}
+                            </span>
                         </span>
                         <span className="flex shrink-0 flex-col items-end">
-                            <span className="t-admin-body-strong tabular text-fg-primary">{t('inventory.location.units', { count: formatUnits(location.on_hand) })}</span>
+                            <span className="t-admin-num tabular text-fg-primary">{t('inventory.location.units', { count: formatUnits(location.on_hand) })}</span>
                             {showValue && location.value !== undefined && (
                                 <span className="t-admin-caption tabular text-fg-tertiary">
                                     <Taka amount={location.value} signClass="t-admin-currency-caption" />
@@ -129,15 +137,34 @@ export function VariantCell({ row }: { row: Pick<StockRow, 'image_url' | 'produc
     );
 }
 
-/** Available with its state: a 2px status edge + "low"/"out" word, never colour alone. */
+/** Available with its state (B · 14 "avail" 241:39587): a 2px status edge + "low"/"out" word, never colour alone. Healthy and overstock rows show the plain number. */
 export function AvailableCell({ available, state }: { available: number; state: StockRow['state'] }) {
     const { t } = useI18n();
-    if (!state) return <span className="t-admin-num tabular text-fg-primary">{formatUnits(available)}</span>;
+    if (state !== 'low' && state !== 'out') return <span className="t-admin-num tabular text-fg-primary">{formatUnits(available)}</span>;
     const edge = state === 'low' ? 'border-status-low-stock' : 'border-status-out-of-stock';
     return (
         <span className={`inline-flex items-center gap-1 rounded-xs border-l-2 bg-subtle py-0.75 ps-1.5 pe-2 whitespace-nowrap ${edge}`}>
             <span className="t-admin-num tabular text-fg-primary">{formatUnits(available)}</span>
             <span className="t-admin-caption text-fg-secondary">{t(state === 'low' ? 'inventory.state.low' : 'inventory.state.out')}</span>
+        </span>
+    );
+}
+
+/**
+ * A drawn action whose feature is not built yet (transfers, purchase orders): Figma's
+ * AdminButton in its Disabled state, with the reason as a hover tooltip and as the
+ * button's accessible description. It never pretends to work.
+ */
+export function PendingButton({ variant = 'outline', size = 'md', reason, children }: { variant?: ButtonVariant; size?: ButtonSize; reason: string; children: ReactNode }) {
+    const id = useId();
+    return (
+        <span title={reason} className="inline-flex cursor-not-allowed">
+            <Button variant={variant} size={size} disabled aria-describedby={id} className="pointer-events-none">
+                {children}
+            </Button>
+            <span id={id} hidden>
+                {reason}
+            </span>
         </span>
     );
 }

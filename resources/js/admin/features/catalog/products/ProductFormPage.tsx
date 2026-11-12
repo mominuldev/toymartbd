@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
-import { ArrowSquareOutIcon, ArrowUUpLeftIcon, CaretDownIcon, ChartLineUpIcon, CheckIcon, CopyIcon, TranslateIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, ArrowUUpLeftIcon, CaretDownIcon, ChartLineUpIcon, CheckIcon, CopyIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeProductRequestSchema, updateProductRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -17,7 +17,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { useAttributes } from '../attributes/api';
 import { flatten, useCategoryTree } from '../categories/api';
-import { genders, productStatuses, productTypes, useArchiveProduct, useBrandOptions, useDuplicateProduct, useMarginPreview, useProduct, useSaveProduct, type Margin, type Product } from './api';
+import { genders, productStatuses, useArchiveProduct, useBrandOptions, useDuplicateProduct, useMarginPreview, useProduct, useSaveProduct, type Margin, type Product } from './api';
 import {
     combinations,
     emptyRow,
@@ -36,11 +36,12 @@ import {
     type VariantFields,
 } from './document';
 import { ProductStatusChip, TAKA, Toggle } from './parts';
-import { ProductSection } from './ProductSection';
+import { OPEN_SECTION_EVENT, ProductSection } from './ProductSection';
 import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
 import { RelationsEditor } from './RelationsEditor';
 import { ImagesPanel } from './ImagesPanel';
 import { SeoPanel } from './SeoPanel';
+import { DescriptionEditor } from './DescriptionEditor';
 import { CertificateFile, StockByBranchCard } from './RailCards';
 
 /** The section navigation of Figma "B · 12 Product edit" 241:37900, in Figma order. */
@@ -65,7 +66,7 @@ const channels: { key: keyof SalesChannels; label: MessageKey }[] = [
 ];
 
 /** Fields edited outside the General card, so their dirty / error state belongs to another tab. */
-const notGeneral = new Set(['simple', 'seo', 'vat_rate']);
+const notGeneral = new Set(['simple', 'seo', 'vat_rate', 'type']);
 
 /** One form per page, so plain ids; `?tab=` addresses the same sections. */
 const anchor = (section: Section) => `product-${section}`;
@@ -75,7 +76,6 @@ const statusOption: Record<Product['status'], MessageKey> = {
     draft: 'products.status.draft',
     archived: 'products.status.archived',
 };
-const typeOption: Record<Product['type'], MessageKey> = { simple: 'products.type.simple', variable: 'products.type.variable' };
 const genderOption: Record<(typeof genders)[number], MessageKey> = { boys: 'products.gender.boys', girls: 'products.gender.girls', unisex: 'products.gender.unisex' };
 
 /** The storefront product URL prefix (SlugField 198:1086); not translated — it is a URL. */
@@ -106,6 +106,10 @@ function formatDhakaDate(ymd: string, locale: string): string {
     if (!y || !m || !d) return ymd;
     return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric', numberingSystem: 'latn' }).format(new Date(Date.UTC(y, m - 1, d)));
 }
+
+/** The sticky topbar (h-15) plus the sticky tab strip, in px — the band the scroll-spy ignores. */
+const STICKY_OFFSET = 108;
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
 
 function smoothScroll(): ScrollBehavior {
     return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -165,7 +169,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const [relations, setRelations] = useState<RelationRow[]>(initialRelations);
     const [placed, setPlaced] = useState<PlacedErrors>(noErrors);
     const [confirming, setConfirming] = useState(false);
-    const [descLang, setDescLang] = useState<'en' | 'bn'>('en');
     const [moreOpen, setMoreOpen] = useState(false);
     const addAnother = useRef(false);
 
@@ -182,13 +185,16 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const simpleValues = useWatch({ control, name: 'simple' });
     const slug = useWatch({ control, name: 'slug' });
     const expiresOn = useWatch({ control, name: 'bsti_expires_on' });
+    const description = useWatch({ control, name: 'description' });
+    const descriptionBn = useWatch({ control, name: 'description_bn' });
 
     const variantAttributes = useMemo(() => (attributes.data ?? []).filter((a) => a.is_variant_defining), [attributes.data]);
     const combos = useMemo(() => combinations(matrix.options, variantAttributes), [matrix.options, variantAttributes]);
     const flatCategories = useMemo(() => flatten(categories.data ?? []), [categories.data]);
 
     const stockRows = product?.stock_by_location;
-    const sections: Section[] = ['general', 'media', type === 'variable' ? 'variants' : 'pricing', ...(stockRows ? (['inventory'] as const) : []), 'seo', 'related'];
+    // Figma 241:37900: every section has its tab; Inventory only once there is stock to show (edit).
+    const sections: Section[] = ['general', 'media', 'pricing', 'variants', ...(stockRows ? (['inventory'] as const) : []), 'seo', 'related'];
 
     // Margins come from the API (rule 1): one preview row per simple product / matrix row.
     const marginRows = useMemo(
@@ -215,12 +221,18 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const requestedRaw = search.get('tab');
     const requested = (requestedRaw === 'images' ? 'media' : requestedRaw) as Section | null;
     const [active, setActive] = useState<Section>(requested && sections.includes(requested) ? requested : 'general');
-    const spyPaused = useRef(0);
+    /**
+     * After a jump (a tab click, `?tab=`, an error) the scroll-spy waits for the reader to
+     * scroll on their own. The rail sits beside the form column, so a rail section (Inventory,
+     * Related) shares the viewport's top band with a form section that comes earlier in tab
+     * order — without this hold the spy would take the tab straight back.
+     */
+    const spyHeld = useRef(false);
 
     const goTab = useCallback(
         (next: Section) => {
             setActive(next);
-            spyPaused.current = Date.now() + 800;
+            spyHeld.current = true;
             setSearch(
                 (current) => {
                     const params = new URLSearchParams(current);
@@ -230,36 +242,62 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                 },
                 { replace: true },
             );
-            document.getElementById(anchor(next))?.scrollIntoView?.({ behavior: smoothScroll(), block: 'start' });
+            const target = document.getElementById(anchor(next));
+            target?.dispatchEvent(new Event(OPEN_SECTION_EVENT));
+            target?.scrollIntoView?.({ behavior: smoothScroll(), block: 'start' });
         },
         [setSearch],
     );
 
     // Open on the section the URL names.
     useEffect(() => {
-        if (requested && requested !== 'general') document.getElementById(anchor(requested))?.scrollIntoView?.({ block: 'start' });
+        if (requested && requested !== 'general') {
+            spyHeld.current = true;
+            const target = document.getElementById(anchor(requested));
+            target?.dispatchEvent(new Event(OPEN_SECTION_EVENT));
+            target?.scrollIntoView?.({ block: 'start' });
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Scroll-spy: the first section (in tab order) inside the top third of the viewport is the active tab.
+    // Scroll-spy: the first section (in tab order) in the top third of the viewport, below the
+    // sticky topbar and tab strip, is the active tab — once the reader scrolls by hand.
     const sectionKey = sections.join();
     useEffect(() => {
         if (typeof IntersectionObserver === 'undefined') return;
         const visible = new Map<string, boolean>();
+        const pick = () => {
+            if (spyHeld.current) return;
+            const first = sections.find((s) => visible.get(anchor(s)));
+            if (first) setActive(first);
+        };
         const observer = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) visible.set(entry.target.id, entry.isIntersecting);
-                if (Date.now() < spyPaused.current) return;
-                const first = sections.find((s) => visible.get(anchor(s)));
-                if (first) setActive(first);
+                pick();
             },
-            { rootMargin: '0px 0px -65% 0px' },
+            { rootMargin: `-${STICKY_OFFSET}px 0px -65% 0px` },
         );
         for (const s of sections) {
             const el = document.getElementById(anchor(s));
             if (el) observer.observe(el);
         }
-        return () => observer.disconnect();
+        // Wheel, touch and the scroll keys are the reader's own scrolling: release the hold.
+        const release = (event: Event) => {
+            if (event instanceof KeyboardEvent && !SCROLL_KEYS.has(event.key)) return;
+            if (!spyHeld.current) return;
+            spyHeld.current = false;
+            pick();
+        };
+        window.addEventListener('wheel', release, { passive: true });
+        window.addEventListener('touchmove', release, { passive: true });
+        window.addEventListener('keydown', release);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('wheel', release);
+            window.removeEventListener('touchmove', release);
+            window.removeEventListener('keydown', release);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sectionKey]);
 
@@ -314,6 +352,19 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [combos, relations, getValues, setError, goTab, sectionKey],
     );
+
+    /**
+     * The matrix decides the type on a new product (Figma has no type select): any option
+     * makes it variable, none makes it simple again. A saved product keeps its type — the
+     * API refuses a change — so on edit this only edits the matrix.
+     */
+    const changeMatrix = (next: MatrixState) => {
+        setMatrix(next);
+        if (id === null) {
+            const nextType = next.options.length > 0 ? 'variable' : 'simple';
+            if (getValues('type') !== nextType) setValue('type', nextType, { shouldDirty: true });
+        }
+    };
 
     const discard = () => {
         reset(toForm(product));
@@ -431,22 +482,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         return [...steps].sort((a, b) => a - b);
     };
 
-    const typeSelect =
-        id === null ? (
-            <span className="flex items-center gap-2">
-                <label htmlFor={`${formId}-type`} className="t-admin-body-strong text-fg-primary">
-                    {t('products.field.type')}
-                </label>
-                <Select id={`${formId}-type`} size="sm" className="w-36" {...register('type')}>
-                    {productTypes.map((value) => (
-                        <option key={value} value={value}>
-                            {t(typeOption[value])}
-                        </option>
-                    ))}
-                </Select>
-            </span>
-        ) : null;
-
     const publishedSince = product?.published_at ? formatDhakaDateTime(product.published_at, locale).split(',')[0] : null;
 
     // SlugField: a live product's URL change needs the redirect acknowledgement (the server enforces it too).
@@ -514,6 +549,9 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
 
             {/* Section tabs (AdminTab 185:125) with the unsaved / error dot after the label (241:37900).
                 Below 1024: a scrolling chip strip (230:22079); ≥ 1024: underline tabs on a baseline. */}
+            {/* Sticky under the topbar (behaviour only), so the active tab stays in view; the canvas
+                band behind it spans the content gutter so cards scroll out of sight beneath it. */}
+            <div className="sticky top-15 z-10 -mx-4 bg-canvas px-4 max-lg:-my-2 max-lg:py-2 md:-mx-5 md:px-5 xl:-mx-6 xl:px-6">
             <nav aria-label={t('products.tabs')} className="-mx-1 flex gap-2 overflow-x-auto overflow-y-hidden scrollbar-none px-1 lg:gap-0.5 lg:border-b lg:border-line-default">
                 {sections.map((name) => {
                     const current = active === name;
@@ -541,6 +579,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                     );
                 })}
             </nav>
+            </div>
 
             <form
                 id={formId}
@@ -577,50 +616,14 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                     </Field>
                                 </div>
 
-                                {/* Description: one editor with the EN | বাং switch of RichTextToolbar 201:1570. */}
-                                <div className="flex flex-col gap-1.5">
-                                    <label htmlFor={`${formId}-desc-${descLang}`} className="t-admin-body-strong text-fg-primary">
-                                        {t('products.field.description')}
-                                    </label>
-                                    <div role="group" aria-label={t('products.field.descriptionLanguage')} className="flex w-fit items-center gap-0.5 rounded-sm border border-line-default bg-subtle p-1">
-                                        <TranslateIcon size={16} aria-hidden className="mx-2 text-fg-secondary" />
-                                        {(['en', 'bn'] as const).map((lang) => (
-                                            <button
-                                                key={lang}
-                                                type="button"
-                                                lang={lang}
-                                                aria-pressed={descLang === lang}
-                                                onClick={() => setDescLang(lang)}
-                                                className="h-8 rounded-sm px-3 t-admin-button-sm text-fg-secondary hover:text-fg-primary aria-pressed:bg-surface aria-pressed:text-fg-primary aria-pressed:shadow-e1"
-                                            >
-                                                {lang === 'en' ? 'EN' : 'বাং'}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <textarea
-                                        id={`${formId}-desc-en`}
-                                        hidden={descLang !== 'en'}
-                                        rows={4}
-                                        aria-invalid={errorOf('description') ? true : undefined}
-                                        className={`${inputClass} p-3.5`}
-                                        {...register('description')}
-                                    />
-                                    <textarea
-                                        id={`${formId}-desc-bn`}
-                                        hidden={descLang !== 'bn'}
-                                        rows={4}
-                                        lang="bn"
-                                        aria-invalid={errorOf('description_bn') ? true : undefined}
-                                        className={`${inputClass} p-3.5`}
-                                        {...register('description_bn')}
-                                    />
-                                    {descError && (
-                                        <p className="flex items-start gap-1 t-admin-caption text-fg-primary">
-                                            <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
-                                            {descError}
-                                        </p>
-                                    )}
-                                </div>
+                                {/* Description — "desc" 241:37921: RichTextToolbar 201:1570 over the editor; HTML, sanitised by the API. */}
+                                <DescriptionEditor
+                                    value={{ en: description, bn: descriptionBn }}
+                                    onChange={(lang, html) => setValue(lang === 'en' ? 'description' : 'description_bn', html, { shouldDirty: true })}
+                                    error={descError}
+                                    invalid={{ en: Boolean(errorOf('description')), bn: Boolean(errorOf('description_bn')) }}
+                                    disabled={!editable || save.isPending}
+                                />
 
                                 {/* Category · Brand · Age (241:37927) */}
                                 <div className="grid gap-4 lg:grid-cols-3">
@@ -734,19 +737,19 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                             </ProductSection>
 
                             {/* Media — ImageUploader 201:1035 */}
-                            <div id={anchor('media')} className="scroll-mt-6">
+                            <div id={anchor('media')} className="scroll-mt-32">
                                 <ImagesPanel product={product} disabled={!editable} />
                             </div>
 
                             {/* Pricing (FormSection 241:37938) — a simple product's one variant. */}
                             {type === 'variable' && (
                                 /* A variable product prices each variant in the matrix; its VAT rate is the product's. */
-                                <ProductSection title={t('products.section.pricing')} description={t('products.section.pricingVariableHint')} forceOpen={errorSections.pricing}>
+                                <ProductSection id={anchor('pricing')} title={t('products.section.pricing')} description={t('products.section.pricingVariableHint')} forceOpen={errorSections.pricing}>
                                     <div className="grid gap-4 lg:grid-cols-2">{vatField}</div>
                                 </ProductSection>
                             )}
                             {type === 'simple' && (
-                                <ProductSection id={anchor('pricing')} title={t('products.section.pricing')} description={t('products.section.pricingHint')} aside={typeSelect} forceOpen={errorSections.pricing}>
+                                <ProductSection id={anchor('pricing')} title={t('products.section.pricing')} description={t('products.section.pricingHint')} forceOpen={errorSections.pricing}>
                                     {!canPrice && <p className="rounded-sm bg-subtle px-3 py-2 t-admin-caption text-fg-secondary">{t('products.pricing.locked')}</p>}
                                     <div className="grid gap-4 lg:grid-cols-2">
                                         <MoneyField label={t('products.field.price')} hint={t('products.field.priceHint')} field="price" readOnly={!canPrice} form={form} error={errorOf('simple.price')} required />
@@ -900,27 +903,27 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                         </aside>
                     </div>
 
-                    {/* Variants — VariantMatrixEditor 201:1201 (241:38029), full 1144 width below the columns. */}
-                    {type === 'variable' &&
-                        (attributes.isError ? (
-                            <QueryError error={attributes.error} onRetry={() => void attributes.refetch()} />
-                        ) : (
-                            <VariantMatrixEditor
-                                id={anchor('variants')}
-                                aside={typeSelect}
-                                attributes={variantAttributes}
-                                value={matrix}
-                                combos={combos}
-                                onChange={setMatrix}
-                                errors={placed.rows}
-                                matrixErrors={placed.matrix}
-                                canCost={canCost}
-                                canPrice={canPrice}
-                                stockMode={stockMode}
-                                margins={canCost ? matrixMargins : undefined}
-                                disabled={!editable || save.isPending}
-                            />
-                        ))}
+                    {/* Variants — VariantMatrixEditor 201:1201 (241:38029), full 1144 width below the columns, on every product.
+                        A simple product shows it empty with "Add option"; on a new product the first option makes it variable. */}
+                    {attributes.isError ? (
+                        <QueryError error={attributes.error} onRetry={() => void attributes.refetch()} />
+                    ) : (
+                        <VariantMatrixEditor
+                            id={anchor('variants')}
+                            attributes={variantAttributes}
+                            value={matrix}
+                            combos={combos}
+                            onChange={changeMatrix}
+                            errors={placed.rows}
+                            matrixErrors={placed.matrix}
+                            canCost={canCost}
+                            canPrice={canPrice}
+                            stockMode={stockMode}
+                            margins={canCost ? matrixMargins : undefined}
+                            disabled={!editable || save.isPending}
+                            simple={type === 'simple' ? (id === null ? 'new' : 'fixed') : undefined}
+                        />
+                    )}
                 </fieldset>
 
                 {/* Below 1024 the destructive action leaves the save bar and sits after the form (Figma 230:22079). */}

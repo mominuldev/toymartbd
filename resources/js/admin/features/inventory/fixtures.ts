@@ -31,10 +31,12 @@ export const puzzle: StockRow = {
     reserved: 2,
     available: 6,
     reorder_point: 12,
+    reorder_quantity: 12,
     state: 'low',
     unit_cost: '310.0000',
     value: '2480.00',
     elsewhere: [],
+    transfer_from: null,
 };
 
 export const blaster: StockRow = {
@@ -48,6 +50,7 @@ export const blaster: StockRow = {
     reserved: 0,
     available: 25,
     reorder_point: 6,
+    reorder_quantity: 6,
     state: null,
     unit_cost: '1060.0000',
     value: '26500.00',
@@ -55,13 +58,54 @@ export const blaster: StockRow = {
 
 export const summary: InventorySummary = {
     location_id: 1,
-    counts: { all: 2, low: 1, out: 0, idle: 0 },
+    counts: { all: 2, low: 1, out: 0, overstock: 0, idle: 0 },
     on_hand: 33,
     reserved: 2,
     value: '28980.00',
     total_value: '28980.00',
-    locations: [{ id: 1, code: 'main', name: 'Dhaka HQ · Mirpur', name_bn: 'ঢাকা প্রধান · মিরপুর', is_default: true, on_hand: 33, value: '28980.00' }],
+    locations: [
+        {
+            id: 1,
+            code: 'dhk',
+            name: 'Dhaka HQ · Mirpur',
+            name_bn: 'ঢাকা এইচকিউ · মিরপুর',
+            description: 'Main warehouse · online orders',
+            description_bn: 'প্রধান গুদাম · অনলাইন অর্ডার',
+            is_default: true,
+            on_hand: 33,
+            value: '28980.00',
+        },
+    ],
 };
+
+/** Three branches (Figma B · 14): Chattogram holds 4 of the low puzzle. */
+export const ctg = { id: 2, code: 'ctg', name: 'Chattogram · Agrabad', name_bn: 'চট্টগ্রাম · আগ্রাবাদ', description: 'Retail branch · POS + pickup', description_bn: 'খুচরা শাখা · POS + পিকআপ', is_default: false, on_hand: 74, value: '38210.00' };
+export const syl = { id: 3, code: 'syl', name: 'Sylhet pickup point', name_bn: 'সিলেট পিকআপ পয়েন্ট', description: 'Pickup only · no POS', description_bn: 'শুধু পিকআপ · POS নেই', is_default: false, on_hand: 19, value: '9369.00' };
+
+export const branchSummary: InventorySummary = {
+    ...summary,
+    counts: { all: 2, low: 1, out: 0, overstock: 5, idle: 11 },
+    total_value: '76559.00',
+    locations: [...summary.locations, ctg, syl],
+};
+
+export const branchRows: StockRow[] = [
+    {
+        ...puzzle,
+        elsewhere: [
+            { location_id: 2, code: 'ctg', on_hand: 4, available: 4 },
+            { location_id: 3, code: 'syl', on_hand: 0, available: 0 },
+        ],
+        transfer_from: { location_id: 2, code: 'ctg', available: 4 },
+    },
+    {
+        ...blaster,
+        elsewhere: [
+            { location_id: 2, code: 'ctg', on_hand: 1, available: 0 },
+            { location_id: 3, code: 'syl', on_hand: 0, available: 0 },
+        ],
+    },
+];
 
 export const movement: Movement = {
     id: 501,
@@ -126,6 +170,7 @@ export function inventoryApi(me: Me, handler?: (url: string, init?: RequestInit)
         if (custom) return custom;
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
         if (url.includes('/inventory/summary')) return { status: 200, body: cost ? summary : { ...costless(summary, ['value', 'total_value']), locations: summary.locations.map((l) => costless(l, ['value'])) } };
+        if (url.includes('/inventory/low-stock-count')) return { status: 200, body: { location_id: 1, count: 1 } };
         if (url.includes('/inventory/stock')) return { status: 200, body: page([puzzle, blaster].map((r) => (cost ? r : costless(r, ['unit_cost', 'value'])))) };
         if (url.includes('/inventory/movements/reconciliation')) return { status: 200, body: cost ? reconciliation : costless(reconciliation, ['stock_value']) };
         if (url.includes('/inventory/movements')) return { status: 200, body: page([cost ? movement : costless(movement, ['unit_cost'])]) };

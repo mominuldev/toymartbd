@@ -31,6 +31,8 @@ enum ProblemType: string
     case PriceChanged = 'price-changed';
     /** Checkout: the stock reservation failed for at least one line; `errors[]` lists each. */
     case InsufficientStock = 'insufficient-stock';
+    /** Media library (docs/api/media-library.md): delete refused, the file is used; `usages[]` lists where. */
+    case MediaInUse = 'media-in-use';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -58,7 +60,7 @@ enum ProblemType: string
             self::IdempotencyKeyMissing, self::IdempotencyKeyInvalid => 400,
             self::IdempotencyKeyReused => 422,
             self::RequestInProgress => 409,
-            self::PriceChanged, self::InsufficientStock => 409,
+            self::PriceChanged, self::InsufficientStock, self::MediaInUse => 409,
             self::ServerError, self::HttpError => 500,
         };
     }
@@ -82,6 +84,7 @@ enum ProblemType: string
             self::RequestInProgress => 'Request in progress',
             self::PriceChanged => 'Price changed',
             self::InsufficientStock => 'Insufficient stock',
+            self::MediaInUse => 'Media in use',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -107,6 +110,7 @@ enum ProblemType: string
             self::RequestInProgress => 'A request with this Idempotency-Key is still being processed. Retry shortly.',
             self::PriceChanged => 'The order total has changed. Review the cart and place the order again.',
             self::InsufficientStock => 'Some items are no longer available in the quantity requested.',
+            self::MediaInUse => 'This file is in use and cannot be deleted.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

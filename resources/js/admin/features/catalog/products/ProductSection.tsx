@@ -1,4 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+
+/** Dispatched on a section by the tab strip: below 1024 a jump opens the accordion it lands on. */
+export const OPEN_SECTION_EVENT = 'product-section:open';
 import { CaretDownIcon } from '@phosphor-icons/react';
 
 type ProductSectionProps = {
@@ -22,11 +25,19 @@ type ProductSectionProps = {
  */
 export function ProductSection({ id, title, description, aside, defaultOpen = false, forceOpen = false, children, className = '' }: ProductSectionProps) {
     const [open, setOpen] = useState(defaultOpen);
+    const root = useRef<HTMLElement>(null);
+    useEffect(() => {
+        const el = root.current;
+        if (!el) return;
+        const openIt = () => setOpen(true);
+        el.addEventListener(OPEN_SECTION_EVENT, openIt);
+        return () => el.removeEventListener(OPEN_SECTION_EVENT, openIt);
+    }, []);
     const expanded = open || forceOpen;
     const bodyId = id ? `${id}-body` : undefined;
 
     return (
-        <section id={id} aria-label={title} className={`flex scroll-mt-6 flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1 ${className}`}>
+        <section ref={root} id={id} aria-label={title} className={`flex scroll-mt-32 flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1 ${className}`}>
             <div className="flex items-center gap-2">
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <h2 className="t-admin-section text-fg-primary">

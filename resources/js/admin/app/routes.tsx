@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router';
+import { Navigate, type RouteObject } from 'react-router';
 import { Shell } from './Shell';
 import { Dashboard } from './Dashboard';
 import { NotFound } from './NotFound';
@@ -19,9 +19,10 @@ import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { MovementsPage } from '@/features/inventory/MovementsPage';
 import { OrdersPage } from '@/features/orders/OrdersPage';
 import { OrderDetailPage } from '@/features/orders/OrderDetailPage';
+import { MediaLibraryPage } from '@/features/media/MediaLibraryPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/orders']);
+const built = new Set(['/products', '/inventory', '/orders', '/store']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -61,6 +62,11 @@ export const routes: RouteObject[] = [
                     // Order board (Figma 205:681) and order detail (206:1475).
                     { path: 'orders', element: <OrdersPage /> },
                     { path: 'orders/:orderId', element: <OrderDetailPage /> },
+                    // Online store: the media library (Figma 303:53185) is its first screen; the
+                    // section's other pages are still to come.
+                    { path: 'store', element: <Navigate to="/store/media" replace /> },
+                    { path: 'store/media', element: <MediaLibraryPage /> },
+                    { path: 'store/*', element: <ComingSoon title="nav.store" /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

@@ -31,6 +31,7 @@ final readonly class ProblemDetails implements Responsable
      * @param  list<array{field: string, message: string}>|null  $errors
      * @param  array<string, string>  $headers
      * @param  array<string, mixed>|null  $debug  only ever set when app.debug is true
+     * @param  array<string, mixed>  $extensions  RFC 9457 extension members for a specific `type` (e.g. `usages` on media-in-use)
      */
     public function __construct(
         public ProblemType $type,
@@ -39,6 +40,7 @@ final readonly class ProblemDetails implements Responsable
         public ?array $errors = null,
         public array $headers = [],
         public ?array $debug = null,
+        public array $extensions = [],
     ) {}
 
     public static function make(ProblemType $type, ?string $detail = null): self
@@ -132,6 +134,7 @@ final readonly class ProblemDetails implements Responsable
             'status' => $this->status,
             'detail' => $this->detail,
             'errors' => $this->errors,
+            ...$this->extensions,
             'request_id' => is_string($requestId) ? $requestId : null,
             'debug' => $this->debug,
         ], static fn (mixed $value): bool => $value !== null);

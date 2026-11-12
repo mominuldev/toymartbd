@@ -9,6 +9,7 @@ use App\Domain\Catalog\Enums\ImageProcessingStatus;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Services\ProductDescription;
 use App\Domain\Seo\Enums\RobotsDirective;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Domain\Seo\Models\SlugHistory;
@@ -198,7 +199,10 @@ final readonly class ProductSeo
     /** The short description, or the first sentence-ish of the long one, as plain text. */
     private static function summary(?string $short, ?string $long): string
     {
-        $text = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) (($short ?? '') !== '' ? $short : $long))));
+        // The long description is rich-text HTML; read it as words, with blocks kept apart.
+        $text = ($short ?? '') !== ''
+            ? trim((string) preg_replace('/\s+/u', ' ', strip_tags($short)))
+            : ProductDescription::plainText($long);
 
         if (mb_strlen($text) <= self::DESCRIPTION_FALLBACK_CHARS) {
             return $text;

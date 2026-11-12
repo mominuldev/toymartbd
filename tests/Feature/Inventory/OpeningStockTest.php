@@ -110,3 +110,17 @@ it('validates opening stock as a whole number from 0', function (mixed $value): 
         ->assertStatus(422)
         ->assertJsonPath('errors.0.field', 'variants.0.opening_stock');
 })->with([-1, 1.5, 'ten', 1000001]);
+
+it('records a branch opening balance at that location only, once per location', function (): void {
+    $product = Product::factory()->create();
+    $variant = $product->variants()->firstOrFail();
+    $ctg = App\Domain\Inventory\Models\StockLocation::query()->create(['code' => 'ctg', 'name' => 'Chattogram · Agrabad', 'is_active' => true]);
+    $record = app(App\Domain\Inventory\Actions\RecordOpeningStock::class);
+
+    $record->handle($product, [$variant->id => 10]);
+    $record->handle($product, [$variant->id => 4], locationId: $ctg->id);
+    $record->handle($product, [$variant->id => 99], locationId: $ctg->id); // already opened there
+
+    expect(StockLevel::query()->where('variant_id', $variant->id)->orderBy('location_id')->pluck('on_hand')->all())->toBe([10, 4])
+        ->and(StockMovement::query()->where('location_id', $ctg->id)->sole()->quantity)->toBe(4);
+});

@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Jobs;
 
 use App\Domain\Catalog\Actions\CompleteImageRenditions;
+use App\Domain\Catalog\Media\Actions\CompleteMediaRenditions;
+use App\Domain\Catalog\Media\Services\RenditionWriter;
 use App\Domain\Catalog\Models\ProductImage;
-use App\Domain\Catalog\Services\ImagePipeline;
-use App\Domain\Catalog\Services\MediaUrls;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -46,7 +44,7 @@ final class GenerateImageRenditions implements ShouldQueue
         return [10, 60, 300];
     }
 
-    public function handle(ImagePipeline $pipeline, CompleteImageRenditions $complete): void
+    public function handle(RenditionWriter $writer, CompleteImageRenditions $complete, CompleteMediaRenditions $completeMedia): void
     {
         $image = ProductImage::query()->find($this->imageId);
 
@@ -54,28 +52,31 @@ final class GenerateImageRenditions implements ShouldQueue
             return; // deleted before the job ran
         }
 
-        $master = Storage::disk(MediaUrls::originalsDisk())->get("{$image->path}/master.webp");
+        // A library-linked image: the renditions belong to its media row (shared by every
+        // product that uses it), so completing them updates and revalidates all of those.
+        $media = $image->linkedMedia();
 
-        if ($master === null) {
-            throw new RuntimeException("Master missing for product image {$image->id}.");
+        if ($media !== null) {
+            $completeMedia->handle($media->id, $media->base_path, $writer->write($media->base_path));
+
+            return;
         }
 
-        $disk = Storage::disk(MediaUrls::disk());
-
-        $renditions = $pipeline->renditions($master);
-
-        foreach ($renditions as $width => $formats) {
-            foreach ($formats as $format => $bytes) {
-                $disk->put(MediaUrls::renditionPath($image->path, $width, $format), $bytes, ['visibility' => 'public']);
-            }
-        }
-
-        $complete->handle($image, array_keys($renditions));
+        $result = $writer->write($image->path);
+        $complete->handle($image, $result['widths']);
     }
 
     public function failed(?Throwable $e): void
     {
         Log::error('Product image renditions failed.', ['image_id' => $this->imageId, 'error' => $e?->getMessage()]);
+
+        $mediaId = ProductImage::query()->whereKey($this->imageId)->value('media_id');
+
+        if (is_numeric($mediaId)) {
+            app(CompleteMediaRenditions::class)->fail((int) $mediaId);
+
+            return;
+        }
 
         app(CompleteImageRenditions::class)->fail($this->imageId);
     }

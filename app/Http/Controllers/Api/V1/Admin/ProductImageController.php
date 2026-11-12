@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Domain\Catalog\Actions\AttachMediaToProduct;
 use App\Domain\Catalog\Actions\CropProductImage;
 use App\Domain\Catalog\Actions\DeleteProductImage;
 use App\Domain\Catalog\Actions\ReorderProductImages;
@@ -41,12 +42,18 @@ final class ProductImageController extends ApiController
 
     /**
      * `POST /products/{product}/images` — `multipart/form-data`; appended last, primary
-     * when it is the product's first image. 201 with the image (`processing`).
+     * when it is the product's first image. 201 with the image (`processing`). With
+     * `media_id` instead of `file`, attaches an existing library image (no re-encode).
      */
-    #[OpenApiResponse(422, 'Not a JPEG/PNG/WebP/AVIF by content, over 10 MB or 8000 px, an embedded payload, or undecodable (`validation-error` on `file`)')]
-    public function store(StoreProductImageRequest $request, Product $product, UploadProductImage $upload): JsonResponse
+    #[OpenApiResponse(422, 'Not a JPEG/PNG/WebP/AVIF by content, over 10 MB or 8000 px, an embedded payload, or undecodable (`validation-error` on `file`); with `media_id`: not an image, already in the gallery, or the gallery is full (`validation-error` on `media_id`)')]
+    public function store(StoreProductImageRequest $request, Product $product, UploadProductImage $upload, AttachMediaToProduct $attach): JsonResponse
     {
-        $image = $upload->handle($product, $request->uploadedPath(), $request->imageAttributes());
+        $mediaId = $request->mediaId();
+        $attributes = $request->imageAttributes();
+
+        $image = $mediaId !== null
+            ? $attach->handle($product, $mediaId, array_intersect_key($attributes, array_flip(['alt_text', 'alt_text_bn', 'variant_id'])))
+            : $upload->handle($product, $request->uploadedPath(), $attributes);
 
         return (new ProductImageResource($image))->response()->setStatusCode(201);
     }

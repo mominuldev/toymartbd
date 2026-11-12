@@ -9,12 +9,16 @@ use Illuminate\Support\Carbon;
 use RuntimeException;
 
 /**
- * A stock location (DATABASE-DESIGN §9). MVP has one, seeded by its migration.
+ * A stock location (DATABASE-DESIGN §9): a warehouse, retail branch or pickup point.
+ * The migration seeds the default one; `code` is the short label the inventory overview
+ * shows for it ("CTG 4 · SYL 0"), `description` what it is for.
  *
  * @property int $id
  * @property string $code
  * @property string $name
  * @property string|null $name_bn
+ * @property string|null $description
+ * @property string|null $description_bn
  * @property bool $is_default
  * @property bool $is_active
  * @property Carbon|null $created_at
@@ -23,7 +27,7 @@ use RuntimeException;
 final class StockLocation extends Model
 {
     /** @var list<string> */
-    protected $fillable = ['code', 'name', 'name_bn', 'is_default', 'is_active'];
+    protected $fillable = ['code', 'name', 'name_bn', 'description', 'description_bn', 'is_default', 'is_active'];
 
     public static function defaultId(): int
     {

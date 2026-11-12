@@ -17,7 +17,7 @@ function seedOrders(): string[] {
         use App\\Domain\\Customer\\Models\\Customer;
         use App\\Domain\\Inventory\\Models\\StockLevel;
         use Tests\\Feature\\Ordering\\Support\\OrderFixtures;
-        $ids = StockLevel::query()->whereRaw('on_hand - reserved >= 5')->orderBy('variant_id')->limit(2)->pluck('variant_id')->all();
+        $ids = StockLevel::query()->where('location_id', App\\Domain\\Inventory\\Models\\StockLocation::defaultId())->whereRaw('on_hand - reserved >= 5')->orderBy('variant_id')->limit(2)->pluck('variant_id')->all();
         $a = Customer::factory()->create(['name' => 'Shahriar Kabir']);
         $b = Customer::factory()->create(['name' => 'রিফাত চৌধুরী']);
         $high = OrderFixtures::place([$ids[0] => 2], customer: $a, overrides: ['risk_score' => 80, 'risk_level' => 'high', 'verification_status' => 'pending', 'risk_flags' => ['signals' => [['code' => 'first_order', 'weight' => 80]], 'hold_reasons' => ['first_order_above_threshold'], 'computed_at' => now()->toIso8601ZuluString()]]);
@@ -25,11 +25,21 @@ function seedOrders(): string[] {
         $third = OrderFixtures::place([$ids[0] => 1, $ids[1] => 1], customer: $b, overrides: ['risk_score' => 10, 'risk_level' => 'low']);
         echo implode(',', [$high->number, $low->number, $third->number]);
     `;
-    const out = execFileSync(process.env.PHP_BIN ?? 'php', ['artisan', 'tinker', '--execute', php], {
-        cwd: root,
-        env: { ...process.env, APP_ENV: 'local', DB_CONNECTION: 'sqlite', DB_DATABASE: resolve(root, 'database/e2e.sqlite'), SCOUT_DRIVER: 'null', QUEUE_CONNECTION: 'sync', STOREFRONT_URL: '' },
-        encoding: 'utf8',
-    });
+    // Same drivers as e2e/admin/serve.sh: the file cache matters because placing an order
+    // changes stock, which clears the cached low-stock count — on CI the .env cache store
+    // is Redis, which this job does not run.
+    let out: string;
+    try {
+        out = execFileSync(process.env.PHP_BIN ?? 'php', ['artisan', 'tinker', '--execute', php], {
+            cwd: root,
+            env: { ...process.env, APP_ENV: 'local', DB_CONNECTION: 'sqlite', DB_DATABASE: resolve(root, 'database/e2e.sqlite'), SCOUT_DRIVER: 'null', QUEUE_CONNECTION: 'sync', CACHE_STORE: 'file', SESSION_DRIVER: 'file', STOREFRONT_URL: '' },
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+    } catch (error) {
+        const e = error as { stdout?: string; stderr?: string };
+        throw new Error(`Seeding orders through tinker failed:\n${e.stderr ?? ''}\n${e.stdout ?? ''}`);
+    }
     const numbers = out.trim().split('\n').pop()!.split(',');
     expect(numbers).toHaveLength(3);
     return numbers;

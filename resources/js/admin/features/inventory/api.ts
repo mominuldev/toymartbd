@@ -10,11 +10,12 @@ export type InventoryLocation = InventorySummary['locations'][number];
 export type Reconciliation = Schema<'InventoryReconciliation'>;
 export type Adjustment = Schema<'InventoryAdjustment'>;
 export type MovementType = Movement['type'];
+export type LowStockCount = Schema<'InventoryLowStockCount'>;
 export type AdjustmentReason = Adjustment['reason'];
 /** The POST body — the generated request type, never a hand-written copy (rule 27). */
 export type AdjustmentInput = StoreStockAdjustmentRequestInput;
 
-export const stockStates = ['low', 'out', 'idle'] as const;
+export const stockStates = ['low', 'out', 'overstock', 'idle'] as const;
 export type StockState = (typeof stockStates)[number];
 
 export const movementTypes: MovementType[] = [
@@ -41,6 +42,7 @@ type Page<T> = { data: T[]; meta: { next_cursor?: string | null } };
 const keys = {
     all: ['inventory'] as const,
     summary: (location: string) => ['inventory', 'summary', location] as const,
+    lowStockCount: ['inventory', 'low-stock-count'] as const,
     stock: (filters: StockFilters) => ['inventory', 'stock', filters] as const,
     movements: (filters: MovementFilters) => ['inventory', 'movements', filters] as const,
     reconciliation: (filters: MovementFilters) => ['inventory', 'reconciliation', filters] as const,
@@ -81,6 +83,21 @@ export function useInventorySummary(location: string) {
         queryKey: keys.summary(location),
         queryFn: () => api<InventorySummary>(`/inventory/summary${query({ 'filter[location_id]': location })}`),
         placeholderData: keepPreviousData,
+    });
+}
+
+/**
+ * The Inventory nav badge: low-stock variants at the default location, counted by the
+ * server (one cached COUNT). Refreshed every few minutes and after any adjustment
+ * (every inventory key is invalidated then).
+ */
+export function useLowStockCount(enabled: boolean) {
+    return useQuery({
+        queryKey: keys.lowStockCount,
+        queryFn: () => api<LowStockCount>('/inventory/low-stock-count'),
+        enabled,
+        staleTime: 60_000,
+        refetchInterval: 300_000,
     });
 }
 

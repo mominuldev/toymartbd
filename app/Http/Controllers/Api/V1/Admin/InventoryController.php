@@ -7,11 +7,13 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Models\StockMovement;
 use App\Domain\Inventory\Services\StockLedgerReport;
 use App\Domain\Inventory\Services\StockOverview;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Inventory\InventoryFilters;
+use App\Http\Resources\Admin\InventoryLowStockCountResource;
 use App\Http\Resources\Admin\InventoryMovementResource;
 use App\Http\Resources\Admin\InventoryReconciliationResource;
 use App\Http\Resources\Admin\InventoryStockRowResource;
@@ -46,11 +48,27 @@ final class InventoryController extends ApiController
     }
 
     /**
+     * `GET /inventory/low-stock-count` — the Inventory nav badge: low-stock variants at the
+     * default location (the Low stock tab's rule). One COUNT, cached until stock or a
+     * reorder point changes, so the shell can ask on every page without slowing it.
+     */
+    public function lowStockCount(StockOverview $overview): InventoryLowStockCountResource
+    {
+        $this->authorize('viewAny', StockLevel::class);
+        $locationId = StockLocation::defaultId();
+
+        return new InventoryLowStockCountResource([
+            'location_id' => $locationId,
+            'count' => $overview->lowCount($locationId),
+        ]);
+    }
+
+    /**
      * `GET /inventory/stock` — one row per variant at a location, cursor-paginated,
      * ordered by product then variant.
      */
     #[QueryParameter('filter[location_id]', 'Stock location; the default location when omitted.', type: 'int')]
-    #[QueryParameter('filter[state]', '`low` (0 < available ≤ reorder point), `out` (available ≤ 0) or `idle` (stock, but no movement for 90 days).', type: "'low'|'out'|'idle'")]
+    #[QueryParameter('filter[state]', '`low` (0 < available ≤ reorder point), `out` (available ≤ 0), `overstock` (reorder quantity set and available > reorder point + 2 × reorder quantity) or `idle` (stock, but no movement for 90 days).', type: "'low'|'out'|'overstock'|'idle'")]
     #[QueryParameter('filter[search]', 'Contains-match on product name, name_bn, SKU or barcode.', type: 'string')]
     #[QueryParameter('filter[product_id]', 'Only this product\'s variants.', type: 'int')]
     #[QueryParameter('filter[variant_id]', 'Only this variant.', type: 'int')]

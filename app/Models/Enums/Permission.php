@@ -92,6 +92,8 @@ enum Permission: string
     case ContentView = 'content.view';
     case ContentManage = 'content.manage';
     case MediaManage = 'media.manage';
+    /** Delete library files and bulk-download originals: owner and admin roles only (docs/api/media-library.md, decision 7). */
+    case MediaDelete = 'media.delete';
 
     // SEO
     case SeoView = 'seo.view';
