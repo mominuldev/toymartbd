@@ -209,7 +209,7 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 - **Product form** — rich-text description (TipTap; sanitised server-side by `ProductDescription` with symfony/html-sanitizer, again on the storefront); Variants section always present, matrix decides the type on create; section tabs sticky with scroll margin (the Inventory tab looked inert). Nested-form bug fixed: confirming an image delete also saved the product.
 - **Inventory page** — matched to Theme B `241:39494`: branch cards, Overstock tab, Other branches column, contextual row actions, low-stock nav badge, 3-branch demo seed through opening-balance movements.
 
-**Owner decisions open:** overstock = `available > reorder_point + 2 × reorder_quantity` (needs reorder_quantity > 0); `Aa` in the rich-text toolbar is "clear formatting"; a saved simple product cannot become variable (API refuses the type change); media delete/bulk download limited to super_admin + manager; storage quota unset.
+**Owner decisions (2026-11-12):** the `Aa` (clear formatting) button is removed from the rich-text toolbar; a saved simple product stays unable to become variable (API refuses the type change). **Still open:** overstock = `available > reorder_point + 2 × reorder_quantity` (needs reorder_quantity > 0); media delete/bulk download limited to super_admin + manager; storage quota unset.
 
 **Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed and AI write in the description toolbar.
 

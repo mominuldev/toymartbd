@@ -11,7 +11,6 @@ import {
     PackageIcon,
     QrCodeIcon,
     QuotesIcon,
-    TextAaIcon,
     TextBIcon,
     TextItalicIcon,
     TranslateIcon,
@@ -299,7 +298,6 @@ export function RichTextToolbar({ editor, language, onLanguage, onImage, disable
                 <Divider />
                 <ToolButton icon={TextBIcon} label={t('products.editor.bold')} pressed={state?.bold} disabled={off} onClick={() => run((c) => c.toggleBold())} />
                 <ToolButton icon={TextItalicIcon} label={t('products.editor.italic')} pressed={state?.italic} disabled={off} onClick={() => run((c) => c.toggleItalic())} />
-                <ToolButton icon={TextAaIcon} label={t('products.editor.clear')} disabled={off} onClick={() => run((c) => c.unsetAllMarks().clearNodes())} />
                 <Divider />
                 <ToolButton icon={ListBulletsIcon} label={t('products.editor.bulletList')} pressed={state?.bulletList} disabled={off} onClick={() => run((c) => c.toggleBulletList())} />
                 <ToolButton icon={ListNumbersIcon} label={t('products.editor.orderedList')} pressed={state?.orderedList} disabled={off} onClick={() => run((c) => c.toggleOrderedList())} />
