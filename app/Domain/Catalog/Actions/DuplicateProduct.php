@@ -33,7 +33,8 @@ final readonly class DuplicateProduct
         return DB::transaction(function () use ($source, $actorId): Product {
             $source = Product::query()->with(['categories', 'variants.attributeValues.attribute', 'images', 'productRelations'])->findOrFail($source->id);
 
-            $copy = $source->replicate(['slug', 'status', 'published_at', 'rating_avg', 'rating_count', 'view_count', 'deleted_at']);
+            // The BSTI certificate file belongs to the source's row (deleting it would orphan the copy); the number travels.
+            $copy = $source->replicate(['slug', 'status', 'published_at', 'rating_avg', 'rating_count', 'view_count', 'deleted_at', 'bsti_certificate_path', 'bsti_certificate_name', 'bsti_certificate_size']);
             $copy->name = mb_substr($source->name.' (copy)', 0, 160);
             $copy->name_bn = $source->name_bn !== null ? mb_substr($source->name_bn.' (কপি)', 0, 160) : null;
             $copy->slug = $this->slugs->generate($copy->name, $copy->name_bn);

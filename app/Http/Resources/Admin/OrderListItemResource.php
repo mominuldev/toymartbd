@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Admin;
 
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Ordering\Queries\OrderAnomalies;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
@@ -48,10 +49,20 @@ final class OrderListItemResource extends ApiResource
             'items_count' => (int) ($order->getAttribute('items_count') ?? 0),
             'grand_total' => $order->grand_total->toDecimal(),
             'due_total' => $order->due_total->toDecimal(),
+            'paid_total' => $order->paid_total->toDecimal(),
+            'refunded_total' => $order->refunded_total->toDecimal(),
+            /** @var int|null */
+            'risk_score' => $order->risk_score,
             /** @var 'low'|'medium'|'high'|null */
             'risk_level' => $order->risk_level?->value,
             /** @var 'not_required'|'pending'|'verified'|'failed' */
             'verification_status' => $order->verification_status->value,
+            /**
+             * Why this status combination should not exist, or null (spec A12 anomaly list).
+             *
+             * @var 'delivered_unpaid'|'refund_pending'|'goods_before_shipping'|'shipped_unfulfilled'|'payment_failed'|null
+             */
+            'anomaly' => OrderAnomalies::reason($order),
             /** @var string|null */
             'placed_at' => $order->placed_at?->toIso8601String(),
             /** @var string|null */

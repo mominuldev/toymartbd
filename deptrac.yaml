@@ -101,8 +101,9 @@ deptrac:
     # Cart prices through Marketing (promotions, coupons), Fulfilment (DeliveryChargeResolver)
     # and reads Inventory availability (P4-CRT-01/02).
     Cart: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Fulfilment, Marketing]
-    # Ordering implements Marketing's order-history seam; batch 5 PlaceOrder prices through Cart.
-    Ordering: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Payment, Cart, Marketing, Fulfilment]
+    # Ordering implements Marketing's order-history seam; batch 5 PlaceOrder prices through Cart
+    # and asks Risk for its advisory assessment (Risk never depends back on Ordering).
+    Ordering: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Payment, Cart, Marketing, Fulfilment, Risk]
     Payment: [Support, Models, DomainEvents, Catalog, Customer]
     Fulfilment: [Support, Models, DomainEvents, Catalog, Customer]
     Risk: [Support, Models, DomainEvents, Catalog, Customer]

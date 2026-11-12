@@ -9,7 +9,9 @@ use App\Domain\Ordering\Enums\OrderPaymentStatus;
 use App\Domain\Ordering\Enums\OrderSource;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Enums\RiskLevel;
+use App\Domain\Ordering\Enums\VerificationStatus;
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Ordering\Queries\OrderAnomalies;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Resources\Admin\OrderListItemResource;
@@ -41,7 +43,10 @@ final class OrderController extends ApiController
      * Filters: `filter[status]`, `filter[payment_status]`, `filter[fulfillment_status]`,
      * `filter[source]`, `filter[risk_level]`, `filter[payment_method]` (enum values),
      * `filter[customer_id]`, `filter[placed_from]` / `filter[placed_to]` (Y-m-d Dhaka dates,
-     * inclusive), `filter[search]` (order number, the last 4+ phone digits, or the name).
+     * inclusive), `filter[search]` (order number, the last 4+ phone digits, or the name),
+     * `filter[verification_status]`, `filter[anomaly]=1`. `meta.counts` also carries
+     * `verify` (verification pending) and `anomalies`, under every filter except the
+     * tab-defining ones (status, verification_status, anomaly).
      * Sorts: `created_at`, `grand_total`, each with `-` for descending (default
      * `-created_at`). Anything else is a 400.
      */
@@ -55,6 +60,8 @@ final class OrderController extends ApiController
     #[QueryParameter('filter[placed_from]', 'First Dhaka date (Y-m-d), inclusive.', type: 'string')]
     #[QueryParameter('filter[placed_to]', 'Last Dhaka date (Y-m-d), inclusive.', type: 'string')]
     #[QueryParameter('filter[search]', 'Order number, last 4+ phone digits, or customer name.', type: 'string')]
+    #[QueryParameter('filter[verification_status]', 'not_required|pending|verified|failed — `pending` is the board\'s Verify tab.', type: 'string')]
+    #[QueryParameter('filter[anomaly]', '`1`: only status combinations that should not exist (the Anomalies tab).', type: 'string')]
     #[QueryParameter('sort', 'Sort field; prefix `-` for descending.', type: "'created_at'|'-created_at'|'grand_total'|'-grand_total'", default: '-created_at')]
     #[QueryParameter('cursor', 'Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.', type: 'string')]
     #[OpenApiResponse(400, 'Unlisted filter or sort, or an invalid filter value (`bad-request`)')]
@@ -94,11 +101,11 @@ final class OrderController extends ApiController
     {
         /** @var array<string, mixed> $filter */
         $filter = is_array($request->query('filter')) ? $request->query('filter') : [];
-        unset($filter['status']);
+        unset($filter['status'], $filter['verification_status'], $filter['anomaly']);
         $countRequest = Request::create('/', 'GET', ['filter' => $filter]);
+        $base = static fn (): QueryBuilder => QueryBuilder::for(Order::class, $countRequest)->allowedFilters(...self::filters());
 
-        $rows = QueryBuilder::for(Order::class, $countRequest)
-            ->allowedFilters(...self::filters())
+        $rows = $base()
             ->toBase()
             ->select('status')
             ->selectRaw('COUNT(*) as aggregate')
@@ -109,6 +116,10 @@ final class OrderController extends ApiController
         foreach (OrderStatus::cases() as $status) {
             $counts[$status->value] = (int) ($rows[$status->value] ?? 0);
         }
+        $counts['verify'] = $base()->where('verification_status', VerificationStatus::Pending->value)->count();
+        $anomalies = $base();
+        OrderAnomalies::apply($anomalies->getEloquentBuilder());
+        $counts['anomalies'] = $anomalies->count();
 
         return $counts;
     }
@@ -123,6 +134,13 @@ final class OrderController extends ApiController
             self::enumFilter('source', OrderSource::class),
             self::enumFilter('risk_level', RiskLevel::class),
             self::enumFilter('payment_method', PaymentMethod::class),
+            self::enumFilter('verification_status', VerificationStatus::class),
+            AllowedFilter::callback('anomaly', static function (Builder $query, mixed $value): void {
+                if (! in_array($value, ['1', 1, true, 'true'], true)) {
+                    throw new BadRequestHttpException('filter[anomaly] must be 1.');
+                }
+                OrderAnomalies::apply($query);
+            }),
             AllowedFilter::callback('customer_id', static function (Builder $query, mixed $value): void {
                 if (! is_string($value) || ! ctype_digit($value)) {
                     throw new BadRequestHttpException('filter[customer_id] must be a positive integer id.');

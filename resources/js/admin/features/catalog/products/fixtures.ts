@@ -134,6 +134,49 @@ export const product: Product = {
     safety_note_bn: null,
     warranty_months: null,
     is_featured: false,
+    is_live: true,
+    sales_channels: { online_store: true, pos: true, facebook_instagram: true, google_merchant: false },
+    vat_rate: '0.00',
+    compliance: { bsti_certificate_no: 'CM-2026-04417', bsti_expires_on: '2027-06-30', expired: false, certificate: { name: 'bsti-cm-2026-04417.pdf', size_bytes: 421888 } },
+    margin: { percent: '39.5', profit: '730.00', net_price: '1850.00' },
+    margin_lowest: { percent: '39.5', variant_id: 100 },
+    stock_by_location: [
+        { location_id: 1, code: 'HQ', name: 'Dhaka HQ · Mirpur', name_bn: 'ঢাকা প্রধান কার্যালয় · মিরপুর', is_default: true, on_hand: 21, reserved: 2, available: 19 },
+        { location_id: 2, code: 'CTG', name: 'Chattogram · Agrabad', name_bn: null, is_default: false, on_hand: 7, reserved: 0, available: 7 },
+    ],
+    slug_history: [],
+    seo: {
+        title: null,
+        title_bn: null,
+        description: null,
+        description_bn: null,
+        canonical_url: null,
+        robots: 'index,follow',
+        sitemap_exclude: false,
+        og_title: null,
+        og_description: null,
+        og_image: null,
+        twitter_card: 'summary_large_image',
+        schema_override: null,
+        focus_keyword: null,
+        defaults: { title: 'Brick Box 500 | Toy Mart BD', title_bn: 'ব্রিক বক্স 500 | Toy Mart BD', description: '500 colourful bricks.', description_bn: '500টি রঙিন ব্রিক।', og_image: null },
+        url: 'https://toymartbd.com/products/brick-box-500',
+        measure: { title: { px: 280, chars: 27, max: 580, fits: true }, description: { px: 150, chars: 21, max: 920, fits: true, fits_mobile: true } },
+        checklist: {
+            passed: 6,
+            total: 7,
+            items: [
+                { key: 'title_fits', status: 'pass', params: { px: 280, max: 580 } },
+                { key: 'description_fits', status: 'pass', params: { px: 150, max: 920 } },
+                { key: 'primary_image', status: 'pass', params: { width: 1200, height: 1200, min: 1200 } },
+                { key: 'image_alt', status: 'warn', params: { missing_en: 0, missing_bn: 2 } },
+                { key: 'slug', status: 'pass', params: { slug: 'brick-box-500' } },
+                { key: 'product_schema', status: 'pass', params: {} },
+                { key: 'sitemap', status: 'pass', params: { reason: '' } },
+            ],
+        },
+        schema: { '@type': 'Product', offers: { availability: 'https://schema.org/InStock' } },
+    },
     published_at: '2026-11-01T00:00:00Z',
     options: [
         { attribute_id: 1, value_ids: [10, 11] },
@@ -148,7 +191,8 @@ export const product: Product = {
 
 /** Strip cost from a product as the API does for staff without catalog.view_cost. */
 export function withoutCost(p: Product): Product {
-    return { ...p, variants: p.variants.map(({ cost_price: _cost, ...rest }) => rest) };
+    const { margin: _m, margin_lowest: _l, ...rest } = p;
+    return { ...rest, variants: p.variants.map(({ cost_price: _cost, margin: _margin, ...variant }) => variant) };
 }
 
 export const page = <T,>(data: T[], next: string | null = null) => ({ data, links: { next: null }, meta: { next_cursor: next } });
@@ -172,11 +216,17 @@ export function productApi(me: Me, handler?: (url: string, init?: RequestInit) =
         if (url.includes('/brands')) return { status: 200, body: page([{ id: 3, name: 'Toy Mart Originals', name_bn: null, slug: 'tmo', description: null, description_bn: null, is_active: true, logo_url: null, created_at: '', updated_at: '' }]) };
         if (/\/products\/42$/.test(url) && (!init?.method || init.method === 'GET')) return { status: 200, body: me.permissions.includes('catalog.view_cost') ? product : withoutCost(product) };
         if (url.includes('/products?') || url.endsWith('/products')) return { status: 200, body: page([listItem]) };
+        if (url.endsWith('/products/seo-measure')) return { status: 200, body: product.seo.measure };
+        if (url.endsWith('/products/margin-preview')) {
+            const rows = (JSON.parse(String(init?.body ?? '{}')) as { rows?: unknown[] }).rows ?? [];
+            return { status: 200, body: { rows: rows.map(() => ({ percent: '39.5', profit: '730.00', net_price: '1850.00' })) } };
+        }
         return { status: 404 };
     });
 }
 
 export function sentBody(calls: ReturnType<typeof mockApi>, method: string): Record<string, unknown> | null {
-    const call = calls.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === method);
+    // The form's live previews (margin, SERP width) are POSTs too; they are not the document.
+    const call = calls.mock.calls.find(([url, init]) => (init as RequestInit | undefined)?.method === method && !/\/products\/(margin-preview|seo-measure)$/.test(String(url)));
     return call ? (JSON.parse(String((call[1] as RequestInit).body)) as Record<string, unknown>) : null;
 }

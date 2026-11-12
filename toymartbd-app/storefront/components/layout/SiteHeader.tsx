@@ -2,9 +2,9 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { LocaleToggle } from '@/components/LocaleToggle';
 import type { MenuItem } from '@/lib/category-tree';
-import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
-import { cartBadge } from '@/lib/navigation';
+import { getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
 import { contact } from '@/lib/site-config';
+import { CartLink } from './CartLink';
 import { MegaMenu } from './MegaMenu';
 import { SearchBar } from './SearchBar';
 import { Wordmark } from './Wordmark';
@@ -15,7 +15,7 @@ interface Props {
     path: string;
     menu: MenuItem[];
     searchQuery?: string;
-    /** No client-side cart exists yet (P4-STO-08); the count is a server-supplied 0. */
+    /** Server-known cart count (cart and checkout pages); cached pages pass 0 and the link reads the count cookie. */
     cartCount?: number;
     /** Mobile search row under the header (Figma Home 126:10 "SearchRow"; the search page). */
     mobileSearch?: boolean;
@@ -24,19 +24,14 @@ interface Props {
 const iconButton =
     'relative size-touch-min shrink-0 items-center justify-center rounded-full transition-colors duration-(--tm-duration-fast) ease-standard hover:bg-fg-primary/8 active:bg-fg-primary/12';
 
-function IconLink({ href, label, icon, badge, className = 'inline-flex text-fg-primary' }: { href: string; label: string; icon: IconName; badge?: string | null; className?: string }) {
+const badgeClass =
+    'absolute top-0.5 left-6.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-brand px-1 t-caption font-display-latin font-semibold text-fg-on-brand';
+
+function IconLink({ href, label, icon, className = 'inline-flex text-fg-primary' }: { href: string; label: string; icon: IconName; className?: string }) {
     // `className` carries the display utility (`inline-flex`, or `hidden lg:inline-flex`) and the ink.
     return (
         <a href={href} aria-label={label} className={`${iconButton} ${className}`}>
             <Icon name={icon} className="size-icon-md" />
-            {badge ? (
-                <span
-                    aria-hidden="true"
-                    className="absolute top-0.5 left-6.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full border-2 border-surface bg-brand px-1 t-caption font-display-latin font-semibold text-fg-on-brand"
-                >
-                    {badge}
-                </span>
-            ) : null}
         </a>
     );
 }
@@ -48,8 +43,6 @@ function IconLink({ href, label, icon, badge, className = 'inline-flex text-fg-p
 export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
-    const badge = cartBadge(cartCount);
-    const cartLabel = badge ? format(t.nav.cartCount, { count: badge }) : t.nav.cartEmpty;
 
     return (
         <div className="sticky top-0 z-30">
@@ -104,13 +97,15 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                         </p>
                         <IconLink href={localizedPath(locale, '/wishlist')} label={t.nav.wishlist} icon="heart" />
                         <IconLink href={localizedPath(locale, '/account')} label={t.nav.account} icon="user" className="hidden text-fg-primary lg:inline-flex" />
-                        <IconLink
+                        <CartLink
                             href={localizedPath(locale, '/cart')}
-                            label={cartLabel}
-                            icon="shoppingBagOpenFill"
-                            badge={badge}
-                            className="hidden text-fg-brand lg:inline-flex"
-                        />
+                            initial={cartCount}
+                            labels={{ empty: t.nav.cartEmpty, count: t.nav.cartCount }}
+                            className={`${iconButton} hidden text-fg-brand lg:inline-flex`}
+                            badgeClassName={badgeClass}
+                        >
+                            <Icon name="shoppingBagOpenFill" className="size-icon-md" />
+                        </CartLink>
                     </nav>
                 </div>
                 {mobileSearch ? (

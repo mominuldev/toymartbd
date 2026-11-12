@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Product;
 
+use App\Domain\Catalog\DTOs\ComplianceData;
 use App\Domain\Catalog\DTOs\ProductData;
 use App\Domain\Catalog\DTOs\ProductWriteContext;
 use App\Domain\Catalog\DTOs\RelationData;
+use App\Domain\Catalog\DTOs\SalesChannelsData;
 use App\Domain\Catalog\DTOs\VariantData;
 use App\Domain\Catalog\DTOs\VariantDefaultsData;
 use App\Domain\Catalog\DTOs\VariantOptionData;
@@ -17,6 +19,9 @@ use App\Domain\Catalog\Enums\RelationType;
 use App\Domain\Catalog\Enums\VariantStatus;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Seo\DTOs\SeoMetaData;
+use App\Domain\Seo\Enums\RobotsDirective;
+use App\Domain\Seo\Enums\TwitterCard;
 use App\Http\Requests\Admin\Brand\StoreBrandRequest;
 use App\Http\Requests\ApiFormRequest;
 use App\Support\Money;
@@ -46,6 +51,12 @@ abstract class ProductDocumentRequest extends ApiFormRequest
     public const string SKU_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9._\/-]*$/';
 
     public const string BARCODE_PATTERN = '/^[A-Za-z0-9-]+$/';
+
+    /** A VAT rate in percent, ≤ 2 decimals ("0", "7.5", "15.00"); ≤ 100 is checked separately. */
+    public const string VAT_PATTERN = '/^\d{1,3}(\.\d{1,2})?$/';
+
+    /** A BSTI certificate number: letters, digits and / . _ - or spaces ("CM-2026-04417"). */
+    public const string CERTIFICATE_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9\/ ._-]*$/';
 
     abstract protected function product(): ?Product;
 
@@ -122,6 +133,56 @@ abstract class ProductDocumentRequest extends ApiFormRequest
             'relations.*.type' => ['required', Rule::enum(RelationType::class)],
             'relations.*.position' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'relations.*.reason_note' => ['nullable', 'string', 'max:500'],
+
+            // Where the product is sold. Omitted: keep the current flags.
+            'sales_channels' => ['sometimes', 'array:online_store,pos,facebook_instagram,google_merchant'],
+            'sales_channels.online_store' => ['required_with:sales_channels', 'boolean'],
+            'sales_channels.pos' => ['required_with:sales_channels', 'boolean'],
+            'sales_channels.facebook_instagram' => ['required_with:sales_channels', 'boolean'],
+            'sales_channels.google_merchant' => ['required_with:sales_channels', 'boolean'],
+
+            /**
+             * VAT included in the selling price, percent as a decimal string ("0", "15").
+             * Omitted or null: keep the current rate.
+             */
+            'vat_rate' => ['sometimes', 'nullable', 'string', 'regex:'.self::VAT_PATTERN, static function (string $attribute, mixed $value, Closure $fail): void {
+                if (is_string($value) && bccomp($value, '100', 2) > 0) {
+                    $fail('The VAT rate cannot be above 100%.');
+                }
+            }],
+
+            // BSTI certification. Omitted: keep the current values. The PDF is uploaded separately.
+            'compliance' => ['sometimes', 'array:bsti_certificate_no,bsti_expires_on'],
+            'compliance.bsti_certificate_no' => ['nullable', 'string', 'max:64', 'regex:'.self::CERTIFICATE_PATTERN],
+            /** @format date */
+            'compliance.bsti_expires_on' => ['nullable', 'date_format:Y-m-d'],
+
+            // Search & social (seo_meta). Omitted: keep the current values; sent: replaces them.
+            'seo' => ['sometimes', 'array:title,title_bn,description,description_bn,canonical_url,robots,sitemap_exclude,og_title,og_description,og_image,twitter_card,schema_override,focus_keyword'],
+            'seo.title' => ['nullable', 'string', 'max:191'],
+            'seo.title_bn' => ['nullable', 'string', 'max:191'],
+            'seo.description' => ['nullable', 'string', 'max:500'],
+            'seo.description_bn' => ['nullable', 'string', 'max:500'],
+            'seo.canonical_url' => ['nullable', 'string', 'max:2048', 'url:https'],
+            'seo.robots' => ['nullable', Rule::enum(RobotsDirective::class)],
+            'seo.sitemap_exclude' => ['sometimes', 'boolean'],
+            'seo.og_title' => ['nullable', 'string', 'max:191'],
+            'seo.og_description' => ['nullable', 'string', 'max:500'],
+            'seo.og_image' => ['nullable', 'string', 'max:2048', 'url:https'],
+            'seo.twitter_card' => ['nullable', Rule::enum(TwitterCard::class)],
+            /**
+             * JSON-LD merged over the generated Product schema; a JSON object.
+             *
+             * @var array<string, mixed>|null
+             */
+            'seo.schema_override' => ['nullable', 'array', 'max:50'],
+            'seo.focus_keyword' => ['nullable', 'string', 'max:120'],
+
+            /**
+             * Required (true) to change the slug of a published product: the old URL then
+             * 301s to the new one (slug_history).
+             */
+            'acknowledge_slug_redirect' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -130,6 +191,14 @@ abstract class ProductDocumentRequest extends ApiFormRequest
     {
         return [function (Validator $validator): void {
             $data = $validator->getData();
+            $product = $this->product();
+
+            // A live URL moves only on purpose (SlugField 198:1086: the redirect panel's acknowledgement).
+            if ($product !== null && $product->isLive() && ! $validator->errors()->has('slug')
+                && is_string($data['slug'] ?? null) && $data['slug'] !== '' && $data['slug'] !== $product->slug
+                && filter_var($data['acknowledge_slug_redirect'] ?? false, FILTER_VALIDATE_BOOLEAN) !== true) {
+                $validator->errors()->add('slug', 'This product is live: changing its URL creates a 301 redirect from the old one. Confirm to continue.');
+            }
 
             if ($validator->errors()->hasAny(['name', 'name_bn', 'slug']) || $this->product() !== null || (is_string($data['slug'] ?? null) && $data['slug'] !== '')) {
                 return;
@@ -195,6 +264,48 @@ abstract class ProductDocumentRequest extends ApiFormRequest
                 ),
                 (array) $v['relations'],
             )) : null,
+            salesChannels: is_array($v['sales_channels'] ?? null) ? new SalesChannelsData(
+                onlineStore: (bool) $v['sales_channels']['online_store'],
+                pos: (bool) $v['sales_channels']['pos'],
+                facebookInstagram: (bool) $v['sales_channels']['facebook_instagram'],
+                googleMerchant: (bool) $v['sales_channels']['google_merchant'],
+            ) : null,
+            vatRate: is_string($v['vat_rate'] ?? null) ? $v['vat_rate'] : null,
+            compliance: is_array($v['compliance'] ?? null) ? new ComplianceData(
+                bstiCertificateNo: self::text(isset($v['compliance']['bsti_certificate_no']) ? trim((string) $v['compliance']['bsti_certificate_no']) : null),
+                bstiExpiresOn: isset($v['compliance']['bsti_expires_on']) ? Carbon::createFromFormat('!Y-m-d', (string) $v['compliance']['bsti_expires_on']) : null,
+            ) : null,
+        );
+    }
+
+    /** The `seo` block, or null when it was not sent (keep the current seo_meta). */
+    public function seoData(): ?SeoMetaData
+    {
+        /** @var array<string, mixed> $v */
+        $v = $this->validated();
+
+        if (! is_array($v['seo'] ?? null)) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $seo */
+        $seo = $v['seo'];
+        $text = static fn (string $key): ?string => self::text(is_string($seo[$key] ?? null) ? trim($seo[$key]) : null);
+
+        return new SeoMetaData(
+            title: $text('title'),
+            titleBn: $text('title_bn'),
+            description: $text('description'),
+            descriptionBn: $text('description_bn'),
+            canonicalUrl: $text('canonical_url'),
+            robots: is_string($seo['robots'] ?? null) ? RobotsDirective::from($seo['robots']) : RobotsDirective::IndexFollow,
+            sitemapExclude: (bool) ($seo['sitemap_exclude'] ?? false),
+            ogTitle: $text('og_title'),
+            ogDescription: $text('og_description'),
+            ogImage: $text('og_image'),
+            twitterCard: is_string($seo['twitter_card'] ?? null) ? TwitterCard::from($seo['twitter_card']) : TwitterCard::SummaryLargeImage,
+            schemaOverride: is_array($seo['schema_override'] ?? null) && $seo['schema_override'] !== [] ? $seo['schema_override'] : null,
+            focusKeyword: $text('focus_keyword'),
         );
     }
 

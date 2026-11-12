@@ -21,6 +21,8 @@ use DateTimeInterface;
  *   combination with no row takes `variantDefaults`.
  * - `relations` null: leave hand-curated relations as they are.
  * - `publishedAt` null: keep the current value, or stamp "now" on first activation.
+ * - `salesChannels`, `vatRate`, `compliance` null: keep the current values (the
+ *   column defaults on create), so older callers that do not send them change nothing.
  */
 final readonly class ProductData
 {
@@ -58,5 +60,8 @@ final readonly class ProductData
         public array $variants = [],
         public ?VariantDefaultsData $variantDefaults = null,
         public ?array $relations = null,
+        public ?SalesChannelsData $salesChannels = null,
+        public ?string $vatRate = null,
+        public ?ComplianceData $compliance = null,
     ) {}
 }

@@ -116,4 +116,12 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    | Admin sign-in attempts per minute, per IP + identifier. Keep the default in
+    | production; only the throwaway E2E server (e2e/admin/serve.sh) raises it,
+    | because the suite signs in once per spec.
+    */
+
+    'login_per_minute' => (int) env('AUTH_LOGIN_PER_MINUTE', 5),
+
 ];

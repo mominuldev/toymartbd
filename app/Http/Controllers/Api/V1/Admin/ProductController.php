@@ -12,6 +12,7 @@ use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Inventory\Actions\CreateProductWithOpeningStock;
 use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Seo\Actions\SaveProductWithSeo;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Product\DuplicateProductRequest;
 use App\Http\Requests\Admin\Product\StoreProductRequest;
@@ -119,13 +120,19 @@ final class ProductController extends ApiController
      * inventory.adjust.
      */
     #[OpenApiResponse(403, 'Missing catalog.create, `cost_price` sent without catalog.view_cost, or `opening_stock` without inventory.adjust (`forbidden`)')]
-    public function store(StoreProductRequest $request, CreateProductWithOpeningStock $createProduct): JsonResponse
+    public function store(StoreProductRequest $request, CreateProductWithOpeningStock $createProduct, SaveProductWithSeo $save): JsonResponse
     {
         if ($request->setsOpeningStock()) {
             $this->authorize('adjust', StockLevel::class);
         }
 
-        $product = $createProduct->handle($request->toData(), $request->writeContext(), $request->openingStock());
+        $context = $request->writeContext();
+        $product = $save->handle(
+            null,
+            fn (): Product => $createProduct->handle($request->toData(), $context, $request->openingStock()),
+            $request->seoData(),
+            $context->actorId,
+        );
 
         return (new ProductResource($product->load(ProductResource::RELATIONS)))->response()->setStatusCode(201);
     }
@@ -141,12 +148,19 @@ final class ProductController extends ApiController
     /**
      * `PUT /products/{product}` — replaces the whole document; needs catalog.update.
      * Changing a selling price or adding a variant also needs catalog.update_price;
-     * sending `cost_price` needs catalog.view_cost.
+     * sending `cost_price` needs catalog.view_cost. Changing a live product's slug needs
+     * `acknowledge_slug_redirect: true` and records the old slug in `slug_history`.
      */
     #[OpenApiResponse(403, 'Missing catalog.update, a price change without catalog.update_price, or `cost_price` without catalog.view_cost (`forbidden`)')]
-    public function update(UpdateProductRequest $request, Product $product, UpdateProduct $updateProduct): ProductResource
+    public function update(UpdateProductRequest $request, Product $product, UpdateProduct $updateProduct, SaveProductWithSeo $save): ProductResource
     {
-        $product = $updateProduct->handle($product, $request->toData(), $request->writeContext());
+        $context = $request->writeContext();
+        $product = $save->handle(
+            $product,
+            fn (): Product => $updateProduct->handle($product, $request->toData(), $context),
+            $request->seoData(),
+            $context->actorId,
+        );
 
         return new ProductResource($product->load(ProductResource::RELATIONS));
     }

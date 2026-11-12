@@ -44,6 +44,24 @@ final class OrderPolicy extends Policy
         return $this->allows($user, Permission::OrdersCancel);
     }
 
+    /** Bulk confirm from the board: the same permission as confirming one order. */
+    public function confirmMany(User $user): bool
+    {
+        return $this->allows($user, Permission::OrdersConfirm);
+    }
+
+    /** Hold, release from hold, start processing, mark ready to ship. */
+    public function progress(User $user, Order $order): bool
+    {
+        return $this->allows($user, Permission::OrdersUpdate);
+    }
+
+    /** Append an internal note (P4-ORD-05). */
+    public function addNote(User $user, Order $order): bool
+    {
+        return $this->allows($user, Permission::OrdersUpdate);
+    }
+
     /** Full phone and address; without it the API masks both. */
     public function viewPii(User $user): bool
     {

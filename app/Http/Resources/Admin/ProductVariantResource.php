@@ -7,6 +7,7 @@ namespace App\Http\Resources\Admin;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Services\Margins;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Services\StockAvailability;
 use App\Http\Resources\ApiResource;
@@ -52,6 +53,14 @@ final class ProductVariantResource extends ApiResource
              * @var string
              */
             'cost_price' => $this->when(self::canViewCost($request), fn (): string => $variant->cost_price->toDecimal()),
+            /**
+             * Per-unit margin at this price and cost, VAT taken out, before delivery and COD
+             * costs — computed by the server. Only with catalog.view_cost; null when the
+             * price or the cost is not set.
+             *
+             * @var array{percent: string, profit: string, net_price: string}|null
+             */
+            'margin' => $this->when(self::canViewCost($request), fn (): ?array => self::marginFor($variant)),
             /** @var string|null */
             'wholesale_price' => $variant->wholesale_price?->toDecimal(),
             'weight_grams' => $variant->weight_grams,
@@ -102,6 +111,14 @@ final class ProductVariantResource extends ApiResource
         $levels = $request->attributes->get($key);
 
         return $levels[$variant->id] ?? ['on_hand' => 0, 'reserved' => 0, 'available' => 0];
+    }
+
+    /** @return array{percent: string, profit: string, net_price: string}|null */
+    public static function marginFor(ProductVariant $variant): ?array
+    {
+        $vat = $variant->relationLoaded('product') ? $variant->product->vat_rate : (string) Product::query()->whereKey($variant->product_id)->value('vat_rate');
+
+        return app(Margins::class)->forUnit($variant->price, $variant->cost_price, $vat !== '' ? $vat : '0')?->toArray();
     }
 
     public static function canViewCost(Request $request): bool

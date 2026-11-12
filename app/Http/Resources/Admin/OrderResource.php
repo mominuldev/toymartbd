@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
+use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderEvent;
 use App\Domain\Ordering\Models\OrderItem;
+use App\Domain\Ordering\Models\OrderNote;
+use App\Domain\Ordering\Queries\OrderAnomalies;
 use App\Domain\Payment\Models\Payment;
 use App\Http\Resources\ApiResource;
 use App\Models\Enums\Permission;
@@ -37,6 +40,8 @@ final class OrderResource extends ApiResource
         $pii = $user instanceof User && $user->can('viewPii', Order::class);
         $cost = $user instanceof User && $user->can(Permission::CatalogViewCost->value);
         $phone = static fn (?string $e164): ?string => $e164 === null ? null : ($pii ? $e164 : (PhoneNumber::tryParse($e164)?->masked() ?? '***'));
+        $notes = OrderNote::query()->where('order_id', $order->id)->orderBy('id')->get();
+        $names = self::actorNames([...$order->events->pluck('user_id')->all(), ...$notes->pluck('user_id')->all()]);
 
         return [
             'id' => $order->id,
@@ -49,6 +54,12 @@ final class OrderResource extends ApiResource
             'payment_method' => $order->payment_method,
             'currency' => $order->currency,
             'pii_masked' => ! $pii,
+            /**
+             * Why this status combination should not exist, or null (spec A12).
+             *
+             * @var 'delivered_unpaid'|'refund_pending'|'goods_before_shipping'|'shipped_unfulfilled'|'payment_failed'|null
+             */
+            'anomaly' => OrderAnomalies::reason($order),
             'customer' => [
                 'id' => $order->customer_id,
                 'name' => $order->customer->name,
@@ -139,6 +150,8 @@ final class OrderResource extends ApiResource
                 'description' => $e->description,
                 /** @var int|null */
                 'user_id' => $e->user_id,
+                /** @var string|null */
+                'user_name' => $e->user_id === null ? null : ($names[$e->user_id] ?? null),
                 'is_customer_visible' => $e->is_customer_visible,
                 /** @var string|null */
                 'created_at' => $e->created_at?->toIso8601String(),
@@ -149,7 +162,31 @@ final class OrderResource extends ApiResource
                 /** @var string|null */
                 'level' => $order->risk_level?->value,
                 'verification_status' => $order->verification_status->value,
+                /**
+                 * Our advisory signals as stored at scoring time — never a courier's data (rule 24).
+                 *
+                 * @var array<string, mixed>|null
+                 */
+                'flags' => $order->risk_flags,
             ],
+            'notes' => $notes->map(static fn (OrderNote $n): array => [
+                'id' => $n->id,
+                'body' => $n->body,
+                'is_customer_visible' => $n->is_customer_visible,
+                /** @var int|null */
+                'user_id' => $n->user_id,
+                /** @var string|null */
+                'user_name' => $n->user_id === null ? null : ($names[$n->user_id] ?? null),
+                /** @var string|null */
+                'created_at' => $n->created_at?->toIso8601String(),
+            ])->all(),
+            /**
+             * What this user may do to the order now — the state machine and their permissions,
+             * decided here so the client never re-derives a transition rule.
+             *
+             * @var list<'confirm'|'hold'|'release'|'processing'|'ready_to_ship'|'cancel'|'add_note'>
+             */
+            'available_actions' => self::availableActions($order, $user instanceof User ? $user : null),
             /** @var string|null */
             'customer_note' => $order->customer_note,
             /** @var string|null */
@@ -169,5 +206,40 @@ final class OrderResource extends ApiResource
             /** @var string|null */
             'cancelled_at' => $order->cancelled_at?->toIso8601String(),
         ];
+    }
+
+    /** @return list<string> */
+    private static function availableActions(Order $order, ?User $user): array
+    {
+        if ($user === null) {
+            return [];
+        }
+        $status = $order->status;
+        $actions = [
+            'confirm' => $status->canTransitionTo(OrderStatus::Confirmed) && $user->can('confirm', $order),
+            'hold' => $status->canTransitionTo(OrderStatus::OnHold) && $user->can('progress', $order),
+            'release' => $status === OrderStatus::OnHold && $user->can('progress', $order),
+            'processing' => $status->canTransitionTo(OrderStatus::Processing) && $user->can('progress', $order),
+            'ready_to_ship' => $status->canTransitionTo(OrderStatus::ReadyToShip) && $user->can('progress', $order),
+            'cancel' => $status->isCancellable() && $user->can('cancel', $order),
+            'add_note' => $user->can('addNote', $order),
+        ];
+
+        return array_keys(array_filter($actions));
+    }
+
+    /**
+     * @param  array<int, int|null>  $ids
+     * @return array<int, string> user id → display name (staff names only, no PII)
+     */
+    private static function actorNames(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (?int $id): bool => $id !== null)));
+        if ($ids === []) {
+            return [];
+        }
+
+        /** @var array<int, string> */
+        return User::query()->whereKey($ids)->pluck('name', 'id')->all();
     }
 }

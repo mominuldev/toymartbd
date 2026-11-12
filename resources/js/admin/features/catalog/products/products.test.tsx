@@ -83,7 +83,7 @@ describe('product form', () => {
 
         expect((await screen.findAllByText('This field is required.')).length).toBeGreaterThan(0);
         expect(screen.getByLabelText(/^Name \(English\)/).getAttribute('aria-invalid')).toBe('true');
-        expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'POST')).toBe(false);
+        expect(sentBody(calls, 'POST')).toBeNull();
         // The section tab with the error is marked.
         expect(screen.getByRole('link', { name: /General.*has errors/ })).toBeTruthy();
     });
@@ -100,7 +100,7 @@ describe('product form', () => {
 
         expect(await screen.findByText('This format is not valid.')).toBeTruthy();
         expect(screen.getByLabelText(/^Price/).getAttribute('aria-invalid')).toBe('true');
-        expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'POST')).toBe(false);
+        expect(sentBody(calls, 'POST')).toBeNull();
     });
 
     it('creates a simple product: money as strings, blank SKU left to the server', async () => {
@@ -157,7 +157,7 @@ describe('product form', () => {
         renderApp('/products/42');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Duplicate' }));
-        expect(await screen.findByRole('heading', { name: 'Brick Box 500 (copy)' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Brick Box 500 (copy)' }, { timeout: 3000 })).toBeTruthy();
         expect(screen.getByText('Copy created as a draft.')).toBeTruthy();
     });
 

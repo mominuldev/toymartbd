@@ -11,8 +11,13 @@ use App\Http\Controllers\Api\V1\Admin\CouponController;
 use App\Http\Controllers\Api\V1\Admin\InventoryAdjustmentController;
 use App\Http\Controllers\Api\V1\Admin\InventoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderController;
+use App\Http\Controllers\Api\V1\Admin\OrderNoteController;
+use App\Http\Controllers\Api\V1\Admin\OrderWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\ProductComplianceController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
 use App\Http\Controllers\Api\V1\Admin\ProductImageController;
+use App\Http\Controllers\Api\V1\Admin\ProductPricingController;
+use App\Http\Controllers\Api\V1\Admin\ProductSeoController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Middleware\EnsureActiveStaffSession;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +67,14 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::post('/products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
 
+    // Product form helpers (P4 batch 5): server-computed margin and SERP width for unsaved
+    // edits, and the BSTI certificate PDF (private; served only as a download).
+    Route::post('/products/margin-preview', [ProductPricingController::class, 'marginPreview'])->name('products.margin-preview');
+    Route::post('/products/seo-measure', [ProductSeoController::class, 'measure'])->name('products.seo-measure');
+    Route::get('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'show'])->name('products.compliance.certificate.show');
+    Route::post('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'store'])->name('products.compliance.certificate.store');
+    Route::delete('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'destroy'])->name('products.compliance.certificate.destroy');
+
     // Product images (media pipeline, P4-CAT-07): upload is multipart; renditions are queued.
     Route::get('/products/{product}/images', [ProductImageController::class, 'index'])->name('products.images.index');
     Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
@@ -107,4 +120,15 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+    // Order workflow (P4-ORD-04/05 write side): each move goes through TransitionOrder /
+    // CancelOrder; a move the state machine refuses is a 409. Bulk confirm reports per order.
+    Route::post('/orders/bulk/confirm', [OrderWorkflowController::class, 'bulkConfirm'])->name('orders.bulk.confirm');
+    Route::post('/orders/{order}/confirm', [OrderWorkflowController::class, 'confirm'])->name('orders.confirm');
+    Route::post('/orders/{order}/hold', [OrderWorkflowController::class, 'hold'])->name('orders.hold');
+    Route::post('/orders/{order}/release', [OrderWorkflowController::class, 'release'])->name('orders.release');
+    Route::post('/orders/{order}/processing', [OrderWorkflowController::class, 'processing'])->name('orders.processing');
+    Route::post('/orders/{order}/ready-to-ship', [OrderWorkflowController::class, 'readyToShip'])->name('orders.ready-to-ship');
+    Route::post('/orders/{order}/cancel', [OrderWorkflowController::class, 'cancel'])->name('orders.cancel');
+    Route::post('/orders/{order}/notes', [OrderNoteController::class, 'store'])->name('orders.notes.store');
 });

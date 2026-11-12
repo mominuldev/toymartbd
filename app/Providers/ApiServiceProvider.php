@@ -55,6 +55,15 @@ class ApiServiceProvider extends ServiceProvider
     /** Header autocomplete: a debounced typist sends a few a second at most (spec §A6.1: 250ms). */
     public const int SEARCH_SUGGEST_PER_MINUTE = 60;
 
+    /** POST /storefront/orders/track (B7.1): attempts per 10 minutes per client + order number. */
+    public const int ORDER_TRACK_PER_TEN_MINUTES = 5;
+
+    /** …and per order number from anywhere, so spreading guesses over clients does not help. */
+    public const int ORDER_TRACK_PER_NUMBER_PER_TEN_MINUTES = 20;
+
+    /** GET /storefront/orders/{number} (confirmation page, cart token required). */
+    public const int ORDER_LOOKUP_PER_MINUTE = 30;
+
     public function boot(): void
     {
         // Attached to the whole storefront group. Behind the Next.js server, $request->ip()
@@ -71,7 +80,7 @@ class ApiServiceProvider extends ServiceProvider
         });
 
         // Route-level limiters, attached by the endpoints that need them (Phase 3 auth, Phase 4 checkout).
-        RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(self::LOGIN_PER_MINUTE)
+        RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute((int) config('auth.login_per_minute', self::LOGIN_PER_MINUTE))
             ->by('ip:'.$request->ip().'|phone:'.self::phoneKey($request)));
 
         RateLimiter::for('otp', fn (Request $request): Limit => Limit::perMinutes(10, self::OTP_PER_TEN_MINUTES)
@@ -87,7 +96,31 @@ class ApiServiceProvider extends ServiceProvider
         RateLimiter::for('search-suggest', fn (Request $request): Limit => Limit::perMinute(self::SEARCH_SUGGEST_PER_MINUTE)
             ->by('ip:'.$request->ip()));
 
+        // Order tracking by number + phone digits (rule 22, P4-STO-10): a 4-digit guess space
+        // is only safe with few attempts per order number.
+        RateLimiter::for('order-track', fn (Request $request): array => [
+            Limit::perMinutes(10, self::ORDER_TRACK_PER_TEN_MINUTES)->by('ip:'.$request->ip().'|order:'.self::orderKey($request)),
+            Limit::perMinutes(10, self::ORDER_TRACK_PER_NUMBER_PER_TEN_MINUTES)->by('order:'.self::orderKey($request)),
+        ]);
+
+        RateLimiter::for('order-lookup', fn (Request $request): Limit => Limit::perMinute(self::ORDER_LOOKUP_PER_MINUTE)
+            ->by('ip:'.$request->ip()));
+
         $this->configureOpenApi();
+    }
+
+    /** The order number's digits only, so "TMB-26-00042" and "26 00042" share a bucket. */
+    private static function orderKey(Request $request): string
+    {
+        $number = $request->route('number') ?? $request->input('number');
+
+        if (! is_string($number)) {
+            return '';
+        }
+        // Bengali digits count as the same digits, or they would open a second bucket.
+        $number = str_replace(['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'], ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], $number);
+
+        return preg_replace('/\D+/', '', $number) ?? '';
     }
 
     /**

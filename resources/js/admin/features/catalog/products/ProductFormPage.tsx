@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
-import { ArrowSquareOutIcon, CaretDownIcon, CopyIcon, TranslateIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, ArrowUUpLeftIcon, CaretDownIcon, ChartLineUpIcon, CheckIcon, CopyIcon, TranslateIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeProductRequestSchema, updateProductRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -17,9 +17,11 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { useAttributes } from '../attributes/api';
 import { flatten, useCategoryTree } from '../categories/api';
-import { genders, productStatuses, productTypes, useArchiveProduct, useBrandOptions, useDuplicateProduct, useProduct, useSaveProduct, type Product } from './api';
+import { genders, productStatuses, productTypes, useArchiveProduct, useBrandOptions, useDuplicateProduct, useMarginPreview, useProduct, useSaveProduct, type Margin, type Product } from './api';
 import {
     combinations,
+    emptyRow,
+    formatMoney,
     placeErrors,
     toForm,
     toMatrix,
@@ -30,6 +32,7 @@ import {
     type MatrixState,
     type PlacedErrors,
     type RelationRow,
+    type SalesChannels,
     type VariantFields,
 } from './document';
 import { ProductStatusChip, TAKA, Toggle } from './parts';
@@ -37,17 +40,32 @@ import { ProductSection } from './ProductSection';
 import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
 import { RelationsEditor } from './RelationsEditor';
 import { ImagesPanel } from './ImagesPanel';
+import { SeoPanel } from './SeoPanel';
+import { CertificateFile, StockByBranchCard } from './RailCards';
 
 /** The section navigation of Figma "B · 12 Product edit" 241:37900, in Figma order. */
-type Section = 'general' | 'media' | 'pricing' | 'variants' | 'related';
+type Section = 'general' | 'media' | 'pricing' | 'variants' | 'inventory' | 'seo' | 'related';
 
 const sectionLabel: Record<Section, MessageKey> = {
     general: 'products.tab.general',
     media: 'products.tab.images',
     pricing: 'products.tab.pricing',
     variants: 'products.tab.variants',
+    inventory: 'products.tab.inventory',
+    seo: 'products.tab.seo',
     related: 'products.tab.related',
 };
+
+/** The Status & visibility switches (241:37946–37958), in Figma order. */
+const channels: { key: keyof SalesChannels; label: MessageKey }[] = [
+    { key: 'online_store', label: 'products.channel.onlineStore' },
+    { key: 'pos', label: 'products.channel.pos' },
+    { key: 'facebook_instagram', label: 'products.channel.facebookInstagram' },
+    { key: 'google_merchant', label: 'products.channel.googleMerchant' },
+];
+
+/** Fields edited outside the General card, so their dirty / error state belongs to another tab. */
+const notGeneral = new Set(['simple', 'seo', 'vat_rate']);
 
 /** One form per page, so plain ids; `?tab=` addresses the same sections. */
 const anchor = (section: Section) => `product-${section}`;
@@ -80,6 +98,13 @@ function formatDhakaDateTime(iso: string, locale: string): string {
         hour12: true,
         numberingSystem: 'latn',
     }).format(new Date(iso));
+}
+
+/** A `YYYY-MM-DD` calendar date as "30 Jun 2027", Western digits (rule 36). Display only. */
+function formatDhakaDate(ymd: string, locale: string): string {
+    const [y, m, d] = ymd.split('-').map(Number);
+    if (!y || !m || !d) return ymd;
+    return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric', numberingSystem: 'latn' }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
 function smoothScroll(): ScrollBehavior {
@@ -152,12 +177,41 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const ageMin = useWatch({ control, name: 'age_min_months' });
     const ageMax = useWatch({ control, name: 'age_max_months' });
     const featured = useWatch({ control, name: 'is_featured' });
+    const salesChannels = useWatch({ control, name: 'sales_channels' });
+    const vatRate = useWatch({ control, name: 'vat_rate' });
+    const simpleValues = useWatch({ control, name: 'simple' });
+    const slug = useWatch({ control, name: 'slug' });
+    const expiresOn = useWatch({ control, name: 'bsti_expires_on' });
 
     const variantAttributes = useMemo(() => (attributes.data ?? []).filter((a) => a.is_variant_defining), [attributes.data]);
     const combos = useMemo(() => combinations(matrix.options, variantAttributes), [matrix.options, variantAttributes]);
     const flatCategories = useMemo(() => flatten(categories.data ?? []), [categories.data]);
 
-    const sections: Section[] = ['general', 'media', type === 'variable' ? 'variants' : 'pricing', 'related'];
+    const stockRows = product?.stock_by_location;
+    const sections: Section[] = ['general', 'media', type === 'variable' ? 'variants' : 'pricing', ...(stockRows ? (['inventory'] as const) : []), 'seo', 'related'];
+
+    // Margins come from the API (rule 1): one preview row per simple product / matrix row.
+    const marginRows = useMemo(
+        () =>
+            type === 'simple'
+                ? [{ price: simpleValues.price, cost_price: simpleValues.cost_price }]
+                : combos.map((combo) => {
+                      const row = matrix.rows[combo.key] ?? emptyRow(combo.valueIds);
+                      return { price: row.price, cost_price: row.cost_price };
+                  }),
+        [type, simpleValues.price, simpleValues.cost_price, combos, matrix.rows],
+    );
+    const marginPreview = useMarginPreview(marginRows, vatRate, canCost);
+    const savedMargins = useMemo(() => new Map((product?.variants ?? []).map((v) => [v.id, v.margin ?? null])), [product]);
+    const simpleMargin: Margin | null = marginPreview.data ? (marginPreview.data[0] ?? null) : (product?.margin ?? null);
+    const matrixMargins = useMemo(() => {
+        const out: Record<string, Margin | null> = {};
+        combos.forEach((combo, index) => {
+            const saved = matrix.rows[combo.key]?.id;
+            out[combo.key] = marginPreview.data ? (marginPreview.data[index] ?? null) : saved ? (savedMargins.get(saved) ?? null) : null;
+        });
+        return out;
+    }, [combos, matrix.rows, marginPreview.data, savedMargins]);
     const requestedRaw = search.get('tab');
     const requested = (requestedRaw === 'images' ? 'media' : requestedRaw) as Section | null;
     const [active, setActive] = useState<Section>(requested && sections.includes(requested) ? requested : 'general');
@@ -213,17 +267,28 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const dirtyFields = formState.dirtyFields;
     const matrixDirty = JSON.stringify(matrix) !== JSON.stringify(initialMatrix);
     const relationsDirty = JSON.stringify(relations) !== JSON.stringify(initialRelations);
-    const generalKeys = Object.keys(dirtyFields).filter((k) => k !== 'simple');
-    const simpleKeys = Object.values(dirtyFields.simple ?? {}).filter(Boolean).length;
-    const dirtySections: Record<Section, boolean> = { general: generalKeys.length > 0, media: false, pricing: simpleKeys > 0, variants: matrixDirty, related: relationsDirty };
+    const generalKeys = Object.keys(dirtyFields).filter((k) => !notGeneral.has(k));
+    const simpleKeys = Object.values(dirtyFields.simple ?? {}).filter(Boolean).length + (dirtyFields.vat_rate ? 1 : 0);
+    const seoKeys = Object.values(dirtyFields.seo ?? {}).filter(Boolean).length;
+    const dirtySections: Record<Section, boolean> = {
+        general: generalKeys.length > 0,
+        media: false,
+        pricing: simpleKeys > 0,
+        variants: matrixDirty,
+        inventory: false,
+        seo: seoKeys > 0,
+        related: relationsDirty,
+    };
     const dirtyCount = Object.values(dirtySections).filter(Boolean).length;
-    const changeCount = generalKeys.length + simpleKeys + (matrixDirty ? 1 : 0) + (relationsDirty ? 1 : 0);
+    const changeCount = generalKeys.length + simpleKeys + seoKeys + (matrixDirty ? 1 : 0) + (relationsDirty ? 1 : 0);
 
     const errorSections: Record<Section, boolean> = {
-        general: Object.keys(formState.errors).some((k) => k !== 'simple') || placed.other.length > 0,
+        general: Object.keys(formState.errors).some((k) => !notGeneral.has(k)) || placed.other.length > 0,
         media: false,
-        pricing: Boolean(formState.errors.simple),
+        pricing: Boolean(formState.errors.simple ?? formState.errors.vat_rate),
         variants: placed.matrix.length > 0 || Object.keys(placed.rows).length > 0,
+        inventory: false,
+        seo: Boolean(formState.errors.seo),
         related: Object.keys(placed.relations).length > 0,
     };
 
@@ -232,11 +297,12 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
             const next = placeErrors(errors, getValues('type'), combos, relations);
             for (const { field, message } of next.form) setError(field as FieldPath<FormValues>, { message });
             setPlaced(next);
-            const first = (['general', 'pricing', 'variants', 'related'] as Section[]).find((name) =>
+            const owner = (field: string) => (field.startsWith('simple.') || field === 'vat_rate' ? 'pricing' : field.startsWith('seo.') ? 'seo' : 'general');
+            const first = (['general', 'pricing', 'variants', 'seo', 'related'] as Section[]).find((name) =>
                 name === 'general'
-                    ? next.form.some((f) => !f.field.startsWith('simple.')) || next.other.length > 0
-                    : name === 'pricing'
-                      ? next.form.some((f) => f.field.startsWith('simple.'))
+                    ? next.form.some((f) => owner(f.field) === 'general') || next.other.length > 0
+                    : name === 'pricing' || name === 'seo'
+                      ? next.form.some((f) => owner(f.field) === name)
                       : name === 'variants'
                         ? next.matrix.length > 0 || Object.keys(next.rows).length > 0
                         : Object.keys(next.relations).length > 0,
@@ -260,6 +326,23 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         clearErrors();
         setPlaced(noErrors);
         const values = getValues();
+
+        // The JSON-LD override must be a JSON object; say so on the field, in words.
+        const override = values.seo.schema_override.trim();
+        if (override !== '') {
+            let parsedOverride: unknown = null;
+            try {
+                parsedOverride = JSON.parse(override);
+            } catch {
+                parsedOverride = null;
+            }
+            if (parsedOverride === null || typeof parsedOverride !== 'object' || Array.isArray(parsedOverride)) {
+                setError('seo.schema_override', { message: t('products.seo.schemaInvalid') });
+                goTab('seo');
+                return;
+            }
+        }
+
         const payload = toPayload(values, { canCost, canOpeningStock: stockMode === 'opening', combos, matrix, relations, product });
         const another = addAnother.current;
         addAnother.current = false;
@@ -365,6 +448,22 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         ) : null;
 
     const publishedSince = product?.published_at ? formatDhakaDateTime(product.published_at, locale).split(',')[0] : null;
+
+    // SlugField: a live product's URL change needs the redirect acknowledgement (the server enforces it too).
+    const slugChanged = Boolean(product?.is_live) && slug.trim() !== '' && slug.trim() !== product?.slug;
+    const slugOk = !slugChanged && product !== undefined && slug.trim() === product.slug && product.seo.checklist.items.some((i) => i.key === 'slug' && i.status === 'pass');
+
+    const bstiHint = product?.compliance.expired && expiresOn === product.compliance.bsti_expires_on
+        ? t('products.bsti.expired', { date: formatDhakaDate(expiresOn, locale) })
+        : expiresOn
+          ? t('products.bsti.expires', { date: formatDhakaDate(expiresOn, locale) })
+          : undefined;
+
+    const vatField = (
+        <Field label={t('products.field.vat')} hint={t('products.field.vatHint')} error={errorOf('vat_rate')}>
+            {(ids) => <Input {...inputProps(ids)} suffix="%" inputMode="decimal" autoComplete="off" className="[&_input]:tabular-nums" {...register('vat_rate')} />}
+        </Field>
+    );
     const descError = errorOf('description') ?? errorOf('description_bn');
 
     return (
@@ -640,6 +739,12 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                             </div>
 
                             {/* Pricing (FormSection 241:37938) — a simple product's one variant. */}
+                            {type === 'variable' && (
+                                /* A variable product prices each variant in the matrix; its VAT rate is the product's. */
+                                <ProductSection title={t('products.section.pricing')} description={t('products.section.pricingVariableHint')} forceOpen={errorSections.pricing}>
+                                    <div className="grid gap-4 lg:grid-cols-2">{vatField}</div>
+                                </ProductSection>
+                            )}
                             {type === 'simple' && (
                                 <ProductSection id={anchor('pricing')} title={t('products.section.pricing')} description={t('products.section.pricingHint')} aside={typeSelect} forceOpen={errorSections.pricing}>
                                     {!canPrice && <p className="rounded-sm bg-subtle px-3 py-2 t-admin-caption text-fg-secondary">{t('products.pricing.locked')}</p>}
@@ -647,6 +752,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                         <MoneyField label={t('products.field.price')} hint={t('products.field.priceHint')} field="price" readOnly={!canPrice} form={form} error={errorOf('simple.price')} required />
                                         <MoneyField label={t('products.field.compareAt')} hint={t('products.field.compareAtHint')} field="compare_at_price" readOnly={!canPrice} form={form} error={errorOf('simple.compare_at_price')} />
                                         {canCost && <MoneyField label={t('products.field.costPrice')} hint={t('products.field.costHint')} field="cost_price" form={form} error={errorOf('simple.cost_price')} />}
+                                        {vatField}
                                         <MoneyField label={t('products.field.wholesale')} field="wholesale_price" readOnly={!canPrice} form={form} error={errorOf('simple.wholesale_price')} />
                                         <Field label={t('products.field.sku')} hint={t('products.field.skuHint')} error={errorOf('simple.sku')}>
                                             {(ids) => <input {...inputProps(ids)} spellCheck={false} className={`${controlHeight.md} ${monoInputClass}`} {...register('simple.sku')} />}
@@ -673,25 +779,79 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                             </div>
                                         )}
                                     </div>
+                                    {/* Margin line (241:37938) — the API's numbers, catalog.view_cost only. */}
+                                    {canCost && (
+                                        <p className="flex items-center gap-2 rounded-sm bg-subtle px-3.5 py-2.5 t-admin-body text-fg-primary" aria-live="polite">
+                                            <ChartLineUpIcon size={16} aria-hidden className="shrink-0 text-fg-secondary" />
+                                            {simpleMargin ? t('products.margin.line', { percent: simpleMargin.percent, profit: `${TAKA}${formatMoney(simpleMargin.profit)}` }) : t('products.margin.none')}
+                                        </p>
+                                    )}
                                 </ProductSection>
                             )}
 
-                            {/* URL — SlugField 198:1086, outside a card as in Figma. */}
-                            <Field label={t('products.field.slug')} hint={t('products.field.slugHint')} error={errorOf('slug')}>
-                                {(ids) => (
-                                    <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
-                                        <span aria-hidden className="flex items-center border-e border-line-default bg-subtle px-3 t-admin-mono-sm text-fg-secondary">
-                                            {URL_PREFIX}
+                            {/* Search & social — SeoPanel 198:1123 (241:37939). */}
+                            <SeoPanel
+                                id={anchor('seo')}
+                                form={form}
+                                product={product}
+                                price={type === 'simple' && simpleValues.price.trim() !== '' ? formatMoney(simpleValues.price.trim()) : null}
+                                errorOf={(field) => errorOf(field)}
+                            />
+
+                            {/* URL — SlugField 198:1086 (241:37940), outside a card as in Figma. */}
+                            <div className="flex flex-col gap-2">
+                                <Field label={t('products.field.slug')} hint={slugChanged ? undefined : t('products.field.slugHint')} error={errorOf('slug')}>
+                                    {(ids) => (
+                                        <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
+                                            <span aria-hidden className="flex items-center border-e border-line-default bg-subtle px-3 t-admin-mono text-fg-tertiary">
+                                                {URL_PREFIX}
+                                            </span>
+                                            <input {...inputProps(ids)} spellCheck={false} autoCapitalize="none" className="min-w-0 flex-1 bg-transparent px-3 t-admin-mono text-fg-primary outline-none" {...register('slug')} />
+                                            {slugOk && (
+                                                <span className="flex items-center pe-3">
+                                                    <CheckIcon size={16} aria-label={t('products.slug.ok')} className="text-feedback-success" />
+                                                </span>
+                                            )}
                                         </span>
-                                        <input {...inputProps(ids)} spellCheck={false} autoCapitalize="none" className="min-w-0 flex-1 bg-transparent px-3 t-admin-mono text-fg-primary outline-none" {...register('slug')} />
-                                    </span>
+                                    )}
+                                </Field>
+                                {slugChanged && product && (
+                                    <div className="flex items-start gap-3 rounded-sm border border-feedback-warning bg-subtle p-4">
+                                        <ArrowUUpLeftIcon size={20} aria-hidden className="shrink-0 text-feedback-warning" />
+                                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                                            <p className="t-admin-body-strong text-fg-primary">{t('products.slug.redirectTitle')}</p>
+                                            <p className="t-admin-mono-sm break-all whitespace-pre-wrap text-fg-secondary">
+                                                {`${URL_PREFIX}${product.slug}  →  ${URL_PREFIX}${slug.trim()}`}
+                                            </p>
+                                            <p className="t-admin-caption text-fg-secondary">
+                                                {publishedSince ? t('products.slug.redirectBodySince', { date: publishedSince }) : t('products.slug.redirectBody')}
+                                            </p>
+                                            <label className="flex min-h-11 items-center gap-3 t-admin-body text-fg-primary">
+                                                <input type="checkbox" className="size-5 accent-brand" {...register('acknowledge_slug_redirect')} />
+                                                {t('products.slug.redirectAck')}
+                                            </label>
+                                        </div>
+                                    </div>
                                 )}
-                            </Field>
+                            </div>
                         </div>
 
                         {/* Rail (241:37941) */}
                         <aside className="flex min-w-0 flex-col gap-6">
                             <ProductSection title={t('products.section.status')} forceOpen={Boolean(errorOf('status'))}>
+                                <div role="group" aria-label={t('products.channels')} className="flex flex-col gap-3.5">
+                                    {channels.map(({ key, label }) => (
+                                        <div key={key} className="flex items-center gap-2">
+                                            <span className="min-w-0 flex-1 t-admin-body text-fg-primary">{t(label)}</span>
+                                            <Toggle
+                                                checked={salesChannels[key]}
+                                                label={t(label)}
+                                                disabled={!editable || save.isPending}
+                                                onChange={(next) => setValue(`sales_channels.${key}`, next, { shouldDirty: true })}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <span id={`${formId}-featured`} className="min-w-0 flex-1 t-admin-body text-fg-primary">
                                         {t('products.field.featured')}
@@ -714,8 +874,15 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                             <ProductSection
                                 title={t('products.section.compliance')}
                                 description={t('products.section.complianceHint')}
-                                forceOpen={Boolean(errorOf('safety_note') ?? errorOf('safety_note_bn') ?? errorOf('warranty_months'))}
+                                forceOpen={Boolean(errorOf('safety_note') ?? errorOf('safety_note_bn') ?? errorOf('warranty_months') ?? errorOf('bsti_certificate_no') ?? errorOf('bsti_expires_on'))}
                             >
+                                <Field label={t('products.field.bstiNo')} hint={bstiHint} error={errorOf('bsti_certificate_no')}>
+                                    {(ids) => <input {...inputProps(ids)} spellCheck={false} autoCapitalize="characters" className={`${controlHeight.md} ${inputClass}`} {...register('bsti_certificate_no')} />}
+                                </Field>
+                                <Field label={t('products.field.bstiExpires')} error={errorOf('bsti_expires_on')}>
+                                    {(ids) => <input {...inputProps(ids)} type="date" className={`${controlHeight.md} ${inputClass} tabular`} {...register('bsti_expires_on')} />}
+                                </Field>
+                                <CertificateFile productId={id} compliance={product?.compliance} disabled={!editable || save.isPending} />
                                 <Field label={t('products.field.safetyNote')} error={errorOf('safety_note')}>
                                     {(ids) => <input {...inputProps(ids)} className={`${controlHeight.md} ${inputClass}`} {...register('safety_note')} />}
                                 </Field>
@@ -726,6 +893,8 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                     {(ids) => <input {...inputProps(ids)} inputMode="numeric" className={`${controlHeight.md} ${inputClass} tabular`} {...register('warranty_months')} />}
                                 </Field>
                             </ProductSection>
+
+                            {stockRows && <StockByBranchCard id={anchor('inventory')} rows={stockRows} />}
 
                             <RelationsEditor id={anchor('related')} productId={id} value={relations} onChange={setRelations} errors={placed.relations} disabled={!editable || save.isPending} />
                         </aside>
@@ -748,6 +917,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                 canCost={canCost}
                                 canPrice={canPrice}
                                 stockMode={stockMode}
+                                margins={canCost ? matrixMargins : undefined}
                                 disabled={!editable || save.isPending}
                             />
                         ))}

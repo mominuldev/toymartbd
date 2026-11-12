@@ -78,6 +78,11 @@ const ICONS = {
     storefront: 'Storefront',
     arrowRight: 'ArrowRight',
     arrowCounterClockwiseFill: 'ArrowCounterClockwise:fill',
+    // Cart, checkout and order tracking (P4-STO-08/09/10; Figma 120:2627, 120:2745, 131:2602).
+    trash: 'Trash',
+    arrowLeft: 'ArrowLeft',
+    ticket: 'Ticket',
+    shoppingBagOpen: 'ShoppingBagOpen',
 };
 
 const require = createRequire(import.meta.url);
