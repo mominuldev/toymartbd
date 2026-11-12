@@ -395,5 +395,5 @@ export const en = {
     },
 } as const;
 
-type Widen<T> = { -readonly [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
+type Widen<T> = { -readonly [K in keyof T]: T[K] extends string ? string : T[K] extends readonly string[] ? readonly string[] : Widen<T[K]> };
 export type Messages = Widen<typeof en>;
