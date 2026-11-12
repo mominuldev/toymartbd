@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Domain\Catalog\Events\ProductChanged;
+use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Services\ProductImageMediaMirror;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -17,8 +19,10 @@ use Illuminate\Validation\ValidationException;
  * it; `false` on the primary is refused (choose another image instead), so a
  * product with images always has exactly one primary.
  */
-final class UpdateProductImage
+final readonly class UpdateProductImage
 {
+    public function __construct(private ProductImageMediaMirror $mirror) {}
+
     /**
      * @param  array{alt_text?: string|null, alt_text_bn?: string|null, variant_id?: int|null, is_primary?: bool}  $changes
      */
@@ -33,11 +37,27 @@ final class UpdateProductImage
                 throw ValidationException::withMessages(['variant_id' => 'The variant does not belong to this product.']);
             }
 
+            // Alt text has one source of truth: a library-linked image writes it to its
+            // media row, so the library and every product using the file agree.
+            $media = $image->media_id !== null ? Media::query()->lockForUpdate()->find($image->media_id) : null;
+
             foreach (['alt_text', 'alt_text_bn'] as $key) {
                 if (array_key_exists($key, $changes)) {
                     $value = $changes[$key] !== null ? trim($changes[$key]) : null;
-                    $image->{$key} = $value === '' ? null : $value;
+                    $value = $value === '' ? null : $value;
+
+                    if ($media !== null) {
+                        $media->{$key} = $value;
+                    } else {
+                        $image->{$key} = $value;
+                    }
                 }
+            }
+
+            if ($media !== null && $media->isDirty()) {
+                $media->save();
+                $this->mirror->sync($media);
+                $image->setRelation('media', $media);
             }
 
             if (array_key_exists('variant_id', $changes)) {

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { WarningIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Button } from './Button';
@@ -27,6 +28,12 @@ type ConfirmDialogProps = {
  * border-topped footer with Cancel (ghost, autofocused so Enter is always safe) and the
  * danger action. Built on <dialog>.showModal(): real focus trap, Esc closes, inert
  * background, and no close on outside click.
+ *
+ * Rendered through a portal into document.body: callers such as the product form's
+ * images panel sit inside another form element, and a nested form is invalid HTML (React
+ * logs a DOM-nesting error for it). React still bubbles
+ * synthetic events through the portal to the owner tree, so submit stops propagating
+ * here — confirming a dialog must never submit the surrounding form.
  */
 export function ConfirmDialog({ open, title, body, confirmLabel, confirmText, typePrompt, cancelLabel, pending, onConfirm, onClose }: ConfirmDialogProps) {
     const { t } = useI18n();
@@ -52,7 +59,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, confirmText, ty
         }
     }, [open]);
 
-    return (
+    return createPortal(
         <dialog
             ref={ref}
             aria-labelledby={titleId}
@@ -64,6 +71,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, confirmText, ty
                 method="dialog"
                 onSubmit={(event) => {
                     event.preventDefault();
+                    event.stopPropagation();
                     if (confirmText === undefined || typed === confirmText) onConfirm();
                 }}
             >
@@ -92,6 +100,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, confirmText, ty
                     </Button>
                 </div>
             </form>
-        </dialog>
+        </dialog>,
+        document.body,
     );
 }

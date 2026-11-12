@@ -2,6 +2,18 @@
 
 How product images get from an admin upload to a CDN URL. Code: `app/Domain/Catalog/Services/ImagePipeline.php`, config: `config/media.php`.
 
+## Relationship to the media library
+
+Since the Media Library batch (`docs/api/media-library.md`) every product photo is also a `media` row, and **the media row is the source of truth for the file and the alt text**:
+
+- An upload here creates a `media` row (`origin: product`, folder *Products*) and a `product_images` row with `media_id`. Same pipeline, same response.
+- `POST …/images` also accepts `media_id` instead of `file`: attach an existing library image (no re-encode, shared base).
+- For a linked row, `ProductImage` reads `path`, `width`, `height`, `processing_status`, `rendition_widths`, `alt_text` and `alt_text_bn` from its media. Editing alt text here writes the media, so the library and every other product using the file change too; a library edit or Replace shows here at once. The row's own columns are a write-through mirror for a safe rollback (expand phase), never read.
+- Renditions of a linked image are the media's (`GenerateImageRenditions` delegates to the media; `GenerateMediaRenditions` is the library's job; both use `RenditionWriter`).
+- **Crop** of a linked image used only once rewrites that media in place (same id, new base). If the media is used elsewhere, the crop forks a new media row for this image only.
+- **Delete** of a product image removes its media (and files) only when the media came from a product upload and nothing else uses it. A library file stays, as *Unused*.
+- Existing rows were linked by the backfill (`toymart:media:backfill`, migration `2026_11_17_100300`): one media per distinct `path`, so a product and its duplicate share one media row and one alt text.
+
 ## Flow
 
 1. **Validate by content** (`App\Http\Rules\RealImage` → `ImagePipeline::inspect`). The extension and the client MIME are ignored. The type comes from `finfo` **and** must agree with the magic bytes; only JPEG, PNG, WebP and AVIF pass. Also refused: files over 10 MB, images over 8000 px on a side (read from the header before any decode), and bytes containing `<?php`, `<script`, `<svg`, `<html`, `<iframe` or `<!doctype` (polyglots). Each refusal is a 422 `validation-error` on `file`. A product holds at most 10 images.

@@ -33,18 +33,22 @@ final class CertificateFiles
         $size = @filesize($path);
 
         if ($size === false || $size === 0) {
-            throw new InvalidCertificate('The file is empty or unreadable.');
+            throw new InvalidCertificate('The file is empty or unreadable.', 'empty');
         }
 
         if ($size > self::MAX_BYTES) {
-            throw new InvalidCertificate(sprintf('The certificate is %.1f MB; the limit is %d MB.', $size / 1048576, intdiv(self::MAX_BYTES, 1048576)));
+            throw new InvalidCertificate(
+                sprintf('The certificate is %.1f MB; the limit is %d MB.', $size / 1048576, intdiv(self::MAX_BYTES, 1048576)),
+                'too_large',
+                ['size' => sprintf('%.1f', $size / 1048576), 'limit' => intdiv(self::MAX_BYTES, 1048576)],
+            );
         }
 
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path);
         $bytes = (string) file_get_contents($path);
 
         if ($mime !== 'application/pdf' || ! str_starts_with($bytes, '%PDF-')) {
-            throw new InvalidCertificate('Only a PDF certificate is accepted.');
+            throw new InvalidCertificate('Only a PDF certificate is accepted.', 'wrong_type');
         }
 
         // Names in a PDF are case-sensitive, but a lower-case scan also catches the
@@ -52,7 +56,7 @@ final class CertificateFiles
         $lower = strtolower($bytes);
         foreach (self::ACTIVE_CONTENT as $marker) {
             if (preg_match('#'.preg_quote($marker, '#').'(?![a-z])#', $lower) === 1) {
-                throw new InvalidCertificate('The PDF contains scripts, attachments or interactive content and was refused. Export it again as a plain PDF.');
+                throw new InvalidCertificate('The PDF contains scripts, attachments or interactive content and was refused. Export it again as a plain PDF.', 'active_content');
             }
         }
 

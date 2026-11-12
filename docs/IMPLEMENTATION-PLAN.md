@@ -200,6 +200,19 @@ One repository, because the API and both frontends share a contract and must cha
 
 **Owner decisions open:** coupon after a non-stackable promotion (applies today); customer aggregates (orders count excludes cancelled, total spent = delivered only); partial COD collection (refused today); `cost_price_snapshot` precision 14,4 (§3.4) vs rule 6; Theme B primary colour in the product-edit frame (coral in Figma, indigo in the build); `throttle:search-suggest` is keyed by IP but all shoppers arrive via the Next server.
 
+### Progress — Media Library + Figma fixes (2026-11-12)
+
+Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-11-12 with **no video in v1** and a **10 MB** upload limit.
+
+**Done, with passing tests** (1401 PHP; 153 admin Vitest; 207 storefront unit; 10 admin + 84 storefront Playwright; PHPStan, Pint, deptrac clean):
+- **Media Library** — `media` + `media_folders` (code in `app/Domain/Catalog/Media`, so Catalog can reference it), expand-only `product_images.media_id` with an idempotent backfill (`toymart:media:backfill`), upload/replace/delete (409 `media-in-use`), bulk move/delete/zip, usage resolver, stable `/m/{id}/{name}` URL; replace keeps the media id, never the bytes path (supersedes A25 rule 3 wording). Admin screen `/store/media` and `MediaPickerModal` with "Choose from library" in the product images panel. Contract: `docs/api/media-library.md`.
+- **Product form** — rich-text description (TipTap; sanitised server-side by `ProductDescription` with symfony/html-sanitizer, again on the storefront); Variants section always present, matrix decides the type on create; section tabs sticky with scroll margin (the Inventory tab looked inert). Nested-form bug fixed: confirming an image delete also saved the product.
+- **Inventory page** — matched to Theme B `241:39494`: branch cards, Overstock tab, Other branches column, contextual row actions, low-stock nav badge, 3-branch demo seed through opening-balance movements.
+
+**Owner decisions open:** overstock = `available > reorder_point + 2 × reorder_quantity` (needs reorder_quantity > 0); `Aa` in the rich-text toolbar is "clear formatting"; a saved simple product cannot become variable (API refuses the type change); media delete/bulk download limited to super_admin + manager; storage quota unset.
+
+**Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed and AI write in the description toolbar.
+
 ### Catalog (CAT)
 | ID | Task | Size | Tests |
 |---|---|---|---|

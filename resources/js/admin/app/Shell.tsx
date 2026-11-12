@@ -3,7 +3,8 @@ import { Outlet, useNavigate } from 'react-router';
 import { XIcon } from '@phosphor-icons/react';
 import { Sidebar } from '@/components/shell/Sidebar';
 import { Topbar } from '@/components/shell/Topbar';
-import { useLogout, useMe } from '@/features/auth/api';
+import { can, useLogout, useMe } from '@/features/auth/api';
+import { useLowStockCount } from '@/features/inventory/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import { IconButton } from '@/components/ui/IconButton';
 import { en, type MessageKey } from '@/i18n/messages';
@@ -36,6 +37,9 @@ export function Shell() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const menuButton = useRef<HTMLButtonElement>(null);
     const drawer = useRef<HTMLDivElement>(null);
+    // Nav count badges (Figma CountBadge 185:43 on SidebarItem): each a cheap server count.
+    const lowStock = useLowStockCount(can(me, 'inventory.view'));
+    const counts: Record<string, number | undefined> = { '/inventory': lowStock.data?.count };
 
     const toggleCollapsed = useCallback(() => {
         setCollapsed((value) => {
@@ -91,7 +95,7 @@ export function Shell() {
             </a>
 
             <aside data-theme="admin-dark" className={`sticky top-0 hidden h-dvh shrink-0 lg:block lg:w-16 ${collapsed ? '' : 'xl:w-62'}`}>
-                <Sidebar permissions={me.permissions} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} user={user} />
+                <Sidebar permissions={me.permissions} counts={counts} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} user={user} />
             </aside>
 
             {drawerOpen && (
@@ -99,7 +103,7 @@ export function Shell() {
                     <button type="button" tabIndex={-1} aria-hidden onClick={closeDrawer} className="absolute inset-0 bg-overlay" />
                     <div ref={drawer} role="dialog" aria-modal="true" aria-label={t('nav.primary')} onKeyDown={trapFocus} className="absolute inset-y-0 left-0 flex">
                         <div data-theme="admin-dark" className="h-full w-62 shadow-e4">
-                            <Sidebar permissions={me.permissions} collapsed={false} variant="drawer" onNavigate={closeDrawer} user={user} />
+                            <Sidebar permissions={me.permissions} counts={counts} collapsed={false} variant="drawer" onNavigate={closeDrawer} user={user} />
                         </div>
                         <IconButton variant="outline" onClick={closeDrawer} aria-label={t('shell.closeMenu')} className="ms-3 mt-3">
                             <XIcon size={18} aria-hidden />

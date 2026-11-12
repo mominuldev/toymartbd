@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
 import {
     ArrowLeftIcon,
     ArrowRightIcon,
@@ -38,6 +38,8 @@ export interface ImageUploaderProps {
     disabled?: boolean;
     /** Used for the auto-composed alt placeholder ("{product} — image {n}"). */
     productName?: string;
+    /** Rendered beside the title — the product form puts "Choose from library" here. */
+    headerAction?: ReactNode;
 }
 
 type Upload = { key: string; file: File; loaded: number; error: string | null };
@@ -56,7 +58,7 @@ export function hasCompleteAlt(image: Pick<ProductImage, 'alt_text' | 'alt_text_
  * `lg` the Figma 768 "Move left / Move right" buttons act on the selected tile.
  * Alt text saves on blur. Uploads go one request per file, with progress.
  */
-export function ImageUploader({ productId, variants, disabled = false, productName }: ImageUploaderProps) {
+export function ImageUploader({ productId, variants, disabled = false, productName, headerAction }: ImageUploaderProps) {
     const { t } = useI18n();
     const query = useProductImages(productId);
     const invalidate = useInvalidateImages(productId);
@@ -187,6 +189,7 @@ export function ImageUploader({ productId, variants, disabled = false, productNa
         >
             <div className="flex items-center gap-2">
                 <h2 className="min-w-0 flex-1 t-admin-section text-fg-primary">{t('images.title', { count: images.length, max: MAX_IMAGES })}</h2>
+                {headerAction}
             </div>
 
             <div className="@container">

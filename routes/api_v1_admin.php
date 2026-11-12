@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\V1\Admin\CategoryController;
 use App\Http\Controllers\Api\V1\Admin\CouponController;
 use App\Http\Controllers\Api\V1\Admin\InventoryAdjustmentController;
 use App\Http\Controllers\Api\V1\Admin\InventoryController;
+use App\Http\Controllers\Api\V1\Admin\MediaBulkController;
+use App\Http\Controllers\Api\V1\Admin\MediaController;
+use App\Http\Controllers\Api\V1\Admin\MediaFolderController;
 use App\Http\Controllers\Api\V1\Admin\OrderController;
 use App\Http\Controllers\Api\V1\Admin\OrderNoteController;
 use App\Http\Controllers\Api\V1\Admin\OrderWorkflowController;
@@ -83,6 +86,24 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/products/{product}/images/{image}/crop', [ProductImageController::class, 'crop'])->scopeBindings()->name('products.images.crop');
     Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->scopeBindings()->name('products.images.destroy');
 
+    // Media library (docs/api/media-library.md). Static paths before {media}.
+    Route::get('/media', [MediaController::class, 'index'])->name('media.index');
+    Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+    Route::get('/media/counts', [MediaController::class, 'counts'])->name('media.counts');
+    Route::get('/media/storage', [MediaController::class, 'storage'])->name('media.storage');
+    Route::get('/media/folders', [MediaFolderController::class, 'index'])->name('media.folders.index');
+    Route::post('/media/folders', [MediaFolderController::class, 'store'])->name('media.folders.store');
+    Route::patch('/media/folders/{folder}', [MediaFolderController::class, 'update'])->name('media.folders.update');
+    Route::delete('/media/folders/{folder}', [MediaFolderController::class, 'destroy'])->name('media.folders.destroy');
+    Route::post('/media/bulk/move', [MediaBulkController::class, 'move'])->name('media.bulk.move');
+    Route::post('/media/bulk/delete', [MediaBulkController::class, 'delete'])->name('media.bulk.delete');
+    Route::post('/media/bulk/download', [MediaBulkController::class, 'download'])->name('media.bulk.download');
+    Route::get('/media/{media}', [MediaController::class, 'show'])->whereNumber('media')->name('media.show');
+    Route::patch('/media/{media}', [MediaController::class, 'update'])->whereNumber('media')->name('media.update');
+    Route::post('/media/{media}/replace', [MediaController::class, 'replace'])->whereNumber('media')->name('media.replace');
+    Route::get('/media/{media}/download', [MediaController::class, 'download'])->whereNumber('media')->name('media.download');
+    Route::delete('/media/{media}', [MediaController::class, 'destroy'])->whereNumber('media')->name('media.destroy');
+
     // Categories (nested set). DELETE archives; never hard-deleted.
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
@@ -106,6 +127,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     // adjustments. An adjustment moves stock, so a double submit must replay, not apply twice.
     Route::get('/inventory/summary', [InventoryController::class, 'summary'])->name('inventory.summary');
     Route::get('/inventory/stock', [InventoryController::class, 'stock'])->name('inventory.stock');
+    Route::get('/inventory/low-stock-count', [InventoryController::class, 'lowStockCount'])->name('inventory.low-stock-count');
     Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
     Route::get('/inventory/movements/reconciliation', [InventoryController::class, 'reconciliation'])->name('inventory.movements.reconciliation');
     Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'store'])->middleware('idempotent')->name('inventory.adjustments.store');

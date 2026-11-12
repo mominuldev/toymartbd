@@ -68,6 +68,29 @@ class DemoCatalogSeeder extends Seeder
     public const string IMAGE_DIR = 'docs/_design/assets/products';
 
     /**
+     * Media-library filenames for the demo photos: generic product-type names, never a
+     * brand (media-library lead decision 5). The product names themselves are unchanged.
+     */
+    public const array MEDIA_FILENAMES = [
+        'TMB-LEG-CL484' => 'creative-building-bricks-01.webp',
+        'TMB-FIS-SSPUP' => 'musical-learning-puppy-01.webp',
+        'TMB-HOT-10PK' => 'die-cast-car-gift-pack-01.webp',
+        'TMB-HAP-PTB' => 'pound-and-tap-xylophone-bench-01.webp',
+        'TMB-MID-SHSORT' => 'wooden-shape-sorting-puzzle-01.webp',
+        'TMB-HUA-GYM' => 'baby-activity-gym-mat-01.webp',
+        'TMB-BRU-MANDT' => 'toy-dump-truck-01.webp',
+        'TMB-RUB-3X3' => 'speed-cube-3x3-01.webp',
+        'TMB-PLA-RB10' => 'rainbow-modelling-dough-10-pack-01.webp',
+        'TMB-BAR-DHPP' => 'fashion-doll-pool-party-01.webp',
+        'TMB-CLE-MICRO' => 'kids-first-microscope-01.webp',
+        'TMB-LIT-SLIDE' => 'toddler-first-slide-01.webp',
+        'TMB-INT-DINOP' => 'dinosaur-inflatable-pool-01.webp',
+        'TMB-CRA-ST20' => 'washable-markers-20-01.webp',
+        'TMB-WIN-PUSHW' => 'baby-walker-push-car-01.webp',
+        'TMB-MEL-DOCK' => 'wooden-doctor-kit-01.webp',
+    ];
+
+    /**
      * slug → product. `category` is the primary (an L2 MegaMenu child); `also` adds
      * more categories (always the L1 parent). Variable products list every
      * combination in `variants`; the one marked `default` carries the spec SKU,
@@ -337,7 +360,11 @@ class DemoCatalogSeeder extends Seeder
         config(['queue.default' => 'sync']);
 
         try {
-            $image = app(UploadProductImage::class)->handle($product, $upload, ['alt_text' => $alt, 'alt_text_bn' => $altBn]);
+            $image = app(UploadProductImage::class)->handle($product, $upload, [
+                'alt_text' => $alt,
+                'alt_text_bn' => $altBn,
+                'filename' => self::MEDIA_FILENAMES[$sku] ?? 'toy-photo-01.webp',
+            ]);
         } finally {
             config(['queue.default' => $previous]);
             @unlink($upload);

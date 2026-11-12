@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(GeographySeeder::class);
         $this->call(CatalogReferenceSeeder::class);
+        $this->call(MediaFoldersSeeder::class);
         $this->call(DeliverySeeder::class);
 
         // A known login is only ever created on a developer's machine or in tests. In any
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
             $this->call(CategoryDemoSeeder::class);
             $this->call(BrandDemoSeeder::class);
             $this->call(DemoCatalogSeeder::class);
+            $this->call(DemoInventorySeeder::class);
         }
     }
 }

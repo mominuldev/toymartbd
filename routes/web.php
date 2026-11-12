@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\PublicMediaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,15 @@ Route::get('/', fn () => response()->json([
     'admin' => url('/admin'),
     'health' => url('/up'),
 ]));
+
+/*
+| Stable public media URL (docs/api/media-library.md, decision 3): a short-cache 302 to
+| the current rendition, so a copied link survives Replace.
+*/
+Route::get('/m/{media}/{filename}', PublicMediaController::class)
+    ->where(['media' => '[0-9]+', 'filename' => '[^/]+'])
+    ->middleware('throttle:240,1')
+    ->name('media.public');
 
 /*
 | Admin SPA

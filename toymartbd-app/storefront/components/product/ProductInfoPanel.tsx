@@ -4,6 +4,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, type Locale, type Messages } from '@/lib/i18n';
 import { ageLabel, formatPrice } from '@/lib/listing/format';
+import { descriptionContext, sanitizeDescription } from '@/lib/product/description';
 import type { DeliveryRates } from '@/lib/product/fetch';
 import { AGE_SCALE, ageRange, bandMatches, weightLabel } from '@/lib/product/format';
 import type { ProductVariant, StorefrontProduct } from '@/lib/product/variants';
@@ -18,6 +19,16 @@ interface Props {
 }
 
 type Size = 'desktop' | 'mobile';
+
+/** The rich-text description in tokens: Body/lg (its Bangla variant carries the 1.15× line-height), 20 between blocks. */
+const descriptionClass = [
+    'pdp-description flex flex-col gap-5 t-body-lg text-fg-primary',
+    '[&_h2]:t-h4 [&_h3]:t-body-strong',
+    '[&_ul]:list-disc [&_ul]:ps-6 [&_ol]:list-decimal [&_ol]:ps-6 [&_li]:mt-1',
+    '[&_blockquote]:border-s-4 [&_blockquote]:border-line-default [&_blockquote]:ps-4 [&_blockquote]:text-fg-secondary',
+    '[&_a]:text-fg-link [&_a]:underline',
+    '[&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg',
+].join(' ');
 
 const pick = (locale: Locale, en: string | null, bn: string | null): string | null => (locale === 'bn' ? (bn ?? en) : en);
 
@@ -123,14 +134,14 @@ function Description({ product, locale, size }: { product: StorefrontProduct; lo
     const text = pick(locale, product.description, product.description_bn) ?? pick(locale, product.short_description, product.short_description_bn);
     const photo = product.images[1] ?? product.images[0];
     const lang = locale === 'bn' && !product.description_bn ? 'en' : undefined;
-    const body = text ? (
-        <div className="flex flex-col gap-5">
-            {text.split(/\n{2,}/).map((para) => (
-                <p key={para} lang={lang} className="t-body-lg whitespace-pre-line text-fg-primary">
-                    {para}
-                </p>
-            ))}
-        </div>
+    // The API sends sanitised HTML; it is filtered again here before it is set as markup.
+    const html = sanitizeDescription(text, descriptionContext(process.env.API_URL, product.images.map((i) => i.url)));
+    const body = html ? (
+        <div
+            lang={lang}
+            className={`${descriptionClass} ${locale === 'bn' && !lang ? 'lang-bn' : ''}`}
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
     ) : null;
     if (size === 'mobile') return body;
     return (

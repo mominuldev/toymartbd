@@ -12,6 +12,7 @@ use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Catalog\Services\PriceDisplay;
+use App\Domain\Catalog\Services\ProductDescription;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Database\Eloquent\Collection;
@@ -81,10 +82,20 @@ final class StorefrontProductResource extends ApiResource
             'short_description' => $product->short_description,
             /** @var string|null */
             'short_description_bn' => $product->short_description_bn,
-            /** @var string|null */
-            'description' => $product->description,
-            /** @var string|null */
-            'description_bn' => $product->description_bn,
+            /**
+             * Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             * a[href] and img[src, alt, width, height] from our own media only.
+             *
+             * @var string|null
+             */
+            'description' => ProductDescription::html($product->description),
+            /**
+             * Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             * a[href] and img[src, alt, width, height] from our own media only.
+             *
+             * @var string|null
+             */
+            'description_bn' => ProductDescription::html($product->description_bn),
             /**
              * Free-form key/value pairs from the product's specifications, in their stored
              * order; empty values are dropped.

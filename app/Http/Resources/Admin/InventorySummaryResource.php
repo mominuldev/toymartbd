@@ -14,12 +14,12 @@ use Illuminate\Http\Request;
  *
  * @property array{
  *     location_id: int,
- *     counts: array{all: int, low: int, out: int, idle: int},
+ *     counts: array{all: int, low: int, out: int, overstock: int, idle: int},
  *     on_hand: int,
  *     reserved: int,
  *     value: string,
  *     total_value: string,
- *     locations: list<array{id: int, code: string, name: string, name_bn: string|null, is_default: bool, on_hand: int, value: string}>
+ *     locations: list<array{id: int, code: string, name: string, name_bn: string|null, description: string|null, description_bn: string|null, is_default: bool, on_hand: int, value: string}>
  * } $resource
  */
 #[SchemaName('InventorySummary')]
@@ -39,9 +39,9 @@ final class InventorySummaryResource extends ApiResource
              */
             'location_id' => $summary['location_id'],
             /**
-             * Rows per tab: every variant, low (0 < available ≤ reorder point), out (available ≤ 0), idle (stock but no movement for 90 days).
+             * Rows per tab: every variant, low (0 < available ≤ reorder point), out (available ≤ 0), overstock (reorder quantity set and available > reorder point + 2 × reorder quantity), idle (stock but no movement for 90 days).
              *
-             * @var array{all: int, low: int, out: int, idle: int}
+             * @var array{all: int, low: int, out: int, overstock: int, idle: int}
              */
             'counts' => $summary['counts'],
             /** @var int */
@@ -67,7 +67,7 @@ final class InventorySummaryResource extends ApiResource
             /**
              * Every active location, the default first. `value` only with catalog.view_cost.
              *
-             * @var list<array{id: int, code: string, name: string, name_bn: string|null, is_default: bool, on_hand: int, value?: string}>
+             * @var list<array{id: int, code: string, name: string, name_bn: string|null, description: string|null, description_bn: string|null, is_default: bool, on_hand: int, value?: string}>
              */
             'locations' => array_map(static function (array $location) use ($viewCost): array {
                 if (! $viewCost) {

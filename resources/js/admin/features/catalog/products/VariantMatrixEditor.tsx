@@ -40,8 +40,13 @@ type Props = {
     margins?: Record<string, Margin | null>;
     /** Anchor id for the section navigation. */
     id?: string;
-    /** Right side of the title row (the product-type select on a new product). */
+    /** Right side of the title row. */
     aside?: ReactNode;
+    /**
+     * A simple product: `new` — no options yet, and adding the first one makes the new
+     * product variable; `fixed` — a saved simple product, whose type the API will not change.
+     */
+    simple?: 'new' | 'fixed';
 };
 
 export type StockMode = 'opening' | 'readonly' | 'hidden';
@@ -54,7 +59,7 @@ export type StockMode = 'opening' | 'readonly' | 'hidden';
  * the column shows available stock read-only (changes are stock adjustments). A removed
  * value archives its variants on save; adding it back restores them.
  */
-export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled, id, aside, margins }: Props) {
+export function VariantMatrixEditor({ attributes, value, combos, onChange, errors, matrixErrors, canCost, canPrice, stockMode, disabled, id, aside, margins, simple }: Props) {
     const { t, locale } = useI18n();
     const bn = locale === 'bn';
     const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -68,7 +73,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
     const outside = Object.entries(value.rows).filter(([key, row]) => row.id !== null && !comboKeys.has(key));
     const usedAttributes = new Set(value.options.map((o) => o.attribute_id));
     const freeAttributes = attributes.filter((a) => !usedAttributes.has(a.id));
-    const canAddAttribute = value.options.length < MAX_ATTRIBUTES && freeAttributes.length !== 0;
+    const canAddAttribute = simple !== 'fixed' && value.options.length < MAX_ATTRIBUTES && freeAttributes.length !== 0;
     const tooMany = combos.length > MAX_VARIANTS;
     const enabledCount = combos.filter((c) => rowOf(c).status === 'active').length;
 
@@ -186,7 +191,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
     };
 
     return (
-        <section id={id} aria-labelledby={`${bulkId}-title`} className="relative flex scroll-mt-6 flex-col overflow-hidden rounded-md border border-line-default bg-surface shadow-e1">
+        <section id={id} aria-labelledby={`${bulkId}-title`} className="relative flex scroll-mt-32 flex-col overflow-hidden rounded-md border border-line-default bg-surface shadow-e1">
             <div className="flex flex-col gap-3 px-5 pt-5 pb-4">
                 <div className="flex flex-wrap items-center gap-3">
                     <h2 id={`${bulkId}-title`} className="min-w-0 flex-1 t-admin-section text-fg-primary">
@@ -195,7 +200,11 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                     {aside}
                 </div>
 
-                {value.options.length === 0 && <p className="t-admin-body text-fg-secondary">{t('products.matrix.noAttributes')}</p>}
+                {value.options.length === 0 && (
+                    <p className="t-admin-body text-fg-secondary">
+                        {simple === 'new' ? t('products.matrix.simpleHint') : simple === 'fixed' ? t('products.matrix.simpleFixed') : t('products.matrix.noAttributes')}
+                    </p>
+                )}
 
                 {value.options.map((option) => {
                     const attribute = attributes.find((a) => a.id === option.attribute_id);
@@ -289,6 +298,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                 {!canPrice && <p className="t-admin-caption text-fg-tertiary">{t('products.matrix.priceLocked')}</p>}
             </div>
 
+            {value.options.length > 0 && (
             <div className="flex min-h-14 flex-wrap items-center gap-3 bg-brand-subtle px-5 py-3">
                 <p className="min-w-0 flex-1 t-admin-body text-fg-primary" aria-live="polite">
                     {uniformValues !== null
@@ -302,6 +312,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                     </p>
                 )}
             </div>
+            )}
 
             {matrixErrors.length > 0 && (
                 <div role="alert" className="flex flex-col gap-1 border-t border-line-default bg-danger-subtle px-5 py-3">

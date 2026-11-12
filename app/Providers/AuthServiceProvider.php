@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
+use App\Domain\Catalog\Media\Models\Media;
+use App\Domain\Catalog\Media\Models\MediaFolder;
 use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
@@ -41,6 +43,8 @@ use App\Policies\CartPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\CouponPolicy;
 use App\Policies\CustomerPolicy;
+use App\Policies\MediaFolderPolicy;
+use App\Policies\MediaPolicy;
 use App\Policies\OrderFinancialPolicy;
 use App\Policies\OrderPartPolicy;
 use App\Policies\OrderPolicy;
@@ -75,6 +79,8 @@ class AuthServiceProvider extends ServiceProvider
         ProductVariant::class => ProductPartPolicy::class,
         ProductImage::class => ProductPartPolicy::class,
         ProductRelation::class => ProductPartPolicy::class,
+        Media::class => MediaPolicy::class,
+        MediaFolder::class => MediaFolderPolicy::class,
         StockLevel::class => StockPolicy::class,
         StockMovement::class => StockPolicy::class,
         StockLocation::class => StockPolicy::class,

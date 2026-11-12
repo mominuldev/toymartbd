@@ -10,9 +10,9 @@ use App\Domain\Inventory\Services\OpeningStock;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Opening stock for an existing product's variants (seeders, a future import). Each
- * variant gets an `opening_balance` movement once; one that already has movements is
- * skipped, so re-running is safe.
+ * Opening stock for an existing product's variants (seeders, a future import), at the
+ * default location or a given one. Each variant gets an `opening_balance` movement once
+ * per location; one that already has movements there is skipped, so re-running is safe.
  */
 final readonly class RecordOpeningStock
 {
@@ -22,8 +22,8 @@ final readonly class RecordOpeningStock
      * @param  array<int, int>  $quantities  variant id → opening on-hand
      * @return list<StockMovement>
      */
-    public function handle(Product $product, array $quantities, ?int $userId = null): array
+    public function handle(Product $product, array $quantities, ?int $userId = null, ?int $locationId = null): array
     {
-        return DB::transaction(fn (): array => $this->openingStock->record($product, $quantities, $userId));
+        return DB::transaction(fn (): array => $this->openingStock->record($product, $quantities, $userId, $locationId));
     }
 }

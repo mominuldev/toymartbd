@@ -277,7 +277,8 @@ export interface paths {
         put?: never;
         /**
          * `POST /products/{product}/images` — `multipart/form-data`; appended last, primary
-         *     when it is the product's first image. 201 with the image (`processing`)
+         *     when it is the product's first image. 201 with the image (`processing`). With
+         *     `media_id` instead of `file`, attaches an existing library image (no re-encode)
          */
         post: operations["v1.admin.products.images.store"];
         delete?: never;
@@ -332,6 +333,207 @@ export interface paths {
         put?: never;
         /** `POST /products/{product}/images/{image}/crop` — re-crops; the image returns to `processing` */
         post: operations["v1.admin.products.images.crop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /media` — cursor-paginated; `meta.total` counts the matches under the filters.
+         *     Anything outside the allowlist is a 400
+         */
+        get: operations["v1.admin.media.index"];
+        put?: never;
+        /**
+         * `POST /media` — `multipart/form-data`, one file. 201; an image is `processing`
+         *     until its renditions are written after commit
+         */
+        post: operations["v1.admin.media.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /media/counts` — every number in the rail, unfiltered */
+        get: operations["v1.admin.media.counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /media/storage` — the storage meter. `quota_bytes` is null without MEDIA_STORAGE_QUOTA_GB */
+        get: operations["v1.admin.media.storage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /media/folders` — system folders first, then custom folders by name */
+        get: operations["v1.admin.media.folders.index"];
+        put?: never;
+        /** `POST /media/folders` — 201; a duplicate name (case-insensitive) is 422 on `name` */
+        post: operations["v1.admin.media.folders.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/folders/{folder}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /media/folders/{folder}` — its files become not filed; nothing is deleted */
+        delete: operations["v1.admin.media.folders.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /media/folders/{folder}` — rename a custom folder */
+        patch: operations["v1.admin.media.folders.update"];
+        trace?: never;
+    };
+    "/admin/media/bulk/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /media/bulk/move` — move files to a folder, or un-file them (`folder_id: null`) */
+        post: operations["v1.admin.media.bulk.move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/bulk/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /media/bulk/delete` — deletes what it can and skips files in use; per-id
+         *     `results` in request order
+         */
+        post: operations["v1.admin.media.bulk.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/bulk/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /media/bulk/download` — a zip of the originals; capped (422 on `ids` over it) */
+        post: operations["v1.admin.media.bulk.download"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/{media}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /media/{media}` — with `used_in` and the renditions */
+        get: operations["v1.admin.media.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /media/{media}` — 409 `media-in-use` with `usages` when the file is used anywhere */
+        delete: operations["v1.admin.media.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /media/{media}` — alt text (shared with every product using the file), caption, folder */
+        patch: operations["v1.admin.media.update"];
+        trace?: never;
+    };
+    "/admin/media/{media}/replace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /media/{media}/replace` — same id, new file of the same kind; old files deleted after commit */
+        post: operations["v1.admin.media.replace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/media/{media}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /media/{media}/download` — the stored original as an attachment */
+        get: operations["v1.admin.media.download"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -526,6 +728,27 @@ export interface paths {
          *     ordered by product then variant
          */
         get: operations["v1.admin.inventory.stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/low-stock-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inventory/low-stock-count` — the Inventory nav badge: low-stock variants at the
+         *     default location (the Low stock tab's rule). One COUNT, cached until stock or a
+         *     reorder point changes, so the shell can ask on every page without slowing it
+         */
+        get: operations["v1.admin.inventory.low-stock-count"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1345,6 +1568,24 @@ export interface components {
             order_ids: number[];
         };
         /**
+         * BulkMediaRequest
+         * @description `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct
+         *     integers. Both need media.delete (deleteAny). Delete reports unknown ids as
+         *     `not_found`; the zip refuses them (422 on `ids.N`).
+         */
+        BulkMediaRequest: {
+            ids: number[];
+        };
+        /**
+         * BulkMoveMediaRequest
+         * @description `POST /media/bulk/move` — `{ ids, folder_id }`: 1–200 distinct existing media ids and
+         *     a folder id, or null to un-file. Needs media.manage.
+         */
+        BulkMoveMediaRequest: {
+            ids: number[];
+            folder_id: number | null;
+        };
+        /**
          * CancelOrderRequest
          * @description `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list
          *     (cancellations are counted by cause); `note` is required when the reason is `other`.
@@ -1694,6 +1935,13 @@ export interface components {
                 unit_cost?: string | null;
             }[];
         };
+        /** InventoryLowStockCount */
+        InventoryLowStockCount: {
+            /** @description The location counted — the default one. */
+            location_id: number;
+            /** @description Variants with 0 < available ≤ reorder point there (up to a minute old). */
+            count: number;
+        };
         /** InventoryMovement */
         InventoryMovement: {
             id: number;
@@ -1762,31 +2010,49 @@ export interface components {
             /** @description on_hand − reserved. May be negative only if the ledger has drifted. */
             available: number;
             reorder_point: number;
+            /** @description Units a reorder brings in; 0 = not set (the variant is then never overstock). */
+            reorder_quantity: number;
             /**
-             * @description `out` (available ≤ 0), `low` (0 < available ≤ reorder point) or null.
+             * @description `out` (available ≤ 0), `low` (0 < available ≤ reorder point), `overstock`
+             *     (reorder quantity set and available > reorder point + 2 × reorder quantity) or null.
              * @enum {string|null}
              */
-            state: "low" | "out" | null;
+            state: "low" | "out" | "overstock" | null;
             /** @description Unit cost basis (weighted-average cost, else current cost price), 4 dp; only with catalog.view_cost. */
             unit_cost?: string;
             /** @description on_hand × unit cost, 2 dp; only with catalog.view_cost. */
             value?: string;
-            /** @description On hand at the other active locations (empty while there is only one). */
+            /**
+             * @description On hand and available at every other active location, in location order
+             *     (empty while there is only one location).
+             */
             elsewhere: {
                 location_id: number;
                 code: string;
                 on_hand: number;
+                available: number;
             }[];
+            /**
+             * @description For a low or out-of-stock row: the other location with the most units
+             *     available, the source a transfer would draw from; null when no other
+             *     location has any, or the row is not short.
+             */
+            transfer_from: {
+                location_id: number;
+                code: string;
+                available: number;
+            } | null;
         };
         /** InventorySummary */
         InventorySummary: {
             /** @description The location the counts and the on-hand figures are for. */
             location_id: number;
-            /** @description Rows per tab: every variant, low (0 < available ≤ reorder point), out (available ≤ 0), idle (stock but no movement for 90 days). */
+            /** @description Rows per tab: every variant, low (0 < available ≤ reorder point), out (available ≤ 0), overstock (reorder quantity set and available > reorder point + 2 × reorder quantity), idle (stock but no movement for 90 days). */
             counts: {
                 all: number;
                 low: number;
                 out: number;
+                overstock: number;
                 idle: number;
             };
             on_hand: number;
@@ -1802,6 +2068,8 @@ export interface components {
                 code: string;
                 name: string;
                 name_bn: string | null;
+                description: string | null;
+                description_bn: string | null;
                 is_default: boolean;
                 on_hand: number;
                 value?: string;
@@ -1829,6 +2097,115 @@ export interface components {
                 price?: string | null;
                 cost_price?: string | null;
             }[];
+        };
+        /** Media */
+        Media: {
+            id: number;
+            /** @enum {string} */
+            kind: "image" | "document";
+            filename: string;
+            caption: string | null;
+            alt_text: string | null;
+            alt_text_bn: string | null;
+            /** @enum {string} */
+            alt_status: "complete" | "missing_bn" | "missing_en" | "missing" | "not_applicable";
+            folder_id: number | null;
+            mime: string;
+            original_mime: string;
+            width: number | null;
+            height: number | null;
+            size_bytes: number;
+            original_size_bytes: number;
+            /** @enum {string} */
+            processing_status: "processing" | "ready" | "failed";
+            urls: {
+                thumb: string | null;
+                medium: string | null;
+                large: string | null;
+            };
+            srcset: {
+                webp: string | null;
+                avif: string | null;
+            };
+            public_url: string | null;
+            used_in_count: number;
+            /** @enum {string} */
+            origin: "library" | "product";
+            uploaded_by: {
+                id: string;
+                name: string;
+            } | null;
+            created_at: string | null;
+            updated_at: string | null;
+        };
+        /** MediaDetail */
+        MediaDetail: {
+            id: number;
+            /** @enum {string} */
+            kind: "image" | "document";
+            filename: string;
+            caption: string | null;
+            alt_text: string | null;
+            alt_text_bn: string | null;
+            /** @enum {string} */
+            alt_status: "complete" | "missing_bn" | "missing_en" | "missing" | "not_applicable";
+            folder_id: number | null;
+            mime: string;
+            original_mime: string;
+            width: number | null;
+            height: number | null;
+            size_bytes: number;
+            original_size_bytes: number;
+            /** @enum {string} */
+            processing_status: "processing" | "ready" | "failed";
+            urls: {
+                thumb: string | null;
+                medium: string | null;
+                large: string | null;
+            };
+            srcset: {
+                webp: string | null;
+                avif: string | null;
+            };
+            public_url: string | null;
+            used_in_count: number;
+            /** @enum {string} */
+            origin: "library" | "product";
+            uploaded_by: {
+                id: string;
+                name: string;
+            } | null;
+            created_at: string | null;
+            updated_at: string | null;
+            used_in: unknown[];
+            renditions: {
+                format: string;
+                width: number;
+                bytes: number;
+                url: string;
+            }[];
+            master_bytes: number;
+            renditions_bytes: number;
+            download_path: string;
+        };
+        /** MediaFolder */
+        MediaFolder: {
+            id: number;
+            name: string;
+            /** @enum {string|null} */
+            system_key: "products" | "category_banners" | "blog" | "pages" | null;
+            is_system: boolean;
+            position: number;
+            created_at: string | null;
+        };
+        /**
+         * MediaFolderRequest
+         * @description `POST /media/folders` and `PATCH /media/folders/{folder}` — `{ name }`, 1–60
+         *     characters after trimming. Uniqueness (case-insensitive) is checked by the Action
+         *     under a lock. Needs media.manage.
+         */
+        MediaFolderRequest: {
+            name: string;
         };
         /**
          * MoveCategoryRequest
@@ -2088,7 +2465,15 @@ export interface components {
             }[];
             short_description: string | null;
             short_description_bn: string | null;
+            /**
+             * @description Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             *     a[href] and img[src, alt, width, height] from our own media only.
+             */
             description: string | null;
+            /**
+             * @description Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             *     a[href] and img[src, alt, width, height] from our own media only.
+             */
             description_bn: string | null;
             specifications: {
                 [key: string]: string | null;
@@ -2439,6 +2824,15 @@ export interface components {
             ids: number[];
         };
         /**
+         * ReplaceMediaRequest
+         * @description `POST /media/{media}/replace` — `multipart/form-data`, `file` of the same kind as the
+         *     media (image ↔ image, PDF ↔ PDF), ≤ 10 MB, checked by content. Needs media.manage.
+         */
+        ReplaceMediaRequest: {
+            /** Format: binary */
+            file: string;
+        };
+        /**
          * RobotsDirective
          * @description The robots meta values the admin may choose (SeoPanel "Advanced").
          * @enum {string}
@@ -2564,6 +2958,20 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * StoreMediaRequest
+         * @description `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a
+         *     PDF, by content, ≤ 10 MB; optional `folder_id`, `alt_text`, `alt_text_bn`, `caption`.
+         *     Needs media.manage.
+         */
+        StoreMediaRequest: {
+            /** Format: binary */
+            file: string;
+            folder_id?: number | null;
+            alt_text?: string | null;
+            alt_text_bn?: string | null;
+            caption?: string | null;
+        };
+        /**
          * StoreOrderNoteRequest
          * @description `POST /orders/{order}/notes` — needs orders.update. Notes are append-only.
          */
@@ -2578,13 +2986,17 @@ export interface components {
          *     or AVIF by content, ≤ 10 MB, ≤ 8000 px per side), optional `alt_text`,
          *     `alt_text_bn`, `variant_id`, and an optional `crop[x|y|width|height]` rectangle
          *     in the source image's (EXIF-oriented) pixels. Needs catalog.update.
+         *
+         *     Or, instead of `file`, a `media_id` (JSON or multipart): attach an existing library
+         *     image (docs/api/media-library.md). `crop` is not allowed with it.
          */
         StoreProductImageRequest: {
             /**
              * Format: binary
-             * @description Maximum file size: 10240 kilobytes.
+             * @description Either a new file or an existing library image (docs/api/media-library.md).
              */
-            file: string;
+            file?: string;
+            media_id?: number | null;
             alt_text?: string | null;
             alt_text_bn?: string | null;
             variant_id?: number | null;
@@ -2886,7 +3298,15 @@ export interface components {
             }[];
             short_description: string | null;
             short_description_bn: string | null;
+            /**
+             * @description Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             *     a[href] and img[src, alt, width, height] from our own media only.
+             */
             description: string | null;
+            /**
+             * @description Sanitised rich-text HTML: p, h2, h3, strong, em, ul, ol, li, blockquote, br,
+             *     a[href] and img[src, alt, width, height] from our own media only.
+             */
             description_bn: string | null;
             /**
              * @description Free-form key/value pairs from the product's specifications, in their stored
@@ -3111,6 +3531,17 @@ export interface components {
             };
             first_order_only?: boolean;
             is_active?: boolean;
+        };
+        /**
+         * UpdateMediaRequest
+         * @description `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500),
+         *     `folder_id` (a folder id or null). Only the keys present change. Needs media.manage.
+         */
+        UpdateMediaRequest: {
+            alt_text?: string | null;
+            alt_text_bn?: string | null;
+            caption?: string | null;
+            folder_id?: number | null;
         };
         /**
          * UpdateProductImageRequest
@@ -4020,7 +4451,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "multipart/form-data": components["schemas"]["StoreProductImageRequest"];
             };
@@ -4038,7 +4469,7 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
-            /** @description Not a JPEG/PNG/WebP/AVIF by content, over 10 MB or 8000 px, an embedded payload, or undecodable (`validation-error` on `file`) */
+            /** @description Not a JPEG/PNG/WebP/AVIF by content, over 10 MB or 8000 px, an embedded payload, or undecodable (`validation-error` on `file`); with `media_id`: not an image, already in the gallery, or the gallery is full (`validation-error` on `media_id`) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4172,6 +4603,577 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.index": {
+        parameters: {
+            query?: {
+                /** @description A folder id, or `none` for files in no folder. */
+                "filter[folder]"?: string;
+                /** @description `1`: only files used nowhere (the Unused view). */
+                "filter[unused]"?: string;
+                /** @description image|document */
+                "filter[kind]"?: "image" | "document";
+                /** @description bn|en — images missing that language's alt text. */
+                "filter[missing_alt]"?: "bn" | "en";
+                /** @description Filename, alt text (EN or BN), or the name of a product using the file. */
+                "filter[search]"?: string;
+                /** @description newest (default) · oldest · name (filename A→Z) · size (largest first). */
+                sort?: "newest" | "oldest" | "name" | "size";
+                /** @description 1–100, default 30. */
+                per_page?: number;
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Media` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Media"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            total: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.media.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["StoreMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description `Media` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Media"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not a JPEG/PNG/WebP/AVIF/PDF by content, over 10 MB or 8000 px, an embedded payload, a PDF with active content, or undecodable (`validation-error` on `file`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.media.counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            all: number;
+                            unused: number;
+                            unfiled: number;
+                            folders: {
+                                id: number;
+                                count: number;
+                            }[];
+                            kinds: {
+                                image: number;
+                                document: number;
+                            };
+                            missing_alt: {
+                                bn: number;
+                                en: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.media.storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            used_bytes: number;
+                            originals_bytes: number;
+                            renditions_bytes: number;
+                            quota_bytes: number | null;
+                            file_count: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.media.folders.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `MediaFolder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MediaFolder"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.media.folders.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description `MediaFolder` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaFolder"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.folders.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The folder ID */
+                folder: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A system folder (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.media.folders.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The folder ID */
+                folder: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description `MediaFolder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaFolder"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A system folder (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.bulk.move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkMoveMediaRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            moved: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.bulk.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkMediaRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            deleted: number;
+                            skipped: number;
+                            results: {
+                                id: number;
+                                /** @enum {string} */
+                                status: "deleted" | "in_use" | "not_found";
+                                used_in_count: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.bulk.download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description The zip (`application/zip`, attachment) */
+            200: {
+                headers: {
+                    /** @example attachment; filename=.zip */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                    "application/json": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Over the file-count or size cap, or an unknown id (`validation-error` on `ids`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.media.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The media ID */
+                media: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `MediaDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.media.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The media ID */
+                media: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The file is in use (`media-in-use`, with a `usages` list) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.media.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The media ID */
+                media: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description `MediaDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.media.replace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The media ID */
+                media: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ReplaceMediaRequest"];
+            };
+        };
+        responses: {
+            /** @description `MediaDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Refused file, or not the same kind as the media (`validation-error` on `file`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.media.download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The media ID */
+                media: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    "Transfer-Encoding": "chunked";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The file is missing on disk (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.categories.index": {
@@ -4727,8 +5729,8 @@ export interface operations {
             query?: {
                 /** @description Stock location; the default location when omitted. */
                 "filter[location_id]"?: number;
-                /** @description `low` (0 < available ≤ reorder point), `out` (available ≤ 0) or `idle` (stock, but no movement for 90 days). */
-                "filter[state]"?: "low" | "out" | "idle";
+                /** @description `low` (0 < available ≤ reorder point), `out` (available ≤ 0), `overstock` (reorder quantity set and available > reorder point + 2 × reorder quantity) or `idle` (stock, but no movement for 90 days). */
+                "filter[state]"?: "low" | "out" | "overstock" | "idle";
                 /** @description Contains-match on product name, name_bn, SKU or barcode. */
                 "filter[search]"?: string;
                 /** @description Only this product's variants. */
@@ -4778,6 +5780,28 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.low-stock-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InventoryLowStockCount` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryLowStockCount"];
                 };
             };
             401: components["responses"]["AuthenticationException"];

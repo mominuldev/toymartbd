@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ClockCounterClockwiseIcon, ListChecksIcon, SlidersHorizontalIcon } from '@phosphor-icons/react';
+import { ArrowsLeftRightIcon, ListChecksIcon, SlidersHorizontalIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
@@ -9,35 +9,32 @@ import { ContentHeader } from '@/components/shell/ContentHeader';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
-import { SearchField } from '@/components/ui/SearchField';
 import { TabButton } from '@/components/ui/Tabs';
 import { stockStates, useInventorySummary, useStock, type AdjustmentReason, type StockRow, type StockState } from './api';
 import { AdjustmentDialog } from './AdjustmentDialog';
-import { AvailableCell, LocationCards, StatCard, TAKA, Taka, VariantCell, formatMoney, formatUnits } from './parts';
+import { AvailableCell, LocationCards, PendingButton, StatCard, TAKA, Taka, VariantCell, formatMoney, formatUnits } from './parts';
 
 const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockState }[] = [
     { value: '', label: 'inventory.tab.all', count: 'all' },
     { value: 'low', label: 'inventory.tab.low', count: 'low' },
     { value: 'out', label: 'inventory.tab.out', count: 'out' },
+    { value: 'overstock', label: 'inventory.tab.overstock', count: 'overstock' },
     { value: 'idle', label: 'inventory.tab.idle', count: 'idle' },
 ];
 
-function useDebounced<T>(value: T, ms = 250): T {
-    const [debounced, setDebounced] = useState(value);
-    useEffect(() => {
-        const id = window.setTimeout(() => setDebounced(value), ms);
-        return () => window.clearTimeout(id);
-    }, [value, ms]);
-    return debounced;
-}
-
-type Dialog = { row: StockRow | null; reason: AdjustmentReason } | null;
+type Dialog = { reason: AdjustmentReason } | null;
 
 /**
- * Inventory overview (Figma "Inventory (multi-branch)" 213:6955, Theme B colours): ContentHeader,
- * four StatCards 189:360, location cards, state AdminTabs 185:125 with counts, and the
- * DataTable 192:532 of variants. Every figure is the server's; the location, tab and search
- * live in the URL (`?location=1&state=low&q=lego`).
+ * Inventory overview (Figma "B · 14 Inventory" 241:39494): ContentHeader with Transfer stock ·
+ * Stock count · New adjustment, four StatCards 189:360, one location card per stock location,
+ * state AdminTabs 185:125 with server counts, and the DataTable 192:532 of variants with
+ * contextual row actions. Every figure is the server's; the location and tab live in the URL
+ * (`?location=2&state=low`). Selecting a location scopes the stat cards, tabs and table.
+ *
+ * Not built yet, so shown disabled with the reason (never a fake action): stock transfers
+ * (Transfer stock, Transfer N) and purchase orders (Create PO). Adjusting stock — the one
+ * working stock change — is the header's New adjustment / Stock count, which search for the
+ * variant. Each healthy row's Ledger opens the movements ledger for that variant.
  */
 export function InventoryPage() {
     const { t, locale } = useI18n();
@@ -46,10 +43,8 @@ export function InventoryPage() {
     const location = /^\d+$/.test(params.get('location') ?? '') ? params.get('location')! : '';
     const stateParam = params.get('state');
     const state: StockState | '' = stockStates.includes(stateParam as StockState) ? (stateParam as StockState) : '';
-    const [search, setSearch] = useState(params.get('q') ?? '');
-    const debounced = useDebounced(search.trim());
     const summary = useInventorySummary(location);
-    const stock = useStock({ location, state, search: debounced });
+    const stock = useStock({ location, state, search: '' });
     const rows = useMemo(() => stock.data?.pages.flatMap((page) => page.data) ?? [], [stock.data]);
     const [dialog, setDialog] = useState<Dialog>(null);
 
@@ -72,24 +67,21 @@ export function InventoryPage() {
             { replace: true },
         );
 
-    useEffect(() => {
-        if (debounced !== (params.get('q') ?? '')) setParam('q', debounced);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debounced]);
-
     const actions = (
         <>
-            <Link to="/inventory/movements" className={buttonClass('outline')}>
-                <ClockCounterClockwiseIcon size={16} aria-hidden />
-                {t('inventory.movementsAction')}
-            </Link>
+            {multi && (
+                <PendingButton reason={t('inventory.transferSoon')}>
+                    <ArrowsLeftRightIcon size={16} aria-hidden />
+                    {t('inventory.transferStock')}
+                </PendingButton>
+            )}
             {canAdjust && (
                 <>
-                    <Button variant="outline" onClick={() => setDialog({ row: null, reason: 'recount' })}>
+                    <Button variant="outline" onClick={() => setDialog({ reason: 'recount' })}>
                         <ListChecksIcon size={16} aria-hidden />
                         {t('inventory.stockCount')}
                     </Button>
-                    <Button onClick={() => setDialog({ row: null, reason: 'damage' })}>
+                    <Button onClick={() => setDialog({ reason: 'damage' })}>
                         <SlidersHorizontalIcon size={16} aria-hidden />
                         {t('inventory.newAdjustment')}
                     </Button>
@@ -98,7 +90,7 @@ export function InventoryPage() {
         </>
     );
 
-    const filtered = Boolean(state || debounced);
+    const filtered = Boolean(state);
     const cell = `${dataTable.td.replace("h-15", "h-14")} max-lg:h-auto max-lg:p-0`;
     const num = `${cell} t-admin-num tabular lg:text-end`;
 
@@ -154,19 +146,11 @@ export function InventoryPage() {
                 )
             )}
 
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-3 border-b border-line-default">
-                <div role="group" aria-label={t('inventory.tabs')} className="scrollbar-none -mb-px flex flex-1 gap-0.5 overflow-x-auto">
-                    {tabs.map((tab) => (
-                        <TabButton key={tab.count} active={state === tab.value} label={t(tab.label)} count={data?.counts[tab.count]} onClick={() => setParam('state', tab.value)} />
-                    ))}
-                </div>
-                <SearchField
-                    label={t('inventory.searchLabel')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={t('inventory.searchPlaceholder')}
-                    className="mb-2 w-full lg:w-72"
-                />
+            {/* B · 14 "tabs" 241:39551: the tab row alone on its baseline (no search field in the frame). */}
+            <div role="group" aria-label={t('inventory.tabs')} className="scrollbar-none flex overflow-x-auto border-b border-line-default">
+                {tabs.map((tab) => (
+                    <TabButton key={tab.count} active={state === tab.value} label={t(tab.label)} count={data?.counts[tab.count]} onClick={() => setParam('state', tab.value)} />
+                ))}
             </div>
 
             {stock.isError ? (
@@ -234,8 +218,9 @@ export function InventoryPage() {
                                         {formatUnits(row.reorder_point)}
                                     </td>
                                     {multi && (
-                                        <td className={`${cell} t-admin-body-strong text-fg-secondary`}>
-                                            {row.elsewhere.map((e) => `${e.code.toUpperCase()} ${formatUnits(e.on_hand)}`).join(' · ') || '—'}
+                                        <td className={`${cell} t-admin-body-strong whitespace-nowrap text-fg-secondary`}>
+                                            <Label text={t('inventory.col.elsewhere')} />
+                                            {row.elsewhere.map((e) => `${e.code.toUpperCase()} ${formatUnits(e.available)}`).join(' · ') || '—'}
                                         </td>
                                     )}
                                     {viewCost && (
@@ -245,28 +230,20 @@ export function InventoryPage() {
                                         </td>
                                     )}
                                     <td className={`${cell} max-lg:basis-full`}>
-                                        <div className="flex items-center gap-2.5">
-                                            {canAdjust && (
-                                                <Button variant="outline" size="sm" onClick={() => setDialog({ row, reason: row.state === 'out' ? 'found' : 'damage' })}>
-                                                    {t('inventory.adjust')}
-                                                </Button>
-                                            )}
-                                            <Link to={`/inventory/movements?variant=${row.variant_id}&sku=${encodeURIComponent(row.sku)}`} className={buttonClass('ghost', 'sm')}>
-                                                {t('inventory.ledger')}
-                                            </Link>
-                                        </div>
+                                        <RowActions row={row} location={location} />
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    <DataTableFooter summary={t('inventory.count', { count: rows.length })}>
-                        {stock.hasNextPage && (
+                    {/* The Figma table ends at its last row; the footer appears only when there is more to load. */}
+                    {stock.hasNextPage && (
+                        <DataTableFooter summary={t('inventory.count', { count: rows.length })}>
                             <Button variant="outline" size="sm" onClick={() => void stock.fetchNextPage()} disabled={stock.isFetchingNextPage}>
                                 {stock.isFetchingNextPage ? t('common.loading') : t('common.loadMore')}
                             </Button>
-                        )}
-                    </DataTableFooter>
+                        </DataTableFooter>
+                    )}
                 </div>
             )}
 
@@ -274,13 +251,43 @@ export function InventoryPage() {
                 <AdjustmentDialog
                     open={dialog !== null}
                     onClose={() => setDialog(null)}
-                    row={dialog?.row ?? null}
+                    row={null}
                     initialReason={dialog?.reason ?? 'damage'}
                     locations={locations}
                     locationId={data.location_id}
                 />
             )}
         </section>
+    );
+}
+
+/**
+ * Contextual row actions (B · 14 rows 241:39599 / 241:39681): a short row (low or out) offers
+ * Create PO and, when another branch has units available, Transfer N — both disabled until
+ * purchase orders and transfers exist; every other row offers its Ledger.
+ */
+function RowActions({ row, location }: { row: StockRow; location: string }) {
+    const { t } = useI18n();
+    if (row.state === 'low' || row.state === 'out') {
+        const from = row.transfer_from;
+        return (
+            <div className="flex items-center gap-2.5">
+                <PendingButton size="sm" reason={t('inventory.createPoSoon')}>
+                    {t('inventory.createPo')}
+                </PendingButton>
+                {from && (
+                    <PendingButton variant="ghost" size="sm" reason={t('inventory.transferFromSoon', { count: formatUnits(from.available), code: from.code.toUpperCase() })}>
+                        {t('inventory.transferN', { count: formatUnits(from.available) })}
+                    </PendingButton>
+                )}
+            </div>
+        );
+    }
+    const ledger = `/inventory/movements?variant=${row.variant_id}&sku=${encodeURIComponent(row.sku)}${location ? `&location=${location}` : ''}`;
+    return (
+        <Link to={ledger} className={buttonClass('ghost', 'sm')}>
+            {t('inventory.ledger')}
+        </Link>
     );
 }
 

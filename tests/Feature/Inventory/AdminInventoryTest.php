@@ -72,7 +72,7 @@ it('lists one row per sellable variant with on hand, reserved, available, state 
         ->and($rows[$this->puzzle->id])->toMatchArray([
             'product_name' => 'Wooden Alphabet Puzzle',
             'on_hand' => 8, 'reserved' => 2, 'available' => 6, 'reorder_point' => 12,
-            'state' => 'low', 'unit_cost' => '310.0000', 'value' => '2480.00', 'elsewhere' => [],
+            'reorder_quantity' => 0, 'state' => 'low', 'unit_cost' => '310.0000', 'value' => '2480.00', 'elsewhere' => [], 'transfer_from' => null,
         ])
         ->and($rows[$this->doll->id]['state'])->toBeNull()
         ->and($rows[$this->empty->id])->toMatchArray(['on_hand' => 0, 'available' => 0, 'state' => 'out']);
@@ -121,23 +121,71 @@ it('cursor-paginates the stock list', function (): void {
         ->and(array_intersect(array_column($first->json('data'), 'variant_id'), array_column($second->json('data'), 'variant_id')))->toBe([]);
 });
 
-it('shows stock held at other locations', function (): void {
-    $ctg = StockLocation::query()->create(['code' => 'ctg', 'name' => 'Chattogram · Agrabad', 'is_active' => true]);
+it('shows stock held at other locations, every other branch named, zeros included', function (): void {
+    $ctg = StockLocation::query()->create(['code' => 'ctg', 'name' => 'Chattogram · Agrabad', 'description' => 'Retail branch · POS + pickup', 'is_active' => true]);
+    $syl = StockLocation::query()->create(['code' => 'syl', 'name' => 'Sylhet pickup point', 'is_active' => true]);
     invStock($this->puzzle->id, 4, locationId: $ctg->id);
 
-    $row = collect($this->getJson(INV_API.'/stock')->json('data'))->firstWhere('variant_id', $this->puzzle->id);
+    $rows = collect($this->getJson(INV_API.'/stock')->json('data'))->keyBy('variant_id');
     $summary = $this->getJson(INV_API.'/summary')->assertOk();
 
-    expect($row['elsewhere'])->toBe([['location_id' => $ctg->id, 'code' => 'ctg', 'on_hand' => 4]])
-        ->and($summary->json('locations'))->toHaveCount(2)
-        ->and($summary->json('locations.1'))->toMatchArray(['code' => 'ctg', 'on_hand' => 4, 'value' => '1240.00'])
+    expect($rows[$this->puzzle->id]['elsewhere'])->toBe([
+        ['location_id' => $ctg->id, 'code' => 'ctg', 'on_hand' => 4, 'available' => 4],
+        ['location_id' => $syl->id, 'code' => 'syl', 'on_hand' => 0, 'available' => 0],
+    ])
+        // Low here, 4 available in Chattogram: that is where a transfer would come from.
+        ->and($rows[$this->puzzle->id]['transfer_from'])->toBe(['location_id' => $ctg->id, 'code' => 'ctg', 'available' => 4])
+        // Out here and nowhere else either: nothing to transfer.
+        ->and($rows[$this->empty->id]['transfer_from'])->toBeNull()
+        // Healthy rows never suggest a transfer.
+        ->and($rows[$this->doll->id]['transfer_from'])->toBeNull()
+        ->and($summary->json('locations'))->toHaveCount(3)
+        ->and($summary->json('locations.1'))->toMatchArray(['code' => 'ctg', 'description' => 'Retail branch · POS + pickup', 'on_hand' => 4, 'value' => '1240.00'])
         ->and($summary->json('total_value'))->toBe('11120.00');
+
+    // Seen from Chattogram, Dhaka is the other branch (default first).
+    $fromCtg = collect($this->getJson(INV_API.'/stock?filter[location_id]='.$ctg->id)->json('data'))->firstWhere('variant_id', $this->puzzle->id);
+    expect(array_column($fromCtg['elsewhere'], 'code'))->toBe(['main', 'syl'])
+        ->and($fromCtg['elsewhere'][0])->toMatchArray(['on_hand' => 8, 'available' => 6]);
+});
+
+it('lists overstock: reorder quantity set and available above the point plus two reorders', function (): void {
+    // Doll: 5 on hand. Point 1 + 2 × 2 = 5 → not over; point 1 + 2 × 1 = 3 → over.
+    app(App\Domain\Inventory\Actions\SetReorderLevels::class)->handle(StockLocation::defaultId(), [$this->doll->id => ['point' => 1, 'quantity' => 2]]);
+    $ids = fn () => collect($this->getJson(INV_API.'/stock?filter[state]=overstock')->assertOk()->json('data'))->pluck('variant_id')->all();
+    expect($ids())->toBe([])
+        ->and($this->getJson(INV_API.'/summary')->json('counts.overstock'))->toBe(0);
+
+    app(App\Domain\Inventory\Actions\SetReorderLevels::class)->handle(StockLocation::defaultId(), [$this->doll->id => ['point' => 1, 'quantity' => 1]]);
+    $row = collect($this->getJson(INV_API.'/stock')->json('data'))->firstWhere('variant_id', $this->doll->id);
+
+    expect($ids())->toBe([$this->doll->id])
+        ->and($row)->toMatchArray(['reorder_point' => 1, 'reorder_quantity' => 1, 'state' => 'overstock'])
+        ->and($this->getJson(INV_API.'/summary')->json('counts.overstock'))->toBe(1);
+});
+
+it('never calls a level without a reorder quantity overstock', function (): void {
+    invStock($this->doll->id, 500, StockMovementType::AdjustmentIn);
+
+    expect($this->getJson(INV_API.'/stock?filter[state]=overstock')->json('data'))->toBe([]);
+});
+
+it('counts low stock at the default location for the nav badge, and refreshes after a stock change', function (): void {
+    $this->getJson(INV_API.'/low-stock-count')->assertOk()->assertExactJson(['location_id' => StockLocation::defaultId(), 'count' => 1]);
+
+    // The doll (5 on hand) becomes low once its reorder point is 5; the cached count follows.
+    app(App\Domain\Inventory\Actions\SetReorderLevels::class)->handle(StockLocation::defaultId(), [$this->doll->id => ['point' => 5, 'quantity' => 10]]);
+    $this->getJson(INV_API.'/low-stock-count')->assertOk()->assertJsonPath('count', 2);
+
+    // Found stock takes the puzzle above its point: the stock change drops the cached count.
+    invAdjust(['reason' => 'found', 'lines' => [['variant_id' => $this->puzzle->id, 'quantity' => 20]]])->assertCreated();
+    $this->getJson(INV_API.'/low-stock-count')->assertOk()->assertJsonPath('count', 1);
 });
 
 it('summarises one location: counts per tab, units, reserved, value at cost', function (): void {
     $this->getJson(INV_API.'/summary')->assertOk()->assertJson([
         'location_id' => StockLocation::defaultId(),
-        'counts' => ['all' => 3, 'low' => 1, 'out' => 1, 'idle' => 0],
+        'counts' => ['all' => 3, 'low' => 1, 'out' => 1, 'overstock' => 0, 'idle' => 0],
         'on_hand' => 13,
         'reserved' => 2,
         // 8 × 310 + 5 × 1480
@@ -166,7 +214,7 @@ it('refuses unlisted filters, a sort, and bad values with 400', function (string
 })->with([
     INV_API.'/stock?filter[colour]=red',
     INV_API.'/stock?sort=name',
-    INV_API.'/stock?filter[state]=overstock',
+    INV_API.'/stock?filter[state]=overflowing',
     INV_API.'/stock?filter[location_id]=999',
     INV_API.'/summary?filter[search]=x',
     INV_API.'/movements?filter[type]=sale_out,teleport',

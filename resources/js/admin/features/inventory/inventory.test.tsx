@@ -2,7 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, describe, expect, it } from 'vitest';
 import { renderApp } from '@/test/renderApp';
 import { formatMoney, signed } from './parts';
-import { inventoryApi, inventoryStaff, operator, sentBody } from './fixtures';
+import { branchRows, branchSummary, inventoryApi, inventoryStaff, operator, sentBody } from './fixtures';
 
 afterEach(() => {
     cleanup();
@@ -30,9 +30,15 @@ describe('inventory overview', () => {
         expect(screen.getAllByText((_, el) => el?.tagName === 'SPAN' && el.textContent === '৳28,980').length).toBeGreaterThan(0);
         expect(screen.getByRole('button', { name: /Dhaka HQ · Mirpur/ }).getAttribute('aria-pressed')).toBe('true');
         expect(screen.getByRole('button', { name: /^Low stock\s*1$/ })).toBeTruthy();
+        expect(screen.getByRole('button', { name: /^Overstock\s*0$/ })).toBeTruthy();
+        expect(screen.getByText('At Dhaka HQ · Mirpur · stock changes only through movements (sale, purchase, adjustment, transfer)')).toBeTruthy();
+        // One location: no Other branches column, no Transfer stock; no search field (not in the Figma frame).
+        expect(within(table).queryByRole('columnheader', { name: 'Other branches' })).toBeNull();
+        expect(screen.queryByRole('button', { name: /Transfer stock/ })).toBeNull();
+        expect(screen.queryByRole('searchbox', { name: 'Search stock' })).toBeNull();
     });
 
-    it('filters by tab and search on the server, with both in the URL', async () => {
+    it('filters by tab on the server, with the tab in the URL', async () => {
         const calls = inventoryApi(inventoryStaff);
         renderApp('/inventory');
         await screen.findByRole('table');
@@ -40,8 +46,57 @@ describe('inventory overview', () => {
         fireEvent.click(screen.getByRole('button', { name: /^Low stock\s*1$/ }));
         await waitFor(() => expect(urls(calls).some((u) => u.includes('filter%5Bstate%5D=low'))).toBe(true));
 
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Search stock' }), { target: { value: 'puzzle' } });
-        await waitFor(() => expect(urls(calls).some((u) => u.includes('filter%5Bsearch%5D=puzzle'))).toBe(true));
+        fireEvent.click(screen.getByRole('button', { name: /^Overstock\s*0$/ }));
+        await waitFor(() => expect(urls(calls).some((u) => u.includes('filter%5Bstate%5D=overstock'))).toBe(true));
+    });
+
+    it('shows contextual row actions: short rows get Create PO (disabled, with the reason), healthy rows their Ledger', async () => {
+        inventoryApi(inventoryStaff);
+        renderApp('/inventory');
+        const table = await screen.findByRole('table');
+
+        const create = within(table).getByRole('button', { name: 'Create PO' }) as HTMLButtonElement;
+        expect(create.disabled).toBe(true);
+        expect(create.getAttribute('aria-describedby')).toBeTruthy();
+        expect(document.getElementById(create.getAttribute('aria-describedby')!)?.textContent).toBe('Purchase orders are coming soon.');
+        // No other branch holds stock: no Transfer N.
+        expect(within(table).queryByRole('button', { name: /^Transfer/ })).toBeNull();
+        expect(within(table).getAllByRole('link', { name: 'Ledger' })).toHaveLength(1);
+        expect(within(table).queryByRole('button', { name: 'Adjust' })).toBeNull();
+    });
+
+    it('lays out one card per branch; selecting one scopes the page through the URL', async () => {
+        const calls = inventoryApi(inventoryStaff, (url) => {
+            if (url.includes('/inventory/summary')) return { status: 200, body: branchSummary };
+            if (url.includes('/inventory/stock')) return { status: 200, body: { data: branchRows, links: { next: null }, meta: { next_cursor: null } } };
+            return undefined;
+        });
+        renderApp('/inventory');
+        const table = await screen.findByRole('table');
+
+        expect(screen.getByText('Across 3 branches · stock changes only through movements (sale, purchase, adjustment, transfer)')).toBeTruthy();
+        expect(screen.getByRole('button', { name: /Chattogram · Agrabad\s*Retail branch · POS \+ pickup\s*74 units/ })).toBeTruthy();
+        expect(screen.getByRole('button', { name: /Sylhet pickup point/ }).getAttribute('aria-pressed')).toBe('false');
+        expect(within(table).getByRole('columnheader', { name: 'Other branches' })).toBeTruthy();
+        // Available elsewhere, server figures: CTG holds 1 but it is all reserved.
+        expect(within(table).getByText('CTG 4 · SYL 0')).toBeTruthy();
+        expect(within(table).getByText('CTG 0 · SYL 0')).toBeTruthy();
+        const transfer = within(table).getByRole('button', { name: 'Transfer 4' }) as HTMLButtonElement;
+        expect(transfer.disabled).toBe(true);
+        expect((screen.getByRole('button', { name: /Transfer stock/ }) as HTMLButtonElement).disabled).toBe(true);
+
+        fireEvent.click(screen.getByRole('button', { name: /Chattogram · Agrabad/ }));
+        await waitFor(() => expect(urls(calls).some((u) => u.includes('/inventory/summary?filter%5Blocation_id%5D=2'))).toBe(true));
+        await waitFor(() => expect(urls(calls).some((u) => u.includes('/inventory/stock?filter%5Blocation_id%5D=2'))).toBe(true));
+    });
+
+    it('shows the server’s low-stock count on the Inventory nav item', async () => {
+        inventoryApi(inventoryStaff);
+        renderApp('/inventory');
+        await screen.findByRole('table');
+
+        const nav = screen.getAllByRole('navigation', { name: 'Main navigation' })[0]!;
+        await waitFor(() => expect(within(nav).getByRole('link', { name: /Inventory.*1 low on stock/ })).toBeTruthy());
     });
 
     it('hides cost, value and adjusting from an order operator', async () => {
@@ -53,8 +108,8 @@ describe('inventory overview', () => {
         expect(screen.getByText('Units on hand')).toBeTruthy();
         expect(within(table).queryByText('Avg cost')).toBeNull();
         expect(screen.queryByRole('button', { name: 'New adjustment' })).toBeNull();
-        expect(within(table).queryByRole('button', { name: 'Adjust' })).toBeNull();
-        expect(within(table).getAllByRole('link', { name: 'Ledger' })).toHaveLength(2);
+        expect(screen.queryByRole('button', { name: 'Stock count' })).toBeNull();
+        expect(within(table).getAllByRole('link', { name: 'Ledger' })).toHaveLength(1);
     });
 
     it('renders in Bangla with Western digits', async () => {
@@ -67,14 +122,21 @@ describe('inventory overview', () => {
     });
 });
 
+/** New adjustment (or Stock count) → search → pick the puzzle, as staff do it. */
+async function openAdjustment(button = 'New adjustment') {
+    await screen.findByRole('table');
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByRole('searchbox', { name: /Search by name or SKU/ }), { target: { value: 'puzzle' } });
+    fireEvent.click(await within(dialog).findByRole('button', { name: /Wooden Alphabet Puzzle/ }));
+    return dialog;
+}
+
 describe('stock adjustment', () => {
     it('records a damage of 2 as a −2 change with an Idempotency-Key', async () => {
         const calls = inventoryApi(inventoryStaff);
         renderApp('/inventory');
-        const table = await screen.findByRole('table');
-
-        fireEvent.click(within(table).getAllByRole('button', { name: 'Adjust' })[0]!);
-        const dialog = await screen.findByRole('dialog');
+        const dialog = await openAdjustment();
         expect(within(dialog).getByText('On hand 8 · reserved 2 · available 6')).toBeTruthy();
 
         fireEvent.change(within(dialog).getByLabelText(/Change in units/), { target: { value: '2' } });
@@ -91,10 +153,7 @@ describe('stock adjustment', () => {
     it('sends a stock count as `counted`, worked out by the server', async () => {
         const calls = inventoryApi(inventoryStaff);
         renderApp('/inventory');
-        const table = await screen.findByRole('table');
-
-        fireEvent.click(within(table).getAllByRole('button', { name: 'Adjust' })[0]!);
-        const dialog = await screen.findByRole('dialog');
+        const dialog = await openAdjustment();
         fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'recount' } });
         fireEvent.change(within(dialog).getByLabelText(/Counted on hand/), { target: { value: '5' } });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Record adjustment' }));
@@ -105,10 +164,7 @@ describe('stock adjustment', () => {
     it('validates with the generated schema before calling the API', async () => {
         const calls = inventoryApi(inventoryStaff);
         renderApp('/inventory');
-        const table = await screen.findByRole('table');
-
-        fireEvent.click(within(table).getAllByRole('button', { name: 'Adjust' })[0]!);
-        const dialog = await screen.findByRole('dialog');
+        const dialog = await openAdjustment();
         fireEvent.click(within(dialog).getByRole('button', { name: 'Record adjustment' }));
 
         expect(await within(dialog).findByText('This field is required.')).toBeTruthy();
@@ -122,10 +178,7 @@ describe('stock adjustment', () => {
                 : undefined,
         );
         renderApp('/inventory');
-        const table = await screen.findByRole('table');
-
-        fireEvent.click(within(table).getAllByRole('button', { name: 'Adjust' })[0]!);
-        const dialog = await screen.findByRole('dialog');
+        const dialog = await openAdjustment();
         fireEvent.change(within(dialog).getByLabelText(/Change in units/), { target: { value: '7' } });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Record adjustment' }));
 

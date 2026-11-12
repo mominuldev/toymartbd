@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Jobs;
 
+use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Services\MediaUrls;
 use Illuminate\Bus\Queueable;
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Remove a media base directory (master + renditions) after the row that pointed at
- * it is gone. Queued after commit (rule 4). Skips a base another product image still
- * references — a duplicated product shares its source's files.
+ * it is gone. Queued after commit (rule 4). Skips a base another product image or a
+ * media row still references — a duplicated product shares its source's files.
  */
 final class DeleteMediaFiles implements ShouldQueue
 {
@@ -38,7 +39,10 @@ final class DeleteMediaFiles implements ShouldQueue
             return;
         }
 
-        if (ProductImage::query()->where('path', $this->base)->exists()) {
+        // Still referenced: a product image row (an unlinked duplicate shares its source's
+        // base) or a media row (the library's source of truth).
+        if (ProductImage::query()->whereNull('media_id')->where('path', $this->base)->exists()
+            || Media::query()->where('base_path', $this->base)->exists()) {
             return;
         }
 

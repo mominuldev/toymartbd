@@ -9,13 +9,16 @@
  * Digits stay Western in both locales (rule 36), so interpolated numbers never change.
  */
 import { inventoryBn, inventoryEn } from './messages.inventory';
-import { mediaBn, mediaEn } from './messages.media';
+import { mediaBn, mediaEn, mediaLibraryBn, mediaLibraryEn } from './messages.media';
+import { mediaPickerBn, mediaPickerEn } from './messages.mediaPicker';
 import { ordersBn, ordersEn } from './messages.orders';
 import { productsBn, productsEn } from './messages.products';
 
 export const en = {
     ...productsEn,
     ...mediaEn,
+    ...mediaLibraryEn,
+    ...mediaPickerEn,
     ...inventoryEn,
     ...ordersEn,
     'app.name': 'Toy Mart BD',
@@ -37,6 +40,7 @@ export const en = {
     'nav.customers': 'Customers',
     'nav.products': 'Products',
     'nav.inventory': 'Inventory',
+    'nav.inventoryBadge': '{count} low on stock',
     'nav.purchasing': 'Purchasing',
     'nav.shipments': 'Shipments',
     'nav.risk': 'Fraud & risk',
@@ -275,6 +279,8 @@ export type Messages = Record<MessageKey, string>;
 export const bn: Messages = {
     ...productsBn,
     ...mediaBn,
+    ...mediaLibraryBn,
+    ...mediaPickerBn,
     ...inventoryBn,
     ...ordersBn,
     'app.name': 'টয় মার্ট বিডি',
@@ -296,6 +302,7 @@ export const bn: Messages = {
     'nav.customers': 'গ্রাহক',
     'nav.products': 'পণ্য',
     'nav.inventory': 'ইনভেন্টরি',
+    'nav.inventoryBadge': '{count}টি কম স্টকে',
     'nav.purchasing': 'ক্রয়',
     'nav.shipments': 'শিপমেন্ট',
     'nav.risk': 'জালিয়াতি ও ঝুঁকি',
