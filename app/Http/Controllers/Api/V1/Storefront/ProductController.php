@@ -29,8 +29,8 @@ final class ProductController extends ApiController
      * `meta.total`.
      *
      * Lists are comma-separated. Unlisted parameters, filters or sorts and
-     * malformed values are a 400. Availability ("in stock") arrives with the
-     * inventory tables (P4-INV).
+     * malformed values are a 400. Each card carries `in_stock`; sold-out products
+     * stay listed unless `filter[availability]=in_stock`.
      */
     #[QueryParameter('filter[category]', 'Category slug; includes every active descendant category.', type: 'string')]
     #[QueryParameter('filter[brand]', 'Brand slugs, comma-separated (any of).', type: 'string', example: 'lego,hape')]
@@ -42,6 +42,7 @@ final class ProductController extends ApiController
     #[QueryParameter('filter[gender]', 'Comma-separated (any of): unisex, boys, girls. `unisex` also matches products with no gender.', type: 'string')]
     #[QueryParameter('filter[rating]', 'Minimum average rating, 1–5.', type: 'int')]
     #[QueryParameter('filter[educational]', 'Only educational (true) or only non-educational (false) products.', type: "'true'|'false'|'1'|'0'")]
+    #[QueryParameter('filter[availability]', 'Only products with an active variant in stock (available = on_hand − reserved > 0).', type: "'in_stock'")]
     #[QueryParameter('sort', 'Listing order.', type: "'featured'|'newest'|'price_asc'|'price_desc'|'rating'|'name'", default: 'featured')]
     #[QueryParameter('cursor', 'Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.', type: 'string')]
     #[OpenApiResponse(400, 'Unlisted parameter, filter or sort, or an invalid filter value (`bad-request`)')]

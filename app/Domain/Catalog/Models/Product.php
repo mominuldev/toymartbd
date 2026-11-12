@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Models;
 
+use App\Domain\Catalog\Contracts\ProductSearchDocuments;
 use App\Domain\Catalog\Enums\Gender;
 use App\Domain\Catalog\Enums\ProductStatus;
 use App\Domain\Catalog\Enums\ProductType;
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as BaseCollection;
+use Laravel\Scout\Searchable;
 
 /**
  * A product (DATABASE-DESIGN §3.1). Holds content and classification only — SKU,
@@ -72,6 +75,7 @@ final class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
+    use Searchable;
     use SoftDeletes;
 
     /** Generated slugs leave room for a "-NNN" suffix; "product:" + 92 = the 100-char tag limit. */
@@ -201,6 +205,46 @@ final class Product extends Model
         $query->where('status', ProductStatus::Active->value)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
+    }
+
+    // ----- Search (P4-CAT-14) — docs/api/search.md ------------------------------------
+
+    /**
+     * Scout's model observer is OFF for products: it would index synchronously on `saved`,
+     * inside the Action's transaction, before the variants are written — and an HTTP call
+     * inside a transaction breaks CLAUDE.md rule 4. Index writes come from domain events
+     * instead (App\Domain\Search\Jobs\SyncProductSearch on the `index` queue, after commit).
+     */
+    protected static function booted(): void
+    {
+        self::disableSearchSyncing();
+    }
+
+    public function searchableAs(): string
+    {
+        return config('scout.prefix').config('search.index', 'products');
+    }
+
+    public function shouldBeSearchable(): bool
+    {
+        return app(ProductSearchDocuments::class)->isSearchable($this);
+    }
+
+    /**
+     * @param  BaseCollection<int, self>  $models
+     * @return BaseCollection<int, self>
+     */
+    public function makeSearchableUsing(BaseCollection $models): BaseCollection
+    {
+        app(ProductSearchDocuments::class)->prepare($models);
+
+        return $models;
+    }
+
+    /** @return array<string, mixed> */
+    public function toSearchableArray(): array
+    {
+        return app(ProductSearchDocuments::class)->build($this);
     }
 
     protected static function newFactory(): ProductFactory

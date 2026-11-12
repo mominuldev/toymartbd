@@ -1,0 +1,79 @@
+/* Product page (P4-STO-05). Everything here works without JavaScript; the client islands only
+   add the zoom lens, the sticky bar's show/hide and in-place tab switching. */
+
+/* Gallery track: no visible scrollbar (paging is by swipe, dots, thumbs or the keyboard). */
+.pdp-track {
+    scrollbar-width: none;
+}
+.pdp-track::-webkit-scrollbar {
+    display: none;
+}
+
+/* Desktop tabs (ProductInfoPanel, Figma 157:2626). Without JavaScript the tab links are fragment
+   links: the targeted panel shows and its tab looks active; with no target, the first panel shows.
+   Once the TabsEnhancer marks the root data-enhanced, `data-active` drives both instead. */
+.pdp-tabs:not([data-enhanced]) .pdp-panel:not(:target) {
+    display: none;
+}
+.pdp-tabs:not([data-enhanced]):not(:has(.pdp-panel:target)) .pdp-panel[data-first] {
+    display: flex;
+}
+.pdp-tabs[data-enhanced] .pdp-panel:not([data-active]) {
+    display: none;
+}
+
+.pdp-tabs:not([data-enhanced]):not(:has(.pdp-panel:target)) .pdp-tab:first-child,
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-description:target) .pdp-tab[href='#pdp-tab-description'],
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-specifications:target) .pdp-tab[href='#pdp-tab-specifications'],
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-age:target) .pdp-tab[href='#pdp-tab-age'],
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-delivery:target) .pdp-tab[href='#pdp-tab-delivery'],
+.pdp-tabs[data-enhanced] .pdp-tab[aria-selected='true'] {
+    font-family: var(--tm-font-display-latin);
+    font-weight: 700;
+    color: var(--tm-color-text-primary);
+}
+.pdp-tabs:not([data-enhanced]):not(:has(.pdp-panel:target)) .pdp-tab:first-child > .pdp-tab-bar,
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-description:target) .pdp-tab[href='#pdp-tab-description'] > .pdp-tab-bar,
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-specifications:target) .pdp-tab[href='#pdp-tab-specifications'] > .pdp-tab-bar,
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-age:target) .pdp-tab[href='#pdp-tab-age'] > .pdp-tab-bar,
+.pdp-tabs:not([data-enhanced]):has(#pdp-tab-delivery:target) .pdp-tab[href='#pdp-tab-delivery'] > .pdp-tab-bar,
+.pdp-tabs[data-enhanced] .pdp-tab[aria-selected='true'] > .pdp-tab-bar {
+    display: block;
+}
+:lang(bn) .pdp-tabs .pdp-tab {
+    font-family: var(--tm-font-bangla);
+}
+
+/* Mobile accordion (Accordion/Item Flush): native disclosure, own chevron. */
+.pdp-accordion > summary {
+    list-style: none;
+}
+.pdp-accordion > summary::-webkit-details-marker {
+    display: none;
+}
+.pdp-accordion[open] > summary .pdp-acc-title {
+    font-weight: 700;
+}
+.pdp-accordion[open] > summary .pdp-acc-chevron {
+    transform: rotate(180deg);
+}
+
+/* Sticky order bar (AddToCartBar, §A16): slides away while the inline CTA is on screen. */
+.pdp-bar {
+    transition: transform var(--tm-duration-base) var(--tm-ease-decelerate);
+}
+.pdp-bar[data-hidden] {
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+        transform var(--tm-duration-base) var(--tm-ease-decelerate),
+        visibility 0s linear var(--tm-duration-base);
+}
+
+/* Variant reason line: one reserved line in English, two in Bangla (§A10.4). */
+.pdp-reason {
+    min-height: 1.25rem;
+}
+:lang(bn) .pdp-reason {
+    min-height: 2.5rem;
+}

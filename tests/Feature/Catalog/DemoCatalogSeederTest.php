@@ -161,3 +161,26 @@ it('attaches a product\'s Figma photo through the upload pipeline, with ready re
     expect(DB::table('jobs')->count())->toBe(0);
     Event::assertDispatched(ProductChanged::class, fn (ProductChanged $e): bool => $e->productId === $product->id);
 })->group('slow');
+
+it('seeds opening stock through the ledger, with sold-out and low-stock demo states', function (): void {
+    $this->seed(DemoCatalogSeeder::class);
+    $this->seed(DemoCatalogSeeder::class); // idempotent: one opening balance per variant
+
+    $stock = fn (string $slug) => App\Domain\Inventory\Models\StockLevel::query()
+        ->join('product_variants', 'product_variants.id', '=', 'stock_levels.variant_id')
+        ->join('products', 'products.id', '=', 'product_variants.product_id')
+        ->where('products.slug', $slug)->orderBy('product_variants.position')->pluck('stock_levels.on_hand')->all();
+
+    expect(App\Domain\Inventory\Models\StockMovement::query()->count())->toBe(ProductVariant::query()->count() - 3) // zero-quantity variants record nothing
+        ->and(App\Domain\Inventory\Models\StockMovement::query()->where('type', '!=', 'opening_balance')->count())->toBe(0)
+        ->and($stock('clementoni-galileo-my-first-microscope'))->toBe([])
+        ->and($stock('barbie-dreamhouse-pool-party-doll'))->toBe([3])
+        ->and($stock('rubiks-cube-3x3-original'))->toBe([24])
+        ->and(app(App\Domain\Inventory\Services\StockAvailability::class)->inStockProductIds(Product::query()->pluck('id')->all()))
+        ->toHaveCount(15);
+
+    $lego = Product::query()->where('slug', 'lego-classic-creative-bricks-484')->sole();
+    $byName = $lego->variants->mapWithKeys(fn (ProductVariant $v) => [(string) $v->name => app(App\Domain\Inventory\Services\StockAvailability::class)->forVariants([$v->id])[$v->id]]);
+    expect($byName->filter(fn (int $q) => $q === 0)->count())->toBe(1)
+        ->and($byName->contains(9))->toBeTrue();
+});

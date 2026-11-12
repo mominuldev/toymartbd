@@ -111,6 +111,11 @@ abstract class ProductDocumentRequest extends ApiFormRequest
             'variants.*.wholesale_price' => $money,
             'variants.*.weight_grams' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'variants.*.status' => ['nullable', Rule::enum(VariantStatus::class)],
+            // Opening stock is set once, at creation (an `opening_balance` movement). After
+            // that, stock changes only through purchases, sales and adjustments (Phase 5).
+            'variants.*.opening_stock' => $this->product() === null
+                ? ['nullable', 'integer', 'min:0', 'max:1000000']
+                : ['prohibited'],
 
             'relations' => ['sometimes', 'array', 'max:50'],
             'relations.*.related_product_id' => ['required', 'integer'],

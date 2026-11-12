@@ -107,7 +107,7 @@ it('applies the provisional Dhaka zone flags by id only', function (): void {
     expect(Upazila::query()->where('is_inside_dhaka_metro', true)->pluck('id')->sort()->values()->all())
         ->toBe($zones['is_inside_dhaka_metro'])
         ->and(Upazila::query()->where('is_dhaka_subcity', true)->orderBy('id')->pluck('name')->all())
-        ->toBe(['Savar', 'Keraniganj'])
+        ->toBe(['Savar', 'Dhamrai', 'Keraniganj', 'Nawabganj', 'Dohar'])
         ->and(Upazila::query()->where('is_inside_dhaka_metro', true)->where('is_dhaka_subcity', true)->count())->toBe(0);
 });
 

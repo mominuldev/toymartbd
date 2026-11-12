@@ -24,6 +24,8 @@ use App\Domain\Catalog\Models\ProductAttribute;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Actions\RecordOpeningStock;
+use App\Domain\Inventory\Events\StockLevelChanged;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -53,6 +55,9 @@ use RuntimeException;
  * writes. Idempotent on slug: an existing product is left as it is (it only gains
  * its photo if it has no image yet and images are on). ProductChanged is silenced
  * while seeding — a fresh database has no storefront cache to purge.
+ *
+ * Opening stock (DEMO_STOCK) goes through the inventory ledger, with a sold-out
+ * product, a low-stock one and sold-out single combinations for the stock states.
  *
  * Needs the brands (BrandDemoSeeder), categories (CategoryDemoSeeder) and the
  * Color/Size attributes (CatalogReferenceSeeder); it runs them first if missing.
@@ -196,6 +201,27 @@ class DemoCatalogSeeder extends Seeder
         ],
     ];
 
+    /** Opening on-hand for every demo variant unless DEMO_STOCK says otherwise. */
+    public const int DEMO_STOCK_DEFAULT = 24;
+
+    /**
+     * Opening stock exceptions (P4-CRT-05), so the storefront shows every stock state:
+     * an int applies to every variant of the product; a map is keyed by the variant's
+     * values (`attribute:value`, comma-joined in attribute-slug order). The microscope
+     * is sold out (listing "Out of stock", PDP Notify me); the Barbie doll is low
+     * ("Only 3 left"); one LEGO combination and one slide colour are sold out while
+     * their siblings are not (VariantSelector "Unavailable").
+     *
+     * @var array<string, int|array<string, int>>
+     */
+    public const array DEMO_STOCK = [
+        'clementoni-galileo-my-first-microscope' => 0,
+        'barbie-dreamhouse-pool-party-doll' => 3,
+        'lego-classic-creative-bricks-484' => ['packaging:tub,set:484-pcs' => 0, 'packaging:box,set:484-pcs' => 9],
+        'little-tikes-first-slide' => ['color:pink' => 0],
+        'bruder-man-tga-dump-truck' => 5,
+    ];
+
     /** C1.1 "Bestseller" (top 8 by units sold), in rank order: the featured products. */
     private const array BESTSELLERS = [
         'hot-wheels-10-car-gift-pack', 'lego-classic-creative-bricks-484', 'play-doh-rainbow-starter-10-pack',
@@ -265,10 +291,12 @@ class DemoCatalogSeeder extends Seeder
                 if ($withImages && ! $product->trashed() && ! $product->images()->exists()) {
                     $this->attachImage($product, $p['sku'], $p['name'], $p['name_bn']);
                 }
+
+                $this->openingStock($product, $slug);
             }
 
             $this->relations();
-        }, [ProductChanged::class]);
+        }, [ProductChanged::class, StockLevelChanged::class]);
     }
 
     /** `media.demo_seed_images`, or — unset — on in `local` only. */
@@ -494,6 +522,33 @@ class DemoCatalogSeeder extends Seeder
         ProductVariant::query()->where('product_id', $product->id)->where('sku', $p['sku'])->update(['is_default' => true]);
 
         Product::query()->whereKey($product->id)->update(['rating_avg' => $p['rating'][0], 'rating_count' => $p['rating'][1]]);
+    }
+
+    /**
+     * Opening stock through the inventory ledger (an `opening_balance` movement per
+     * variant), so demo stock obeys the same invariant as real stock. Recorded once per
+     * variant; re-seeding leaves existing stock alone.
+     */
+    private function openingStock(Product $product, string $slug): void
+    {
+        $rule = self::DEMO_STOCK[$slug] ?? self::DEMO_STOCK_DEFAULT;
+
+        $quantities = [];
+        foreach ($product->variants()->with('attributeValues.attribute')->get() as $variant) {
+            if (is_int($rule)) {
+                $quantities[$variant->id] = $rule;
+
+                continue;
+            }
+
+            $key = $variant->attributeValues
+                ->map(fn (ProductAttributeValue $v): string => $v->attribute->slug.':'.$v->slug)
+                ->sort()
+                ->implode(',');
+            $quantities[$variant->id] = $rule[$key] ?? self::DEMO_STOCK_DEFAULT;
+        }
+
+        app(RecordOpeningStock::class)->handle($product, $quantities);
     }
 
     /** Relations go in a second pass, once every target exists. */

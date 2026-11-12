@@ -11,8 +11,8 @@ import { DEFAULT_SORT, hrefFor, type ListingScope, type ListingState } from '@/l
 // filtered page is reachable, shareable and restorable with JavaScript off. The desktop sidebar
 // auto-applies on change once FilterAutoApply has enhanced it; the mobile sheet applies on submit.
 //
-// Order is fixed: Age → Price → Category → Brand → Gender (Figma; Skill, Rating and Availability
-// have no data yet). Zero-count options are shown disabled with a reason, never hidden.
+// Order is fixed: Age → Price → Category → Brand → Gender → Availability (Figma; Skill and Rating
+// have no data yet, and Availability's "Free delivery" option waits for per-card delivery data). Zero-count options are shown disabled with a reason, never hidden.
 
 export interface FilterFormProps {
     id: string;
@@ -153,6 +153,14 @@ export function FilterForm({ id, locale, path, scope, state, facets, t, size, ch
                 <Section title={t.facetGender} open={anyIn(facets.gender)}>
                     {facets.gender.map((o) => (
                         <OptionRow key={o.value} name="gender" option={o} label={{ text: genderLabels[o.value] ?? o.value }} size={size} t={t} />
+                    ))}
+                </Section>
+            ) : null}
+
+            {facets.availability.length > 0 ? (
+                <Section title={t.facetAvailability} open={anyIn(facets.availability)}>
+                    {facets.availability.map((o) => (
+                        <OptionRow key={o.value} name="availability" option={o} label={{ text: t.inStockOnly }} size={size} t={t} />
                     ))}
                 </Section>
             ) : null}

@@ -164,6 +164,16 @@ One repository, because the API and both frontends share a contract and must cha
 
 **Owner decisions open:** strip C2PA "AI-generated" metadata on upload (it embeds an SVG, so such PNGs are refused today); card price = lowest variant vs. headline variant; Bengali vs. Western digits in Bangla product names; `ink-*` colours fail AA in Dark and `ink-mint` on `tile-mint` is 4.44:1 (pre-existing in Figma); spacing tokens for the frequent raw 6/10/14 values.
 
+### Progress — Phase 4 batch 3 (PR #7, 2026-11-12)
+
+**Done, with passing tests** (775 PHP on SQLite; 78 admin Vitest; 155 storefront unit; PHPStan L6, Pint, deptrac clean):
+- **P4-CRT-05 (inventory core)** — `stock_locations`, `stock_levels`, append-only `stock_movements`; `ReserveStock`/`ReleaseStock` lock rows `FOR UPDATE` in ascending `variant_id`; opening stock on product create; `StockAvailability` (`available = on_hand - reserved`).
+- **P4-CRT-03 / P4-STO-06** — one `DeliveryChargeResolver` (zones, free-shipping threshold, weight surcharge) behind `/storefront/delivery/*`; PDP `DeliveryEstimator` and a `/delivery-charge` page. `courier_providers` table seeded unverified.
+- **P4-CAT-14** — Meilisearch via Scout with a database fallback engine, queued sync on save, zero-gap rebuild command, Bangla/Banglish synonyms, spelling suggestions, index-lag check; storefront search + suggestions API.
+- **P4-STO-05** — product detail page: gallery, variant selector with disabled out-of-stock options, price block, stock state, info tabs, trust strip, sticky add-to-cart bar, related products.
+
+**Open:** the storefront `/search` page is still the static shell (API is ready — P4-STO-04); best sellers rank by recency until orders exist.
+
 ### Catalog (CAT)
 | ID | Task | Size | Tests |
 |---|---|---|---|

@@ -29,19 +29,20 @@ const bn = getMessages('bn').listing;
 
 describe('URL ↔ filter state', () => {
     it('round-trips a full state through the canonical query', () => {
-        const state = parseListingState({ age: '24-48,0-12', brand: 'lego,hape', price: '1000-2500', gender: 'unisex', sort: 'newest', cursor: 'eyJvIjo0fQ' }, category);
+        const state = parseListingState({ age: '24-48,0-12', brand: 'lego,hape', price: '1000-2500', gender: 'unisex', availability: 'in_stock', sort: 'newest', cursor: 'eyJvIjo0fQ' }, category);
         expect(state).toEqual({
             age: ['0-12', '24-48'],
             price: ['1000-2500'],
             brand: ['hape', 'lego'],
             gender: ['unisex'],
+            availability: ['in_stock'],
             category: null,
             sort: 'newest',
             cursor: 'eyJvIjo0fQ',
         });
         const query = toSearchParams(state);
         expect(hrefFor('/categories/building-blocks', state)).toBe(
-            '/categories/building-blocks?age=0-12,24-48&price=1000-2500&brand=hape,lego&gender=unisex&sort=newest&cursor=eyJvIjo0fQ',
+            '/categories/building-blocks?age=0-12,24-48&price=1000-2500&brand=hape,lego&gender=unisex&availability=in_stock&sort=newest&cursor=eyJvIjo0fQ',
         );
         expect(parseListingState(Object.fromEntries(query), category)).toEqual(state);
     });
@@ -78,6 +79,8 @@ describe('URL ↔ filter state', () => {
             'filter[gender]': 'boys',
             sort: 'price_asc',
         });
+        expect(toApiQuery(parseListingState({ availability: 'in_stock' }, category), category).get('filter[availability]')).toBe('in_stock');
+        expect(parseListingState({ availability: 'pre_order' }, category).availability).toEqual([]);
         const onBrand = parseListingState({ category: 'puzzles' }, brand);
         expect(Object.fromEntries(toApiQuery(onBrand, brand))).toEqual({ 'filter[brand]': 'lego', 'filter[category]': 'puzzles' });
     });
@@ -121,6 +124,11 @@ describe('chips', () => {
         expect(chipLabel('brand', 'lego', facets, 'bn', bn).text).toBe('ব্র্যান্ড: লেগো');
         expect(chipLabel('price', '1000-2500', facets, 'en', en).text).toBe('৳1,000–2,500');
         expect(chipLabel('gender', 'unisex', facets, 'bn', bn).text).toBe('সবার জন্য');
+        expect(chipLabel('availability', 'in_stock', facets, 'en', en).text).toBe('In stock');
+        expect(chipLabel('availability', 'in_stock', facets, 'bn', bn).text).toBe('স্টকে আছে');
+        expect(normalizeListing({ meta: { facets: { availability: { count: 7, selected: true } } } }).facets.availability).toEqual([
+            { value: 'in_stock', label: null, labelBn: null, count: 7, selected: true },
+        ]);
     });
 });
 

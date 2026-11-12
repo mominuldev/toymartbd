@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Catalog\Contracts\AvailableStockQuery;
 use App\Domain\Catalog\Events\BrandChanged;
 use App\Domain\Catalog\Events\CategoryChanged;
 use App\Domain\Catalog\Events\ProductChanged;
 use App\Domain\Content\Listeners\RevalidateBrandPages;
 use App\Domain\Content\Listeners\RevalidateCategoryPages;
 use App\Domain\Content\Listeners\RevalidateProductPages;
+use App\Domain\Content\Listeners\RevalidateStockPages;
+use App\Domain\Inventory\Events\StockLevelChanged;
+use App\Domain\Inventory\Services\StockAvailability;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,7 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Catalog declares what it reads from Inventory; Inventory implements it (deptrac).
+        $this->app->bind(AvailableStockQuery::class, StockAvailability::class);
     }
 
     /**
@@ -33,5 +38,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(BrandChanged::class, RevalidateBrandPages::class);
         Event::listen(CategoryChanged::class, RevalidateCategoryPages::class);
         Event::listen(ProductChanged::class, RevalidateProductPages::class);
+        Event::listen(StockLevelChanged::class, RevalidateStockPages::class);
     }
 }

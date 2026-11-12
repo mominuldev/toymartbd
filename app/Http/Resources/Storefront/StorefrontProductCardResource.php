@@ -7,6 +7,7 @@ namespace App\Http\Resources\Storefront;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Inventory\Services\StockAvailability;
 use App\Http\Resources\ApiResource;
 use App\Support\Money;
 use Dedoc\Scramble\Attributes\SchemaName;
@@ -19,7 +20,9 @@ use Illuminate\Http\Request;
  * variant's was-price (null when none or not higher), `price_max` the highest
  * active variant price (show "from" when it differs from `price`).
  *
- * Needs ProductListing::RELATIONS loaded.
+ * Needs ProductListing::RELATIONS loaded. `in_stock` comes from the listing's
+ * `listing_in_stock` column when the product was read through ProductListing, else
+ * from StockAvailability (one query — related-product rails, search hits).
  *
  * @property Product $resource
  */
@@ -84,9 +87,26 @@ final class StorefrontProductCardResource extends ApiResource
             'is_featured' => $product->is_featured,
             /** @var int */
             'variant_count' => $variants->count(),
+            /**
+             * An active variant has available stock (on_hand − reserved > 0). Sold-out
+             * cards stay listed and show their out-of-stock state.
+             *
+             * @var bool
+             */
+            'in_stock' => self::inStock($product),
             /** @var array{url: string, srcset_webp: string|null, srcset_avif: string|null, alt: string|null, alt_bn: string|null, width: int|null, height: int|null}|null */
             'image' => self::image($image),
         ];
+    }
+
+    private static function inStock(Product $product): bool
+    {
+        $listed = $product->getAttribute('listing_in_stock');
+        if ($listed !== null) {
+            return (int) $listed === 1;
+        }
+
+        return app(StockAvailability::class)->inStockProductIds([$product->id]) !== [];
     }
 
     /** Whole percent off the was-price, rounded down ("−15%"): never overstates a saving. */

@@ -13,12 +13,15 @@
 export const AGE_BANDS = ['0-12', '12-24', '24-48', '48-72', '72-96', '96-144', '144-'] as const;
 export const PRICE_BANDS = ['0-500', '500-1000', '1000-2500', '2500-5000', '5000-'] as const;
 export const GENDERS = ['unisex', 'boys', 'girls'] as const;
+/** `availability` values (only "in stock" today). */
+export const AVAILABILITY = ['in_stock'] as const;
 export const SORTS = ['featured', 'newest', 'price_asc', 'price_desc', 'rating', 'name'] as const;
 export const DEFAULT_SORT = 'featured';
 
 export type AgeBand = (typeof AGE_BANDS)[number];
 export type PriceBand = (typeof PRICE_BANDS)[number];
 export type Gender = (typeof GENDERS)[number];
+export type Availability = (typeof AVAILABILITY)[number];
 export type Sort = (typeof SORTS)[number];
 
 /** `category`: a listing scoped by the path (a category page) has no category filter. */
@@ -29,15 +32,17 @@ export interface ListingState {
     price: PriceBand[];
     brand: string[];
     gender: Gender[];
+    /** `in_stock`: only products with an active variant in stock (P4-CAT-13). */
+    availability: Availability[];
     /** Brand pages only: narrow to one category. */
     category: string | null;
     sort: Sort;
     cursor: string | null;
 }
 
-/** Filter keys, in URL and chip order (Age → Price → Category → Brand → Gender, §A7). */
-export type FilterKey = 'age' | 'price' | 'category' | 'brand' | 'gender';
-export const FILTER_KEYS: readonly FilterKey[] = ['age', 'price', 'category', 'brand', 'gender'];
+/** Filter keys, in URL and chip order (Age → Price → Category → Brand → Gender → Availability, §A7). */
+export type FilterKey = 'age' | 'price' | 'category' | 'brand' | 'gender' | 'availability';
+export const FILTER_KEYS: readonly FilterKey[] = ['age', 'price', 'category', 'brand', 'gender', 'availability'];
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -45,7 +50,7 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const CURSOR = /^[A-Za-z0-9_=-]{1,1000}$/;
 const MAX_LIST = 20;
 
-export const emptyState = (): ListingState => ({ age: [], price: [], brand: [], gender: [], category: null, sort: DEFAULT_SORT, cursor: null });
+export const emptyState = (): ListingState => ({ age: [], price: [], brand: [], gender: [], availability: [], category: null, sort: DEFAULT_SORT, cursor: null });
 
 function values(raw: string | string[] | undefined): string[] {
     const parts = (Array.isArray(raw) ? raw : raw === undefined ? [] : [raw]).flatMap((v) => v.split(','));
@@ -77,6 +82,7 @@ export function parseListingState(params: RawSearchParams, scope: ListingScope):
         price: oneOf(PRICE_BANDS, params.price),
         brand: scope.kind === 'brand' ? [] : values(params.brand).filter((s) => SLUG.test(s)).sort(),
         gender: oneOf(GENDERS, params.gender),
+        availability: oneOf(AVAILABILITY, params.availability),
         category: scope.kind === 'brand' && category !== null && SLUG.test(category) ? category : null,
         sort: sort !== null && (SORTS as readonly string[]).includes(sort) ? (sort as Sort) : DEFAULT_SORT,
         cursor: cursor !== null && CURSOR.test(cursor) ? cursor : null,
@@ -91,6 +97,7 @@ export function toSearchParams(state: ListingState): URLSearchParams {
     if (state.category) out.set('category', state.category);
     if (state.brand.length) out.set('brand', state.brand.join(','));
     if (state.gender.length) out.set('gender', state.gender.join(','));
+    if (state.availability.length) out.set('availability', state.availability.join(','));
     if (state.sort !== DEFAULT_SORT) out.set('sort', state.sort);
     if (state.cursor) out.set('cursor', state.cursor);
     return out;
@@ -114,6 +121,7 @@ export function toApiQuery(state: ListingState, scope: ListingScope): URLSearchP
     if (state.age.length) q.set('filter[age_band]', state.age.join(','));
     if (state.price.length) q.set('filter[price_band]', state.price.join(','));
     if (state.gender.length) q.set('filter[gender]', state.gender.join(','));
+    if (state.availability.includes('in_stock')) q.set('filter[availability]', 'in_stock');
     if (state.sort !== DEFAULT_SORT) q.set('sort', state.sort);
     if (state.cursor) q.set('cursor', state.cursor);
     return q;
@@ -140,6 +148,7 @@ export function withoutValue(state: ListingState, key: FilterKey, value: string)
     else if (key === 'age') next.age = state.age.filter((v) => v !== value);
     else if (key === 'price') next.price = state.price.filter((v) => v !== value);
     else if (key === 'gender') next.gender = state.gender.filter((v) => v !== value);
+    else if (key === 'availability') next.availability = state.availability.filter((v) => v !== value);
     else next.brand = state.brand.filter((v) => v !== value);
     return next;
 }

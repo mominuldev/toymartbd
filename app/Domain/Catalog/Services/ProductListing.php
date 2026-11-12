@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Services;
 
+use App\Domain\Catalog\Contracts\AvailableStockQuery;
 use App\Domain\Catalog\DTOs\ProductListingFilters as F;
 use App\Domain\Catalog\Enums\AgeBand;
 use App\Domain\Catalog\Enums\BrandStatus;
@@ -29,8 +30,10 @@ use Illuminate\Support\Facades\DB;
  * A listed product is active, published (`published_at` reached), not deleted, and
  * has at least one active variant. Its listing price is its lowest active variant
  * price. Everything runs against one derived table aliased `products`, which adds
- * `listing_price_min` and `listing_rating` (rating with nulls as 0) so they can be
- * filtered, sorted and cursor-paginated like plain columns.
+ * `listing_price_min`, `listing_rating` (rating with nulls as 0) and
+ * `listing_in_stock` (1 when an active variant has available stock > 0, from
+ * {@see AvailableStockQuery}) so they can be filtered, sorted and cursor-paginated
+ * like plain columns.
  *
  * Facets are disjunctive: each facet's counts apply every filter except its own,
  * so selecting LEGO still shows how many Hape products the other filters allow.
@@ -42,6 +45,8 @@ final class ProductListing
 
     /** The eager loads a listing card needs. */
     public const array RELATIONS = ['brand', 'activeVariants', 'images'];
+
+    public function __construct(private readonly AvailableStockQuery $stock) {}
 
     /**
      * One page of products, eager-loaded for the card.
@@ -89,6 +94,7 @@ final class ProductListing
      *     gender: list<array{value: string, count: int, selected: bool}>,
      *     rating: list<array{value: int, count: int, selected: bool}>,
      *     educational: array{count: int, selected: bool},
+     *     availability: array{count: int, selected: bool},
      * }
      */
     public function facets(F $filters): array
@@ -101,6 +107,7 @@ final class ProductListing
             'gender' => $this->genderFacet($filters),
             'rating' => $this->ratingFacet($filters),
             'educational' => $this->educationalFacet($filters),
+            'availability' => $this->availabilityFacet($filters),
         ];
     }
 
@@ -177,6 +184,10 @@ final class ProductListing
             $query->where('products.is_educational', $filters->educational);
         }
 
+        if ($except !== F::AVAILABILITY && $filters->inStock !== null) {
+            $query->where('products.listing_in_stock', $filters->inStock ? 1 : 0);
+        }
+
         return $query;
     }
 
@@ -189,15 +200,17 @@ final class ProductListing
     private function base(): Builder
     {
         $prices = DB::table('product_variants')
-            ->select('product_id')
-            ->selectRaw('MIN(price) as listing_price_min')
-            ->where('status', VariantStatus::Active->value)
-            ->groupBy('product_id');
+            ->leftJoinSub($this->stock->availableByVariant(), 'variant_stock', 'variant_stock.variant_id', '=', 'product_variants.id')
+            ->select('product_variants.product_id')
+            ->selectRaw('MIN(product_variants.price) as listing_price_min')
+            ->selectRaw('MAX(CASE WHEN COALESCE(variant_stock.available, 0) > 0 THEN 1 ELSE 0 END) as listing_in_stock')
+            ->where('product_variants.status', VariantStatus::Active->value)
+            ->groupBy('product_variants.product_id');
 
         $inner = Product::query()
             ->published()
             ->joinSub($prices, 'listing_prices', 'listing_prices.product_id', '=', 'products.id')
-            ->select('products.*', 'listing_prices.listing_price_min')
+            ->select('products.*', 'listing_prices.listing_price_min', 'listing_prices.listing_in_stock')
             ->selectRaw('COALESCE(products.rating_avg, 0) as listing_rating');
 
         return Product::query()->fromSub($inner, 'products');
@@ -443,5 +456,17 @@ final class ProductListing
         $counts = $this->sums($this->filtered($filters, F::EDUCATIONAL), ['e' => ['products.is_educational = 1', []]]);
 
         return ['count' => $counts['e'], 'selected' => $filters->educational === true];
+    }
+
+    /**
+     * In-stock products under the other filters (the "In stock only" toggle).
+     *
+     * @return array{count: int, selected: bool}
+     */
+    private function availabilityFacet(F $filters): array
+    {
+        $counts = $this->sums($this->filtered($filters, F::AVAILABILITY), ['s' => ['products.listing_in_stock = 1', []]]);
+
+        return ['count' => $counts['s'], 'selected' => $filters->inStock === true];
     }
 }

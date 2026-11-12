@@ -145,6 +145,8 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 
 > `balance_after` is denormalised deliberately: it makes the stock history screen readable without a window function, and it makes the reconciliation invariant trivially checkable.
 
+> **As built (P4-CRT-05).** `stock_locations` (`code` UNIQUE · `name` · `name_bn` · `is_default` · `is_active`) holds one `main` row, inserted by its migration (it is the §9 `locations` table). `stock_levels` and `stock_movements` are written only by `App\Domain\Inventory\Services\StockLedger` (movements + `on_hand`) and `StockReservations` (`reserved`), inside the calling Action's transaction, locking levels `FOR UPDATE` in ascending `variant_id` and checking every line before writing any; no movement type may take `on_hand` below zero at MVP. Reserving writes no movement (`on_hand` is unchanged), so invariant §7.1 holds through reservations. The model refuses update/delete of a movement. Opening stock is one `opening_balance` movement per variant, written once (`reference_type = 'product'`); later changes are adjustments (Phase 5). Every level change fires `StockLevelChanged(variantId, productId)` after commit (search re-index, storefront revalidation). Read side: `StockAvailability` (`forVariants`, `inStockProductIds`), and Catalog's `AvailableStockQuery` contract for the listing's in-stock filter.
+
 **`stock_adjustments`** `id` · `location_id` · `reason` (`damage`|`loss`|`found`|`recount`|`expiry`|`correction`) · `note` · `user_id` · `approved_by` NULL · `status` · `created_at`
 **`stock_adjustment_items`** `adjustment_id` · `variant_id` · `quantity_before` · `quantity_after` · `unit_cost` · `reason`
 
@@ -232,6 +234,8 @@ Index: `(order_id)`, `(transaction_id)` UNIQUE where not null, `(status, created
 
 **`courier_providers`** `id` · `code` (`pathao`|`steadfast`|...) · `name` · `is_active` · `is_default` · `credentials` JSON **encrypted** · `settings` JSON · `supports_bulk` · `supports_webhook` · `webhook_secret` encrypted · `base_charge_dhaka` · `base_charge_suburb` · `base_charge_outside` · `per_kg_charge` · `cod_fee_percent` · `return_charge` · `balance` · `balance_checked_at` · `position`
 > Charges are stored and editable because courier rate cards change without notice, and they feed delivery-charge quoting and P&L. Credentials are encrypted at rest and only decrypted at call time.
+>
+> **As built (P4-CRT-03)**, ahead of the courier drivers because the delivery-charge resolver reads the rate card: also `name_bn` · `verified` BOOL (rule 33a) · `requires_location_mapping` BOOL · `included_weight_grams` INT (the weight covered by the base charge — 1000 Steadfast, 2000 Pathao; `per_kg_charge` applies per started kg above it). Seeded by `DeliverySeeder`: Steadfast (active, default) and Pathao (inactive), both unverified, with the design's placeholder ৳70 / ৳100 / ৳130.
 
 **`courier_locations`** `id` · `provider_id` · `external_city_id` · `external_city_name` · `external_zone_id` · `external_zone_name` · `external_area_id` · `external_area_name` · `district_id` FK NULL · `upazila_id` FK NULL · `is_mapped` BOOL · `synced_at`
 > **This table exists because a courier's zone hierarchy does not match Bangladesh's postal geography.** Pathao's city/zone/area ids are its own namespace. Booking requires the courier's ids; our addresses use districts/upazilas. Rather than guessing, we sync the provider's location tree and maintain an explicit mapping, surfacing unmapped areas to the admin. A booking into an unmapped area is blocked with a clear message instead of being silently sent to the wrong zone.
@@ -444,6 +448,8 @@ Resolved server-side in this order, and the resolved value is written to the ord
 4. Weight surcharge above the included allowance, using summed `variant.weight_grams`
 5. Store-level free-shipping threshold if configured
 The quote shown in the cart and the charge on the order must come from the same code path. A mismatch between the two is a direct trust loss at the most fragile moment of the funnel.
+
+> **As built (P4-CRT-03):** `App\Domain\Fulfilment\Services\DeliveryChargeResolver::quote()`. Store numbers (threshold, cut-off 17:00 Dhaka, ETAs, non-working days, holidays, suburb/metro district lists, not-serviced upazilas, COD advance) are `delivery.*` settings; step 1 is the `FreeShippingPromotion` seam (no promotions yet). A district-level Dhaka address (no upazila) is metro — Dhaka city is not an upazila. Full contract: docs/api/delivery.md.
 
 ### 5.2 Risk score (0–100, higher = riskier)
 Weighted, transparent, and recorded in `score_breakdown` so staff see *why*:

@@ -161,6 +161,7 @@ export const storeProductRequestSchema = z.object({
     "wholesale_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "weight_grams": z.number().int().min(0).max(1000000).nullable().optional(),
     "status": variantStatusSchema.nullable().optional(),
+    "opening_stock": z.number().int().min(0).max(1000000).nullable().optional(),
 })).max(100).optional(),
     "relations": z.array(z.object({
     "related_product_id": z.number().int(),
@@ -271,6 +272,7 @@ export const updateProductRequestSchema = z.object({
     "wholesale_price": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
     "weight_grams": z.number().int().min(0).max(1000000).nullable().optional(),
     "status": variantStatusSchema.nullable().optional(),
+    "opening_stock": z.number().int().min(0).max(1000000).nullable().optional(),
 })).max(100).optional(),
     "relations": z.array(z.object({
     "related_product_id": z.number().int(),

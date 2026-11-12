@@ -81,11 +81,17 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Tracking\\(?!Events\\)#'
+    # Product search (P4-CAT-14). Reads the catalog and stock availability to build index
+    # documents; nothing depends on it except Http and Providers.
+    - name: Search
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Search\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -100,3 +106,4 @@ deptrac:
     Content: [Support, Models, DomainEvents, Catalog, Customer]
     Seo: [Support, Models, DomainEvents, Catalog, Customer]
     Tracking: [Support, Models, DomainEvents, Catalog, Customer]
+    Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]

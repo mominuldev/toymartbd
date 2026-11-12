@@ -61,6 +61,19 @@ const ICONS = {
     shoppingCartFill: 'ShoppingCart:fill',
     smiley: 'Smiley',
     graduationCap: 'GraduationCap',
+    // Product page (P4-STO-05): variant reason line, quantity stepper, rating, safety alert, gallery.
+    info: 'Info',
+    minus: 'Minus',
+    plus: 'Plus',
+    starFill: 'Star:fill',
+    warning: 'Warning',
+    caretLeft: 'CaretLeft',
+    shieldCheck: 'ShieldCheck',
+    // DeliveryEstimator (P4-STO-06): ETA line and the not-serviced headline.
+    calendarBlank: 'CalendarBlank',
+    warningCircle: 'WarningCircle',
+    // ProductCard Stock=OutOfStock "Notify me" (Figma 100:741).
+    bellFill: 'Bell:fill',
 };
 
 const require = createRequire(import.meta.url);

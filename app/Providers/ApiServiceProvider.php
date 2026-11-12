@@ -52,6 +52,9 @@ class ApiServiceProvider extends ServiceProvider
 
     public const int HEALTH_PER_MINUTE = 60;
 
+    /** Header autocomplete: a debounced typist sends a few a second at most (spec §A6.1: 250ms). */
+    public const int SEARCH_SUGGEST_PER_MINUTE = 60;
+
     public function boot(): void
     {
         // Attached to the whole storefront group. Behind the Next.js server, $request->ip()
@@ -78,6 +81,10 @@ class ApiServiceProvider extends ServiceProvider
             ->by(($cart = self::cartKey($request)) !== '' ? 'cart:'.$cart : 'ip:'.$request->ip()));
 
         RateLimiter::for('health', fn (Request $request): Limit => Limit::perMinute(self::HEALTH_PER_MINUTE)
+            ->by('ip:'.$request->ip()));
+
+        // GET /storefront/search/suggest (P4-CAT-14), on top of the storefront group's limit.
+        RateLimiter::for('search-suggest', fn (Request $request): Limit => Limit::perMinute(self::SEARCH_SUGGEST_PER_MINUTE)
             ->by('ip:'.$request->ip()));
 
         $this->configureOpenApi();
