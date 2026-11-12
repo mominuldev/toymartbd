@@ -37,10 +37,12 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     await signIn(page);
 
     // The LEGO 484 box variant is low at Dhaka HQ (9 on hand, reorder at 12).
+    // Name the seeded SKU instead of taking "the first LEGO row": right after the tab
+    // click the table can still show All variants, which picked a healthy variant that
+    // the Low stock list then no longer contained (flaky on CI).
+    const sku = 'TMB-LEG-CL484';
     await page.getByRole('button', { name: /^Low stock/ }).click();
-    const first = page.getByRole('row', { name: /LEGO Classic Creative Bricks/ }).first();
-    await expect(first).toBeVisible();
-    const sku = (await first.locator('.t-admin-mono-sm').innerText()).trim();
+    await expect(page.getByRole('row').filter({ hasText: 'TM-00001-90PCS-BOX' })).toHaveCount(0);
     const row = page.getByRole('row').filter({ hasText: sku });
     await expect(row).toHaveCount(1);
     const onHandBefore = Number((await row.getByRole('cell').nth(1).innerText()).replace(/\D/g, ''));

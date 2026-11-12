@@ -98,14 +98,18 @@ function DetailBody({ media, folders, canManage, canDelete, onDeleted }: { media
         );
     };
 
-    const confirmDelete = () =>
-        remove.mutate(media.id, {
-            onSuccess: () => {
+    // mutateAsync, not mutate(…, { onSuccess }): the delete invalidates the list, the
+    // deleted row disappears and this panel can unmount before the per-call callbacks
+    // run — TanStack skips those for an unmounted observer, which dropped the toast.
+    const confirmDelete = () => {
+        const filename = media.filename;
+        remove.mutateAsync(media.id).then(
+            () => {
                 setDialog(null);
-                toast.notify(t('media.delete.done', { name: media.filename }));
+                toast.notify(t('media.delete.done', { name: filename }));
                 onDeleted();
             },
-            onError: (error) => {
+            (error: unknown) => {
                 const usages = inUseUsages(error);
                 if (usages) setDialog({ state: 'blocked', usages });
                 else {
@@ -113,7 +117,8 @@ function DetailBody({ media, folders, canManage, canDelete, onDeleted }: { media
                     toast.notify(problemMessage(error) ?? t('media.queue.network'), 'danger');
                 }
             },
-        });
+        );
+    };
 
     // The renditions box: the largest AVIF, then WebP from largest down (Figma 291:2054).
     const avif = media.renditions.filter((r) => r.format === 'avif').sort((a, b) => b.width - a.width).slice(0, 1);

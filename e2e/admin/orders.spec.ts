@@ -17,7 +17,7 @@ function seedOrders(): string[] {
         use App\\Domain\\Customer\\Models\\Customer;
         use App\\Domain\\Inventory\\Models\\StockLevel;
         use Tests\\Feature\\Ordering\\Support\\OrderFixtures;
-        $ids = StockLevel::query()->whereRaw('on_hand - reserved >= 5')->orderBy('variant_id')->limit(2)->pluck('variant_id')->all();
+        $ids = StockLevel::query()->where('location_id', App\\Domain\\Inventory\\Models\\StockLocation::defaultId())->whereRaw('on_hand - reserved >= 5')->orderBy('variant_id')->limit(2)->pluck('variant_id')->all();
         $a = Customer::factory()->create(['name' => 'Shahriar Kabir']);
         $b = Customer::factory()->create(['name' => 'রিফাত চৌধুরী']);
         $high = OrderFixtures::place([$ids[0] => 2], customer: $a, overrides: ['risk_score' => 80, 'risk_level' => 'high', 'verification_status' => 'pending', 'risk_flags' => ['signals' => [['code' => 'first_order', 'weight' => 80]], 'hold_reasons' => ['first_order_above_threshold'], 'computed_at' => now()->toIso8601ZuluString()]]);
