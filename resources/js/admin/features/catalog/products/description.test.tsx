@@ -62,8 +62,10 @@ describe('DescriptionEditor (RichTextToolbar 201:1570)', () => {
         renderEditor();
         const bar = within(toolbar());
         expect(bar.getByLabelText('Text style')).toBeTruthy();
+        // Owner decision 2026-11-12: no clear-formatting ("Aa") button.
+        expect(bar.queryByRole('button', { name: 'Clear formatting' })).toBeNull();
         const names = bar.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
-        expect(names.slice(0, 11)).toEqual(['Bold', 'Italic', 'Clear formatting', 'Bulleted list', 'Numbered list', 'Quote', 'Link', 'Insert image', 'Embed a product', 'Embed a QR code', 'AI write']);
+        expect(names.slice(0, 10)).toEqual(['Bold', 'Italic', 'Bulleted list', 'Numbered list', 'Quote', 'Link', 'Insert image', 'Embed a product', 'Embed a QR code', 'AI write']);
 
         for (const name of ['Embed a product', 'Embed a QR code']) {
             const button = bar.getByRole('button', { name });
@@ -92,9 +94,6 @@ describe('DescriptionEditor (RichTextToolbar 201:1570)', () => {
         fireEvent.click(within(toolbar()).getByRole('button', { name: 'Quote' }));
         fireEvent.change(within(toolbar()).getByLabelText('Text style'), { target: { value: 'h2' } });
         await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('en', '<h2><strong>Hello bricks</strong></h2>'));
-
-        fireEvent.click(within(toolbar()).getByRole('button', { name: 'Clear formatting' }));
-        await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('en', '<p>Hello bricks</p>'));
     });
 
     it('links only http(s) and mailto addresses', async () => {
