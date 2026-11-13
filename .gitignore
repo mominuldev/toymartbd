@@ -49,3 +49,6 @@ toymartbd-app/packages/api-types/dist
 /database/e2e.sqlite
 /e2e/**/test-results
 /e2e/**/playwright-report
+
+# agents' local screenshot helpers
+e2e/admin/.*-shots.mjs
