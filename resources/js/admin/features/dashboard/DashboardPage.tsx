@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMe } from '@/features/auth/api';
+import { can, useMe } from '@/features/auth/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
@@ -43,7 +43,7 @@ export function DashboardPage() {
                         <div className="min-w-0 flex-1">
                             <RangePicker range={range} shown={shown} onChange={setRange} today={dhakaToday()} />
                         </div>
-                        {data && Object.values(data.visibility).some(Boolean) && <ExportMenu range={range} />}
+                        {data && can(me, 'reports.export') && Object.values(data.visibility).some(Boolean) && <ExportMenu range={range} />}
                     </div>
                 }
             />

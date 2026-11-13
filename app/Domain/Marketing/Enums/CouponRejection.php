@@ -23,6 +23,8 @@ enum CouponRejection: string
     case FirstOrderOnly = 'first_order_only';
     /** Every eligible line was discounted by a promotion with `allows_coupons = false` (P7). */
     case NotCombinable = 'not_combinable';
+    /** A personal coupon (P8 batch 3 birthday offer) presented by someone other than its customer. */
+    case NotForCustomer = 'not_for_customer';
 
     public function message(?Money $minimum = null): string
     {

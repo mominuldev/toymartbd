@@ -73,5 +73,7 @@ final class NotificationServiceProvider extends ServiceProvider
         Event::listen(OrderCancelled::class, [QueueOrderNotifications::class, 'onCancelled']);
         // P6: the courier's out-for-delivery move (Fulfilment event, after commit).
         Event::listen(\App\Domain\Fulfilment\Events\ShipmentStatusChanged::class, [QueueOrderNotifications::class, 'onShipmentStatusChanged']);
+        // P8 batch 3: a removed child's name leaves the birthday-reminder payloads too.
+        Event::listen(\App\Domain\Customer\Events\CustomerChildRemoved::class, \App\Domain\Notification\Listeners\ForgetRemovedChild::class);
     }
 }

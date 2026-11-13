@@ -30,6 +30,7 @@ return [
         'minimum_not_met' => 'Spend at least ৳:minimum to use this coupon.',
         'usage_limit_reached' => 'This coupon has been fully redeemed.',
         'customer_limit_reached' => 'You have already used this coupon.',
+        'not_for_customer' => 'This coupon is for another customer only.',
         'not_applicable' => 'This coupon does not apply to the items in your cart.',
         'first_order_only' => 'This coupon is for first orders only.',
         'not_combinable' => 'This coupon cannot be combined with the offer already on these items.',

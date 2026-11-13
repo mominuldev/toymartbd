@@ -99,7 +99,7 @@ final class CustomerController extends ApiController
     {
         $this->authorize('view', $customer);
 
-        $customer->load(['addresses.district', 'addresses.upazila', 'addresses.division']);
+        $customer->load(['addresses.district', 'addresses.upazila', 'addresses.division', 'children']);
         $statusCounts = Order::query()
             ->where('customer_id', $customer->id)
             ->toBase()

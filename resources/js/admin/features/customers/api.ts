@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { StoreCustomerNoteRequestInput, UpdateCustomerDateOfBirthRequestInput, UpdateMessageConsentRequestInput } from '@toymart/api-types/zod';
+import type { SaveCustomerChildRequestInput, StoreCustomerNoteRequestInput, UpdateMessageConsentRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
 
 export type CustomerRow = Schema<'CustomerListItem'>;
@@ -8,10 +8,12 @@ export type CustomerProfile = Schema<'CustomerProfile'>;
 export type CustomerNote = Schema<'CustomerNote'>;
 export type NotificationPreference = Schema<'NotificationPreference'>;
 export type MessageConsents = Schema<'MessageConsents'>;
-export type CustomerDateOfBirth = Schema<'CustomerDateOfBirth'>;
+export type CustomerChild = Schema<'CustomerChild'>;
 /** The PUT bodies — generated from the FormRequests (rule 27). */
 export type ConsentInput = UpdateMessageConsentRequestInput;
-export type DateOfBirthInput = UpdateCustomerDateOfBirthRequestInput;
+export type ChildInput = SaveCustomerChildRequestInput;
+export type ConfirmationMethod = NonNullable<MessageConsents['birthday']['confirmation_method']>;
+export const confirmationMethods: ConfirmationMethod[] = ['phone_call', 'in_person', 'written', 'other'];
 export type Segment = CustomerRow['segment'];
 export type RiskStatus = NonNullable<CustomerRow['risk']>['status'];
 export type RiskLevel = NonNullable<CustomerRow['risk']>['level'];
@@ -134,7 +136,7 @@ export function useDistricts(enabled: boolean) {
     });
 }
 
-/** Birthday-message consent with its provenance (P8) — customers.view to read. */
+/** Birthday-reminder consent with its provenance (P8) — customers.view to read. */
 export function useMessageConsents(id: number, enabled: boolean) {
     return useQuery({
         queryKey: customerKeys.consents(id),
@@ -143,7 +145,7 @@ export function useMessageConsents(id: number, enabled: boolean) {
     });
 }
 
-/** Record (with the customer's confirmed agreement) or withdraw the birthday consent — customers.update. */
+/** Record (with the customer's confirmed agreement and how it was given) or withdraw the birthday-reminder consent — customers.update. */
 export function useSetMessageConsent(id: number) {
     const client = useQueryClient();
     return useMutation({
@@ -152,11 +154,20 @@ export function useSetMessageConsent(id: number) {
     });
 }
 
-/** Record or clear the date of birth — customers.update + customers.view_pii. */
-export function useSetDateOfBirth(id: number) {
+/** Add, edit or remove a child (P8 batch 3) — customers.update + customers.view_pii. The profile re-reads the list. */
+export function useSaveChild(customerId: number) {
     const client = useQueryClient();
     return useMutation({
-        mutationFn: (input: DateOfBirthInput) => api<CustomerDateOfBirth>(`/customers/${id}/date-of-birth`, { method: 'PUT', body: JSON.stringify(input) }),
-        onSuccess: () => void client.invalidateQueries({ queryKey: customerKeys.detail(id) }),
+        mutationFn: ({ id, input }: { id: number | null; input: ChildInput }) =>
+            api<CustomerChild>(id === null ? `/customers/${customerId}/children` : `/customers/${customerId}/children/${id}`, { method: id === null ? 'POST' : 'PATCH', body: JSON.stringify(input) }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: customerKeys.detail(customerId) }),
+    });
+}
+
+export function useRemoveChild(customerId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => api<null>(`/customers/${customerId}/children/${id}`, { method: 'DELETE' }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: customerKeys.detail(customerId) }),
     });
 }

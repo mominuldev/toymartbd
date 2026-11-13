@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Models;
 
+use App\Domain\Notification\Enums\ConsentConfirmationMethod;
 use App\Domain\Notification\Enums\MessageConsentPurpose;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * A customer's consent to one purpose of message (P8): today only `birthday`. No row means
- * NOT consented. Provenance: who recorded it (`recorded_by`, null = the customer on the
- * storefront), from where, when given and when withdrawn.
+ * A customer's consent to one purpose of message (P8): today only `birthday` — reminders before
+ * each child's birthday, with a gift offer (P8 batch 3). No row means NOT consented. Provenance:
+ * who recorded it (`recorded_by`, null = the customer on the storefront), from where, when given
+ * and when withdrawn, and how staff confirmed it (`confirmation_method` + note).
  *
  * @property int $id
  * @property int $customer_id
@@ -21,6 +23,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $withdrawn_at
  * @property string $source
  * @property int|null $recorded_by
+ * @property ConsentConfirmationMethod|null $confirmation_method how staff confirmed it (admin "yes" only)
+ * @property string|null $confirmation_note optional short note by staff
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -41,6 +45,7 @@ final class MessageConsent extends Model
             'consented_at' => 'datetime',
             'withdrawn_at' => 'datetime',
             'recorded_by' => 'integer',
+            'confirmation_method' => ConsentConfirmationMethod::class,
         ];
     }
 

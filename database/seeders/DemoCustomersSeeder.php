@@ -8,13 +8,16 @@ use App\Domain\Catalog\Models\Product;
 use App\Domain\Customer\Actions\AddToWishlist;
 use App\Domain\Customer\Actions\RequestLoginOtp;
 use App\Domain\Customer\Actions\SaveCustomerAddress;
+use App\Domain\Customer\Actions\SaveCustomerChild;
 use App\Domain\Customer\Actions\UpdateCustomerProfile;
 use App\Domain\Customer\Actions\VerifyLoginOtp;
 use App\Domain\Customer\DTOs\AddressData;
 use App\Domain\Customer\Enums\AddressType;
 use App\Domain\Customer\Jobs\SendLoginOtp;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Notification\Actions\SetMessageConsent;
 use App\Domain\Notification\Actions\SetNotificationPreference;
+use App\Domain\Notification\Enums\MessageConsentPurpose;
 use App\Domain\Notification\Enums\NotificationCategory;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Support\PhoneNumber;
@@ -64,16 +67,18 @@ class DemoCustomersSeeder extends Seeder
      * line, landmark]; the first is saved first (so it is the default) unless `default2`.
      * `wish`: product slugs. `prefs`: [channel, category, enabled] the customer set.
      *
-     * @var array<string, array{name: string, email: string|null, lang: string, addresses: list<array{string, string|null, string, string|null, string, string, string}>, default2?: true, wish?: list<string>, prefs?: list<array{string, string, bool}>}>
+     * @var array<string, array{name: string, email: string|null, lang: string, addresses: list<array{string, string|null, string, string|null, string, string, string}>, default2?: true, wish?: list<string>, prefs?: list<array{string, string, bool}>, kids?: list<array{string, int, int, int|null}>, birthday_reminders?: true}>
      */
     public const array CUSTOMERS = [
         '01711458231' => ['name' => 'নুসরাত জাহান', 'email' => null, 'lang' => 'bn', 'addresses' => [
             ['home', 'বাসা', 'Dhaka', null, 'ধানমন্ডি', 'বাড়ি ২৭, রোড ৯/এ, ৪র্থ তলা', 'রবীন্দ্র সরোবরের উল্টো দিকে'],
-        ], 'wish' => ['lego-classic-creative-bricks-484', 'clementoni-galileo-my-first-microscope']],
+        ], 'wish' => ['lego-classic-creative-bricks-484', 'clementoni-galileo-my-first-microscope'],
+            // P8 batch 3: children + the birthday-reminder consent (Bangla and English names).
+            'kids' => [['আয়ান', 3, 12, 2020], ['Mehrin', 8, 4, null]], 'birthday_reminders' => true],
         '01819233467' => ['name' => 'Tahmid Rahman', 'email' => 'tahmid.rahman@example.com', 'lang' => 'en', 'addresses' => [
             ['home', 'Home', 'Dhaka', null, 'Mirpur 10', 'House 14, Road 3, Block C', 'Behind Mirpur 10 roundabout, near Shah Ali Plaza'],
             ['office', 'Office', 'Dhaka', null, 'Gulshan 1', 'Level 6, Plot 42, Gulshan Avenue', 'Opposite Gulshan 1 DCC market'],
-        ], 'wish' => ['bruder-man-tga-dump-truck', 'hot-wheels-10-car-gift-pack', 'rubiks-cube-3x3-original'], 'prefs' => [['sms', 'marketing', false]]],
+        ], 'wish' => ['bruder-man-tga-dump-truck', 'hot-wheels-10-car-gift-pack', 'rubiks-cube-3x3-original'], 'prefs' => [['sms', 'marketing', false]], 'kids' => [['Arian', 2, 29, 2020]]],
         '01912784520' => ['name' => 'ফারজানা ইসলাম', 'email' => null, 'lang' => 'bn', 'addresses' => [
             ['home', 'বাসা', 'Dhaka', null, 'উত্তরা সেক্টর ৭', 'বাড়ি ৫, রোড ১৮, ৩য় তলা', 'উত্তরা মডেল টাউন মসজিদের পাশে'],
         ], 'wish' => ['huanger-baby-activity-gym-play-mat']],
@@ -215,6 +220,13 @@ class DemoCustomersSeeder extends Seeder
                         $enabled,
                         'storefront',
                     );
+                }
+
+                foreach ($row['kids'] ?? [] as [$kid, $month, $day, $year]) {
+                    app(SaveCustomerChild::class)->handle($customer, null, $kid, $month, $day, $year);
+                }
+                if ($row['birthday_reminders'] ?? false) {
+                    app(SetMessageConsent::class)->handle($customer->id, MessageConsentPurpose::Birthday, true, 'storefront', null);
                 }
             }
         });

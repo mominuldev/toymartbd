@@ -17,6 +17,7 @@ use App\Domain\Reporting\Exports\DashboardSheets;
 use App\Domain\Reporting\Queries\Dashboard\DashboardReport;
 use App\Domain\Reporting\Queries\Dashboard\DashboardScope;
 use App\Domain\Reporting\Support\DateRange;
+use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
 use App\Models\User;
 use App\Support\Money;
@@ -32,12 +33,17 @@ use Tests\Feature\Finance\FinanceKit;
  * out (never zero), no PII, Bangla labels, the 403 and the 400s.
  */
 
-function dashExportUser(?Role $role): User
+/** $export grants reports.export on top of the role, so block visibility can be tested per role. */
+function dashExportUser(?Role $role, bool $export = true): User
 {
     (new RolesAndPermissionsSeeder)->run();
     app('auth')->forgetGuards();
     $factory = User::factory();
-    $user = ($role === null ? $factory : $factory->withRole($role))->create()->refresh();
+    $user = ($role === null ? $factory : $factory->withRole($role))->create();
+    if ($export && $role !== null) {
+        $user->givePermissionTo(Permission::ReportsExport->value);
+    }
+    $user = $user->refresh();
     test()->actingAs($user, 'web');
 
     return $user;
@@ -366,9 +372,11 @@ it('returns 401 for a guest and 403 without dashboard.view', function (): void {
     $this->get('/api/v1/admin/dashboard/export', ['Accept' => 'application/json'])->assertForbidden();
 });
 
-it('answers every launch role, which all hold dashboard.view', function (Role $role): void {
-    dashExportUser($role);
-    $this->get('/api/v1/admin/dashboard/export')->assertOk();
+it('needs reports.export on top of dashboard.view (owner decision 2026-11-13)', function (Role $role): void {
+    dashExportUser($role, export: false);
+    $response = $this->get('/api/v1/admin/dashboard/export', ['Accept' => 'application/json']);
+
+    in_array(Permission::ReportsExport, $role->permissions(), true) ? $response->assertOk() : $response->assertForbidden();
 })->with(Role::cases());
 
 it('refuses an invalid range, format, locale or unknown parameter with a 400', function (string $query): void {

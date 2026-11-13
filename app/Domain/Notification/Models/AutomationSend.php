@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 /**
  * One automation decision (P8): `queued` (a notification log row exists) or `skipped` with
  * the reason. UNIQUE (automation, subject_id, period) — at most one per order / per
- * customer-year, however often the scheduler runs.
+ * child-birthday (subject = customer_children.id, period = that birthday's year, P8 batch 3), however often the scheduler runs.
  *
  * @property int $id
  * @property AutomationKind $automation
@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property AutomationSkip|null $skip_reason
  * @property int|null $notification_log_id
+ * @property int|null $coupon_id the personal coupon a birthday reminder carried (P8 batch 3; Marketing's id, audit only)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -43,6 +44,7 @@ final class AutomationSend extends Model
             'subject_id' => 'integer',
             'customer_id' => 'integer',
             'notification_log_id' => 'integer',
+            'coupon_id' => 'integer',
         ];
     }
 }

@@ -8,7 +8,7 @@ import type { StorefrontOrder } from '../cart/types';
 import { localizedPath, type Locale } from '../i18n/config';
 import { ACCOUNT_COOKIE, ACCOUNT_FLASH_COOKIE } from './cookies';
 import { decodeFlash } from './flash';
-import type { Account, AccountConsents, AccountFlash, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
+import type { Account, AccountChild, AccountConsents, AccountFlash, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
 
 // The customer account, server side (P4-STO-11, docs/api/account.md). The customer's Sanctum token
 // lives in an httpOnly cookie, is read only here and in the account Server Actions, and is sent to
@@ -97,7 +97,12 @@ export async function getWishlist(token: string, locale: Locale): Promise<Wishli
     return (await read<{ data: WishlistItem[] }>('storefront/account/wishlist', token, locale)).data;
 }
 
-/** The customer's own message consents (P8: birthday). No customer id is sent — the token is the customer. */
+/** The customer's own children (P8 batch 3, "My kids"), in birthday order. The token is the customer. */
+export async function getChildren(token: string, locale: Locale): Promise<AccountChild[]> {
+    return (await read<{ data: AccountChild[] }>('storefront/account/children', token, locale)).data;
+}
+
+/** The customer's own message consents (P8: birthday reminders with offers). No customer id is sent — the token is the customer. */
 export async function getConsents(token: string, locale: Locale): Promise<AccountConsents> {
     return read<AccountConsents>('storefront/account/consents', token, locale);
 }

@@ -6,7 +6,8 @@ namespace App\Http\Requests\Storefront\Account;
 
 /**
  * `PUT /storefront/account/consents` — the signed-in customer opts in to (or out of) birthday
- * messages (P8). Recorded with source `storefront`; a "no" withdraws, it never deletes.
+ * reminders with offers — a message before each child's birthday, with a gift code when the shop
+ * runs one (P8 batch 3). Recorded with source `storefront`; a "no" withdraws, it never deletes.
  */
 final class UpdateConsentRequest extends AccountRequest
 {
@@ -14,7 +15,7 @@ final class UpdateConsentRequest extends AccountRequest
     public function rules(): array
     {
         return [
-            /** True: send me a message on my birthday. False: stop. */
+            /** True: remind me before my children's birthdays, with offers. False: stop. */
             'birthday' => ['required', 'boolean'],
         ];
     }

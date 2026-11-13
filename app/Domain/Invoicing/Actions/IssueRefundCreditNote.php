@@ -29,7 +29,9 @@ use Illuminate\Support\Facades\DB;
  *    refund's `shipping_amount`. The credit note's total is EXACTLY the refund amount: if the
  *    refund was capped below its computed lines, the difference is an explicit adjustment.
  *  - Refused (CreditNoteExceedsInvoice, nothing written) when the refund is more than the
- *    invoice still has uncredited — e.g. the order was edited upwards after issue.
+ *    invoice still has uncredited. "Uncredited" counts supplementary invoices (P8 batch 3),
+ *    so a refund after an upward edit is credited. Nothing (null) when a courier return or a
+ *    cancellation already credited the whole invoice — the refund is that credit's cash side.
  *
  * One transaction (3 attempts): `CN` counter, then invoice row, FOR UPDATE. No ledger row
  * (the refund books its own).
@@ -90,12 +92,18 @@ final readonly class IssueRefundCreditNote
 
         $this->issuer->prepare();
 
-        return DB::transaction(function () use ($reason, $refund, $invoice, $lines, $totals, $sourceReference, $userId): CreditNote {
+        return DB::transaction(function () use ($reason, $refund, $invoice, $lines, $totals, $sourceReference, $userId): ?CreditNote {
             ['counter' => $counter, 'invoice' => $locked, 'remaining' => $remaining] = $this->issuer->lock($invoice->id);
 
             $existing = $this->issuer->existing($reason, $refund->id);
             if ($existing !== null) {
                 return $existing;
+            }
+            // P8 batch 3: a courier return (or a cancellation) already credited the whole
+            // invoice; the refund of a prepayment is the cash side of that same credit.
+            if ($remaining->isZero() && CreditNote::query()->where('invoice_id', $locked->id)
+                ->whereIn('reason', [CreditNoteReason::CourierReturn->value, CreditNoteReason::OrderCancelled->value])->exists()) {
+                return null;
             }
 
             return $this->issuer->write(

@@ -13,7 +13,10 @@ enum AutomationKind: string
 {
     /** N days after delivery, once per order (subject = order, period ''). */
     case ReviewRequest = 'review_request';
-    /** On the customer's birthday, 10:00 Dhaka, once per year (subject = customer, period = year). */
+    /**
+     * Reminder to the parent `lead_days` before each child's birthday, with an optional gift
+     * coupon (P8 batch 3; subject = customer_children.id, period = the birthday's year).
+     */
     case Birthday = 'birthday';
 
     public function template(): string

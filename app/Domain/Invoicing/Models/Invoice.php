@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Invoicing\Models;
 
+use App\Domain\Invoicing\Enums\InvoiceKind;
 use App\Domain\Invoicing\Enums\InvoiceType;
 use App\Domain\Invoicing\Exceptions\InvoiceImmutable;
 use App\Support\Casts\MoneyCast;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -24,10 +26,24 @@ use Illuminate\Support\Carbon;
  *   landmark, postcode, customer_id, preferred_language. (purchase): supplier_id, name,
  *   contact_person, phone, email, address, tin, supplier_invoice_no.
  * `lines`: list of {name, name_bn, variant, sku, quantity, unit_price, discount, line_total}
- *   — money as decimal strings, copied, never recomputed.
+ *   — money as decimal strings, copied, never recomputed. A supplementary invoice's lines
+ *   (P8 batch 3) are the edit's INCREASES: `kind` `item` (added/increased quantity) or
+ *   `adjustment` (the line's amount rose with no added quantity), `line_total` the increase.
+ *
+ * `kind` (P8 batch 3): `original` — the order's one invoice, issued on first print — or
+ * `supplementary` — the increase of an order edited upwards after that, numbered from the
+ * same `INV` series, pointing at `original_invoice_id`, with `source_type` `order_edit` and
+ * `source_id` the edit's `order_events` row (UNIQUE: one per edit). Credit notes always
+ * reference the original; {@see self::balance()} on the original covers the supplementary
+ * invoices too. `order_event_id`: the order's last order_events id the snapshot reflects.
  *
  * @property int $id
  * @property InvoiceType $type
+ * @property InvoiceKind $kind
+ * @property int|null $original_invoice_id
+ * @property string|null $source_type
+ * @property int|null $source_id
+ * @property int|null $order_event_id
  * @property string $series
  * @property int $year
  * @property int $sequence
@@ -56,14 +72,19 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, CreditNote> $creditNotes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Invoice> $supplementaryInvoices
+ * @property-read Invoice|null $originalInvoice
  */
 final class Invoice extends Model
 {
     /** The only layout today. A VAT/Mushak format (PRD N-14, P2) would be a new value here. */
     public const string TEMPLATE_STANDARD = 'standard';
 
-    /** @var list<string> */
-    protected $guarded = ['id'];
+    /** @var list<string> `original_order_key` is a generated column, never written. */
+    protected $guarded = ['id', 'original_order_key'];
+
+    /** @var array<string, mixed> the column default, so a freshly created row reads it too */
+    protected $attributes = ['kind' => 'original'];
 
     protected static function booted(): void
     {
@@ -81,16 +102,54 @@ final class Invoice extends Model
         return $this->hasMany(CreditNote::class)->orderBy('id');
     }
 
+    /**
+     * The supplementary invoices issued on top of this original, oldest first (P8 batch 3).
+     *
+     * @return HasMany<Invoice, $this>
+     */
+    public function supplementaryInvoices(): HasMany
+    {
+        return $this->hasMany(self::class, 'original_invoice_id')->orderBy('id');
+    }
+
+    /** @return BelongsTo<Invoice, $this> */
+    public function originalInvoice(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'original_invoice_id');
+    }
+
+    public function isSupplementary(): bool
+    {
+        return $this->kind === InvoiceKind::Supplementary;
+    }
+
     /** Σ credit-note totals — what has been credited so far. Needs `creditNotes` (loads it if not). */
     public function credited(): Money
     {
         return $this->creditNotes->reduce(static fn (Money $sum, CreditNote $note): Money => $sum->plus($note->total), Money::zero());
     }
 
-    /** The invoice total less everything credited: what still stands. Never negative by construction. */
+    /**
+     * What has been invoiced: an original's total plus every supplementary invoice on it
+     * (P8 batch 3); a supplementary invoice's own total. Needs `supplementaryInvoices`.
+     */
+    public function invoicedTotal(): Money
+    {
+        if ($this->isSupplementary()) {
+            return $this->total;
+        }
+
+        return $this->supplementaryInvoices->reduce(static fn (Money $sum, Invoice $s): Money => $sum->plus($s->total), $this->total);
+    }
+
+    /**
+     * Everything invoiced less everything credited: what still stands. Never negative by
+     * construction. Credit notes reference the original, so a supplementary invoice's own
+     * balance is simply its total; the order's balance is the original's.
+     */
     public function balance(): Money
     {
-        return $this->total->minus($this->credited());
+        return $this->invoicedTotal()->minus($this->credited());
     }
 
     /** @return array<string, string> */
@@ -98,6 +157,10 @@ final class Invoice extends Model
     {
         return [
             'type' => InvoiceType::class,
+            'kind' => InvoiceKind::class,
+            'original_invoice_id' => 'integer',
+            'source_id' => 'integer',
+            'order_event_id' => 'integer',
             'year' => 'integer',
             'sequence' => 'integer',
             'order_id' => 'integer',

@@ -66,8 +66,14 @@ phone, so the cart can only check it at checkout. `CouponUsages::record()` re-ch
 limits under `SELECT … FOR UPDATE` on the coupon row, inside the order transaction.
 
 Rejection codes (`coupon.reason`): `not_found`, `inactive`, `not_started`, `expired`, `minimum_not_met`,
-`usage_limit_reached`, `customer_limit_reached`, `not_applicable`, `first_order_only`. Messages in
-`lang/{en,bn}/cart.php`.
+`usage_limit_reached`, `customer_limit_reached`, `not_applicable`, `first_order_only`, `not_combinable`,
+`not_for_customer`. Messages in `lang/{en,bn}/cart.php`.
+
+**Personal coupons (P8 batch 3).** `coupons.customer_id` set = only that customer may redeem it (the
+birthday-reminder offer: single use, minted by `IssuePersonalCoupon` through the
+`PersonalCouponIssuer` contract). Matched on the cart's customer id, or the checkout phone against the
+customer's phone; a guest cart before checkout is not refused yet (the phone decides at checkout), and
+`CouponUsages::record()` refuses it again under the lock.
 
 ## Storefront API — `/api/v1/storefront/cart`
 

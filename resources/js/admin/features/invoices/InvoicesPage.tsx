@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { GearIcon, PrinterIcon, ReceiptXIcon } from '@phosphor-icons/react';
+import { GearIcon, PlusCircleIcon, PrinterIcon, ReceiptXIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
@@ -40,6 +40,11 @@ function useDebounced<T>(value: T, delay = 350): T {
  * Credit notes (P8 batch 2, no Figma frame either): a "Credit notes" tab lists them from
  * their own endpoint with the same search and date filters; an invoice row shows what has
  * been credited (server figure) and its credit notes, each printable.
+ *
+ * Supplementary invoices (P8 batch 3, no Figma frame): an order edited upwards after its
+ * invoice was issued gets one. Its row carries a "Supplementary" chip and the original's
+ * number; the original lists its supplementary invoices (each printable) and shows the
+ * server's `invoiced_total` beside its own total. Nothing is added up here (rule 1).
  */
 export function InvoicesPage() {
     const { t, locale } = useI18n();
@@ -146,7 +151,14 @@ export function InvoicesPage() {
                                     <td className={`${cell} basis-full lg:basis-auto`}>
                                         <span className="flex flex-col items-start gap-0.5">
                                             <span className="t-admin-mono text-fg-primary">{row.number}</span>
-                                            <StatusChip label={t(`invoices.type.${row.type}`)} tone={row.type === 'sales' ? 'info' : 'neutral'} showIcon={false} />
+                                            <span className="flex flex-wrap items-center gap-1">
+                                                <StatusChip label={t(`invoices.type.${row.type}`)} tone={row.type === 'sales' ? 'info' : 'neutral'} showIcon={false} />
+                                                {row.kind === 'supplementary' && <StatusChip label={t('invoices.kind.supplementary')} tone="warning" showIcon={false} />}
+                                            </span>
+                                            {row.kind === 'supplementary' && row.original_invoice_number && (
+                                                <span className="t-admin-caption text-fg-secondary">{t('invoices.supplementaryOf', { number: row.original_invoice_number })}</span>
+                                            )}
+                                            {row.supplementary_invoices.length > 0 && <SupplementaryLinks row={row} />}
                                             {row.credit_notes.length > 0 && <CreditNoteLinks row={row} />}
                                         </span>
                                     </td>
@@ -156,7 +168,16 @@ export function InvoicesPage() {
                                     <td className={`${cell} t-admin-body text-fg-primary`}>{row.issued_to_name}</td>
                                     <td className={`${cell} t-admin-body whitespace-nowrap text-fg-secondary`}>{formatIssued(row.issued_at, locale)}</td>
                                     <td className={`${cell} t-admin-num tabular whitespace-nowrap lg:text-end`}>
-                                        <Taka amount={row.total} />
+                                        <span className="flex flex-col items-start gap-0.5 lg:items-end">
+                                            <span>
+                                                <Taka amount={row.total} />
+                                            </span>
+                                            {row.supplementary_invoices.length > 0 && (
+                                                <span className="t-admin-caption text-fg-secondary">
+                                                    {t('invoices.withSupplementary')} <Taka amount={row.invoiced_total} />
+                                                </span>
+                                            )}
+                                        </span>
                                     </td>
                                     <td className={`${cell} t-admin-num tabular whitespace-nowrap text-fg-secondary lg:text-end`}>
                                         <Taka amount={row.due} />
@@ -190,6 +211,13 @@ export function InvoicesPage() {
 }
 
 type CreditNotesQuery = ReturnType<typeof useCreditNotes>;
+
+const reasonTone: Record<CreditNoteListItem['reason'], 'info' | 'warning' | 'neutral'> = {
+    refund: 'info',
+    order_cancelled: 'warning',
+    courier_return: 'warning',
+    order_edited: 'neutral',
+};
 
 /** The "Credit notes" tab: server figures only; each credit note reprints from its snapshot. */
 function CreditNotesTable({ query, rows }: { query: CreditNotesQuery; rows: CreditNoteListItem[] }) {
@@ -226,7 +254,7 @@ function CreditNotesTable({ query, rows }: { query: CreditNotesQuery; rows: Cred
                             <td className={`${cell} basis-full lg:basis-auto`}>
                                 <span className="flex flex-col items-start gap-0.5">
                                     <span className="t-admin-mono text-fg-primary">{row.number}</span>
-                                    <StatusChip label={t(`creditNotes.reason.${row.reason}`)} tone={row.reason === 'refund' ? 'info' : 'warning'} showIcon={false} />
+                                    <StatusChip label={t(`creditNotes.reason.${row.reason}`)} tone={reasonTone[row.reason]} showIcon={false} />
                                 </span>
                             </td>
                             <td className={cell}>
@@ -269,6 +297,33 @@ function CreditNoteLinks({ row }: { row: InvoiceListItem }) {
                 <li key={note.id} className="t-admin-caption flex items-center gap-1 text-fg-secondary">
                     <ReceiptXIcon size={14} aria-hidden />
                     {note.can_print ? <PrintCreditNoteButton note={note} compact /> : <span className="t-admin-mono">{note.number}</span>}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+/** An original invoice's supplementary invoices (upward edits after issue): each prints from its own snapshot. */
+function SupplementaryLinks({ row }: { row: InvoiceListItem }) {
+    const { t } = useI18n();
+    const { notify } = useToast();
+    return (
+        <ul aria-label={t('invoices.supplementaryList', { number: row.number })} className="flex flex-col gap-0.5">
+            {row.supplementary_invoices.map((supplementary) => (
+                <li key={supplementary.id} className="t-admin-caption flex items-center gap-1 text-fg-secondary">
+                    <PlusCircleIcon size={14} aria-hidden />
+                    {supplementary.can_print ? (
+                        <button
+                            type="button"
+                            onClick={() => void openPdf(`/invoices/${supplementary.id}/pdf`).catch((error: unknown) => notify(error instanceof ApiError ? error.problem.title : t('invoices.printFailed'), 'danger'))}
+                            aria-label={t('invoices.printSupplementaryAria', { number: supplementary.number })}
+                            className="t-admin-mono text-fg-link hover:underline"
+                        >
+                            {supplementary.number}
+                        </button>
+                    ) : (
+                        <span className="t-admin-mono">{supplementary.number}</span>
+                    )}
                 </li>
             ))}
         </ul>

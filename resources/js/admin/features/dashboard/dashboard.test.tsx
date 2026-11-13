@@ -10,7 +10,7 @@ afterEach(() => {
     localStorage.clear();
 });
 
-const owner: Me = { ...viewer, name: 'Mominul Islam', roles: ['super_admin'], permissions: ['dashboard.view', 'orders.view', 'finance.view', 'customers.view', 'inventory.view', 'risk.view', 'shipments.view'] };
+const owner: Me = { ...viewer, name: 'Mominul Islam', roles: ['super_admin'], permissions: ['dashboard.view', 'orders.view', 'finance.view', 'customers.view', 'inventory.view', 'risk.view', 'shipments.view', 'reports.export'] };
 
 const days = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'];
 const placed = ['8030.00', '6830.00', '3080.00', '4450.00', '4740.00', '8780.00', '1910.00'];
@@ -226,6 +226,13 @@ describe('dashboard', () => {
         dashboardApi(nothing, { ...viewer, permissions: ['dashboard.view'] });
         renderApp('/');
         expect(await screen.findByRole('heading', { name: 'Overview' })).toBeTruthy();
+        await screen.findByText(/here is the shop for/);
+        expect(screen.queryByText('Export')).toBeNull();
+        cleanup();
+
+        // Every block visible but no reports.export (owner decision 2026-11-13): no Export either.
+        dashboardApi(undefined, { ...owner, permissions: owner.permissions.filter((p) => p !== 'reports.export') });
+        renderApp('/');
         await screen.findByText(/here is the shop for/);
         expect(screen.queryByText('Export')).toBeNull();
     });

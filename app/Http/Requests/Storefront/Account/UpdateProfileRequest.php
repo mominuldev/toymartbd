@@ -6,7 +6,7 @@ namespace App\Http\Requests\Storefront\Account;
 
 use Illuminate\Validation\Rule;
 
-/** `PATCH /storefront/account` — the customer's own name, email, language and date of birth. */
+/** `PATCH /storefront/account` — the customer's own name, email and language. */
 final class UpdateProfileRequest extends AccountRequest
 {
     /** @return array<string, mixed> */
@@ -17,12 +17,10 @@ final class UpdateProfileRequest extends AccountRequest
             'email' => ['sometimes', 'nullable', 'string', 'email', 'max:191'],
             /** @var 'en'|'bn' */
             'preferred_language' => ['sometimes', 'required', 'string', Rule::in(['en', 'bn'])],
-            /** Y-m-d, in the past; null clears it. Read only by birthday messages, and only with their consent. */
-            'date_of_birth' => ['sometimes', 'nullable', 'date_format:Y-m-d', 'after_or_equal:1900-01-01', 'before:today'],
         ];
     }
 
-    /** @return array{name?: string, email?: string|null, preferred_language?: string, date_of_birth?: string|null} */
+    /** @return array{name?: string, email?: string|null, preferred_language?: string} */
     public function changes(): array
     {
         $changes = [];
@@ -34,9 +32,6 @@ final class UpdateProfileRequest extends AccountRequest
         }
         if ($this->has('preferred_language')) {
             $changes['preferred_language'] = $this->string('preferred_language')->toString();
-        }
-        if ($this->exists('date_of_birth')) {
-            $changes['date_of_birth'] = $this->filled('date_of_birth') ? $this->string('date_of_birth')->toString() : null;
         }
 
         return $changes;

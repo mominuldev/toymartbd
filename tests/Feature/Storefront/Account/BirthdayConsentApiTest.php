@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerChild;
 use App\Domain\Notification\Actions\SendBirthdayMessages;
 use App\Domain\Notification\Contracts\SmsGateway;
 use App\Domain\Notification\DTOs\SmsResult;
@@ -16,10 +17,11 @@ use Illuminate\Support\Facades\Http;
 use Tests\Feature\Storefront\Account\AccountTestKit;
 
 /*
- * P8 — the customer records their own birthday-message consent and date of birth on the
- * storefront profile. Source `storefront`, no staff recorder; a "no" withdraws (kept, not
- * deleted); another customer's consent is never readable or writable; a withdrawal stops
- * the next send, and a consent without a birth date sends nothing.
+ * P8 (batch 3) — the customer records their own consent to birthday reminders with offers on the
+ * storefront profile, and their children on "My kids". Source `storefront`, no staff recorder; a
+ * "no" withdraws (kept, not deleted); another customer's consent or children are never readable
+ * or writable; a withdrawal stops the next send, and a consent without children sends nothing.
+ * The customer's own date of birth is no longer collected.
  */
 
 beforeEach(function (): void {
@@ -117,23 +119,74 @@ it('validates the consent body', function (): void {
     bdayCustomer($this->meToken)->putJson('/api/v1/storefront/account/consents', ['birthday' => 'maybe'])->assertUnprocessable();
 });
 
-it('saves, shows and clears the date of birth on the profile', function (): void {
-    bdayCustomer($this->meToken)->patchJson('/api/v1/storefront/account', ['date_of_birth' => '1992-02-29'])->assertOk()
-        ->assertJsonPath('date_of_birth', '1992-02-29');
-    bdayCustomer($this->meToken)->getJson('/api/v1/storefront/account')->assertJsonPath('date_of_birth', '1992-02-29');
-
-    foreach (['2099-01-01', '1899-12-31', '29/02/1992', '1993-02-29', now()->toDateString()] as $bad) {
-        bdayCustomer($this->meToken)->patchJson('/api/v1/storefront/account', ['date_of_birth' => $bad])->assertUnprocessable();
-    }
-    // Leaving it out leaves it alone; null clears it.
-    bdayCustomer($this->meToken)->patchJson('/api/v1/storefront/account', ['name' => 'Sadia'])->assertJsonPath('date_of_birth', '1992-02-29');
-    bdayCustomer($this->meToken)->patchJson('/api/v1/storefront/account', ['date_of_birth' => null])->assertJsonPath('date_of_birth', null);
-    expect($this->them->refresh()->date_of_birth)->toBeNull();
+it('no longer reads or writes the customer\'s own date of birth', function (): void {
+    $this->me->forceFill(['date_of_birth' => '1992-02-29'])->save();
+    bdayCustomer($this->meToken)->getJson('/api/v1/storefront/account')->assertOk()->assertJsonMissingPath('date_of_birth');
+    bdayCustomer($this->meToken)->patchJson('/api/v1/storefront/account', ['name' => 'Sadia', 'date_of_birth' => '1990-01-01'])->assertOk()
+        ->assertJsonMissingPath('date_of_birth');
+    expect($this->me->refresh()->date_of_birth?->format('Y-m-d'))->toBe('1992-02-29'); // column kept, never written
 });
 
-it('stops the next birthday message after a storefront withdrawal', function (): void {
+it('adds, lists, edits and deletes the customer\'s own children', function (): void {
+    $url = '/api/v1/storefront/account/children';
+    bdayCustomer($this->meToken)->getJson($url)->assertOk()->assertExactJson(['data' => []]);
+
+    $id = bdayCustomer($this->meToken)->postJson($url, ['name' => 'আয়ান', 'birth_month' => 3, 'birth_day' => 12, 'birth_year' => 2020])
+        ->assertCreated()->assertJsonPath('name', 'আয়ান')->assertJsonPath('birth_year', 2020)->json('id');
+    bdayCustomer($this->meToken)->postJson($url, ['name' => null, 'birth_month' => 2, 'birth_day' => 29, 'birth_year' => null])
+        ->assertCreated()->assertJsonPath('name', null)->assertJsonPath('age', null);
+
+    bdayCustomer($this->meToken)->getJson($url)->assertOk()->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.birth_month', 2)->assertJsonPath('data.1.birth_month', 3); // birthday order
+
+    bdayCustomer($this->meToken)->patchJson("{$url}/{$id}", ['name' => 'Ayaan', 'birth_month' => 3, 'birth_day' => 13, 'birth_year' => null])
+        ->assertOk()->assertJsonPath('name', 'Ayaan')->assertJsonPath('birth_day', 13)->assertJsonPath('birth_year', null);
+
+    bdayCustomer($this->meToken)->deleteJson("{$url}/{$id}")->assertNoContent();
+    expect(CustomerChild::query()->whereKey($id)->exists())->toBeFalse() // deleted, not soft-deleted
+        ->and(CustomerChild::query()->where('customer_id', $this->me->id)->count())->toBe(1);
+});
+
+it('validates a child: real dates only, optional year within 25 years, at most six', function (): void {
+    $url = '/api/v1/storefront/account/children';
+    $year = (int) App\Support\DhakaDate::todayDate()->year;
+    foreach ([
+        ['birth_month' => 2, 'birth_day' => 30, 'birth_year' => null],
+        ['birth_month' => 2, 'birth_day' => 29, 'birth_year' => 2021],
+        ['birth_month' => 13, 'birth_day' => 1, 'birth_year' => null],
+        ['birth_month' => 4, 'birth_day' => 31, 'birth_year' => null],
+        ['birth_month' => 1, 'birth_day' => 1, 'birth_year' => $year - 26],
+        ['birth_month' => 12, 'birth_day' => 31, 'birth_year' => $year + 1],
+        ['birth_month' => 1, 'birth_day' => 1, 'birth_year' => null, 'name' => str_repeat('a', 41)],
+    ] as $bad) {
+        bdayCustomer($this->meToken)->postJson($url, ['name' => null, ...$bad])->assertUnprocessable();
+    }
+    for ($i = 1; $i <= CustomerChild::MAX_PER_CUSTOMER; $i++) {
+        bdayCustomer($this->meToken)->postJson($url, ['name' => "Kid {$i}", 'birth_month' => $i, 'birth_day' => 1, 'birth_year' => null])->assertCreated();
+    }
+    bdayCustomer($this->meToken)->postJson($url, ['name' => 'One too many', 'birth_month' => 9, 'birth_day' => 1, 'birth_year' => null])
+        ->assertUnprocessable()->assertJsonPath('errors.0.field', 'children');
+    expect(CustomerChild::query()->count())->toBe(CustomerChild::MAX_PER_CUSTOMER);
+});
+
+it('never lets one customer see, change or delete another customer\'s child', function (): void {
+    $theirs = CustomerChild::query()->create(['customer_id' => $this->them->id, 'name' => 'Mehrin', 'birth_month' => 8, 'birth_day' => 4]);
+    $url = '/api/v1/storefront/account/children';
+
+    bdayCustomer($this->meToken)->getJson($url)->assertOk()->assertJsonCount(0, 'data');
+    bdayCustomer($this->meToken)->patchJson("{$url}/{$theirs->id}", ['name' => 'X', 'birth_month' => 1, 'birth_day' => 1, 'birth_year' => null])->assertNotFound();
+    bdayCustomer($this->meToken)->deleteJson("{$url}/{$theirs->id}")->assertNotFound();
+    app('auth')->forgetGuards();
+    $this->withToken('nope')->getJson($url)->assertUnauthorized();
+    app('auth')->forgetGuards();
+    $this->withToken('nope')->postJson($url, ['name' => 'X', 'birth_month' => 1, 'birth_day' => 1, 'birth_year' => null])->assertUnauthorized();
+
+    expect($theirs->refresh()->name)->toBe('Mehrin');
+});
+
+it('stops the next birthday reminder after a storefront withdrawal', function (): void {
     $sms = bdaySms();
-    $this->me->update(['date_of_birth' => '1990-11-13']);
+    CustomerChild::query()->create(['customer_id' => $this->me->id, 'name' => 'Ayaan', 'birth_month' => 11, 'birth_day' => 20]);
     bdayCustomer($this->meToken)->putJson('/api/v1/storefront/account/consents', ['birthday' => true])->assertOk();
     bdayCustomer($this->meToken)->putJson('/api/v1/storefront/account/consents', ['birthday' => false])->assertOk();
 
@@ -148,10 +201,10 @@ it('stops the next birthday message after a storefront withdrawal', function ():
         ->and($sms->sent)->toBe(['+8801712345670']);
 });
 
-it('sends nothing to a consented customer with no date of birth', function (): void {
+it('sends nothing to a consented customer with no children', function (): void {
     $sms = bdaySms();
+    $this->me->forceFill(['date_of_birth' => '1990-11-13'])->save(); // their own birthday is not a reason any more
     bdayCustomer($this->meToken)->putJson('/api/v1/storefront/account/consents', ['birthday' => true])->assertOk();
-    expect($this->me->refresh()->date_of_birth)->toBeNull();
 
     foreach (['2026-11-13 04:00:00', '2027-02-28 04:00:00', '2027-01-01 04:00:00'] as $at) {
         expect(app(SendBirthdayMessages::class)->handle(Carbon::parse($at)))->toBe(['queued' => 0, 'skipped' => 0]);

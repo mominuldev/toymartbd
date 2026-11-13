@@ -20,9 +20,10 @@ use App\Http\Resources\Admin\MessageConsentResource;
 use App\Models\Enums\Permission;
 
 /**
- * Scheduled automations (P8): review requests and birthday messages. Their on/off switches
- * and copy are the `review.request` / `customer.birthday` templates on Settings → Automations;
- * this controller holds the scheduling values and the birthday consent.
+ * Scheduled automations (P8): review requests and birthday reminders (before each child's
+ * birthday, with an optional offer — P8 batch 3). Their on/off switches and copy are the
+ * `review.request` / `customer.birthday` templates on Settings → Automations; this controller
+ * holds the scheduling and offer values and the birthday consent.
  */
 final class AutomationController extends ApiController
 {
@@ -38,7 +39,7 @@ final class AutomationController extends ApiController
     public function update(UpdateAutomationSettingsRequest $request, UpdateAutomationSettings $update, AutomationSettings $settings, AutomationStats $stats): AutomationSettingsResource
     {
         $userId = $request->user()?->getAuthIdentifier();
-        $update->handle($request->delayDays(), $request->quietFrom(), $request->quietTo(), is_int($userId) ? $userId : null);
+        $update->handle($request->delayDays(), $request->quietFrom(), $request->quietTo(), is_int($userId) ? $userId : null, $request->leadDays(), $request->offer());
 
         return new AutomationSettingsResource(['settings' => $settings->adminView(), 'stats' => $stats->lastDays()]);
     }
@@ -51,11 +52,11 @@ final class AutomationController extends ApiController
         return new MessageConsentResource(self::birthday($customer->id));
     }
 
-    /** `PUT /notifications/customers/{customer}/consents` — customers.update; source `admin`. */
+    /** `PUT /notifications/customers/{customer}/consents` — customers.update; source `admin`; a "yes" needs how the customer agreed. */
     public function updateConsents(UpdateMessageConsentRequest $request, Customer $customer, SetMessageConsent $set): MessageConsentResource
     {
         $userId = $request->user()?->getAuthIdentifier();
-        $set->handle($customer->id, MessageConsentPurpose::Birthday, $request->birthday(), 'admin', is_int($userId) ? $userId : null);
+        $set->handle($customer->id, MessageConsentPurpose::Birthday, $request->birthday(), 'admin', is_int($userId) ? $userId : null, $request->confirmationMethod(), $request->confirmationNote());
 
         return new MessageConsentResource(self::birthday($customer->id));
     }

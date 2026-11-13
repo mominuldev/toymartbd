@@ -15,6 +15,18 @@ return [
     // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
     'sender_id_numeric' => 'সেন্ডার আইডি আপনার REVE নন-মাস্কিং নম্বর: শুধু সংখ্যা, 5 থেকে 15টি (যেমন 8809612345678, 01712345678 বা শর্ট কোড)। অক্ষর চলবে না।',
 
+    // জন্মদিনের রিমাইন্ডার (P8 batch 3): সন্তানের জন্মদিনের আগে অভিভাবককে। NEW লেখা মালিকের রিভিউয়ের জন্য।
+    'birthday' => [
+        'child_possessive' => ':name-এর',
+        'child_possessive_unnamed' => 'আপনার সন্তানের',
+        // NEW
+        'offer_sentence' => 'উপহার কোড :code: :offer ছাড়, :expiry পর্যন্ত।',
+        'offer_percent' => ':value%',
+        'offer_fixed' => 'BDT :value',
+        // NEW
+        'no_offer_whatsapp' => 'সব বয়সের জন্য উপহার আছে আমাদের কাছে।',
+    ],
+
     'mail' => [
         'greeting' => ':name,',
         'order_number' => 'অর্ডার',

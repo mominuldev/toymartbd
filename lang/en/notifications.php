@@ -17,6 +17,19 @@ return [
     // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
     'sender_id_numeric' => 'The sender ID is your REVE non-masking number: digits only, 5 to 15 of them (e.g. 8809612345678, 01712345678 or a short code). Letters are not allowed.',
 
+    // Birthday reminders (P8 batch 3): to the parent, before a child's birthday. Copy marked
+    // NEW is for the owner's review (the batch-2 birthday copy was approved; this adapts it).
+    'birthday' => [
+        'child_possessive' => ':name\'s',
+        'child_possessive_unnamed' => 'your child\'s',
+        // NEW — the offer line in the reminder (SMS: GSM-7 only, no taka sign).
+        'offer_sentence' => 'Gift code :code: :offer off, valid till :expiry.',
+        'offer_percent' => ':value%',
+        'offer_fixed' => 'BDT :value',
+        // NEW — WhatsApp needs a non-empty parameter when there is no offer.
+        'no_offer_whatsapp' => 'We have gifts for every age.',
+    ],
+
     'mail' => [
         'greeting' => 'Hello :name,',
         'order_number' => 'Order',

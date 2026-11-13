@@ -54,8 +54,11 @@ const profile = (over: Partial<CustomerProfile> = {}): CustomerProfile => ({
     phone: '+8801711258046',
     email: 'jahangir.alam@example.com',
     has_account: true,
-    date_of_birth: '1990-05-04',
-    has_date_of_birth: true,
+    children_count: 2,
+    children: [
+        { id: 11, name: 'Arian', birth_month: 3, birth_day: 12, birth_year: 2020, age: 6, next_birthday: '2027-03-12' },
+        { id: 12, name: 'Mehrin', birth_month: 8, birth_day: 4, birth_year: 2023, age: 3, next_birthday: '2027-08-04' },
+    ],
     preferred_language: 'en',
     source: 'web',
     status: 'active',
@@ -103,8 +106,10 @@ const profile = (over: Partial<CustomerProfile> = {}): CustomerProfile => ({
 
 const note: CustomerNote = { id: 4, body: 'Buys birthday gifts in Feb and Aug', is_pinned: true, user_id: 1, user_name: 'Mominul', created_at: '2026-09-05T04:00:00+00:00' };
 
-const noConsent: MessageConsents = { birthday: { consented: false, consented_at: null, withdrawn_at: null, source: null, recorded_by: null } };
-const givenByStaff: MessageConsents = { birthday: { consented: true, consented_at: '2026-11-10T04:15:00+00:00', withdrawn_at: null, source: 'admin', recorded_by: { id: 7, name: 'Nadia' } } };
+const noConsent: MessageConsents = { birthday: { consented: false, consented_at: null, withdrawn_at: null, source: null, recorded_by: null, confirmation_method: null, confirmation_note: null } };
+const givenByStaff: MessageConsents = {
+    birthday: { consented: true, consented_at: '2026-11-10T04:15:00+00:00', withdrawn_at: null, source: 'admin', recorded_by: { id: 7, name: 'Nadia' }, confirmation_method: 'phone_call', confirmation_note: 'Agreed on the order call' },
+};
 
 function api(me: Me = operator, detail: CustomerProfile = profile(), consents: MessageConsents = noConsent) {
     return mockApi((url, init) => {
@@ -114,10 +119,11 @@ function api(me: Me = operator, detail: CustomerProfile = profile(), consents: M
             return { status: 200, body: body.birthday ? givenByStaff : { birthday: { ...givenByStaff.birthday, consented: false, withdrawn_at: '2026-11-13T05:00:00+00:00' } } };
         }
         if (url.includes('/notifications/customers/1/consents')) return { status: 200, body: consents };
-        if (url.includes('/customers/1/date-of-birth') && init?.method === 'PUT') {
-            const body = JSON.parse(String(init.body)) as { date_of_birth: string | null };
-            return { status: 200, body: { id: 1, date_of_birth: body.date_of_birth } };
+        if (url.includes('/customers/1/children') && (init?.method === 'POST' || init?.method === 'PATCH')) {
+            const body = JSON.parse(String(init.body)) as { name: string | null; birth_month: number; birth_day: number; birth_year: number | null };
+            return { status: init.method === 'POST' ? 201 : 200, body: { id: 13, ...body, age: null, next_birthday: '2027-02-28' } };
         }
+        if (url.includes('/customers/1/children/') && init?.method === 'DELETE') return { status: 204 };
         if (url.includes('/customers/1/notes') && init?.method === 'POST') return { status: 201, body: { ...note, id: 5, body: JSON.parse(String(init.body)).body } };
         if (url.includes('/customers/1/notes')) return { status: 200, body: { data: [note] } };
         if (url.includes('/notifications/customers/1/preferences'))
@@ -237,73 +243,111 @@ describe('customer profile', () => {
     });
 });
 
-describe('birthday messages panel', () => {
-    const put = (calls: ReturnType<typeof mockApi>, part: string) => calls.mock.calls.filter(([url, init]) => String(url).includes(part) && init?.method === 'PUT').map(([, init]) => JSON.parse(String(init?.body)) as unknown);
+describe('kids & birthday reminders', () => {
+    const sent = (calls: ReturnType<typeof mockApi>, part: string, method: string) =>
+        calls.mock.calls.filter(([url, init]) => String(url).includes(part) && init?.method === method).map(([, init]) => (init?.body ? (JSON.parse(String(init.body)) as unknown) : null));
+    const panelOf = async (name = 'Kids & birthday reminders') => (await screen.findByRole('heading', { name })).closest('section')!;
 
-    it('records consent only after staff tick that the customer agreed', async () => {
+    it('shows children and birthday reminders on the Profile card (Figma 241:41502 / 241:41505)', async () => {
+        api(operator, profile(), givenByStaff);
+        renderApp('/customers/1');
+        const card = (await screen.findByRole('heading', { name: 'Profile' })).closest('section')!;
+        expect(await within(card).findByText('Arian (6) · Mehrin (3)')).toBeTruthy();
+        expect(await within(card).findByText('12 Mar · 04 Aug')).toBeTruthy();
+        expect(within(card).getByText('Has 2 kids')).toBeTruthy();
+    });
+
+    it('records consent only after staff tick that the customer agreed and say how', async () => {
         const calls = api();
         renderApp('/customers/1');
 
-        const panel = (await screen.findByRole('heading', { name: 'Birthday messages' })).closest('section')!;
-        expect(within(panel).getByText('04 May 1990')).toBeTruthy();
+        const panel = await panelOf();
+        expect(within(panel).getByText('Arian · 6 years')).toBeTruthy();
+        expect(within(panel).getByText('Birthday 12 Mar')).toBeTruthy();
         expect(await within(panel).findByText('Not opted in')).toBeTruthy();
         const record = within(panel).getByRole('button', { name: 'Record consent' }) as HTMLButtonElement;
         expect(record.disabled).toBe(true);
         expect((within(panel).getByRole('checkbox') as HTMLInputElement).checked).toBe(false); // never pre-ticked
 
-        fireEvent.click(within(panel).getByLabelText(/The customer agreed to a birthday message/));
+        fireEvent.click(within(panel).getByLabelText(/The customer agreed to birthday reminders with offers/));
+        expect(record.disabled).toBe(true); // still needs how
+        fireEvent.change(within(panel).getByLabelText(/How did they agree\?/), { target: { value: 'phone_call' } });
+        fireEvent.change(within(panel).getByLabelText(/^Note/), { target: { value: ' Agreed on the order call ' } });
         fireEvent.click(record);
 
-        await waitFor(() => expect(put(calls, '/consents')).toEqual([{ birthday: true, customer_confirmed: true }]));
+        await waitFor(() =>
+            expect(sent(calls, '/consents', 'PUT')).toEqual([{ birthday: true, customer_confirmed: true, confirmation_method: 'phone_call', confirmation_note: 'Agreed on the order call' }]),
+        );
         expect(await within(panel).findByText('Opted in')).toBeTruthy();
         expect(within(panel).getByText(/Given 10 Nov 2026, 10:15 am · recorded by Nadia/)).toBeTruthy();
+        expect(within(panel).getByText('How: Phone call — Agreed on the order call')).toBeTruthy();
     });
 
-    it('withdraws consent and shows when, and keeps when it was given', async () => {
+    it('withdraws consent and shows when, and keeps when and how it was given', async () => {
         const calls = api(operator, profile(), givenByStaff);
         renderApp('/customers/1');
 
-        const panel = (await screen.findByRole('heading', { name: 'Birthday messages' })).closest('section')!;
+        const panel = await panelOf();
         fireEvent.click(await within(panel).findByRole('button', { name: 'Withdraw consent' }));
 
-        await waitFor(() => expect(put(calls, '/consents')).toEqual([{ birthday: false }]));
+        await waitFor(() => expect(sent(calls, '/consents', 'PUT')).toEqual([{ birthday: false }]));
         expect(await within(panel).findByText('Withdrawn')).toBeTruthy();
         expect(within(panel).getByText(/Withdrawn 13 Nov 2026, 11:00 am · recorded by Nadia\. Last given 10 Nov 2026\./)).toBeTruthy();
     });
 
-    it('warns when a consent has no date of birth, and edits the date through the API', async () => {
-        const calls = api(operator, profile({ date_of_birth: null, has_date_of_birth: false }), givenByStaff);
+    it('adds, edits and removes a child through the API', async () => {
+        const calls = api(operator, profile({ children_count: 0, children: [] }), givenByStaff);
         renderApp('/customers/1');
 
-        const panel = (await screen.findByRole('heading', { name: 'Birthday messages' })).closest('section')!;
-        expect(await within(panel).findByText('No date of birth on file, so nothing will be sent until one is added.')).toBeTruthy();
-        expect(within(panel).getByText('Not recorded')).toBeTruthy();
-
-        fireEvent.click(within(panel).getByRole('button', { name: 'Add' }));
-        fireEvent.change(within(panel).getByLabelText('Date of birth'), { target: { value: '2016-02-29' } });
-        fireEvent.click(within(panel).getByRole('button', { name: 'Save date' }));
-        await waitFor(() => expect(put(calls, '/date-of-birth')).toEqual([{ date_of_birth: '2016-02-29' }]));
-        expect(await screen.findByText('Date of birth saved')).toBeTruthy();
+        const panel = await panelOf();
+        expect(await within(panel).findByText('No children on file, so nothing will be sent until one is added.')).toBeTruthy();
+        fireEvent.click(within(panel).getByRole('button', { name: 'Add a child' }));
+        const form = within(panel).getByRole('form', { name: 'Add a child' });
+        fireEvent.change(within(form).getByLabelText(/First name or nickname/), { target: { value: ' Leap ' } });
+        fireEvent.change(within(form).getByLabelText(/^Day/), { target: { value: '29' } });
+        fireEvent.change(within(form).getByLabelText(/^Month/), { target: { value: '2' } });
+        fireEvent.click(within(form).getByRole('button', { name: 'Add child' }));
+        await waitFor(() => expect(sent(calls, '/customers/1/children', 'POST')).toEqual([{ name: 'Leap', birth_month: 2, birth_day: 29, birth_year: null }]));
+        expect(await screen.findByText('Child added')).toBeTruthy();
     });
 
-    it('hides the date and every control from a role without customers.view_pii or customers.update', async () => {
-        const calls = api(reader, profile({ pii_masked: true, phone: '017****8046', email: null, risk: null, date_of_birth: null, has_date_of_birth: true }), givenByStaff);
+    it('edits and removes an existing child', async () => {
+        const calls = api(operator, profile(), givenByStaff);
+        renderApp('/customers/1');
+        const panel = await panelOf();
+
+        fireEvent.click(within(panel).getByRole('button', { name: 'Edit Arian' }));
+        const form = within(panel).getByRole('form', { name: 'Edit child' });
+        fireEvent.change(within(form).getByLabelText(/Birth year/), { target: { value: '' } });
+        fireEvent.click(within(form).getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(sent(calls, '/customers/1/children/11', 'PATCH')).toEqual([{ name: 'Arian', birth_month: 3, birth_day: 12, birth_year: null }]));
+
+        fireEvent.click(within(panel).getByRole('button', { name: 'Remove Mehrin' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+        await waitFor(() => expect(sent(calls, '/customers/1/children/12', 'DELETE')).toHaveLength(1));
+    });
+
+    it('hides children and every control from a role without customers.view_pii or customers.update', async () => {
+        const calls = api(reader, profile({ pii_masked: true, phone: '017****8046', email: null, risk: null, children_count: 2, children: null }), givenByStaff);
         renderApp('/customers/1');
 
-        const panel = (await screen.findByRole('heading', { name: 'Birthday messages' })).closest('section')!;
+        const panel = await panelOf();
         expect(await within(panel).findByText('Opted in')).toBeTruthy();
-        expect(within(panel).getByText('Recorded — hidden for your role')).toBeTruthy();
+        expect(within(panel).getByText('2 recorded — hidden for your role')).toBeTruthy();
         expect(within(panel).queryByRole('button')).toBeNull();
         expect(within(panel).queryByRole('checkbox')).toBeNull();
-        expect(document.body.textContent ?? '').not.toContain('1990');
-        expect(put(calls, '/')).toEqual([]);
+        const card = (await screen.findByRole('heading', { name: 'Profile' })).closest('section')!;
+        expect(within(card).getByText('2 · hidden')).toBeTruthy();
+        expect(document.body.textContent ?? '').not.toContain('Arian');
+        expect(calls.mock.calls.filter(([, init]) => init?.method && init.method !== 'GET')).toEqual([]);
     });
 
     it('renders the panel in Bangla with Western digits', async () => {
         api(operator, profile(), givenByStaff);
         renderApp('/customers/1', { locale: 'bn' });
-        const panel = (await screen.findByRole('heading', { name: 'জন্মদিনের বার্তা' })).closest('section')!;
+        const panel = await panelOf('সন্তান ও জন্মদিনের রিমাইন্ডার');
         expect(await within(panel).findByText('সম্মতি দিয়েছেন')).toBeTruthy();
+        expect(within(panel).getByText('Arian · 6 বছর')).toBeTruthy();
         expect(panel.textContent ?? '').not.toMatch(/[০-৯]/);
     });
 });

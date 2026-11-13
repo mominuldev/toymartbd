@@ -621,10 +621,12 @@ let account;
 let addresses;
 let wishlist;
 let birthdayConsent;
+let children;
+let nextChildId;
 
 function resetAccount() {
     account = {
-        id: 1, name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', email: 'sabrina@example.com', date_of_birth: null, preferred_language: 'bn',
+        id: 1, name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', email: 'sabrina@example.com', preferred_language: 'bn',
         phone_verified_at: '2026-11-01T04:00:00Z', member_since: '2026-03-14T04:00:00Z', counts: { orders: 4, wishlist: 2, addresses: 2 },
     };
     addresses = [
@@ -633,6 +635,8 @@ function resetAccount() {
     ];
     wishlist = [productFixtures[0], productFixtures[1]].map((p) => p.id);
     birthdayConsent = { consented: false, consented_at: null, withdrawn_at: null };
+    children = [];
+    nextChildId = 1;
 }
 resetAccount();
 
@@ -686,12 +690,11 @@ async function accountRoutes(req, res, url) {
     if (req.headers.authorization !== `Bearer ${CUSTOMER_TOKEN}`) return problemOf(res, 401, 'unauthenticated', 'Unauthenticated');
     if (p === '/account' && req.method === 'GET') return send(res, 200, { ...account, counts: { ...account.counts, wishlist: wishlist.length, addresses: addresses.length } });
     if (p === '/account' && req.method === 'PATCH') {
-        const body = await readJson(req);
-        if (body.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(body.date_of_birth)) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'date_of_birth', message: 'Enter a real date in the past.' }]);
-        Object.assign(account, body);
+        const { name, email, preferred_language } = await readJson(req);
+        Object.assign(account, Object.fromEntries(Object.entries({ name, email, preferred_language }).filter(([, v]) => v !== undefined)));
         return send(res, 200, account);
     }
-    // Birthday-message consent (P8): no row = not consented; a "no" after a "yes" is a withdrawal, kept.
+    // Birthday-reminder consent (P8): no row = not consented; a "no" after a "yes" is a withdrawal, kept.
     if (p === '/account/consents' && req.method === 'GET') return send(res, 200, { birthday: birthdayConsent });
     if (p === '/account/consents' && req.method === 'PUT') {
         const { birthday } = await readJson(req);
@@ -700,6 +703,28 @@ async function accountRoutes(req, res, url) {
         if (birthday && !birthdayConsent.consented) birthdayConsent = { consented: true, consented_at: now, withdrawn_at: null };
         else if (!birthday && birthdayConsent.consented) birthdayConsent = { ...birthdayConsent, consented: false, withdrawn_at: now };
         return send(res, 200, { birthday: birthdayConsent });
+    }
+    // My kids (P8 batch 3): first name/nickname + birthday, year optional; real dates only; at most 6.
+    if (p === '/account/children' && req.method === 'GET') return send(res, 200, { data: [...children].sort((a, b) => a.birth_month - b.birth_month || a.birth_day - b.birth_day || a.id - b.id) });
+    const childPath = p.match(/^\/account\/children(?:\/(\d+))?$/);
+    if (childPath && (req.method === 'POST' || req.method === 'PATCH')) {
+        const id = childPath[1] ? Number(childPath[1]) : null;
+        const existing = id === null ? null : children.find((c) => c.id === id);
+        if (id !== null && !existing) return problemOf(res, 404, 'not-found', 'Not Found');
+        const { name, birth_month, birth_day, birth_year } = await readJson(req);
+        const real = Number.isInteger(birth_month) && Number.isInteger(birth_day) && new Date(Date.UTC(birth_year ?? 2000, birth_month - 1, birth_day)).getUTCDate() === birth_day;
+        if (!real) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'birth_day', message: 'That birthday is not a real date. Check the day, month and year.' }]);
+        if (id === null && children.length >= 6) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'children', message: 'You can add up to 6 children. Remove one first.' }]);
+        const age = birth_year ? 2026 - birth_year : null;
+        const row = { id: id ?? nextChildId++, name: name || null, birth_month, birth_day, birth_year: birth_year ?? null, age, next_birthday: '2027-01-01' };
+        if (existing) Object.assign(existing, row);
+        else children.push(row);
+        return send(res, id === null ? 201 : 200, row);
+    }
+    if (childPath && childPath[1] && req.method === 'DELETE') {
+        const before = children.length;
+        children = children.filter((c) => c.id !== Number(childPath[1]));
+        return before === children.length ? problemOf(res, 404, 'not-found', 'Not Found') : res.writeHead(204).end();
     }
     if (p === '/account/logout') return res.writeHead(204).end();
     if (p === '/account/orders' && req.method === 'GET') {

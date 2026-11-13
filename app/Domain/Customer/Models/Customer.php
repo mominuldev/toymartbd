@@ -119,6 +119,12 @@ final class Customer extends Model implements AuthenticatableContract
         return $this->hasMany(Address::class);
     }
 
+    /** @return HasMany<CustomerChild, $this> Children's data (P8 batch 3): customers.view_pii only. */
+    public function children(): HasMany
+    {
+        return $this->hasMany(CustomerChild::class)->orderBy('birth_month')->orderBy('birth_day')->orderBy('id');
+    }
+
     /** @return HasMany<WishlistItem, $this> */
     public function wishlistItems(): HasMany
     {

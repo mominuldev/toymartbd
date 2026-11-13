@@ -42,7 +42,7 @@ final class CreditNoteController extends ApiController
      */
     #[QueryParameter('filter[invoice]', 'Credit notes of this invoice id.', type: 'integer')]
     #[QueryParameter('filter[order]', 'Credit notes of this order id.', type: 'integer')]
-    #[QueryParameter('filter[reason]', 'Why it was issued.', type: "'order_cancelled'|'refund'")]
+    #[QueryParameter('filter[reason]', 'Why it was issued.', type: "'order_cancelled'|'refund'|'order_edited'|'courier_return'")]
     #[QueryParameter('filter[search]', 'Credit-note or invoice number, order/RMA reference or customer name contains.', type: 'string')]
     #[QueryParameter('filter[issued_from]', 'Issued on or after this Dhaka date (Y-m-d).', type: 'string')]
     #[QueryParameter('filter[issued_to]', 'Issued on or before this Dhaka date (Y-m-d).', type: 'string')]

@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Customer\Models\Customer;
-use App\Domain\Notification\Actions\SendBirthdayMessages;
 use App\Domain\Notification\Actions\SendReviewRequests;
-use App\Domain\Notification\Actions\SetMessageConsent;
 use App\Domain\Notification\Actions\SetNotificationPreference;
 use App\Domain\Notification\Contracts\SmsGateway;
 use App\Domain\Notification\DTOs\SmsResult;
 use App\Domain\Notification\Enums\AutomationSkip;
-use App\Domain\Notification\Enums\MessageConsentPurpose;
 use App\Domain\Notification\Enums\NotificationCategory;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\NotificationStatus;
@@ -29,8 +26,8 @@ use Tests\Support\RoleMatrix;
 
 /*
  * P8 notification automation: review requests (N days after delivery, once per order,
- * marketing consent, quiet hours, link to the review form) and birthday messages (consent
- * required, 10:00 Dhaka, once a year). A second run sends nothing. WhatsApp templates are in
+ * marketing consent, quiet hours, link to the review form). Birthday reminders (before each
+ * child's birthday, P8 batch 3) are in BirthdayRemindersTest. A second run sends nothing. WhatsApp templates are in
  * the library as "not submitted"; WhatsApp stays off.
  */
 
@@ -146,53 +143,6 @@ it('does nothing when the review template is switched off', function (): void {
         ->and(AutomationSend::query()->sole()->skip_reason)->toBe(AutomationSkip::TemplateInactive);
 });
 
-it('sends a birthday message at 10:00 Dhaka to a consented customer, once a year', function (): void {
-    $sms = automationSms();
-    $customer = Customer::factory()->create(['name' => 'Rahim Uddin', 'preferred_language' => 'en', 'date_of_birth' => '1990-11-13']);
-    $other = Customer::factory()->create(['date_of_birth' => '1991-11-13']); // no consent
-    app(SetMessageConsent::class)->handle($customer->id, MessageConsentPurpose::Birthday, true, 'admin', null);
-
-    // 09:30 Dhaka: too early.
-    expect(app(SendBirthdayMessages::class)->handle(Carbon::parse('2026-11-13 03:30:00')))->toBe(['queued' => 0, 'skipped' => 0]);
-    $at = Carbon::parse('2026-11-13 04:00:00'); // 10:00 Dhaka
-    expect(app(SendBirthdayMessages::class)->handle($at))->toBe(['queued' => 1, 'skipped' => 0])
-        ->and(app(SendBirthdayMessages::class)->handle($at->copy()->addHours(3)))->toBe(['queued' => 0, 'skipped' => 0]);
-
-    $log = NotificationLog::query()->where('template', 'customer.birthday')->sole();
-    expect($log->status)->toBe(NotificationStatus::Sent)
-        ->and($log->notifiable_type)->toBe(NotificationLog::NOTIFIABLE_CUSTOMER)
-        ->and($log->recipient)->not->toContain(substr($customer->phone, -8))
-        ->and($sms->sent)->toHaveCount(1)
-        ->and($sms->sent[0]['to'])->toBe($customer->phone)
-        ->and($sms->sent[0]['body'])->toStartWith('Happy birthday, Rahim!')
-        ->and(AutomationSend::query()->where('subject_id', $other->id)->exists())->toBeFalse();
-
-    // Next year: again, once.
-    expect(app(SendBirthdayMessages::class)->handle(Carbon::parse('2027-11-13 05:00:00')))->toBe(['queued' => 1, 'skipped' => 0]);
-});
-
-it('skips a consented customer who opted out of marketing SMS, and honours a withdrawn consent', function (): void {
-    automationSms();
-    $out = Customer::factory()->create(['date_of_birth' => '1990-11-13']);
-    $withdrawn = Customer::factory()->create(['date_of_birth' => '1990-11-13']);
-    app(SetMessageConsent::class)->handle($out->id, MessageConsentPurpose::Birthday, true, 'admin', null);
-    optInMarketing($out->id, false);
-    app(SetMessageConsent::class)->handle($withdrawn->id, MessageConsentPurpose::Birthday, true, 'storefront', null);
-    app(SetMessageConsent::class)->handle($withdrawn->id, MessageConsentPurpose::Birthday, false, 'storefront', null);
-
-    expect(app(SendBirthdayMessages::class)->handle(Carbon::parse('2026-11-13 04:30:00')))->toBe(['queued' => 0, 'skipped' => 1])
-        ->and(AutomationSend::query()->sole()->skip_reason)->toBe(AutomationSkip::OptedOut)
-        ->and(NotificationLog::query()->count())->toBe(0);
-});
-
-it('celebrates a 29 February birthday on 28 February in a non-leap year', function (): void {
-    automationSms();
-    $leap = Customer::factory()->create(['date_of_birth' => '2000-02-29']);
-    app(SetMessageConsent::class)->handle($leap->id, MessageConsentPurpose::Birthday, true, 'admin', null);
-
-    expect(app(SendBirthdayMessages::class)->handle(Carbon::parse('2027-02-28 05:00:00')))->toBe(['queued' => 1, 'skipped' => 0]);
-});
-
 it('reads and saves the automation settings and the birthday consent', function (): void {
     Tests\Feature\Orders\Support::actingAs(App\Models\Enums\Role::Manager);
     $this->getJson('/api/v1/admin/notifications/automations')->assertOk()
@@ -204,7 +154,7 @@ it('reads and saves the automation settings and the birthday consent', function 
 
     $customer = Customer::factory()->create();
     $this->getJson("/api/v1/admin/notifications/customers/{$customer->id}/consents")->assertOk()->assertJsonPath('birthday.consented', false);
-    $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true])
+    $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true, 'confirmation_method' => 'in_person'])
         ->assertOk()->assertJsonPath('birthday.consented', true)->assertJsonPath('birthday.source', 'admin');
 });
 
@@ -217,34 +167,6 @@ describe('role matrix', function (): void {
     it('guards the birthday consent (customers.view / customers.update)', function (): void {
         $customer = Customer::factory()->create();
         RoleMatrix::assert($this, Permission::CustomersView, fn () => $this->getJson("/api/v1/admin/notifications/customers/{$customer->id}/consents"));
-        RoleMatrix::assert($this, Permission::CustomersUpdate, fn () => $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true]));
+        RoleMatrix::assert($this, Permission::CustomersUpdate, fn () => $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true, 'confirmation_method' => 'in_person']));
     });
-});
-
-it('sends a birthday message over WhatsApp first when WhatsApp is on, falling back to SMS if refused', function (): void {
-    $sms = automationSms();
-    config(['notifications.whatsapp.enabled' => true]);
-    $refusing = new class implements App\Domain\Notification\Contracts\WhatsAppGateway
-    {
-        /** @var list<array{template: string, parameters: list<string>}> */
-        public array $sent = [];
-
-        public function sendTemplate(string $e164Phone, string $providerTemplate, string $language, array $parameters, string $template): App\Domain\Notification\DTOs\WhatsAppResult
-        {
-            $this->sent[] = ['template' => $providerTemplate, 'parameters' => $parameters];
-
-            return App\Domain\Notification\DTOs\WhatsAppResult::rejected('template not approved');
-        }
-    };
-    app()->instance(App\Domain\Notification\Contracts\WhatsAppGateway::class, $refusing);
-    $customer = Customer::factory()->create(['name' => 'নুসরাত জাহান', 'date_of_birth' => '1990-11-13']);
-    app(SetMessageConsent::class)->handle($customer->id, MessageConsentPurpose::Birthday, true, 'admin', null);
-
-    app(SendBirthdayMessages::class)->handle(Carbon::parse('2026-11-13 04:00:00'));
-
-    $logs = NotificationLog::query()->where('template', 'customer.birthday')->orderBy('id')->get();
-    expect($refusing->sent)->toBe([['template' => 'customer_birthday', 'parameters' => ['নুসরাত']]])
-        ->and($logs->pluck('channel')->all())->toBe([NotificationChannel::WhatsApp, NotificationChannel::Sms])
-        ->and($logs[1]->status)->toBe(NotificationStatus::Sent)
-        ->and($sms->sent[0]['body'])->toStartWith('শুভ জন্মদিন, নুসরাত!');
 });
