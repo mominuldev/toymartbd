@@ -22,7 +22,7 @@ Each item below lists its scope; check the code on disk to see how far it got, t
 | # | Scope | State at handoff |
 |---|---|---|
 | 1 | CMS typed blocks + homepage builder + signed live preview + scheduling (app/Domain/Content, admin features/content/home, storefront components/content/blocks) | running |
-| 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | running |
+| 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | **done** |
 | 3 | Blog: posts/categories/tags/authors, buying guides with live product picks, related posts | **done** (shared `App\Support\PreviewToken`; SEO type `blog_post`) |
 | 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | **done** — rows 4–7 except Search Console metrics/site audit (`docs/api/seo.md`) |
 | 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | **done** — see open items below |
@@ -51,11 +51,14 @@ Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the
 
 - SEO follow-ups: title separator mismatch (server " | " vs storefront template " · "); Content↔Seo deptrac cycle to review; blog/CMS actions write seo_meta/slug_history themselves alongside generic SaveSeoMeta/RecordSlugChange — fold into one path; blog_category/tag/author have no SEO provider (not in panel/sitemaps); `next.config.ts` `htmlLimitedBots: /.*/` makes metadata fetches count against TTFB.
 
+- Pages follow-ups: page saves purge `content:page:{slug}` but the SEO fetch is tagged `seo` + `page:{slug}` — align tags so a page SEO save revalidates; check `app/[locale]/pages/about/page.tsx` still uses the lib/seo metadata helpers (agent 2's fork rewrote it); two scheduled revalidation commands (`toymart:content:revalidate-schedule` from agent 1 and `toymart:content:revalidate-scheduled` from agent 2) — merge into one; shared sanitiser strips relative links in page bodies; storefront Playwright `/pages/privacy` 404 test needs the mock API endpoint; untraced failures last seen: MediaRoleMatrixTest ×1, DemoCatalogSeederTest ×2, Arch BoundariesTest "Path not found" ×2.
+
 ## Owner decisions still open
 - Managers can now change courier/SMS credentials (decision 6) — confirm the security impact is understood.
 - Bangla no-rider out-for-delivery SMS drops "অর্ডার" to stay 1 segment — keep or full copy (2 segments)?
 - Meta approval for WhatsApp `order_out_for_delivery_no_rider`; design sign-off for the shipment rider row (no Figma frame).
 - Flash sales default `allows_coupons=false`? Where do guests give phone + consent for cart reminders (never on checkout)? All `config/cart_recovery.php` values are placeholders. Promotion budgets exclude delivery saved by free-delivery promotions.
+- Static page copy incl. policies is the owner's (seeded drafts are placeholders); should `/store` open on Pages instead of Media; per-page header colour needed?; title separator " | " vs " · ".
 - Earlier open lists: IMPLEMENTATION-PLAN "Owner decisions open" lines in every progress section.
 - Still owed by the owner: Gate 4 UAT on staging (`docs/ops/UAT-GATE-4.md`), ten real-order profit hand check
   (`docs/ops/PROFIT-RECONCILIATION.md`), staging host, SSLCommerz merchant account, Steadfast merchant account,
