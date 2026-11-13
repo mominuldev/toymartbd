@@ -1,0 +1,108 @@
+import type { Locale } from '../i18n/config';
+
+// Blog and buying-guide copy (Phase 7), English and Bangla. Kept beside the blog code rather than in
+// lib/i18n/en.ts|bn.ts so it does not churn the shared catalogues. Western numerals in both (rule 36).
+// The section name follows content spec §nav.link.blog: "Toy guide" / "খেলনা গাইড".
+// REVIEW(bn): first-draft Bangla, needs a native reader before launch.
+
+const en = {
+    title: 'Toy guide',
+    intro: 'Honest advice for parents in Bangladesh: what to buy, for which age, and why.',
+    metaDescription: 'Toy guides, gift ideas and parenting tips for Bangladeshi families, from Toy Mart BD.',
+    guidesTitle: 'Buying guides',
+    guidesIntro: 'Hand-picked toys by age and budget, with live prices from our shop.',
+    guidesMeta: 'Toy buying guides by age and budget, with live prices and stock, from Toy Mart BD.',
+    home: 'Home',
+    breadcrumb: 'Breadcrumb',
+    all: 'All',
+    categoriesNav: 'Blog categories',
+    readTime: '{minutes} min read',
+    by: 'By {name}',
+    publishedOn: 'Published {date}',
+    pageTitle: '{title} — page {page}',
+    categoryTitle: '{name}',
+    tagTitle: 'Posts tagged “{name}”',
+    authorTitle: 'Posts by {name}',
+    categoryMeta: '{name} — articles and guides from the Toy Mart BD toy guide.',
+    tagMeta: 'Articles and guides about {name} from the Toy Mart BD toy guide.',
+    authorMeta: 'Articles and guides by {name} for the Toy Mart BD toy guide.',
+    empty: 'Nothing here yet',
+    emptyBody: 'New guides are on the way. Meanwhile, browse toys by age.',
+    browse: 'Browse toys',
+    tags: 'Tags',
+    aboutAuthor: 'About the author',
+    relatedPosts: 'Keep reading',
+    relatedProducts: 'Toys from this article',
+    ourPicks: 'Our picks',
+    forAges: 'For ages {range}',
+    budget: 'Budget {range}',
+    budgetUpTo: 'Up to {max}',
+    budgetFrom: 'From {min}',
+    whyPicked: 'Why we picked it',
+    pagination: 'Pagination',
+    previous: 'Previous page',
+    next: 'Next page',
+    page: 'Page {page}',
+    pageCurrent: 'Page {page}, current page',
+    pageOf: 'Page {page} of {total}',
+    showingRange: 'Showing {from}–{to} of {total} posts',
+    previewBanner: 'Preview — this is how the post will look. It is not public yet.',
+    previewTitle: 'Post preview',
+    guideBadge: 'Buying guide',
+    fallbackLang: 'Shown in English — Bangla coming soon',
+};
+
+export type BlogMessages = typeof en;
+
+const bn: BlogMessages = {
+    title: 'খেলনা গাইড',
+    intro: 'বাংলাদেশের অভিভাবকদের জন্য সৎ পরামর্শ: কী কিনবেন, কোন বয়সের জন্য, আর কেন।',
+    metaDescription: 'বাংলাদেশি পরিবারের জন্য খেলনা গাইড, উপহারের আইডিয়া ও প্যারেন্টিং টিপস — টয় মার্ট বিডি।',
+    guidesTitle: 'কেনাকাটার গাইড',
+    guidesIntro: 'বয়স ও বাজেট অনুযায়ী বাছাই করা খেলনা, আমাদের দোকানের হালনাগাদ দামসহ।',
+    guidesMeta: 'বয়স ও বাজেট অনুযায়ী খেলনা কেনার গাইড, হালনাগাদ দাম ও স্টকসহ — টয় মার্ট বিডি।',
+    home: 'হোম',
+    breadcrumb: 'ব্রেডক্রাম্ব',
+    all: 'সব',
+    categoriesNav: 'ব্লগের বিভাগ',
+    readTime: '{minutes} মিনিটে পড়ুন',
+    by: 'লিখেছেন {name}',
+    publishedOn: 'প্রকাশিত {date}',
+    pageTitle: '{title} — পৃষ্ঠা {page}',
+    categoryTitle: '{name}',
+    tagTitle: '“{name}” ট্যাগের লেখা',
+    authorTitle: '{name}-এর লেখা',
+    categoryMeta: '{name} — টয় মার্ট বিডি খেলনা গাইডের লেখা ও গাইড।',
+    tagMeta: '{name} নিয়ে টয় মার্ট বিডি খেলনা গাইডের লেখা ও গাইড।',
+    authorMeta: 'টয় মার্ট বিডি খেলনা গাইডে {name}-এর লেখা ও গাইড।',
+    empty: 'এখানে এখনো কিছু নেই',
+    emptyBody: 'নতুন গাইড আসছে। ততক্ষণ বয়স অনুযায়ী খেলনা দেখুন।',
+    browse: 'খেলনা দেখুন',
+    tags: 'ট্যাগ',
+    aboutAuthor: 'লেখক সম্পর্কে',
+    relatedPosts: 'আরও পড়ুন',
+    relatedProducts: 'এই লেখার খেলনা',
+    ourPicks: 'আমাদের বাছাই',
+    forAges: '{range} বয়সের জন্য',
+    budget: 'বাজেট {range}',
+    budgetUpTo: '{max} পর্যন্ত',
+    budgetFrom: '{min} থেকে',
+    whyPicked: 'কেন বাছাই করেছি',
+    pagination: 'পৃষ্ঠা নির্বাচন',
+    previous: 'আগের পৃষ্ঠা',
+    next: 'পরের পৃষ্ঠা',
+    page: 'পৃষ্ঠা {page}',
+    pageCurrent: 'পৃষ্ঠা {page}, বর্তমান পৃষ্ঠা',
+    pageOf: 'পৃষ্ঠা {page} / {total}',
+    showingRange: '{total}টি লেখার মধ্যে {from}–{to}',
+    previewBanner: 'প্রিভিউ — লেখাটি এভাবে দেখাবে। এটি এখনো প্রকাশিত হয়নি।',
+    previewTitle: 'লেখার প্রিভিউ',
+    guideBadge: 'কেনাকাটার গাইড',
+    fallbackLang: 'ইংরেজিতে দেখানো হচ্ছে — বাংলা শিগগিরই আসছে',
+};
+
+const catalogs: Record<Locale, BlogMessages> = { en, bn };
+
+export function blogMessages(locale: Locale): BlogMessages {
+    return catalogs[locale];
+}

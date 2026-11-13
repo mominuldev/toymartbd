@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Providers\AppServiceProvider;
 use App\Providers\AuthServiceProvider;
+use App\Providers\CmsBlocksServiceProvider;
 use App\Providers\CourierTrackingServiceProvider;
 use App\Providers\FinanceServiceProvider;
 use App\Providers\FulfilmentServiceProvider;
@@ -13,6 +14,7 @@ use App\Providers\PurchasingServiceProvider;
 use App\Providers\ReturnsServiceProvider;
 use App\Providers\RiskServiceProvider;
 use App\Providers\SearchServiceProvider;
+use App\Providers\SeoServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -26,4 +28,8 @@ return [
     ReturnsServiceProvider::class,
     RiskServiceProvider::class,
     SearchServiceProvider::class,
+    CmsBlocksServiceProvider::class,
+    SeoServiceProvider::class,
+    App\Providers\BlogServiceProvider::class,
+    App\Providers\StoreContentServiceProvider::class,
 ];

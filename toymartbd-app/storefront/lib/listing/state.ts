@@ -193,12 +193,14 @@ export function withCategory(state: ListingState, category: string | null): List
 
 /**
  * Indexing rule (§A7.5, §A8): the bare listing and a single-value, single-facet view are canonical
- * and indexable (`?age=24-48` is a landing page). Anything else — several facets, several values,
- * a non-default sort or a later page — is `noindex, follow` with its canonical on the bare listing.
+ * and indexable (`?age=24-48` is a landing page). Pagination SEO (Phase 7): a later page of such a
+ * view is its own page — self-canonical, cursor included, and indexable — so products deep in a
+ * category stay reachable; it is never canonicalised to page 1. Anything else — several facets,
+ * several values or a non-default sort — is `noindex, follow` with its canonical on the bare listing.
  */
 export function indexing(state: ListingState): { indexable: boolean; canonical: ListingState } {
     const filters = activeFilters(state);
-    const plain = state.sort === DEFAULT_SORT && state.cursor === null;
-    if (plain && filters.length <= 1) return { indexable: true, canonical: { ...state, cursor: null } };
+    const plainSort = state.sort === DEFAULT_SORT;
+    if (plainSort && filters.length <= 1) return { indexable: true, canonical: { ...state } };
     return { indexable: false, canonical: emptyState() };
 }

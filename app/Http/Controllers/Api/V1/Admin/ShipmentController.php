@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Fulfilment\Actions\CancelShipment;
+use App\Domain\Fulfilment\Actions\RecordShipmentRider;
 use App\Domain\Fulfilment\Actions\RequestShipment;
 use App\Domain\Fulfilment\Actions\RequestShipments;
 use App\Domain\Fulfilment\Actions\RetryShipment;
@@ -17,6 +18,7 @@ use App\Http\Requests\Admin\Shipment\BulkRequestShipmentsRequest;
 use App\Http\Requests\Admin\Shipment\CancelShipmentRequest;
 use App\Http\Requests\Admin\Shipment\RequestShipmentRequest;
 use App\Http\Requests\Admin\Shipment\RetryShipmentRequest;
+use App\Http\Requests\Admin\Shipment\UpdateShipmentRiderRequest;
 use App\Http\Resources\Admin\ShipmentBulkResultResource;
 use App\Http\Resources\Admin\ShipmentResource;
 use Dedoc\Scramble\Attributes\QueryParameter;
@@ -123,6 +125,17 @@ final class ShipmentController extends ApiController
     public function cancel(CancelShipmentRequest $request, Shipment $shipment, CancelShipment $action): ShipmentResource
     {
         return self::resource($action->handle($shipment, $request->reason()));
+    }
+
+    /**
+     * `PATCH /shipments/{shipment}/rider` — record (or clear, both null) the delivery rider the
+     * courier sent, when the rider calls. Needs shipments.book; audited with the phone masked.
+     * The phone comes back in full only with customers.view_pii. Never resends a message.
+     */
+    #[OpenApiResponse(409, 'The shipment is pending, failed or cancelled — no courier holds it (`conflict`)')]
+    public function rider(UpdateShipmentRiderRequest $request, Shipment $shipment, RecordShipmentRider $action): ShipmentResource
+    {
+        return self::resource($action->handle($shipment, $request->riderName(), $request->riderPhone(), $request->user()?->id));
     }
 
     private function list(Request $request, bool $needsAttention): AnonymousResourceCollection

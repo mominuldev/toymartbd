@@ -12,6 +12,7 @@ use App\Domain\Ordering\Events\OrderConfirmed;
 use App\Domain\Ordering\Events\OrderDelivered;
 use App\Domain\Ordering\Events\OrderPlaced;
 use App\Domain\Ordering\Events\OrderShipped;
+use App\Domain\Ordering\Queries\OrderRiderContact;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
@@ -23,12 +24,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
  * ShipmentStatusChanged with `to = out_for_delivery`, after commit. Only that transition is
  * queued ({@see ShouldQueue()}), and an order gets the message once — a second delivery
  * attempt does not message the customer again.
+ *
+ * It names the RIDER's phone (owner decision 2026-11-13), read through Ordering's
+ * {@see OrderRiderContact} (Notification never imports Fulfilment). With no rider recorded
+ * the `order.out_for_delivery.no_rider` variant goes instead — no rider line, no hotline in
+ * its place. Either variant counts as "sent once": recording the rider afterwards does not
+ * send the message again.
  */
 final readonly class QueueOrderNotifications implements ShouldQueue
 {
     private const string OUT_FOR_DELIVERY = 'out_for_delivery';
 
-    public function __construct(private QueueOrderNotification $queue) {}
+    public const string TEMPLATE_OUT_FOR_DELIVERY = 'order.out_for_delivery';
+
+    public const string TEMPLATE_OUT_FOR_DELIVERY_NO_RIDER = 'order.out_for_delivery.no_rider';
+
+    public function __construct(private QueueOrderNotification $queue, private OrderRiderContact $riders) {}
 
     public function viaQueue(): string
     {
@@ -70,14 +81,21 @@ final readonly class QueueOrderNotifications implements ShouldQueue
 
     public function onShipmentStatusChanged(ShipmentStatusChanged $event): void
     {
+        if ($event->to !== self::OUT_FOR_DELIVERY) {
+            return;
+        }
+
         $already = NotificationLog::query()
             ->where('notifiable_type', NotificationLog::NOTIFIABLE_ORDER)
             ->where('notifiable_id', $event->orderId)
-            ->where('template', 'order.out_for_delivery')
+            ->whereIn('template', [self::TEMPLATE_OUT_FOR_DELIVERY, self::TEMPLATE_OUT_FOR_DELIVERY_NO_RIDER])
             ->exists();
 
-        if ($event->to === self::OUT_FOR_DELIVERY && ! $already) {
-            $this->queue->handle($event->orderId, 'order.out_for_delivery');
+        if (! $already) {
+            $this->queue->handle(
+                $event->orderId,
+                $this->riders->phoneFor($event->orderId) !== null ? self::TEMPLATE_OUT_FOR_DELIVERY : self::TEMPLATE_OUT_FOR_DELIVERY_NO_RIDER,
+            );
         }
     }
 }

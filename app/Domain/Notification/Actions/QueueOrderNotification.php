@@ -60,7 +60,9 @@ final readonly class QueueOrderNotification
                 'locale' => $locale,
                 'notifiable_type' => NotificationLog::NOTIFIABLE_ORDER,
                 'notifiable_id' => $order->id,
-                'payload' => $variables,
+                // The rider's phone is re-read at send time like the recipient's; the row keeps
+                // it masked only (rule 20).
+                'payload' => self::storable($variables),
                 'queued_at' => now(),
             ];
 
@@ -133,6 +135,22 @@ final readonly class QueueOrderNotification
 
         return TemplateCatalog::supports($key, $channel)
             && NotificationTemplate::query()->where('key', $key)->where('channel', $channel->value)->where('is_active', true)->exists();
+    }
+
+    /**
+     * The variables as stored on `notification_logs.payload`: a phone variable masked
+     * (`017****5678`). The send job re-reads the real number ({@see SendNotification}).
+     *
+     * @param  array<string, string>  $variables
+     * @return array<string, string>
+     */
+    public static function storable(array $variables): array
+    {
+        if (($variables['rider_phone'] ?? '') !== '') {
+            $variables['rider_phone'] = PhoneNumber::tryParse($variables['rider_phone'])?->masked() ?? '***';
+        }
+
+        return $variables;
     }
 
     /** "n•••@example.com" (rule 20 spirit: logs and admin screens never show a full address). */

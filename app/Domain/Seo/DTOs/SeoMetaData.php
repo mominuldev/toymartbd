@@ -25,5 +25,7 @@ final readonly class SeoMetaData
         public TwitterCard $twitterCard = TwitterCard::SummaryLargeImage,
         public ?array $schemaOverride = null,
         public ?string $focusKeyword = null,
+        public ?string $ogTitleBn = null,
+        public ?string $ogDescriptionBn = null,
     ) {}
 }

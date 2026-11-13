@@ -99,7 +99,10 @@ test.describe('desktop', () => {
         await page.getByRole('link', { name: 'Show more products' }).click();
         await expect(page).toHaveURL(/\?cursor=/);
         await expect(cards(page)).toHaveText(['Magnetic Tiles Starter Set 60 pcs', 'Hape Pound & Tap Bench with Xylophone', 'DUPLO Animal Train', 'DUPLO My First Town']);
-        await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+        // Pagination SEO (Phase 7): a later page is indexable and self-canonical, with rel=next.
+        await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', new RegExp(`/categories/building-blocks\\?cursor=`));
+        await expect(page.locator('head link[rel="next"]')).toHaveAttribute('href', /\?cursor=/);
         await page.getByRole('link', { name: 'Show more products' }).click();
         await expect(cards(page)).toHaveText(['LEGO Technic Race Car', 'LEGO City Fire Station']);
         await expect(page.getByRole('link', { name: 'Show more products' })).toHaveCount(0);

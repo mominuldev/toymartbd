@@ -86,7 +86,7 @@ Start from `.env.example`. Every variable below is read by `config/*.php`. The l
 
 | Variable | Value | Effect |
 |---|---|---|
-| `SMS_DRIVER`, `SMS_REVE_*`, `SMS_COST_PER_SEGMENT` | leave unset (optional fallback) | **SMS credentials are entered in the admin, not here** (owner decision 2026-11-13). Sign in as super_admin → **Admin → Integrations → Messaging** (`/admin/integrations/messaging`): Provider = REVE SMS, API base URL (`https://smpp.ajuratech.com:7790`), API key, secret key and sender ID from the provider panel, and the contracted cost per segment (0.64 is a placeholder). Keys are stored encrypted in `settings` (needs a stable `APP_KEY` — rotating it makes saved keys unreadable, and they must be re-entered), are never shown again (only the last 4 characters), and every change is written to `audit_sensitive` as `credential_changed` without the value. A saved value applies to the next SMS, queue workers included — no restart. These env variables are only used for a value nobody has saved in the admin (CI, older deployments); never commit real keys. Before the UAT, use **Send test SMS** on that screen (or `php artisan toymart:sms:test 017XXXXXXXX`, and again with `--bn` — same settings) and confirm both English and Bangla arrive intact. |
+| `SMS_DRIVER`, `SMS_REVE_*`, `SMS_COST_PER_SEGMENT` | leave unset (optional fallback) | **SMS credentials are entered in the admin, not here** (owner decision 2026-11-13). Sign in as super_admin or a manager (managers hold Integrations since the owner's decision of 2026-11-13) → **Admin → Integrations → Messaging** (`/admin/integrations/messaging`): Provider = REVE SMS, API base URL (`https://smpp.ajuratech.com:7790`), API key and secret key from the provider panel, the sender ID — the owner's REVE sender is **non-masking**, so it is the number, digits only (`880XXXXXXXXXX`, `01XXXXXXXXX` or a 5–15-digit short code; a brand name is refused) — and the cost per segment, **৳0.26** (the owner's REVE rate, 2026-11-13; also the default). Keys are stored encrypted in `settings` (needs a stable `APP_KEY` — rotating it makes saved keys unreadable, and they must be re-entered), are never shown again (only the last 4 characters), and every change is written to `audit_sensitive` as `credential_changed` without the value. A saved value applies to the next SMS, queue workers included — no restart. These env variables are only used for a value nobody has saved in the admin (CI, older deployments); never commit real keys. Before the UAT, use **Send test SMS** on that screen (or `php artisan toymart:sms:test 017XXXXXXXX`, and again with `--bn` — same settings) and confirm both English and Bangla arrive intact. |
 | `WHATSAPP_DRIVER` | `log` | No WhatsApp Business account yet. `WHATSAPP_ACCESS_TOKEN` stays empty. |
 | `WHATSAPP_ENABLED` | `false` (the default) | **Must stay off while there is no WhatsApp account.** It is the fallback for the **WhatsApp** switch on Admin → Integrations → Messaging, which wins once saved — check the switch is off there too. With it on, order updates go to the WhatsApp log driver, which reports success, so the SMS fallback never fires and no customer gets an order SMS. |
 | `SMS_LOG_CHANNEL` | empty | The log line goes to the default channel |
@@ -201,11 +201,15 @@ Use one cron entry, as the deploy user, on **one** server: `* * * * * cd /path/t
 | `toymart:backup` | daily 02:00 | Encrypted backup to `BACKUP_DISK` |
 | `toymart:inventory:reconcile` | daily 03:30 | Invariant: stock movements = stock levels. Alerts and mails on drift; never corrects. |
 | `toymart:inventory:digest` | daily 09:00 (`inventory.alerts.digest_time`) | Low-stock digest to managers |
+| `toymart:content:revalidate-scheduled` | every minute | **The one scheduled-content sweep** (P7): a homepage CMS block's start/end (`content:home`), a banner's start/end (`content:banners`) or a static page's publish time (`content:page:{slug}` + `page:{slug}`) that passed since the last run purges those storefront cache tags. It replaced the blocks-only `toymart:content:revalidate-schedule`, which no longer exists |
+| `toymart:promotions:boundaries` | every minute | Promotion / flash-sale start or end → storefront revalidation (`products`, `flash-sale`, each sale product) |
+| `toymart:blog:publish-due` | every minute | Publishes scheduled blog posts and buying guides whose time has come (registered in `BlogServiceProvider`) |
+| `toymart:carts:recover` | every 10 minutes | Abandoned-cart reminders (consent and quiet hours enforced in the Action) |
+| `toymart:couriers:sync-locations pathao --queue` | daily 04:00 | Pathao city/zone/area mirror — only once Pathao credentials exist |
+| `GenerateSitemaps` (job) | daily 03:00 | XML sitemaps rebuilt on `index`, then the storefront's cached copies purged |
 
 These §7 tasks are **not scheduled yet**:
 
-- abandoned-cart detection
-- sitemap regeneration
 - stale-cart cleanup
 - the nightly search reindex
 - `toymart:search:lag-check`

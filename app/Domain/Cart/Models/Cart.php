@@ -26,6 +26,10 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $token
  * @property int|null $customer_id
+ * @property string|null $phone E.164 contact a guest left for recovery (P7)
+ * @property bool $marketing_consent the guest opted in to one cart reminder (P7)
+ * @property string|null $locale
+ * @property Carbon|null $contact_captured_at
  * @property int|null $coupon_id
  * @property string $currency
  * @property Money $subtotal
@@ -79,6 +83,8 @@ final class Cart extends Model
     {
         return [
             'customer_id' => 'integer',
+            'marketing_consent' => 'boolean',
+            'contact_captured_at' => 'datetime',
             'coupon_id' => 'integer',
             'subtotal' => MoneyCast::class,
             'discount_total' => MoneyCast::class,

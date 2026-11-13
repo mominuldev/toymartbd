@@ -120,7 +120,11 @@ export function MegaMenu({ locale, items, label }: Props) {
     if (items.length === 0) return null;
 
     const role = <T extends string>(value: T) => (enhanced ? value : undefined);
-    const href = (link: MenuLink) => localizedPath(locale, link.path);
+    // CMS menu links (lib/content/types.ts): an external https URL stays absolute; a new-tab item opens with rel=noopener.
+    const href = (link: MenuLink) => ({
+        href: link.external ? link.path : localizedPath(locale, link.path),
+        ...(link.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : link.external ? { rel: 'noopener' } : {}),
+    });
 
     return (
         <nav
@@ -151,7 +155,7 @@ export function MegaMenu({ locale, items, label }: Props) {
                                         triggers.current[index] = el;
                                     }}
                                     id={triggerId}
-                                    href={href(item.label)}
+                                    {...href(item.label)}
                                     lang={item.label.lang}
                                     role={role('menuitem')}
                                     aria-haspopup={enhanced && withPanel ? 'true' : undefined}
@@ -197,7 +201,7 @@ interface PanelProps {
     item: MenuItem;
     index: number;
     enhanced: boolean;
-    href: (link: MenuLink) => string;
+    href: (link: MenuLink) => { href: string; target?: string; rel?: string };
     links: Map<string, HTMLAnchorElement>;
 }
 
@@ -219,7 +223,7 @@ function Panel({ item, index, enhanced, href, links }: PanelProps) {
                             <a
                                 ref={register(0, 0)}
                                 {...position()}
-                                href={href(item.viewAll)}
+                                {...href(item.viewAll)}
                                 role={role('menuitem')}
                                 className="t-label inline-flex items-center self-start rounded-xs text-fg-link underline-offset-4 hover:underline"
                             >
@@ -235,7 +239,7 @@ function Panel({ item, index, enhanced, href, links }: PanelProps) {
                                         ref={register(column, headingPos['data-row'])}
                                         {...headingPos}
                                         id={headingId}
-                                        href={href(group.heading)}
+                                        {...href(group.heading)}
                                         lang={group.heading.lang}
                                         role={role('menuitem')}
                                         className="t-overline self-start rounded-xs text-fg-tertiary hover:text-fg-link"
@@ -251,7 +255,7 @@ function Panel({ item, index, enhanced, href, links }: PanelProps) {
                                                         <a
                                                             ref={register(column, pos['data-row'])}
                                                             {...pos}
-                                                            href={href(link)}
+                                                            {...href(link)}
                                                             lang={link.lang}
                                                             role={role('menuitem')}
                                                             className="t-body-sm flex min-h-7 items-center rounded-xs text-fg-secondary hover:text-fg-link"

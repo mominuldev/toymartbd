@@ -11,6 +11,7 @@ import { validToken } from '@/lib/cart/server';
 import { ORDER_NUMBER } from '@/lib/checkout/form';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { getPlacedOrder } from '@/lib/order/fetch';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /orders/{number} — the order confirmation (P4-STO-10). There is no Figma frame of its own: it is
 // assembled from the checkout and tracking parts (header card, OrderTimeline, delivery details,
@@ -26,9 +27,9 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { locale } = await params;
+    const { locale, number } = await params;
     if (!isLocale(locale)) return {};
-    return { title: getMessages(locale).order.thanksTitle, robots: { index: false, follow: false } };
+    return privateMetadata(locale, `/orders/${encodeURIComponent(number)}`, getMessages(locale).order.thanksTitle);
 }
 
 export default async function OrderConfirmationPage({ params }: Props) {

@@ -2,8 +2,11 @@ import type { ReactNode } from 'react';
 
 import { buildMenu } from '@/lib/category-tree';
 import { getCategoryTree } from '@/lib/categories';
+import { getBanners, getMenus } from '@/lib/content/api';
+import { footerMenu, headerMenu, linkAttrs, localisedOptional } from '@/lib/content/types';
 import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
 import { LocaleSuggestion } from './LocaleSuggestion';
+import { BannerPopup } from './content/BannerPopup';
 import { AnnouncementBar } from './layout/AnnouncementBar';
 import { MobileNav } from './layout/MobileNav';
 import { SiteFooter } from './layout/SiteFooter';
@@ -46,11 +49,27 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
     // The suggestion is shown in Bangla, so its copy comes from the Bangla catalog.
     const bn = getMessages('bn');
     const tree = await getCategoryTree(); // never throws: an API failure renders no menu
-    const menu = buildMenu(tree, locale, {
+    const categoryMenu = buildMenu(tree, locale, {
         viewAll: (category) => format(t.nav.viewAll, { category }),
         more: t.nav.more,
         allCategories: t.nav.allCategories,
     });
+    // The published CMS menus (tag content:menus); a location without one keeps today's menu.
+    const menus = await getMenus(); // never throws
+    const menu = menus.header ? headerMenu(menus.header, locale, categoryMenu, (category) => format(t.nav.viewAll, { category })) : categoryMenu;
+    const footer = menus.footer ? footerMenu(menus.footer, locale) : null;
+
+    // Banners (tag content:banners). Never on cart or checkout except the info strip, which those
+    // pages render themselves (rule 25b).
+    const purchaseFlow = /^\/(cart|checkout)(\/|\?|$)/.test(path);
+    const announcementBanner = announcement ? (await getBanners('announcement_bar'))[0] : undefined;
+    const announcementText = announcementBanner ? (localisedOptional(locale, announcementBanner.title, announcementBanner.title_bn) ?? localisedOptional(locale, announcementBanner.body, announcementBanner.body_bn)) : null;
+    const announcementLink = announcementBanner ? linkAttrs(locale, announcementBanner.link_url) : null;
+    const announcementLinkLabel = announcementBanner ? localisedOptional(locale, announcementBanner.link_label, announcementBanner.link_label_bn) : null;
+    const popup = purchaseFlow ? undefined : (await getBanners('popup'))[0];
+    const popupTitle = popup ? localisedOptional(locale, popup.title, popup.title_bn) : null;
+    const popupBody = popup ? localisedOptional(locale, popup.body, popup.body_bn) : null;
+    const popupLinkLabel = popup ? localisedOptional(locale, popup.link_label, popup.link_label_bn) : null;
 
     return (
         <>
@@ -69,7 +88,17 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
                     region={bn.suggest.region}
                 />
             ) : null}
-            {announcement ? <AnnouncementBar message={t.announcement.cod} /> : null}
+            {announcement ? (
+                announcementText ? (
+                    <AnnouncementBar
+                        message={announcementText.text}
+                        lang={announcementText.lang}
+                        link={announcementLink && announcementLinkLabel ? { ...announcementLink, label: announcementLinkLabel.text } : null}
+                    />
+                ) : (
+                    <AnnouncementBar message={t.announcement.cod} />
+                )
+            ) : null}
             <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} />
             {/* Gutters outside, content capped at 1280 inside: at 1440 that is the design's 80px margin. */}
             <main
@@ -79,7 +108,24 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
             >
                 {bleed ? children : <div className="mx-auto max-w-content">{children}</div>}
             </main>
-            <SiteFooter locale={locale} path={path} />
+            <SiteFooter locale={locale} path={path} menu={footer} />
+            {popup && (popupTitle || popupBody) ? (
+                <BannerPopup
+                    id={popup.id}
+                    title={popupTitle?.text ?? null}
+                    body={popupBody?.text ?? null}
+                    lang={popupTitle?.lang ?? popupBody?.lang}
+                    bangla={locale === 'bn'}
+                    link={linkAttrs(locale, popup.link_url)}
+                    linkLabel={popupLinkLabel?.text ?? null}
+                    image={
+                        popup.image
+                            ? { src: popup.image.url, srcSet: popup.image.srcset, width: popup.image.width, height: popup.image.height, alt: (locale === 'bn' ? (popup.image.alt_bn ?? popup.image.alt) : popup.image.alt) ?? '' }
+                            : null
+                    }
+                    labels={{ notice: t.content.notice, close: t.content.close }}
+                />
+            ) : null}
             {bottomBar ? <div aria-hidden="true" className="h-19 shrink-0 lg:hidden" /> : null}
             <MobileNav locale={locale} path={path} cartCount={cartCount} />
         </>

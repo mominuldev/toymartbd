@@ -1,8 +1,11 @@
+import { CountdownTimer } from '@/components/flash-sale/CountdownTimer';
+import { FlashBadge } from '@/components/flash-sale/FlashBadge';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { iconPaths } from '@/components/icons/paths';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
+import type { VariantFlash } from '@/lib/flash-sale/format';
 import { ageForLabel, ratingValue, starFills } from '@/lib/product/format';
 import type { ProductVariant, StorefrontProduct } from '@/lib/product/variants';
 
@@ -78,9 +81,10 @@ export function RatingRow({ product, t }: { product: StorefrontProduct; t: Messa
  * are the API's numbers; the second line is reserved (it always carries the COD note) so a variant
  * with no discount does not change the height.
  */
-export function PriceBlock({ variant, t }: { variant: ProductVariant; t: Messages }) {
-    const price = formatPrice(variant.price);
-    const was = variant.compare_at_price ? formatPrice(variant.compare_at_price) : null;
+export function PriceBlock({ variant, t, flash = null }: { variant: ProductVariant; t: Messages; flash?: VariantFlash | null }) {
+    // P7: on a running flash sale the API's sale price leads and the regular price is struck.
+    const price = formatPrice(flash ? flash.salePrice : variant.price);
+    const was = flash ? formatPrice(variant.price) : variant.compare_at_price ? formatPrice(variant.compare_at_price) : null;
     return (
         <div className="flex h-24 flex-col justify-center gap-1 rounded-sm bg-brand-subtle px-4 py-3 lg:h-auto lg:gap-1.5 lg:px-5 lg:py-4">
             <p className="flex items-baseline gap-2.5 tabular-nums lg:gap-3">
@@ -96,11 +100,22 @@ export function PriceBlock({ variant, t }: { variant: ProductVariant; t: Message
                         </s>
                     </>
                 ) : null}
-                {variant.discount_percent ? (
+                {flash ? (
+                    <FlashBadge discountPercent={flash.discountPercent} t={t.flashSale} discountTemplate={t.pdp.discount} className="self-center" />
+                ) : variant.discount_percent ? (
                     <span className="t-caption-strong self-center rounded-full bg-brand px-2 py-0.5 text-fg-on-brand">{format(t.pdp.discount, { percent: String(variant.discount_percent) })}</span>
                 ) : null}
             </p>
-            <p className="t-caption-strong text-fg-discount">{variant.saving ? format(t.pdp.saveCod, { amount: formatPrice(variant.saving) }) : t.pdp.cod}</p>
+            <p className="t-caption-strong text-fg-discount">{flash ? format(t.flashSale.remaining, { count: String(flash.remaining) }) : variant.saving ? format(t.pdp.saveCod, { amount: formatPrice(variant.saving) }) : t.pdp.cod}</p>
+        </div>
+    );
+}
+
+/** P7: the flash sale's md countdown under the price block (spec §A15 `md` — flash-sale hero / PDP). */
+export function FlashSaleStrip({ flash, t }: { flash: VariantFlash; t: Messages }) {
+    return (
+        <div className="flex flex-wrap items-center gap-3">
+            <CountdownTimer endsAt={flash.endsAt} size="md" t={t.flashSale} />
         </div>
     );
 }

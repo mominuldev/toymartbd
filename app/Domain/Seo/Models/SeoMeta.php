@@ -14,7 +14,8 @@ use Illuminate\Support\Carbon;
  * Search and social overrides for one page (DATABASE-DESIGN §3.9 `seo_meta`).
  * Polymorphic by a short type ("product"), not a class name, so a model rename never
  * orphans rows. Every text column is optional; an empty one falls back to the page's
- * server-side default. Written only through {@see \App\Domain\Seo\Actions\SaveProductWithSeo}.
+ * server-side default. Written only through {@see \App\Domain\Seo\Actions\SaveProductWithSeo}
+ * (with the product document) and {@see \App\Domain\Seo\Actions\SaveSeoMeta} (every type).
  *
  * @property int $id
  * @property string $seoable_type
@@ -28,6 +29,8 @@ use Illuminate\Support\Carbon;
  * @property bool $sitemap_exclude
  * @property string|null $og_title
  * @property string|null $og_description
+ * @property string|null $og_title_bn
+ * @property string|null $og_description_bn
  * @property string|null $og_image
  * @property TwitterCard $twitter_card
  * @property array<string, mixed>|null $schema_override
@@ -44,7 +47,7 @@ final class SeoMeta extends Model
     /** @var list<string> */
     protected $fillable = [
         'seoable_type', 'seoable_id', 'title', 'title_bn', 'description', 'description_bn', 'canonical_url', 'robots',
-        'sitemap_exclude', 'og_title', 'og_description', 'og_image', 'twitter_card', 'schema_override', 'focus_keyword',
+        'sitemap_exclude', 'og_title', 'og_description', 'og_title_bn', 'og_description_bn', 'og_image', 'twitter_card', 'schema_override', 'focus_keyword',
     ];
 
     /** @var array<string, mixed> */
@@ -64,6 +67,12 @@ final class SeoMeta extends Model
             'sitemap_exclude' => 'boolean',
             'schema_override' => 'array',
         ];
+    }
+
+    /** @return Builder<self> */
+    public static function for(string $type, int $id): Builder
+    {
+        return self::query()->where('seoable_type', $type)->where('seoable_id', $id);
     }
 
     /** @return Builder<self> */

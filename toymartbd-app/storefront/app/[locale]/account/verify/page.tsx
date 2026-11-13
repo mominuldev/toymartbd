@@ -16,6 +16,7 @@ import { accountMessages } from '@/lib/account/messages';
 import { readAccountFlash } from '@/lib/account/server';
 import { format, isLocale, localizedPath } from '@/lib/i18n';
 import { contact } from '@/lib/site-config';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/verify — Enter the code, Figma 237:9412 (390). Six boxes (plain inputs: the form posts
 // without JS), a resend timer, "Wrong number? Change it", and a help card. The code goes by SMS only
@@ -34,7 +35,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.verify, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/verify', accountMessages(locale).meta.verify);
 }
 
 export default async function VerifyPage({ params }: Props) {

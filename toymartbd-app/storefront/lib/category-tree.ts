@@ -88,6 +88,10 @@ export interface MenuLink {
     /** `en` when a Bangla page shows the English fallback. */
     lang?: 'en';
     path: string;
+    /** An absolute https URL from the CMS menu: rendered as is, not locale-prefixed. */
+    external?: boolean;
+    /** Open in a new tab (CMS `open_in_new_tab`). */
+    newTab?: boolean;
 }
 
 export interface MenuGroup {

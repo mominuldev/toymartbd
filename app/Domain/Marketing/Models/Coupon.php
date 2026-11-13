@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $code
  * @property string|null $description
+ * @property string|null $batch bulk-generated codes share it (P7)
  * @property CouponType $type
  * @property Money $value
  * @property Money|null $max_discount
@@ -50,7 +51,7 @@ final class Coupon extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'code', 'description', 'type', 'value', 'max_discount', 'min_order_amount', 'usage_limit_total',
+        'code', 'description', 'batch', 'type', 'value', 'max_discount', 'min_order_amount', 'usage_limit_total',
         'usage_limit_per_customer', 'starts_at', 'ends_at', 'applies_to', 'conditions', 'excludes',
         'first_order_only', 'customer_segment_id', 'is_active', 'created_by',
     ];

@@ -36,6 +36,7 @@ use App\Domain\Ordering\Models\OrderNote;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\Refund;
 use App\Domain\Payment\Models\RefundItem;
+use App\Domain\Seo\Models\Redirect;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Domain\Seo\Models\SlugHistory;
 use App\Models\Enums\Role;
@@ -57,6 +58,7 @@ use App\Policies\ProductAttributeValuePolicy;
 use App\Policies\ProductPartPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PromotionPolicy;
+use App\Policies\RedirectPolicy;
 use App\Policies\RefundPolicy;
 use App\Policies\SeoPolicy;
 use App\Policies\StockPolicy;
@@ -107,10 +109,14 @@ class AuthServiceProvider extends ServiceProvider
         Coupon::class => CouponPolicy::class,
         CouponUsage::class => CouponPolicy::class,
         Promotion::class => PromotionPolicy::class,
+        \App\Domain\Marketing\Models\FlashSaleItem::class => PromotionPolicy::class,
+        \App\Domain\Marketing\Models\PromotionUsage::class => PromotionPolicy::class,
+        \App\Domain\Notification\Models\CartRecovery::class => \App\Policies\CartRecoveryPolicy::class,
         StockAdjustment::class => StockPolicy::class,
         StockAdjustmentItem::class => StockPolicy::class,
         SeoMeta::class => SeoPolicy::class,
         SlugHistory::class => SeoPolicy::class,
+        Redirect::class => RedirectPolicy::class,
         \App\Domain\Catalog\Import\Models\ProductImport::class => \App\Policies\ProductImportPolicy::class,
         \App\Domain\Catalog\Import\Models\ProductImportError::class => \App\Policies\ProductImportPolicy::class,
         \App\Domain\Catalog\Reviews\Models\Review::class => \App\Policies\ReviewPolicy::class,

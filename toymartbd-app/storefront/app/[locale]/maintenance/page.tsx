@@ -7,6 +7,7 @@ import { ContactDetail } from '@/components/layout/ContactDetail';
 import { Wordmark } from '@/components/layout/Wordmark';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { contact } from '@/lib/site-config';
+import { noindexMetadata } from '@/lib/seo/metadata';
 
 // Maintenance page (Figma 169:10575 / 173:19641, storefront spec §B8): no site chrome — the shop
 // is offline — just the wordmark, the content-spec copy and the ways to reach a person. Served at /maintenance and
@@ -22,7 +23,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: getMessages(locale).maintenance.title, robots: { index: false, follow: false } };
+    return noindexMetadata(getMessages(locale).maintenance.title);
 }
 
 export default async function MaintenancePage({ params }: Props) {

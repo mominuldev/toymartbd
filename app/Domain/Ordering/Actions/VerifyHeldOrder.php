@@ -12,10 +12,17 @@ use App\Domain\Ordering\Services\OrderTransitions;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Verification queue → "Verified": a person spoke to the customer and the order is genuine.
- * Records who and when (`verification_status = verified`, `verified_by`, `verified_at`) and
- * releases the hold (on_hold → pending), in one transaction. Only a held order waiting for
- * verification qualifies; anything else is a 409.
+ * Verification queue → "Verify & confirm": a person spoke to the customer and the order is
+ * genuine. Records who and when (`verification_status = verified`, `verified_by`,
+ * `verified_at`) and CONFIRMS the order (on_hold → confirmed), in one transaction — owner
+ * decision 2026-11-13: the call that verifies an order is the confirmation call, so it does
+ * not go back to `pending` to be confirmed a second time.
+ *
+ * The move goes through the same {@see OrderTransitions::transition()} as every other
+ * confirm ({@see TransitionOrder}, {@see BulkConfirmOrders}): `confirmed_at` is stamped, the
+ * timeline row is written and `OrderConfirmed` is dispatched after commit, so the customer's
+ * "order confirmed" message and every other confirm listener fire exactly as for a normal
+ * confirm. Only a held order waiting for verification qualifies; anything else is a 409.
  */
 final readonly class VerifyHeldOrder
 {
@@ -33,7 +40,7 @@ final readonly class VerifyHeldOrder
 
             return $this->transitions->transition(
                 $locked,
-                OrderStatus::Pending,
+                OrderStatus::Confirmed,
                 $userId,
                 attributes: [
                     'verification_status' => VerificationStatus::Verified,
@@ -41,7 +48,7 @@ final readonly class VerifyHeldOrder
                     'verified_at' => now(),
                 ],
                 meta: ['verification' => 'verified'],
-                description: $note ?? 'Verified by phone; hold released.',
+                description: $note ?? 'Verified by phone and confirmed.',
             );
         });
     }

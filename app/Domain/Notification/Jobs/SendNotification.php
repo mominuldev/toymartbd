@@ -16,6 +16,7 @@ use App\Domain\Notification\Services\SmsDrivers;
 use App\Domain\Notification\Support\SmsSegments;
 use App\Domain\Notification\Support\TemplateCatalog;
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Ordering\Queries\OrderRiderContact;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 use Illuminate\Bus\Queueable;
@@ -29,7 +30,8 @@ use Throwable;
  * Sends one logged message (P4-NOT-01/02). On the `notify` queue, after commit (rule 4).
  *
  * The payload is only the log id: the phone number and email are re-read from the order
- * at send time, so neither ever sits on the queue or in the log (rule 20).
+ * at send time, and the delivery rider's phone from the shipment, so none ever sits on the
+ * queue or in the log in full (rule 20).
  *
  *  - SMS rejected or a thrown error → retried; after the last of 3 tries the row is
  *    `dead_lettered` and shows in the admin log with a Retry action.
@@ -58,7 +60,7 @@ final class SendNotification implements ShouldQueue
         $this->backoff = is_array($backoff) ? array_values(array_map(intval(...), $backoff)) : [30, 120];
     }
 
-    public function handle(SmsDrivers $sms, WhatsAppGateway $whatsApp, QueueSmsFallback $fallback): void
+    public function handle(SmsDrivers $sms, WhatsAppGateway $whatsApp, QueueSmsFallback $fallback, OrderRiderContact $riders): void
     {
         $log = NotificationLog::query()->find($this->logId);
         if ($log === null || $log->status !== NotificationStatus::Queued) {
@@ -85,6 +87,11 @@ final class SendNotification implements ShouldQueue
         }
 
         $variables = $log->variables();
+        // The payload keeps the rider's phone masked (rule 20); re-read the real number now,
+        // as the recipient's is. Empty if the rider was cleared since it was queued.
+        if (array_key_exists('rider_phone', $variables)) {
+            $variables['rider_phone'] = $riders->phoneFor($order->id)?->national() ?? '';
+        }
 
         match ($log->channel) {
             NotificationChannel::Sms => $this->sendSms($log, $template, $order, $variables, $sms),

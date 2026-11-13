@@ -45,7 +45,7 @@ jobs:
       - name: deptrac
         run: vendor/bin/deptrac analyse --no-progress
       - name: Pest (SQLite)
-        run: php artisan test
+        run: php artisan test --parallel
       - name: Pest (MySQL 8.4 group — collation, locking)
         env:
           DB_CONNECTION: mysql

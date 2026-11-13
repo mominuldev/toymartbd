@@ -1,6 +1,8 @@
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
-import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
+import { CountdownTimer } from '@/components/flash-sale/CountdownTimer';
+import { FlashBadge } from '@/components/flash-sale/FlashBadge';
+import { format, getMessages, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { ageLabel, formatPrice, sameAmount } from '@/lib/listing/format';
 import type { ProductCard as Card } from '@/lib/listing/response';
 import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
@@ -44,6 +46,10 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
     const price = formatPrice(product.price);
     const ranged = !sameAmount(product.price, product.price_max);
     const soldOut = product.in_stock === false;
+    // P7: a running flash sale (API `flash_sale`) replaces the discount badge, pins an xs countdown
+    // to the photo's bottom edge and shows the sale price over the struck regular price.
+    const flash = soldOut ? null : (product.flash_sale ?? null);
+    const tf = getMessages(locale).flashSale;
 
     return (
         <article className="flex h-full flex-col rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-1.5 pt-2 pb-3 shadow-e1 sm:px-2">
@@ -71,9 +77,11 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         </span>
                     )}
                 </a>
-                {product.discount_percent || soldOut ? (
+                {product.discount_percent || soldOut || flash ? (
                     <div className="pointer-events-none absolute top-2.5 left-2 flex flex-col items-start gap-1">
-                        {product.discount_percent ? (
+                        {flash ? (
+                            <FlashBadge discountPercent={flash.discount_percent} t={tf} discountTemplate={t.discount} />
+                        ) : product.discount_percent ? (
                             <span className="t-badge inline-flex h-6 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-fg-on-brand">
                                 {format(t.discount, { percent: String(product.discount_percent) })}
                             </span>
@@ -95,8 +103,11 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                     buttonClassName="flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 lg:size-8 before:absolute before:size-touch-min before:content-['']"
                     iconClassName="size-icon-sm"
                 />
+                {flash ? (
+                    <CountdownTimer endsAt={flash.ends_at} size="xs" t={tf} fill className="absolute inset-x-0 bottom-0" />
+                ) : null}
                 {age ? (
-                    <span className="t-caption-strong pointer-events-none absolute bottom-2 left-2 inline-flex h-5.5 items-center gap-1 rounded-full bg-surface px-2 text-fg-primary">
+                    <span className={`t-caption-strong pointer-events-none absolute left-2 ${flash ? 'bottom-7.5' : 'bottom-2'} inline-flex h-5.5 items-center gap-1 rounded-full bg-surface px-2 text-fg-primary`}>
                         <Icon name={ageIcon(product.age_min_months)} className="size-3.5" />
                         {age}
                     </span>
@@ -108,6 +119,18 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         {name}
                     </a>
                 </h3>
+                {flash ? (
+                    <p className="flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
+                        <span className="sr-only">{format(tf.salePrice, { price: formatPrice(flash.sale_price) })}</span>
+                        <span aria-hidden="true" className="t-price text-fg-discount">
+                            {formatPrice(flash.sale_price)}
+                        </span>
+                        <span className="sr-only">{format(tf.regularPrice, { price: formatPrice(flash.regular_price) })}</span>
+                        <s aria-hidden="true" className="t-price-was text-fg-price-was">
+                            {formatPrice(flash.regular_price)}
+                        </s>
+                    </p>
+                ) : (
                 <p className="flex flex-wrap items-baseline gap-x-1.5 tabular-nums">
                     <span className={`t-price ${soldOut ? 'text-fg-secondary' : 'text-fg-discount'}`}>{ranged ? format(t.from, { price }) : price}</span>
                     {product.compare_at_price ? (
@@ -119,6 +142,7 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         </>
                     ) : null}
                 </p>
+                )}
                 <div className="mt-auto flex items-center gap-1.5 pt-2 sm:gap-2">
                     {soldOut ? (
                         <a

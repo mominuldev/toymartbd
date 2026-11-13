@@ -29,6 +29,8 @@ final class CouponResource extends ApiResource
             'id' => $coupon->id,
             'code' => $coupon->code,
             'description' => $coupon->description,
+            /** Bulk-generated codes share a batch label (coupon builder, P7). */
+            'batch' => $coupon->batch,
             /** @var 'fixed'|'percent'|'free_shipping' */
             'type' => $coupon->type->value,
             /** @var string */

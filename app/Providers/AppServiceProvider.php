@@ -21,7 +21,6 @@ use App\Domain\Fulfilment\Contracts\FreeShippingPromotion;
 use App\Domain\Inventory\Events\StockLevelChanged;
 use App\Domain\Inventory\Listeners\ForgetLowStockCount;
 use App\Domain\Inventory\Services\StockAvailability;
-use App\Domain\Marketing\Services\CouponFreeShipping;
 use App\Domain\Ordering\Events\OrderPlaced;
 use App\Domain\Ordering\Events\OrderStatusTransition;
 use App\Domain\Ordering\Listeners\SyncPaymentStatusOnPaymentChange;
@@ -42,9 +41,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // Catalog declares what it reads from Inventory; Inventory implements it (deptrac).
         $this->app->bind(AvailableStockQuery::class, StockAvailability::class);
+        // P7: one flash-sale lookup per request, shared by every card and the product page.
+        $this->app->scoped(\App\Domain\Marketing\Services\FlashSaleLookup::class);
 
-        // DATABASE-DESIGN §5.1 step 1: free-shipping coupons (Marketing) answer Fulfilment's seam.
-        $this->app->bind(FreeShippingPromotion::class, CouponFreeShipping::class);
+        // DATABASE-DESIGN §5.1 step 1: free-shipping coupons and free-delivery promotions (P7) answer Fulfilment's seam.
+        $this->app->bind(FreeShippingPromotion::class, \App\Domain\Marketing\Services\MarketingFreeShipping::class);
 
         // Customer declares what it reads from orders; Ordering implements it (deptrac).
         $this->app->bind(CustomerOrderHistory::class, EloquentCustomerOrderHistory::class);
@@ -92,6 +93,12 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(OrderPlaced::class, RefreshAggregatesOnOrderChange::class);
         Event::listen(OrderStatusTransition::class, RefreshAggregatesOnOrderChange::class);
         Event::listen(PaymentStatusChanged::class, SyncPaymentStatusOnPaymentChange::class);
+        // P7 marketing: a cancelled order gives back its coupon/promotion usage (flash units too);
+        // promotion saves and start/end boundaries revalidate the storefront; a reminded cart
+        // that becomes an order is recovered.
+        Event::listen(\App\Domain\Ordering\Events\OrderCancelled::class, \App\Domain\Marketing\Listeners\ReverseUsageOnOrderCancelled::class);
+        Event::listen(\App\Domain\Marketing\Events\PromotionChanged::class, \App\Domain\Content\Listeners\RevalidatePromotionPages::class);
+        Event::listen(OrderPlaced::class, \App\Domain\Notification\Listeners\MarkCartRecoveredOnOrderPlaced::class);
         // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).
         Event::listen(\App\Domain\Payment\Events\PaymentFlaggedForReview::class, \App\Domain\Ordering\Listeners\HoldOrderOnPaymentReview::class);
     }

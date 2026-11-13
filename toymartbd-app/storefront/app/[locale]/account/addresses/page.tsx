@@ -16,6 +16,7 @@ import { getUpazilas } from '@/lib/checkout/geo';
 import { getDeliveryReference } from '@/lib/delivery/fetch';
 import { placeName } from '@/lib/delivery/format';
 import { format, isLocale, localizedPath } from '@/lib/i18n';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/addresses — Addresses, Figma 238:10058 (390): saved AddressCards, then "Add a new address"
 // with the checkout's cascading selects — district → upazila → area + house/road + landmark (rule 31;
@@ -35,7 +36,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.addresses, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/addresses', accountMessages(locale).meta.addresses);
 }
 
 const ID = /^[1-9]\d{0,8}$/;

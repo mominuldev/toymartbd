@@ -15,6 +15,7 @@ import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
+import { SeoPanel } from '@/features/seo';
 import {
     MAX_DEPTH,
     flatten,
@@ -308,6 +309,9 @@ function CategoryForm({ id, category, tree, parentId, onClose }: { id: number | 
                 </div>
             </div>
         </form>
+
+            {/* Search & social (P7 SEO module): its own form, saved separately. */}
+            {category && <SeoPanel type="category" id={category.id} />}
 
             {category && (
                 <ConfirmDialog

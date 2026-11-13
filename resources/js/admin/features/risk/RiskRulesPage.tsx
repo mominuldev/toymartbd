@@ -67,7 +67,7 @@ export function RiskRulesPage() {
         <div className="flex flex-col gap-6">
             <ContentHeader title={t('risk.rules.title')} breadcrumb={crumbs(t, 'risk.tab.rules')} subtitle={t('risk.rules.subtitle')} />
             <RiskTabs />
-            <p className="rounded-sm border border-line-default border-l-2 border-l-feedback-warning bg-subtle px-3 py-2 t-admin-caption text-fg-primary">
+            <p className="rounded-sm border border-line-default border-l-2 border-l-feedback-success bg-subtle px-3 py-2 t-admin-caption text-fg-primary">
                 {t('risk.rules.provisional')} {!editable && rules.data ? t('risk.rules.readOnly') : ''}
             </p>
             <form

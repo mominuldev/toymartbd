@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 /**
  * The Risk rules form: factor weights (total ≤ 100), level thresholds, the first-order hold
- * threshold (rule 33b) and the two factor parameters. PROVISIONAL defaults (§5.2) until saved.
+ * threshold (rule 33b) and the two factor parameters. Defaults (§5.2) owner-confirmed 2026-11-13.
  *
  * @property RiskSettings $resource
  */

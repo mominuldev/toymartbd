@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Storefront;
 
 use App\Domain\Inventory\Exceptions\InsufficientStock;
 use App\Domain\Marketing\Exceptions\CouponRejected;
+use App\Domain\Marketing\Exceptions\PromotionRejected;
 use App\Domain\Ordering\Actions\PlaceOrder;
 use App\Domain\Ordering\Checkout\CheckoutNotReady;
 use App\Domain\Ordering\Checkout\PriceChanged;
@@ -47,6 +48,9 @@ final class CheckoutController extends ApiController
             return self::problem($request, ProblemType::ValidationError, $e->errors);
         } catch (CouponRejected $e) {
             return self::problem($request, ProblemType::ValidationError, [['field' => 'coupon', 'message' => $e->getMessage()]]);
+        } catch (PromotionRejected $e) {
+            // P7: a promotion limit, budget or flash allotment ran out since pricing — the total changed.
+            return self::problem($request, ProblemType::PriceChanged, [['field' => 'expected_total', 'message' => $e->getMessage()]]);
         }
 
         return (new StorefrontOrderResource($order))->response()

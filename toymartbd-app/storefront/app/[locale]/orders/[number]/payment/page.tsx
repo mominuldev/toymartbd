@@ -17,6 +17,7 @@ import { formatPrice } from '@/lib/listing/format';
 import { PAYMENT_FLASH_COOKIE } from '@/lib/payments/cookies';
 import { getPlacedOrder } from '@/lib/order/fetch';
 import { contact } from '@/lib/site-config';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /orders/{number}/payment — where the customer lands after SSLCommerz (success, fail or cancel)
 // and after a retry that could not open a session (P4-PAY-03/04). It NEVER trusts the URL, a query
@@ -63,7 +64,7 @@ function reasonText(reason: string | undefined, t: Messages): string | null {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale, number } = await params;
     if (!isLocale(locale)) return {};
-    return { title: format(getMessages(locale).payment.title, { number: decodeURIComponent(number).toUpperCase() }), robots: { index: false, follow: false } };
+    return privateMetadata(locale, `/orders/${encodeURIComponent(number)}/payment`, format(getMessages(locale).payment.title, { number: decodeURIComponent(number).toUpperCase() }));
 }
 
 export default async function OrderPaymentPage({ params }: Props) {

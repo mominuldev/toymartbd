@@ -13,7 +13,7 @@ import { activeCount, cleared, hrefFor, parseListingState, withCategory, type Li
 import { fetchSearch } from '@/lib/products';
 import { pageHref, parsePage, parseQuery, searchPath } from '@/lib/search/query';
 import type { SearchResults } from '@/lib/search/response';
-import { alternatesFor } from '@/lib/seo';
+import { searchMetadata } from '@/lib/seo/metadata';
 
 // Search results and zero results (P4-STO-04) — Figma 161:15289 (1440) and 132:3269 (390).
 // The header search bar submits GET /search?q= (and /bn/search?q=), so this works without
@@ -39,12 +39,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     if (!isLocale(locale)) return {};
     const t = getMessages(locale);
     const q = parseQuery((await searchParams).q);
-    return {
-        title: q ? format(t.search.resultsTitle, { query: q }) : t.search.pageTitle,
-        description: t.search.metaDescription,
-        robots: { index: false, follow: true },
-        alternates: alternatesFor(locale, '/search'),
-    };
+    return searchMetadata(locale, q ? format(t.search.resultsTitle, { query: q }) : t.search.pageTitle, t.search.metaDescription);
 }
 
 function relatedLinks(locale: Locale, base: string, results: SearchResults, state: ReturnType<typeof parseListingState>, t: Messages): SubLink[] {

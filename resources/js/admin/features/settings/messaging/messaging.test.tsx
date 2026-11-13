@@ -10,13 +10,13 @@ afterEach(() => {
 });
 
 const owner: Me = { ...viewer, roles: ['super_admin'], permissions: ['dashboard.view', 'settings.view', 'settings.manage_integrations'] };
-const manager: Me = { ...viewer, roles: ['manager'], permissions: ['dashboard.view', 'settings.view', 'settings.update'] };
+const operator: Me = { ...viewer, roles: ['order_operator'], permissions: ['dashboard.view', 'settings.view', 'settings.update'] };
 
 const saved: MessagingSettings = {
     sms_driver: 'reve',
     reve_base_url: 'https://smpp.ajuratech.com:7790',
-    reve_sender_id: 'ToyMartBD',
-    sms_cost_per_segment: '0.64',
+    reve_sender_id: '8809612345678',
+    sms_cost_per_segment: '0.26',
     whatsapp_enabled: false,
     reve_api_key_set: true,
     reve_api_key_hint: '••••1234',
@@ -27,7 +27,7 @@ const saved: MessagingSettings = {
     sources: { sms_driver: 'settings', reve_base_url: 'settings', reve_sender_id: 'settings', sms_cost_per_segment: 'env', whatsapp_enabled: 'env' },
 };
 
-const accepted: SmsTestResult = { driver: 'reve', accepted: true, message_id: '4242', segments: 2, cost: '1.28', error: null };
+const accepted: SmsTestResult = { driver: 'reve', accepted: true, message_id: '4242', segments: 2, cost: '0.52', error: null };
 
 function messagingApi(me: Me, test: { status: number; body?: unknown } = { status: 200, body: accepted }) {
     return mockApi((url, init) => {
@@ -75,8 +75,8 @@ describe('integrations → messaging', () => {
         expect(sentBody(calls, 'PUT', '/settings/messaging')).toEqual({
             sms_driver: 'reve',
             reve_base_url: 'https://smpp.ajuratech.com:7790',
-            reve_sender_id: 'ToyMartBD',
-            sms_cost_per_segment: '0.64',
+            reve_sender_id: '8809612345678',
+            sms_cost_per_segment: '0.26',
             whatsapp_enabled: true,
             reve_api_key: null,
             reve_secret_key: 'new-secret-value',
@@ -84,6 +84,18 @@ describe('integrations → messaging', () => {
             clear_reve_secret_key: false,
         });
         expect(await screen.findByText('Messaging settings saved')).toBeTruthy();
+    });
+
+    it('refuses a masked (lettered) sender ID before sending, with a clear message', async () => {
+        const calls = messagingApi(owner);
+        renderApp('/integrations/messaging');
+
+        const sender = await screen.findByLabelText(/Sender ID/);
+        fireEvent.change(sender, { target: { value: 'ToyMartBD' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        expect(await screen.findByText('Enter the non-masking number, digits only (5–15). Letters and brand names are not allowed.')).toBeTruthy();
+        expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toBe(false);
     });
 
     it('can remove a saved key explicitly', async () => {
@@ -120,7 +132,7 @@ describe('integrations → messaging', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Send test SMS' }));
 
         expect(await screen.findByText('Accepted by reve')).toBeTruthy();
-        expect(screen.getByText('Message ID 4242 · 2 segment(s) · ৳1.28')).toBeTruthy();
+        expect(screen.getByText('Message ID 4242 · 2 segment(s) · ৳0.52')).toBeTruthy();
         expect(sentBody(calls, 'POST', '/settings/messaging/test')).toEqual({ phone: '01712345678', locale: 'bn' });
     });
 
@@ -140,7 +152,7 @@ describe('integrations → messaging', () => {
     });
 
     it('is closed to staff without settings.manage_integrations', async () => {
-        const calls = messagingApi(manager);
+        const calls = messagingApi(operator);
         renderApp('/integrations/messaging');
 
         expect(await screen.findByText('You do not have access to this page.')).toBeTruthy();

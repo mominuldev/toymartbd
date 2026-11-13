@@ -421,6 +421,169 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/seo/meta/{type}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/meta/{type}/{id}` — needs seo.view. Unknown type or id → 404 */
+        get: operations["v1.admin.seo.meta.show"];
+        /** `PUT /seo/meta/{type}/{id}` — needs seo.manage. Replaces the stored document */
+        put: operations["v1.admin.seo.meta.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/serp-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /seo/serp-preview` — the server's pixel measurement and truncation of an unsaved
+         *     title and description, as Google's desktop result would show them
+         */
+        post: operations["v1.admin.seo.serp-preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/redirects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/redirects` — needs seo.view */
+        get: operations["v1.admin.seo.redirects.index"];
+        put?: never;
+        /** `POST /seo/redirects` — needs seo.manage. Conflict, loop and chain checks → 422 */
+        post: operations["v1.admin.seo.redirects.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/redirects/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /seo/redirects/import` — CSV, all or nothing. 200 with counts, or 422 with
+         *     the row errors (nothing saved)
+         */
+        post: operations["v1.admin.seo.redirects.import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/redirects/{redirect}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /seo/redirects/{redirect}` — needs seo.manage */
+        delete: operations["v1.admin.seo.redirects.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /seo/redirects/{redirect}` — needs seo.manage */
+        patch: operations["v1.admin.seo.redirects.update"];
+        trace?: never;
+    };
+    "/admin/seo/slug-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/slug-history` — automatic redirects from slug changes; needs seo.view */
+        get: operations["v1.admin.seo.slug-history.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/sitemap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/sitemap` — the last build; needs seo.view */
+        get: operations["v1.admin.seo.sitemap.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/sitemap/regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /seo/sitemap/regenerate` — queue a rebuild (on `index`); needs seo.manage */
+        post: operations["v1.admin.seo.sitemap.regenerate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/seo/robots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/robots` — needs seo.view */
+        get: operations["v1.admin.seo.robots.show"];
+        /** `PUT /seo/robots` — needs seo.manage */
+        put: operations["v1.admin.seo.robots.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/products/{product}/compliance/certificate": {
         parameters: {
             query?: never;
@@ -1374,6 +1537,149 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/coupons/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /coupons/generate` — `count` unique codes on the same terms, one batch (P7).
+         *     Needs marketing.manage. Answers `{batch, count, codes: list<string>}`
+         */
+        post: operations["v1.admin.coupons.generate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/coupons/{coupon}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /coupons/{coupon}/report` — usage summary (orders, discount given, gross sales,
+         *     delivered revenue) and the 50 latest uses with masked phones. Needs marketing.view.
+         *     With a batch, `batch` sums every code of it
+         */
+        get: operations["v1.admin.coupons.report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/promotions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /promotions` — cursor-paginated, needs marketing.view
+         * @description Filters: `filter[search]` (name contains), `filter[type]`, `filter[status]` =
+         *     `scheduled|running|ended|inactive` (at request time). Sorts: `priority`, `starts_at`,
+         *     `ends_at`, `created_at` (default `-priority`).
+         */
+        get: operations["v1.admin.promotions.index"];
+        put?: never;
+        /** `POST /promotions` — needs marketing.manage */
+        post: operations["v1.admin.promotions.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/promotions/{promotion}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /promotions/{promotion}` — needs marketing.view */
+        get: operations["v1.admin.promotions.show"];
+        /** `PUT /promotions/{promotion}` — replace the whole document; needs marketing.manage */
+        put: operations["v1.admin.promotions.update"];
+        post?: never;
+        /** `DELETE /promotions/{promotion}` — deactivates (idempotent); needs marketing.manage */
+        delete: operations["v1.admin.promotions.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/promotions/{promotion}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /promotions/{promotion}/report` — orders, discount given, gross sales, delivered
+         *     revenue, and the 50 latest uses (masked phones). Needs marketing.view
+         */
+        get: operations["v1.admin.promotions.report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/cart-recoveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /cart-recoveries` — newest abandoned first, cursor-paginated. Filters:
+         *     `filter[status]` = `messaged|skipped|recovered`
+         */
+        get: operations["v1.admin.cart-recoveries.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/cart-recoveries/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /cart-recoveries/summary?from=YYYY-MM-DD&to=YYYY-MM-DD` — Dhaka dates, default the
+         *     last 30 days, at most 366 days
+         */
+        get: operations["v1.admin.cart-recoveries.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/orders": {
         parameters: {
             query?: never;
@@ -1804,6 +2110,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/shipments/{shipment}/rider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * `PATCH /shipments/{shipment}/rider` — record (or clear, both null) the delivery rider the
+         *     courier sent, when the rider calls. Needs shipments.book; audited with the phone masked.
+         *     The phone comes back in full only with customers.view_pii. Never resends a message
+         */
+        patch: operations["v1.admin.shipments.rider"];
+        trace?: never;
+    };
     "/admin/orders/compose/customer": {
         parameters: {
             query?: never;
@@ -2150,11 +2477,17 @@ export interface paths {
         };
         /**
          * `GET /notifications/templates` — every template, ordered by key then channel; needs
-         *     settings.view. Filters: `filter[channel]` = sms|whatsapp|email, `filter[category]`
+         *     settings.view. Archived templates are left out unless `filter[archived]=1`, which
+         *     returns only the archive
          */
         get: operations["v1.admin.notifications.templates.index"];
         put?: never;
-        post?: never;
+        /**
+         * `POST /notifications/templates` — a staff-made marketing / manual template, one row per
+         *     chosen channel under one generated `custom.*` key; needs settings.update. Returns the
+         *     created rows. Nothing sends a custom template yet
+         */
+        post: operations["v1.admin.notifications.templates.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2170,7 +2503,7 @@ export interface paths {
         };
         /** `GET /notifications/templates/{template}` — needs settings.view */
         get: operations["v1.admin.notifications.templates.show"];
-        /** `PUT /notifications/templates/{template}` — replace both bodies; re-measured on save. Needs settings.update */
+        /** `PUT /notifications/templates/{template}` — replace both bodies; re-measured and versioned on save. Needs settings.update */
         put: operations["v1.admin.notifications.templates.update"];
         post?: never;
         delete?: never;
@@ -2188,8 +2521,97 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** `POST /notifications/templates/{template}/preview` — measure unsaved bodies; writes nothing. Needs settings.view */
+        /**
+         * `POST /notifications/templates/{template}/preview` — measure unsaved bodies; writes
+         *     nothing. Needs settings.view. Reports unknown variables, WhatsApp parameters a body
+         *     dropped, and a warning when an SMS side runs to 3+ segments
+         */
         post: operations["v1.admin.notifications.templates.preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /notifications/templates/{template}/archive` — every channel of a custom template. Needs settings.update */
+        post: operations["v1.admin.notifications.templates.archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /notifications/templates/{template}/unarchive` — bring a custom template back (switched off). Needs settings.update */
+        post: operations["v1.admin.notifications.templates.unarchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/templates/{template}/versions` — saved copies, newest first. Needs settings.view */
+        get: operations["v1.admin.notifications.templates.versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/versions/{version}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /notifications/templates/{template}/versions/{version}/restore` — copy an old version back as a new one. Needs settings.update */
+        post: operations["v1.admin.notifications.templates.versions.restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/templates/{template}/whatsapp-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /notifications/templates/{template}/whatsapp-status` — record the Meta approval state. Needs settings.update */
+        put: operations["v1.admin.notifications.templates.whatsapp-status"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3138,7 +3560,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** `POST /risk/orders/{order}/verify` — verified by phone: hold released (on_hold → pending). Needs risk.verify */
+        /**
+         * `POST /risk/orders/{order}/verify` — verified by phone and confirmed (on_hold → confirmed,
+         *     owner decision 2026-11-13; `OrderConfirmed` fires as for any confirm). Needs risk.verify
+         *     and orders.confirm
+         */
         post: operations["v1.admin.risk.orders.verify"];
         delete?: never;
         options?: never;
@@ -3253,6 +3679,520 @@ export interface paths {
         /** `PUT /risk/rules` — needs risk.manage_rules. Only future scores change */
         put: operations["v1.admin.risk.rules.update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /blog/posts` — page-paginated, newest first by default
+         * @description Filters: `filter[search]` (title, title_bn or slug), `filter[status]`, `filter[type]`,
+         *     `filter[category]` (id), `filter[author]` (id). Sorts: `updated_at`, `published_at`,
+         *     `title` (prefix `-` for descending). Anything else is a 400.
+         */
+        get: operations["v1.admin.blog.posts.index"];
+        put?: never;
+        /** `POST /blog/posts` — needs content.manage */
+        post: operations["v1.admin.blog.posts.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/posts/{post}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/posts/{post}` — the editor document */
+        get: operations["v1.admin.blog.posts.show"];
+        /** `PUT /blog/posts/{post}` — replaces the document; needs content.manage */
+        put: operations["v1.admin.blog.posts.update"];
+        post?: never;
+        /** `DELETE /blog/posts/{post}` — drafts only (422 otherwise); needs content.manage */
+        delete: operations["v1.admin.blog.posts.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/posts/{post}/preview-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /blog/posts/{post}/preview-link` — a signed, 24-hour token for the storefront's
+         *     private preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage
+         */
+        post: operations["v1.admin.blog.posts.preview-link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}` — with `posts_count` (drafts included) */
+        get: operations["v1.admin.blog.categories.index"];
+        put?: never;
+        /** `POST /blog/{categories|tags|authors}` */
+        post: operations["v1.admin.blog.categories.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/categories/{blog_category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}/{id}` */
+        get: operations["v1.admin.blog.categories.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /blog/{categories|tags|authors}/{id}` — a category or author in use is a 422 */
+        delete: operations["v1.admin.blog.categories.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /blog/{categories|tags|authors}/{id}` */
+        patch: operations["v1.admin.blog.categories.update"];
+        trace?: never;
+    };
+    "/admin/blog/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}` — with `posts_count` (drafts included) */
+        get: operations["v1.admin.blog.tags.index"];
+        put?: never;
+        /** `POST /blog/{categories|tags|authors}` */
+        post: operations["v1.admin.blog.tags.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/tags/{blog_tag}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}/{id}` */
+        get: operations["v1.admin.blog.tags.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /blog/{categories|tags|authors}/{id}` — a category or author in use is a 422 */
+        delete: operations["v1.admin.blog.tags.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /blog/{categories|tags|authors}/{id}` */
+        patch: operations["v1.admin.blog.tags.update"];
+        trace?: never;
+    };
+    "/admin/blog/authors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}` — with `posts_count` (drafts included) */
+        get: operations["v1.admin.blog.authors.index"];
+        put?: never;
+        /** `POST /blog/{categories|tags|authors}` */
+        post: operations["v1.admin.blog.authors.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/blog/authors/{blog_author}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/{categories|tags|authors}/{id}` */
+        get: operations["v1.admin.blog.authors.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /blog/{categories|tags|authors}/{id}` — a category or author in use is a 422 */
+        delete: operations["v1.admin.blog.authors.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /blog/{categories|tags|authors}/{id}` */
+        patch: operations["v1.admin.blog.authors.update"];
+        trace?: never;
+    };
+    "/admin/content/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/pages` — needs content.view */
+        get: operations["v1.admin.content.pages.index"];
+        put?: never;
+        /** `POST /content/pages` — needs content.manage */
+        post: operations["v1.admin.content.pages.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/pages/{page}` — with content, FAQ and SEO; needs content.view */
+        get: operations["v1.admin.content.pages.show"];
+        /** `PUT /content/pages/{page}` — replaces the document; needs content.manage */
+        put: operations["v1.admin.content.pages.update"];
+        post?: never;
+        /** `DELETE /content/pages/{page}` — archives (idempotent); needs content.manage */
+        delete: operations["v1.admin.content.pages.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/menus` — all three locations; needs content.view */
+        get: operations["v1.admin.content.menus.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/menu-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/menu-targets` — link picker search; needs content.view */
+        get: operations["v1.admin.content.menus.targets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/menus/{location}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/menus/{location}` — needs content.view */
+        get: operations["v1.admin.content.menus.show"];
+        /** `PUT /content/menus/{location}` — replaces the tree; needs content.manage */
+        put: operations["v1.admin.content.menus.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/banners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/banners` — newest first per placement; needs content.view */
+        get: operations["v1.admin.content.banners.index"];
+        put?: never;
+        /** `POST /content/banners` — needs content.manage */
+        post: operations["v1.admin.content.banners.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/banners/{banner}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/banners/{banner}` — needs content.view */
+        get: operations["v1.admin.content.banners.show"];
+        /** `PUT /content/banners/{banner}` — needs content.manage */
+        put: operations["v1.admin.content.banners.update"];
+        post?: never;
+        /** `DELETE /content/banners/{banner}` — needs content.manage */
+        delete: operations["v1.admin.content.banners.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/testimonials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/testimonials` — in display order; needs content.view */
+        get: operations["v1.admin.content.testimonials.index"];
+        put?: never;
+        /** `POST /content/testimonials` — appended at the end; needs content.manage */
+        post: operations["v1.admin.content.testimonials.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/testimonials/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/testimonials/reorder` — every id once, in the new order; needs content.manage */
+        post: operations["v1.admin.content.testimonials.reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/testimonials/{testimonial}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/testimonials/{testimonial}` — needs content.view */
+        get: operations["v1.admin.content.testimonials.show"];
+        /** `PUT /content/testimonials/{testimonial}` — needs content.manage */
+        put: operations["v1.admin.content.testimonials.update"];
+        post?: never;
+        /** `DELETE /content/testimonials/{testimonial}` — needs content.manage */
+        delete: operations["v1.admin.content.testimonials.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/home` — the draft, the live version and whether they differ */
+        get: operations["v1.admin.content.home.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/home/blocks` — add a block (defaults when `content` is omitted) */
+        post: operations["v1.admin.content.home.blocks.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/blocks/{block}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /content/home/blocks/{block}` — removes it from the draft; published versions keep their copy */
+        delete: operations["v1.admin.content.home.blocks.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /content/home/blocks/{block}` */
+        patch: operations["v1.admin.content.home.blocks.update"];
+        trace?: never;
+    };
+    "/admin/content/home/blocks/{block}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/home/blocks/{block}/duplicate` — a copy directly below */
+        post: operations["v1.admin.content.home.blocks.duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /content/home/order` — `ids` must list every draft block once */
+        put: operations["v1.admin.content.home.order"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/home/publish` — the draft goes live as the next version */
+        post: operations["v1.admin.content.home.publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/home/versions` — the 50 latest versions, newest first */
+        get: operations["v1.admin.content.home.versions.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/versions/{version}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /content/home/versions/{version}/revert` — with `publish` (default) the old version
+         *     goes live as a new version and 201 returns it; with `publish: false` only the draft is
+         *     replaced and 200 returns the draft
+         */
+        post: operations["v1.admin.content.home.versions.revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/home/preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /content/home/preview-token` — a signed token, valid for 10 minutes, that lets the
+         *     storefront render the draft, and the storefront URL that opens it
+         */
+        post: operations["v1.admin.content.home.preview-token"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3519,6 +4459,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/flash-sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /flash-sales`
+         * @description `server_time` is the API's clock (UTC) when the page was rendered; times are ISO 8601 UTC.
+         */
+        get: operations["v1.storefront.flash-sales.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/products/{slug}/reviews": {
         parameters: {
             query?: never;
@@ -3532,6 +4492,355 @@ export interface paths {
          *     (the same figures as the product's `rating_avg` / `rating_count`)
          */
         get: operations["v1.storefront.products.reviews.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/seo/{type}/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /seo/{type}/{slug}` — effective SEO of a live page, both locales; 404 when not live */
+        get: operations["v1.storefront.seo.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/redirects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /redirects` — the whole collapsed redirect map (manual + slug history), live
+         *     URLs pruned, no chains, no loops. Paths are locale-independent
+         */
+        get: operations["v1.storefront.redirects.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/redirects/{id}/hit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /redirects/{id}/hit` — count one storefront hit on a manual redirect */
+        post: operations["v1.storefront.redirects.hit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/sitemaps/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /sitemaps/{file}` — one sitemap file (XML) from the last build; 404 when absent */
+        get: operations["v1.storefront.sitemaps.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/robots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /robots` — robots.txt as served (text/plain), the sitemap line guaranteed */
+        get: operations["v1.storefront.robots.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /blog/posts` — page-paginated (numbered pages, for `rel=prev/next` and canonical
+         *     page URLs), newest first. Filters by slug: `filter[category]`, `filter[tag]`,
+         *     `filter[author]`; `filter[type]` = `article|buying_guide`. Anything else is a 400
+         */
+        get: operations["v1.storefront.blog.posts.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/teaser": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/teaser` — the home-page blog block: featured posts first, then the newest (`limit` 1–6, default 3) */
+        get: operations["v1.storefront.blog.teaser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/posts/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/posts/{slug}` — one live post or guide; 404 otherwise (an old slug is the redirect middleware's job) */
+        get: operations["v1.storefront.blog.posts.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/preview/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/preview/{token}` — any post, by a signed preview token from the admin. Never cache this */
+        get: operations["v1.storefront.blog.preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/categories` — categories with at least one live post, in admin order */
+        get: operations["v1.storefront.blog.categories.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/categories/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/categories/{slug}` */
+        get: operations["v1.storefront.blog.categories.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/tags/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/tags/{slug}` */
+        get: operations["v1.storefront.blog.tags.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/blog/authors/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /blog/authors/{slug}` */
+        get: operations["v1.storefront.blog.authors.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pages` — every live page (sitemaps, footers), by title */
+        get: operations["v1.storefront.pages.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/pages/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pages/{slug}` — one live page; 404 when missing, draft, scheduled or archived */
+        get: operations["v1.storefront.pages.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/menus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /menus` — `{header, footer, mobile}`; a location without a published menu is null */
+        get: operations["v1.storefront.menus.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/banners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1.storefront.banners.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/testimonials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1.storefront.testimonials.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/content/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/home?locale=en|bn` — the live homepage blocks visible now in that locale */
+        get: operations["v1.storefront.content.home"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/content/home/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /content/home/preview?locale=en|bn[&at=ISO]` — the DRAFT, for the builder's live
+         *     preview. Needs a valid, unexpired preview token from the admin in `X-Preview-Token`;
+         *     `at` previews the schedule at another instant. Never cache this response
+         */
+        get: operations["v1.storefront.content.home.preview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3609,6 +4918,47 @@ export interface paths {
         post: operations["v1.storefront.cart.coupon.store"];
         /** `DELETE /cart/coupon` — remove the coupon */
         delete: operations["v1.storefront.cart.coupon.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/cart/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * `PUT /cart/contact` — the phone a shopper left and whether they want one reminder
+         *     about this cart. Sending `marketing_consent: false` withdraws it. Answers 204
+         */
+        put: operations["v1.storefront.cart.contact.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/cart/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /cart/restore` — exchange a recovery link's token for its cart. Answers the
+         *     priced cart including its `token`, which the Next.js server stores in its httpOnly
+         *     cookie. An unknown or expired link, or a cart already ordered, is a 404
+         */
+        post: operations["v1.storefront.cart.restore"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4077,6 +5427,162 @@ export interface components {
          * @enum {string}
          */
         AddressType: "home" | "office" | "other";
+        /** AdminBlogPost */
+        AdminBlogPost: {
+            id: number;
+            /** @enum {string} */
+            type: "article" | "buying_guide";
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            excerpt: string | null;
+            excerpt_bn: string | null;
+            body: string | null;
+            body_bn: string | null;
+            cover: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            author_id: number | null;
+            author: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            category_id: number | null;
+            category: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            tags: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            }[];
+            /** @enum {string} */
+            status: "draft" | "scheduled" | "published";
+            is_live: boolean;
+            published_at: string | null;
+            published_at_dhaka: string | null;
+            is_featured: boolean;
+            reading_minutes: number;
+            reading_minutes_bn: number | null;
+            guide_age_band: string | null;
+            guide_budget_min: string | null;
+            guide_budget_max: string | null;
+            sections: {
+                id: number;
+                heading: string;
+                heading_bn: string | null;
+                body: string | null;
+                body_bn: string | null;
+                age_band: string | null;
+                budget_min: string | null;
+                budget_max: string | null;
+                picks: {
+                    product_id: number;
+                    name: string;
+                    name_bn: string | null;
+                    slug: string;
+                    note: string | null;
+                    note_bn: string | null;
+                    visible: boolean;
+                }[];
+            }[];
+            related_products: {
+                product_id: number;
+                name: string;
+                name_bn: string | null;
+                slug: string;
+                note: string | null;
+                note_bn: string | null;
+                visible: boolean;
+            }[];
+            seo: {
+                title: string | null;
+                title_bn: string | null;
+                description: string | null;
+                description_bn: string | null;
+                canonical_url: string | null;
+                robots: string;
+                og_image: string | null;
+                focus_keyword: string | null;
+            };
+            checklist: {
+                has_bangla: boolean;
+                cover_alt: boolean;
+                cover_alt_bn: boolean;
+                product_links: number;
+            };
+            updated_at: string | null;
+        };
+        /** AdminBlogPostRow */
+        AdminBlogPostRow: {
+            id: number;
+            /** @enum {string} */
+            type: "article" | "buying_guide";
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            /** @enum {string} */
+            status: "draft" | "scheduled" | "published";
+            is_live: boolean;
+            is_featured: boolean;
+            published_at: string | null;
+            published_at_dhaka: string | null;
+            reading_minutes: number;
+            category: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            author: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            cover: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            updated_at: string | null;
+        };
+        /** AdminBlogTerm */
+        AdminBlogTerm: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            position: number | null;
+            user_id: number | null;
+            avatar: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            posts_count: number;
+        };
         /** AdminReview */
         AdminReview: {
             id: number;
@@ -4116,6 +5622,12 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /**
+         * AgeBand
+         * @description The storefront age facet (03-storefront-spec §A7.2), in months. A band covers ages `min ≤ x < max` (`max` null = open-ended). A product is in a band when its own inclusive range `[age_min_months, age_max_months]` (null bounds open) shares at least one age with it — so bands overlap, and a 0–12 month toy is in both `0-12` and `12-24` (it fits a 12-month-old), consistent with `filter[age]=12`.
+         * @enum {string}
+         */
+        AgeBand: "0-12" | "12-24" | "24-48" | "48-72" | "72-96" | "96-144" | "144-";
         /**
          * ApplyCouponRequest
          * @description `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason.
@@ -4172,6 +5684,176 @@ export interface components {
             locale: "en" | "bn" | null;
             roles: string[];
             permissions: string[];
+        };
+        /** Banner */
+        Banner: {
+            id: number;
+            /** @enum {string} */
+            placement: "announcement_bar" | "category_page" | "info_strip" | "popup";
+            name: string;
+            title: string | null;
+            title_bn: string | null;
+            body: string | null;
+            body_bn: string | null;
+            media_id: number | null;
+            image: {
+                media_id: number;
+                url: string;
+                srcset: string | null;
+                width: number | null;
+                height: number | null;
+                alt: string | null;
+                alt_bn: string | null;
+            } | null;
+            link_url: string | null;
+            link_label: string | null;
+            link_label_bn: string | null;
+            category_id: number | null;
+            category: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            priority: number;
+            is_active: boolean;
+            starts_at: string | null;
+            ends_at: string | null;
+            /** @enum {string} */
+            state: "inactive" | "scheduled" | "live" | "ended";
+            updated_at: string | null;
+        };
+        /**
+         * BannerPlacement
+         * @description Banner slots outside the homepage blocks (the home hero is a CMS block). - announcement_bar: the strip above the header. - category_page: under a category page's header; optionally targeted at one category. - info_strip: a plain information line (delivery cut-off, holiday notice). The ONLY   placement that may render on cart and checkout, and it is text-only there (rule 25b:   checkout carries no upsell or cross-sell). - popup: a dismissible notice; never on cart or checkout.
+         * @enum {string}
+         */
+        BannerPlacement: "announcement_bar" | "category_page" | "info_strip" | "popup";
+        /**
+         * BannerRequest
+         * @description `POST /content/banners` and `PUT /content/banners/{banner}` — the whole banner. `starts_at` /
+         *     `ends_at` are ISO 8601 instants (the admin sends Dhaka time with +06:00); stored UTC.
+         *
+         *     Placement rules: only `category_page` and `popup` take an image (`media_id`, a library
+         *     image); only `category_page` targets a `category_id`; `info_strip` — the only placement shown
+         *     on cart and checkout — is text plus at most a link to a static page (`/pages/…`), never a
+         *     product or category (rule 25b).
+         */
+        BannerRequest: {
+            placement: components["schemas"]["BannerPlacement"];
+            name: string;
+            title?: string | null;
+            title_bn?: string | null;
+            body?: string | null;
+            body_bn?: string | null;
+            media_id?: number | null;
+            link_url?: string | null;
+            link_label?: string | null;
+            link_label_bn?: string | null;
+            category_id?: number | null;
+            priority?: number;
+            is_active?: boolean;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+        };
+        /**
+         * BlockType
+         * @description Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).
+         *     | |
+         *     |---|
+         *     | `hero` <br/> Hero / banner carousel: 1–5 slides; the first slide's image is the page's LCP. |
+         *     | `category_tiles` <br/>  |
+         *     | `age_tiles` <br/> "Shop by age" tiles with live counts from the catalogue. |
+         *     | `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |
+         *     | `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |
+         *     | `brand_strip` <br/>  |
+         *     | `usp_band` <br/>  |
+         *     | `promo_split` <br/>  |
+         *     | `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |
+         *     | `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |
+         *     | `rich_text` <br/>  |
+         *     | `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |
+         * @enum {string}
+         */
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+        /**
+         * BlogPostRequest
+         * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
+         *
+         *     - `publish_at` is Dhaka wall time `Y-m-d H:i` (or ISO 8601 with an offset, the content screens'
+         *       convention), required for `status: scheduled` and in the future; the server stores it as UTC.
+         *     - `body`/`body_bn` and section bodies are editor HTML, sanitised on save.
+         *     - `sections` apply to a buying guide only; each pick is a product id. `related_product_ids`
+         *       are the post's manual related products (≤ 8). Picks of an unbuyable product are kept and
+         *       hidden on the storefront.
+         *     - `seo` omitted keeps the saved seo_meta; sent, only the keys it carries change (the SEO
+         *       module's full panel, `PUT /seo/meta/blog_post/{id}`, owns the rest).
+         */
+        BlogPostRequest: {
+            type: components["schemas"]["PostType"];
+            title: string;
+            title_bn?: string | null;
+            slug?: string | null;
+            excerpt?: string | null;
+            excerpt_bn?: string | null;
+            body?: string | null;
+            body_bn?: string | null;
+            cover_media_id?: number | null;
+            author_id?: number | null;
+            category_id?: number | null;
+            tag_ids?: number[];
+            status: components["schemas"]["PostStatus"];
+            /** @description Dhaka wall time `Y-m-d H:i`, or ISO 8601 with an offset (`2026-12-01T00:00:00+06:00`). */
+            publish_at?: string | null;
+            is_featured?: boolean;
+            guide_age_band?: components["schemas"]["AgeBand"] | null;
+            guide_budget_min?: string | null;
+            guide_budget_max?: string | null;
+            sections?: {
+                heading: string;
+                heading_bn?: string | null;
+                body?: string | null;
+                body_bn?: string | null;
+                age_band?: components["schemas"]["AgeBand"] | null;
+                budget_min?: string | null;
+                budget_max?: string | null;
+                picks?: {
+                    product_id: number;
+                    note?: string | null;
+                    note_bn?: string | null;
+                }[];
+            }[];
+            related_product_ids?: number[];
+            seo?: {
+                title?: string | null;
+                title_bn?: string | null;
+                description?: string | null;
+                description_bn?: string | null;
+                /** Format: uri */
+                canonical_url?: string | null;
+                robots?: components["schemas"]["RobotsDirective"] | null;
+                /** Format: uri */
+                og_image?: string | null;
+                focus_keyword?: string | null;
+            };
+        };
+        /**
+         * BlogTermRequest
+         * @description Create or edit a blog category (`/blog/categories`), tag (`/blog/tags`) or author
+         *     (`/blog/authors`). `slug` omitted keeps the current one (new: generated from the name).
+         *     `description(_bn)` is a category description or an author bio; `position` is for
+         *     categories, `avatar_media_id` and `user_id` for authors.
+         */
+        BlogTermRequest: {
+            name: string;
+            name_bn?: string | null;
+            slug?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            position?: number | null;
+            avatar_media_id?: number | null;
+            user_id?: number | null;
         };
         /** Brand */
         Brand: {
@@ -4369,6 +6051,34 @@ export interface components {
             /** @description Every line sellable and in stock, the coupon (if any) applied and a serviced destination given. */
             checkout_ready: boolean;
         };
+        /** CartRecovery */
+        CartRecovery: {
+            id: number;
+            cart_id: number;
+            phone: string | null;
+            customer_name: string | null;
+            /** @enum {string} */
+            status: "messaged" | "skipped";
+            /** @enum {string|null} */
+            skip_reason: "no_phone" | "no_consent" | "opted_out" | "cooldown" | "already_ordered" | "below_minimum" | "template_inactive" | "converted" | null;
+            locale: string;
+            cart_value: string;
+            item_count: number;
+            abandoned_at: string | null;
+            /** @enum {string|null} */
+            message_status: "queued" | "sent" | "failed" | "dead_lettered" | "skipped" | null;
+            message_cost: string | null;
+            message_segments: number | null;
+            sent_at: string | null;
+            restored_at: string | null;
+            recovered_order: {
+                id: number;
+                number: string;
+                status: string;
+                grand_total: string;
+            } | null;
+            recovered_at: string | null;
+        };
         /** Category */
         Category: {
             id: number;
@@ -4447,6 +6157,161 @@ export interface components {
             /** @description Why the rest will not arrive (supplier out of stock, discontinued …). */
             reason: string;
         };
+        /** CmsBlock */
+        CmsBlock: {
+            id: number;
+            uuid: string;
+            /** @enum {string} */
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+            label: string | null;
+            content: {
+                [key: string]: unknown;
+            };
+            position: number;
+            is_enabled: boolean;
+            show_en: boolean;
+            show_bn: boolean;
+            show_mobile: boolean;
+            show_desktop: boolean;
+            starts_at: string | null;
+            ends_at: string | null;
+            updated_at: string | null;
+        };
+        /** CmsHomeDraft */
+        CmsHomeDraft: {
+            /** @constant */
+            placement: "home";
+            blocks: {
+                [key: string]: unknown;
+            }[];
+            live: {
+                [key: string]: unknown;
+            } | null;
+            has_unpublished_changes: boolean;
+            block_types: {
+                type: string;
+                defaults: {
+                    [key: string]: unknown;
+                };
+            }[];
+            media: {
+                id: number;
+                thumb_url: string | null;
+                alt_text: string | null;
+                alt_text_bn: string | null;
+            }[];
+        };
+        /** CmsLayoutVersion */
+        CmsLayoutVersion: {
+            id: number;
+            version: number;
+            block_count: number;
+            published_at: string | null;
+            published_by: {
+                id: number;
+                name: string;
+            } | null;
+            restored_from_version: number | null;
+            note: string | null;
+            is_live: boolean;
+        };
+        /** CmsPage */
+        CmsPage: {
+            id: number;
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            /** @enum {string} */
+            template: "default" | "sidebar" | "faq";
+            /** @enum {string} */
+            status: "draft" | "published" | "archived";
+            /** @enum {string} */
+            state: "draft" | "scheduled" | "live" | "archived";
+            published_at: string | null;
+            /** @description Locale-free storefront path. */
+            path: string;
+            has_bangla: boolean;
+            content: string | null;
+            content_bn: string | null;
+            faq_items: {
+                question: string;
+                question_bn: string | null;
+                answer: string;
+                answer_bn: string | null;
+            }[] | null;
+            /** @description Stored seo_meta overrides plus the defaults an empty field falls back to. */
+            seo: {
+                title: string | null;
+                title_bn: string | null;
+                description: string | null;
+                description_bn: string | null;
+                canonical_url: string | null;
+                robots: string;
+                sitemap_exclude: boolean;
+                og_title: string | null;
+                og_description: string | null;
+                og_image: string | null;
+                twitter_card: string;
+                focus_keyword: string | null;
+                defaults: {
+                    title: string;
+                    title_bn: string;
+                    description: string;
+                };
+            } | null;
+            updated_at: string | null;
+            created_at: string | null;
+        };
+        /**
+         * CmsPageRequest
+         * @description `POST /content/pages` and `PUT /content/pages/{page}` — the whole page document. `slug` null
+         *     keeps the current slug (or generates one from the title). `published_at` is an ISO 8601
+         *     instant (the admin sends Dhaka time with its +06:00 offset); with `status: published` a
+         *     future instant schedules the page. Changing a live page's slug needs
+         *     `acknowledge_slug_redirect: true` — the old URL then 301s (slug_history).
+         */
+        CmsPageRequest: {
+            title: string;
+            title_bn?: string | null;
+            slug?: string | null;
+            /** @description Rich text (HTML from the admin editor); sanitised on save. */
+            content?: string | null;
+            content_bn?: string | null;
+            template: components["schemas"]["PageTemplate"];
+            status: components["schemas"]["PageStatus"];
+            /** Format: date-time */
+            published_at?: string | null;
+            faq_items?: {
+                question: string;
+                question_bn?: string | null;
+                answer: string;
+                answer_bn?: string | null;
+            }[] | null;
+            /** @description Search & social (seo_meta, type `page`). Omitted: keep; sent: replace. */
+            seo?: {
+                title?: string | null;
+                title_bn?: string | null;
+                description?: string | null;
+                description_bn?: string | null;
+                /** Format: uri */
+                canonical_url?: string | null;
+                robots?: components["schemas"]["RobotsDirective"] | null;
+                sitemap_exclude?: boolean;
+                og_title?: string | null;
+                og_description?: string | null;
+                /** Format: uri */
+                og_image?: string | null;
+                twitter_card?: components["schemas"]["TwitterCard"] | null;
+                focus_keyword?: string | null;
+            };
+            acknowledge_slug_redirect?: boolean;
+        };
+        /** CmsPreviewToken */
+        CmsPreviewToken: {
+            token: string;
+            expires_at: string;
+            url: string | null;
+        };
         /**
          * ConfirmOrderRequest
          * @description `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`.
@@ -4460,6 +6325,8 @@ export interface components {
             id: number;
             code: string;
             description: string | null;
+            /** @description Bulk-generated codes share a batch label (coupon builder, P7). */
+            batch: string | null;
             /** @enum {string} */
             type: "fixed" | "percent" | "free_shipping";
             value: string;
@@ -5068,6 +6935,38 @@ export interface components {
          * @enum {string}
          */
         Gender: "boys" | "girls" | "unisex";
+        /**
+         * GenerateCouponsRequest
+         * @description `POST /coupons/generate` (coupon builder, P7) — the coupon document without `code`,
+         *     plus `count` (1–1000), `prefix` (optional, ≤ 12), `code_length` (6–16, default 8) and
+         *     `batch` (the campaign label the codes share). Needs marketing.manage.
+         */
+        GenerateCouponsRequest: {
+            description?: string | null;
+            type: components["schemas"]["CouponType"];
+            value: string;
+            max_discount?: string | null;
+            min_order_amount?: string | null;
+            usage_limit_total?: number | null;
+            usage_limit_per_customer?: number | null;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+            applies_to: components["schemas"]["ProductScopeType"];
+            scope_ids?: number[];
+            excludes?: {
+                product_ids?: number[];
+                category_ids?: number[];
+                brand_ids?: number[];
+            };
+            first_order_only?: boolean;
+            is_active?: boolean;
+            count: number;
+            prefix?: string | null;
+            code_length?: number;
+            batch: string;
+        };
         /** HealthReportResource */
         HealthReportResource: {
             /** @enum {string} */
@@ -5260,6 +7159,17 @@ export interface components {
         HoldOrderRequest: {
             /** @description Why the order is paused, e.g. "Customer asked to deliver after Friday". */
             reason: string;
+        };
+        /**
+         * ImportRedirectsRequest
+         * @description `POST /seo/redirects/import` — a CSV `from_path,to_path,status_code[,note]`, ≤ 1 MB.
+         */
+        ImportRedirectsRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 1024 kilobytes.
+             */
+            file: string;
         };
         /**
          * ImportSettlementRequest
@@ -5626,6 +7536,14 @@ export interface components {
             truncated: boolean;
         };
         /**
+         * IssueCmsPreviewTokenRequest
+         * @description `POST /content/home/preview-token` — `locale` en|bn picks the storefront prefix of the preview URL.
+         */
+        IssueCmsPreviewTokenRequest: {
+            /** @enum {string} */
+            locale?: "en" | "bn";
+        };
+        /**
          * LandedCostMethod
          * @description How a receipt's landed costs (freight, customs/duty, other) are split across its lines. `value` is the default and what DATABASE-DESIGN §3.2 specifies; `quantity` suits a shipment of similar items, `weight` a freight bill charged by the kilo (needs every line's `product_variants.weight_grams`).
          * @enum {string}
@@ -5794,6 +7712,50 @@ export interface components {
         MediaFolderRequest: {
             name: string;
         };
+        /** Menu */
+        Menu: {
+            /** @enum {string} */
+            location: "header" | "footer" | "mobile";
+            exists: boolean;
+            is_published: boolean;
+            published_at: string | null;
+            updated_at: string | null;
+            /** @enum {integer} */
+            max_depth: 3 | 2;
+            /** @constant */
+            max_items: 120;
+            items: {
+                id: number;
+                label: string;
+                label_bn: string | null;
+                link_type: string;
+                link_id: number | null;
+                url: string | null;
+                is_visible: boolean;
+                open_in_new_tab: boolean;
+                target: {
+                    label: string;
+                    label_bn: string | null;
+                    path: string;
+                    live: boolean;
+                } | null;
+                children: unknown[];
+            }[];
+        };
+        /** MenuLinkTarget */
+        MenuLinkTarget: {
+            id: number;
+            label: string;
+            label_bn: string | null;
+            path: string;
+            live: boolean;
+        };
+        /**
+         * MenuLocation
+         * @description Where a menu renders. Each location caps how deep items may nest: the header mega menu has three levels (tab → column → link), the footer two (column → link), the mobile menu two.
+         * @enum {string}
+         */
+        MenuLocation: "header" | "footer" | "mobile";
         /** MessagingSettings */
         MessagingSettings: {
             /**
@@ -5914,13 +7876,27 @@ export interface components {
             body_bn: string;
             provider_template: string | null;
             is_active: boolean;
+            /** @enum {string} */
+            kind: "system" | "marketing" | "manual";
+            is_custom: boolean;
+            name_en: string | null;
+            name_bn: string | null;
+            /** @enum {string|null} */
+            whatsapp_status: "draft" | "submitted" | "approved" | null;
             variables: string[];
+            /** @description Positional parameters a WhatsApp system body must keep (Meta-approved). */
+            required_variables: string[];
             chars_en: number | null;
             chars_bn: number | null;
             segments_en: number | null;
             segments_bn: number | null;
             encoding_en: string | null;
             encoding_bn: string | null;
+            /** @description Cost of one SMS send at the configured per-segment rate, server-computed; null for WhatsApp and email. */
+            cost_en: string | null;
+            cost_bn: string | null;
+            updated_by_name: string | null;
+            archived_at: string | null;
             updated_at: string | null;
         };
         /** NotificationTemplatePreview */
@@ -5942,6 +7918,24 @@ export interface components {
                 cost: string;
             };
             unknown_variables: string[];
+            /** @description Parameters a WhatsApp system body dropped (Meta-approved; refused on save). */
+            missing_variables: string[];
+            /** @description An SMS side that runs to 3+ segments. */
+            warnings: ("long_sms_en" | "long_sms_bn")[];
+        };
+        /** NotificationTemplateVersion */
+        NotificationTemplateVersion: {
+            id: number;
+            version: number;
+            subject_en: string | null;
+            subject_bn: string | null;
+            preheader_en: string | null;
+            preheader_bn: string | null;
+            body_en: string;
+            body_bn: string;
+            restored_from: number | null;
+            created_by_name: string | null;
+            created_at: string | null;
         };
         /** Order */
         Order: {
@@ -6367,6 +8361,18 @@ export interface components {
             note?: string | null;
         };
         /**
+         * PageStatus
+         * @description `cms_pages.status`. A published page with a future `published_at` is scheduled.
+         * @enum {string}
+         */
+        PageStatus: "draft" | "published" | "archived";
+        /**
+         * PageTemplate
+         * @description How the storefront lays a static page out. `faq` renders `faq_items` as an accordion.
+         * @enum {string}
+         */
+        PageTemplate: "default" | "sidebar" | "faq";
+        /**
          * PayExpenseRequest
          * @description `POST /finance/expenses/{expense}/pay` — `payment_method` and `paid_on` (a Dhaka date, not in the future).
          */
@@ -6631,6 +8637,18 @@ export interface components {
              */
             source: "ledger" | "summaries" | "mixed";
         };
+        /**
+         * PostStatus
+         * @description A post's editorial state. Live on the storefront = not draft and `published_at` reached: a scheduled post goes live at its instant even before the sweep flips it to `published`.
+         * @enum {string}
+         */
+        PostStatus: "draft" | "scheduled" | "published";
+        /**
+         * PostType
+         * @description An article, or a buying guide (structured sections with product picks), served under /guides.
+         * @enum {string}
+         */
+        PostType: "article" | "buying_guide";
         /**
          * PreviewNotificationTemplateRequest
          * @description `POST /notifications/templates/{template}/preview` — measure an unsaved body (the
@@ -7106,6 +9124,69 @@ export interface components {
             };
             truncated: boolean;
         };
+        /** Promotion */
+        Promotion: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            description: string | null;
+            /** @enum {string} */
+            type: "discount" | "flash_sale" | "category_discount" | "tiered" | "buy_x_get_y" | "bundle" | "free_delivery";
+            priority: number;
+            is_stackable: boolean;
+            allows_coupons: boolean;
+            rules: {
+                [key: string]: unknown;
+            };
+            starts_at: string | null;
+            ends_at: string | null;
+            is_active: boolean;
+            /** @enum {string} */
+            status: "scheduled" | "running" | "ended" | "inactive";
+            usage_count: number;
+            usage_limit_total: number | null;
+            usage_limit_per_customer: number | null;
+            budget: string | null;
+            discount_spent: string;
+            flash_items: {
+                id: number;
+                variant_id: number;
+                sku: string | null;
+                product_name: string | null;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                regular_price: string | null;
+                sale_price: string;
+                allotment: number;
+                claimed: number;
+                remaining: number;
+                per_order_limit: number | null;
+            }[];
+            created_at: string | null;
+            updated_at: string | null;
+        };
+        /**
+         * PromotionType
+         * @description `promotions.type` (DATABASE-DESIGN §3.8). `rules` shape per type is documented in docs/api/promotions.md and read by {@see \App\Domain\Marketing\Services\PromotionEngine}.
+         *     | |
+         *     |---|
+         *     | `discount` <br/> Percent or fixed-per-unit off every eligible line (the general "percentage / fixed" promotion). |
+         *     | `flash_sale` <br/> Hard-windowed sale. With `flash_sale_items` rows: each listed variant at its sale price for a limited allotment. Without: percent/fixed like `discount` (Phase 4 rows). |
+         *     | `category_discount` <br/> As `discount`; the Phase 4 name, kept so existing rows and reports still read. |
+         *     | `tiered` <br/> Percent or fixed off the eligible subtotal, by the highest tier reached. |
+         *     | `buy_x_get_y` <br/> For every `buy` + `get` eligible units, the `get` cheapest are discounted by `percent`. |
+         *     | `bundle` <br/> Percent or fixed off — or a fixed `price` for — each complete set of `product_ids`. |
+         *     | `free_delivery` <br/> Delivery becomes free when the eligible goods (after discounts) reach `min_subtotal`. |
+         * @enum {string}
+         */
+        PromotionType: "discount" | "flash_sale" | "category_discount" | "tiered" | "buy_x_get_y" | "bundle" | "free_delivery";
+        /**
+         * PublishCmsLayoutRequest
+         * @description `POST /content/home/publish` — an optional note for the version history.
+         */
+        PublishCmsLayoutRequest: {
+            note?: string | null;
+        };
         /** Purchase */
         Purchase: {
             id: number;
@@ -7321,6 +9402,22 @@ export interface components {
             reference?: string | null;
             note?: string | null;
         };
+        /** Redirect */
+        Redirect: {
+            id: number;
+            from_path: string;
+            to_path: string;
+            /** @enum {integer} */
+            status_code: 301 | 302;
+            is_active: boolean;
+            /** @enum {string} */
+            source: "manual" | "import";
+            hit_count: number;
+            last_hit_at: string | null;
+            note: string | null;
+            created_at: string | null;
+            updated_at: string | null;
+        };
         /** Refund */
         Refund: {
             id: number;
@@ -7404,11 +9501,25 @@ export interface components {
             ids: number[];
         };
         /**
+         * ReorderCmsBlocksRequest
+         * @description `PUT /content/home/order` — `ids`: every draft block id, in the new order.
+         */
+        ReorderCmsBlocksRequest: {
+            ids: number[];
+        };
+        /**
          * ReorderProductImagesRequest
          * @description `POST /products/{product}/images/reorder` — `{ ids: [3, 1, 2] }`, every image id
          *     of the product exactly once, in display order. Needs catalog.update.
          */
         ReorderProductImagesRequest: {
+            ids: number[];
+        };
+        /**
+         * ReorderTestimonialsRequest
+         * @description `POST /content/testimonials/reorder` — `ids`: every testimonial id, once, in the new order.
+         */
+        ReorderTestimonialsRequest: {
             ids: number[];
         };
         /**
@@ -7452,11 +9563,26 @@ export interface components {
             note?: string | null;
         };
         /**
+         * RestoreCartRequest
+         * @description `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7).
+         */
+        RestoreCartRequest: {
+            token: string;
+        };
+        /**
          * ReturnReason
          * @description Why a customer sent goods back. Counted by cause, so a fixed list; `other` needs a note.
          * @enum {string}
          */
         ReturnReason: "damaged_in_transit" | "defective" | "wrong_item" | "missing_parts" | "not_as_described" | "changed_mind" | "other";
+        /**
+         * RevertCmsLayoutRequest
+         * @description `POST /content/home/versions/{version}/revert` — `publish` (default true) puts the old
+         *     version live again as a new version; false only restores it into the draft.
+         */
+        RevertCmsLayoutRequest: {
+            publish?: boolean;
+        };
         /**
          * ReviewSettlementLineRequest
          * @description `POST /finance/settlements/{settlement}/items/{item}/review` — `decision` (accepted|excluded;
@@ -7579,6 +9705,50 @@ export interface components {
          * @enum {string}
          */
         RobotsDirective: "index,follow" | "noindex,follow" | "index,nofollow" | "noindex,nofollow";
+        /** RobotsTxt */
+        RobotsTxt: {
+            content: string;
+            is_default: boolean;
+            default_content: string;
+            sitemap_url: string;
+            served: string;
+        };
+        /**
+         * SaveRedirectRequest
+         * @description `POST /seo/redirects` and `PATCH /seo/redirects/{redirect}`. Shape only; the
+         *     conflict, loop and chain rules live in App\Domain\Seo\Actions\SaveRedirect.
+         */
+        SaveRedirectRequest: {
+            from_path: string;
+            to_path: string;
+            /** @enum {integer} */
+            status_code?: "301" | "302";
+            is_active?: boolean;
+            note?: string | null;
+        };
+        /**
+         * SaveSeoMetaRequest
+         * @description `PUT /seo/meta/{type}/{id}` — the whole SEO document of one page (SeoPanel). Every text
+         *     field is optional (empty = the server default); a save replaces the stored document.
+         */
+        SaveSeoMetaRequest: {
+            title?: string | null;
+            title_bn?: string | null;
+            description?: string | null;
+            description_bn?: string | null;
+            og_title?: string | null;
+            og_title_bn?: string | null;
+            og_description?: string | null;
+            og_description_bn?: string | null;
+            /** Format: uri */
+            og_image?: string | null;
+            /** Format: uri */
+            canonical_url?: string | null;
+            robots?: components["schemas"]["RobotsDirective"] | null;
+            sitemap_exclude?: boolean;
+            twitter_card?: components["schemas"]["TwitterCard"] | null;
+            focus_keyword?: string | null;
+        };
         /**
          * SendTestSmsRequest
          * @description `POST /settings/messaging/test` — one test SMS to a Bangladeshi mobile (rule 30:
@@ -7589,6 +9759,71 @@ export interface components {
             /** @enum {string} */
             locale: "en" | "bn";
         };
+        /** SeoDocument */
+        SeoDocument: {
+            type: string;
+            id: number;
+            slug: string;
+            path: string;
+            is_live: boolean;
+            urls: {
+                en: string;
+                bn: string;
+            };
+            title: string | null;
+            title_bn: string | null;
+            description: string | null;
+            description_bn: string | null;
+            og_title: string | null;
+            og_title_bn: string | null;
+            og_description: string | null;
+            og_description_bn: string | null;
+            og_image: string | null;
+            canonical_url: string | null;
+            /** @enum {string} */
+            robots: "index,follow" | "noindex,follow" | "index,nofollow" | "noindex,nofollow";
+            sitemap_exclude: boolean;
+            /** @enum {string} */
+            twitter_card: "summary_large_image" | "summary";
+            focus_keyword: string | null;
+            defaults: {
+                title: string;
+                title_bn: string;
+                description: string;
+                description_bn: string;
+                og_image: string | null;
+            };
+            /** @description Search-result previews, computed on the server. */
+            serp: {
+                en: {
+                    title: string;
+                    title_display: string;
+                    title_px: number;
+                    title_max: number;
+                    title_truncated: boolean;
+                    description: string;
+                    description_display: string;
+                    description_px: number;
+                    description_max: number;
+                    description_truncated: boolean;
+                    url_display: string;
+                };
+                bn: {
+                    title: string;
+                    title_display: string;
+                    title_px: number;
+                    title_max: number;
+                    title_truncated: boolean;
+                    description: string;
+                    description_display: string;
+                    description_px: number;
+                    description_max: number;
+                    description_truncated: boolean;
+                    url_display: string;
+                };
+            };
+            in_sitemap: boolean;
+        };
         /**
          * SeoMeasureRequest
          * @description `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta
@@ -7597,6 +9832,26 @@ export interface components {
         SeoMeasureRequest: {
             title?: string | null;
             description?: string | null;
+        };
+        /**
+         * SerpPreviewRequest
+         * @description `POST /seo/serp-preview` — the server's truncation of unsaved title/description. Read-only.
+         */
+        SerpPreviewRequest: {
+            title?: string | null;
+            description?: string | null;
+            url?: string | null;
+        };
+        /**
+         * SetCartContactRequest
+         * @description `PUT /cart/contact` `{phone, marketing_consent, locale?}` (P7 abandoned-cart recovery).
+         *     `marketing_consent` is the shopper's explicit opt-in to one reminder about this cart.
+         */
+        SetCartContactRequest: {
+            phone: string;
+            marketing_consent: boolean;
+            /** @enum {string} */
+            locale?: "en" | "bn";
         };
         /**
          * SetPhoneStatusRequest
@@ -7667,6 +9922,19 @@ export interface components {
             /** @description The order was marked shipped for this shipment (stock consumed, courier charge booked). */
             dispatched: boolean;
             note: string | null;
+            /**
+             * @description The delivery rider, recorded by staff when the rider calls (neither courier's API
+             *     returns it). `phone` is E.164 with customers.view_pii, else masked (`017****5678`);
+             *     `phone_masked` says which. Null when nobody has recorded one.
+             */
+            rider: {
+                name: string | null;
+                phone: string | null;
+                phone_masked: boolean;
+                /** @enum {string|null} */
+                source: "manual" | "courier" | null;
+                recorded_at: string | null;
+            } | null;
             booked_at: string | null;
             dispatched_at: string | null;
             picked_up_at: string | null;
@@ -7800,6 +10068,36 @@ export interface components {
                 weight_grams?: number | null;
             }[];
         };
+        /** SitemapStatus */
+        SitemapStatus: {
+            sitemap_url: string;
+            generated_at: string | null;
+            total_urls: number;
+            duration_ms: number | null;
+            files: {
+                file: string;
+                partition: string;
+                /** @enum {string} */
+                locale: "en" | "bn";
+                part: number;
+                urls: number;
+                url: string;
+            }[];
+        };
+        /** SlugRedirect */
+        SlugRedirect: {
+            id: number;
+            type: string;
+            entity_id: number;
+            entity_name: string | null;
+            old_slug: string;
+            new_slug: string;
+            from_path: string | null;
+            to_path: string | null;
+            /** @constant */
+            status_code: 301;
+            created_at: string | null;
+        };
         /** SmsTestResult */
         SmsTestResult: {
             driver: string;
@@ -7901,6 +10199,26 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * StoreCmsBlockRequest
+         * @description `POST /content/home/blocks` — add a block to the draft. `content` is optional: omitted, the
+         *     type's defaults are used; given, it is validated against the type's schema. `position` is the
+         *     0-based slot (omitted = the end).
+         */
+        StoreCmsBlockRequest: {
+            type: components["schemas"]["BlockType"];
+            position?: number | null;
+            label?: string | null;
+            is_enabled?: boolean;
+            show_en?: boolean;
+            show_bn?: boolean;
+            show_mobile?: boolean;
+            show_desktop?: boolean;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+        };
+        /**
          * StoreComplianceCertificateRequest
          * @description `POST /products/{product}/compliance/certificate` — `multipart/form-data` with `file`:
          *     the BSTI certificate as a PDF (by content, ≤ 10 MB, no scripts or attachments).
@@ -7953,6 +10271,26 @@ export interface components {
             alt_text?: string | null;
             alt_text_bn?: string | null;
             caption?: string | null;
+        };
+        /**
+         * StoreNotificationTemplateRequest
+         * @description `POST /notifications/templates` — a staff-made template (P7 Message templates) for
+         *     marketing or manual use; needs settings.update. `variables` is a subset of the generic
+         *     set ({@see CustomTemplateVariables::ALL}); the bodies may name only those. One row is
+         *     created per channel, sharing a generated `custom.*` key. Subjects are required when
+         *     email is one of the channels.
+         */
+        StoreNotificationTemplateRequest: {
+            name_en: string;
+            name_bn: string;
+            /** @enum {string} */
+            kind: "marketing" | "manual";
+            channels: ("sms" | "whatsapp" | "email")[];
+            variables: ("name" | "order_number" | "store_name" | "hotline" | "store_url" | "track_url")[];
+            body_en: string;
+            body_bn: string;
+            subject_en?: string | null;
+            subject_bn?: string | null;
         };
         /**
          * StoreOrderNoteRequest
@@ -8149,6 +10487,57 @@ export interface components {
             acknowledge_slug_redirect?: boolean;
         };
         /**
+         * StorePromotionRequest
+         * @description `POST /promotions` — needs marketing.manage.
+         */
+        StorePromotionRequest: {
+            name: string;
+            name_bn?: string | null;
+            description?: string | null;
+            type: components["schemas"]["PromotionType"];
+            priority?: number;
+            is_stackable?: boolean;
+            allows_coupons?: boolean;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+            is_active?: boolean;
+            usage_limit_total?: number | null;
+            usage_limit_per_customer?: number | null;
+            budget?: string | null;
+            rules: {
+                scope?: {
+                    applies_to?: components["schemas"]["ProductScopeType"];
+                    ids?: number[];
+                    exclude_product_ids?: number[];
+                    exclude_category_ids?: number[];
+                    exclude_brand_ids?: number[];
+                };
+                /** @enum {string|null} */
+                type?: "percent" | "fixed" | "price" | null;
+                value?: string | null;
+                max_discount?: string | null;
+                tiers?: {
+                    min_subtotal: string;
+                    /** @enum {string} */
+                    type: "percent" | "fixed";
+                    value: string;
+                }[];
+                buy?: number;
+                get?: number;
+                percent?: number;
+                product_ids?: number[];
+                min_subtotal?: string;
+            };
+            flash_items?: {
+                variant_id: number;
+                sale_price: string;
+                allotment: number;
+                per_order_limit?: number | null;
+            }[];
+        };
+        /**
          * StorePurchaseRequest
          * @description `POST /purchases` — raises a draft PO; needs purchasing.create.
          */
@@ -8328,6 +10717,177 @@ export interface components {
             landmark: string | null;
             is_default: boolean;
         };
+        /** StorefrontBanner */
+        StorefrontBanner: {
+            id: number;
+            /** @enum {string} */
+            placement: "announcement_bar" | "category_page" | "info_strip" | "popup";
+            title: string | null;
+            title_bn: string | null;
+            body: string | null;
+            body_bn: string | null;
+            image: {
+                media_id: number;
+                url: string;
+                srcset: string | null;
+                width: number | null;
+                height: number | null;
+                alt: string | null;
+                alt_bn: string | null;
+            } | null;
+            link_url: string | null;
+            link_label: string | null;
+            link_label_bn: string | null;
+            ends_at: string | null;
+        };
+        /** StorefrontBlogPost */
+        StorefrontBlogPost: {
+            id: number;
+            /** @enum {string} */
+            type: "article" | "buying_guide";
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            excerpt: string | null;
+            excerpt_bn: string | null;
+            cover: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            category: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            } | null;
+            author: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+                bio: string | null;
+                bio_bn: string | null;
+                avatar: {
+                    media_id: number;
+                    url: string;
+                    srcset_webp: string | null;
+                    srcset_avif: string | null;
+                    alt: string | null;
+                    alt_bn: string | null;
+                    width: number | null;
+                    height: number | null;
+                } | null;
+            } | null;
+            reading_minutes: number;
+            reading_minutes_bn: number | null;
+            published_at: string | null;
+            is_featured: boolean;
+            body: string | null;
+            body_bn: string | null;
+            tags: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            }[];
+            guide_age_band: string | null;
+            guide_budget_min: string | null;
+            guide_budget_max: string | null;
+            sections: {
+                heading: string;
+                heading_bn: string | null;
+                body: string | null;
+                body_bn: string | null;
+                age_band: string | null;
+                budget_min: string | null;
+                budget_max: string | null;
+                picks: {
+                    note: string | null;
+                    note_bn: string | null;
+                    product: {
+                        [key: string]: unknown;
+                    };
+                }[];
+            }[];
+            related_products: {
+                note: string | null;
+                note_bn: string | null;
+                product: {
+                    [key: string]: unknown;
+                };
+            }[];
+            related_posts: {
+                [key: string]: unknown;
+            }[];
+            seo: {
+                title: string | null;
+                title_bn: string | null;
+                description: string | null;
+                description_bn: string | null;
+                canonical_url: string | null;
+                robots: string;
+                og_image: string | null;
+            };
+            modified_at: string | null;
+        };
+        /** StorefrontBlogPostCard */
+        StorefrontBlogPostCard: {
+            id: number;
+            /** @enum {string} */
+            type: "article" | "buying_guide";
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            excerpt: string | null;
+            excerpt_bn: string | null;
+            cover: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            category: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            } | null;
+            author: {
+                name: string;
+                name_bn: string | null;
+                slug: string;
+            } | null;
+            reading_minutes: number;
+            reading_minutes_bn: number | null;
+            published_at: string | null;
+            is_featured: boolean;
+        };
+        /** StorefrontBlogTerm */
+        StorefrontBlogTerm: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            slug: string;
+            description: string | null;
+            description_bn: string | null;
+            avatar: {
+                media_id: number;
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            posts_count: number;
+        };
         /** StorefrontBrand */
         StorefrontBrand: {
             name: string;
@@ -8377,6 +10937,48 @@ export interface components {
             };
             upazila_required: string;
             city_option: boolean;
+        };
+        /** StorefrontHome */
+        StorefrontHome: {
+            version: number | null;
+            published_at: string | null;
+            preview: boolean;
+            blocks: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** StorefrontMenus */
+        StorefrontMenus: {
+            header: {
+                items: {
+                    label: string;
+                    label_bn: string | null;
+                    type: string;
+                    href: string | null;
+                    open_in_new_tab: boolean;
+                    children: unknown[];
+                }[];
+            } | null;
+            footer: {
+                items: {
+                    label: string;
+                    label_bn: string | null;
+                    type: string;
+                    href: string | null;
+                    open_in_new_tab: boolean;
+                    children: unknown[];
+                }[];
+            } | null;
+            mobile: {
+                items: {
+                    label: string;
+                    label_bn: string | null;
+                    type: string;
+                    href: string | null;
+                    open_in_new_tab: boolean;
+                    children: unknown[];
+                }[];
+            } | null;
         };
         /** StorefrontOrder */
         StorefrontOrder: {
@@ -8523,6 +11125,43 @@ export interface components {
             resend_in: number;
             length: number;
         };
+        /** StorefrontPage */
+        StorefrontPage: {
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            /** @enum {string} */
+            template: "default" | "sidebar" | "faq";
+            content: string | null;
+            content_bn: string | null;
+            faq_items: {
+                question: string;
+                question_bn: string | null;
+                answer: string;
+                answer_bn: string | null;
+            }[];
+            published_at: string | null;
+            updated_at: string | null;
+            seo: {
+                title: string;
+                title_bn: string;
+                description: string;
+                description_bn: string;
+                canonical_url: string | null;
+                robots: string;
+                og_title: string | null;
+                og_description: string | null;
+                og_image: string | null;
+                twitter_card: string;
+            };
+        };
+        /** StorefrontPageSummary */
+        StorefrontPageSummary: {
+            slug: string;
+            title: string;
+            title_bn: string | null;
+            updated_at: string | null;
+        };
         /** StorefrontProduct */
         StorefrontProduct: {
             id: number;
@@ -8622,6 +11261,28 @@ export interface components {
                 /** @enum {string} */
                 stock_state: "in_stock" | "low_stock" | "out_of_stock";
             }[];
+            /**
+             * @description P7: the running flash sale on this product — the cheapest offer, plus each
+             *     variant's own sale price in `variants` (variant id → offer). Null when none.
+             */
+            flash_sale: {
+                promotion_id: number;
+                name: string;
+                name_bn: string | null;
+                ends_at: string;
+                variant_id: number;
+                sale_price: string;
+                regular_price: string;
+                discount_percent: number;
+                remaining: number;
+                variants: {
+                    [key: string]: {
+                        sale_price: string;
+                        discount_percent: number;
+                        remaining: number;
+                    };
+                };
+            } | null;
             related: components["schemas"]["StorefrontProductCard"][];
         };
         /** StorefrontProductCard */
@@ -8658,6 +11319,21 @@ export interface components {
                 alt_bn: string | null;
                 width: number | null;
                 height: number | null;
+            } | null;
+            /**
+             * @description P7: the cheapest running flash-sale offer on this product (badge + countdown to
+             *     `ends_at`, server time UTC), or null. Display only; the cart prices it.
+             */
+            flash_sale: {
+                promotion_id: number;
+                name: string;
+                name_bn: string | null;
+                ends_at: string;
+                variant_id: number;
+                sale_price: string;
+                regular_price: string;
+                discount_percent: number;
+                remaining: number;
             } | null;
         };
         /** StorefrontReview */
@@ -8698,6 +11374,54 @@ export interface components {
             }[];
             total: string;
             degraded: string;
+        };
+        /** StorefrontSeo */
+        StorefrontSeo: {
+            type: string;
+            slug: string;
+            path: string;
+            robots: {
+                index: boolean;
+                follow: boolean;
+            };
+            canonical_url: string | null;
+            sitemap_exclude: boolean;
+            /** @enum {string} */
+            twitter_card: "summary_large_image" | "summary";
+            og_image: string | null;
+            en: {
+                title: string;
+                description: string;
+                og_title: string;
+                og_description: string;
+            };
+            bn: {
+                title: string;
+                description: string;
+                og_title: string;
+                og_description: string;
+            };
+            updated_at: string | null;
+        };
+        /** StorefrontTestimonial */
+        StorefrontTestimonial: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            location: string | null;
+            location_bn: string | null;
+            quote: string;
+            quote_bn: string | null;
+            rating: number | null;
+            photo: {
+                media_id: number;
+                url: string;
+                srcset: string | null;
+                width: number | null;
+                height: number | null;
+                alt: string | null;
+                alt_bn: string | null;
+            } | null;
         };
         /** StorefrontUpazila */
         StorefrontUpazila: {
@@ -8787,6 +11511,45 @@ export interface components {
          * @enum {string}
          */
         SupplierStatus: "active" | "archived";
+        /** Testimonial */
+        Testimonial: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            location: string | null;
+            location_bn: string | null;
+            quote: string;
+            quote_bn: string | null;
+            rating: number | null;
+            media_id: number | null;
+            photo: {
+                media_id: number;
+                url: string;
+                srcset: string | null;
+                width: number | null;
+                height: number | null;
+                alt: string | null;
+                alt_bn: string | null;
+            } | null;
+            is_published: boolean;
+            position: number;
+            updated_at: string | null;
+        };
+        /**
+         * TestimonialRequest
+         * @description `POST /content/testimonials` and `PUT /content/testimonials/{testimonial}` — the whole testimonial.
+         */
+        TestimonialRequest: {
+            name: string;
+            name_bn?: string | null;
+            location?: string | null;
+            location_bn?: string | null;
+            quote: string;
+            quote_bn?: string | null;
+            rating?: number | null;
+            media_id?: number | null;
+            is_published?: boolean;
+        };
         /**
          * TwitterCard
          * @enum {string}
@@ -8853,6 +11616,24 @@ export interface components {
             is_featured?: boolean;
             show_in_menu?: boolean;
             is_active?: boolean;
+        };
+        /**
+         * UpdateCmsBlockRequest
+         * @description `PATCH /content/home/blocks/{block}` — any subset of label, visibility, schedule and
+         *     `content`. `content` replaces the block's content whole and is validated against the block's
+         *     own type; the type cannot change.
+         */
+        UpdateCmsBlockRequest: {
+            label?: string | null;
+            is_enabled?: boolean;
+            show_en?: boolean;
+            show_bn?: boolean;
+            show_mobile?: boolean;
+            show_desktop?: boolean;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
         };
         /**
          * UpdateCouponRequest
@@ -8969,6 +11750,7 @@ export interface components {
             sms_driver: "log" | "null" | "reve";
             /** Format: uri */
             reve_base_url?: string | null;
+            /** @description The REVE non-masking number: digits only (5–15), optional leading `+`. */
             reve_sender_id?: string | null;
             /** @description Decimal string, taka per segment, ≥ 0 (no sign allowed), 2 places at most. */
             sms_cost_per_segment: string;
@@ -9005,6 +11787,9 @@ export interface components {
             subject_bn?: string | null;
             preheader_en?: string | null;
             preheader_bn?: string | null;
+            /** @description Custom (staff-made) templates only; ignored for a system template (P7). */
+            name_en?: string | null;
+            name_bn?: string | null;
         };
         /**
          * UpdateOrderRequest
@@ -9170,6 +11955,57 @@ export interface components {
             preferred_language?: "en" | "bn";
         };
         /**
+         * UpdatePromotionRequest
+         * @description `PUT /promotions/{promotion}` — the whole document; needs marketing.manage.
+         */
+        UpdatePromotionRequest: {
+            name: string;
+            name_bn?: string | null;
+            description?: string | null;
+            type: components["schemas"]["PromotionType"];
+            priority?: number;
+            is_stackable?: boolean;
+            allows_coupons?: boolean;
+            /** Format: date-time */
+            starts_at?: string | null;
+            /** Format: date-time */
+            ends_at?: string | null;
+            is_active?: boolean;
+            usage_limit_total?: number | null;
+            usage_limit_per_customer?: number | null;
+            budget?: string | null;
+            rules: {
+                scope?: {
+                    applies_to?: components["schemas"]["ProductScopeType"];
+                    ids?: number[];
+                    exclude_product_ids?: number[];
+                    exclude_category_ids?: number[];
+                    exclude_brand_ids?: number[];
+                };
+                /** @enum {string|null} */
+                type?: "percent" | "fixed" | "price" | null;
+                value?: string | null;
+                max_discount?: string | null;
+                tiers?: {
+                    min_subtotal: string;
+                    /** @enum {string} */
+                    type: "percent" | "fixed";
+                    value: string;
+                }[];
+                buy?: number;
+                get?: number;
+                percent?: number;
+                product_ids?: number[];
+                min_subtotal?: string;
+            };
+            flash_items?: {
+                variant_id: number;
+                sale_price: string;
+                allotment: number;
+                per_order_limit?: number | null;
+            }[];
+        };
+        /**
          * UpdatePurchaseRequest
          * @description `PUT /purchases/{purchase}` — replaces a draft's header and lines (409 once ordered); needs purchasing.create.
          */
@@ -9219,6 +12055,25 @@ export interface components {
             rapid_repeat_minutes: number;
         };
         /**
+         * UpdateRobotsRequest
+         * @description `PUT /seo/robots` — the robots.txt text, validated directive by directive. seo.manage.
+         */
+        UpdateRobotsRequest: {
+            content: string;
+        };
+        /**
+         * UpdateShipmentRiderRequest
+         * @description `PATCH /shipments/{shipment}/rider` — the delivery rider's name and phone, typed in when the
+         *     rider calls (neither courier's API returns them). Both null clears the rider. The phone is
+         *     a Bangladeshi mobile, 013–019 only (rule 30), stored E.164. Needs shipments.book.
+         */
+        UpdateShipmentRiderRequest: {
+            /** @description The rider's name as they gave it. */
+            rider_name?: string | null;
+            /** @description The rider's mobile: `01XXXXXXXXX`, `8801XXXXXXXXX` or `+8801XXXXXXXXX`, 013–019 only. */
+            rider_phone?: string | null;
+        };
+        /**
          * UpdateSupplierRequest
          * @description `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change.
          *     `status: active` restores an archived supplier. Needs purchasing.manage_suppliers.
@@ -9239,6 +12094,15 @@ export interface components {
             status?: components["schemas"]["SupplierStatus"];
         };
         /**
+         * UpdateWhatsAppStatusRequest
+         * @description `PUT /notifications/templates/{template}/whatsapp-status` (P7) — staff record where a
+         *     WhatsApp template stands with Meta; needs settings.update. No Meta API is called.
+         */
+        UpdateWhatsAppStatusRequest: {
+            /** @enum {string} */
+            status: "draft" | "submitted" | "approved";
+        };
+        /**
          * VariantStatus
          * @description `product_variants.status`. A variant is archived, never deleted: stock movements and order lines reference it.
          * @enum {string}
@@ -9246,7 +12110,8 @@ export interface components {
         VariantStatus: "active" | "archived";
         /**
          * VerifyHeldOrderRequest
-         * @description `POST /risk/orders/{order}/verify` — optional `note`. Needs risk.verify.
+         * @description `POST /risk/orders/{order}/verify` — optional `note`. Verifying confirms the order
+         *     (on_hold → confirmed), so it needs risk.verify AND orders.confirm.
          */
         VerifyHeldOrderRequest: {
             note?: string | null;
@@ -9290,6 +12155,15 @@ export interface components {
         };
         /** @description Not found */
         ModelNotFoundException: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
+        /** @description Not found */
+        NotFoundHttpException: {
             headers: {
                 [name: string]: unknown;
             };
@@ -10270,6 +13144,420 @@ export interface operations {
                             fits_mobile: boolean;
                         };
                     };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.meta.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SeoDocument` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeoDocument"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.seo.meta.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SaveSeoMetaRequest"];
+            };
+        };
+        responses: {
+            /** @description `SeoDocument` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeoDocument"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.serp-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SerpPreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        title: string;
+                        title_display: string;
+                        title_px: number;
+                        title_max: number;
+                        title_truncated: boolean;
+                        description: string;
+                        description_display: string;
+                        description_px: number;
+                        description_max: number;
+                        description_truncated: boolean;
+                        url_display: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.redirects.index": {
+        parameters: {
+            query?: {
+                /** @description Contains, on from_path, to_path or note. */
+                "filter[q]"?: string;
+                /** @description Only 301 or only 302. */
+                "filter[status_code]"?: "301" | "302";
+                /** @description Only active (1) or inactive (0). */
+                "filter[is_active]"?: "0" | "1";
+                /** @description manual or import. */
+                "filter[source]"?: "manual" | "import";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "from_path" | "-from_path" | "hit_count" | "-hit_count" | "last_hit_at" | "-last_hit_at" | "created_at" | "-created_at";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Redirect` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Redirect"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.seo.redirects.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRedirectRequest"];
+            };
+        };
+        responses: {
+            /** @description `Redirect` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Redirect"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.redirects.import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ImportRedirectsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created: number;
+                        updated: number;
+                        errors: {
+                            line: number;
+                            field: string;
+                            message: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.redirects.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The redirect ID */
+                redirect: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.seo.redirects.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The redirect ID */
+                redirect: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRedirectRequest"];
+            };
+        };
+        responses: {
+            /** @description `Redirect` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Redirect"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.slug-history.index": {
+        parameters: {
+            query?: {
+                /** @description One entity type (product, category, brand, page, blog_post, …). */
+                "filter[type]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `SlugRedirect` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SlugRedirect"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.seo.sitemap.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SitemapStatus` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SitemapStatus"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.seo.sitemap.regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": 202;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.seo.robots.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `RobotsTxt` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RobotsTxt"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.seo.robots.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRobotsRequest"];
+            };
+        };
+        responses: {
+            /** @description `RobotsTxt` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RobotsTxt"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -13059,6 +16347,8 @@ export interface operations {
                 "filter[search]"?: string;
                 /** @description Only active or only inactive coupons. */
                 "filter[status]"?: "active" | "inactive";
+                /** @description Only the codes of one bulk batch. */
+                "filter[batch]"?: string;
                 /** @description Sort field; prefix `-` for descending. */
                 sort?: "code" | "-code" | "created_at" | "-created_at" | "ends_at" | "-ends_at";
                 /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
@@ -13218,6 +16508,401 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.coupons.generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateCouponsRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        batch: string;
+                        count: number;
+                        codes: unknown[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.coupons.report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The coupon ID */
+                coupon: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        summary: {
+                            orders: number;
+                            discount_total: string;
+                            gross_sales: string;
+                            delivered_orders: number;
+                            delivered_revenue: string;
+                        };
+                        batch: {
+                            orders: number;
+                            discount_total: string;
+                            gross_sales: string;
+                            delivered_orders: number;
+                            delivered_revenue: string;
+                        } | null;
+                        recent: {
+                            order_id: number;
+                            order_number: string;
+                            status: string;
+                            phone: string;
+                            discount: string;
+                            grand_total: string;
+                            used_at: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.promotions.index": {
+        parameters: {
+            query?: {
+                /** @description Name contains. */
+                "filter[search]"?: string;
+                /** @description One promotion type. */
+                "filter[type]"?: "discount" | "flash_sale" | "category_discount" | "tiered" | "buy_x_get_y" | "bundle" | "free_delivery";
+                /** @description Status now. */
+                "filter[status]"?: "scheduled" | "running" | "ended" | "inactive";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "priority" | "-priority" | "starts_at" | "-starts_at" | "ends_at" | "-ends_at" | "created_at" | "-created_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Promotion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Promotion"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.promotions.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorePromotionRequest"];
+            };
+        };
+        responses: {
+            /** @description `Promotion` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Promotion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.promotions.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The promotion ID */
+                promotion: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Promotion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Promotion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.promotions.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The promotion ID */
+                promotion: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePromotionRequest"];
+            };
+        };
+        responses: {
+            /** @description `Promotion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Promotion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.promotions.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The promotion ID */
+                promotion: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Promotion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Promotion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.promotions.report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The promotion ID */
+                promotion: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        summary: {
+                            orders: number;
+                            discount_total: string;
+                            gross_sales: string;
+                            delivered_orders: number;
+                            delivered_revenue: string;
+                        };
+                        recent: {
+                            order_id: number;
+                            order_number: string;
+                            status: string;
+                            phone: string;
+                            discount: string;
+                            grand_total: string;
+                            used_at: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.cart-recoveries.index": {
+        parameters: {
+            query?: {
+                /** @description Messaged, skipped, or recovered (became an order). */
+                "filter[status]"?: "messaged" | "skipped" | "recovered";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CartRecovery` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CartRecovery"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.cart-recoveries.summary": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka date (Y-m-d). */
+                from?: string;
+                /** @description Last Dhaka date (Y-m-d). */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        from: string;
+                        to: string;
+                        abandoned: number;
+                        messaged: number;
+                        skipped: {
+                            [key: string]: number;
+                        };
+                        sent: number;
+                        cost: string;
+                        restored: number;
+                        recovered: number;
+                        recovered_delivered: number;
+                        revenue_recovered: string;
+                        abandoned_value: string;
+                    };
+                };
+            };
+            /** @description Bad date range (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "v1.admin.orders.index": {
@@ -14405,6 +18090,46 @@ export interface operations {
             };
         };
     };
+    "v1.admin.shipments.rider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateShipmentRiderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shipment"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The shipment is pending, failed or cancelled — no courier holds it (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.orders.compose.customer": {
         parameters: {
             query?: {
@@ -15112,8 +18837,16 @@ export interface operations {
                 filter?: string;
                 /** @description Only one channel. */
                 "filter[channel]"?: "sms" | "whatsapp" | "email";
-                /** @description Only one category. */
+                /** @description Only one opt-out category. */
                 "filter[category]"?: "security" | "order_updates" | "marketing";
+                /** @description System (event-bound) or staff-made. */
+                "filter[kind]"?: "system" | "marketing" | "manual";
+                /** @description Only switched on (1) or off (0). */
+                "filter[active]"?: "0" | "1";
+                /** @description 1 = only archived custom templates; default 0. */
+                "filter[archived]"?: "0" | "1";
+                /** @description Matches key, name or either body. */
+                "filter[search]"?: string;
             };
             header?: never;
             path?: never;
@@ -15143,6 +18876,43 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.notifications.templates.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreNotificationTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description The created rows, one per channel */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationTemplate"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Unknown variable, variable outside the generic set, or missing field (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.notifications.templates.show": {
@@ -15199,6 +18969,15 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            /** @description The template is archived (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -15230,6 +19009,195 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.templates.archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationTemplate"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A system template cannot be archived (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.templates.unarchive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationTemplate"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A system template is never archived (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.templates.versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `NotificationTemplateVersion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationTemplateVersion"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.notifications.templates.versions.restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplate"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The template is archived (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The version names a variable no longer allowed (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.notifications.templates.whatsapp-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The template ID */
+                template: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWhatsAppStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description `NotificationTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTemplate"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a WhatsApp template (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -17957,6 +21925,1495 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.blog.posts.index": {
+        parameters: {
+            query?: {
+                /** @description Contains match on title, title_bn or slug. */
+                "filter[search]"?: string;
+                /** @description Editorial status. */
+                "filter[status]"?: "draft" | "scheduled" | "published";
+                /** @description Article or buying guide. */
+                "filter[type]"?: "article" | "buying_guide";
+                /** @description Blog category id. */
+                "filter[category]"?: number;
+                /** @description Blog author id. */
+                "filter[author]"?: number;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "updated_at" | "-updated_at" | "published_at" | "-published_at" | "title" | "-title";
+                /** @description Page number. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `AdminBlogPostRow` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminBlogPostRow"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.blog.posts.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogPostRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogPost` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogPost"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.posts.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The post ID */
+                post: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminBlogPost` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogPost"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.posts.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The post ID */
+                post: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogPostRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogPost` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogPost"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.posts.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The post ID */
+                post: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.posts.preview-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The post ID */
+                post: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        token: string;
+                        path: string;
+                        path_bn: string;
+                        url: string;
+                        url_bn: string;
+                        expires_in: number;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.categories.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminBlogTerm"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.blog.categories.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.categories.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog category ID */
+                blog_category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.categories.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog category ID */
+                blog_category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.categories.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog category ID */
+                blog_category: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.tags.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminBlogTerm"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.blog.tags.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.tags.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog tag ID */
+                blog_tag: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.tags.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog tag ID */
+                blog_tag: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.tags.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog tag ID */
+                blog_tag: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.authors.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdminBlogTerm"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.blog.authors.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.blog.authors.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog author ID */
+                blog_author: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.authors.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog author ID */
+                blog_author: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.blog.authors.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The blog author ID */
+                blog_author: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlogTermRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdminBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.index": {
+        parameters: {
+            query?: {
+                /** @description Contains match on title, title_bn or slug. */
+                "filter[search]"?: string;
+                /** @description draft | published | archived. */
+                "filter[status]"?: "draft" | "published" | "archived";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "title" | "-title" | "updated_at" | "-updated_at";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CmsPage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CmsPage"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.pages.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPageRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsPage` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsPage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.pages.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPageRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsPage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsPage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.menus.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `Menu` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Menu"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.menus.targets": {
+        parameters: {
+            query: {
+                /** @description What to link to. */
+                type: "category" | "brand" | "page" | "post" | "product";
+                /** @description Contains match on name/title (either locale) or slug. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `MenuLinkTarget` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MenuLinkTarget"][];
+                    };
+                };
+            };
+            /** @description Missing or unknown `type` (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.menus.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The location ID */
+                location: components["schemas"]["MenuLocation"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Menu` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Menu"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.menus.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The location ID */
+                location: components["schemas"]["MenuLocation"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Menu` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Menu"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.banners.index": {
+        parameters: {
+            query?: {
+                filter?: string;
+                /** @description One placement only. */
+                "filter[placement]"?: "announcement_bar" | "category_page" | "info_strip" | "popup";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `Banner` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Banner"][];
+                    };
+                };
+            };
+            /** @description Unknown filter or placement (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.banners.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerRequest"];
+            };
+        };
+        responses: {
+            /** @description `Banner` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Banner"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.banners.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The banner ID */
+                banner: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Banner` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Banner"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.banners.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The banner ID */
+                banner: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BannerRequest"];
+            };
+        };
+        responses: {
+            /** @description `Banner` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Banner"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.banners.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The banner ID */
+                banner: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.testimonials.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `Testimonial` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Testimonial"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.testimonials.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestimonialRequest"];
+            };
+        };
+        responses: {
+            /** @description `Testimonial` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Testimonial"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.testimonials.reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderTestimonialsRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `Testimonial` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Testimonial"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.testimonials.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The testimonial ID */
+                testimonial: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Testimonial` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Testimonial"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.testimonials.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The testimonial ID */
+                testimonial: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestimonialRequest"];
+            };
+        };
+        responses: {
+            /** @description `Testimonial` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Testimonial"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.testimonials.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The testimonial ID */
+                testimonial: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.home.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.home.blocks.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCmsBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsBlock` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.home.blocks.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.home.blocks.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCmsBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsBlock` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.home.blocks.duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsBlock` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.home.order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderCmsBlocksRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The ids are not exactly the draft's blocks (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.content.home.publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PublishCmsLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsLayoutVersion` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsLayoutVersion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The draft has no unpublished changes (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.home.versions.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.content.home.versions.revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The version ID */
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RevertCmsLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            /** @description `CmsLayoutVersion` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsLayoutVersion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.home.preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["IssueCmsPreviewTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsPreviewToken` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPreviewToken"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.ping": {
         parameters: {
             query?: never;
@@ -18662,6 +24119,42 @@ export interface operations {
             };
         };
     };
+    "v1.storefront.flash-sales.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        server_time: string;
+                        sales: {
+                            id: number;
+                            name: string;
+                            name_bn: string | null;
+                            starts_at: string | null;
+                            ends_at: string;
+                            products: unknown[];
+                        }[];
+                        next: {
+                            id: number;
+                            name: string;
+                            name_bn: string | null;
+                            starts_at: string | null;
+                        } | null;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "v1.storefront.products.reviews.index": {
         parameters: {
             query?: {
@@ -18705,6 +24198,660 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.seo.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontSeo` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontSeo"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["NotFoundHttpException"];
+        };
+    };
+    "v1.storefront.redirects.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        redirects: {
+                            id: number | null;
+                            from: string;
+                            to: string;
+                            /** @enum {integer} */
+                            status: 301 | 302;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.redirects.hit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.sitemaps.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/xml; charset=UTF-8": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["NotFoundHttpException"];
+        };
+    };
+    "v1.storefront.robots.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain; charset=UTF-8": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.blog.posts.index": {
+        parameters: {
+            query?: {
+                /** @description Blog category slug. */
+                "filter[category]"?: string;
+                /** @description Blog tag slug. */
+                "filter[tag]"?: string;
+                /** @description Blog author slug. */
+                "filter[author]"?: string;
+                /** @description Article or buying guide. */
+                "filter[type]"?: "article" | "buying_guide";
+                /** @description Page number (1-based). */
+                page?: number;
+                /** @description Posts per page, 1–24. */
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `StorefrontBlogPostCard` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontBlogPostCard"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.blog.teaser": {
+        parameters: {
+            query?: {
+                /** @description How many cards, 1–6. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontBlogPostCard` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontBlogPostCard"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.blog.posts.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBlogPost` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBlogPost"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No live post has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.blog.preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBlogPost` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBlogPost"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Invalid, forged or expired token */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.blog.categories.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontBlogTerm"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.blog.categories.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No blog category has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.blog.tags.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No blog tag has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.blog.authors.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontBlogTerm` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontBlogTerm"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No blog author has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.pages.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontPageSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontPageSummary"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.pages.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontPage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontPage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No live page has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.menus.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontMenus` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontMenus"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.banners.index": {
+        parameters: {
+            query: {
+                /** @description The slot. */
+                placement: "announcement_bar" | "category_page" | "info_strip" | "popup";
+                /** @description The page asking. */
+                context?: "general" | "cart" | "checkout";
+                /** @description Category slug, for category_page. */
+                category?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontBanner` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontBanner"][];
+                    };
+                };
+            };
+            /** @description Missing or unknown placement or context (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.testimonials.index": {
+        parameters: {
+            query?: {
+                /** @description How many (1–24). */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontTestimonial` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontTestimonial"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.content.home": {
+        parameters: {
+            query: {
+                /** @description Storefront locale; picks the language and the per-locale visibility. */
+                locale: "en" | "bn";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontHome` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontHome"];
+                };
+            };
+            /** @description Missing or unknown locale, or an unlisted parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.content.home.preview": {
+        parameters: {
+            query: {
+                /** @description Storefront locale. */
+                locale: "en" | "bn";
+                /** @description Preview the schedule at this instant (ISO 8601). Default: now. */
+                at?: string;
+            };
+            header: {
+                /** @description Signed homepage preview token from POST /admin/content/home/preview-token. */
+                "X-Preview-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontHome` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontHome"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing, forged or expired preview token (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.storefront.cart.show": {
@@ -19027,6 +25174,85 @@ export interface operations {
                 };
             };
             /** @description No open cart has this token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.cart.contact.update": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetCartContactRequest"];
+            };
+        };
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No open cart has this token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid phone (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.cart.restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreCartRequest"];
+            };
+        };
+        responses: {
+            /** @description `Cart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Unknown or expired link, or the cart is no longer open (`not-found`) */
             404: {
                 headers: {
                     [name: string]: unknown;

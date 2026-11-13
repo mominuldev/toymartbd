@@ -133,6 +133,13 @@ final class StorefrontProductResource extends ApiResource
             'attributes' => self::axes($variants),
             /** @var list<array{id: int, sku: string, name: string|null, name_bn: string|null, attribute_value_ids: list<int>, price: string, compare_at_price: string|null, discount_percent: int|null, saving: string|null, weight_grams: int, is_default: bool, status: 'active', available: int, stock_state: 'in_stock'|'low_stock'|'out_of_stock'}> */
             'variants' => $variants->map(fn (ProductVariant $v): array => $this->variant($v))->values()->all(),
+            /**
+             * P7: the running flash sale on this product — the cheapest offer, plus each
+             * variant's own sale price in `variants` (variant id → offer). Null when none.
+             *
+             * @var array{promotion_id: int, name: string, name_bn: string|null, ends_at: string, variant_id: int, sale_price: string, regular_price: string, discount_percent: int, remaining: int, variants: array<string, array{sale_price: string, discount_percent: int, remaining: int}>}|null
+             */
+            'flash_sale' => self::flashSale($variants),
             /** @var list<StorefrontProductCardResource> */
             'related' => StorefrontProductCardResource::collection($this->related),
         ];
@@ -282,5 +289,16 @@ final class StorefrontProductResource extends ApiResource
         }
 
         return $out;
+    }
+
+    /**
+     * @param  iterable<ProductVariant>  $variants
+     * @return array<string, mixed>|null
+     */
+    private static function flashSale(iterable $variants): ?array
+    {
+        $best = FlashSalePayload::forVariants($variants);
+
+        return $best === null ? null : $best + ['variants' => (object) FlashSalePayload::perVariant($variants)];
     }
 }

@@ -106,7 +106,7 @@ it('returns the product page in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe([
         'id', 'slug', 'name', 'name_bn', 'type', 'brand', 'breadcrumbs', 'short_description', 'short_description_bn', 'description',
         'description_bn', 'specifications', 'age_min_months', 'age_max_months', 'gender', 'is_educational', 'safety_note', 'safety_note_bn',
-        'warranty_months', 'rating_avg', 'rating_count', 'in_stock', 'default_variant_id', 'images', 'attributes', 'variants', 'related',
+        'warranty_months', 'rating_avg', 'rating_count', 'in_stock', 'default_variant_id', 'images', 'attributes', 'variants', 'flash_sale', 'related',
     ])
         ->and($response->json('brand'))->toBe(['name' => 'LEGO', 'name_bn' => 'লেগো', 'slug' => 'lego'])
         ->and($response->json('breadcrumbs.*.slug'))->toBe(['building', 'lego-sets'])

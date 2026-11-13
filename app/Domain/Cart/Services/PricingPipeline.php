@@ -9,9 +9,11 @@ use App\Domain\Cart\DTOs\PriceBreakdown;
 use App\Domain\Cart\DTOs\PricingInput;
 use App\Domain\Fulfilment\DTOs\DeliveryParcel;
 use App\Domain\Fulfilment\Services\DeliveryChargeResolver;
+use App\Domain\Marketing\DTOs\AppliedDiscount;
 use App\Domain\Marketing\DTOs\PricingLine;
 use App\Domain\Marketing\Services\Allocator;
 use App\Domain\Marketing\Services\CouponEvaluator;
+use App\Domain\Marketing\Services\FreeDeliveryPromotions;
 use App\Domain\Marketing\Services\PromotionEngine;
 use App\Support\Money;
 
@@ -22,10 +24,14 @@ use App\Support\Money;
  * implementation anywhere — including the browser — is a bug (rule 1).
  *
  *  1. base: each sellable line at the variant's current price
- *  2. promotions (PromotionEngine): priority order, stacking; a non-stackable match ends the chain
- *  3. coupon (CouponEvaluator) on the post-promotion amounts
+ *  2. promotions (PromotionEngine): priority order, stacking; a non-stackable match ends the chain;
+ *     limits/budget per promotion (per-phone limits once the phone is known)
+ *  3. coupon (CouponEvaluator) on the post-promotion amounts, minus the lines a promotion
+ *     with `allows_coupons = false` discounted
  *  4. delivery (DeliveryChargeResolver — the estimator's code path) on the post-discount
- *     goods value; a valid free-shipping coupon makes it 0 through §5.1 step 1
+ *     goods value; a valid free-shipping coupon or a free-delivery promotion the chain
+ *     reached (threshold on the post-discount eligible goods) makes it 0 through §5.1
+ *     step 1 — the promotion then shows as a 0.00 "promotion" row in the breakdown
  *  5. total
  *
  * Read-only: no writes, no transaction, no external call — safe to call inside
@@ -38,6 +44,7 @@ final readonly class PricingPipeline
         private PromotionEngine $promotions,
         private CouponEvaluator $coupons,
         private DeliveryChargeResolver $delivery,
+        private FreeDeliveryPromotions $freeDelivery,
     ) {}
 
     public function price(PricingInput $input): PriceBreakdown
@@ -58,12 +65,12 @@ final readonly class PricingPipeline
         }
 
         // 1–2. base and promotions
-        $promotion = $this->promotions->apply($lines, $now);
+        $promotion = $this->promotions->apply($lines, $now, phone: $input->phone, customerId: $input->customerId);
 
         // 3. coupon
         $coupon = $input->couponCode === null || trim($input->couponCode) === ''
             ? null
-            : $this->coupons->evaluate($input->couponCode, $lines, $promotion->remaining, $now, $input->phone, $input->customerId);
+            : $this->coupons->evaluate($input->couponCode, $lines, $promotion->remaining, $now, $input->phone, $input->customerId, $promotion->couponBlockedVariantIds());
         $couponLines = $coupon?->discount !== null ? $coupon->discount->perLine : [];
 
         $breakdownLines = [];
@@ -86,6 +93,13 @@ final readonly class PricingPipeline
         $merchandise = $subtotal->minus($promotionDiscount)->minus($couponDiscount);
 
         // 4. delivery — one implementation for the estimator, the cart and checkout.
+        $afterCoupon = [];
+        foreach ($breakdownLines as $row) {
+            $afterCoupon[$row->variant->id] = $row->total;
+        }
+        $couponFreeShipping = $coupon?->discount?->freeShipping === true;
+        $freeDelivery = $couponFreeShipping ? null : $this->freeDelivery->choose($promotion->freeDelivery, $lines, $afterCoupon);
+        $promotions = $promotion->discounts;
         $quote = null;
         if ($input->district !== null) {
             $quote = $this->delivery->quote(
@@ -97,18 +111,26 @@ final readonly class PricingPipeline
                         array_map(static fn (PricingLine $l): int => $l->quantity, $lines),
                     ),
                     $merchandise,
-                    $coupon?->discount?->freeShipping === true ? $coupon->code : null,
+                    $couponFreeShipping ? $coupon->code : null,
+                    $freeDelivery?->id,
                 ),
                 $now,
             );
         }
         $shipping = $quote?->charge;
+        if ($freeDelivery !== null && ($quote === null || $quote->freeShipping)) {
+            // Named in the breakdown ("Promotion: Free delivery over ৳2000"); its saving is the delivery line's 0.
+            $promotions[] = new AppliedDiscount(
+                AppliedDiscount::PROMOTION, $freeDelivery->id, $freeDelivery->name, $freeDelivery->name_bn, Money::zero(), [],
+                freeShipping: true, allowsCoupons: $freeDelivery->allows_coupons, kind: $freeDelivery->type->value,
+            );
+        }
 
         // 5. total
         return new PriceBreakdown(
             lines: $breakdownLines,
             unavailableVariantIds: $unavailable,
-            promotions: $promotion->discounts,
+            promotions: $promotions,
             coupon: $coupon,
             delivery: $quote,
             subtotal: $subtotal,

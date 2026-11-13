@@ -12,6 +12,8 @@ return [
     'courier_fallback' => 'কুরিয়ার',
     'consignment_pending' => 'শীঘ্রই জানানো হবে',
     'refund_sentence' => 'আপনার দেওয়া BDT :amount ফেরত দেওয়া হবে।',
+    // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
+    'sender_id_numeric' => 'সেন্ডার আইডি আপনার REVE নন-মাস্কিং নম্বর: শুধু সংখ্যা, 5 থেকে 15টি (যেমন 8809612345678, 01712345678 বা শর্ট কোড)। অক্ষর চলবে না।',
 
     'mail' => [
         'greeting' => ':name,',

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Inventory\Exceptions\InsufficientStock;
 use App\Domain\Marketing\Exceptions\CouponRejected;
+use App\Domain\Marketing\Exceptions\PromotionRejected;
 use App\Domain\Ordering\Checkout\CheckoutNotReady;
 use App\Domain\Ordering\Checkout\PriceChanged;
 use App\Http\Problems\ProblemDetails;
@@ -54,6 +55,9 @@ final class OrderProblems
             return self::problem($request, ProblemType::ValidationError, $e->errors);
         } catch (CouponRejected $e) {
             return self::problem($request, ProblemType::ValidationError, [['field' => 'coupon_code', 'message' => $e->getMessage()]]);
+        } catch (PromotionRejected $e) {
+            // P7: a promotion limit, budget or flash allotment ran out since the quote — re-quote.
+            return self::problem($request, ProblemType::PriceChanged, [['field' => 'expected_total', 'message' => $e->getMessage()]]);
         }
     }
 

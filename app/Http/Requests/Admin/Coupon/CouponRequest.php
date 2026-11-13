@@ -9,6 +9,7 @@ use App\Domain\Marketing\Enums\CouponType;
 use App\Domain\Marketing\Enums\ProductScopeType;
 use App\Domain\Marketing\Models\Coupon;
 use App\Http\Requests\ApiFormRequest;
+use App\Support\DhakaDate;
 use App\Support\Money;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ use Illuminate\Validation\Validator;
  * The coupon document (P4-CRT-04), shared by `POST /coupons` and `PUT /coupons/{coupon}`.
  * Money is a decimal string. `scope_ids` lists the products, categories (subtrees
  * included) or brands for `applies_to`; `excludes` removes products, categories or
- * brands from any scope. `code` is upper-cased before validation.
+ * brands from any scope. `code` is upper-cased before validation. A time without an
+ * offset is read as Dhaka time (P7).
  */
 abstract class CouponRequest extends ApiFormRequest
 {
@@ -117,8 +119,8 @@ abstract class CouponRequest extends ApiFormRequest
             minOrderAmount: $this->filled('min_order_amount') ? Money::of($this->string('min_order_amount')->toString()) : Money::zero(),
             usageLimitTotal: $this->filled('usage_limit_total') ? $this->integer('usage_limit_total') : null,
             usageLimitPerCustomer: $this->filled('usage_limit_per_customer') ? $this->integer('usage_limit_per_customer') : null,
-            startsAt: $this->filled('starts_at') ? Carbon::parse($this->string('starts_at')->toString()) : null,
-            endsAt: $this->filled('ends_at') ? Carbon::parse($this->string('ends_at')->toString()) : null,
+            startsAt: $this->filled('starts_at') ? Carbon::parse($this->string('starts_at')->toString(), DhakaDate::zone())->utc() : null,
+            endsAt: $this->filled('ends_at') ? Carbon::parse($this->string('ends_at')->toString(), DhakaDate::zone())->utc() : null,
             appliesTo: $appliesTo,
             scopeIds: $appliesTo === ProductScopeType::All ? [] : $this->scopeIds(),
             excludes: $excludes,

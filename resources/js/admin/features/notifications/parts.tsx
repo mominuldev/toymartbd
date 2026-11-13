@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { ChatTextIcon, EnvelopeSimpleIcon, WhatsappLogoIcon, type Icon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
-import type { MessageKey } from '@/i18n/messages';
+import { en as enMessages, type MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
-import type { Channel, LogStatus } from './api';
+import type { Channel, LogStatus, NotificationTemplate } from './api';
 
 export const TAKA = '৳';
 
@@ -120,4 +120,25 @@ export function FlowLine() {
             <span className="h-4 w-0.5 bg-line-strong" />
         </div>
     );
+}
+
+/** A catalogue key that may not exist: the template catalog is read dynamically (P7). */
+export function maybeKey(key: string): MessageKey | null {
+    return key in enMessages ? (key as MessageKey) : null;
+}
+
+/**
+ * A template's display name: staff-made ones carry their own EN/BN name; system ones use the
+ * admin catalogue's event label, and a key the catalogue does not know yet shows as the key.
+ */
+export function templateTitle(tpl: Pick<NotificationTemplate, 'key' | 'is_custom' | 'name_en' | 'name_bn'>, t: (key: MessageKey) => string, locale: string): string {
+    if (tpl.is_custom) return (locale === 'bn' ? tpl.name_bn || tpl.name_en : tpl.name_en || tpl.name_bn) ?? tpl.key;
+    const key = maybeKey(`notif.event.${tpl.key}`);
+    return key ? t(key) : tpl.key;
+}
+
+/** What a variable stands for, when the catalogue describes it. */
+export function variableHint(name: string, t: (key: MessageKey) => string): string | null {
+    const key = maybeKey(`notif.var.${name}`);
+    return key ? t(key) : null;
 }

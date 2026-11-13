@@ -18,24 +18,24 @@ test('owner signs in, then creates, edits and archives a brand', async ({ page }
 
     // Create — empty name is caught by the generated schema before any request.
     await page.getByRole('link', { name: 'New brand' }).click();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('This field is required.')).toBeVisible();
 
     await page.getByLabel('Name (English)').fill('Rainbow Blocks');
     await page.getByLabel('Name (Bangla)').fill('রংধনু ব্লক');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Edit brand' })).toBeVisible();
     await expect(page.getByText('Brand created.')).toBeVisible();
     await expect(page.getByLabel('URL slug')).toHaveValue('rainbow-blocks');
 
     // Edit — a duplicate slug comes back from the server as a field error.
     await page.getByLabel('URL slug').fill('lego');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByLabel('URL slug')).toHaveAttribute('aria-invalid', 'true');
 
     await page.getByLabel('URL slug').fill('rainbow-blocks');
     await page.getByLabel('Name (English)').fill('Rainbow Blocks Junior');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Changes saved.')).toBeVisible();
 
     // Archive — the confirm button stays disabled until the name is typed.

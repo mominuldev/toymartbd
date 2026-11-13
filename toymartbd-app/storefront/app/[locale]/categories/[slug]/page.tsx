@@ -2,11 +2,16 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { CategoryBanner } from '@/components/content/CategoryBanner';
 import { ListingView } from '@/components/listing/ListingView';
+import { getBanners } from '@/lib/content/api';
 import { PageShell } from '@/components/PageShell';
 import { categoryPath } from '@/lib/category-tree';
 import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib/i18n';
-import { listingMetadata } from '@/lib/listing/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getSeo } from '@/lib/seo/fetch';
+import { breadcrumbJsonLd } from '@/lib/seo/jsonld';
+import { listingPageMetadata } from '@/lib/seo/metadata';
 import { hrefFor, parseListingState, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing, getCategoryPage } from '@/lib/products';
 
@@ -31,15 +36,18 @@ function localised(locale: Locale, name: string, nameBn: string | null): { text:
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
-    const category = await loadCategory(slug, locale);
+    const [category, seo] = await Promise.all([loadCategory(slug, locale), getSeo('category', slug)]);
     if (!category) return {};
     const name = localised(locale, category.name, category.name_bn).text;
     const scope: ListingScope = { kind: 'category', slug };
-    return {
+    return listingPageMetadata({
+        locale,
+        path: categoryPath(slug),
+        state: parseListingState(await searchParams, scope),
         title: name,
         description: (locale === 'bn' ? category.description_bn : category.description) ?? format(getMessages(locale).listing.metaCategory, { category: name }),
-        ...listingMetadata(locale, categoryPath(slug), parseListingState(await searchParams, scope)),
-    };
+        seo,
+    });
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
@@ -52,6 +60,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     const scope: ListingScope = { kind: 'category', slug };
     const state = parseListingState(await searchParams, scope);
     const listing = await fetchListing(state, scope, locale);
+    // The top live category-page banner for this category (or for every category); tag content:banners.
+    const [banner] = await getBanners('category_page', 'general', slug);
     const title = localised(locale, category.name, category.name_bn);
     const path = categoryPath(slug);
     // Sub-category chips keep the active filters (minus paging) when moving down the tree.
@@ -59,6 +69,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
     return (
         <PageShell locale={locale} path={hrefFor(path, state)} top="crumb" mobileSearch>
+            <CategoryBanner locale={locale} banner={banner} />
+            <JsonLd
+                data={breadcrumbJsonLd(locale, [
+                    { name: t.home, path: '/' },
+                    ...category.breadcrumbs.map((crumb) => ({ name: localised(locale, crumb.name, crumb.name_bn).text, path: categoryPath(crumb.slug) })),
+                ])}
+            />
             <ListingView
                 locale={locale}
                 t={t}

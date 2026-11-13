@@ -4,6 +4,7 @@ import { Dashboard } from './Dashboard';
 import { NotFound } from './NotFound';
 import { ComingSoon } from './ComingSoon';
 import { RouteError } from './RouteError';
+import { BlogPostEditorPage, BlogPostsPage, BlogTermsPage } from '@/features/content/blog';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { sectionPaths } from '@/components/shell/nav';
@@ -26,6 +27,9 @@ import { OrderEditPage } from '@/features/orders/OrderEditPage';
 import { MediaLibraryPage } from '@/features/media/MediaLibraryPage';
 import { AutomationsPage } from '@/features/notifications/AutomationsPage';
 import { NotificationLogPage } from '@/features/notifications/NotificationLogPage';
+import { MessageTemplatesPage } from '@/features/notifications/MessageTemplatesPage';
+import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
+import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
@@ -47,9 +51,19 @@ import { LocationMappingPage } from '@/features/couriers/locations/LocationMappi
 import { CourierSettingsPage, FailedBookingsPage } from '@/features/couriers';
 import { PhoneLookupPage, RiskRulesPage, VerificationQueuePage } from '@/features/risk';
 import { SettlementsPage } from '@/features/finance/settlements/SettlementsPage';
+import { AbandonedCartsPage, CouponFormPage, CouponsPage, PromotionFormPage, PromotionsPage } from '@/features/marketing';
+import { PagesPage } from '@/features/content/pages/PagesPage';
+import { PageFormPage } from '@/features/content/pages/PageFormPage';
+import { MenuEditorPage } from '@/features/content/menus/MenuEditorPage';
+import { BannersPage } from '@/features/content/banners/BannersPage';
+import { BannerFormPage } from '@/features/content/banners/BannerFormPage';
+import { TestimonialsPage } from '@/features/content/testimonials/TestimonialsPage';
+import { TestimonialFormPage } from '@/features/content/testimonials/TestimonialFormPage';
+import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
+import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -57,6 +71,9 @@ export const routes: RouteObject[] = [
         element: <RequireAuth />,
         errorElement: <RouteError />,
         children: [
+            // Homepage builder (Figma B · 26 Page builder 241:44102): full height beside the sidebar
+            // rail, no topbar, so it sits outside the Shell. Static, so it wins over `store/*`.
+            { path: '/store/home', element: <HomeBuilderPage /> },
             {
                 path: '/',
                 element: <Shell />,
@@ -130,12 +147,50 @@ export const routes: RouteObject[] = [
                     { path: 'risk/rules', element: <RiskRulesPage /> },
                     // Online store: the media library (Figma 303:53185) is its first screen; the
                     // section's other pages are still to come.
+                    // P7 Marketing: coupons + builder (Figma B · 20 241:42268), promotions and flash sales
+                    // (B · 20 builder layout, no frame of their own), abandoned carts (B · 21 241:42726).
+                    { path: 'marketing', element: <Navigate to="/marketing/coupons" replace /> },
+                    { path: 'marketing/coupons', element: <CouponsPage /> },
+                    { path: 'marketing/coupons/new', element: <CouponFormPage /> },
+                    { path: 'marketing/coupons/generate', element: <CouponFormPage mode="generate" /> },
+                    { path: 'marketing/coupons/:couponId', element: <CouponFormPage key="edit" /> },
+                    { path: 'marketing/promotions', element: <PromotionsPage /> },
+                    { path: 'marketing/promotions/new', element: <PromotionFormPage /> },
+                    { path: 'marketing/promotions/:promotionId', element: <PromotionFormPage key="edit" /> },
+                    { path: 'marketing/flash-sales', element: <PromotionsPage flash key="flash" /> },
+                    { path: 'marketing/flash-sales/new', element: <PromotionFormPage flash key="flash-new" /> },
+                    { path: 'marketing/flash-sales/:promotionId', element: <PromotionFormPage flash key="flash-edit" /> },
+                    { path: 'marketing/abandoned-carts', element: <AbandonedCartsPage /> },
                     { path: 'store', element: <Navigate to="/store/media" replace /> },
                     { path: 'store/media', element: <MediaLibraryPage /> },
+                    // P7 Pages & navigation (Figma B · 27 241:45525): pages, header/footer/mobile menus;
+                    // banners and testimonials have no frame and share the same tab row.
+                    { path: 'store/pages', element: <PagesPage /> },
+                    { path: 'store/pages/new', element: <PageFormPage /> },
+                    { path: 'store/pages/:pageId', element: <PageFormPage /> },
+                    { path: 'store/navigation', element: <Navigate to="/store/navigation/header" replace /> },
+                    { path: 'store/navigation/:location', element: <MenuEditorPage /> },
+                    { path: 'store/banners', element: <BannersPage /> },
+                    { path: 'store/banners/new', element: <BannerFormPage /> },
+                    { path: 'store/banners/:bannerId', element: <BannerFormPage /> },
+                    { path: 'store/testimonials', element: <TestimonialsPage /> },
+                    { path: 'store/testimonials/new', element: <TestimonialFormPage /> },
+                    { path: 'store/testimonials/:testimonialId', element: <TestimonialFormPage /> },
+                    // Blog (Phase 7): posts + buying guides (editor = Figma B · 28 241:46011), categories, tags, authors.
+                    { path: 'store/blog', element: <BlogPostsPage /> },
+                    { path: 'store/blog/new', element: <BlogPostEditorPage /> },
+                    { path: 'store/blog/categories', element: <BlogTermsPage key="categories" kind="categories" /> },
+                    { path: 'store/blog/tags', element: <BlogTermsPage key="tags" kind="tags" /> },
+                    { path: 'store/blog/authors', element: <BlogTermsPage key="authors" kind="authors" /> },
+                    { path: 'store/blog/:postId', element: <BlogPostEditorPage /> },
                     { path: 'store/*', element: <ComingSoon title="nav.store" /> },
                     // Settings → Automations (Figma 223:15784): notification templates; the message log is not drawn.
                     { path: 'automations', element: <AutomationsPage /> },
                     { path: 'automations/log', element: <NotificationLogPage /> },
+                    // P7 Message templates library (button on B · 36 241:49914; no frame of its own).
+                    { path: 'automations/templates', element: <MessageTemplatesPage /> },
+                    { path: 'automations/templates/new', element: <NewTemplatePage /> },
+                    { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
                     // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
                     { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
@@ -144,6 +199,10 @@ export const routes: RouteObject[] = [
                     { path: 'shipments/failed', element: <FailedBookingsPage /> },
                     // Courier location mapping (P6, no Figma frame; linked from Shipments B · 08 "map it").
                     { path: 'shipments/locations', element: <LocationMappingPage /> },
+                    // P7 SEO: overview (Figma B · 29 241:46427), Redirects (B · 30 241:46849), sitemap & robots.txt (no own frame).
+                    { path: 'seo', element: <SeoOverviewPage /> },
+                    { path: 'seo/redirects', element: <RedirectsPage /> },
+                    { path: 'seo/sitemap', element: <SitemapRobotsPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

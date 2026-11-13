@@ -1,16 +1,34 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
 
 import { ACCOUNT_FLASH_COOKIE } from './lib/account/cookies';
 import { CHECKOUT_FLASH_COOKIE, FLASH_COOKIE, TRACK_COOKIE } from './lib/cart/cookies';
 import { splitLocalePath } from './lib/i18n/config';
 import { LOCALE_HEADER, LOCALE_REWRITE_HEADER, PATH_HEADER, resolveLocaleRoute } from './lib/locale-route';
+import { recordHit, redirectIndex } from './lib/seo/redirect-map';
+import { resolveRedirect } from './lib/seo/redirects';
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
     // Next 16 runs the proxy again for the rewritten `/en/...` path. The marker header lets that
     // second pass through instead of hitting the `/en` canonicalisation redirect.
     if (request.headers.get(LOCALE_REWRITE_HEADER) === '1') return NextResponse.next();
 
     const { pathname } = request.nextUrl;
+
+    // Slug history + manual redirects (docs/api/seo.md): old URLs 301 to the current one in both
+    // locales, before any page renders. Laravel never lists a live URL, so a page always wins.
+    if (request.method === 'GET' || request.method === 'HEAD') {
+        const decision = resolveRedirect(await redirectIndex(), pathname, request.nextUrl.search);
+        if (decision) {
+            if (decision.id !== null) event.waitUntil(recordHit(decision.id));
+            if (!decision.location.startsWith('/')) return NextResponse.redirect(new URL(decision.location), decision.status);
+            const url = request.nextUrl.clone();
+            const [path, query] = decision.location.split('?', 2) as [string, string?];
+            url.pathname = path;
+            url.search = query ? `?${query}` : '';
+            return NextResponse.redirect(url, decision.status);
+        }
+    }
+
     const route = resolveLocaleRoute(pathname);
 
     if (route.action === 'redirect') {

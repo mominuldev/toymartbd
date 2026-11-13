@@ -9,7 +9,7 @@ import { PageShell } from '@/components/PageShell';
 import { TRACK_COOKIE } from '@/lib/cart/cookies';
 import { format, getMessages, isLocale } from '@/lib/i18n';
 import { trackOrder, type TrackResult } from '@/lib/order/fetch';
-import { alternatesFor } from '@/lib/seo';
+import { trackMetadata } from '@/lib/seo/metadata';
 import { contact } from '@/lib/site-config';
 
 // /track — public order tracking (P4-STO-10; Figma Order tracking 132:2899 at 390, 161:16502 at
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale).track;
-    return { title: t.title, description: t.metaDescription, alternates: alternatesFor(locale, PATH) };
+    return trackMetadata(locale, t.title, t.metaDescription);
 }
 
 function readLookup(value: string | undefined): { number: string; phone: string } | null {

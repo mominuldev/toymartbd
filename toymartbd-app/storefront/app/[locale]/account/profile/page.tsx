@@ -11,6 +11,7 @@ import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { readAccountFlash, requireAccount } from '@/lib/account/server';
 import { isLocale } from '@/lib/i18n';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/profile — Profile & settings, Figma 239:13856 (1440) / 238:10951 (390): "Your details" (name,
 // verified mobile — read-only, it is the sign-in identity — and optional email) plus the language for
@@ -29,7 +30,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.profile, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/profile', accountMessages(locale).meta.profile);
 }
 
 export default async function ProfilePage({ params, searchParams }: Props) {

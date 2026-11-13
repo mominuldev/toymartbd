@@ -37,6 +37,12 @@ final class ShipmentPolicy extends Policy
         return $this->request($user);
     }
 
+    /** Record the delivery rider's name / phone when the rider calls (owner decision 2026-11-13). */
+    public function recordRider(User $user, Shipment $shipment): bool
+    {
+        return $this->allows($user, Permission::ShipmentsBook);
+    }
+
     public function cancel(User $user, Shipment $shipment): bool
     {
         return $this->allows($user, Permission::ShipmentsCancel);

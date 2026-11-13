@@ -12,8 +12,8 @@ use App\Models\User;
  * Courier settings & delivery charges (P6). Two separate powers:
  * - the rate card, the free-delivery threshold and which provider is on/default →
  *   shipments.manage_rates (a manager runs prices);
- * - credentials and the webhook secret → settings.manage_integrations (rule 20; the
- *   manager role deliberately lacks it).
+ * - credentials and the webhook secret → settings.manage_integrations (rule 20; super_admin
+ *   and — owner decision 2026-11-13 — manager).
  * Either one opens the screen. Providers are rows of reference data: no create or delete.
  */
 final class CourierProviderPolicy extends Policy

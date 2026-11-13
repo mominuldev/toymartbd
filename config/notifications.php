@@ -7,11 +7,11 @@ declare(strict_types=1);
 | Notifications (P4-NOT-01..03, P4-I18N-03)
 |--------------------------------------------------------------------------
 |
-| Every cost and every business value below is a PLACEHOLDER until the owner
-| signs a provider contract (CLAUDE.md "Known gaps"; UI-UX-DESIGN-SPEC §10).
-| The research (docs/_research/agent4-bd-market-and-payments.md §4) found local
-| masked SMS at roughly ৳0.48–0.64 a segment and WhatsApp utility at ≈৳0.45, but
-| no merchant account exists, so nothing here is a contracted rate.
+| The SMS rate is the owner's REVE rate (৳0.26 a segment, non-masking sender,
+| 2026-11-13). Every OTHER cost and business value below is a PLACEHOLDER until
+| the owner confirms it (CLAUDE.md "Known gaps"; UI-UX-DESIGN-SPEC §10): WhatsApp
+| utility at ≈৳0.45 (docs/_research/agent4-bd-market-and-payments.md §4) is not a
+| contracted rate — no WhatsApp account exists.
 |
 | Channel policy (rules 32b, 39): order updates go over WhatsApp utility first,
 | SMS only as the fallback; OTP goes over SMS, never WhatsApp.
@@ -30,9 +30,9 @@ return [
         // Admin → Integrations → Messaging overrides this and cost_per_segment below.
         'driver' => env('SMS_DRIVER', 'log'),
         'log_channel' => env('SMS_LOG_CHANNEL'),
-        // PLACEHOLDER: sms.bd Basic-slab masking rate observed 2026-11-07, not a contract.
+        // Owner's REVE rate (2026-11-13): ৳0.26 per SMS segment, non-masking numeric sender.
         // Applied by every driver except `null`, so cost accounting is visible in dev too.
-        'cost_per_segment' => env('SMS_COST_PER_SEGMENT', '0.64'),
+        'cost_per_segment' => env('SMS_COST_PER_SEGMENT', '0.26'),
         'drivers' => [
             // REVE SMS reseller endpoint (App\Domain\Notification\Drivers\ReveSmsGateway).
             // Entered at Admin → Integrations → Messaging (encrypted in `settings`); these env

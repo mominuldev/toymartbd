@@ -207,7 +207,8 @@ function CallCard({ detail }: { detail: HeldOrderDetail }) {
     const [reason, setReason] = useState<CancelReason | ''>('');
     const [cancelNote, setCancelNote] = useState('');
     const fail = (e: unknown) => notify(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : t('risk.error'), 'danger');
-    const mayVerify = can(me, 'risk.verify');
+    // Verifying confirms the order (owner decision 2026-11-13): risk.verify + orders.confirm.
+    const mayVerify = can(me, 'risk.verify') && can(me, 'orders.confirm');
     const mayCancel = mayVerify && can(me, 'orders.cancel');
 
     return (

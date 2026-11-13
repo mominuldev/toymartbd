@@ -8,7 +8,6 @@ use App\Domain\Catalog\Events\ProductChanged;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Seo\DTOs\SeoMetaData;
 use App\Domain\Seo\Models\SeoMeta;
-use App\Domain\Seo\Models\SlugHistory;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
@@ -29,6 +28,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class SaveProductWithSeo
 {
+    public function __construct(private readonly RecordSlugChange $slugs) {}
+
     /** @param  Closure(): Product  $write */
     public function handle(?Product $existing, Closure $write, ?SeoMetaData $seo, ?int $actorId = null): Product
     {
@@ -39,26 +40,7 @@ final class SaveProductWithSeo
             $product = $write();
 
             if ($previousSlug !== null && $previousSlug !== $product->slug) {
-                SlugHistory::query()
-                    ->where('sluggable_type', SeoMeta::TYPE_PRODUCT)
-                    ->where('old_slug', $product->slug)
-                    ->delete();
-
-                if ($wasLive) {
-                    SlugHistory::query()->create([
-                        'sluggable_type' => SeoMeta::TYPE_PRODUCT,
-                        'sluggable_id' => $product->id,
-                        'old_slug' => $previousSlug,
-                        'new_slug' => $product->slug,
-                        'user_id' => $actorId,
-                    ]);
-
-                    // Earlier redirects of this product now point one hop further.
-                    SlugHistory::query()
-                        ->where('sluggable_type', SeoMeta::TYPE_PRODUCT)
-                        ->where('sluggable_id', $product->id)
-                        ->update(['new_slug' => $product->slug]);
-                }
+                $this->slugs->handle(SeoMeta::TYPE_PRODUCT, $product->id, $previousSlug, $product->slug, $wasLive, $actorId);
             }
 
             if ($seo !== null) {

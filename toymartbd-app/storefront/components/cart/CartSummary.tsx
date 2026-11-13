@@ -43,8 +43,10 @@ export function CartSummary({ cart, locale, t, cta, totalId, className = '' }: P
                     .filter((a) => a.type === 'promotion')
                     .map((a) => (
                         <div key={`p${a.id ?? ''}`} className={row}>
-                            <dt className="text-fg-secondary">{(bn ? (a.label_bn ?? a.label) : a.label) ?? c.discount}</dt>
-                            <dd className="tabular-nums text-fg-discount">{signedPrice(a.amount)}</dd>
+                            {/* "Promotion: Eid sale" — the API's name (label_bn in Bangla). A 0.00 row is a
+                                free-delivery promotion (P7): its saving is the delivery line's "Free". */}
+                            <dt className="text-fg-secondary">{format(c.promotionRow, { label: (bn ? (a.label_bn ?? a.label) : a.label) ?? c.discount })}</dt>
+                            <dd className={`tabular-nums ${isZero(a.amount.replace(/^-/, '')) ? 'text-status-in-stock' : 'text-fg-discount'}`}>{isZero(a.amount.replace(/^-/, '')) ? c.free : signedPrice(a.amount)}</dd>
                         </div>
                     ))}
                 {cart.coupon?.applied && !isZero(cart.totals.coupon_discount) ? (

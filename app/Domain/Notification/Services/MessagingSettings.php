@@ -94,7 +94,7 @@ final class MessagingSettings
         ];
     }
 
-    /** PLACEHOLDER rate until the owner signs a contract (config/notifications.php). */
+    /** Taka per SMS segment; default the owner's REVE rate ৳0.26 (2026-11-13, config/notifications.php). */
     public function costPerSegment(): Money
     {
         $rate = $this->value(self::SMS_COST_PER_SEGMENT);

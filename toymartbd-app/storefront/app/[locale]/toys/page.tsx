@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { ListingView } from '@/components/listing/ListingView';
 import { PageShell } from '@/components/PageShell';
 import { getMessages, isLocale } from '@/lib/i18n';
-import { listingMetadata } from '@/lib/listing/seo';
+import { listingPageMetadata } from '@/lib/seo/metadata';
 import { hrefFor, parseListingState, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing } from '@/lib/products';
 
@@ -28,11 +28,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale).listing;
-    return {
-        title: t.allToys,
-        description: t.metaAll,
-        ...listingMetadata(locale, PATH, parseListingState(await searchParams, SCOPE)),
-    };
+    return listingPageMetadata({ locale, path: PATH, state: parseListingState(await searchParams, SCOPE), title: t.allToys, description: t.metaAll });
 }
 
 export default async function AllToysPage({ params, searchParams }: Props) {

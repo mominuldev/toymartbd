@@ -60,6 +60,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $note
  * @property int|null $requested_by
  * @property int|null $booked_by
+ * @property string|null $rider_name
+ * @property string|null $rider_phone E.164 (rule 30); shown in full only with customers.view_pii
+ * @property string|null $rider_source `manual` (staff typed it when the rider called) | `courier`
+ * @property Carbon|null $rider_recorded_at
+ * @property int|null $rider_recorded_by
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read CourierProvider $provider
@@ -136,6 +141,12 @@ final class Shipment extends Model
     /** Courier accepted, but marking the order shipped failed — retry completes it without a second booking. */
     public const string FAILURE_COMPLETION = 'completion_failed';
 
+    /** Staff recorded the rider when the rider called (neither courier's API returns the number). */
+    public const string RIDER_MANUAL = 'manual';
+
+    /** Reserved: a provider payload carried the rider (none of today's official APIs does). */
+    public const string RIDER_COURIER = 'courier';
+
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -164,6 +175,8 @@ final class Shipment extends Model
             'booking_response' => 'array',
             'requested_by' => 'integer',
             'booked_by' => 'integer',
+            'rider_recorded_at' => 'datetime',
+            'rider_recorded_by' => 'integer',
         ];
     }
 }

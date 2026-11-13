@@ -79,6 +79,20 @@ export function cardFromProduct(product: StorefrontProduct): ProductCard {
         is_featured: false,
         variant_count: product.variants.length,
         in_stock: product.in_stock,
+        // P7: the product's cheapest flash offer, copied as the API sent it (no per-variant map on a card).
+        flash_sale: product.flash_sale
+            ? {
+                  promotion_id: product.flash_sale.promotion_id,
+                  name: product.flash_sale.name,
+                  name_bn: product.flash_sale.name_bn,
+                  ends_at: product.flash_sale.ends_at,
+                  variant_id: product.flash_sale.variant_id,
+                  sale_price: product.flash_sale.sale_price,
+                  regular_price: product.flash_sale.regular_price,
+                  discount_percent: product.flash_sale.discount_percent,
+                  remaining: product.flash_sale.remaining,
+              }
+            : null,
         image: image
             ? { url: image.url, srcset_webp: image.srcset_webp, srcset_avif: image.srcset_avif, alt: image.alt, alt_bn: image.alt_bn, width: image.width, height: image.height }
             : null,

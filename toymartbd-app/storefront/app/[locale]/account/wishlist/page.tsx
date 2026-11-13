@@ -12,6 +12,7 @@ import { accountMessages } from '@/lib/account/messages';
 import { getWishlist, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/wishlist — My wishlist, Figma 239:13228 (1440) / 238:10450 (390): the saved toys as the
 // standard ProductCard (Version B), 3-up on desktop, 2-up on mobile, each with a Remove form. Price,
@@ -31,7 +32,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.wishlist, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/wishlist', accountMessages(locale).meta.wishlist);
 }
 
 export default async function WishlistPage({ params }: Props) {

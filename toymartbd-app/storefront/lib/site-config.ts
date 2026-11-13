@@ -87,3 +87,17 @@ export const social: ReadonlyArray<{ key: 'facebook' | 'instagram' | 'youtube' |
     { key: 'youtube', href: null },
     { key: 'tiktok', href: null },
 ];
+
+/**
+ * Organization structured data (lib/seo/jsonld.ts). PLACEHOLDERS: there is no final logo file
+ * (the wordmark is a design placeholder, Figma 123:1712) and the registered legal name is not
+ * confirmed. While `placeholder: true` the value is NOT emitted in JSON-LD. Replace and flip the
+ * flag once the owner supplies them (UI-UX-DESIGN-SPEC §10).
+ */
+export const organization: {
+    logo: { path: string; placeholder: boolean };
+    legalName: { value: string; placeholder: boolean };
+} = {
+    logo: { path: '/images/logo-512.png', placeholder: true },
+    legalName: { value: 'Toy Mart BD', placeholder: true },
+};

@@ -6,7 +6,10 @@ import { ListingView } from '@/components/listing/ListingView';
 import { PageShell } from '@/components/PageShell';
 import { brandDescription, brandName, brandNameIsFallback, getBrand } from '@/lib/brands';
 import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib/i18n';
-import { listingMetadata } from '@/lib/listing/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { getSeo } from '@/lib/seo/fetch';
+import { breadcrumbJsonLd } from '@/lib/seo/jsonld';
+import { listingPageMetadata } from '@/lib/seo/metadata';
 import { hrefFor, parseListingState, withCategory, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing, getCategoryPage } from '@/lib/products';
 
@@ -28,15 +31,18 @@ const load = cache(async (slug: string, locale: Locale) => (SLUG.test(slug) ? ge
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
-    const brand = await load(slug, locale);
+    const [brand, seo] = await Promise.all([load(slug, locale), getSeo('brand', slug)]);
     if (!brand) return {};
     const name = brandName(brand, locale);
     const scope: ListingScope = { kind: 'brand', slug };
-    return {
+    return listingPageMetadata({
+        locale,
+        path: `/brands/${slug}`,
+        state: parseListingState(await searchParams, scope),
         title: name,
         description: brandDescription(brand, locale) ?? format(getMessages(locale).listing.metaBrand, { brand: name }),
-        ...listingMetadata(locale, `/brands/${slug}`, parseListingState(await searchParams, scope)),
-    };
+        seo,
+    });
 }
 
 export default async function BrandPage({ params, searchParams }: Props) {
@@ -65,6 +71,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
     return (
         <PageShell locale={locale} path={hrefFor(path, state)} top="crumb" mobileSearch>
+            <JsonLd data={breadcrumbJsonLd(locale, [{ name: t.home, path: '/' }, { name: messages.brands.title, path: '/brands' }, { name, path }])} />
             <ListingView
                 locale={locale}
                 t={t}

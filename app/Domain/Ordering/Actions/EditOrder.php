@@ -11,6 +11,7 @@ use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\StockReservations;
 use App\Domain\Marketing\Exceptions\CouponRejected;
 use App\Domain\Marketing\Services\CouponUsages;
+use App\Domain\Marketing\Services\PromotionUsages;
 use App\Domain\Ordering\Checkout\CheckoutNotReady;
 use App\Domain\Ordering\Checkout\OrderItemSnapshots;
 use App\Domain\Ordering\Checkout\PriceChanged;
@@ -70,6 +71,7 @@ final readonly class EditOrder
         private StockReservations $reservations,
         private OrderItemSnapshots $snapshots,
         private CouponUsages $couponUsages,
+        private PromotionUsages $promotionUsages,
         private PaymentTransitions $payments,
     ) {}
 
@@ -97,6 +99,28 @@ final readonly class EditOrder
             }
 
             $newLines = self::normalise($data->lines);
+
+            // Locks follow the global order (DATABASE-DESIGN §4.8), the same as PlaceOrder:
+            // order row → stock levels (ascending variant id) → coupons → promotions (ascending
+            // id, each followed by its flash-sale items). Stock first, before any Marketing row.
+
+            // Reservation: the per-variant difference, one ascending lock pass (rule 9). The
+            // deltas depend only on the old and new lines, never on the price, so they are
+            // reserved before re-pricing; a refusal below rolls them back with the edit.
+            $oldLines = $locked->reservedLines();
+            $deltas = [];
+            foreach (array_unique([...array_keys($oldLines), ...array_keys($newLines)]) as $variantId) {
+                $deltas[$variantId] = ($newLines[$variantId] ?? 0) - ($oldLines[$variantId] ?? 0);
+            }
+            ksort($deltas);
+            $locationId = StockLocation::defaultId();
+            $this->reservations->adjust($deltas, $locationId);
+
+            // Give this order's coupon and promotion usage (limit counts, budget, flash units)
+            // back first, so re-pricing sees what the order itself already held; both are
+            // recorded again below, coupon then promotions, under the locks taken here.
+            $this->couponUsages->reverseForOrder($locked->id);
+            $this->promotionUsages->reverseForOrder($locked->id);
             $breakdown = $this->quotes->forEdit($locked, $newLines, $data->district, $data->upazila);
             $blockers = OrderQuotes::blockers($breakdown, $data->upazila, requireCoupon: $locked->coupon_code !== null);
             if ($blockers !== []) {
@@ -109,16 +133,6 @@ final readonly class EditOrder
             }
 
             $before = self::snapshot($locked);
-
-            // Reservation: the per-variant difference, one ascending lock pass (rule 9).
-            $oldLines = $locked->reservedLines();
-            $deltas = [];
-            foreach (array_unique([...array_keys($oldLines), ...array_keys($newLines)]) as $variantId) {
-                $deltas[$variantId] = ($newLines[$variantId] ?? 0) - ($oldLines[$variantId] ?? 0);
-            }
-            ksort($deltas);
-            $locationId = StockLocation::defaultId();
-            $this->reservations->adjust($deltas, $locationId);
 
             // Lines: existing ones keep their cost snapshot; new variants get a new line.
             $priced = [];
@@ -138,12 +152,14 @@ final readonly class EditOrder
             }
 
             // Coupon usage follows the new discount; record() re-checks the limits under lock.
-            $this->couponUsages->reverseForOrder($locked->id);
             $coupon = $breakdown->coupon?->applied() === true ? $breakdown->coupon->coupon : null;
             if ($coupon !== null) {
                 $usagePhone = PhoneNumber::tryParse($locked->customer->phone) ?? $data->phone;
                 $this->couponUsages->record($coupon, $locked->id, $usagePhone, $breakdown->couponDiscount, $locked->customer_id);
             }
+
+            // Promotion usage (P7): re-claimed under lock for the edited figures (released before pricing).
+            $this->promotionUsages->record($breakdown->promotions, $locked->id, PhoneNumber::tryParse($locked->customer->phone) ?? $data->phone, $locked->customer_id);
 
             $locked->forceFill([
                 'subtotal' => $breakdown->subtotal,

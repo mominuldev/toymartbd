@@ -7,13 +7,16 @@ namespace App\Http\Resources\Admin;
 use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Ordering\Models\Order;
 use App\Http\Resources\ApiResource;
+use App\Models\User;
+use App\Support\PhoneNumber;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
 
 /**
  * A shipment for the admin (docs/api/shipments.md). Money as decimal strings. `submitted`
  * must be shown as "submitted", never "booked": a bulk-booked parcel has no consignment id
- * until the courier confirms it (rule 24d). Carries no phone or address (rule 20).
+ * until the courier confirms it (rule 24d). Carries no customer phone or address (rule 20);
+ * the delivery rider's phone is masked unless the user holds customers.view_pii.
  *
  * @property Shipment $resource
  */
@@ -25,6 +28,8 @@ final class ShipmentResource extends ApiResource
     {
         $s = $this->resource;
         $order = $s->getRelationValue('orderSummary');
+        $user = $request->user();
+        $pii = $user instanceof User && $user->can('viewPii', Order::class);
 
         return [
             'id' => $s->id,
@@ -59,6 +64,20 @@ final class ShipmentResource extends ApiResource
             /** The order was marked shipped for this shipment (stock consumed, courier charge booked). */
             'dispatched' => $s->dispatched_at !== null,
             'note' => $s->note,
+            /**
+             * The delivery rider, recorded by staff when the rider calls (neither courier's API
+             * returns it). `phone` is E.164 with customers.view_pii, else masked (`017****5678`);
+             * `phone_masked` says which. Null when nobody has recorded one.
+             *
+             * @var array{name: string|null, phone: string|null, phone_masked: bool, source: 'manual'|'courier'|null, recorded_at: string|null}|null
+             */
+            'rider' => $s->rider_name === null && $s->rider_phone === null ? null : [
+                'name' => $s->rider_name,
+                'phone' => $s->rider_phone === null ? null : ($pii ? $s->rider_phone : (PhoneNumber::tryParse($s->rider_phone)?->masked() ?? '***')),
+                'phone_masked' => ! $pii,
+                'source' => $s->rider_source,
+                'recorded_at' => $s->rider_recorded_at?->toIso8601String(),
+            ],
             'booked_at' => $s->booked_at?->toIso8601String(),
             'dispatched_at' => $s->dispatched_at?->toIso8601String(),
             'picked_up_at' => $s->picked_up_at?->toIso8601String(),

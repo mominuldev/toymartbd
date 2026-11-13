@@ -57,7 +57,8 @@ it('sends the old slug and the descendants on a slug change', function (): void 
 
     app(UpdateCategory::class)->handle($root, ['slug' => 'all-toys']);
 
-    expect(pushedCategoryTags())->toBe(['categories', 'category:all-toys', 'category:toys', 'category:puzzles']);
+    // `redirects`: the Seo module recorded the old slug's 301 (docs/api/seo.md).
+    expect(pushedCategoryTags())->toBe(['categories', 'category:all-toys', 'category:toys', 'category:puzzles', 'redirects']);
 });
 
 it('sends only the category itself for a flag change, and nothing for a no-op', function (): void {
