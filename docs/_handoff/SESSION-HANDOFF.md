@@ -41,6 +41,12 @@ npm run typecheck && npm run typecheck:storefront && npm run lint:i18n && npx vi
 Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR, merge after CI.
 
 ## Integration state (latest)
+**PR #17 open** (https://github.com/mominuldev/toymartbd/pull/17), branch fully pushed, working tree clean at checkpoint.
+First CI run (43405012115): Frontend ✅, Storefront ✅, **Admin E2E ❌**, PHP still running at checkpoint time.
+Next step: `gh run view 43405012115 --log-failed | grep -E "✘|Error:|Locator"` to see which admin Playwright spec failed
+(likely a spec asserting old UI text that a Phase 7 screen changed, as happened in PR #16 — fix the spec or the UI,
+push, wait for all 4 jobs, then `gh pr merge 17 --merge`). After merge: Phase 7 batch 2 = server-side tracking.
+
 All 7 batch-1 agents finished. Full checks: 2889 PHP passed, PHPStan/deptrac clean, Pint fixed, typecheck clean, i18n clean, 389 storefront unit, admin 330/332 (2 product-form tests are a known load flake; pass alone). An integration-fix agent was started for: risk deadlock retry, global lock order PlaceOrder/EditOrder, page SEO cache tags, merging the two per-minute content revalidation commands, About page metadata, cart-recovery retry routing, storefront Playwright `/pages/privacy` mock. If that work is not on disk, do it, then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR and merge after CI.
 
 ## Follow-ups found by agent 5 (fix before merging the batch)
