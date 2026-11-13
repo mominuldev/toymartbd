@@ -4,72 +4,71 @@ declare(strict_types=1);
 
 namespace App\Domain\Risk\Services;
 
+use App\Domain\Risk\DTOs\OrderContext;
+use App\Domain\Risk\DTOs\PhoneHistory;
 use App\Domain\Risk\DTOs\RiskAssessment;
 use App\Domain\Risk\DTOs\RiskInput;
+use App\Domain\Risk\Enums\RiskProfileStatus;
+use App\Domain\Risk\Models\CustomerRiskProfile;
 use App\Support\Money;
 
 /**
- * The launch risk check (DATABASE-DESIGN §5.2, rule 33b) — deliberately minimal: our
- * own order history only, no courier data (no merchant account yet).
+ * The checkout risk check (DATABASE-DESIGN §5.2, rules 23, 24b, 33b) — the ONE place an
+ * order's hold decision is made (PlaceOrder only asks). Our own order history only: courier
+ * data is shown to staff beside it, never mixed in (rule 24).
  *
- *  - signal `first_order` (weight 10): the phone has never ordered;
- *  - hold `first_order_above_threshold`: first order at or above
- *    config('risk.first_order_hold_threshold') — held regardless of score (rule 33b);
- *  - hold `cod_advance_required`: the COD advance (delivery.cod_advance) must be
- *    arranged by phone, since no online gateway exists to take it;
- *  - hold `high_risk_score`: score ≥ the `high` level.
- *
- * Pure: no reads, no writes. It never cancels anything (rules 23, 24b).
+ * Hold reasons (any one → `on_hold` + verification pending; NEVER a cancel):
+ *  - `high_risk_score`             score ≥ the high threshold (not for a whitelisted phone);
+ *  - `first_order_above_threshold` an unknown phone at or above the first-order threshold —
+ *                                  regardless of score or status (rule 33b);
+ *  - `cod_advance_required`        the COD advance must be arranged by phone;
+ *  - `blacklisted` / `watchlist`   staff put the phone on a list.
  */
 final readonly class OrderRiskAssessor
 {
+    public function __construct(
+        private RiskSettings $settings,
+        private PhoneHistoryReader $history,
+        private RiskScorer $scorer,
+    ) {}
+
     public function assess(RiskInput $input): RiskAssessment
     {
-        $signals = [];
-        if ($input->priorOrders === 0) {
-            $signals[] = ['code' => 'first_order', 'weight' => self::weight('first_order')];
+        $history = $this->history->forPhone($input->phone->e164());
+        if ($input->priorOrders !== null) {
+            $history = self::withTotal($history, $input->priorOrders);
         }
 
-        $score = min(100, array_sum(array_column($signals, 'weight')));
-        $level = self::level($score);
+        $breakdown = $this->scorer->score($history, new OrderContext($input->orderValue, $input->addressLine, $input->hasLocality));
+        $status = CustomerRiskProfile::forPhone($input->phone->e164())?->status;
 
         $hold = [];
-        if ($level === 'high') {
+        if ($status?->holdReason() !== null) {
+            $hold[] = $status->holdReason();
+        }
+        if ($breakdown->level === 'high' && $status !== RiskProfileStatus::Whitelist) {
             $hold[] = 'high_risk_score';
         }
-        if ($input->priorOrders === 0 && ! $input->orderValue->lessThan(self::threshold())) {
+        if ($history->totalOrders === 0 && ! $input->orderValue->lessThan($this->settings->firstOrderHoldThreshold())) {
             $hold[] = 'first_order_above_threshold';
         }
         if ($input->codAdvanceRequired) {
             $hold[] = 'cod_advance_required';
         }
 
-        return new RiskAssessment($score, $level, $signals, $hold);
+        return new RiskAssessment($breakdown->score, $breakdown->level, $breakdown->signals(), $hold, $status?->value);
     }
 
-    public static function threshold(): Money
+    public function threshold(): Money
     {
-        $value = config('risk.first_order_hold_threshold', '3000.00');
-
-        return Money::of(is_string($value) || is_int($value) ? (string) $value : '3000.00');
+        return $this->settings->firstOrderHoldThreshold();
     }
 
-    private static function weight(string $signal): int
+    private static function withTotal(PhoneHistory $h, int $total): PhoneHistory
     {
-        $value = config('risk.weights.'.$signal, 0);
-
-        return is_numeric($value) ? (int) $value : 0;
-    }
-
-    private static function level(int $score): string
-    {
-        $high = config('risk.levels.high', 70);
-        $medium = config('risk.levels.medium', 40);
-
-        return match (true) {
-            $score >= (is_numeric($high) ? (int) $high : 70) => 'high',
-            $score >= (is_numeric($medium) ? (int) $medium : 40) => 'medium',
-            default => 'low',
-        };
+        return new PhoneHistory(
+            $h->phone, $h->customerId, $total, $h->deliveredCount, $h->cancelledCount, $h->customerCancelCount,
+            $h->returnedCount, $h->refusedCount, $h->failedDeliveryCount, $h->averageDeliveredValue, $h->recentOrders, $h->lastOrderAt,
+        );
     }
 }

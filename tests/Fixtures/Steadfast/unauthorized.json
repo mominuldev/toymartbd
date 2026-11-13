@@ -1,0 +1,11 @@
+{
+    "_fixture": {
+        "source": "Live unauthenticated probe of portal.packzy.com recorded in docs/_research/agent3-appbyte-and-couriers.md §6.2 (2026-11-07)",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call"
+    },
+    "http_status": 401,
+    "body": {
+        "status": 401,
+        "message": "Unauthorized Access (missing API credentials)"
+    }
+}

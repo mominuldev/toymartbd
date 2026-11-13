@@ -65,6 +65,7 @@ const order = (over: Partial<StorefrontOrder> = {}): StorefrontOrder => ({
     coupon_code: null,
     totals: { subtotal: '1.00', promotion_discount: '0.00', coupon_discount: '0.00', discount_total: '0.00', shipping_charge: '0.00', grand_total: '1.00', paid_total: '0.00', due_total: '1.00' },
     timeline: [{ stage: 'placed', at: '2026-11-12T05:02:00Z' }],
+    shipment: null,
     ...over,
 });
 
@@ -76,7 +77,7 @@ describe('order display', () => {
 
     it('draws the happy path up to the current stage', () => {
         const steps = timelineSteps(order({ stage: 'shipped', timeline: [{ stage: 'placed', at: 'a' }, { stage: 'confirmed', at: 'b' }, { stage: 'processing', at: 'c' }, { stage: 'shipped', at: 'd' }] }));
-        expect(steps.map((s) => s.state)).toEqual(['complete', 'complete', 'complete', 'current', 'upcoming']);
+        expect(steps.map((s) => s.state)).toEqual(['complete', 'complete', 'complete', 'current', 'upcoming', 'upcoming']);
         expect(steps[3]?.at).toBe('d');
         expect(timelineSteps(order({ stage: 'delivered' })).every((s) => s.state === 'complete')).toBe(true);
     });

@@ -226,6 +226,16 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/orders/{order}/ship', [OrderFulfilmentController::class, 'ship'])->middleware('idempotent')->name('orders.ship');
     Route::post('/orders/{order}/deliver', [OrderFulfilmentController::class, 'deliver'])->middleware('idempotent')->name('orders.deliver');
 
+    // Courier booking (P6, docs/api/shipments.md): request → BookShipment on `courier` →
+    // booked (order shipped) or failed (retry queue). Writes need an Idempotency-Key (rule 17).
+    Route::post('/orders/{order}/shipments', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'store'])->middleware('idempotent')->name('orders.shipments.store');
+    Route::post('/shipments/bulk', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'bulk'])->middleware('idempotent')->name('shipments.bulk');
+    Route::get('/shipments', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'index'])->name('shipments.index');
+    Route::get('/shipments/failed', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'failed'])->name('shipments.failed');
+    Route::get('/shipments/{shipment}', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'show'])->whereNumber('shipment')->name('shipments.show');
+    Route::post('/shipments/{shipment}/retry', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'retry'])->whereNumber('shipment')->middleware('idempotent')->name('shipments.retry');
+    Route::post('/shipments/{shipment}/cancel', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'cancel'])->whereNumber('shipment')->middleware('idempotent')->name('shipments.cancel');
+
     // Manual orders (P4-ORD-06): lookups, a live quote and the order itself, all through the
     // checkout pricing pipeline and PlaceOrder. Edit after placement (P4-ORD-07). Bulk pack
     // and invoice PDFs (P4-ORD-08) report per order, never all-or-nothing.
@@ -266,11 +276,56 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'show'])->name('notifications.preferences.show');
     Route::put('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'update'])->name('notifications.preferences.update');
 
+    // Integrations → Messaging (owner request 2026-11-13): SMS credentials in the admin,
+    // encrypted in `settings`, env as the fallback. Credentials page → manage_integrations
+    // for everything; the test send is rate-limited per user.
+    Route::middleware('can:'.App\Models\Enums\Permission::SettingsManageIntegrations->value)->group(function (): void {
+        Route::get('/settings/messaging', [App\Http\Controllers\Api\V1\Admin\Settings\MessagingSettingsController::class, 'show'])->name('settings.messaging.show');
+        Route::put('/settings/messaging', [App\Http\Controllers\Api\V1\Admin\Settings\MessagingSettingsController::class, 'update'])->name('settings.messaging.update');
+        Route::post('/settings/messaging/test', [App\Http\Controllers\Api\V1\Admin\Settings\MessagingSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.messaging.test');
+    });
+
+    // Courier settings & delivery charges (P6): rate cards / on-off / default / free-delivery
+    // threshold → shipments.manage_rates; credentials (write-only) → settings.manage_integrations.
+    Route::get('/settings/couriers', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'index'])->name('settings.couriers.index');
+    Route::patch('/settings/couriers/{provider}', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'update'])->whereNumber('provider')->name('settings.couriers.update');
+    Route::put('/settings/couriers/{provider}/rates', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'rates'])->whereNumber('provider')->name('settings.couriers.rates');
+    Route::put('/settings/couriers/{provider}/credentials', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'credentials'])->whereNumber('provider')->name('settings.couriers.credentials');
+    Route::get('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'delivery'])->name('settings.delivery.show');
+    Route::put('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'updateDelivery'])->name('settings.delivery.update');
+    // Booking panel charge preview (P6): read-only, from stored rate cards; orders.update + shipments.book.
+    Route::post('/shipments/quote', App\Http\Controllers\Api\V1\Admin\ShipmentQuoteController::class)->name('shipments.quote');
+    // Courier location mapping (P6, §3.6): a mirrored courier tree mapped BY HAND to our
+    // districts/upazilas (rule 32). Reads → shipments.view; map/unmap/sync → shipments.manage_locations.
+    Route::prefix('/courier-locations/{provider}')->where(['provider' => '[a-z][a-z0-9_]*'])->name('courier-locations.')->group(function (): void {
+        $c = App\Http\Controllers\Api\V1\Admin\CourierLocationController::class;
+        Route::get('/', [$c, 'overview'])->name('overview');
+        Route::get('/locations', [$c, 'index'])->name('index');
+        Route::get('/needs-mapping', [$c, 'needsMapping'])->name('needs-mapping');
+        Route::get('/places', [$c, 'places'])->name('places');
+        Route::get('/suggestions', [$c, 'suggestZones'])->name('suggestions');
+        Route::get('/resolve', [$c, 'resolve'])->name('resolve');
+        Route::post('/sync', [$c, 'sync'])->name('sync');
+        Route::get('/locations/{location}/suggestions', [$c, 'suggestPlaces'])->whereNumber('location')->name('location.suggestions');
+        Route::put('/locations/{location}/mapping', [$c, 'map'])->whereNumber('location')->name('location.map');
+        Route::delete('/locations/{location}/mapping', [$c, 'unmap'])->whereNumber('location')->name('location.unmap');
+    });
+    // Shipping labels (P6): shipments.view + customers.view_pii; only once a consignment id exists.
+    Route::post('/shipments/labels', [App\Http\Controllers\Api\V1\Admin\ShipmentLabelController::class, 'bulk'])->name('shipments.labels');
+    Route::get('/shipments/{shipment}/label', [App\Http\Controllers\Api\V1\Admin\ShipmentLabelController::class, 'show'])->whereNumber('shipment')->name('shipments.label');
+
     // Finance ledger (P5): read-only browser, COD receivables, manual COD receipts (cash, not
     // revenue), expense categories, expenses (receipt, approval, pay, void). Static paths first.
     Route::get('/finance/ledger', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'index'])->name('finance.ledger.index');
     Route::get('/finance/receivables', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'receivables'])->name('finance.receivables');
     Route::post('/finance/orders/{order}/cod-receipts', [App\Http\Controllers\Api\V1\Admin\CodReceiptController::class, 'store'])->middleware('idempotent')->name('finance.cod-receipts.store');
+    // Courier COD settlements (P6, §4.5): import a remittance (file or typed), review each
+    // variance, confirm → ledger. Moving money, so import and confirm replay on a double submit.
+    Route::get('/finance/settlements', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'index'])->name('finance.settlements.index');
+    Route::post('/finance/settlements', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'store'])->middleware('idempotent')->name('finance.settlements.store');
+    Route::get('/finance/settlements/{settlement}', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'show'])->whereNumber('settlement')->name('finance.settlements.show');
+    Route::post('/finance/settlements/{settlement}/items/{item}/review', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'review'])->whereNumber('settlement')->whereNumber('item')->name('finance.settlements.items.review');
+    Route::post('/finance/settlements/{settlement}/confirm', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'confirm'])->whereNumber('settlement')->middleware('idempotent')->name('finance.settlements.confirm');
     Route::get('/finance/expense-categories', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'index'])->name('finance.expense-categories.index');
     Route::post('/finance/expense-categories', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'store'])->name('finance.expense-categories.store');
     Route::patch('/finance/expense-categories/{category}', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'update'])->whereNumber('category')->name('finance.expense-categories.update');
@@ -299,4 +354,21 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/finance/reports/profitability/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportProfitability'])->name('finance.reports.profitability.export');
     Route::get('/reports/inventory-valuation', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'index'])->name('reports.inventory-valuation');
     Route::get('/reports/inventory-valuation/export', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'export'])->name('reports.inventory-valuation.export');
+    // Courier performance (P6): per provider and district, Dhaka dates; CSV like the other reports.
+    Route::get('/reports/couriers', [App\Http\Controllers\Api\V1\Admin\CourierPerformanceController::class, 'index'])->name('reports.couriers');
+    Route::get('/reports/couriers/export', [App\Http\Controllers\Api\V1\Admin\CourierPerformanceController::class, 'export'])->name('reports.couriers.export');
+
+    // Fraud & risk (P6, checklist §2.4, rules 23/24/24b/33b): the verification queue (held
+    // orders; a PERSON verifies or cancels — scoring never does), phone lookup with our score
+    // and the courier panel kept separate, list status, and the Risk rules form.
+    Route::get('/risk/queue', [App\Http\Controllers\Api\V1\Admin\RiskQueueController::class, 'index'])->name('risk.queue.index');
+    Route::get('/risk/orders/{order}', [App\Http\Controllers\Api\V1\Admin\RiskQueueController::class, 'show'])->name('risk.orders.show');
+    Route::post('/risk/orders/{order}/verify', [App\Http\Controllers\Api\V1\Admin\RiskQueueController::class, 'verify'])->name('risk.orders.verify');
+    Route::post('/risk/orders/{order}/reject', [App\Http\Controllers\Api\V1\Admin\RiskQueueController::class, 'reject'])->name('risk.orders.reject');
+    Route::post('/risk/orders/{order}/calls', [App\Http\Controllers\Api\V1\Admin\RiskQueueController::class, 'logCall'])->name('risk.orders.calls.store');
+    Route::get('/risk/lookup', [App\Http\Controllers\Api\V1\Admin\RiskPhoneController::class, 'lookup'])->name('risk.lookup');
+    Route::post('/risk/lookup/rescore', [App\Http\Controllers\Api\V1\Admin\RiskPhoneController::class, 'rescore'])->name('risk.lookup.rescore');
+    Route::put('/risk/phone-status', [App\Http\Controllers\Api\V1\Admin\RiskPhoneController::class, 'setStatus'])->name('risk.phone-status');
+    Route::get('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'show'])->name('risk.rules.show');
+    Route::put('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'update'])->name('risk.rules.update');
 });

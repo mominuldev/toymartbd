@@ -29,3 +29,9 @@ Route::get('/ping', fn () => ['ok' => true, 'audience' => 'webhooks'])->name('pi
 
 // SSLCommerz IPN (P4-PAY-03): signature first, receipt (replay = no-op), queued re-query.
 Route::post('/payments/sslcommerz/ipn', [SslcommerzWebhookController::class, 'ipn'])->name('payments.sslcommerz.ipn');
+
+// Courier webhooks (P6): the driver verifies the signature first (401, nothing written),
+// a receipt makes a replay a no-op, and a queued re-query of status() is what gets applied.
+Route::post('/couriers/{provider}', App\Http\Controllers\Api\V1\Webhooks\CourierWebhookController::class)
+    ->where('provider', '[a-z0-9_\-]{1,24}')
+    ->name('couriers');

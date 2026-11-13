@@ -1,0 +1,41 @@
+{
+  "message": "Store list fetched.",
+  "type": "success",
+  "code": 200,
+  "data": {
+    "data": [
+      {
+        "store_id": 39,
+        "store_name": "SDK Test Store f3cabd0d",
+        "store_address": "House 1, Road 1, Sector 10, Uttara, Dhaka-1230, f3cabd0d",
+        "is_active": 1,
+        "city_id": 1,
+        "zone_id": 298,
+        "hub_id": 126,
+        "is_default_store": false,
+        "is_default_return_store": false
+      },
+      {
+        "store_id": 38,
+        "store_name": "Sendbox Test",
+        "store_address": "House 123, Road 4, Sector 10, Uttara, Dhaka-1230, Bangladesh",
+        "is_active": 1,
+        "city_id": 1,
+        "zone_id": 1070,
+        "hub_id": 2,
+        "is_default_store": false,
+        "is_default_return_store": false
+      }
+    ],
+    "total": 31,
+    "current_page": 1,
+    "per_page": 1000,
+    "total_in_page": 31,
+    "last_page": 1,
+    "path": "http://hermes-api.sandbox/aladdin/api/v1/stores",
+    "to": 31,
+    "from": 1,
+    "last_page_url": "http://hermes-api.sandbox/aladdin/api/v1/stores?page=1",
+    "first_page_url": "http://hermes-api.sandbox/aladdin/api/v1/stores?page=1"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "message": "Your bulk order creation request is accepted,<br> please wait some time to complete order creation.",
+  "type": "success",
+  "code": 202,
+  "data": true
+}

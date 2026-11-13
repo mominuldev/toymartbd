@@ -13,7 +13,7 @@
 | **OWNER** Domains | e.g. `staging-api.<domain>` and `staging.<domain>` | Both need HTTPS. The admin is served by the API host at `/admin`. |
 | **OWNER** Data | reference data only (default), or reference data plus the demo catalogue | §12 says "anonymised production clone"; there is no production yet. The Gate 4 UAT needs **real** products that the owner enters (see `UAT-GATE-4.md`), so the default is **no demo catalogue**. |
 | **OWNER** Backup bucket | any S3-compatible store (S3, R2, B2, Wasabi) | Required for the still-open P3-CI-03 restore rehearsal (`backup-and-restore.md`). |
-| **OWNER** SMS / WhatsApp provider | SMS: REVE SMS via `https://smpp.ajuratech.com:7790` (owner, 2026-11-13). WhatsApp: none yet | SMS is real (`SMS_DRIVER=reve`); WhatsApp stays off so order updates go by SMS (§3.4). |
+| **OWNER** SMS / WhatsApp provider | SMS: REVE SMS via `https://smpp.ajuratech.com:7790` (owner, 2026-11-13). WhatsApp: none yet | SMS is real: the owner enters the REVE credentials at **Admin → Integrations → Messaging** (`/admin/integrations/messaging`); env is only a fallback. WhatsApp stays off so order updates go by SMS (§3.4). |
 | **OWNER** Payment gateway | SSLCommerz sandbox credentials, or none | Gateway stays **inactive** for Gate 4. COD only (§3.5). |
 
 We do not recommend a specific provider; `docs/_research/` has no hosting comparison. Pick on price and on Dhaka latency.
@@ -86,12 +86,12 @@ Start from `.env.example`. Every variable below is read by `config/*.php`. The l
 
 | Variable | Value | Effect |
 |---|---|---|
-| `SMS_DRIVER` | `reve` | Real SMS through REVE. Set `SMS_REVE_API_KEY`, `SMS_REVE_SECRET_KEY` and `SMS_REVE_SENDER_ID` from the provider panel (`SMS_REVE_BASE_URL` defaults to `https://smpp.ajuratech.com:7790`). Keep these in the server's env only, never in git. Before the UAT run `php artisan toymart:sms:test 017XXXXXXXX` and again with `--bn`, and confirm both arrive with correct Bangla. Set `SMS_COST_PER_SEGMENT` to the contracted rate (the default 0.64 is a placeholder). |
+| `SMS_DRIVER`, `SMS_REVE_*`, `SMS_COST_PER_SEGMENT` | leave unset (optional fallback) | **SMS credentials are entered in the admin, not here** (owner decision 2026-11-13). Sign in as super_admin → **Admin → Integrations → Messaging** (`/admin/integrations/messaging`): Provider = REVE SMS, API base URL (`https://smpp.ajuratech.com:7790`), API key, secret key and sender ID from the provider panel, and the contracted cost per segment (0.64 is a placeholder). Keys are stored encrypted in `settings` (needs a stable `APP_KEY` — rotating it makes saved keys unreadable, and they must be re-entered), are never shown again (only the last 4 characters), and every change is written to `audit_sensitive` as `credential_changed` without the value. A saved value applies to the next SMS, queue workers included — no restart. These env variables are only used for a value nobody has saved in the admin (CI, older deployments); never commit real keys. Before the UAT, use **Send test SMS** on that screen (or `php artisan toymart:sms:test 017XXXXXXXX`, and again with `--bn` — same settings) and confirm both English and Bangla arrive intact. |
 | `WHATSAPP_DRIVER` | `log` | No WhatsApp Business account yet. `WHATSAPP_ACCESS_TOKEN` stays empty. |
-| `WHATSAPP_ENABLED` | `false` | **Required while there is no WhatsApp account.** With it on, order updates go to the WhatsApp log driver, which reports success, so the SMS fallback never fires and no customer gets an order SMS. |
+| `WHATSAPP_ENABLED` | `false` (the default) | **Must stay off while there is no WhatsApp account.** It is the fallback for the **WhatsApp** switch on Admin → Integrations → Messaging, which wins once saved — check the switch is off there too. With it on, order updates go to the WhatsApp log driver, which reports success, so the SMS fallback never fires and no customer gets an order SMS. |
 | `SMS_LOG_CHANNEL` | empty | The log line goes to the default channel |
 
-With `SMS_DRIVER=reve` each SMS is really sent; the server log gets a `sms.reve.accepted` / `sms.reve.rejected` line with the masked phone and the provider's status, never the message text or the keys. What a log driver writes: a `sms.log_driver` / `whatsapp.log_driver` line with the **masked** phone (`017****5678`) and the template name. **It does not log the message text.** One `notification_logs` row per message, status **Sent**, appears in **Admin → Automations → Message log** (`/admin/automations/log`). `UAT-GATE-4.md` §0 explains what the owner will and will not see.
+With the REVE provider selected each SMS is really sent; the server log gets a `sms.reve.accepted` / `sms.reve.rejected` line with the masked phone and the provider's status, never the message text or the keys. What a log driver writes: a `sms.log_driver` / `whatsapp.log_driver` line with the **masked** phone (`017****5678`) and the template name. **It does not log the message text.** One `notification_logs` row per message, status **Sent**, appears in **Admin → Automations → Message log** (`/admin/automations/log`). `UAT-GATE-4.md` §0 explains what the owner will and will not see.
 
 ### 3.5 Payments — gateway inactive, COD only
 
@@ -194,6 +194,7 @@ Use one cron entry, as the deploy user, on **one** server: `* * * * * cd /path/t
 | Command | When (Dhaka) | What |
 |---|---|---|
 | `toymart:payments:expire` | every 5 minutes | Unpaid online orders past their window: re-query, then expire (stock released, order cancelled) |
+| `toymart:couriers:poll` | every 15 minutes | Courier status reconciliation: re-query every in-flight shipment with no update for `couriers.status_poll.stale_minutes` (default 60) on the `courier` queue; resolves bulk-`submitted` parcels by merchant ref where the driver can. Terminal shipments are never polled. |
 | `toymart:finance:recurring-expenses` | 1st of each month, 00:30 | Generate recurring expenses |
 | `toymart:finance:rollup` | daily 01:00 | `daily_financial_summaries` for yesterday and today |
 | `toymart:finance:verify` | daily 01:30 | Invariant: order financials = ledger. Exits non-zero on drift; never corrects. |
@@ -203,7 +204,6 @@ Use one cron entry, as the deploy user, on **one** server: `* * * * * cd /path/t
 
 These §7 tasks are **not scheduled yet**:
 
-- courier status reconciliation (Phase 6)
 - abandoned-cart detection
 - sitemap regeneration
 - stale-cart cleanup

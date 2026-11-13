@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import {
     ArrowUUpLeftIcon,
     CheckCircleIcon,
@@ -21,7 +21,6 @@ import type { MessageKey } from '@/i18n/messages';
 import { Avatar } from '@/components/shell/Avatar';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { Button } from '@/components/ui/Button';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { inputClass } from '@/components/ui/Field';
 import { IconButton } from '@/components/ui/IconButton';
 import { QueryError } from '@/components/ui/QueryError';
@@ -34,6 +33,7 @@ import { OrderActions, problemText } from './OrderActions';
 import { OrderStatusBadge, PaymentChip, methodLabel, paymentLabel, riskTint, sourceLabel, statusLabel } from './parts';
 import { OrderStepper } from './Stepper';
 import { OrderRefundPanel } from '@/features/returns';
+import { ShipmentCard } from '@/features/couriers';
 
 const card = 'flex flex-col gap-4 rounded-md border border-line-default bg-surface p-5 shadow-e1';
 
@@ -100,12 +100,7 @@ export function OrderDetailPage() {
                     <ItemsCard order={o} />
                     <PaymentsCard order={o} />
                     <OrderRefundPanel orderId={o.id} />
-                    <section className={card} aria-labelledby="order-shipment">
-                        <h2 id="order-shipment" className="t-admin-section text-fg-primary">
-                            {t('orders.shipment.title')}
-                        </h2>
-                        <EmptyState reason="notConnected" title={t('orders.shipment.empty')} body={t('orders.shipment.emptyBody')} className="border-dashed bg-subtle" />
-                    </section>
+                    <ShipmentCard order={o} />
                     <ActivityCard order={o} />
                 </div>
                 <div className="flex min-w-0 flex-col gap-6">
@@ -518,19 +513,22 @@ function AddressCard({ order }: { order: Order }) {
     );
 }
 
-type Signal = { code: string; weight: number };
+type Signal = { code: string; weight: number; contribution: number };
 
 function readFlags(flags: Order['risk']['flags']): { signals: Signal[]; holds: string[]; computedAt: string | null } {
     const signals = Array.isArray(flags?.signals)
-        ? (flags.signals as unknown[]).flatMap((s) => (s && typeof s === 'object' && 'code' in s && 'weight' in s && typeof s.code === 'string' && typeof s.weight === 'number' ? [{ code: s.code, weight: s.weight }] : []))
+        ? (flags.signals as unknown[]).flatMap((s) => (s && typeof s === 'object' && 'code' in s && 'weight' in s && typeof s.code === 'string' && typeof s.weight === 'number'
+                  ? [{ code: s.code, weight: s.weight, contribution: 'contribution' in s && typeof s.contribution === 'number' ? s.contribution : s.weight }]
+                  : []))
         : [];
     const holds = Array.isArray(flags?.hold_reasons) ? (flags.hold_reasons as unknown[]).filter((h): h is string => typeof h === 'string') : [];
     const computedAt = typeof flags?.computed_at === 'string' ? flags.computed_at : null;
     return { signals, holds, computedAt };
 }
 
-const knownSignals = ['first_order'];
-const knownHolds = ['high_risk_score', 'first_order_above_threshold', 'cod_advance_required'];
+// P6 risk module: every §5.2 factor (labels from the risk catalogue) and the list-status holds.
+const knownSignals = ['cancellation_rate', 'courier_return_rate', 'failed_delivery', 'first_order', 'value_above_norm', 'address_quality', 'rapid_repeat'];
+const knownHolds = ['high_risk_score', 'first_order_above_threshold', 'cod_advance_required', 'blacklisted', 'watchlist'];
 
 /** The 220° arc gauge: arc colour is reinforcement only — the number and the word carry it. */
 function Gauge({ score, level }: { score: number; level: RiskLevel }) {
@@ -587,8 +585,8 @@ function RiskCard({ order }: { order: Order }) {
                     <ul className="flex flex-col">
                         {signals.map((s) => (
                             <li key={s.code} className="flex items-center justify-between gap-3 border-t border-line-default py-2">
-                                <span className="t-admin-body text-fg-primary">{knownSignals.includes(s.code) ? t(`orders.risk.signal.${s.code}` as MessageKey) : s.code}</span>
-                                <span className="t-admin-num tabular text-fg-primary">{s.weight}</span>
+                                <span className="t-admin-body text-fg-primary">{knownSignals.includes(s.code) ? t(`risk.factor.${s.code}` as MessageKey) : s.code}</span>
+                                <span className="t-admin-num tabular text-fg-primary">{s.contribution}</span>
                             </li>
                         ))}
                         <li className="flex items-center justify-between gap-3 border-t border-line-strong py-2">
@@ -603,7 +601,7 @@ function RiskCard({ order }: { order: Order }) {
                     {holds.map((h) => (
                         <li key={h} className="flex items-start gap-1.5 t-admin-caption text-fg-primary">
                             <WarningIcon size={14} aria-hidden className="mt-px shrink-0 text-status-low-stock" />
-                            {knownHolds.includes(h) ? t(`orders.risk.hold.${h}` as MessageKey) : h}
+                            {knownHolds.includes(h) ? t(`risk.hold.${h}` as MessageKey) : h}
                         </li>
                     ))}
                 </ul>
@@ -611,7 +609,30 @@ function RiskCard({ order }: { order: Order }) {
             <p className="t-admin-caption text-fg-secondary">
                 {t(`orders.risk.verification.${verification}` as MessageKey)} {t('orders.risk.policy')}
             </p>
+            <PhoneProfileLine order={order} />
         </section>
+    );
+}
+
+/** The phone's CURRENT profile (P6): our score now and the staff list — beside the order's own snapshot, never merged (rule 24). */
+function PhoneProfileLine({ order }: { order: Order }) {
+    const { t } = useI18n();
+    const profile = order.risk.profile;
+    const score = typeof profile?.internal_score === 'number' ? profile.internal_score : null;
+    const status = typeof profile?.status === 'string' ? profile.status : 'normal';
+    return (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-default pt-3">
+            <p className="t-admin-caption tabular text-fg-secondary">
+                {score !== null && t('risk.card.profile', { score })}
+                {score !== null && status !== 'normal' && ' · '}
+                {status !== 'normal' && t('risk.card.listed', { status: t(`risk.status.label.${status}` as MessageKey) })}
+            </p>
+            {!order.pii_masked && (
+                <Link to={`/risk/lookup?phone=${encodeURIComponent(order.shipping.phone ?? '')}`} className="t-admin-caption text-fg-link hover:underline">
+                    {t('risk.card.lookup')}
+                </Link>
+            )}
+        </div>
     );
 }
 

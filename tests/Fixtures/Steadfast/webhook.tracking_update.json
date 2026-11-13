@@ -1,0 +1,14 @@
+{
+    "_fixture": {
+        "source": "Same sources as webhook.delivery_status.json",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call"
+    },
+    "http_status": 200,
+    "body": {
+        "notification_type": "tracking_update",
+        "consignment_id": 12345,
+        "invoice": "INV-67890",
+        "tracking_message": "Package arrived at sorting center",
+        "updated_at": "2025-03-02 13:15:00"
+    }
+}

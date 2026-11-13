@@ -1,0 +1,18 @@
+{
+  "message": "price",
+  "type": "success",
+  "code": 200,
+  "data": {
+    "price": 90,
+    "discount": 0,
+    "discount_type": "eligible_for_order_volume_wise_discount",
+    "promo_discount": 0,
+    "plan_id": 354,
+    "cod_enabled": 1,
+    "cod_percentage": 0.01,
+    "cod_discount": null,
+    "additional_charge": 0,
+    "final_price": 90,
+    "distance_id": 1
+  }
+}

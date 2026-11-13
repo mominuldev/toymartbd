@@ -1,0 +1,13 @@
+{
+  "type": "success",
+  "code": 200,
+  "data": {
+    "consignment_id": "DS131126MTS7DD",
+    "invoice_id": null,
+    "merchant_order_id": "TMBD-SANDBOX-0001",
+    "order_status": "Pending",
+    "order_status_slug": "pending",
+    "payment_status": "",
+    "updated_at": "2026-11-13 11:37:13"
+  }
+}

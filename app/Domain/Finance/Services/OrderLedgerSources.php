@@ -39,6 +39,8 @@ final class OrderLedgerSources
         'refund_payout' => ['refunds', 'order_id'],
         'payment' => ['payments', 'order_id'],
         'manual_cod_receipt' => ['manual_cod_receipts', 'order_id'],
+        // Courier COD settlement (§4.5): one `cod_received` per booked settlement line.
+        'courier_settlement_item' => ['courier_settlement_items', 'order_id'],
         // An expense tied to one order (e.g. its packaging) is part of that order's P&L.
         'expense' => ['expenses', 'order_id'],
         'expense_void' => ['expenses', 'order_id'],

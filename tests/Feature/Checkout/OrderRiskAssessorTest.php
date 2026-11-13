@@ -13,7 +13,7 @@ use App\Support\PhoneNumber;
 
 function assess(string $value, int $prior, bool $advance = false): App\Domain\Risk\DTOs\RiskAssessment
 {
-    return (new OrderRiskAssessor)->assess(new RiskInput(PhoneNumber::parse('01712345678'), Money::of($value), $prior, $advance));
+    return app(OrderRiskAssessor::class)->assess(new RiskInput(PhoneNumber::parse('01712345678'), Money::of($value), $prior, $advance));
 }
 
 beforeEach(fn () => config(['risk.first_order_hold_threshold' => '3000.00']));
@@ -29,7 +29,7 @@ it('scores a first order low and records the signal', function (): void {
 
     expect($risk->score)->toBe(10)
         ->and($risk->level)->toBe('low')
-        ->and($risk->signals)->toBe([['code' => 'first_order', 'weight' => 10]])
+        ->and($risk->signals)->toBe([['code' => 'first_order', 'weight' => 10, 'value' => '0', 'contribution' => 10]])
         ->and($risk->toFlags())->toHaveKeys(['signals', 'hold_reasons', 'computed_at']);
 });
 

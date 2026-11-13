@@ -1,0 +1,16 @@
+{
+    "_fixture": {
+        "source": "NOT DOCUMENTED by Steadfast. Shape guessed as Laravel's default 422 validation body (the API is a Laravel app); error wording from the newer guide's code list via docs/_research/agent3-appbyte-and-couriers.md §6.4/§6.10",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "The driver must not depend on this shape: any 4xx (other than 401/429) is a refusal, with the message extracted best-effort."
+    },
+    "http_status": 422,
+    "body": {
+        "message": "The invoice has already been taken.",
+        "errors": {
+            "invoice": [
+                "The invoice has already been taken."
+            ]
+        }
+    }
+}

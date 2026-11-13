@@ -26,7 +26,8 @@ return [
     'backoff' => [30, 120],
 
     'sms' => [
-        // log | null | reve (owner's provider, 2026-11-13) | sms_net_bd (UNVERIFIED skeleton)
+        // log | null | reve (owner's provider, 2026-11-13) | sms_net_bd (UNVERIFIED skeleton).
+        // Admin → Integrations → Messaging overrides this and cost_per_segment below.
         'driver' => env('SMS_DRIVER', 'log'),
         'log_channel' => env('SMS_LOG_CHANNEL'),
         // PLACEHOLDER: sms.bd Basic-slab masking rate observed 2026-11-07, not a contract.
@@ -34,7 +35,8 @@ return [
         'cost_per_segment' => env('SMS_COST_PER_SEGMENT', '0.64'),
         'drivers' => [
             // REVE SMS reseller endpoint (App\Domain\Notification\Drivers\ReveSmsGateway).
-            // Credentials only ever come from env; never commit them.
+            // Entered at Admin → Integrations → Messaging (encrypted in `settings`); these env
+            // values are only the fallback when nothing is saved there. Never commit them.
             'reve' => [
                 'base_url' => env('SMS_REVE_BASE_URL', 'https://smpp.ajuratech.com:7790'),
                 'api_key' => env('SMS_REVE_API_KEY'),
@@ -57,7 +59,9 @@ return [
         'driver' => env('WHATSAPP_DRIVER', 'log'),
         // PLACEHOLDER: ≈৳0.45 utility rate (PRD §6a). Meta's pricing moves; confirm before launch.
         'cost_per_message' => env('WHATSAPP_COST_PER_MESSAGE', '0.45'),
-        'enabled' => (bool) env('WHATSAPP_ENABLED', true),
+        // Fallback for Admin → Integrations → Messaging. Default OFF: no WhatsApp account yet,
+        // and with the `log` driver a WhatsApp send "succeeds", so the SMS fallback never fires.
+        'enabled' => (bool) env('WHATSAPP_ENABLED', false),
     ],
 
     'email' => [

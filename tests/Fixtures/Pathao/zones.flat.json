@@ -1,0 +1,287 @@
+{
+  "message": "Zone list fetched.",
+  "type": "success",
+  "code": 200,
+  "data": [
+    {
+      "id": 298,
+      "name": "60 feet",
+      "originalName": "60 feet",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1070,
+      "name": "Abdullahpur Uttara",
+      "originalName": "Abdullahpur Uttara",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1066,
+      "name": "Abul Hotel",
+      "originalName": "Abul Hotel",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 52,
+      "name": "Adabor",
+      "originalName": "Adabor",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1094,
+      "name": "Adarsha Nagar - Kutubpur",
+      "originalName": "Adarsha Nagar - Kutubpur",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 300,
+      "name": "Aftab Nagar",
+      "originalName": "Aftab Nagar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1764,
+      "name": "Aganagar",
+      "originalName": "Aganagar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 17,
+      "name": "Agargaon",
+      "originalName": "Agargaon",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1108,
+      "name": "Agargaon-Taltola",
+      "originalName": "Agargaon-Taltola",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 2896,
+      "name": "Airport Chittagong",
+      "originalName": "Airport Chittagong",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 78,
+      "name": "Akbarsha",
+      "originalName": "Akbarsha",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 2456,
+      "name": "Akhalia",
+      "originalName": "Akhalia",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 1757,
+      "name": "Akran Bazar",
+      "originalName": "Akran Bazar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 2700,
+      "name": "Ali Nagar Bazar",
+      "originalName": "Ali Nagar Bazar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 3013,
+      "name": "Aman Bazar",
+      "originalName": "Aman Bazar",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 2461,
+      "name": "Amborkhana",
+      "originalName": "Amborkhana",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 1465,
+      "name": "Amin Bazar",
+      "originalName": "Amin Bazar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1765,
+      "name": "Amritopur",
+      "originalName": "Amritopur",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1749,
+      "name": "Amtola",
+      "originalName": "Amtola",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 434,
+      "name": "Anawara",
+      "originalName": "Anawara",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 69,
+      "name": "Andarkilla",
+      "originalName": "Andarkilla",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 453,
+      "name": "Anowara",
+      "originalName": "Anowara",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 317,
+      "name": "Arambag",
+      "originalName": "Arambag",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 3036,
+      "name": "Ashigor",
+      "originalName": "Ashigor",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 965,
+      "name": "Ashkona",
+      "originalName": "Ashkona",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1538,
+      "name": "Ashulia Bazar",
+      "originalName": "Ashulia Bazar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1041,
+      "name": "azampur (Uttara)",
+      "originalName": "azampur (Uttara)",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 55,
+      "name": "Azimpur (Lalbag)",
+      "originalName": "Azimpur (Lalbag)",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 2465,
+      "name": "Badaghat",
+      "originalName": "Badaghat",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 30,
+      "name": "Badda",
+      "originalName": "Badda",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 2460,
+      "name": "Baghbari",
+      "originalName": "Baghbari",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 2966,
+      "name": "Bahaddarhat",
+      "originalName": "Bahaddarhat",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 312,
+      "name": "Baily Road",
+      "originalName": "Baily Road",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1476,
+      "name": "Baipail",
+      "originalName": "Baipail",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 83,
+      "name": "Bakoliya thana",
+      "originalName": "Bakoliya thana",
+      "is_third_party": 0,
+      "city_id": 2
+    },
+    {
+      "id": 274,
+      "name": "Bakshi Bazar",
+      "originalName": "Bakshi Bazar",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1466,
+      "name": "Bakurta",
+      "originalName": "Bakurta",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 611,
+      "name": "Balaganj",
+      "originalName": "Balaganj",
+      "is_third_party": 0,
+      "city_id": 3
+    },
+    {
+      "id": 292,
+      "name": "Balughat",
+      "originalName": "Balughat",
+      "is_third_party": 0,
+      "city_id": 1
+    },
+    {
+      "id": 1,
+      "name": "Banani",
+      "originalName": "Banani",
+      "is_third_party": 0,
+      "city_id": 1
+    }
+  ]
+}

@@ -47,4 +47,8 @@ return [
     'valuation' => [
         'total' => 'মোট',
     ],
+    'couriers' => [
+        'all' => 'সব কুরিয়ার',
+        'no_district' => 'জেলা নেই',
+    ],
 ];

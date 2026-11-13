@@ -1,0 +1,8 @@
+{
+  "message": "Bad Request",
+  "type": "error",
+  "error": {
+    "source": "verify-auth-token",
+    "description": "bearer token missing"
+  }
+}

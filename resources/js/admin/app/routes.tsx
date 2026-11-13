@@ -26,6 +26,7 @@ import { OrderEditPage } from '@/features/orders/OrderEditPage';
 import { MediaLibraryPage } from '@/features/media/MediaLibraryPage';
 import { AutomationsPage } from '@/features/notifications/AutomationsPage';
 import { NotificationLogPage } from '@/features/notifications/NotificationLogPage';
+import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -41,9 +42,14 @@ import { ExpensesPage } from '@/features/finance/ExpensesPage';
 import { ExpenseCategoriesPage } from '@/features/finance/ExpenseCategoriesPage';
 import { LedgerPage } from '@/features/finance/LedgerPage';
 import { InventoryValuationPage } from '@/features/reports/InventoryValuationPage';
+import { CourierPerformancePage } from '@/features/reports/couriers/CourierPerformancePage';
+import { LocationMappingPage } from '@/features/couriers/locations/LocationMappingPage';
+import { CourierSettingsPage, FailedBookingsPage } from '@/features/couriers';
+import { PhoneLookupPage, RiskRulesPage, VerificationQueuePage } from '@/features/risk';
+import { SettlementsPage } from '@/features/finance/settlements/SettlementsPage';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -95,6 +101,9 @@ export const routes: RouteObject[] = [
                     { path: 'purchasing/:purchaseId/edit', element: <PurchaseFormPage /> },
                     // P5 reports: inventory valuation, and the finance P&L (Figma B · 31 241:47268), daily reports, profitability.
                     { path: 'inventory/valuation', element: <InventoryValuationPage /> },
+                    // P6 Analytics → Couriers (no frame; B · 24 Analytics 241:30584 language). Analytics' other tabs are not built yet.
+                    { path: 'analytics', element: <Navigate to="/analytics/couriers" replace /> },
+                    { path: 'analytics/couriers', element: <CourierPerformancePage /> },
                     // Finance opens on the P&L, its first sub-page (06-admin-feature-checklist §1).
                     { path: 'finance', element: <Navigate to="/finance/pnl" replace /> },
                     { path: 'finance/pnl', element: <ProfitLossPage /> },
@@ -104,6 +113,8 @@ export const routes: RouteObject[] = [
                     { path: 'finance/expenses', element: <ExpensesPage /> },
                     { path: 'finance/expenses/categories', element: <ExpenseCategoriesPage /> },
                     { path: 'finance/ledger', element: <LedgerPage /> },
+                    // P6 COD settlements (Figma B · 09 241:35325): courier remittances matched line by line.
+                    { path: 'finance/settlements', element: <SettlementsPage /> },
                     // Order board (Figma 205:681) and order detail (206:1475).
                     { path: 'orders', element: <OrdersPage /> },
                     // Create order (207:2243) and edit after placement (P4-ORD-06/07).
@@ -112,6 +123,11 @@ export const routes: RouteObject[] = [
                     { path: 'orders/:orderId/edit', element: <OrderEditPage /> },
                     // Returns, refunds & exchanges (Figma B · 10 241:35772).
                     { path: 'returns', element: <ReturnsPage /> },
+                    // P6 Fraud & risk: verification queue (B · 05 241:36206), phone lookup (B · 06 241:36699), risk rules (settings form pattern).
+                    { path: 'risk', element: <Navigate to="/risk/queue" replace /> },
+                    { path: 'risk/queue', element: <VerificationQueuePage /> },
+                    { path: 'risk/lookup', element: <PhoneLookupPage /> },
+                    { path: 'risk/rules', element: <RiskRulesPage /> },
                     // Online store: the media library (Figma 303:53185) is its first screen; the
                     // section's other pages are still to come.
                     { path: 'store', element: <Navigate to="/store/media" replace /> },
@@ -120,6 +136,14 @@ export const routes: RouteObject[] = [
                     // Settings → Automations (Figma 223:15784): notification templates; the message log is not drawn.
                     { path: 'automations', element: <AutomationsPage /> },
                     { path: 'automations/log', element: <NotificationLogPage /> },
+                    // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
+                    { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
+                    { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
+                    // P6 couriers: settings & delivery charges (no frame; B · 37 / B · 07 parts) and the failed-booking retry queue.
+                    { path: 'integrations/couriers', element: <CourierSettingsPage /> },
+                    { path: 'shipments/failed', element: <FailedBookingsPage /> },
+                    // Courier location mapping (P6, no Figma frame; linked from Shipments B · 08 "map it").
+                    { path: 'shipments/locations', element: <LocationMappingPage /> },
                     ...sectionPaths
                         .filter((item) => !built.has(item.path))
                         .map((item) => ({ path: `${item.path.slice(1)}/*`, element: <ComingSoon title={item.key} /> })),

@@ -1674,6 +1674,136 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/orders/{order}/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/{order}/shipments` — request a courier booking for one order. 202 with the
+         *     shipment. Needs orders.update + shipments.book
+         */
+        post: operations["v1.admin.orders.shipments.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /shipments/bulk` — request bookings for many orders; one result per id and
+         *     `meta.requested` / `meta.failed`. A partial failure is a 200 with per-order results
+         */
+        post: operations["v1.admin.shipments.bulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /shipments` — cursor-paginated, needs shipments.view.
+         *     Filters: `filter[status]`, `filter[provider]` (code), `filter[order_id]`,
+         *     `filter[needs_attention]=1`. Sorts: `created_at`, `booked_at` (prefix `-` for
+         *     descending; default `-created_at`). Anything else is a 400
+         */
+        get: operations["v1.admin.shipments.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/failed` — the retry queue (failed, or booked but not dispatched). Needs shipments.view */
+        get: operations["v1.admin.shipments.failed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/{shipment}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/{shipment}` — needs shipments.view */
+        get: operations["v1.admin.shipments.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/{shipment}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /shipments/{shipment}/retry` — failed → pending and re-queued; completion_failed → completed locally */
+        post: operations["v1.admin.shipments.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/{shipment}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /shipments/{shipment}/cancel` — only pending or failed. Needs shipments.cancel */
+        post: operations["v1.admin.shipments.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/orders/compose/customer": {
         parameters: {
             query?: never;
@@ -2138,6 +2268,352 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/messaging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/messaging` — effective values; secrets only as set/source/last-4 hint */
+        get: operations["v1.admin.settings.messaging.show"];
+        /** `PUT /settings/messaging` — blank secret = keep; `clear_*` = remove. Audited (`credential_changed`) */
+        put: operations["v1.admin.settings.messaging.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/messaging/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/messaging/test` — sends ONE real SMS through the configured driver and
+         *     reports what the provider said. Rate-limited; no transaction around the provider call
+         */
+        post: operations["v1.admin.settings.messaging.test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/couriers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/couriers` — every provider, in display order */
+        get: operations["v1.admin.settings.couriers.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/couriers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** `PATCH /settings/couriers/{provider}` — on/off, or make default */
+        patch: operations["v1.admin.settings.couriers.update"];
+        trace?: never;
+    };
+    "/admin/settings/couriers/{provider}/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /settings/couriers/{provider}/rates` — the whole rate card */
+        put: operations["v1.admin.settings.couriers.rates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/couriers/{provider}/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /settings/couriers/{provider}/credentials` — write-only; blank keeps the saved value */
+        put: operations["v1.admin.settings.couriers.credentials"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/delivery` — the free-delivery threshold */
+        get: operations["v1.admin.settings.delivery.show"];
+        /** `PUT /settings/delivery` — null switches free delivery off */
+        put: operations["v1.admin.settings.delivery.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1.admin.shipments.quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /courier-locations/{provider}` — totals, last sync, and the courier's cities; needs shipments.view */
+        get: operations["v1.admin.courier-locations.overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /courier-locations/{provider}/locations` — the courier's zones and areas, cursor-paginated; needs shipments.view
+         * @description Filters: `filter[city]` (courier city id), `filter[status]` = `mapped|unmapped|inactive` (default: every active row),
+         *     `filter[level]` = `zone|area`, `filter[search]` (zone or area name contains). Sorted by city, zone, area. Anything else is a 400.
+         */
+        get: operations["v1.admin.courier-locations.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/needs-mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /courier-locations/{provider}/needs-mapping` — OUR places that orders waiting to ship
+         *     are addressed to and that have nothing mapped for this courier, most orders first. A
+         *     booking through this courier into any of them is blocked. Needs shipments.view
+         */
+        get: operations["v1.admin.courier-locations.needs-mapping"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /courier-locations/{provider}/places?q=` — the place picker: districts and upazilas matching `q` (English or Bangla) */
+        get: operations["v1.admin.courier-locations.places"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /courier-locations/{provider}/suggestions?district_id=&upazila_id=` — SUGGESTED courier
+         *     zones for one of our places (name similarity; confirm before mapping). Needs shipments.view
+         */
+        get: operations["v1.admin.courier-locations.suggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /courier-locations/{provider}/resolve?district_id=&upazila_id=&area=` — what a booking to
+         *     this address would send: resolved ids, an ambiguous candidate list, or unmapped (blocked)
+         */
+        get: operations["v1.admin.courier-locations.resolve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /courier-locations/{provider}/sync` — queue a fresh pull of the courier's tree (202); needs shipments.manage_locations */
+        post: operations["v1.admin.courier-locations.sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/locations/{location}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /courier-locations/{provider}/locations/{location}/suggestions` — SUGGESTED places of ours for one courier row */
+        get: operations["v1.admin.courier-locations.location.suggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courier-locations/{provider}/locations/{location}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /courier-locations/{provider}/locations/{location}/mapping` — map a zone/area to our place; needs shipments.manage_locations */
+        put: operations["v1.admin.courier-locations.location.map"];
+        post?: never;
+        /** `DELETE /courier-locations/{provider}/locations/{location}/mapping` — clear a mapping; needs shipments.manage_locations */
+        delete: operations["v1.admin.courier-locations.location.unmap"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /shipments/labels` — labels for the selected shipments in one PDF, in the order
+         *     requested. Shipments that do not exist or have no consignment id yet are left out and
+         *     listed in `X-Shipments-Skipped`; if nothing is printable it is a 409
+         */
+        post: operations["v1.admin.shipments.labels"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/{shipment}/label": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/{shipment}/label` — one label as `application/pdf`; 409 before the consignment id exists */
+        get: operations["v1.admin.shipments.label"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/finance/ledger": {
         parameters: {
             query?: never;
@@ -2183,6 +2659,75 @@ export interface paths {
         put?: never;
         /** `POST /finance/orders/{order}/cod-receipts` — needs finance.reconcile_cod and an `Idempotency-Key` */
         post: operations["v1.admin.finance.cod-receipts.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/settlements` — newest first; `meta.providers` lists the couriers (code, name) for the import form. `filter[status]` (received|reconciled), `filter[provider]` (code). Needs finance.view */
+        get: operations["v1.admin.finance.settlements.index"];
+        put?: never;
+        /** `POST /finance/settlements` — import (file or typed lines) and match. Books nothing. Needs finance.reconcile_cod */
+        post: operations["v1.admin.finance.settlements.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/settlements/{settlement}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/settlements/{settlement}` — with every line. Needs finance.view */
+        get: operations["v1.admin.finance.settlements.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/settlements/{settlement}/items/{item}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/settlements/{settlement}/items/{item}/review` — accept (short only) or exclude. Needs finance.reconcile_cod */
+        post: operations["v1.admin.finance.settlements.items.review"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/settlements/{settlement}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/settlements/{settlement}/confirm` — book the matched lines. Needs finance.reconcile_cod and an `Idempotency-Key` */
+        post: operations["v1.admin.finance.settlements.confirm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2502,6 +3047,211 @@ export interface paths {
         /** `GET /reports/inventory-valuation/export` — every row as CSV */
         get: operations["v1.admin.reports.inventory-valuation.export"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/couriers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/couriers` */
+        get: operations["v1.admin.reports.couriers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/couriers/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/couriers/export` — the provider rows, then the district rows, as CSV */
+        get: operations["v1.admin.reports.couriers.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /risk/queue` — held orders waiting for verification, oldest first (first in, first
+         *     called). `filter[risk_level]` (low|medium|high). Anything else is a 400. Needs risk.view
+         */
+        get: operations["v1.admin.risk.queue.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/orders/{order}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /risk/orders/{order}` — the side panel: the row, the call log, and the phone's
+         *     lookup (our score and, separately, each courier's record — rule 24). Needs risk.view.
+         *     The courier lookup may call a provider; it runs outside any transaction (rule 4)
+         */
+        get: operations["v1.admin.risk.orders.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/orders/{order}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /risk/orders/{order}/verify` — verified by phone: hold released (on_hold → pending). Needs risk.verify */
+        post: operations["v1.admin.risk.orders.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/orders/{order}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /risk/orders/{order}/reject` — a PERSON cancels the held order with a reason;
+         *     verification is marked failed. Needs risk.verify and orders.cancel
+         */
+        post: operations["v1.admin.risk.orders.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/orders/{order}/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /risk/orders/{order}/calls` — log a call outcome. Never moves the order. Needs risk.verify */
+        post: operations["v1.admin.risk.orders.calls.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /risk/lookup?phone=…` — needs risk.view. A phone with no stored profile shows a
+         *     score computed now from its history (`ours.stored = false`); nothing is written
+         */
+        get: operations["v1.admin.risk.lookup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/lookup/rescore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /risk/lookup/rescore` — rebuild and store the phone's profile now. Needs risk.verify */
+        post: operations["v1.admin.risk.lookup.rescore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/phone-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * `PUT /risk/phone-status` — watch / blacklist / whitelist / normal, with a reason (who and
+         *     when are recorded). A blacklisted phone's orders are HELD, never cancelled. Needs
+         *     risk.manage_lists
+         */
+        put: operations["v1.admin.risk.phone-status"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/risk/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /risk/rules` — needs risk.view */
+        get: operations["v1.admin.risk.rules.show"];
+        /** `PUT /risk/rules` — needs risk.manage_rules. Only future scores change */
+        put: operations["v1.admin.risk.rules.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3247,6 +3997,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/couriers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1.webhooks.couriers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3475,6 +4241,17 @@ export interface components {
             order_ids: number[];
         };
         /**
+         * BulkRequestShipmentsRequest
+         * @description `POST /shipments/bulk` — send many orders to one courier from the board. Needs
+         *     orders.update + shipments.book; `Idempotency-Key` required. Up to 100 ids; unknown ids
+         *     come back as `not_found` results.
+         */
+        BulkRequestShipmentsRequest: {
+            order_ids: number[];
+            /** @description Courier provider code. Omitted: the active default provider. */
+            provider?: string | null;
+        };
+        /**
          * CancelOrderRequest
          * @description `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list
          *     (cancellations are counted by cause); `note` is required when the reason is `other`.
@@ -3483,6 +4260,14 @@ export interface components {
             reason: components["schemas"]["CancellationReason"];
             /** @description Required when `reason` is `other`. */
             note?: string | null;
+        };
+        /**
+         * CancelShipmentRequest
+         * @description `POST /shipments/{shipment}/cancel` — only pending or failed shipments; needs shipments.cancel.
+         */
+        CancelShipmentRequest: {
+            /** @description Why, kept on the shipment. */
+            reason?: string | null;
         };
         /**
          * CancellationReason
@@ -3709,6 +4494,284 @@ export interface components {
          * @enum {string}
          */
         CouponType: "fixed" | "percent" | "free_shipping";
+        /** CourierLocation */
+        CourierLocation: {
+            id: number;
+            /** @enum {string} */
+            level: "zone" | "area";
+            city_id: string;
+            city_name: string;
+            zone_id: string;
+            zone_name: string;
+            area_id: string | null;
+            area_name: string | null;
+            home_delivery_available: boolean | null;
+            pickup_available: boolean | null;
+            is_mapped: boolean;
+            /** @description False once the courier stopped returning this row; a mapping on it no longer books. */
+            is_active: boolean;
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            mapped_at: string | null;
+            synced_at: string | null;
+        };
+        /** CourierLocationOverview */
+        CourierLocationOverview: {
+            provider: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            zones: number;
+            areas: number;
+            /** @description Active rows a human has mapped. */
+            mapped: number;
+            /** @description Mapped rows the courier no longer serves — bookings there are blocked until re-mapped. */
+            mapped_inactive: number;
+            last_sync: {
+                cities: number;
+                zones: number;
+                areas: number;
+                created: number;
+                deactivated: number;
+                mapped_inactive: number;
+                finished_at: string;
+            } | null;
+            cities: {
+                id: string;
+                name: string;
+                zones: number;
+                mapped: number;
+            }[];
+        };
+        /** CourierLocationResolution */
+        CourierLocationResolution: {
+            /** @enum {string} */
+            status: "not_required" | "resolved" | "ambiguous" | "unmapped";
+            can_book: boolean;
+            ref: {
+                city_id: string | null;
+                zone_id: string | null;
+                area_id: string | null;
+            } | null;
+            candidates: components["schemas"]["CourierLocation"][];
+        };
+        /** CourierPerformance */
+        CourierPerformance: {
+            /** @description Dhaka date, inclusive. */
+            from: string;
+            /** @description Dhaka date, inclusive. */
+            to: string;
+            /** @description The provider filter, or null for every courier. */
+            provider: string | null;
+            totals: {
+                booked: number;
+                delivered: number;
+                partially_delivered: number;
+                returned: number;
+                cancelled: number;
+                in_flight: number;
+                delivery_rate: string | null;
+                return_rate: string | null;
+                average_days_to_deliver: string | null;
+                average_charge: string | null;
+                cod_expected: string;
+                cod_collected: string;
+                cod_outstanding: string;
+            };
+            providers: {
+                provider: {
+                    id: number;
+                    code: string;
+                    name: string;
+                    name_bn: string | null;
+                };
+                booked: number;
+                delivered: number;
+                partially_delivered: number;
+                returned: number;
+                cancelled: number;
+                in_flight: number;
+                delivery_rate: string | null;
+                return_rate: string | null;
+                average_days_to_deliver: string | null;
+                average_charge: string | null;
+                cod_expected: string;
+                cod_collected: string;
+                cod_outstanding: string;
+            }[];
+            /** @description `district` null = shipments whose order has no district. */
+            districts: {
+                district: {
+                    id: number;
+                    name: string;
+                    name_bn: string | null;
+                } | null;
+                booked: number;
+                delivered: number;
+                partially_delivered: number;
+                returned: number;
+                cancelled: number;
+                in_flight: number;
+                delivery_rate: string | null;
+                return_rate: string | null;
+                average_days_to_deliver: string | null;
+                average_charge: string | null;
+                cod_expected: string;
+                cod_collected: string;
+                cod_outstanding: string;
+            }[];
+        };
+        /** CourierPlace */
+        CourierPlace: {
+            district_id: number;
+            district: string;
+            district_bn: string;
+            /** @description Null for a district-level place (an address with no upazila, such as Dhaka city). */
+            upazila_id: number | null;
+            upazila: string | null;
+            upazila_bn: string | null;
+            /** @description Open orders (not yet shipped) addressed here — what booking through this courier would block. */
+            waiting_orders: number;
+            /** @description Courier rows a human has mapped to exactly this place. */
+            mapped_count: number;
+        };
+        /** CourierPlaceSuggestion */
+        CourierPlaceSuggestion: {
+            /** @constant */
+            reason: "name_similarity";
+            score: number;
+            district_id: number;
+            district: string;
+            district_bn: string;
+            upazila_id: number | null;
+            upazila: string | null;
+            upazila_bn: string | null;
+        };
+        /** CourierProviderSettings */
+        CourierProviderSettings: {
+            id: number;
+            code: string;
+            name: string;
+            name_bn: string | null;
+            is_active: boolean;
+            is_default: boolean;
+            /** @description A booking has succeeded through this driver (rule 33a). Set by the booking flow, never by this screen. */
+            verified: boolean;
+            /** @enum {string} */
+            trust: "verified" | "unverified" | "not_connected";
+            /** @description Booking needs a mapped courier_locations row (Pathao yes, Steadfast no — rule 32). */
+            requires_location_mapping: boolean;
+            supports_bulk: boolean;
+            supports_webhook: boolean;
+            /** @description The provider's credential keys; `hint` is "••••1234" at most. */
+            credential_fields: {
+                key: string;
+                secret: boolean;
+                set: boolean;
+                hint: string | null;
+            }[];
+            /** @description Every required credential is stored. */
+            credentials_complete: boolean;
+            credentials_updated_at: string | null;
+            webhook_secret_set: boolean;
+            /** @description The URL to register in the courier's merchant panel. */
+            webhook_url: string | null;
+            /** @description Decimal strings. */
+            rates: {
+                base_charge_dhaka: string;
+                base_charge_suburb: string;
+                base_charge_outside: string;
+                included_weight_grams: number;
+                per_kg_charge: string;
+                cod_fee_percent: string;
+                return_charge: string;
+            };
+            rate_card_updated_at: string | null;
+            /** @description Last balance the provider reported; null = never checked. */
+            balance: string | null;
+            balance_checked_at: string | null;
+            can: {
+                update_rates: boolean;
+                update_credentials: boolean;
+            };
+        };
+        /** CourierSettlementResource */
+        CourierSettlementResource: {
+            id: number;
+            provider: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            reference: string;
+            period_start: string | null;
+            period_end: string | null;
+            received_at: string;
+            totals: {
+                cod_collected: string;
+                delivery_charges: string;
+                cod_fees: string;
+                return_charges: string;
+                net_received: string;
+            };
+            /**
+             * @description `received` | `disputed` (unresolved variance lines) | `reconciled`
+             * @enum {string}
+             */
+            status: "reconciled" | "disputed" | "received";
+            source: string;
+            variance_count: number;
+            unresolved_count: number;
+            note: string | null;
+            imported_by: string | null;
+            confirmed_by: string | null;
+            confirmed_at: string | null;
+            created_at: string | null;
+            can_reconcile: boolean;
+            items?: {
+                id: number;
+                line_no: number | null;
+                consignment_id: string | null;
+                shipment_id: number | null;
+                order_id: number | null;
+                order_number: string | null;
+                cod_amount: string;
+                charges: string;
+                cod_fee: string;
+                return_charge: string;
+                net: string;
+                expected_cod: string | null;
+                expected_net: string | null;
+                variance: string;
+                /** @enum {string} */
+                variance_type: "none" | "short" | "over" | "missing" | "unknown_consignment" | "not_delivered" | "already_settled" | "duplicate_line" | "exceeds_receivable";
+                acceptable: boolean;
+                is_matched: boolean;
+                /** @enum {string} */
+                review_status: "pending" | "accepted" | "excluded";
+                review_note: string | null;
+                needs_review: boolean;
+                booked: boolean;
+            }[];
+        };
+        /** CourierZoneSuggestion */
+        CourierZoneSuggestion: {
+            /** @constant */
+            reason: "name_similarity";
+            /** @description 0–1 name similarity (city ~ district, zone ~ upazila). Not a confidence in the mapping. */
+            score: number;
+            location: components["schemas"]["CourierLocation"];
+        };
         /**
          * CropProductImageRequest
          * @description `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the
@@ -3807,6 +4870,11 @@ export interface components {
             per_kg_charge: string;
             cutoff_time: string;
             timezone: string;
+        };
+        /** DeliverySettings */
+        DeliverySettings: {
+            /** @description Subtotal at or above which delivery is free in every zone; null = off. */
+            free_shipping_threshold: string | null;
         };
         /** Expense */
         Expense: {
@@ -4012,6 +5080,178 @@ export interface components {
             last_courier_sync: null;
             checked_at: string;
         };
+        /** HeldOrderDetailResource */
+        HeldOrderDetailResource: {
+            order: {
+                id: number;
+                number: string;
+                placed_at: string | null;
+                grand_total: string;
+                payment_method: string | null;
+                customer_name: string;
+                phone: string;
+                district: string | null;
+                order_risk: {
+                    score: number | null;
+                    /** @enum {string|null} */
+                    level: "low" | "medium" | "high" | null;
+                    /** @enum {string} */
+                    verification_status: "not_required" | "pending" | "verified" | "failed";
+                    hold_reasons: unknown[];
+                    signals: {
+                        [key: string]: unknown;
+                    }[];
+                    computed_at: unknown;
+                };
+                ours: {
+                    stored: boolean;
+                    internal_score: number;
+                    level: string;
+                    breakdown: {
+                        code: string;
+                        weight: number;
+                        value: string;
+                        contribution: number;
+                    }[];
+                    score_computed_at: string | null;
+                    counts: {
+                        total_orders: number;
+                        delivered: number;
+                        cancelled: number;
+                        returned: number;
+                        failed_delivery: number;
+                        refused: number;
+                    };
+                    last_order_at: string | null;
+                } | {
+                    stored: boolean;
+                    /** @constant */
+                    internal_score: 0;
+                    /** @constant */
+                    level: "low";
+                    breakdown: string[];
+                    score_computed_at: string | null;
+                    counts: {
+                        /** @constant */
+                        total_orders: 0;
+                        /** @constant */
+                        delivered: 0;
+                        /** @constant */
+                        cancelled: 0;
+                        /** @constant */
+                        returned: 0;
+                        /** @constant */
+                        failed_delivery: 0;
+                        /** @constant */
+                        refused: 0;
+                    };
+                    last_order_at: null;
+                };
+                status: {
+                    /** @enum {string} */
+                    value: "normal" | "watch" | "blacklist" | "whitelist";
+                    reason: string | null;
+                    set_by: unknown;
+                    set_at: string | null;
+                } | {
+                    /** @constant */
+                    value: "normal";
+                    reason: null;
+                    set_by: null;
+                    set_at: null;
+                };
+                calls: {
+                    count: number;
+                    last_outcome: string | null;
+                };
+            };
+            call_log: components["schemas"]["RiskVerificationCallResource"][];
+            phone: {
+                phone: string;
+                pii_masked: boolean;
+                ours: {
+                    stored: boolean;
+                    internal_score: number;
+                    level: string;
+                    breakdown: {
+                        code: string;
+                        weight: number;
+                        value: string;
+                        contribution: number;
+                    }[];
+                    score_computed_at: string | null;
+                    counts: {
+                        total_orders: number;
+                        delivered: number;
+                        cancelled: number;
+                        returned: number;
+                        failed_delivery: number;
+                        refused: number;
+                    };
+                    last_order_at: string | null;
+                } | {
+                    stored: boolean;
+                    internal_score: number;
+                    level: string;
+                    breakdown: {
+                        code: string;
+                        weight: number;
+                        value: string;
+                        contribution: number;
+                    }[];
+                    score_computed_at: string | null;
+                    counts: {
+                        total_orders: number;
+                        delivered: number;
+                        cancelled: number;
+                        returned: number;
+                        failed_delivery: number;
+                        refused: number;
+                    } | {
+                        /** @constant */
+                        total_orders: 0;
+                        /** @constant */
+                        delivered: 0;
+                        /** @constant */
+                        cancelled: 0;
+                        /** @constant */
+                        returned: 0;
+                        /** @constant */
+                        failed_delivery: 0;
+                        /** @constant */
+                        refused: 0;
+                    };
+                    last_order_at: null;
+                };
+                status: {
+                    /** @enum {string} */
+                    value: "normal" | "watch" | "blacklist" | "whitelist";
+                    reason: string | null;
+                    set_by: unknown;
+                    set_at: string | null;
+                } | {
+                    /** @constant */
+                    value: "normal";
+                    reason: null;
+                    set_by: null;
+                    set_at: null;
+                };
+                courier: {
+                    checked_at: string;
+                    providers: {
+                        [key: string]: unknown;
+                    }[];
+                };
+                recent_orders: {
+                    id: number;
+                    number: string;
+                    /** @enum {string} */
+                    status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+                    grand_total: string;
+                    placed_at: string | null;
+                }[];
+            };
+        };
         /**
          * HoldOrderRequest
          * @description `POST /orders/{order}/hold` — needs orders.update. A hold always says why (`reason`),
@@ -4020,6 +5260,39 @@ export interface components {
         HoldOrderRequest: {
             /** @description Why the order is paused, e.g. "Customer asked to deliver after Friday". */
             reason: string;
+        };
+        /**
+         * ImportSettlementRequest
+         * @description `POST /finance/settlements` — import one courier remittance: `provider` (courier code),
+         *     `reference` (the courier's payment id), `received_at` (Dhaka date, not in the future),
+         *     optional `period_start`/`period_end` (both or neither; enables MISSING-line detection) and
+         *     `note`; then EITHER `file` (the portal export, CSV or XLSX, ≤ 5 MB) OR `lines[]` typed in
+         *     (`consignment_id`, `cod_amount`, optional `delivery_charge`, `cod_fee`, `return_charge`,
+         *     `net_amount`; ≤ 500). Needs finance.reconcile_cod and an `Idempotency-Key`.
+         */
+        ImportSettlementRequest: {
+            provider: string;
+            reference: string;
+            /** Format: date */
+            received_at: string;
+            /** Format: date */
+            period_start?: string | null;
+            /** Format: date */
+            period_end?: string | null;
+            note?: string | null;
+            /**
+             * Format: binary
+             * @description Maximum file size: 5120 kilobytes.
+             */
+            file?: string;
+            lines?: {
+                consignment_id: string;
+                cod_amount: string;
+                delivery_charge?: string | null;
+                cod_fee?: string | null;
+                return_charge?: string | null;
+                net_amount?: string | null;
+            }[];
         };
         /**
          * InspectReturnRequest
@@ -4359,6 +5632,15 @@ export interface components {
          */
         LandedCostMethod: "value" | "quantity" | "weight";
         /**
+         * LogVerificationCallRequest
+         * @description `POST /risk/orders/{order}/calls` — `outcome` (CallOutcome) and an optional `note`. Needs risk.verify.
+         */
+        LogVerificationCallRequest: {
+            /** @enum {string} */
+            outcome: "confirmed" | "no_answer" | "switched_off" | "wrong_number" | "call_back" | "declined";
+            note?: string | null;
+        };
+        /**
          * LoginRequest
          * @description `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`.
          */
@@ -4377,6 +5659,18 @@ export interface components {
             reference: string | null;
             note: string | null;
             order_outstanding: string;
+        };
+        /**
+         * MapCourierLocationRequest
+         * @description `PUT /courier-locations/{provider}/{location}/mapping` — a human maps one courier zone
+         *     or area to our district (+ upazila). The only way a row becomes mapped (rule 32). The
+         *     upazila must belong to the district, and the row must still be served by the provider.
+         *     Needs shipments.manage_locations.
+         */
+        MapCourierLocationRequest: {
+            district_id: number;
+            /** @description Omit (or null) for a district-level mapping — an address with no upazila, such as Dhaka city. */
+            upazila_id?: number | null;
         };
         /**
          * MarginPreviewRequest
@@ -4499,6 +5793,42 @@ export interface components {
          */
         MediaFolderRequest: {
             name: string;
+        };
+        /** MessagingSettings */
+        MessagingSettings: {
+            /**
+             * @description The SMS driver in use.
+             * @enum {string}
+             */
+            sms_driver: "log" | "null" | "reve" | "sms_net_bd";
+            reve_base_url: string | null;
+            reve_sender_id: string | null;
+            /** @description Decimal string, taka per SMS segment (PLACEHOLDER until a contract). */
+            sms_cost_per_segment: string;
+            /** @description Order updates go WhatsApp-first. Off until a WhatsApp account exists. */
+            whatsapp_enabled: boolean;
+            reve_api_key_set: boolean;
+            /** @description "••••1234" at most. */
+            reve_api_key_hint: string | null;
+            /** @enum {string|null} */
+            reve_api_key_source: "settings" | "env" | null;
+            reve_secret_key_set: boolean;
+            /** @description "••••1234" at most. */
+            reve_secret_key_hint: string | null;
+            /** @enum {string|null} */
+            reve_secret_key_source: "settings" | "env" | null;
+            sources: {
+                /** @enum {string} */
+                sms_driver: "settings" | "env";
+                /** @enum {string} */
+                reve_base_url: "settings" | "env";
+                /** @enum {string} */
+                reve_sender_id: "settings" | "env";
+                /** @enum {string} */
+                sms_cost_per_segment: "settings" | "env";
+                /** @enum {string} */
+                whatsapp_enabled: "settings" | "env";
+            };
         };
         /**
          * MoveCategoryRequest
@@ -4730,6 +6060,13 @@ export interface components {
                 verification_status: "not_required" | "pending" | "verified" | "failed";
                 /** @description Our advisory signals as stored at scoring time — never a courier's data (rule 24). */
                 flags: {
+                    [key: string]: unknown;
+                } | null;
+                /**
+                 * @description The phone's CURRENT profile (P6 risk module): our score now and the staff list
+                 *     status — beside, never merged with, the snapshot above (rule 24).
+                 */
+                profile: {
                     [key: string]: unknown;
                 } | null;
             };
@@ -5049,6 +6386,101 @@ export interface components {
             /** @enum {string|null} */
             method?: "bkash" | "nagad" | "cash" | "bank_transfer" | null;
             reference?: string | null;
+        };
+        /**
+         * PhoneLookupRequest
+         * @description `GET /risk/lookup?phone=…` and `POST /risk/lookup/rescore` — a Bangladesh mobile number
+         *     in any accepted spelling (rule 30). Lookup needs risk.view; rescore needs risk.verify
+         *     (it writes the profile projection).
+         */
+        PhoneLookupRequest: {
+            phone: string;
+        };
+        /** PhoneRiskResource */
+        PhoneRiskResource: {
+            phone: string;
+            pii_masked: boolean;
+            ours: {
+                stored: boolean;
+                internal_score: number;
+                level: string;
+                breakdown: {
+                    code: string;
+                    weight: number;
+                    value: string;
+                    contribution: number;
+                }[];
+                score_computed_at: string | null;
+                counts: {
+                    total_orders: number;
+                    delivered: number;
+                    cancelled: number;
+                    returned: number;
+                    failed_delivery: number;
+                    refused: number;
+                };
+                last_order_at: string | null;
+            } | {
+                stored: boolean;
+                internal_score: number;
+                level: string;
+                breakdown: {
+                    code: string;
+                    weight: number;
+                    value: string;
+                    contribution: number;
+                }[];
+                score_computed_at: string | null;
+                counts: {
+                    total_orders: number;
+                    delivered: number;
+                    cancelled: number;
+                    returned: number;
+                    failed_delivery: number;
+                    refused: number;
+                } | {
+                    /** @constant */
+                    total_orders: 0;
+                    /** @constant */
+                    delivered: 0;
+                    /** @constant */
+                    cancelled: 0;
+                    /** @constant */
+                    returned: 0;
+                    /** @constant */
+                    failed_delivery: 0;
+                    /** @constant */
+                    refused: 0;
+                };
+                last_order_at: null;
+            };
+            status: {
+                /** @enum {string} */
+                value: "normal" | "watch" | "blacklist" | "whitelist";
+                reason: string | null;
+                set_by: unknown;
+                set_at: string | null;
+            } | {
+                /** @constant */
+                value: "normal";
+                reason: null;
+                set_by: null;
+                set_at: null;
+            };
+            courier: {
+                checked_at: string;
+                providers: {
+                    [key: string]: unknown;
+                }[];
+            };
+            recent_orders: {
+                id: number;
+                number: string;
+                /** @enum {string} */
+                status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+                grand_total: string;
+                placed_at: string | null;
+            }[];
         };
         /** PnlSeries */
         PnlSeries: {
@@ -5925,6 +7357,17 @@ export interface components {
             };
         };
         /**
+         * RejectHeldOrderRequest
+         * @description `POST /risk/orders/{order}/reject` — a person cancels a held order: `reason` (a
+         *     CancellationReason, required) and `note` (required for `other`). Needs risk.verify AND
+         *     orders.cancel. The only cancel the queue has — scoring never cancels (rule 23).
+         */
+        RejectHeldOrderRequest: {
+            /** @enum {string} */
+            reason: "customer_request" | "customer_unreachable" | "fake_order" | "duplicate_order" | "out_of_stock" | "pricing_error" | "address_unserviceable" | "payment_failed" | "other";
+            note?: string | null;
+        };
+        /**
          * RejectRefundRequest
          * @description `POST /refunds/{refund}/reject` — same permission as approving it; a reason is required.
          */
@@ -5994,17 +7437,158 @@ export interface components {
             phone: string;
         };
         /**
+         * RequestShipmentRequest
+         * @description `POST /orders/{order}/shipments` — send one order to a courier (P6, DATABASE-DESIGN §4.2).
+         *     Needs orders.update + shipments.book; `Idempotency-Key` required (rule 17).
+         */
+        RequestShipmentRequest: {
+            /** @description Courier provider code (e.g. `steadfast`, `pathao`). Omitted: the active default provider. */
+            provider?: string | null;
+            /** @description A mapped `courier_locations` id of that provider — required in effect when the address's upazila maps to several zones (rule 32). */
+            courier_location_id?: number | null;
+            /** @description Parcel weight in grams, overriding Σ variant weight × quantity. */
+            weight_grams?: number | null;
+            /** @description Note for the courier (delivery instructions). */
+            note?: string | null;
+        };
+        /**
          * ReturnReason
          * @description Why a customer sent goods back. Counted by cause, so a fixed list; `other` needs a note.
          * @enum {string}
          */
         ReturnReason: "damaged_in_transit" | "defective" | "wrong_item" | "missing_parts" | "not_as_described" | "changed_mind" | "other";
         /**
+         * ReviewSettlementLineRequest
+         * @description `POST /finance/settlements/{settlement}/items/{item}/review` — `decision` (accepted|excluded;
+         *     accept is for a `short` line only) and a `note` (required to exclude: why it is not booked).
+         *     Needs finance.reconcile_cod.
+         */
+        ReviewSettlementLineRequest: {
+            /** @enum {string} */
+            decision: "accepted" | "excluded";
+            note?: string | null;
+        };
+        /** RiskQueueItemResource */
+        RiskQueueItemResource: {
+            id: number;
+            number: string;
+            placed_at: string | null;
+            grand_total: string;
+            payment_method: string | null;
+            customer_name: string;
+            phone: string;
+            district: string | null;
+            order_risk: {
+                score: number | null;
+                /** @enum {string|null} */
+                level: "low" | "medium" | "high" | null;
+                /** @enum {string} */
+                verification_status: "not_required" | "pending" | "verified" | "failed";
+                hold_reasons: unknown[];
+                signals: {
+                    [key: string]: unknown;
+                }[];
+                computed_at: unknown;
+            };
+            ours: {
+                stored: boolean;
+                internal_score: number;
+                level: string;
+                breakdown: {
+                    code: string;
+                    weight: number;
+                    value: string;
+                    contribution: number;
+                }[];
+                score_computed_at: string | null;
+                counts: {
+                    total_orders: number;
+                    delivered: number;
+                    cancelled: number;
+                    returned: number;
+                    failed_delivery: number;
+                    refused: number;
+                };
+                last_order_at: string | null;
+            } | {
+                stored: boolean;
+                /** @constant */
+                internal_score: 0;
+                /** @constant */
+                level: "low";
+                breakdown: string[];
+                score_computed_at: string | null;
+                counts: {
+                    /** @constant */
+                    total_orders: 0;
+                    /** @constant */
+                    delivered: 0;
+                    /** @constant */
+                    cancelled: 0;
+                    /** @constant */
+                    returned: 0;
+                    /** @constant */
+                    failed_delivery: 0;
+                    /** @constant */
+                    refused: 0;
+                };
+                last_order_at: null;
+            };
+            status: {
+                /** @enum {string} */
+                value: "normal" | "watch" | "blacklist" | "whitelist";
+                reason: string | null;
+                set_by: unknown;
+                set_at: string | null;
+            } | {
+                /** @constant */
+                value: "normal";
+                reason: null;
+                set_by: null;
+                set_at: null;
+            };
+            calls: {
+                count: number;
+                last_outcome: string | null;
+            };
+        };
+        /** RiskRulesResource */
+        RiskRulesResource: {
+            weights: {
+                [key: string]: number;
+            };
+            medium_threshold: number;
+            high_threshold: number;
+            first_order_hold_threshold: string;
+            value_norm_multiplier: string;
+            rapid_repeat_minutes: number;
+            can_edit: boolean;
+        };
+        /** RiskVerificationCallResource */
+        RiskVerificationCallResource: {
+            id: number;
+            /** @enum {string} */
+            outcome: "confirmed" | "no_answer" | "switched_off" | "wrong_number" | "call_back" | "declined";
+            note: string | null;
+            user_name: string | null;
+            created_at: string | null;
+        };
+        /**
          * RobotsDirective
          * @description The robots meta values the admin may choose (SeoPanel "Advanced").
          * @enum {string}
          */
         RobotsDirective: "index,follow" | "noindex,follow" | "index,nofollow" | "noindex,nofollow";
+        /**
+         * SendTestSmsRequest
+         * @description `POST /settings/messaging/test` — one test SMS to a Bangladeshi mobile (rule 30:
+         *     013–019 only), in English or Bangla; needs settings.manage_integrations.
+         */
+        SendTestSmsRequest: {
+            phone: string;
+            /** @enum {string} */
+            locale: "en" | "bn";
+        };
         /**
          * SeoMeasureRequest
          * @description `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta
@@ -6013,6 +7597,20 @@ export interface components {
         SeoMeasureRequest: {
             title?: string | null;
             description?: string | null;
+        };
+        /**
+         * SetPhoneStatusRequest
+         * @description `PUT /risk/phone-status` — put a phone on a list (or back to normal): `phone`, `status`
+         *     (normal|watch|blacklist|whitelist) and a `reason` (required, recorded with who and when).
+         *     Blacklisting also needs `confirm` equal to the phone's last four digits (the checklist's
+         *     typed confirmation). Needs risk.manage_lists.
+         */
+        SetPhoneStatusRequest: {
+            phone: string;
+            /** @enum {string} */
+            status: "normal" | "watch" | "blacklist" | "whitelist";
+            reason: string;
+            confirm?: string | null;
         };
         /**
          * ShipOrderRequest
@@ -6027,6 +7625,191 @@ export interface components {
             tracking_reference?: string | null;
             /** @description Shown on the order's activity timeline next to the change. */
             note?: string | null;
+        };
+        /** Shipment */
+        Shipment: {
+            id: number;
+            number: string;
+            order_id: number;
+            order: {
+                id: number;
+                number: string;
+                status: string;
+            } | null;
+            provider: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            /** @enum {string} */
+            status: "pending" | "submitted" | "booked" | "picked_up" | "in_transit" | "out_for_delivery" | "delivered" | "partially_delivered" | "returned" | "cancelled" | "on_hold" | "failed";
+            provider_status_raw: string | null;
+            consignment_id: string | null;
+            tracking_code: string | null;
+            tracking_url: string | null;
+            courier_location_id: number | null;
+            weight_grams: number;
+            item_count: number;
+            cod_amount: string;
+            declared_value: string;
+            charge: string | null;
+            cod_fee: string | null;
+            return_charge: string | null;
+            total_cost: string | null;
+            cod_collected: string | null;
+            delivery_attempts: number;
+            booking_attempts: number;
+            /** @description machine-readable: unverified_provider, inactive_provider, unmapped_location, ambiguous_location, provider_refused, transport, order_not_shippable, completion_failed */
+            failure_code: string | null;
+            error_message: string | null;
+            /** @description In the retry queue: failed, or booked with the courier but the order not yet marked shipped. */
+            needs_attention: boolean;
+            /** @description The order was marked shipped for this shipment (stock consumed, courier charge booked). */
+            dispatched: boolean;
+            note: string | null;
+            booked_at: string | null;
+            dispatched_at: string | null;
+            picked_up_at: string | null;
+            delivered_at: string | null;
+            returned_at: string | null;
+            cancelled_at: string | null;
+            last_attempt_at: string | null;
+            created_at: string;
+        };
+        /** ShipmentBulkResult */
+        ShipmentBulkResult: {
+            order_id: number;
+            /** @enum {string} */
+            result: "requested" | "conflict" | "not_found";
+            shipment_id: number | null;
+            shipment_number: string | null;
+            message: string | null;
+        };
+        /**
+         * ShipmentLabelsRequest
+         * @description `GET /shipments/{shipment}/label` and `POST /shipments/labels` — shipping label PDFs.
+         *     Needs shipments.view AND customers.view_pii: the label carries the full phone and street
+         *     address the courier needs (rule 20, like the packing slip). `locale` picks the label's
+         *     printed captions (default English; the address is printed as the customer typed it).
+         */
+        ShipmentLabelsRequest: {
+            shipment_ids: number[];
+            /** @enum {string|null} */
+            locale?: "en" | "bn" | null;
+        };
+        /** ShipmentQuote */
+        ShipmentQuote: {
+            providers: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                is_active: boolean;
+                is_default: boolean;
+                /** @enum {string} */
+                trust: "verified" | "unverified" | "not_connected";
+                bookings_count: number;
+                requires_location_mapping: boolean;
+                supports_bulk: boolean;
+                balance: string | null;
+                balance_checked_at: string | null;
+                rate_card_updated_at: string | null;
+                rates: {
+                    base_charge_dhaka: string;
+                    base_charge_suburb: string;
+                    base_charge_outside: string;
+                    included_weight_grams: number;
+                    per_kg_charge: string;
+                    cod_fee_percent: string;
+                    return_charge: string;
+                };
+                /** @enum {string|null} */
+                blocked_reason: "inactive" | "not_connected" | "unverified_in_production" | null;
+            }[];
+            orders: {
+                order_id: number;
+                found: boolean;
+                number?: string;
+                status?: string;
+                can_ship?: boolean;
+                recipient_name?: string;
+                district?: {
+                    id: number;
+                    name: string;
+                    name_bn: string;
+                } | null;
+                upazila?: {
+                    id: number;
+                    name: string;
+                    name_bn: string;
+                } | null;
+                /** @enum {string|null} */
+                zone?: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka" | null;
+                item_count?: number;
+                variant_weight_grams?: number;
+                weight_grams?: number;
+                cod_amount?: string;
+                declared_value?: string;
+                quotes?: {
+                    provider_id: number;
+                    /** @enum {string} */
+                    location_status: "not_required" | "mapped" | "ambiguous" | "unmapped";
+                    location_options: {
+                        id: number;
+                        city: string;
+                        zone: string;
+                        area: string | null;
+                        mapped_at: string | null;
+                    }[];
+                    /** @enum {string|null} */
+                    blocked_reason: "missing_address" | "not_serviced" | "unmapped_location" | null;
+                    estimate: {
+                        zone: string;
+                        weight_grams: number;
+                        base_charge: string;
+                        weight_surcharge: string;
+                        delivery_charge: string;
+                        cod_fee_percent: string;
+                        cod_fee: string;
+                        return_charge: string;
+                        total_if_delivered: string;
+                        cost_if_refused: string;
+                    } | null;
+                }[];
+            }[];
+            /** @description Per courier, over the orders it can price. */
+            totals: {
+                provider_id: number;
+                parcels: number;
+                weight_grams: number;
+                cod_amount: string;
+                total_if_delivered: string;
+            }[];
+        };
+        /**
+         * ShipmentQuoteRequest
+         * @description `POST /shipments/quote` — the booking panel's charge preview for one order (single) or up
+         *     to 100 (bulk), for every courier, from the stored rate cards. Read-only; needs the same
+         *     powers as booking (orders.update + shipments.book). `weight_grams` overrides the summed
+         *     variant weight for that order ("Override if you weighed the parcel").
+         */
+        ShipmentQuoteRequest: {
+            orders: {
+                id: number;
+                /** @description Parcel weight in grams; absent = Σ variant weight × quantity. */
+                weight_grams?: number | null;
+            }[];
+        };
+        /** SmsTestResult */
+        SmsTestResult: {
+            driver: string;
+            accepted: boolean;
+            message_id: string | null;
+            segments: number;
+            /** @description Decimal string, taka. */
+            cost: string;
+            /** @description The provider's refusal, as it gave it. */
+            error: string | null;
         };
         /**
          * SslcommerzNotificationRequest
@@ -6685,6 +8468,29 @@ export interface components {
                 stage: "placed" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
                 at: string | null;
             }[];
+            /**
+             * @description The courier leg (P6): the order's latest shipment a courier has accepted, or null
+             *     before that (a booking still pending or refused is staff business, never shown).
+             *     `milestones` are the courier's, oldest first, each the latest time it was reached;
+             *     `consignment_id` is null while a bulk booking awaits the courier's id (rule 24d).
+             *     `tracking_url` is the courier's own public page.
+             */
+            shipment: {
+                courier: {
+                    code: string;
+                    name: string;
+                    name_bn: string | null;
+                };
+                /** @enum {string} */
+                status: "submitted" | "booked" | "picked_up" | "in_transit" | "out_for_delivery" | "on_hold" | "delivered" | "partially_delivered" | "returned" | "cancelled";
+                consignment_id: string | null;
+                tracking_url: string | null;
+                milestones: {
+                    /** @enum {string} */
+                    milestone: "booked" | "picked_up" | "in_transit" | "out_for_delivery" | "delivered" | "returned";
+                    at: string | null;
+                }[];
+            } | null;
         };
         /** StorefrontOrderSummary */
         StorefrontOrderSummary: {
@@ -7076,6 +8882,70 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * UpdateCourierCredentialsRequest
+         * @description `PUT /settings/couriers/{provider}/credentials` — needs settings.manage_integrations.
+         *     `credentials` maps a key from the provider's `credential_fields` to a new value; an absent
+         *     or blank value KEEPS the stored one. `clear` lists keys to remove. `webhook_secret` /
+         *     `clear_webhook_secret` work the same way. Nothing is ever echoed back (rule 20).
+         */
+        UpdateCourierCredentialsRequest: {
+            credentials?: {
+                [key: string]: string | null;
+            };
+            /** @description Keys to remove. */
+            clear?: string[];
+            /** @description The shared secret the courier sends with each webhook. Blank keeps it. */
+            webhook_secret?: string | null;
+            clear_webhook_secret?: boolean;
+        };
+        /**
+         * UpdateCourierProviderRequest
+         * @description `PATCH /settings/couriers/{provider}` — switch a courier on/off or make it the default;
+         *     needs shipments.manage_rates. The default provider's rate card prices the storefront, so
+         *     the default cannot be switched off (make another default first) and neither can the last
+         *     active provider.
+         */
+        UpdateCourierProviderRequest: {
+            is_active?: boolean;
+            /**
+             * @description Only `true` is meaningful: make this the default (it also switches it on).
+             * @enum {unknown}
+             */
+            is_default?: "yes" | "on" | "1" | 1 | "true" | true;
+        };
+        /**
+         * UpdateCourierRatesRequest
+         * @description `PUT /settings/couriers/{provider}/rates` — the whole rate card; needs
+         *     shipments.manage_rates. Money is a decimal string (DECIMAL(14,2), never a float — rule 6).
+         *     `included_weight_grams` is the weight the base charge covers; `per_kg_charge` is added
+         *     per started kilogram above it (Steadfast steps at 1,000 g, Pathao at 2,000 g — rule 32a).
+         */
+        UpdateCourierRatesRequest: {
+            /** @description Customer-facing delivery charge, inside Dhaka metro. Decimal string, e.g. "70.00". */
+            base_charge_dhaka: string;
+            /** @description Dhaka suburbs (Gazipur, Narayanganj, Savar …). */
+            base_charge_suburb: string;
+            /** @description Outside Dhaka. */
+            base_charge_outside: string;
+            /** @description Grams covered by the base charge: 1000 for Steadfast, 2000 for Pathao. Whole 100 g steps. */
+            included_weight_grams: number;
+            /** @description Added per started kilogram above `included_weight_grams`. */
+            per_kg_charge: string;
+            /** @description The courier's cash-collection fee, percent of the COD amount, e.g. "1.00". */
+            cod_fee_percent: string;
+            /** @description What the courier charges to bring a refused parcel back. */
+            return_charge: string;
+        };
+        /**
+         * UpdateDeliverySettingsRequest
+         * @description `PUT /settings/delivery` — the store-level free-delivery threshold; needs
+         *     shipments.manage_rates. null switches free delivery off. Decimal string (rule 6).
+         */
+        UpdateDeliverySettingsRequest: {
+            /** @description Subtotal at or above which delivery is free, e.g. "3000.00"; null = off. */
+            free_shipping_threshold: string | null;
+        };
+        /**
          * UpdateMediaRequest
          * @description `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500),
          *     `folder_id` (a folder id or null). Only the keys present change. Needs media.manage.
@@ -7085,6 +8955,28 @@ export interface components {
             alt_text_bn?: string | null;
             caption?: string | null;
             folder_id?: number | null;
+        };
+        /**
+         * UpdateMessagingSettingsRequest
+         * @description `PUT /settings/messaging` — Admin → Integrations → Messaging; needs
+         *     settings.manage_integrations. Non-secret fields are the whole document. A blank or
+         *     absent `reve_api_key` / `reve_secret_key` KEEPS the saved secret; `clear_reve_api_key`
+         *     / `clear_reve_secret_key` remove it (env applies again, if set). Choosing `reve` needs
+         *     a base URL, a sender ID and both secrets to be in place after the save.
+         */
+        UpdateMessagingSettingsRequest: {
+            /** @enum {string} */
+            sms_driver: "log" | "null" | "reve";
+            /** Format: uri */
+            reve_base_url?: string | null;
+            reve_sender_id?: string | null;
+            /** @description Decimal string, taka per segment, ≥ 0 (no sign allowed), 2 places at most. */
+            sms_cost_per_segment: string;
+            whatsapp_enabled: boolean;
+            reve_api_key?: string | null;
+            reve_secret_key?: string | null;
+            clear_reve_api_key?: boolean;
+            clear_reve_secret_key?: boolean;
         };
         /**
          * UpdateNotificationPreferencesRequest
@@ -7304,6 +9196,29 @@ export interface components {
             }[];
         };
         /**
+         * UpdateRiskRulesRequest
+         * @description `PUT /risk/rules` — the Risk rules form: one weight per factor (0–100, totalling ≤ 100 so
+         *     the breakdown always adds up to the score), `medium_threshold` < `high_threshold` (1–100),
+         *     `first_order_hold_threshold` (BDT, rule 33b), `value_norm_multiplier` (1–20) and
+         *     `rapid_repeat_minutes` (1–1440). Needs risk.manage_rules.
+         */
+        UpdateRiskRulesRequest: {
+            weights: {
+                cancellation_rate: number;
+                courier_return_rate: number;
+                failed_delivery: number;
+                first_order: number;
+                value_above_norm: number;
+                address_quality: number;
+                rapid_repeat: number;
+            };
+            medium_threshold: number;
+            high_threshold: number;
+            first_order_hold_threshold: string;
+            value_norm_multiplier: number;
+            rapid_repeat_minutes: number;
+        };
+        /**
          * UpdateSupplierRequest
          * @description `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change.
          *     `status: active` restores an archived supplier. Needs purchasing.manage_suppliers.
@@ -7329,6 +9244,13 @@ export interface components {
          * @enum {string}
          */
         VariantStatus: "active" | "archived";
+        /**
+         * VerifyHeldOrderRequest
+         * @description `POST /risk/orders/{order}/verify` — optional `note`. Needs risk.verify.
+         */
+        VerifyHeldOrderRequest: {
+            note?: string | null;
+        };
         /**
          * VerifyOtpRequest
          * @description `POST /storefront/auth/otp/verify` (P4-STO-11). An optional `X-Cart-Token` names the
@@ -12114,6 +14036,375 @@ export interface operations {
             };
         };
     };
+    "v1.admin.orders.shipments.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RequestShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description `Shipment` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shipment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not confirmed/processing/ready to ship, or already has an open shipment (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unknown or inactive provider, or a location of another provider */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.shipments.bulk": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkRequestShipmentsRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `ShipmentBulkResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ShipmentBulkResult"][];
+                        meta: {
+                            requested: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.shipments.index": {
+        parameters: {
+            query?: {
+                /** @description Only shipments in this status. */
+                "filter[status]"?: string;
+                /** @description Only this courier provider code. */
+                "filter[provider]"?: string;
+                /** @description Only this order's shipments. */
+                "filter[order_id]"?: number;
+                /** @description `1`: only the retry queue. */
+                "filter[needs_attention]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "created_at" | "-created_at" | "booked_at" | "-booked_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Shipment"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.failed": {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Shipment"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shipment"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.shipments.retry": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shipment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The shipment is not retryable (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.shipments.cancel": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description `Shipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shipment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A courier already holds the parcel (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.admin.orders.compose.customer": {
         parameters: {
             query?: {
@@ -13121,6 +15412,707 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.settings.messaging.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `MessagingSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagingSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.messaging.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMessagingSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `MessagingSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessagingSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.messaging.test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendTestSmsRequest"];
+            };
+        };
+        responses: {
+            /** @description `SmsTestResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsTestResult"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+            /** @description Too many test sends (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.settings.couriers.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CourierProviderSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierProviderSettings"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.couriers.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The provider ID */
+                provider: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCourierProviderRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierProviderSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProviderSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.couriers.rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The provider ID */
+                provider: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCourierRatesRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierProviderSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProviderSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.couriers.credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The provider ID */
+                provider: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCourierCredentialsRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierProviderSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProviderSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.delivery.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `DeliverySettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverySettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.delivery.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDeliverySettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `DeliverySettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverySettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.shipments.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShipmentQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `ShipmentQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.courier-locations.overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierLocationOverview` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierLocationOverview"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.courier-locations.index": {
+        parameters: {
+            query?: {
+                /** @description The courier's own city id. */
+                "filter[city]"?: string;
+                /** @description Mapped, unmapped (both active only) or inactive rows. */
+                "filter[status]"?: "mapped" | "unmapped" | "inactive";
+                /** @description Only zones or only areas. */
+                "filter[level]"?: "zone" | "area";
+                /** @description Case-insensitive "contains" on zone or area name. */
+                "filter[search]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CourierLocation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierLocation"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.courier-locations.needs-mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CourierPlace` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierPlace"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.courier-locations.places": {
+        parameters: {
+            query?: {
+                /** @description Our district (required by suggestions and resolve). */
+                district_id?: number;
+                /** @description Our upazila in that district; omit for a district-level place (Dhaka city). */
+                upazila_id?: number | null;
+                /** @description The address's free-text area, used only to choose between already-mapped zones. */
+                area?: string | null;
+                /** @description Place picker search: district or upazila name, English or Bangla, 2+ characters. */
+                q?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CourierPlace` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierPlace"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.courier-locations.suggestions": {
+        parameters: {
+            query?: {
+                /** @description Our district (required by suggestions and resolve). */
+                district_id?: number;
+                /** @description Our upazila in that district; omit for a district-level place (Dhaka city). */
+                upazila_id?: number | null;
+                /** @description The address's free-text area, used only to choose between already-mapped zones. */
+                area?: string | null;
+                /** @description Place picker search: district or upazila name, English or Bangla, 2+ characters. */
+                q?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CourierZoneSuggestion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierZoneSuggestion"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description `district_id` missing or unknown */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.courier-locations.resolve": {
+        parameters: {
+            query?: {
+                /** @description Our district (required by suggestions and resolve). */
+                district_id?: number;
+                /** @description Our upazila in that district; omit for a district-level place (Dhaka city). */
+                upazila_id?: number | null;
+                /** @description The address's free-text area, used only to choose between already-mapped zones. */
+                area?: string | null;
+                /** @description Place picker search: district or upazila name, English or Bangla, 2+ characters. */
+                q?: string;
+            };
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierLocationResolution` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierLocationResolution"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.courier-locations.sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.courier-locations.location.suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+                /** @description The location ID */
+                location: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CourierPlaceSuggestion` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierPlaceSuggestion"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.courier-locations.location.map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+                /** @description The location ID */
+                location: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MapCourierLocationRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierLocation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierLocation"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Upazila outside the district, or the courier no longer serves the row */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.courier-locations.location.unmap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+                /** @description The location ID */
+                location: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierLocation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierLocation"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.shipments.labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShipmentLabelsRequest"];
+            };
+        };
+        responses: {
+            /** @description The labels PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description None of the shipments has a consignment id (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.shipments.label": {
+        parameters: {
+            query: {
+                "shipment_ids[]": number[];
+                locale?: "en" | "bn" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The label PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description No consignment id yet (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.finance.ledger.index": {
         parameters: {
             query?: {
@@ -13268,6 +16260,245 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             /** @description Not a COD order, not delivered yet, or more than is outstanding (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.settlements.index": {
+        parameters: {
+            query?: {
+                /** @description received|reconciled */
+                "filter[status]"?: string;
+                /** @description Courier code (steadfast, pathao…). */
+                "filter[provider]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CourierSettlementResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CourierSettlementResource"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            providers: {
+                                code: string;
+                                name: string;
+                                name_bn: string | null;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.settlements.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ImportSettlementRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierSettlementResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierSettlementResource"] & Record<string, never>;
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description This courier reference was already imported (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.settlements.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The settlement ID */
+                settlement: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierSettlementResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierSettlementResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.finance.settlements.items.review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The settlement ID */
+                settlement: number;
+                /** @description The item ID */
+                item: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewSettlementLineRequest"];
+            };
+        };
+        responses: {
+            /** @description `CourierSettlementResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierSettlementResource"] & Record<string, never>;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already reconciled, or this variance cannot be accepted (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.settlements.confirm": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The settlement ID */
+                settlement: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierSettlementResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierSettlementResource"] & Record<string, never>;
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already reconciled, or a variance line has no decision yet (`conflict`) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -14303,6 +17534,427 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+        };
+    };
+    "v1.admin.reports.couriers": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka date (inclusive), YYYY-MM-DD. Default: six days before today. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date (inclusive), YYYY-MM-DD. Default: today. */
+                "filter[to]"?: string;
+                /** @description Only this courier (`courier_providers.code`). */
+                "filter[provider]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierPerformance` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierPerformance"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown provider or a malformed date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or shipments.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.couriers.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /reports/couriers. */
+                "filter[from]"?: string;
+                /** @description As on GET /reports/couriers. */
+                "filter[to]"?: string;
+                /** @description As on GET /reports/couriers. */
+                "filter[provider]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted parameter or filter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing the view permissions or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.risk.queue.index": {
+        parameters: {
+            query?: {
+                /** @description low|medium|high */
+                "filter[risk_level]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `RiskQueueItemResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RiskQueueItemResource"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            count: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.risk.orders.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `HeldOrderDetailResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeldOrderDetailResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.risk.orders.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VerifyHeldOrderRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: number;
+                        /** @enum {string} */
+                        status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+                        /** @enum {string} */
+                        verification_status: "not_required" | "pending" | "verified" | "failed";
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not waiting for verification (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.orders.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectHeldOrderRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: number;
+                        /** @enum {string} */
+                        status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+                        /** @enum {string} */
+                        verification_status: "not_required" | "pending" | "verified" | "failed";
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not waiting for verification (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.orders.calls.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogVerificationCallRequest"];
+            };
+        };
+        responses: {
+            /** @description `RiskVerificationCallResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskVerificationCallResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.lookup": {
+        parameters: {
+            query: {
+                phone: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PhoneRiskResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneRiskResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.lookup.rescore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneLookupRequest"];
+            };
+        };
+        responses: {
+            /** @description `PhoneRiskResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneRiskResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.phone-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPhoneStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description `PhoneRiskResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneRiskResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.risk.rules.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `RiskRulesResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskRulesResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.risk.rules.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRiskRulesRequest"];
+            };
+        };
+        responses: {
+            /** @description `RiskRulesResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskRulesResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.storefront.ping": {
@@ -16515,6 +20167,50 @@ export interface operations {
             };
             /** @description The source IP is not on the configured allowlist */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.webhooks.couriers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        received: boolean;
+                        replayed: boolean;
+                        ignored: boolean;
+                    };
+                };
+            };
+            /** @description The signature did not verify — nothing was written */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unknown courier provider (`not-found`) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

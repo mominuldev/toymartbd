@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Domain\Notification\Contracts\SmsGateway;
 use App\Domain\Notification\Drivers\ReveSmsGateway;
 use App\Domain\Notification\Models\NotificationLog;
+use App\Domain\Notification\Services\MessagingSettings;
+use App\Models\Enums\SettingGroup;
+use App\Models\Setting;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -93,6 +96,20 @@ it('refuses on a connection failure', function (): void {
     Http::fake(fn () => throw new ConnectionException('timed out'));
 
     expect(reveGateway()->send('+8801712345678', 'hi', 'test')->accepted)->toBeFalse();
+});
+
+it('prefers credentials saved at Admin → Integrations → Messaging over env, per key', function (): void {
+    Http::fake(['*' => Http::response(['Status' => '0', 'Text' => 'ACCEPTD', 'Message_ID' => '8'])]);
+    Setting::put(MessagingSettings::REVE_SECRET_KEY, 'saved-secret', SettingGroup::Notification, true);
+    Setting::put(MessagingSettings::REVE_SENDER_ID, 'SavedID', SettingGroup::Notification);
+
+    reveGateway()->send('+8801712345678', 'hi', 'test');
+
+    // Saved values win; the API key and base URL nobody saved still come from env.
+    Http::assertSent(fn (Request $r): bool => $r['secretkey'] === 'saved-secret'
+        && $r['callerID'] === 'SavedID'
+        && $r['apikey'] === 'test-key'
+        && str_starts_with($r->url(), 'https://smpp.example.test:7790'));
 });
 
 it('refuses without calling the provider when a credential is missing', function (): void {

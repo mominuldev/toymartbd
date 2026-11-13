@@ -6,6 +6,7 @@ namespace App\Domain\Notification\Drivers;
 
 use App\Domain\Notification\Contracts\SmsGateway;
 use App\Domain\Notification\DTOs\SmsResult;
+use App\Domain\Notification\Services\MessagingSettings;
 use App\Domain\Notification\Support\SmsSegments;
 use App\Domain\Notification\Support\SmsTariff;
 use App\Support\PhoneNumber;
@@ -36,15 +37,20 @@ use Illuminate\Support\Facades\Log;
  * Recipients go as 8801XXXXXXXXX (E.164 without the plus), the provider's format.
  * Nothing here logs the body (an OTP in a log is a credential), the secret, or a full
  * phone number (rule 20). Cost is the configured tariff, never the provider's word.
+ *
+ * Credentials come from MessagingSettings: entered at Admin → Integrations → Messaging
+ * (encrypted in `settings`), with SMS_REVE_* env as the fallback.
  */
 final readonly class ReveSmsGateway implements SmsGateway
 {
-    public function __construct(private Http $http, private SmsTariff $tariff) {}
+    public function __construct(private Http $http, private SmsTariff $tariff, private MessagingSettings $settings) {}
 
     public function send(string $e164Phone, string $body, string $template): SmsResult
     {
         $segments = SmsSegments::count($body);
-        $config = (array) config('notifications.sms.drivers.reve');
+        // Admin → Integrations → Messaging first, env as the fallback; read per send, so a
+        // credential changed in the admin applies to the next message without a restart.
+        $config = $this->settings->reve();
         $masked = PhoneNumber::tryParse($e164Phone)?->masked() ?? '***';
 
         foreach (['base_url', 'api_key', 'secret_key', 'sender_id'] as $key) {
@@ -55,10 +61,10 @@ final readonly class ReveSmsGateway implements SmsGateway
 
         try {
             $response = $this->http
-                ->timeout((int) ($config['timeout'] ?? 10))
+                ->timeout($config['timeout'])
                 ->acceptJson()
                 ->asJson()
-                ->post(rtrim($config['base_url'], '/').'/sendtext', [
+                ->post(rtrim((string) $config['base_url'], '/').'/sendtext', [
                     'apikey' => $config['api_key'],
                     'secretkey' => $config['secret_key'],
                     'callerID' => $config['sender_id'],

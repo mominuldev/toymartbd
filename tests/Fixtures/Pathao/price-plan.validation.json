@@ -1,0 +1,10 @@
+{
+  "message": "Please fix the given errors",
+  "type": "error",
+  "code": 422,
+  "errors": {
+    "recipient_zone": [
+      "The recipient zone field is required."
+    ]
+  }
+}

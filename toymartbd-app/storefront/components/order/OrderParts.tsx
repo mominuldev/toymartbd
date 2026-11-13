@@ -4,7 +4,7 @@ import type { StorefrontOrder } from '@/lib/cart/types';
 import { placeName } from '@/lib/delivery/format';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
-import { orderDate, orderDateTime, orderItemCount, orderItemName, timelineSteps } from '@/lib/order/format';
+import { courierLabel, orderDate, orderDateTime, orderItemCount, orderItemName, timelineSteps, type Shipment } from '@/lib/order/format';
 import { contact } from '@/lib/site-config';
 
 // The order views shared by the confirmation page and public tracking (P4-STO-10; Figma Order
@@ -51,8 +51,11 @@ export function OrderHeaderCard({ order, t }: { order: StorefrontOrder; t: Messa
 /** OrderTimeline — Figma 121:1558 / OrderStep 121:1557: 72-tall steps, a 24 gutter holding the 24px marker
  *  and the rail beneath it (coral under a done step, hairline otherwise), label body-strong (upcoming:
  *  body, tertiary) · timestamp caption tertiary. Done = coral disc + check 14; Current = white disc, 2px
- *  coral ring, 8px coral core; Upcoming = subtle disc + hairline; Stopped = danger disc + x. */
-export function OrderTimeline({ order, t }: { order: StorefrontOrder; t: Messages }) {
+ *  coral ring, 8px coral core; Upcoming = subtle disc + hairline; Stopped = danger disc + x. "Handed to courier"
+ *  carries the Detail row (121:1518: courier · consignment, body-sm secondary, + "Track" body-sm-strong brand)
+ *  and, below it, the courier's picked-up / in-transit times (captions; not drawn in Figma). Out for delivery
+ *  is the courier's own milestone (P6). */
+export function OrderTimeline({ order, locale, t }: { order: StorefrontOrder; locale: Locale; t: Messages }) {
     const steps = timelineSteps(order);
     return (
         <section aria-labelledby="order-timeline" className={card}>
@@ -84,12 +87,38 @@ export function OrderTimeline({ order, t }: { order: StorefrontOrder; t: Message
                             <span className="flex min-w-0 flex-col gap-0.5 pb-4">
                                 <span className={reached ? 't-body-strong text-fg-primary' : 't-body text-fg-tertiary'}>{t.order.stages[step.stage]}</span>
                                 {step.at ? <span className="t-caption text-fg-tertiary tabular-nums">{orderDateTime(step.at, t)}</span> : null}
+                                {step.courier ? (
+                                    <>
+                                        <CourierLine shipment={step.courier.shipment} locale={locale} t={t} />
+                                        {step.courier.sub.map((m) => (
+                                            <span key={m.milestone} className="t-caption text-fg-tertiary tabular-nums">
+                                                {m.at ? format(t.order.milestoneAt, { milestone: t.order.milestones[m.milestone], time: orderDateTime(m.at, t) }) : t.order.milestones[m.milestone]}
+                                            </span>
+                                        ))}
+                                    </>
+                                ) : null}
                             </span>
                         </li>
                     );
                 })}
             </ol>
         </section>
+    );
+}
+
+/** Figma 121:1518 Detail: "Steadfast · CN-4471982  Track" — the courier's name in the page language, the
+ *  consignment (Western digits) and the courier's own tracking page. A bulk-submitted parcel has no
+ *  consignment yet; it says so rather than showing a number it does not have (rule 24d). */
+function CourierLine({ shipment, locale, t, long = false }: { shipment: Shipment; locale: Locale; t: Messages; long?: boolean }) {
+    return (
+        <span className="t-body-sm flex flex-wrap items-center gap-x-2">
+            <span className="text-fg-secondary tabular-nums">{courierLabel(shipment, locale, t)}</span>
+            {shipment.tracking_url ? (
+                <a href={shipment.tracking_url} target="_blank" rel="noopener noreferrer nofollow" className="t-body-sm-strong text-fg-brand hover:underline">
+                    {long ? t.order.trackWithCourier : t.order.trackShort}
+                </a>
+            ) : null}
+        </span>
     );
 }
 
@@ -124,7 +153,13 @@ export function DeliveryDetails({ order, locale, t }: { order: StorefrontOrder; 
                 </div>
                 <div className="flex flex-col gap-1">
                     <dt className={label}>{o.courier}</dt>
-                    <dd className="text-fg-secondary">{o.courierPending}</dd>
+                    {order.shipment ? (
+                        <dd>
+                            <CourierLine shipment={order.shipment} locale={locale} t={t} long />
+                        </dd>
+                    ) : (
+                        <dd className="text-fg-secondary">{o.courierPending}</dd>
+                    )}
                 </div>
             </dl>
         </section>

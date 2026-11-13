@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Notification;
 
-use App\Domain\Notification\Contracts\SmsGateway;
+use App\Domain\Notification\Actions\SendTestSms;
 use App\Support\PhoneNumber;
 use Illuminate\Console\Command;
 
 /**
  * Sends ONE real SMS through the configured driver, so the owner can confirm a provider
  * account works (and, for REVE, see the success Status and whether Bangla arrives intact)
- * before customers depend on it. Goes through the container's SmsGateway, so the send is
- * recorded in notification_logs with its segments and cost like any other.
+ * before customers depend on it. Uses the same settings (Admin → Integrations → Messaging,
+ * env as the fallback) and the same SendTestSms action as the admin's "Send test SMS" card;
+ * the send is recorded in notification_logs with its segments and cost like any other.
  */
 final class SendTestSmsCommand extends Command
 {
@@ -21,7 +22,7 @@ final class SendTestSmsCommand extends Command
 
     protected $description = 'Send one test SMS through the configured SMS driver';
 
-    public function handle(SmsGateway $sms): int
+    public function handle(SendTestSms $send): int
     {
         $phone = PhoneNumber::tryParse((string) $this->argument('phone'));
 
@@ -31,13 +32,9 @@ final class SendTestSmsCommand extends Command
             return self::INVALID;
         }
 
-        $body = $this->option('bn')
-            ? 'টয় মার্ট বিডি: এটি একটি পরীক্ষামূলক এসএমএস।'
-            : 'Toy Mart BD: this is a test SMS.';
+        $this->line('Driver: '.$send->driver().' · to '.$phone->masked());
 
-        $this->line('Driver: '.(string) config('notifications.sms.driver').' · to '.$phone->masked());
-
-        $result = $sms->send($phone->e164(), $body, 'test');
+        $result = $send->handle($phone, $this->option('bn') ? 'bn' : 'en');
 
         if (! $result->accepted) {
             $this->error('Refused: '.($result->error ?? 'unknown error'));

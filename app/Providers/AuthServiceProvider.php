@@ -98,6 +98,8 @@ class AuthServiceProvider extends ServiceProvider
         OrderNote::class => OrderPartPolicy::class,
         OrderFinancial::class => OrderFinancialPolicy::class,
         Payment::class => PaymentPolicy::class,
+        \App\Domain\Fulfilment\Models\CourierProvider::class => \App\Policies\CourierProviderPolicy::class,
+        \App\Domain\Fulfilment\Models\CourierLocation::class => \App\Policies\CourierLocationPolicy::class,
         Refund::class => RefundPolicy::class,
         RefundItem::class => RefundPolicy::class,
         Cart::class => CartPolicy::class,
@@ -114,6 +116,8 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Catalog\Reviews\Models\Review::class => \App\Policies\ReviewPolicy::class,
         // Finance reports have no model; FinanceReport is the policy subject (P5 reports).
         \App\Domain\Finance\Reports\FinanceReport::class => \App\Policies\FinanceReportPolicy::class,
+        // Courier performance report (P6) has no model; the report class is the policy subject.
+        \App\Domain\Fulfilment\Reports\CourierPerformanceReport::class => \App\Policies\CourierPerformanceReportPolicy::class,
         // Finance ledger, expenses, COD receipts, daily rollup (P5 finance).
         \App\Domain\Finance\Models\FinancialTransaction::class => \App\Policies\FinancialTransactionPolicy::class,
         \App\Domain\Finance\Models\Expense::class => \App\Policies\ExpensePolicy::class,

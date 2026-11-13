@@ -17,4 +17,5 @@ enum SettingGroup: string
     case Seo = 'seo';
     case Localization = 'localization';
     case System = 'system';
+    case Risk = 'risk';
 }

@@ -71,5 +71,7 @@ final class NotificationServiceProvider extends ServiceProvider
         Event::listen(OrderShipped::class, [QueueOrderNotifications::class, 'onShipped']);
         Event::listen(OrderDelivered::class, [QueueOrderNotifications::class, 'onDelivered']);
         Event::listen(OrderCancelled::class, [QueueOrderNotifications::class, 'onCancelled']);
+        // P6: the courier's out-for-delivery move (Fulfilment event, after commit).
+        Event::listen(\App\Domain\Fulfilment\Events\ShipmentStatusChanged::class, [QueueOrderNotifications::class, 'onShipmentStatusChanged']);
     }
 }

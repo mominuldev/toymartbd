@@ -183,7 +183,8 @@ final readonly class DeliveryChargeResolver
         return [$parcel->subtotal ?? $subtotal, $grams];
     }
 
-    private function weightSurcharge(CourierProvider $courier, int $grams): Money
+    /** Per started kg above the provider's included weight — also the courier-cost estimate's (P6). */
+    public function weightSurcharge(CourierProvider $courier, int $grams): Money
     {
         $over = $grams - $courier->included_weight_grams;
         if ($over <= 0) {

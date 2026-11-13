@@ -1,0 +1,18 @@
+{
+    "_fixture": {
+        "source": "Steadfast webhook spec, NOT in the public collection: two independent third-party recreations (TeamRSBDigital/STEADFAST_API STEADFAST_WEBHOOK.md, inversemaha/SteadFastWebhookForFunnelliner) + required fields from the official steadfast-it Laravel package validatePayload(); via docs/_research/agent3-appbyte-and-couriers.md §6.7",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "http_status is irrelevant here (inbound). Auth: Authorization: Bearer <token> (official package); X-Signature HMAC-SHA256 of the raw body is third-party only."
+    },
+    "http_status": 200,
+    "body": {
+        "notification_type": "delivery_status",
+        "consignment_id": 12345,
+        "invoice": "INV-67890",
+        "cod_amount": 1500.0,
+        "status": "delivered",
+        "delivery_charge": 100.0,
+        "tracking_message": "Package delivered successfully",
+        "updated_at": "2025-03-02 12:45:30"
+    }
+}

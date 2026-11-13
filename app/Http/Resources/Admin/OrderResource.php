@@ -189,6 +189,13 @@ final class OrderResource extends ApiResource
                  * @var array<string, mixed>|null
                  */
                 'flags' => $order->risk_flags,
+                /**
+                 * The phone's CURRENT profile (P6 risk module): our score now and the staff list
+                 * status — beside, never merged with, the snapshot above (rule 24).
+                 *
+                 * @var array<string, mixed>|null
+                 */
+                'profile' => self::riskProfile($order->shipping_phone),
             ],
             'notes' => $notes->map(static fn (OrderNote $n): array => [
                 'id' => $n->id,
@@ -277,5 +284,25 @@ final class OrderResource extends ApiResource
         $status = app(\App\Domain\Payment\Services\OnlineGateways::class)->status($method);
 
         return ['enabled' => $status['enabled'], 'verified' => $status['verified'], 'sandbox' => $status['sandbox'], 'reason' => $status['reason']];
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function riskProfile(string $phone): ?array
+    {
+        $profile = \App\Domain\Risk\Models\CustomerRiskProfile::forPhone($phone);
+        if ($profile === null) {
+            return null;
+        }
+        $ours = Risk\RiskProfilePresenter::ours($profile);
+
+        return [
+            'internal_score' => $ours['internal_score'],
+            'level' => $ours['level'],
+            'score_computed_at' => $ours['score_computed_at'],
+            'counts' => $ours['counts'],
+            'status' => $profile->status->value,
+            'status_reason' => $profile->status_reason,
+            'status_set_at' => $profile->status_set_at?->toIso8601String(),
+        ];
     }
 }

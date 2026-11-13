@@ -1,0 +1,11 @@
+{
+  "message": "Order Created Successfully",
+  "type": "success",
+  "code": 200,
+  "data": {
+    "consignment_id": "DS131126MTS7DD",
+    "merchant_order_id": "TMBD-SANDBOX-0001",
+    "order_status": "Pending",
+    "delivery_fee": 60
+  }
+}

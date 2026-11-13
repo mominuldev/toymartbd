@@ -6,7 +6,7 @@ import { detail, operator, ordersApi, postedTo } from './fixtures';
 
 /*
  * Manual fulfilment (P5, until Phase 6 courier booking): the buttons follow the server's
- * `available_actions`; every call carries an Idempotency-Key; courier booking stays disabled.
+ * `available_actions`; every call carries an Idempotency-Key. Courier booking (P6) sits beside them.
  */
 
 afterEach(() => {
@@ -78,7 +78,7 @@ describe('manual fulfilment on the order detail', () => {
 });
 
 describe('bulk manual fulfilment on the board', () => {
-    it('bulk ships per order with an Idempotency-Key, keeps failures selected, and keeps courier booking disabled', async () => {
+    it('bulk ships per order with an Idempotency-Key, keeps failures selected, and offers courier booking', async () => {
         const calls = ordersApi(fulfiller, (url) =>
             url.endsWith('/orders/bulk/ship')
                 ? {
@@ -98,7 +98,7 @@ describe('bulk manual fulfilment on the board', () => {
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Select TMB-26-00126' }));
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Select TMB-26-00127' }));
         const bar = screen.getByRole('region', { name: 'Bulk actions' });
-        expect(within(bar).getByRole('button', { name: 'Book courier' }).getAttribute('aria-disabled')).toBe('true');
+        expect((within(bar).getByRole('button', { name: 'Book courier' }) as HTMLButtonElement).disabled).toBe(false);
 
         // Mark shipped / delivered live in the bar's ⋯ overflow (Figma BulkActionBar 193:740).
         fireEvent.click(within(bar).getByRole('button', { name: 'More actions' }));
