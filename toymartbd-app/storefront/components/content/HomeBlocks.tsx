@@ -51,20 +51,27 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean): ReactNode
     }
 }
 
-export function HomeBlocks({ blocks, locale }: { blocks: HomeBlock[]; locale: Locale }) {
+/**
+ * `editable` (the draft preview only) stamps each section with its block id, which the builder's
+ * live editor (PreviewBridge) uses to outline and select it. The live page carries no ids.
+ */
+export function HomeBlocks({ blocks, locale, editable = false }: { blocks: HomeBlock[]; locale: Locale; editable?: boolean }) {
     const firstHero = blocks.findIndex((b) => b.type === 'hero');
     return (
         <div className="flex flex-col gap-12 lg:gap-20">
             {blocks.map((block, i) => {
                 const node = render(block, locale, i === firstHero);
                 const device = deviceClass(block);
+                const blockId = editable && block.id ? block.id : undefined;
                 return block.type === 'usp_band' ? (
-                    <div key={block.id || i} data-block={block.type} className={device}>
+                    <div key={block.id || i} data-block={block.type} data-block-id={blockId} className={device}>
                         {node}
                     </div>
                 ) : (
                     <Band key={block.id || i} className={device}>
-                        <div data-block={block.type}>{node}</div>
+                        <div data-block={block.type} data-block-id={blockId}>
+                            {node}
+                        </div>
                     </Band>
                 );
             })}
