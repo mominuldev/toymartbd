@@ -9,6 +9,9 @@ use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Customer\Models\District;
 use App\Domain\Customer\Models\Division;
 use App\Domain\Customer\Models\Upazila;
+use App\Domain\Fulfilment\Enums\ShipmentStatus;
+use App\Domain\Fulfilment\Models\CourierTrackingEvent;
+use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Ordering\Enums\OrderEventType;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
@@ -122,6 +125,16 @@ final class StorefrontOrderResource extends ApiResource
              * @var list<array{stage: 'placed'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled'|'returned', at: string|null}>
              */
             'timeline' => self::timeline($order->events),
+            /**
+             * The courier leg (P6): the order's latest shipment a courier has accepted, or null
+             * before that (a booking still pending or refused is staff business, never shown).
+             * `milestones` are the courier's, oldest first, each the latest time it was reached;
+             * `consignment_id` is null while a bulk booking awaits the courier's id (rule 24d).
+             * `tracking_url` is the courier's own public page.
+             *
+             * @var array{courier: array{code: string, name: string, name_bn: string|null}, status: 'submitted'|'booked'|'picked_up'|'in_transit'|'out_for_delivery'|'on_hold'|'delivered'|'partially_delivered'|'returned'|'cancelled', consignment_id: string|null, tracking_url: string|null, milestones: list<array{milestone: 'booked'|'picked_up'|'in_transit'|'out_for_delivery'|'delivered'|'returned', at: string|null}>}|null
+             */
+            'shipment' => self::shipment($order),
         ];
     }
 
@@ -230,6 +243,83 @@ final class StorefrontOrderResource extends ApiResource
         }
 
         return $rows;
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function shipment(Order $order): ?array
+    {
+        /** @var Shipment|null $shipment */
+        $shipment = Shipment::query()->with('provider')
+            ->where('order_id', $order->id)
+            ->whereNotIn('status', [ShipmentStatus::Pending->value, ShipmentStatus::Failed->value])
+            ->where(static fn ($q) => $q->where('status', '!=', ShipmentStatus::Cancelled->value)->orWhereNotNull('booked_at'))
+            ->orderByDesc('id')
+            ->first();
+        if ($shipment === null) {
+            return null;
+        }
+
+        return [
+            'courier' => ['code' => $shipment->provider->code, 'name' => $shipment->provider->name, 'name_bn' => $shipment->provider->name_bn],
+            'status' => $shipment->status->value,
+            'consignment_id' => $shipment->consignment_id,
+            'tracking_url' => self::safeUrl($shipment->tracking_url),
+            'milestones' => self::milestones($shipment),
+        ];
+    }
+
+    /**
+     * The courier milestones a customer reads. The history table first; the shipment's own
+     * timestamp columns fill any milestone the history lacks. `on_hold` and `submitted` are
+     * not milestones (a held parcel is still on its way; a submitted one is not yet booked).
+     *
+     * @return list<array{milestone: string, at: string|null}>
+     */
+    private static function milestones(Shipment $shipment): array
+    {
+        $map = [
+            ShipmentStatus::Booked->value => 'booked',
+            ShipmentStatus::PickedUp->value => 'picked_up',
+            ShipmentStatus::InTransit->value => 'in_transit',
+            ShipmentStatus::OutForDelivery->value => 'out_for_delivery',
+            ShipmentStatus::Delivered->value => 'delivered',
+            ShipmentStatus::PartiallyDelivered->value => 'delivered',
+            ShipmentStatus::Returned->value => 'returned',
+        ];
+
+        /** @var array<string, DateTimeInterface> $reached */
+        $reached = [];
+        $events = CourierTrackingEvent::query()->where('shipment_id', $shipment->id)->orderBy('occurred_at')->orderBy('id')->get();
+        foreach ($events as $event) {
+            $milestone = $map[$event->normalised_status->value] ?? null;
+            if ($milestone !== null) {
+                $reached[$milestone] = $event->occurred_at;
+            }
+        }
+        foreach (['booked' => $shipment->booked_at, 'picked_up' => $shipment->picked_up_at, 'delivered' => $shipment->delivered_at, 'returned' => $shipment->returned_at] as $milestone => $at) {
+            if ($at !== null && ! isset($reached[$milestone])) {
+                $reached[$milestone] = $at;
+            }
+        }
+        if ($shipment->status === ShipmentStatus::Returned) {
+            unset($reached['delivered']);
+        }
+
+        $order = array_flip(['booked', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'returned']);
+        uksort($reached, static fn (string $a, string $b): int => [$reached[$a]->getTimestamp(), $order[$a]] <=> [$reached[$b]->getTimestamp(), $order[$b]]);
+
+        $rows = [];
+        foreach ($reached as $milestone => $at) {
+            $rows[] = ['milestone' => $milestone, 'at' => self::iso($at)];
+        }
+
+        return $rows;
+    }
+
+    /** Only an http(s) URL reaches a link in the storefront. */
+    private static function safeUrl(?string $url): ?string
+    {
+        return $url !== null && preg_match('#^https?://#i', $url) === 1 ? $url : null;
     }
 
     /**

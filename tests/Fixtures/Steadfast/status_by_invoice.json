@@ -1,0 +1,12 @@
+{
+    "_fixture": {
+        "source": "NOT in the Postman collection. Steadfast API guide (verbatim third-party paste, github.com/MdSalman2022/Ecommerce-site-backend steadfastapi.txt) via docs/_research/agent3-appbyte-and-couriers.md §6.5: same shape as status_by_cid",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "If the same invoice was booked twice, Steadfast answers for the most recent (research §6.5)."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "delivery_status": "{{delivery_status}}"
+    }
+}

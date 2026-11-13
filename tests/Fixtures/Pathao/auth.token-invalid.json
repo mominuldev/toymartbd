@@ -1,0 +1,8 @@
+{
+  "message": "Unauthorized User",
+  "type": "error",
+  "error": {
+    "source": "verify-auth-token",
+    "description": "rpc error: code = Unauthenticated desc = access token is invalid"
+  }
+}

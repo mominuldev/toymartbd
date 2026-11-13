@@ -1,0 +1,12 @@
+{
+    "_fixture": {
+        "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Check Balance', 200 example",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "Can be negative. Key is current_balance (a third-party doc's `balance` is wrong)."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "current_balance": -10
+    }
+}

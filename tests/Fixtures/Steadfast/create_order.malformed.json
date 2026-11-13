@@ -1,0 +1,9 @@
+{
+    "_fixture": {
+        "source": "Synthetic: an upstream proxy error page instead of JSON",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "A 200 whose body is not the documented JSON. The order may or may not exist, so the driver throws (retryable; the unique invoice makes a retry safe) rather than refusing."
+    },
+    "http_status": 200,
+    "body_raw": "<html><body><h1>502 Bad Gateway</h1></body></html>"
+}

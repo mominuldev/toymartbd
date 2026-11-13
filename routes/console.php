@@ -62,3 +62,19 @@ Schedule::command('toymart:payments:expire')
     ->everyFiveMinutes()
     ->withoutOverlapping(10)
     ->onOneServer();
+
+// Courier location mirror (P6, DATABASE-DESIGN §3.6): Pathao's city/zone/area tree, nightly
+// at 04:00 Dhaka, queued on `courier`. Only once Pathao credentials exist. Maps nothing —
+// mapping is a human decision (rule 32).
+Schedule::command('toymart:couriers:sync-locations pathao --queue')
+    ->dailyAt('04:00')
+    ->timezone('Asia/Dhaka')
+    ->when(static fn (): bool => App\Domain\Fulfilment\Drivers\Pathao\PathaoCredentials::resolve() !== null)
+    ->onOneServer();
+
+// Courier status reconciliation (P6): every in-flight shipment with no update for an hour is
+// re-queried — webhooks get lost. Terminal shipments are never polled; work goes to `courier`.
+Schedule::command('toymart:couriers:poll')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping(15)
+    ->onOneServer();

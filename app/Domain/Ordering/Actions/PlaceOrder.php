@@ -117,16 +117,17 @@ final readonly class PlaceOrder
             $this->reservations->reserve($lines, $locationId);
 
             // 4. Customer by phone + address book.
-            $priorOrders = self::priorOrders($data);
             $customer = $this->customers->findOrCreate($data);
             $this->customers->address($customer, $data);
 
-            // 10 (computed early so the order row is written once). Advisory only.
+            // 10 (computed early so the order row is written once). Advisory only: Risk reads
+            //    the phone's history and decides holds (rules 23, 24b, 33b); it never cancels.
             $risk = $this->risk->assess(new RiskInput(
                 phone: $data->phone,
                 orderValue: $breakdown->grandTotal,
-                priorOrders: $priorOrders,
                 codAdvanceRequired: $breakdown->delivery?->codAdvance !== null,
+                addressLine: $data->addressLine,
+                hasLocality: $data->upazila !== null || trim($data->area) !== '',
             ));
 
             // 5–6. Number and order.
@@ -231,16 +232,6 @@ final readonly class PlaceOrder
         }
 
         throw new CheckoutNotReady($errors !== [] ? $errors : [['field' => 'cart', 'message' => (string) __('checkout.cart_empty')]]);
-    }
-
-    /** Earlier orders owned by, or shipped to, this phone — any status (rule 33b "unknown phone"). */
-    private static function priorOrders(CheckoutData $data): int
-    {
-        $e164 = $data->phone->e164();
-
-        return Order::query()
-            ->where(fn ($q) => $q->where('shipping_phone', $e164)->orWhereHas('customer', fn ($c) => $c->where('phone', $e164)))
-            ->count();
     }
 
     private static function holdDescription(RiskAssessment $risk): string

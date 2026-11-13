@@ -1,0 +1,57 @@
+{
+  "message": "Zone list fetched.",
+  "type": "success",
+  "code": 200,
+  "data": {
+    "data": [
+      {
+        "zone_id": 298,
+        "zone_name": "60 feet"
+      },
+      {
+        "zone_id": 1070,
+        "zone_name": "Abdullahpur Uttara"
+      },
+      {
+        "zone_id": 1066,
+        "zone_name": "Abul Hotel"
+      },
+      {
+        "zone_id": 52,
+        "zone_name": "Adabor"
+      },
+      {
+        "zone_id": 1094,
+        "zone_name": "Adarsha Nagar - Kutubpur"
+      },
+      {
+        "zone_id": 300,
+        "zone_name": "Aftab Nagar"
+      },
+      {
+        "zone_id": 1764,
+        "zone_name": "Aganagar"
+      },
+      {
+        "zone_id": 17,
+        "zone_name": "Agargaon"
+      },
+      {
+        "zone_id": 1108,
+        "zone_name": "Agargaon-Taltola"
+      },
+      {
+        "zone_id": 1757,
+        "zone_name": "Akran Bazar"
+      },
+      {
+        "zone_id": 2700,
+        "zone_name": "Ali Nagar Bazar"
+      },
+      {
+        "zone_id": 1465,
+        "zone_name": "Amin Bazar"
+      }
+    ]
+  }
+}

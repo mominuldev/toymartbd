@@ -37,6 +37,8 @@ use Illuminate\Support\Carbon;
  * @property Money|null $balance
  * @property Carbon|null $balance_checked_at
  * @property int $position
+ * @property Carbon|null $rate_card_updated_at
+ * @property Carbon|null $credentials_updated_at
  */
 final class CourierProvider extends Model
 {
@@ -88,6 +90,8 @@ final class CourierProvider extends Model
             'balance' => MoneyCast::class,
             'balance_checked_at' => 'datetime',
             'position' => 'integer',
+            'rate_card_updated_at' => 'datetime',
+            'credentials_updated_at' => 'datetime',
         ];
     }
 }

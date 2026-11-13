@@ -1,0 +1,9 @@
+{
+  "consignment_id": "DS131126MTS7DD",
+  "merchant_order_id": "TMBD-SANDBOX-0001",
+  "updated_at": "2026-11-14 17:49:43",
+  "timestamp": "2026-11-14T11:49:43+00:00",
+  "store_id": 39,
+  "event": "order.delivered",
+  "collected_amount": 500
+}

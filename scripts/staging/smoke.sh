@@ -108,7 +108,7 @@ fi
 list="$(artisan schedule:list)"
 for task in toymart:backup toymart:inventory:reconcile toymart:inventory:digest \
             toymart:finance:recurring-expenses toymart:finance:rollup toymart:finance:verify \
-            toymart:payments:expire; do
+            toymart:payments:expire toymart:couriers:poll; do
     if [[ "$list" == *"$task"* ]]; then
         pass "schedule: $task registered"
     else

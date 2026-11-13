@@ -20,13 +20,12 @@ use InvalidArgumentException;
  */
 final readonly class SmsDrivers
 {
-    public function __construct(private Container $container) {}
+    public function __construct(private Container $container, private MessagingSettings $settings) {}
 
     public function name(): string
     {
-        $driver = config('notifications.sms.driver', 'log');
-
-        return is_string($driver) ? $driver : 'log';
+        // Admin → Integrations → Messaging first, SMS_DRIVER env as the fallback.
+        return $this->settings->smsDriver();
     }
 
     public function driver(): SmsGateway

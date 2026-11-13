@@ -1,0 +1,15 @@
+{
+  "message": "Area list fetched.",
+  "type": "success",
+  "code": 200,
+  "data": {
+    "data": [
+      {
+        "area_id": 3069,
+        "area_name": "60 feet road",
+        "home_delivery_available": true,
+        "pickup_available": true
+      }
+    ]
+  }
+}

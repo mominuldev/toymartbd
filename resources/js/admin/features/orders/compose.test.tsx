@@ -149,7 +149,7 @@ describe('edit order', () => {
 });
 
 describe('bulk processing', () => {
-    it('marks packed per order, keeps the failure selected, and shows courier booking as Phase 6', async () => {
+    it('marks packed per order, keeps the failure selected, and offers courier booking only with shipments.book', async () => {
         const calls = composeApi();
         renderApp('/orders');
         const table = await screen.findByRole('table');
@@ -157,9 +157,8 @@ describe('bulk processing', () => {
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Select TMB-26-00127' }));
         const bar = screen.getByRole('region', { name: 'Bulk actions' });
 
-        const courier = within(bar).getByRole('button', { name: 'Book courier' });
-        expect(courier.getAttribute('aria-disabled')).toBe('true');
-        expect(within(bar).getByRole('tooltip').textContent).toBe('Courier booking arrives in Phase 6');
+        // P6: booking needs orders.update + shipments.book; this user has no shipments.book.
+        expect(within(bar).queryByRole('button', { name: 'Book courier' })).toBeNull();
 
         fireEvent.click(within(bar).getByRole('button', { name: 'Mark packed' }));
         await waitFor(() => expect(postedTo(calls, '/orders/bulk/pack')).toEqual({ order_ids: [126, 127] }));

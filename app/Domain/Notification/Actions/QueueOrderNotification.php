@@ -9,6 +9,7 @@ use App\Domain\Notification\Enums\NotificationStatus;
 use App\Domain\Notification\Jobs\SendNotification;
 use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Notification\Models\NotificationTemplate;
+use App\Domain\Notification\Services\MessagingSettings;
 use App\Domain\Notification\Services\NotificationPreferences;
 use App\Domain\Notification\Services\OrderMessageData;
 use App\Domain\Notification\Support\TemplateCatalog;
@@ -110,10 +111,16 @@ final readonly class QueueOrderNotification
         return $logs;
     }
 
-    /** @return list<NotificationChannel> WhatsApp first (rule 39), SMS as fallback. */
+    /**
+     * WhatsApp first (rule 39), SMS as fallback — but only while WhatsApp is switched on at
+     * Admin → Integrations → Messaging (default off until a WhatsApp account exists: with the
+     * log driver a WhatsApp send "succeeds" and the SMS fallback never fires).
+     *
+     * @return list<NotificationChannel>
+     */
     public static function messagingChannels(): array
     {
-        return config('notifications.whatsapp.enabled') === true
+        return app(MessagingSettings::class)->whatsappEnabled()
             ? [NotificationChannel::WhatsApp, NotificationChannel::Sms]
             : [NotificationChannel::Sms];
     }

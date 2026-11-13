@@ -30,5 +30,10 @@ final class FinanceServiceProvider extends ServiceProvider
     {
         // Orders: revenue recognised on delivery (§4.3). Cancel before delivery: nothing to do.
         Event::listen(OrderDelivered::class, RecognizeRevenueOnDelivery::class);
+
+        // Courier COD settlement (§4.5): confirmed lines → cod_received + unbooked courier costs.
+        Event::listen(\App\Domain\Finance\Events\CourierSettlementReconciled::class, \App\Domain\Finance\Listeners\Settlement\BookCourierSettlement::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Domain\Finance\Models\CourierSettlement::class, \App\Policies\CourierSettlementPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Domain\Finance\Models\CourierSettlementItem::class, \App\Policies\CourierSettlementPolicy::class);
     }
 }

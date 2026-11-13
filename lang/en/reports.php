@@ -47,4 +47,8 @@ return [
     'valuation' => [
         'total' => 'Total',
     ],
+    'couriers' => [
+        'all' => 'All couriers',
+        'no_district' => 'No district',
+    ],
 ];

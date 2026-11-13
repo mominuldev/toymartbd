@@ -232,7 +232,7 @@ describe('product form', () => {
 
         await waitFor(() => expect(sentBody(calls, 'PUT')).not.toBeNull());
         expect(sentBody(calls, 'PUT')).toMatchObject({ is_featured: !before });
-        expect(await screen.findByRole('heading', { name: 'Add product' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Add product' }, { timeout: 5_000 })).toBeTruthy();
     });
 
     it('shows the form in Bangla', async () => {

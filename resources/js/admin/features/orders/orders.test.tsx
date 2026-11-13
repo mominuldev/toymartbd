@@ -104,7 +104,8 @@ describe('order detail', () => {
         expect(screen.getByText('High risk · 80 / 100')).toBeTruthy();
         // Rule 33b: the courier panel says "not connected", never a zero.
         expect(screen.getByText('Provider not connected')).toBeTruthy();
-        expect(screen.getByText('No shipment yet')).toBeTruthy();
+        // P6: the shipment card needs shipments.view, which this operator fixture lacks.
+        expect(screen.getByText('You do not have access to shipments.')).toBeTruthy();
         expect(screen.getByText('Phone masked — needs the customer PII permission.')).toBeTruthy();
         expect(screen.queryByRole('link', { name: 'Call customer' })).toBeNull();
         expect(screen.getByText('কল করেছি, ধরেননি')).toBeTruthy();

@@ -92,7 +92,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
                         {order ? (
                             <>
                                 <OrderHeaderCard order={order} t={t} />
-                                <OrderTimeline order={order} t={t} />
+                                <OrderTimeline order={order} locale={locale} t={t} />
                                 <div className="hidden lg:block">
                                     <DeliveryDetails order={order} locale={locale} t={t} />
                                 </div>

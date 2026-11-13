@@ -1,0 +1,11 @@
+{
+    "_fixture": {
+        "source": "Synthetic 5xx; status code list from the newer guide via docs/_research/agent3-appbyte-and-couriers.md §6.10",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call"
+    },
+    "http_status": 500,
+    "body": {
+        "status": 500,
+        "message": "Server Error"
+    }
+}

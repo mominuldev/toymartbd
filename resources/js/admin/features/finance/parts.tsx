@@ -83,6 +83,7 @@ export function FinanceTabs() {
             {finance && <TabLink to="/finance/expenses" end label={t('finNav.expenses')} />}
             {finance && <TabLink to="/finance/expenses/categories" label={t('finNav.categories')} />}
             {finance && <TabLink to="/finance/ledger" label={t('finNav.ledger')} />}
+            {finance && <TabLink to="/finance/settlements" label={t('settlements.tab')} />}
             <TabLink to="/finance/profitability" label={t('reports.tab.profitability')} />
         </TabList>
     );

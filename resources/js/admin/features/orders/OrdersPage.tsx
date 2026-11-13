@@ -48,7 +48,7 @@ import {
 } from './api';
 import { openInvoices, useBulkPack } from './composeApi';
 import { useBulkFulfil, type FulfilMove } from './fulfilmentApi';
-import { Soon } from './OrderComposer';
+import { CourierBookingPanel } from '@/features/couriers';
 import { Taka, ageLabel, dhakaDate, dhakaParts, isZeroAmount, rangeLabel } from './format';
 import { OrderStatusBadge, PaymentChip, RiskPill, paymentLabel, sourceLabel } from './parts';
 
@@ -118,6 +118,8 @@ export function OrdersPage() {
     const deliverBulk = useBulkFulfil('deliver');
     const canFulfil = canPack && can(me, 'shipments.book');
     const canPrint = can(me, 'orders.view') && can(me, 'customers.view_pii');
+    // P6: bulk courier submission from the board (orders.update + shipments.book), via the booking panel.
+    const [booking, setBooking] = useState<number[] | null>(null);
 
     const rows = orders.data?.data ?? [];
     const counts = orders.data?.meta.counts ?? {};
@@ -432,17 +434,20 @@ export function OrdersPage() {
                     canPack={canPack}
                     canFulfil={canFulfil}
                     canPrint={canPrint}
+                    canBook={canFulfil}
                     result={result}
                     onConfirm={confirmSelected}
                     onPack={packSelected}
                     onFulfil={fulfilSelected}
                     onPrint={printSelected}
+                    onBook={() => setBooking([...selected])}
                     onClear={() => {
                         setSelected(new Set());
                         setResult(null);
                     }}
                 />
             )}
+            {canFulfil && <CourierBookingPanel open={booking !== null} orderIds={booking ?? []} onClose={() => setBooking(null)} />}
         </section>
     );
 }
@@ -641,11 +646,13 @@ function BulkActionBar({
     canPack,
     canFulfil,
     canPrint,
+    canBook,
     result,
     onConfirm,
     onPack,
     onFulfil,
     onPrint,
+    onBook,
     onClear,
 }: {
     docked: boolean;
@@ -660,11 +667,13 @@ function BulkActionBar({
     canPack: boolean;
     canFulfil: boolean;
     canPrint: boolean;
+    canBook: boolean;
     result: { done: number; failed: BulkResult[] } | null;
     onConfirm: () => void;
     onPack: () => void;
     onFulfil: (move: FulfilMove) => void;
     onPrint: () => void;
+    onBook: () => void;
     onClear: () => void;
 }) {
     const { t } = useI18n();
@@ -771,14 +780,12 @@ function BulkActionBar({
                 <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
                     {confirm}
                     {packButton}
-                    <Soon label={t('orders.bulk.bookCourierSoon')}>
-                        {(id) => (
-                            <Button variant="outline" aria-disabled="true" aria-describedby={id} onClick={(e) => e.preventDefault()} className="cursor-not-allowed !text-fg-disabled hover:!bg-surface">
-                                <TruckIcon size={16} aria-hidden />
-                                {t('orders.bulk.bookCourier')}
-                            </Button>
-                        )}
-                    </Soon>
+                    {canBook && (
+                        <Button variant="outline" onClick={onBook} disabled={count === 0}>
+                            <TruckIcon size={16} aria-hidden />
+                            {t('orders.bulk.bookCourier')}
+                        </Button>
+                    )}
                     {print}
                     {more}
                 </div>

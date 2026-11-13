@@ -1,0 +1,9 @@
+{
+  "store_id": 1,
+  "store_name": "Test Store",
+  "store_address": "Test store address",
+  "is_active": 1,
+  "event": "store.created",
+  "updated_at": "2024-12-27 23:55:34",
+  "timestamp": "2024-12-27T17:55:34+00:00"
+}

@@ -1,0 +1,12 @@
+{
+    "_fixture": {
+        "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Check Status by CID', 200 example; value list from Steadfast API guide, verbatim third-party paste (github.com/MdSalman2022/Ecommerce-site-backend steadfastapi.txt) via docs/_research/agent3-appbyte-and-couriers.md §6",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "The collection's own example value is 'partial_delivered'. status_by_trackingcode may return 'in review' with a space (research §6.5)."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "delivery_status": "{{delivery_status}}"
+    }
+}

@@ -32,6 +32,9 @@ final class OrderMessageData
             'cod_amount' => self::amount($order->due_total),
             'track_url' => config('notifications.short_link_base', 'tmbd.co').'/'.$order->number,
             'hotline' => (string) config('notifications.hotline'),
+            // PLACEHOLDER (P6): neither courier's status API returns the rider's number, so
+            // `order.out_for_delivery` names our hotline rather than send a literal {rider_phone}.
+            'rider_phone' => (string) config('notifications.hotline'),
             'store_url' => (string) config('notifications.store_url'),
             'date_range' => (string) trans('notifications.delivery_window', [], $locale),
             'eta' => (string) trans('notifications.shipping_eta', [], $locale),

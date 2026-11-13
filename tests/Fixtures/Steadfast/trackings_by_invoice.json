@@ -1,0 +1,49 @@
+{
+    "_fixture": {
+        "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Get Trackings By Invoice', 200 example (first two events, trimmed)",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "Each event carries the integer consignment_id — the only official invoice-keyed answer that does. tracking_type 1 = created by sender/API, 10 = status updated, 6 = field changed."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "tracking": [
+            {
+                "id": 1138890547,
+                "consignment_id": 170577767,
+                "sender_id": null,
+                "tracking_type": 1,
+                "icon": null,
+                "text": "Consignment created by Sender(API).",
+                "user_type": null,
+                "user_id": 37722,
+                "deliveryman_id": null,
+                "admin_id": null,
+                "updated_by": null,
+                "confirm_status": 0,
+                "status": 1,
+                "hide_sender": 0,
+                "created_at": "2025-09-04T09:46:19.000000Z",
+                "updated_at": "2025-09-04T09:46:19.000000Z"
+            },
+            {
+                "id": 1139149020,
+                "consignment_id": 170577767,
+                "sender_id": null,
+                "tracking_type": 10,
+                "icon": null,
+                "text": "Consignment status has been updated as Pending",
+                "user_type": null,
+                "user_id": 37722,
+                "deliveryman_id": null,
+                "admin_id": null,
+                "updated_by": null,
+                "confirm_status": 0,
+                "status": 1,
+                "hide_sender": 0,
+                "created_at": "2025-09-04T11:51:07.000000Z",
+                "updated_at": "2025-09-04T11:51:07.000000Z"
+            }
+        ]
+    }
+}

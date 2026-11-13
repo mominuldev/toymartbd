@@ -137,12 +137,25 @@ export const bulkPackOrdersRequestSchema = z.object({
 });
 export type BulkPackOrdersRequestInput = z.input<typeof bulkPackOrdersRequestSchema>;
 
+/** `POST /shipments/bulk` — send many orders to one courier from the board. Needs */
+export const bulkRequestShipmentsRequestSchema = z.object({
+    "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
+    "provider": z.string().max(32).nullable().optional(),
+});
+export type BulkRequestShipmentsRequestInput = z.input<typeof bulkRequestShipmentsRequestSchema>;
+
 /** `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list */
 export const cancelOrderRequestSchema = z.object({
     "reason": cancellationReasonSchema,
     "note": z.string().max(500).nullable().optional(),
 });
 export type CancelOrderRequestInput = z.input<typeof cancelOrderRequestSchema>;
+
+/** `POST /shipments/{shipment}/cancel` — only pending or failed shipments; needs shipments.cancel. */
+export const cancelShipmentRequestSchema = z.object({
+    "reason": z.string().max(255).nullable().optional(),
+});
+export type CancelShipmentRequestInput = z.input<typeof cancelShipmentRequestSchema>;
 
 /** `POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from */
 export const checkoutRequestSchema = z.object({
@@ -241,6 +254,26 @@ export const holdOrderRequestSchema = z.object({
 });
 export type HoldOrderRequestInput = z.input<typeof holdOrderRequestSchema>;
 
+/** `POST /finance/settlements` — import one courier remittance: `provider` (courier code), */
+export const importSettlementRequestSchema = z.object({
+    "provider": z.string().min(1),
+    "reference": z.string().min(1).max(120),
+    "received_at": z.string().min(1),
+    "period_start": z.string().nullable().optional(),
+    "period_end": z.string().nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+    "file": z.instanceof(Blob).optional(),
+    "lines": z.array(z.object({
+    "consignment_id": z.string().min(1).max(64),
+    "cod_amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "delivery_charge": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "cod_fee": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "return_charge": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "net_amount": z.string().regex(new RegExp("^-?\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+})).min(1).max(500).optional(),
+});
+export type ImportSettlementRequestInput = z.input<typeof importSettlementRequestSchema>;
+
 /** `POST /returns/{orderReturn}/inspect` — needs returns.manage. One row per returned line: */
 export const inspectReturnRequestSchema = z.object({
     "items": z.array(z.object({
@@ -252,6 +285,13 @@ export const inspectReturnRequestSchema = z.object({
 });
 export type InspectReturnRequestInput = z.input<typeof inspectReturnRequestSchema>;
 
+/** `POST /risk/orders/{order}/calls` — `outcome` (CallOutcome) and an optional `note`. Needs risk.verify. */
+export const logVerificationCallRequestSchema = z.object({
+    "outcome": z.enum(["confirmed","no_answer","switched_off","wrong_number","call_back","declined"]),
+    "note": z.string().max(1000).nullable().optional(),
+});
+export type LogVerificationCallRequestInput = z.input<typeof logVerificationCallRequestSchema>;
+
 /** `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`. */
 export const loginRequestSchema = z.object({
     "email": z.email().min(1).max(255),
@@ -259,6 +299,13 @@ export const loginRequestSchema = z.object({
     "remember": z.boolean().optional(),
 });
 export type LoginRequestInput = z.input<typeof loginRequestSchema>;
+
+/** `PUT /courier-locations/{provider}/{location}/mapping` — a human maps one courier zone */
+export const mapCourierLocationRequestSchema = z.object({
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+});
+export type MapCourierLocationRequestInput = z.input<typeof mapCourierLocationRequestSchema>;
 
 /** `POST /products/margin-preview` — margins for prices and costs the form has not */
 export const marginPreviewRequestSchema = z.object({
@@ -330,6 +377,12 @@ export const payRefundRequestSchema = z.object({
 });
 export type PayRefundRequestInput = z.input<typeof payRefundRequestSchema>;
 
+/** `GET /risk/lookup?phone=…` and `POST /risk/lookup/rescore` — a Bangladesh mobile number */
+export const phoneLookupRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+});
+export type PhoneLookupRequestInput = z.input<typeof phoneLookupRequestSchema>;
+
 /** `POST /notifications/templates/{template}/preview` — measure an unsaved body (the */
 export const previewNotificationTemplateRequestSchema = z.object({
     "body_en": z.string().min(1).max(2000),
@@ -364,6 +417,13 @@ export const recordCodReceiptRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type RecordCodReceiptRequestInput = z.input<typeof recordCodReceiptRequestSchema>;
+
+/** `POST /risk/orders/{order}/reject` — a person cancels a held order: `reason` (a */
+export const rejectHeldOrderRequestSchema = z.object({
+    "reason": z.enum(["customer_request","customer_unreachable","fake_order","duplicate_order","out_of_stock","pricing_error","address_unserviceable","payment_failed","other"]),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type RejectHeldOrderRequestInput = z.input<typeof rejectHeldOrderRequestSchema>;
 
 /** `POST /refunds/{refund}/reject` — same permission as approving it; a reason is required. */
 export const rejectRefundRequestSchema = z.object({
@@ -413,12 +473,44 @@ export const requestOtpRequestSchema = z.object({
 });
 export type RequestOtpRequestInput = z.input<typeof requestOtpRequestSchema>;
 
+/** `POST /orders/{order}/shipments` — send one order to a courier (P6, DATABASE-DESIGN §4.2). */
+export const requestShipmentRequestSchema = z.object({
+    "provider": z.string().max(32).nullable().optional(),
+    "courier_location_id": z.number().int().min(1).nullable().optional(),
+    "weight_grams": z.number().int().min(1).max(100000).nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type RequestShipmentRequestInput = z.input<typeof requestShipmentRequestSchema>;
+
+/** `POST /finance/settlements/{settlement}/items/{item}/review` — `decision` (accepted|excluded; */
+export const reviewSettlementLineRequestSchema = z.object({
+    "decision": z.enum(["accepted","excluded"]),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type ReviewSettlementLineRequestInput = z.input<typeof reviewSettlementLineRequestSchema>;
+
+/** `POST /settings/messaging/test` — one test SMS to a Bangladeshi mobile (rule 30: */
+export const sendTestSmsRequestSchema = z.object({
+    "phone": z.string().min(1).regex(new RegExp("^(?:\\+?880|0)1[3-9]\\d{8}$")),
+    "locale": z.enum(["en","bn"]),
+});
+export type SendTestSmsRequestInput = z.input<typeof sendTestSmsRequestSchema>;
+
 /** `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta */
 export const seoMeasureRequestSchema = z.object({
     "title": z.string().max(500).nullable().optional(),
     "description": z.string().max(1000).nullable().optional(),
 });
 export type SeoMeasureRequestInput = z.input<typeof seoMeasureRequestSchema>;
+
+/** `PUT /risk/phone-status` — put a phone on a list (or back to normal): `phone`, `status` */
+export const setPhoneStatusRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+    "status": z.enum(["normal","watch","blacklist","whitelist"]),
+    "reason": z.string().min(3).max(500),
+    "confirm": z.string().max(8).nullable().optional(),
+});
+export type SetPhoneStatusRequestInput = z.input<typeof setPhoneStatusRequestSchema>;
 
 /** `POST /orders/{order}/ship` — manual dispatch (P5, until Phase 6 courier booking). */
 export const shipOrderRequestSchema = z.object({
@@ -427,6 +519,22 @@ export const shipOrderRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type ShipOrderRequestInput = z.input<typeof shipOrderRequestSchema>;
+
+/** `GET /shipments/{shipment}/label` and `POST /shipments/labels` — shipping label PDFs. */
+export const shipmentLabelsRequestSchema = z.object({
+    "shipment_ids": z.array(z.number().int().min(1)).min(1).max(100),
+    "locale": z.enum(["en","bn"]).nullable().optional(),
+});
+export type ShipmentLabelsRequestInput = z.input<typeof shipmentLabelsRequestSchema>;
+
+/** `POST /shipments/quote` — the booking panel's charge preview for one order (single) or up */
+export const shipmentQuoteRequestSchema = z.object({
+    "orders": z.array(z.object({
+    "id": z.number().int(),
+    "weight_grams": z.number().int().min(1).max(50000).nullable().optional(),
+})).min(1).max(100),
+});
+export type ShipmentQuoteRequestInput = z.input<typeof shipmentQuoteRequestSchema>;
 
 /** An SSLCommerz IPN, or the browser-return POST forwarded by the storefront (P4-PAY-03). */
 export const sslcommerzNotificationRequestSchema = z.object({
@@ -831,6 +939,40 @@ export const updateCouponRequestSchema = z.object({
 });
 export type UpdateCouponRequestInput = z.input<typeof updateCouponRequestSchema>;
 
+/** `PUT /settings/couriers/{provider}/credentials` — needs settings.manage_integrations. */
+export const updateCourierCredentialsRequestSchema = z.object({
+    "credentials": z.record(z.string(), z.string().nullable()).optional(),
+    "clear": z.array(z.string().max(40)).optional(),
+    "webhook_secret": z.string().min(16).max(255).nullable().optional(),
+    "clear_webhook_secret": z.boolean().optional(),
+});
+export type UpdateCourierCredentialsRequestInput = z.input<typeof updateCourierCredentialsRequestSchema>;
+
+/** `PATCH /settings/couriers/{provider}` — switch a courier on/off or make it the default; */
+export const updateCourierProviderRequestSchema = z.object({
+    "is_active": z.boolean().optional(),
+    "is_default": z.union([z.literal("yes"), z.literal("on"), z.literal("1"), z.literal(1), z.literal("true"), z.literal(true)]).optional(),
+});
+export type UpdateCourierProviderRequestInput = z.input<typeof updateCourierProviderRequestSchema>;
+
+/** `PUT /settings/couriers/{provider}/rates` — the whole rate card; needs */
+export const updateCourierRatesRequestSchema = z.object({
+    "base_charge_dhaka": z.string().min(1).regex(new RegExp("^\\d{1,5}(\\.\\d{1,2})?$")),
+    "base_charge_suburb": z.string().min(1).regex(new RegExp("^\\d{1,5}(\\.\\d{1,2})?$")),
+    "base_charge_outside": z.string().min(1).regex(new RegExp("^\\d{1,5}(\\.\\d{1,2})?$")),
+    "included_weight_grams": z.number().int().min(0).max(30000),
+    "per_kg_charge": z.string().min(1).regex(new RegExp("^\\d{1,5}(\\.\\d{1,2})?$")),
+    "cod_fee_percent": z.string().min(1).regex(new RegExp("^\\d{1,2}(\\.\\d{1,2})?$")),
+    "return_charge": z.string().min(1).regex(new RegExp("^\\d{1,5}(\\.\\d{1,2})?$")),
+});
+export type UpdateCourierRatesRequestInput = z.input<typeof updateCourierRatesRequestSchema>;
+
+/** `PUT /settings/delivery` — the store-level free-delivery threshold; needs */
+export const updateDeliverySettingsRequestSchema = z.object({
+    "free_shipping_threshold": z.string().min(1).regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable(),
+});
+export type UpdateDeliverySettingsRequestInput = z.input<typeof updateDeliverySettingsRequestSchema>;
+
 /** `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500), */
 export const updateMediaRequestSchema = z.object({
     "alt_text": z.string().max(255).nullable().optional(),
@@ -839,6 +981,20 @@ export const updateMediaRequestSchema = z.object({
     "folder_id": z.number().int().nullable().optional(),
 });
 export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
+
+/** `PUT /settings/messaging` — Admin → Integrations → Messaging; needs */
+export const updateMessagingSettingsRequestSchema = z.object({
+    "sms_driver": z.enum(["log","null","reve"]),
+    "reve_base_url": z.url().max(255).nullable().optional(),
+    "reve_sender_id": z.string().max(15).regex(new RegExp("^(?:[A-Za-z0-9][A-Za-z0-9 .\\-]{0,10}|\\+?\\d{5,15})$")).nullable().optional(),
+    "sms_cost_per_segment": z.string().min(1).regex(new RegExp("^\\d{1,4}(?:\\.\\d{1,2})?$")),
+    "whatsapp_enabled": z.boolean(),
+    "reve_api_key": z.string().max(255).nullable().optional(),
+    "reve_secret_key": z.string().max(255).nullable().optional(),
+    "clear_reve_api_key": z.boolean().optional(),
+    "clear_reve_secret_key": z.boolean().optional(),
+});
+export type UpdateMessagingSettingsRequestInput = z.input<typeof updateMessagingSettingsRequestSchema>;
 
 /** `PUT /notifications/customers/{customer}/preferences` — one or more (channel, category) */
 export const updateNotificationPreferencesRequestSchema = z.object({
@@ -999,6 +1155,25 @@ export const updatePurchaseRequestSchema = z.object({
 });
 export type UpdatePurchaseRequestInput = z.input<typeof updatePurchaseRequestSchema>;
 
+/** `PUT /risk/rules` — the Risk rules form: one weight per factor (0–100, totalling ≤ 100 so */
+export const updateRiskRulesRequestSchema = z.object({
+    "weights": z.object({
+    "cancellation_rate": z.number().int().min(0).max(100),
+    "courier_return_rate": z.number().int().min(0).max(100),
+    "failed_delivery": z.number().int().min(0).max(100),
+    "first_order": z.number().int().min(0).max(100),
+    "value_above_norm": z.number().int().min(0).max(100),
+    "address_quality": z.number().int().min(0).max(100),
+    "rapid_repeat": z.number().int().min(0).max(100),
+}),
+    "medium_threshold": z.number().int().min(1).max(99),
+    "high_threshold": z.number().int().min(2).max(100),
+    "first_order_hold_threshold": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "value_norm_multiplier": z.number().min(1).max(20),
+    "rapid_repeat_minutes": z.number().int().min(1).max(1440),
+});
+export type UpdateRiskRulesRequestInput = z.input<typeof updateRiskRulesRequestSchema>;
+
 /** `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change. */
 export const updateSupplierRequestSchema = z.object({
     "name": z.string().max(160).optional(),
@@ -1015,6 +1190,12 @@ export const updateSupplierRequestSchema = z.object({
     "status": supplierStatusSchema.optional(),
 });
 export type UpdateSupplierRequestInput = z.input<typeof updateSupplierRequestSchema>;
+
+/** `POST /risk/orders/{order}/verify` — optional `note`. Needs risk.verify. */
+export const verifyHeldOrderRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type VerifyHeldOrderRequestInput = z.input<typeof verifyHeldOrderRequestSchema>;
 
 /** `POST /storefront/auth/otp/verify` (P4-STO-11). An optional `X-Cart-Token` names the */
 export const verifyOtpRequestSchema = z.object({

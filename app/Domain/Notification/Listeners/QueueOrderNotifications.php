@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Listeners;
 
+use App\Domain\Fulfilment\Events\ShipmentStatusChanged;
 use App\Domain\Notification\Actions\QueueOrderNotification;
+use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Ordering\Events\OrderCancelled;
 use App\Domain\Ordering\Events\OrderConfirmed;
 use App\Domain\Ordering\Events\OrderDelivered;
@@ -17,11 +19,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
  * notification code can never fail the order request that raised the event. The Ordering
  * events are dispatched after commit, so a rolled-back transition sends nothing.
  *
- * `order.out_for_delivery` has a template but no trigger yet: there is no courier status
- * event until shipments exist (Phase 6).
+ * `order.out_for_delivery` is triggered by the courier (P6): Fulfilment's
+ * ShipmentStatusChanged with `to = out_for_delivery`, after commit. Only that transition is
+ * queued ({@see ShouldQueue()}), and an order gets the message once — a second delivery
+ * attempt does not message the customer again.
  */
 final readonly class QueueOrderNotifications implements ShouldQueue
 {
+    private const string OUT_FOR_DELIVERY = 'out_for_delivery';
+
     public function __construct(private QueueOrderNotification $queue) {}
 
     public function viaQueue(): string
@@ -29,6 +35,12 @@ final readonly class QueueOrderNotifications implements ShouldQueue
         $queue = config('notifications.queue', 'notify');
 
         return is_string($queue) ? $queue : 'notify';
+    }
+
+    /** Queue only the events this listener acts on: every order event, and a shipment going out for delivery. */
+    public function shouldQueue(object $event): bool
+    {
+        return ! $event instanceof ShipmentStatusChanged || $event->to === self::OUT_FOR_DELIVERY;
     }
 
     public function onPlaced(OrderPlaced $event): void
@@ -54,5 +66,18 @@ final readonly class QueueOrderNotifications implements ShouldQueue
     public function onCancelled(OrderCancelled $event): void
     {
         $this->queue->handle($event->orderId, 'order.cancelled');
+    }
+
+    public function onShipmentStatusChanged(ShipmentStatusChanged $event): void
+    {
+        $already = NotificationLog::query()
+            ->where('notifiable_type', NotificationLog::NOTIFIABLE_ORDER)
+            ->where('notifiable_id', $event->orderId)
+            ->where('template', 'order.out_for_delivery')
+            ->exists();
+
+        if ($event->to === self::OUT_FOR_DELIVERY && ! $already) {
+            $this->queue->handle($event->orderId, 'order.out_for_delivery');
+        }
     }
 }

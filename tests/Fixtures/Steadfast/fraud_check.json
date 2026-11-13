@@ -1,0 +1,14 @@
+{
+    "_fixture": {
+        "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Fraud Check', 200 example",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "No status wrapper on this endpoint. Requires a merchant account (rule 33b) — not called anywhere until one exists."
+    },
+    "http_status": 200,
+    "body": {
+        "total_parcels": 24,
+        "total_delivered": 9,
+        "total_cancelled": 15,
+        "total_fraud_reports": []
+    }
+}

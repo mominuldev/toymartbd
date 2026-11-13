@@ -69,7 +69,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
                     <div className="flex min-w-0 flex-col gap-4 lg:grow">
                         <OrderHeaderCard order={order} t={t} />
-                        <OrderTimeline order={order} t={t} />
+                        <OrderTimeline order={order} locale={locale} t={t} />
                         <DeliveryDetails order={order} locale={locale} t={t} />
                     </div>
                     <aside className="flex flex-col gap-4 lg:w-100 lg:shrink-0">

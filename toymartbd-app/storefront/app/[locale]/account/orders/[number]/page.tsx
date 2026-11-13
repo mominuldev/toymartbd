@@ -89,7 +89,7 @@ export default async function AccountOrderPage({ params }: Props) {
                             {due ? ` ${due}` : ''}
                         </p>
                     </section>
-                    <OrderTimeline order={order} t={t} />
+                    <OrderTimeline order={order} locale={locale} t={t} />
                 </div>
                 <aside className="flex flex-col gap-4 lg:w-104 lg:shrink-0">
                     <OrderItems order={order} locale={locale} t={t} totals />

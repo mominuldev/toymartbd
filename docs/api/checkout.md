@@ -153,6 +153,12 @@ the cart token (in a short-lived cookie) to read the confirmation — the cart i
   lapses; null for COD). Public tracking never returns a session URL or a retry.
 - `due_total` is what the rider collects ("Cash on delivery · ৳1,930.00 due").
 - `timeline` — customer-visible events only, oldest first; `stage` codes as above.
+- `shipment` (P6) — `null` until a courier has accepted the parcel; then `{ courier: {code, name,
+  name_bn}, status, consignment_id, tracking_url, milestones: [{ milestone, at }] }`. `milestones`
+  are `booked` · `picked_up` · `in_transit` · `out_for_delivery` · `delivered` · `returned`, oldest
+  first, from the courier's history (`courier_tracking_events`). `consignment_id` is `null` for a
+  bulk-submitted parcel the courier has not confirmed yet (rule 24d). Public tracking returns it
+  too (number + phone digits, rule 22). See `courier-tracking.md`.
 - `image` may be `null`. `slug` may be `null` if the product was since deleted.
 - Never present: cost prices, risk score/flags, internal notes, the full phone, the customer id.
 

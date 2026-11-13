@@ -21,6 +21,12 @@ import { purchasingBn, purchasingEn } from './messages.purchasing';
 import { reportsBn, reportsEn } from './messages.reports';
 import { financeBn, financeEn } from './messages.finance';
 import { fulfilmentBn, fulfilmentEn } from './messages.fulfilment';
+import { courierReportBn, courierReportEn } from './messages.courierReport';
+import { courierLocationsBn, courierLocationsEn } from './messages.courierLocations';
+import { integrationsBn, integrationsEn } from './messages.integrations';
+import { couriersBn, couriersEn } from './messages.couriers';
+import { riskBn, riskEn } from './messages.risk';
+import { settlementsBn, settlementsEn } from './messages.settlements';
 
 export const en = {
     ...productsEn,
@@ -37,6 +43,12 @@ export const en = {
     ...reportsEn,
     ...financeEn,
     ...fulfilmentEn,
+    ...courierReportEn,
+    ...courierLocationsEn,
+    ...integrationsEn,
+    ...couriersEn,
+    ...riskEn,
+    ...settlementsEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -307,6 +319,12 @@ export const bn: Messages = {
     ...reportsBn,
     ...financeBn,
     ...fulfilmentBn,
+    ...courierReportBn,
+    ...courierLocationsBn,
+    ...integrationsBn,
+    ...couriersBn,
+    ...riskBn,
+    ...settlementsBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

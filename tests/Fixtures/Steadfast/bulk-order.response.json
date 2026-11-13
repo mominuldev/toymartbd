@@ -1,0 +1,38 @@
+{
+    "_fixture": {
+        "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Create Bulk Order', 200 example (error entries), plus the success-entry shape from Steadfast API guide, verbatim third-party paste (github.com/MdSalman2022/Ecommerce-site-backend steadfastapi.txt) via docs/_research/agent3-appbyte-and-couriers.md §6",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
+        "notes": "HTTP 200 even when entries fail. `error` is a JSON string holding a JSON array (double-decode). Rule 24d: we treat a bulk call as 'submitted' and never take ids from it; a poll or webhook confirms each shipment."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "message": "We have a response for you.",
+        "data": [
+            {
+                "invoice": "{{invoice_1}}",
+                "recipient_name": "Badrul Hasan Sajib",
+                "recipient_phone": "01309055966",
+                "recipient_address": "Dhanmondi, Zigatola",
+                "cod_amount": "3010",
+                "status": "success",
+                "note": null,
+                "consignment_id": 11543968,
+                "tracking_code": "B025A038",
+                "error": null
+            },
+            {
+                "invoice": "{{invoice_2}}",
+                "recipient_name": "Badrul Hasan Sajib",
+                "recipient_phone": "01309055966",
+                "recipient_address": "Dhanmondi, Zigatola",
+                "cod_amount": "3010",
+                "status": null,
+                "note": null,
+                "consignment_id": null,
+                "tracking_code": null,
+                "error": "[\"THIS_INVOICE_ALREADY_EXISTS\"]"
+            }
+        ]
+    }
+}

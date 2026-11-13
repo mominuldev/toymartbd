@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Ordering\Actions;
 
-use App\Domain\Inventory\Actions\ConsumeReservedStock;
 use App\Domain\Inventory\Exceptions\InsufficientStock;
-use App\Domain\Ordering\Enums\FulfillmentStatus;
-use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Exceptions\InvalidOrderTransition;
 use App\Domain\Ordering\Models\Order;
-use App\Domain\Ordering\Services\OrderStateMachine;
-use App\Domain\Ordering\Services\OrderTransitions;
+use App\Domain\Ordering\Services\OrderDispatcher;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,21 +23,20 @@ use Illuminate\Support\Facades\DB;
  *   order_events row carrying the courier name / tracking reference → OrderShipped after
  *   commit (the shipped notification listens to it).
  *
- * There is no `shipments` table yet, so the free-text courier name and tracking
- * reference live on the timeline row's `meta` (`manual: true`). No `courier_charge`
- * ledger entry is written — the charge is unknown here; Phase 6's booking writes it.
+ * The steps after the lock are {@see OrderDispatcher} — shared with courier booking
+ * (Phase 6, ShipOrderForCourier) so stock consumption has one implementation. A manual
+ * dispatch has no `shipments` row: the free-text courier name and tracking reference live
+ * on the timeline row's `meta` (`manual: true`), and no `courier_charge` is written (the
+ * charge is unknown here; a courier booking writes it).
  */
 final readonly class MarkOrderShipped
 {
     /** `stock_movements.reference_type` for a sale_out against an order. */
-    public const string STOCK_REFERENCE = 'order';
+    public const string STOCK_REFERENCE = OrderDispatcher::STOCK_REFERENCE;
 
     public const int FIELD_MAX = 120;
 
-    public function __construct(
-        private OrderTransitions $transitions,
-        private ConsumeReservedStock $consume,
-    ) {}
+    public function __construct(private OrderDispatcher $dispatcher) {}
 
     /**
      * @throws InvalidOrderTransition when the order cannot ship from its status (409)
@@ -61,39 +56,12 @@ final readonly class MarkOrderShipped
         return DB::transaction(function () use ($order, $courierName, $trackingReference, $userId, $note): Order {
             /** @var Order $locked */
             $locked = Order::query()->with('items')->lockForUpdate()->findOrFail($order->id);
-            OrderStateMachine::assertStatus($locked->status, OrderStatus::Shipped);
 
-            $lines = [];
-            foreach ($locked->items as $item) {
-                $open = $item->quantity - $item->quantity_shipped;
-                if ($open <= 0) {
-                    continue;
-                }
-                if ($item->variant_id !== null) {
-                    $lines[] = ['variant_id' => $item->variant_id, 'quantity' => $open, 'unit_cost' => $item->cost_price_snapshot];
-                }
-                $item->quantity_shipped = $item->quantity;
-                $item->save();
-            }
-            usort($lines, static fn (array $a, array $b): int => $a['variant_id'] <=> $b['variant_id']);
-            $this->consume->handle($lines, self::STOCK_REFERENCE, $locked->id, $userId);
-
-            if ($locked->fulfillment_status !== FulfillmentStatus::Fulfilled) {
-                $this->transitions->transitionFulfillment($locked, FulfillmentStatus::Fulfilled, $userId);
-            }
-
-            return $this->transitions->transition(
-                $locked,
-                OrderStatus::Shipped,
-                $userId,
-                meta: array_filter([
-                    'manual' => true,
-                    'courier_name' => $courierName,
-                    'tracking_reference' => $trackingReference,
-                    'consumed' => array_map(static fn (array $l): array => ['variant_id' => $l['variant_id'], 'quantity' => $l['quantity']], $lines),
-                ], static fn (mixed $v): bool => $v !== null),
-                description: $note,
-            );
+            return $this->dispatcher->dispatch($locked, $userId, array_filter([
+                'manual' => true,
+                'courier_name' => $courierName,
+                'tracking_reference' => $trackingReference,
+            ], static fn (mixed $v): bool => $v !== null), $note);
         });
     }
 

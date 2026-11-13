@@ -21,7 +21,7 @@ Every button name below is the English label on screen. The Bangla label is give
 2. Run `php artisan toymart:payments:gateway sslcommerz` and confirm it is **inactive**.
 3. Note the date and time. The profit check in §10 uses it.
 
-**What you will and won't see for messages.** SMS goes out for real through REVE SMS (`SMS_DRIVER=reve`); there is no WhatsApp account yet, so WhatsApp is switched off (`WHATSAPP_ENABLED=false`) and every order update goes by SMS. Before you start, the developer runs `php artisan toymart:sms:test <your number>` and `--bn` once each; both must arrive.
+**What you will and won't see for messages.** SMS goes out for real through REVE SMS. You enter the REVE credentials yourself at **Admin → Integrations → Messaging** (`/admin/integrations/messaging`) — provider, API key, secret key, sender ID and the cost per segment; the keys are stored encrypted and only their last 4 characters are ever shown again. There is no WhatsApp account yet, so the **WhatsApp** switch on that screen stays off and every order update goes by SMS. Before you start, use **Send test SMS** on that screen once in English and once in Bangla (the developer's `php artisan toymart:sms:test <your number>` / `--bn` uses the same settings); both must arrive.
 
 | You will see | You will NOT see |
 |---|---|
@@ -73,7 +73,7 @@ Fail step 2 if any of these happen:
 |---|---|---|---|
 | 4.1 | **Inventory**: Red and Blue rows. | Red: on hand 5, **reserved 1** (A), available 4. Blue: on hand 5, **reserved 2 + C's quantity**, available drops by the same amount. On hand has **not** changed. | ☐ |
 | 4.2 | **Inventory → Movements** (`/admin/inventory/movements`). | Only "Opening stock" rows. A reservation is **not** a movement. | ☐ |
-| 4.3 | **Automations → Message log**. | One **Sent** row per order (A, B, C), template "Order confirmation", channel WhatsApp, masked recipient. | ☐ |
+| 4.3 | **Automations → Message log**. | One **Sent** row per order (A, B, C), template "Order confirmation", channel SMS (WhatsApp is off), masked recipient. | ☐ |
 
 ## 5. Confirm → pack → ship → deliver (orders A and B)
 

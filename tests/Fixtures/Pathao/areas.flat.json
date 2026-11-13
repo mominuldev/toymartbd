@@ -1,0 +1,1087 @@
+{
+  "message": "Area list fetched.",
+  "type": "success",
+  "code": 200,
+  "data": [
+    {
+      "id": 29819,
+      "name": "16 Pakhi",
+      "originalName": "16 Pakhi",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29821,
+      "name": "16 Pakhi Fokir Bari Mosjid",
+      "originalName": "16 Pakhi Fokir Bari Mosjid",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 4238,
+      "name": "1 kilometer",
+      "originalName": "1 kilometer",
+      "is_third_party": 0,
+      "zone_id": 83,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30106,
+      "name": "3 mail",
+      "originalName": "3 mail",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 24136,
+      "name": "5 Gachiya",
+      "originalName": "5 Gachiya",
+      "is_third_party": 0,
+      "zone_id": 1465,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 3069,
+      "name": "60 feet road",
+      "originalName": "60 feet road",
+      "is_third_party": 0,
+      "zone_id": 298,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30373,
+      "name": "AB Bank Market",
+      "originalName": "AB Bank Market",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 17103,
+      "name": "Abdullabag, Uttar Badda",
+      "originalName": "Abdullabag, Uttar Badda",
+      "is_third_party": 0,
+      "zone_id": 30,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 40835,
+      "name": "Abeder bari",
+      "originalName": "Abeder bari",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 29752,
+      "name": "Abjal Market",
+      "originalName": "Abjal Market",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 40843,
+      "name": "Abjal talukder bari",
+      "originalName": "Abjal talukder bari",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 17821,
+      "name": "Abul Hasnat Road DTW, Dhaka WASA",
+      "originalName": "Abul Hasnat Road DTW, Dhaka WASA",
+      "is_third_party": 0,
+      "zone_id": 274,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5129,
+      "name": "Adabor Road  1",
+      "originalName": "Adabor Road  1",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5138,
+      "name": "Adabor Road  10",
+      "originalName": "Adabor Road  10",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5139,
+      "name": "Adabor Road  11",
+      "originalName": "Adabor Road  11",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5140,
+      "name": "Adabor Road  12",
+      "originalName": "Adabor Road  12",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5141,
+      "name": "Adabor Road  13",
+      "originalName": "Adabor Road  13",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5142,
+      "name": "Adabor Road  14",
+      "originalName": "Adabor Road  14",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5130,
+      "name": "Adabor Road  2",
+      "originalName": "Adabor Road  2",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5131,
+      "name": "Adabor Road  3",
+      "originalName": "Adabor Road  3",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5132,
+      "name": "Adabor Road  4",
+      "originalName": "Adabor Road  4",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5133,
+      "name": "Adabor Road  5",
+      "originalName": "Adabor Road  5",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5134,
+      "name": "Adabor Road  6",
+      "originalName": "Adabor Road  6",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5135,
+      "name": "Adabor Road  7",
+      "originalName": "Adabor Road  7",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5136,
+      "name": "Adabor Road  8",
+      "originalName": "Adabor Road  8",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5137,
+      "name": "Adabor Road  9",
+      "originalName": "Adabor Road  9",
+      "is_third_party": 0,
+      "zone_id": 52,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 17098,
+      "name": "Adarsha Nagar, Middle Badda",
+      "originalName": "Adarsha Nagar, Middle Badda",
+      "is_third_party": 0,
+      "zone_id": 30,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30874,
+      "name": "ADE Hostel, Banani",
+      "originalName": "ADE Hostel, Banani",
+      "is_third_party": 0,
+      "zone_id": 1,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30104,
+      "name": "Afazuddin school & college,",
+      "originalName": "Afazuddin school & college,",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30367,
+      "name": "Aganagar Boro Mosjid",
+      "originalName": "Aganagar Boro Mosjid",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30368,
+      "name": "Aganagar Choto Mosjid",
+      "originalName": "Aganagar Choto Mosjid",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30289,
+      "name": "Aganagar Union Porishad",
+      "originalName": "Aganagar Union Porishad",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5166,
+      "name": "Agargaon Bus Stop",
+      "originalName": "Agargaon Bus Stop",
+      "is_third_party": 0,
+      "zone_id": 17,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 21772,
+      "name": "Agargaon New Colony",
+      "originalName": "Agargaon New Colony",
+      "is_third_party": 0,
+      "zone_id": 17,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 21771,
+      "name": "Agargaon Passport Office",
+      "originalName": "Agargaon Passport Office",
+      "is_third_party": 0,
+      "zone_id": 17,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 19946,
+      "name": "Agargaon Taltola",
+      "originalName": "Agargaon Taltola",
+      "is_third_party": 0,
+      "zone_id": 17,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 17820,
+      "name": "Aga Sadek Rd",
+      "originalName": "Aga Sadek Rd",
+      "is_third_party": 0,
+      "zone_id": 274,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 21888,
+      "name": "Aga Sadek Road",
+      "originalName": "Aga Sadek Road",
+      "is_third_party": 0,
+      "zone_id": 274,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 32171,
+      "name": "AGB Colony",
+      "originalName": "AGB Colony",
+      "is_third_party": 0,
+      "zone_id": 317,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 17822,
+      "name": "Ahsan Plastic Industry Road",
+      "originalName": "Ahsan Plastic Industry Road",
+      "is_third_party": 0,
+      "zone_id": 274,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 28904,
+      "name": "Aingon",
+      "originalName": "Aingon",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 28905,
+      "name": "Aingon 3 rastar mor",
+      "originalName": "Aingon 3 rastar mor",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30098,
+      "name": "Aingon bridge",
+      "originalName": "Aingon bridge",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30097,
+      "name": "Aingon pocchimprara",
+      "originalName": "Aingon pocchimprara",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 38621,
+      "name": "Airport Inside Area",
+      "originalName": "Airport Inside Area",
+      "is_third_party": 0,
+      "zone_id": 2896,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 1264,
+      "name": "Akhalia",
+      "originalName": "Akhalia",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34831,
+      "name": "Akhalia Ghat",
+      "originalName": "Akhalia Ghat",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34814,
+      "name": "Akhalia Nobabi Mosjid",
+      "originalName": "Akhalia Nobabi Mosjid",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34920,
+      "name": "Akhra Goli",
+      "originalName": "Akhra Goli",
+      "is_third_party": 0,
+      "zone_id": 2460,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5267,
+      "name": "A K Khan moor",
+      "originalName": "A K Khan moor",
+      "is_third_party": 0,
+      "zone_id": 78,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30288,
+      "name": "AK Khondokar Road",
+      "originalName": "AK Khondokar Road",
+      "is_third_party": 0,
+      "zone_id": 1,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29818,
+      "name": "Akrain Chhomil",
+      "originalName": "Akrain Chhomil",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29865,
+      "name": "Akran Bazar",
+      "originalName": "Akran Bazar",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29789,
+      "name": "Akran Central Mosjid",
+      "originalName": "Akran Central Mosjid",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29787,
+      "name": "Akran Namapara",
+      "originalName": "Akran Namapara",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29781,
+      "name": "Akran Pukurpar",
+      "originalName": "Akran Pukurpar",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29790,
+      "name": "Akran Walton Shoroom",
+      "originalName": "Akran Walton Shoroom",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29786,
+      "name": "Alal Cheyarmen er Bari",
+      "originalName": "Alal Cheyarmen er Bari",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 40804,
+      "name": "alam companyr bari",
+      "originalName": "alam companyr bari",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 30371,
+      "name": "Alam Mol",
+      "originalName": "Alam Mol",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30384,
+      "name": "Alam Tower",
+      "originalName": "Alam Tower",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16817,
+      "name": "Al-Huda Masjid",
+      "originalName": "Al-Huda Masjid",
+      "is_third_party": 0,
+      "zone_id": 965,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 35948,
+      "name": "Ali Nagar Bazar Chowrasta",
+      "originalName": "Ali Nagar Bazar Chowrasta",
+      "is_third_party": 0,
+      "zone_id": 2700,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 17102,
+      "name": "Alir Mor, Uttar Badda",
+      "originalName": "Alir Mor, Uttar Badda",
+      "is_third_party": 0,
+      "zone_id": 30,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34919,
+      "name": "Al Modina",
+      "originalName": "Al Modina",
+      "is_third_party": 0,
+      "zone_id": 2460,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5320,
+      "name": "amanbazar",
+      "originalName": "amanbazar",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 4300,
+      "name": "Amanbazar",
+      "originalName": "Amanbazar",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 40800,
+      "name": "Aman Bazar Jugirhat, Nur Market",
+      "originalName": "Aman Bazar Jugirhat, Nur Market",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 40801,
+      "name": "Aman bazar koshal shah",
+      "originalName": "Aman bazar koshal shah",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 29783,
+      "name": "Am Bagan Akran ",
+      "originalName": "Am Bagan Akran ",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30290,
+      "name": "Ambagicha Kheler math",
+      "originalName": "Ambagicha Kheler math",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 1242,
+      "name": "Amborkhana",
+      "originalName": "Amborkhana",
+      "is_third_party": 0,
+      "zone_id": 2461,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29779,
+      "name": "Amin Agro",
+      "originalName": "Amin Agro",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 21889,
+      "name": "Aminbazar",
+      "originalName": "Aminbazar",
+      "is_third_party": 0,
+      "zone_id": 1465,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 29763,
+      "name": "Amin Model Twon",
+      "originalName": "Amin Model Twon",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 40828,
+      "name": "Amin villa",
+      "originalName": "Amin villa",
+      "is_third_party": 0,
+      "zone_id": 3013,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 34844,
+      "name": "Amir Complex Sust Gate",
+      "originalName": "Amir Complex Sust Gate",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 41326,
+      "name": "Amkuna",
+      "originalName": "Amkuna",
+      "is_third_party": 0,
+      "zone_id": 3036,
+      "is_home_delivery_available": false,
+      "is_pickup_available": false
+    },
+    {
+      "id": 29782,
+      "name": "Amloke Bagan Akran ",
+      "originalName": "Amloke Bagan Akran ",
+      "is_third_party": 0,
+      "zone_id": 1757,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 4904,
+      "name": "Ananda nagar",
+      "originalName": "Ananda nagar",
+      "is_third_party": 0,
+      "zone_id": 300,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25216,
+      "name": "Anar kolir mor",
+      "originalName": "Anar kolir mor",
+      "is_third_party": 0,
+      "zone_id": 1476,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5301,
+      "name": "Anawara - Center",
+      "originalName": "Anawara - Center",
+      "is_third_party": 0,
+      "zone_id": 434,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 4193,
+      "name": "Anawara - Crossing",
+      "originalName": "Anawara - Crossing",
+      "is_third_party": 0,
+      "zone_id": 434,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 5435,
+      "name": "anderkilla",
+      "originalName": "anderkilla",
+      "is_third_party": 0,
+      "zone_id": 69,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 3237,
+      "name": "Anowara",
+      "originalName": "Anowara",
+      "is_third_party": 0,
+      "zone_id": 453,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25868,
+      "name": "Anowar Jong Bari",
+      "originalName": "Anowar Jong Bari",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25869,
+      "name": "Anowar Jong Mosjid",
+      "originalName": "Anowar Jong Mosjid",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25867,
+      "name": "Anowar Jong School",
+      "originalName": "Anowar Jong School",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34925,
+      "name": "Anti Corruption Commission, Sylhet",
+      "originalName": "Anti Corruption Commission, Sylhet",
+      "is_third_party": 0,
+      "zone_id": 2460,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 3251,
+      "name": "Anwara",
+      "originalName": "Anwara",
+      "is_third_party": 0,
+      "zone_id": 453,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34842,
+      "name": "Anwara Road Akhalia ",
+      "originalName": "Anwara Road Akhalia ",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 19167,
+      "name": "Anwar Jong Road",
+      "originalName": "Anwar Jong Road",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25871,
+      "name": "Aolat Cheyarmen Bari",
+      "originalName": "Aolat Cheyarmen Bari",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 24153,
+      "name": "Aoyal Markter",
+      "originalName": "Aoyal Markter",
+      "is_third_party": 0,
+      "zone_id": 1466,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 3088,
+      "name": "Arambag",
+      "originalName": "Arambag",
+      "is_third_party": 0,
+      "zone_id": 317,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 32172,
+      "name": "Arambag Bus Counter",
+      "originalName": "Arambag Bus Counter",
+      "is_third_party": 0,
+      "zone_id": 317,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 24145,
+      "name": "Aria Arar Mor",
+      "originalName": "Aria Arar Mor",
+      "is_third_party": 0,
+      "zone_id": 1476,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 32646,
+      "name": "Army Camp ",
+      "originalName": "Army Camp ",
+      "is_third_party": 0,
+      "zone_id": 1476,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 34841,
+      "name": "Asa Offiice er Goli Akahila ",
+      "originalName": "Asa Offiice er Goli Akahila ",
+      "is_third_party": 0,
+      "zone_id": 2456,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30374,
+      "name": "Asha Complex",
+      "originalName": "Asha Complex",
+      "is_third_party": 0,
+      "zone_id": 1764,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 894,
+      "name": "Ashadgonj",
+      "originalName": "Ashadgonj",
+      "is_third_party": 0,
+      "zone_id": 69,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16823,
+      "name": "Ashkona College Road",
+      "originalName": "Ashkona College Road",
+      "is_third_party": 0,
+      "zone_id": 965,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16828,
+      "name": "Ashkona Panir Pump",
+      "originalName": "Ashkona Panir Pump",
+      "is_third_party": 0,
+      "zone_id": 965,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16827,
+      "name": "Ashkona Primary School",
+      "originalName": "Ashkona Primary School",
+      "is_third_party": 0,
+      "zone_id": 965,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25864,
+      "name": "Ashuilia Police Fari",
+      "originalName": "Ashuilia Police Fari",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25865,
+      "name": "Ashuilia Sab Vumi Office",
+      "originalName": "Ashuilia Sab Vumi Office",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25866,
+      "name": "Ashuilia Union Porishod",
+      "originalName": "Ashuilia Union Porishod",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25863,
+      "name": "Ashuilia Vumi Office",
+      "originalName": "Ashuilia Vumi Office",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30105,
+      "name": "Ashulia 3Pukur",
+      "originalName": "Ashulia 3Pukur",
+      "is_third_party": 0,
+      "zone_id": 1749,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 19113,
+      "name": "Ashulia Baribadh",
+      "originalName": "Ashulia Baribadh",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25851,
+      "name": "Ashulia Bazar",
+      "originalName": "Ashulia Bazar",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25890,
+      "name": "Ashulia New Merket",
+      "originalName": "Ashulia New Merket",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25862,
+      "name": "Ashulia School and College",
+      "originalName": "Ashulia School and College",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 25054,
+      "name": "Ashulia Sonali Bank",
+      "originalName": "Ashulia Sonali Bank",
+      "is_third_party": 0,
+      "zone_id": 1538,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30664,
+      "name": "Ati Para ",
+      "originalName": "Ati Para ",
+      "is_third_party": 0,
+      "zone_id": 1070,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 31556,
+      "name": "Autograph Tower",
+      "originalName": "Autograph Tower",
+      "is_third_party": 0,
+      "zone_id": 1,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30304,
+      "name": "Awamilig Club",
+      "originalName": "Awamilig Club",
+      "is_third_party": 0,
+      "zone_id": 1765,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 30298,
+      "name": "Aymonakhatun School",
+      "originalName": "Aymonakhatun School",
+      "is_third_party": 0,
+      "zone_id": 1765,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16757,
+      "name": "Azimpur Bottola",
+      "originalName": "Azimpur Bottola",
+      "is_third_party": 0,
+      "zone_id": 55,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    },
+    {
+      "id": 16755,
+      "name": "Azimpur Busstand",
+      "originalName": "Azimpur Busstand",
+      "is_third_party": 0,
+      "zone_id": 55,
+      "is_home_delivery_available": true,
+      "is_pickup_available": true
+    }
+  ]
+}

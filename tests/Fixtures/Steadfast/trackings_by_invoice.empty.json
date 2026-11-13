@@ -1,0 +1,11 @@
+{
+    "_fixture": {
+        "source": "NOT DOCUMENTED. Synthetic answer for an invoice Steadfast does not know: an empty tracking list (shape of the 'Get Trackings By Invoice' example in Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13))",
+        "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call"
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "tracking": []
+    }
+}
