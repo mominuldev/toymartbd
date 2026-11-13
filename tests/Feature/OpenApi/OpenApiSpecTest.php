@@ -20,21 +20,37 @@ use Illuminate\Support\Facades\DB;
 
 const OPENAPI_SPEC_PATH = 'docs/api/openapi.json';
 
-function freshOpenApiSpec(): string
+/** @param  bool  $regenerate  true when the test changed the routes (the cache would miss them) */
+function freshOpenApiSpec(bool $regenerate = false): string
 {
+    // Generated once per worker process: Scramble's type inference is heavy, and in a
+    // parallel run it lands in a worker that has already run hundreds of tests — at 1G it
+    // OOM-crashed the worker on CI (P9). Generation alone peaks near 460 MB, so give this
+    // process headroom instead of raising the limit for the whole suite.
+    static $cached = null;
+    if ($cached !== null && ! $regenerate) {
+        return $cached;
+    }
+
+    ini_set('memory_limit', '2G');
     $tmp = tempnam(sys_get_temp_dir(), 'openapi');
     test()->artisan('scramble:export', ['--path' => $tmp])->assertSuccessful();
     $json = (string) file_get_contents($tmp);
     @unlink($tmp);
 
+    // A regenerated document reflects routes the test added: never cache it.
+    if (! $regenerate) {
+        $cached = $json;
+    }
+
     return $json;
 }
 
 /** @return array<string, mixed> */
-function openApiSpec(): array
+function openApiSpec(bool $regenerate = false): array
 {
     /** @var array<string, mixed> */
-    return json_decode(freshOpenApiSpec(), true, flags: JSON_THROW_ON_ERROR);
+    return json_decode(freshOpenApiSpec($regenerate), true, flags: JSON_THROW_ON_ERROR);
 }
 
 it('matches the committed docs/api/openapi.json', function (): void {
@@ -96,7 +112,7 @@ it('documents errors as RFC 9457 problem+json', function (): void {
 it('documents the Idempotency-Key header on idempotent routes only', function (): void {
     Route::middleware(['api', 'idempotent'])->post('api/v1/storefront/_test/openapi-idempotent', fn () => response()->json(['ok' => true], 201));
 
-    $spec = openApiSpec();
+    $spec = openApiSpec(regenerate: true);
     $operation = $spec['paths']['/storefront/_test/openapi-idempotent']['post'];
 
     expect($operation['parameters'])->toContain(['$ref' => '#/components/parameters/IdempotencyKey'])
