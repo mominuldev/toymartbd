@@ -191,6 +191,12 @@ export interface ListingPageInput {
     description?: string | null;
     image?: SeoImage | null;
     seo?: SeoDocument | null;
+    /**
+     * The listing the page renders, when the URL carries a cursor. The API answers a cursor it
+     * cannot decode with the FIRST page (`prev_cursor: null`), so `?cursor=<junk>` would otherwise
+     * be an indexable, self-canonical duplicate of the bare listing — an infinite URL space.
+     */
+    listing?: { prevCursor: string | null } | null;
 }
 
 /**
@@ -200,6 +206,12 @@ export interface ListingPageInput {
  * on the bare listing. hreflang carries the same query in both locales.
  */
 export function listingPageMetadata(input: ListingPageInput): Metadata {
+    const staleCursor = input.state.cursor !== null && input.listing != null && input.listing.prevCursor === null;
+    if (staleCursor) {
+        // A cursor that resolved to page 1: canonicalise to the cursor-less view and keep it out of the index.
+        const first = indexing({ ...input.state, cursor: null }).canonical;
+        return buildMetadata({ ...withSeoDocument({ locale: input.locale, path: hrefFor(input.path, first), title: input.title, description: input.description, image: input.image }, input.seo), robots: NOINDEX_FOLLOW, canonicalUrl: null });
+    }
     const { indexable, canonical } = indexing(input.state);
     const path = hrefFor(input.path, canonical);
     const base: PageSeoInput = { locale: input.locale, path, title: input.title, description: input.description, image: input.image, robots: indexable ? INDEX : NOINDEX_FOLLOW };

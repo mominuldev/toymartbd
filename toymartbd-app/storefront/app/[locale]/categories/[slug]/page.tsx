@@ -40,10 +40,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     if (!category) return {};
     const name = localised(locale, category.name, category.name_bn).text;
     const scope: ListingScope = { kind: 'category', slug };
+    const state = parseListingState(await searchParams, scope);
     return listingPageMetadata({
         locale,
         path: categoryPath(slug),
-        state: parseListingState(await searchParams, scope),
+        state,
+        // A cursor page: the same (deduplicated) listing fetch the page makes, to spot a stale cursor.
+        listing: state.cursor ? await fetchListing(state, scope, locale) : null,
         title: name,
         description: (locale === 'bn' ? category.description_bn : category.description) ?? format(getMessages(locale).listing.metaCategory, { category: name }),
         seo,

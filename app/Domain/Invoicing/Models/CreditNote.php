@@ -54,6 +54,7 @@ use Illuminate\Support\Carbon;
  * @property Money $adjustment
  * @property Money $total
  * @property string|null $amount_in_words
+ * @property string|null $amount_in_words_bn Bangla words (P9); null on documents issued before it
  * @property Carbon $issued_at
  * @property string $template
  * @property int|null $created_by

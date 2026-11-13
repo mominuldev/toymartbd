@@ -105,6 +105,7 @@ final readonly class IssuePurchaseInvoice
                 'paid' => $fresh->paid_amount,
                 'due' => $fresh->due_amount,
                 'amount_in_words' => AmountInWords::english($fresh->total),
+                'amount_in_words_bn' => AmountInWords::bangla($fresh->total),
                 'issued_at' => now(),
                 'due_at' => $supplier->payment_terms_days > 0 ? $fresh->order_date->copy()->addDays($supplier->payment_terms_days) : null,
                 'template' => Invoice::TEMPLATE_STANDARD,

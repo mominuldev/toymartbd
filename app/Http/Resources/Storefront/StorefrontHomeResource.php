@@ -100,6 +100,7 @@ final class StorefrontHomeResource extends ApiResource
                 break;
 
             case BlockType::ProductRail:
+                StorefrontProductCardResource::primeStock($data['products']); // one stock query per rail (Phase 9 P-10)
                 $out['products'] = StorefrontProductCardResource::collection($data['products'])->resolve($request);
                 $out['see_all_href'] = $data['see_all_href'] ?? null;
                 $content = ['title' => $content['title'] ?? null, 'limit' => $content['limit'] ?? null];

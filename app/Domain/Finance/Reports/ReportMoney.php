@@ -28,6 +28,10 @@ final class ReportMoney
         }
 
         $text = is_scalar($value) ? (string) $value : '0';
+        // Already two decimals (what MySQL returns for a DECIMAL(14,2) column): nothing to round.
+        if (preg_match('/^-?\d+\.\d\d$/', $text) === 1) {
+            return Money::of($text);
+        }
         // A 4-dp column (cost_price_snapshot, avg_cost) or a SQLite string with more digits.
         if (preg_match('/^-?\d+(\.\d+)?$/', $text) !== 1) {
             return Money::of(sprintf('%.2F', round((float) $text, 2)));

@@ -54,7 +54,7 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
     return (
         <article className="flex h-full flex-col rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-1.5 pt-2 pb-3 shadow-e1 sm:px-2">
             <div className="relative aspect-square w-full overflow-hidden rounded-xs bg-tile-pink">
-                <a href={href} tabIndex={-1} className={`absolute inset-0 ${soldOut ? 'opacity-60' : ''}`}>
+                <a href={href} tabIndex={-1} aria-hidden="true" className={`absolute inset-0 ${soldOut ? 'opacity-60' : ''}`}>
                     {image ? (
                         <picture>
                             {image.srcset_avif ? <source type="image/avif" srcSet={image.srcset_avif} sizes="(min-width: 64rem) 19rem, 50vw" /> : null}

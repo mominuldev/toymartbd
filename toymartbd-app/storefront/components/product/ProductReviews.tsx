@@ -2,7 +2,7 @@ import { Field, inputClass, textareaClass } from '@/components/cart/fields';
 import { Icon } from '@/components/icons/Icon';
 import { iconPaths } from '@/components/icons/paths';
 import { buttonClass } from '@/components/layout/button-styles';
-import { format, localizedPath, type Locale } from '@/lib/i18n';
+import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
 import { ratingValue, starFills } from '@/lib/product/format';
 import type { ReviewPage, StorefrontReview } from '@/lib/reviews/fetch';
 import type { ReviewMessages } from '@/lib/reviews/messages';
@@ -20,14 +20,19 @@ interface Props {
     outcome: ReviewOutcome | null;
 }
 
-/** "12 Oct 2026" in Dhaka time, Western digits in both locales (rule 36). */
-function reviewDate(iso: string): string {
+/**
+ * "12 Oct 2026" / "12 অক্টোবর 2026" in Dhaka time, Western digits in both locales (rule 36). The
+ * Bangla page names the month in Bangla (the catalogue's month names) — an English "Oct" there was
+ * untranslated copy (rule 35; Phase 9 bilingual sweep).
+ */
+function reviewDate(iso: string, locale: Locale): string {
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return '';
     // en-GB order ("12 Oct 2026") with en-US short months: en-GB's ICU spells September "Sept".
-    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', year: 'numeric' }).formatToParts(date);
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', day: 'numeric', month: locale === 'bn' ? 'numeric' : 'short', year: 'numeric' }).formatToParts(date);
     const pick = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-    return `${pick('day')} ${pick('month')} ${pick('year')}`;
+    const month = locale === 'bn' ? (getMessages('bn').delivery.months[Number(pick('month')) - 1] ?? pick('month')) : pick('month');
+    return `${pick('day')} ${month} ${pick('year')}`;
 }
 
 function initial(name: string): string {
@@ -159,7 +164,7 @@ export function ProductReviews({ page, productId, slug, locale, m, moreHref, out
                 <div className="flex min-w-0 grow flex-col">
                     <ul className="flex flex-col">
                         {page.data.map((review) => (
-                            <ReviewCard key={review.id} review={review} m={m} />
+                            <ReviewCard key={review.id} review={review} m={m} locale={locale} />
                         ))}
                     </ul>
                     {moreHref ? (
@@ -185,7 +190,7 @@ const CLAMP_FROM = 220;
  *  clamped at 4 lines with "Read more" (a checkbox toggle, so it works without JavaScript); the shop
  *  reply in a brand-subtle box. Not built (not collected yet): the "Bought: … · child aged 5" context
  *  line, photos and the helpful / report row. */
-function ReviewCard({ review, m }: { review: StorefrontReview; m: ReviewMessages }) {
+function ReviewCard({ review, m, locale }: { review: StorefrontReview; m: ReviewMessages; locale: Locale }) {
     const long = (review.body?.length ?? 0) > CLAMP_FROM;
     const toggle = `review-${review.id}-more`;
     return (
@@ -196,7 +201,7 @@ function ReviewCard({ review, m }: { review: StorefrontReview; m: ReviewMessages
                 </span>
                 <div className="flex min-w-0 grow flex-col">
                     <p className="t-body-sm-strong text-fg-primary">{review.reviewer_name}</p>
-                    <p className="t-caption text-fg-tertiary tabular-nums">{reviewDate(review.created_at)}</p>
+                    <p className="t-caption text-fg-tertiary tabular-nums">{reviewDate(review.created_at, locale)}</p>
                 </div>
                 <span className="flex h-5 items-center gap-2" role="img" aria-label={format(m.ratingAria, { rating: String(review.rating) })}>
                     <Stars rating={review.rating} />

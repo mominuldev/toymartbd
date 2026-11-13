@@ -72,7 +72,9 @@ final class CompanyDetails
 
     /**
      * What an invoice copies at issue: every field (names defaulted to the brand), plus
-     * `placeholders` — the required fields still unset, printed as "[placeholder]".
+     * `logo` — a reference to the logo rendition file current at issue, or null (P9,
+     * {@see InvoiceLogo}) — and `placeholders` — the required fields still unset, printed as
+     * "[placeholder]".
      *
      * @return array<string, mixed>
      */
@@ -88,7 +90,8 @@ final class CompanyDetails
         foreach (self::DEFAULT_NAMES as $field => $name) {
             $saved[$field] ??= $name;
         }
+        $logo = InvoiceLogo::reference(is_int($saved['logo_media_id']) ? $saved['logo_media_id'] : null);
 
-        return $saved + ['placeholders' => $placeholders];
+        return $saved + ['logo' => $logo, 'placeholders' => $placeholders];
     }
 }

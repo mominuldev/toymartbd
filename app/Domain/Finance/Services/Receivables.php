@@ -38,13 +38,18 @@ final readonly class Receivables
     {
         $asOf ??= DhakaDate::today();
         $collectable = array_reduce($this->collectableByOrder($asOf, null), static fn (Money $c, Money $m): Money => $c->plus($m), Money::zero());
-        $received = self::money(DB::table('financial_transactions')
+
+        return $collectable->minus($this->receivedTotal($asOf));
+    }
+
+    /** Σ cod_received (every source) as at the end of a Dhaka date. */
+    private function receivedTotal(string $asOf): Money
+    {
+        return self::money(DB::table('financial_transactions')
             ->where('type', T::CodReceived->value)
             ->where('occurred_on', '<=', $asOf)
             ->selectRaw("SUM(CASE WHEN direction = 'in' THEN amount ELSE -amount END) as total")
             ->value('total'));
-
-        return $collectable->minus($received);
     }
 
     /**
@@ -56,13 +61,12 @@ final readonly class Receivables
     public function summary(?string $asOf = null): array
     {
         $asOf ??= DhakaDate::today();
-        $collectable = $this->collectableByOrder($asOf, null);
+        // One pass over the ledger for the collectable amounts and the delivery dates (Phase 9,
+        // docs/audits/PERFORMANCE.md P-06): the delivery date used to be a second query with every
+        // open order id as a bound parameter — past 65,535 delivered COD orders MySQL refuses the
+        // statement ("too many placeholders") — and total() re-ran the collectable aggregation.
+        [$collectable, $deliveredOn] = $this->collectable($asOf, null);
         $received = $this->receivedByOrder($asOf, null);
-        $deliveredOn = DB::table('financial_transactions')
-            ->where('source_type', OrderLedgerSources::ORDER)
-            ->where('type', T::SaleRevenue->value)
-            ->whereIn('source_id', array_keys($collectable) ?: [0])
-            ->pluck('occurred_on', 'source_id');
 
         $aging = ['0_7' => Money::zero(), '8_15' => Money::zero(), '16_30' => Money::zero(), '31_plus' => Money::zero()];
         $open = 0;
@@ -85,7 +89,7 @@ final readonly class Receivables
         }
 
         $recognised = array_reduce($collectable, static fn (Money $c, Money $m): Money => $c->plus($m), Money::zero());
-        $total = $this->total($asOf);
+        $total = $recognised->minus($this->receivedTotal($asOf));
 
         return [
             'recognised' => $recognised,
@@ -104,6 +108,18 @@ final readonly class Receivables
      */
     private function collectableByOrder(?string $asOf, ?array $orderIds): array
     {
+        return $this->collectable($asOf, $orderIds)[0];
+    }
+
+    /**
+     * Σ collectable per delivered COD order, and the Dhaka date its sale revenue was recognised
+     * (the delivery date the aging buckets count from; null when only a reversal is in range).
+     *
+     * @param  list<int>|null  $orderIds
+     * @return array{0: array<int, Money>, 1: array<int, string|null>}
+     */
+    private function collectable(?string $asOf, ?array $orderIds): array
+    {
         $query = DB::table('financial_transactions as ft')
             ->join('orders as o', 'o.id', '=', 'ft.source_id')
             ->whereIn('ft.source_type', [OrderLedgerSources::ORDER, OrderLedgerSources::ORDER_REVERSAL])
@@ -111,7 +127,8 @@ final readonly class Receivables
             ->where('o.payment_method', 'cod')
             ->groupBy('ft.source_id')
             ->selectRaw('ft.source_id as order_id')
-            ->selectRaw("SUM(CASE WHEN ft.direction = 'in' THEN ft.amount ELSE -ft.amount END) as total");
+            ->selectRaw("SUM(CASE WHEN ft.direction = 'in' THEN ft.amount ELSE -ft.amount END) as total")
+            ->selectRaw('MIN(CASE WHEN ft.source_type = ? AND ft.type = ? THEN ft.occurred_on END) as delivered_on', [OrderLedgerSources::ORDER, T::SaleRevenue->value]);
         if ($asOf !== null) {
             $query->where('ft.occurred_on', '<=', $asOf);
         }
@@ -120,11 +137,13 @@ final readonly class Receivables
         }
 
         $out = [];
+        $deliveredOn = [];
         foreach ($query->get() as $row) {
             $out[(int) $row->order_id] = self::money($row->total);
+            $deliveredOn[(int) $row->order_id] = $row->delivered_on === null ? null : (string) $row->delivered_on;
         }
 
-        return $out;
+        return [$out, $deliveredOn];
     }
 
     /**

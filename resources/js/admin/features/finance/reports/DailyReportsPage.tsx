@@ -88,7 +88,7 @@ function Chart({ data, label }: { data: PnlSeries; label: Label }) {
             <h2 className="t-admin-section text-fg-primary">{t('reports.daily.chart', { group: t(`reports.daily.group.${data.granularity}` as MessageKey).toLowerCase() })}</h2>
             <div className="h-64" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+                    <BarChart accessibilityLayer={false} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
                         <CartesianGrid vertical={false} stroke="var(--color-line-default)" />
                         <XAxis dataKey="short" axisLine={false} tickLine={false} tick={<Tick anchor="middle" />} minTickGap={8} />
                         <YAxis axisLine={false} tickLine={false} width={64} tick={<Tick anchor="end" money />} />

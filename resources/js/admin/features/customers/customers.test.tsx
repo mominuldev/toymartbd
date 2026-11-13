@@ -146,8 +146,8 @@ describe('customers list', () => {
         expect(await screen.findByText('28 customers · phone is the identity')).toBeTruthy();
         expect(screen.getByRole('heading', { name: 'Customers' })).toBeTruthy();
         const tiles = screen.getByRole('group', { name: 'Customer segments' });
-        expect(within(tiles).getByRole('button', { name: 'VIP: 3 · LTV over ৳15,000' })).toBeTruthy();
-        expect(within(tiles).getByRole('button', { name: 'At risk: 4 · no order in 90 days' })).toBeTruthy();
+        expect(within(tiles).getByRole('button', { name: 'VIP 3 LTV over ৳15,000' })).toBeTruthy();
+        expect(within(tiles).getByRole('button', { name: 'At risk 4 no order in 90 days' })).toBeTruthy();
 
         const jahangir = screen.getByRole('row', { name: /Jahangir Alam/ });
         expect(within(jahangir).getByText('017****8046')).toBeTruthy();
@@ -167,7 +167,7 @@ describe('customers list', () => {
         renderApp('/customers');
         await screen.findByRole('row', { name: /Jahangir Alam/ });
 
-        fireEvent.click(screen.getByRole('button', { name: /^VIP: 3/ }));
+        fireEvent.click(screen.getByRole('button', { name: /^VIP 3/ }));
         await waitFor(() => expect(urls(calls).some((u) => u.includes('/customers?filter[segment]=vip'))).toBe(true));
 
         fireEvent.change(screen.getByLabelText('Search customers'), { target: { value: '01712' } });

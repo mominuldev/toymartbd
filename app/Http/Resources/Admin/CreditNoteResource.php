@@ -69,6 +69,8 @@ final class CreditNoteResource extends ApiResource
             'adjustment' => $note->adjustment->toDecimal(),
             /** @var string|null */
             'amount_in_words' => $note->amount_in_words,
+            /** @var string|null */
+            'amount_in_words_bn' => $note->amount_in_words_bn,
             /**
              * The company details as at the credit note's issue.
              *

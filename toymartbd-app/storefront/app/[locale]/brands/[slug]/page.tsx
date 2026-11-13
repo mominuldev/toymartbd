@@ -35,10 +35,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     if (!brand) return {};
     const name = brandName(brand, locale);
     const scope: ListingScope = { kind: 'brand', slug };
+    const state = parseListingState(await searchParams, scope);
     return listingPageMetadata({
         locale,
         path: `/brands/${slug}`,
-        state: parseListingState(await searchParams, scope),
+        state,
+        // A cursor page: the same (deduplicated) listing fetch the page makes, to spot a stale cursor.
+        listing: state.cursor ? await fetchListing(state, scope, locale) : null,
         title: name,
         description: brandDescription(brand, locale) ?? format(getMessages(locale).listing.metaBrand, { brand: name }),
         seo,

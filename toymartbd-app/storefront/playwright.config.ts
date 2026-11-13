@@ -46,7 +46,7 @@ export default defineConfig({
         {
             command: 'node e2e/mock-api.mjs',
             url: `${MOCK_API_URL}/__control/hits`,
-            env: { MOCK_API_PORT: String(MOCK_API_PORT), EXPECTED_TOKEN: FAKE_TOKEN },
+            env: { MOCK_API_PORT: String(MOCK_API_PORT), EXPECTED_TOKEN: FAKE_TOKEN, STOREFRONT_URL },
             reuseExistingServer: false,
             timeout: 30_000,
         },

@@ -171,7 +171,7 @@ final readonly class SendBirthdayMessages
             }
 
             $terms = $this->settings->birthdayCouponTerms();
-            $coupon = $terms === null ? null : $this->coupons->issue($customer->id, $terms);
+            $coupon = $terms === null ? null : $this->coupons->issue($customer->id, $terms, $now);
             $locale = $customer->preferred_language === 'en' ? 'en' : 'bn';
 
             $log = NotificationLog::query()->create([

@@ -17,4 +17,6 @@ enum AuditAction: string
     case CredentialChanged = 'credential_changed';
     /** A delivery rider's name / phone recorded on a shipment (masked phone in the row, rule 20). */
     case ShipmentRiderRecorded = 'shipment_rider_recorded';
+    /** A failed scheduled report email sent again by staff (P9) — financial data leaving the admin. */
+    case ScheduledReportResent = 'scheduled_report_resent';
 }

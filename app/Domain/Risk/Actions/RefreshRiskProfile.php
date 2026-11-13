@@ -17,10 +17,10 @@ use Illuminate\Support\Facades\DB;
  * count: every run recomputes from the source. Staff-owned columns (status, reason, who/when,
  * note) and the courier columns are never touched here.
  *
- * Concurrency: two workers rebuilding the same new phone at once both find no row under
- * `FOR UPDATE` and both insert. On MySQL that is a gap-lock deadlock (1213); on any engine
- * the loser can instead hit the `phone` unique index. Either way the loser is retried from
- * the top — bounded, like PlaceOrder's 3× — and the second attempt finds the winner's row,
+ * Concurrency: the row is inserted (if missing) before it is locked, so different phones
+ * never contend. Two workers rebuilding the SAME new phone at once can still collide — on
+ * MySQL as a 1213 (shared lock on the duplicate, then FOR UPDATE), on any engine possibly
+ * as a `phone` unique violation. Either way the loser is retried from the top — bounded, like PlaceOrder's 3× — and the second attempt finds the winner's row,
  * locks it and recomputes it. Recomputing is idempotent, so a retry can never double count.
  */
 final readonly class RefreshRiskProfile
@@ -46,6 +46,15 @@ final readonly class RefreshRiskProfile
 
     private function rebuild(string $e164): CustomerRiskProfile
     {
+        // Never lock a phone with no row (P9, LOAD-AND-CONCURRENCY F-6): FOR UPDATE on a
+        // missing key is a gap lock, and rebuilds for two DIFFERENT new phones in the same
+        // gap then deadlocked on their inserts — every pair of first orders at launch. A
+        // plain read, an insert of the missing row (inserts do not block each other; it is
+        // only visible on commit), then a record lock on the row that now exists.
+        if (! CustomerRiskProfile::query()->where('phone', $e164)->exists()) {
+            $now = now();
+            DB::table('customer_risk_profiles')->insertOrIgnore(['phone' => $e164, 'created_at' => $now, 'updated_at' => $now]);
+        }
         $profile = CustomerRiskProfile::query()->where('phone', $e164)->lockForUpdate()->first()
             ?? new CustomerRiskProfile(['phone' => $e164]);
 

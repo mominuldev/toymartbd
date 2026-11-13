@@ -17,10 +17,10 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
     test('English: header controls, mega-menu links from the API, footer, tab bar', async ({ page }) => {
         await page.goto('/');
         const header = page.locator('header').first();
-        await expect(header.getByRole('link', { name: 'Toy Mart BD — home' })).toHaveAttribute('href', '/');
+        await expect(header.getByRole('link', { name: 'ToyMart BD — home' })).toHaveAttribute('href', '/');
         await expect(header.locator('form[role="search"]').first()).toHaveAttribute('action', '/search');
         await expect(header.locator('a[hreflang="bn"]')).toHaveAttribute('href', '/bn');
-        await expect(header.getByRole('link', { name: 'Wishlist' })).toHaveAttribute('href', '/wishlist');
+        await expect(header.getByRole('link', { name: 'Wishlist' })).toHaveAttribute('href', '/account/wishlist');
         await expect(header.getByRole('link', { name: 'Cart, empty' })).toHaveAttribute('href', '/cart');
 
         // All three levels are real links in the HTML, from the mock API's tree.
@@ -129,7 +129,7 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
     test('links to pages not built yet get the same styled 404', async ({ page }) => {
         // `/pages/{slug}` is a real route now (Phase 7 CMS pages), so an unmatched URL under it
         // has to be deeper than one segment.
-        for (const path of ['/pages/privacy/print', '/bn/wishlist']) {
+        for (const path of ['/pages/privacy-policy/print', '/bn/wishlist']) {
             const res = await page.goto(path);
             expect(res?.status(), path).toBe(404);
             await expect(page.locator('h1'), path).toHaveText(path.startsWith('/bn') ? 'এই পাতাটি নেই' : "This page isn't here");
@@ -139,16 +139,16 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
 
 test.describe('static pages', () => {
     test('a CMS page renders server-side in both locales with canonical and hreflang', async ({ page }) => {
-        const res = await page.goto('/pages/privacy');
+        const res = await page.goto('/pages/privacy-policy');
         expect(res?.status()).toBe(200);
         await expect(page.locator('h1')).toHaveText('Privacy policy');
         await expect(page.locator('main h2').first()).toHaveText('What we collect');
-        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy`);
-        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy`);
-        await expect(page.locator('head link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy`);
-        await page.goto('/bn/pages/privacy');
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy-policy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy-policy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy-policy`);
+        await page.goto('/bn/pages/privacy-policy');
         await expect(page.locator('h1')).toHaveText('গোপনীয়তা নীতি');
-        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy`);
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy-policy`);
     });
 
     test('a CMS page that is not live is a 404, noindex', async ({ page }) => {

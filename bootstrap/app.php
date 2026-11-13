@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureIdempotency;
 use App\Http\Middleware\ResolveLocale;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Problems\ProblemDetails;
 use App\Providers\ApiServiceProvider;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -59,6 +60,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // X-Request-Id first, so every later log line, job and Sentry event carries it (P3-CI-04).
         $middleware->prepend(AssignRequestId::class);
+
+        // nosniff, X-Frame-Options, HSTS over HTTPS, a locked-down CSP on the JSON API and a
+        // nonce CSP on the admin shell (P9 security review).
+        $middleware->append(SecurityHeaders::class);
 
         // Trusted proxies come from config/trustedproxy.php (env TRUSTED_PROXIES, default none,
         // wildcards refused). Only the client IP and scheme are taken from a trusted proxy —

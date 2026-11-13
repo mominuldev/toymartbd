@@ -322,9 +322,10 @@ export function RichTextToolbar({ editor, language, onLanguage, onImage, disable
                 <button
                     type="button"
                     onClick={() => onLanguage(other)}
-                    aria-label={t('products.editor.language', { language: t(language === 'en' ? 'products.editor.english' : 'products.editor.bangla') })}
                     className="flex h-8 items-center gap-1.5 rounded-sm px-3 t-admin-button-sm text-fg-primary hover:bg-surface"
                 >
+                    {/* Visually hidden, not aria-label: the visible "EN | বাং" stays part of the name (WCAG 2.5.3). */}
+                    <span className="sr-only">{t('products.editor.language', { language: t(language === 'en' ? 'products.editor.english' : 'products.editor.bangla') })}</span>
                     <TranslateIcon size={16} aria-hidden />
                     <span className={language === 'en' ? 'text-fg-primary' : 'text-fg-tertiary'}>EN</span>
                     <span aria-hidden className="text-fg-tertiary">

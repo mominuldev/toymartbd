@@ -123,7 +123,7 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
 
             {/* FilterBar — mobile and tablet (<1024): sticky under the header. */}
             <div className={`sticky top-14 z-20 -mx-gutter-mobile has-[.filter-sheet[open]]:z-50 ${mobileHead ? '-mt-2' : 'mt-4'} flex items-center gap-3 border-b border-line-brand-subtle bg-surface px-gutter-mobile py-2 md:-mx-gutter-tablet md:px-gutter-tablet lg:hidden`}>
-                <details className="filter-sheet min-w-0 flex-1">
+                <details data-dismissible className="filter-sheet min-w-0 flex-1">
                     <summary className="flex h-control-md cursor-pointer list-none items-center justify-center gap-2 rounded-full border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-4 text-fg-primary [&::-webkit-details-marker]:hidden">
                         <Icon name="funnel" className="size-4.5" />
                         <span className="t-body-sm-strong">{t.filters}</span>

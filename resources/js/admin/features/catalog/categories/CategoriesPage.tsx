@@ -122,7 +122,7 @@ export function CategoriesPage() {
         });
 
     const renderLevel = (siblings: Category[], parent: Category | null, grandSiblings: Category[] | null, depth: number) => (
-        <ul role={depth === 0 ? undefined : 'group'} className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-0.5">
             {siblings.map((node, index) => {
                 const children = node.children ?? [];
                 const open = !collapsed.has(node.id);

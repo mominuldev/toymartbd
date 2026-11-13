@@ -11,6 +11,8 @@ use App\Domain\Marketing\Enums\CouponType;
 use App\Domain\Marketing\Enums\ProductScopeType;
 use App\Domain\Marketing\Models\Coupon;
 use App\Support\DhakaDate;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,15 +29,19 @@ final class IssuePersonalCoupon implements PersonalCouponIssuer
 
     private const int LENGTH = 8;
 
-    public function issue(int $customerId, PersonalCouponTerms $terms): IssuedCoupon
+    public function issue(int $customerId, PersonalCouponTerms $terms, ?DateTimeInterface $at = null): IssuedCoupon
     {
-        return DB::transaction(static function () use ($customerId, $terms): IssuedCoupon {
+        // Validity counts from the issuing moment (the send time), never the wall clock: a run
+        // that processes an earlier slot, or a test, must not shift the expiry by a day.
+        $issuedAt = CarbonImmutable::instance($at ?? DhakaDate::instant())->utc();
+
+        return DB::transaction(static function () use ($customerId, $terms, $issuedAt): IssuedCoupon {
             $prefix = Coupon::normaliseCode($terms->prefix);
             do {
                 $code = ($prefix === '' ? '' : $prefix.'-').self::random();
             } while (Coupon::query()->where('code', $code)->exists());
 
-            $endsAt = DhakaDate::todayDate()->addDays($terms->validDays + 1)->utc();
+            $endsAt = DhakaDate::local($issuedAt)->startOfDay()->addDays($terms->validDays + 1)->utc();
             $percent = $terms->type === 'percent';
 
             $coupon = new Coupon([
@@ -47,7 +53,7 @@ final class IssuePersonalCoupon implements PersonalCouponIssuer
                 'min_order_amount' => $terms->minOrderAmount,
                 'usage_limit_total' => 1,
                 'usage_limit_per_customer' => 1,
-                'starts_at' => DhakaDate::instant(),
+                'starts_at' => $issuedAt,
                 'ends_at' => $endsAt,
                 'applies_to' => ProductScopeType::All,
                 'first_order_only' => false,

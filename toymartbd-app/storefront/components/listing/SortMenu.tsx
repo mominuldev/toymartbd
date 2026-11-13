@@ -22,7 +22,7 @@ export function SortMenu({ href, state, t, context, sorts: options = SORTS }: Pr
     const sorts = t.sorts as Record<string, string>;
     const mobile = context === 'mobile';
     return (
-        <details className={`listing-disclosure relative ${mobile ? 'min-w-0 flex-1' : ''}`}>
+        <details data-dismissible className={`listing-disclosure relative ${mobile ? 'min-w-0 flex-1' : ''}`}>
             <summary
                 className={`flex cursor-pointer items-center justify-center gap-2 rounded-full border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-4 text-fg-primary ${mobile ? 'h-control-md w-full' : 'h-10'}`}
             >

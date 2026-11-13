@@ -124,7 +124,7 @@ function LtvDistribution({ data }: { data: CustomerAnalytics }) {
         <Panel title={t('customerAnalytics.ltv.title')} subtitle={t('customerAnalytics.ltv.subtitle')} titleId={id}>
             <div className="h-56" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={bars} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
+                    <BarChart accessibilityLayer={false} data={bars} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<AxisTick />} interval={0} />
                         <YAxis hide allowDecimals={false} />
                         <Tooltip

@@ -13,7 +13,7 @@ final readonly class LivePaths
     /** Built-in storefront routes (locale-independent). */
     public const array RESERVED = [
         '/', '/cart', '/checkout', '/search', '/track', '/categories', '/brands', '/toys', '/blog', '/guides',
-        '/delivery-charge', '/maintenance', '/robots.txt', '/sitemap.xml', '/pages/about',
+        '/delivery-charge', '/flash-sale', '/maintenance', '/robots.txt', '/sitemap.xml', '/pages/about',
     ];
 
     /** Prefixes owned by the storefront itself. */

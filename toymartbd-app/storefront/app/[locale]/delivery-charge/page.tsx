@@ -17,6 +17,11 @@ import { NOINDEX_FOLLOW, staticMetadata } from '@/lib/seo/metadata';
 
 const PATH = '/delivery-charge';
 
+// Per-request: the root layout's empty generateStaticParams would otherwise make this an ISR
+// route, and reading searchParams there fails the render with a 500 (DYNAMIC_SERVER_USAGE) —
+// found by the Phase 9 accessibility sweep (docs/audits/ACCESSIBILITY-AND-BILINGUAL.md).
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ locale: string }>;
     searchParams: Promise<Record<string, string | string[] | undefined>>;

@@ -247,7 +247,7 @@ function Waterfall({ data }: { data: PnlStatement }) {
             <h2 className="t-admin-section text-fg-primary">{t('reports.waterfall.title')}</h2>
             <div className="h-48" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={bars} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
+                    <BarChart accessibilityLayer={false} data={bars} margin={{ top: 20, right: 4, bottom: 0, left: 4 }}>
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<AxisTick />} interval={0} />
                         <YAxis hide domain={[(min: number) => Math.min(0, min), 'auto']} />
                         <ReferenceLine y={0} stroke="var(--color-line-default)" />

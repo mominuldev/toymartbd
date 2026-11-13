@@ -1,3 +1,4 @@
+import { variantFlash } from '../flash-sale/format';
 import { getMessages } from '../i18n';
 import { localizedPath, type Locale } from '../i18n/config';
 import type { StorefrontProduct } from '../product/variants';
@@ -33,15 +34,22 @@ export function productJsonLd(product: StorefrontProduct, locale: Locale, labels
     const description = (locale === 'bn' ? (product.short_description_bn ?? product.short_description) : product.short_description) ?? undefined;
     const url = pageUrl(locale, `/products/${product.slug}`);
 
-    const offers = product.variants.map((variant) => ({
-        '@type': 'Offer',
-        sku: variant.sku,
-        url: `${url}?variant=${variant.id}`,
-        price: variant.price,
-        priceCurrency: 'BDT',
-        availability: availability[variant.stock_state],
-        itemCondition: 'https://schema.org/NewCondition',
-    }));
+    // The Offer price is the price ON THE PAGE: during a flash sale that is the API's sale price,
+    // valid until the sale ends (Dhaka date). A regular price here while the page shows the sale
+    // price is a merchant-listing price mismatch (Phase 9 SEO audit). Prices are the API's strings.
+    const offers = product.variants.map((variant) => {
+        const flash = variantFlash(product.flash_sale, variant.id);
+        return {
+            '@type': 'Offer',
+            sku: variant.sku,
+            url: `${url}?variant=${variant.id}`,
+            price: flash ? flash.salePrice : variant.price,
+            ...(flash ? { priceValidUntil: dhakaDate(flash.endsAt) } : {}),
+            priceCurrency: 'BDT',
+            availability: availability[variant.stock_state],
+            itemCondition: 'https://schema.org/NewCondition',
+        };
+    });
 
     const productLd: JsonLdNode = {
         '@context': CONTEXT,
@@ -65,6 +73,11 @@ export function productJsonLd(product: StorefrontProduct, locale: Locale, labels
     ];
 
     return [productLd, breadcrumbJsonLd(locale, crumbs)];
+}
+
+/** The Asia/Dhaka calendar date (YYYY-MM-DD) of an ISO instant — Bangladesh has no DST (UTC+6). */
+function dhakaDate(iso: string): string {
+    return new Date(Date.parse(iso) + 6 * 3_600_000).toISOString().slice(0, 10);
 }
 
 // ── BreadcrumbList ──────────────────────────────────────────────────────────────────────────────

@@ -45,7 +45,7 @@ test('opt-in: nothing loads or is sent until the visitor answers; Reject keeps i
     await page.goto(PDP);
     await expect(banner(page)).toBeVisible();
     await expect(banner(page)).toHaveAttribute('aria-modal', 'false');
-    await expect(banner(page).getByRole('link', { name: en.consent.privacy })).toHaveAttribute('href', '/pages/privacy');
+    await expect(banner(page).getByRole('link', { name: en.consent.privacy })).toHaveAttribute('href', '/pages/privacy-policy');
     await page.waitForLoadState('load');
     await page.waitForTimeout(500); // lazyOnload runs in idle time after load
     expect(await page.locator('script[src*="googletagmanager"], script[src*="fbevents"]').count()).toBe(0);
@@ -127,7 +127,7 @@ test('Bangla: the banner speaks Bangla and links to the Bangla privacy policy', 
     await page.goto('/bn');
     const dialog = page.getByRole('dialog', { name: bn.consent.title });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('link', { name: bn.consent.privacy })).toHaveAttribute('href', '/bn/pages/privacy');
+    await expect(dialog.getByRole('link', { name: bn.consent.privacy })).toHaveAttribute('href', '/bn/pages/privacy-policy');
     await expect(dialog.getByRole('button', { name: bn.consent.acceptAll })).toBeVisible();
     // The banner is first in the tab order.
     await page.keyboard.press('Tab');
@@ -181,7 +181,7 @@ test('without JavaScript there is no banner, and Cookie settings is a plain link
     const page = await noJs.newPage();
     await page.goto('/');
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: en.consent.settings })).toHaveAttribute('href', '/pages/privacy');
+    await expect(page.getByRole('link', { name: en.consent.settings })).toHaveAttribute('href', '/pages/privacy-policy');
     await noJs.close();
 });
 

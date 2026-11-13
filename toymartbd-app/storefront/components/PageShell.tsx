@@ -7,6 +7,7 @@ import { footerMenu, headerMenu, linkAttrs, localisedOptional } from '@/lib/cont
 import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
 import { LocaleSuggestion } from './LocaleSuggestion';
 import { BannerPopup } from './content/BannerPopup';
+import { DisclosureKeyboard } from './layout/DisclosureKeyboard';
 import { AnnouncementBar } from './layout/AnnouncementBar';
 import { MobileNav } from './layout/MobileNav';
 import { SiteFooter } from './layout/SiteFooter';
@@ -128,6 +129,8 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
             ) : null}
             {bottomBar ? <div aria-hidden="true" className="h-19 shrink-0 lg:hidden" /> : null}
             <MobileNav locale={locale} path={path} cartCount={cartCount} />
+            {/* Escape / focus trap for the <details> pop-overs (filter sheet, sort, language). */}
+            <DisclosureKeyboard />
         </>
     );
 }

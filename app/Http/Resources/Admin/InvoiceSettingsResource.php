@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * The company details printed on invoices issued from now on (P8, N-13). Null = not set;
  * `placeholders` lists the required fields still unset (printed as "[placeholder]").
  *
- * @property array{values: array<string, string|int|null>, placeholders: list<string>} $resource
+ * @property array{values: array<string, string|int|null>, placeholders: list<string>, logo_url?: string|null} $resource
  */
 #[SchemaName('InvoiceSettings')]
 final class InvoiceSettingsResource extends ApiResource
@@ -43,6 +43,12 @@ final class InvoiceSettingsResource extends ApiResource
             'bin' => $v['bin'] ?? null,
             /** @var int|null */
             'logo_media_id' => isset($v['logo_media_id']) ? (int) $v['logo_media_id'] : null,
+            /**
+             * Admin preview of the chosen logo (a 320px rendition); null when none or not ready.
+             *
+             * @var string|null
+             */
+            'logo_url' => $this->resource['logo_url'] ?? null,
             /** @var string|null */
             'footer_en' => $v['footer_en'] ?? null,
             /** @var string|null */

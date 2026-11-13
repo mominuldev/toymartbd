@@ -7,6 +7,7 @@ import { WishlistHearts } from '@/components/wishlist/WishlistHearts';
 import { fontVariables } from '@/lib/fonts';
 import { getMessages, htmlLang, isLocale, localizedPath } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
+import { cmsPaths } from '@/lib/site-config';
 import { getTitleSeparator } from '@/lib/seo/fetch';
 import { titleTemplate } from '@/lib/seo/metadata';
 import { getTrackingConfig } from '@/lib/tracking/fetch';
@@ -57,7 +58,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
             <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>
                 {/* Consent banner + consent-gated tags (K-01/K-02). First in the DOM so the banner is
                     first in the tab order; it is a fixed overlay, so it moves no content. */}
-                <TrackingRoot config={tracking} labels={t.consent} privacyHref={localizedPath(locale, '/pages/privacy')} bangla={locale === 'bn'} />
+                <TrackingRoot config={tracking} labels={t.consent} privacyHref={localizedPath(locale, cmsPaths.privacy)} bangla={locale === 'bn'} />
                 {children}
                 {/* Every wishlist heart on the page (cards, PDP): filled state + in-place toggle. */}
                 <WishlistHearts locale={locale} labels={t.wishlist} />

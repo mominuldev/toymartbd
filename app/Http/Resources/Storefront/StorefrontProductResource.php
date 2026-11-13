@@ -55,6 +55,7 @@ final class StorefrontProductResource extends ApiResource
     public function toArray(Request $request): array
     {
         $product = $this->resource;
+        StorefrontProductCardResource::primeStock($this->related); // one stock query for the related cards (Phase 9 P-10)
         $variants = $product->activeVariants;
         $brand = $product->brand;
 

@@ -64,6 +64,7 @@ use Illuminate\Support\Carbon;
  * @property Money $due
  * @property string|null $payment_method
  * @property string|null $amount_in_words
+ * @property string|null $amount_in_words_bn Bangla words (P9); null on documents issued before it
  * @property Carbon $issued_at
  * @property Carbon|null $due_at
  * @property string|null $pdf_path

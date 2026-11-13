@@ -62,9 +62,9 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                     </div>
                     <nav aria-label={t.nav.primary} className="flex items-center gap-1">
                         <IconLink href={localizedPath(locale, '/search')} label={t.nav.search} icon="magnifyingGlass" className="inline-flex text-fg-primary lg:hidden" />
-                        <details className="locale-menu relative hidden lg:block">
+                        <details data-dismissible className="locale-menu relative hidden lg:block">
                             <summary
-                                aria-label={t.language.switchLabel}
+                                aria-label={`${t.nav.languageShort[locale]} — ${t.language.switchLabel}`}
                                 className="t-body-sm inline-flex h-control-sm cursor-pointer list-none items-center gap-1 rounded-full bg-brand-subtle pr-2.5 pl-3 font-semibold text-fg-primary transition-colors duration-(--tm-duration-fast) ease-standard hover:bg-brand-subtle-shelf [&::-webkit-details-marker]:hidden"
                             >
                                 <span lang={locale}>{t.nav.languageShort[locale]}</span>
@@ -95,7 +95,7 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                                 </a>
                             )}
                         </p>
-                        <IconLink href={localizedPath(locale, '/wishlist')} label={t.nav.wishlist} icon="heart" />
+                        <IconLink href={localizedPath(locale, '/account/wishlist')} label={t.nav.wishlist} icon="heart" />
                         <IconLink href={localizedPath(locale, '/account')} label={t.nav.account} icon="user" className="hidden text-fg-primary lg:inline-flex" />
                         <CartLink
                             href={localizedPath(locale, '/cart')}

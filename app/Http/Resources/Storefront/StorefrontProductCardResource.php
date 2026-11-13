@@ -106,6 +106,32 @@ final class StorefrontProductCardResource extends ApiResource
         ];
     }
 
+    /**
+     * Sets `listing_in_stock` on every product that lacks it, with one stock query for all of them
+     * (Phase 9, docs/audits/PERFORMANCE.md P-10). Products not read through ProductListing (search
+     * fallback, flash sale, home rails, related, wishlist, blog picks) have no `listing_in_stock`,
+     * and inStock() then queried once per card — 24 identical queries on a search page. Every
+     * caller that renders a list of such cards calls this first.
+     *
+     * @param  iterable<mixed>  $products
+     */
+    public static function primeStock(iterable $products): void
+    {
+        $unknown = [];
+        foreach ($products as $product) {
+            if ($product instanceof Product && $product->getAttribute('listing_in_stock') === null) {
+                $unknown[$product->id] = $product;
+            }
+        }
+        if ($unknown === []) {
+            return;
+        }
+        $inStock = array_flip(app(StockAvailability::class)->inStockProductIds(array_keys($unknown)));
+        foreach ($unknown as $id => $product) {
+            $product->setAttribute('listing_in_stock', isset($inStock[$id]) ? 1 : 0);
+        }
+    }
+
     private static function inStock(Product $product): bool
     {
         $listed = $product->getAttribute('listing_in_stock');

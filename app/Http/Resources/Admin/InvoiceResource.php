@@ -53,6 +53,12 @@ final class InvoiceResource extends ApiResource
             'tax' => $invoice->tax->toDecimal(),
             /** @var string|null */
             'amount_in_words' => $invoice->amount_in_words,
+            /**
+             * Bangla words (P9); null on an invoice issued before them.
+             *
+             * @var string|null
+             */
+            'amount_in_words_bn' => $invoice->amount_in_words_bn,
             /** @var string|null */
             'due_at' => $invoice->due_at?->toIso8601String(),
             /**

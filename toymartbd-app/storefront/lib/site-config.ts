@@ -25,6 +25,16 @@ export const contact = {
     email: { display: 'hello@toymartbd.com', href: 'mailto:hello@toymartbd.com', placeholder: true },
 } satisfies Record<string, ContactValue>;
 
+/**
+ * CMS pages the layout links to directly (consent banner, footer legal bar, contact fallbacks).
+ * The slugs are the ones database/seeders/StaticPagesSeeder.php creates — a link to any other
+ * slug is a sitewide 404 (Phase 9 SEO audit: `/pages/privacy` never existed).
+ */
+export const cmsPaths = {
+    privacy: '/pages/privacy-policy',
+    contact: '/pages/contact',
+} as const;
+
 /** Trade licence and BIN for the legal bar. `null` until the owner supplies them. */
 export const legal: { tradeLicence: string | null; bin: string | null } = {
     tradeLicence: null,
@@ -35,20 +45,20 @@ export const legal: { tradeLicence: string | null; bin: string | null } = {
 export const addressIsPlaceholder = true;
 
 /**
- * Footer link tiles (Figma Footer 124:3310: Shop · Help · About). `label` is a key of
- * `footer.links` in the message catalogs; `path` is locale-independent. Pages not built yet
- * (track, policies, flash sale…) answer the styled 404 until their task lands — listed here so
- * the footer is complete from day one.
+ * Footer link tiles (Figma Footer 124:3310: Shop · Help · About) — the FALLBACK when the admin
+ * has not built a footer menu (Content → Menus). `label` is a key of `footer.links` in the
+ * message catalogs; `path` is locale-independent. Every path is a real route or a slug that
+ * database/seeders/StaticPagesSeeder.php creates (tests/seo-audit.test.ts): the Phase 9 SEO
+ * audit found ten of these pointing at routes that never existed (sitewide 404 links). Design
+ * entries with no route yet (By age, Best sellers, Toy safety) are left out until they exist.
  */
 export const footerColumns = [
     {
         title: 'shop',
         links: [
-            { label: 'allToys', path: '/categories' },
-            { label: 'byAge', path: '/age' },
-            { label: 'flashSale', path: '/offers' },
-            { label: 'newArrivals', path: '/new-arrivals' },
-            { label: 'bestSellers', path: '/best-sellers' },
+            { label: 'allToys', path: '/toys' },
+            { label: 'flashSale', path: '/flash-sale' },
+            { label: 'newArrivals', path: '/toys?sort=newest' },
             { label: 'brands', path: '/brands' },
         ],
     },
@@ -56,19 +66,18 @@ export const footerColumns = [
         title: 'help',
         links: [
             { label: 'track', path: '/track' },
-            { label: 'delivery', path: '/pages/delivery' },
-            { label: 'returns', path: '/pages/returns' },
+            { label: 'delivery', path: '/delivery-charge' },
+            { label: 'returns', path: '/pages/returns-policy' },
             { label: 'faq', path: '/pages/faq' },
-            { label: 'contact', path: '/pages/contact' },
+            { label: 'contact', path: cmsPaths.contact },
         ],
     },
     {
         title: 'about',
         links: [
             { label: 'about', path: '/pages/about' },
-            { label: 'safety', path: '/pages/toy-safety' },
             { label: 'blog', path: '/blog' },
-            { label: 'privacy', path: '/pages/privacy' },
+            { label: 'privacy', path: cmsPaths.privacy },
             { label: 'terms', path: '/pages/terms' },
         ],
     },

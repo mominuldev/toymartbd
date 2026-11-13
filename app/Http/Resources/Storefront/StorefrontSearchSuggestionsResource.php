@@ -32,6 +32,8 @@ final class StorefrontSearchSuggestionsResource extends ApiResource
      */
     public function toArray(Request $request): array
     {
+        StorefrontProductCardResource::primeStock($this->resource['products']); // one stock query (Phase 9 P-10)
+
         return [
             'query' => $this->resource['query'],
             /** @var list<StorefrontProductCardResource> */

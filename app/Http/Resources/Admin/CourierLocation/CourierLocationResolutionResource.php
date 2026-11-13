@@ -7,6 +7,7 @@ namespace App\Http\Resources\Admin\CourierLocation;
 use App\Domain\Fulfilment\Locations\LocationResolution;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 
 /**
@@ -29,7 +30,8 @@ final class CourierLocationResolutionResource extends ApiResource
             'can_book' => $r->canBook(),
             /** @var array{city_id: string|null, zone_id: string|null, area_id: string|null}|null */
             'ref' => $r->ref === null ? null : ['city_id' => $r->ref->externalCityId, 'zone_id' => $r->ref->externalZoneId, 'area_id' => $r->ref->externalAreaId],
-            'candidates' => CourierLocationResource::collection($r->candidates),
+            // One query per relation for the whole list, not two per candidate (Phase 9 N+1 guard).
+            'candidates' => CourierLocationResource::collection((new EloquentCollection($r->candidates))->loadMissing(['district', 'upazila'])),
         ];
     }
 }

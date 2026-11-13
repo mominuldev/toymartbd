@@ -49,6 +49,8 @@
         $bn = $locale === 'bn';
         $tr = static fn (string $key, array $replace = []): string => (string) __('invoices.'.$key, $replace, $locale);
         $by = $note->issued_by;
+        // P9: the logo file referenced at issue, as a local path (never a URL), or null — no image.
+        $logo = \App\Domain\Invoicing\Services\InvoiceLogo::localPath($by);
         $to = $note->issued_to;
         $missing = (array) ($by['placeholders'] ?? []);
         $field = static fn (string $key): string => in_array($key, $missing, true) || ($by[$key] ?? null) === null ? $tr('placeholder') : (string) $by[$key];
@@ -61,6 +63,9 @@
     <table class="head">
         <tr>
             <td style="width: 55%">
+                @if ($logo)
+                    <img src="{{ $logo }}" alt="" style="height: 14mm; margin-bottom: 4pt" />
+                @endif
                 <h1>{{ $bn ? ($by['name_bn'] ?? $by['name_en'] ?? '') : ($by['name_en'] ?? '') }}</h1>
                 <div class="muted">{{ $bn ? $field('address_bn') : $field('address_en') }}</div>
                 <div class="muted">{{ $tr('hotline_label') }}: {{ $field('hotline') }}@if (! empty($by['email'])) · {{ $by['email'] }}@endif @if (! empty($by['website'])) · {{ $by['website'] }}@endif</div>
@@ -142,8 +147,12 @@
         <tr class="grand"><td></td><td>{{ $tr('credit_note.total') }}</td><td class="num">{{ $money($note->total) }}</td></tr>
     </table>
 
-    @if (! $bn && $note->amount_in_words)
-        <div class="muted" style="margin-top: 6pt">{{ $tr('in_words') }}: {{ $note->amount_in_words }}</div>
+    @php
+        // P9: Bangla words on documents issued from then on; an older one has none (prints no line).
+        $words = $bn ? $note->amount_in_words_bn : $note->amount_in_words;
+    @endphp
+    @if ($words)
+        <div class="muted" style="margin-top: 6pt">{{ $tr('in_words') }}: {{ $words }}</div>
     @endif
     @if ($note->note)
         <div class="box" style="margin-top: 8pt"><span class="muted">{{ $tr('note') }}:</span> {{ $note->note }}</div>

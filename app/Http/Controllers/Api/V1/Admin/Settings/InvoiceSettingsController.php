@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin\Settings;
 
+use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Invoicing\Actions\UpdateInvoiceSettings;
 use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Http\Controllers\Api\V1\ApiController;
@@ -38,7 +39,13 @@ final class InvoiceSettingsController extends ApiController
     private static function view(CompanyDetails $company): InvoiceSettingsResource
     {
         $snapshot = $company->snapshot();
+        $saved = $company->saved();
+        $logo = is_int($saved['logo_media_id']) ? Media::query()->find($saved['logo_media_id']) : null;
 
-        return new InvoiceSettingsResource(['values' => $company->saved(), 'placeholders' => array_values($snapshot['placeholders'])]);
+        return new InvoiceSettingsResource([
+            'values' => $saved,
+            'placeholders' => array_values($snapshot['placeholders']),
+            'logo_url' => $logo instanceof Media ? $logo->url(320) : null,
+        ]);
     }
 }

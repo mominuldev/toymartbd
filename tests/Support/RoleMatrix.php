@@ -33,6 +33,10 @@ use Tests\TestCase;
  *     })->with(RoleMatrix::dataset(Permission::StaffView));
  *
  * Pass `null` as the permission for "any active staff member".
+ *
+ * Every route a matrix test reaches is recorded (RoleMatrixCoverage), and
+ * tests/Arch/AdminRouteAuthorisationTest.php fails when an admin route has
+ * no matrix test — see that file for how to add one.
  */
 final class RoleMatrix
 {
@@ -84,6 +88,8 @@ final class RoleMatrix
 
         $response = $request();
 
+        RoleMatrixCoverage::record($response);
+
         if ($allowed) {
             $response->assertStatus($allowedStatus);
 
@@ -95,6 +101,8 @@ final class RoleMatrix
 
     public static function assertForbidden(TestResponse $response, string $message = ''): void
     {
+        RoleMatrixCoverage::record($response);
+
         $status = $response->getStatusCode();
 
         \PHPUnit\Framework\Assert::assertSame(403, $status, trim("{$message} (got {$status})"));

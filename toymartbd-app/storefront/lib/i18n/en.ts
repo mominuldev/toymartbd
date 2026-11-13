@@ -16,7 +16,7 @@ export const en = {
         primary: 'Main',
         home: 'Home',
         brands: 'Brands',
-        logoAria: 'Toy Mart BD — home', // nav.logo.aria
+        logoAria: 'ToyMart BD — home', // nav.logo.aria
         categoriesMenu: 'Shop by category',
         allCategories: 'All categories', // nav.link.all_categories
         more: 'More',

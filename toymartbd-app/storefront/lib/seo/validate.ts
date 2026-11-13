@@ -45,6 +45,7 @@ function offer(o: unknown, i: number, errors: string[], warnings: string[]): voi
     if (o.availability === undefined) warnings.push(`missing recommended "${at}.availability"`);
     else if (!AVAILABILITY.test(String(o.availability))) errors.push(`"${at}.availability" is not a schema.org ItemAvailability URL`);
     if (o.url !== undefined && !absoluteUrl(o.url)) errors.push(`"${at}.url" must be absolute`);
+    if (o.priceValidUntil !== undefined && !(typeof o.priceValidUntil === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.priceValidUntil))) errors.push(`"${at}.priceValidUntil" must be an ISO 8601 date`);
 }
 
 function aggregateRating(r: unknown, errors: string[]): void {

@@ -47,7 +47,7 @@ final class ReportScheduleResource extends ApiResource
             ])->values()->all(),
             /** @var string|null */
             'next_send_at' => $s->is_active ? ScheduleClock::next($s, CarbonImmutable::now('UTC'))->toIso8601String() : null,
-            /** @var array{id: int, period_from: string, period_to: string, status: string, recipients_sent: int, recipients_skipped: int, error: string|null, due_at: string|null, sent_at: string|null, created_at: string|null}|null */
+            /** @var array{id: int, period_from: string, period_to: string, status: 'queued'|'sending'|'sent'|'skipped'|'failed', recipients_sent: int, recipients_skipped: int, error: string|null, due_at: string|null, sent_at: string|null, created_at: string|null, resend_count: int, last_resent_at: string|null, last_resent_by: array{id: int, name: string}|null, deliveries: list<array{user_id: int, name: string, status: 'queued'|'sent'|'skipped'|'failed', attempts: int, error: string|null, sent_at: string|null, resent_at: string|null, resent_by: string|null}>}|null */
             'latest_run' => $s->relationLoaded('latestRun') && $s->latestRun !== null ? (new ReportScheduleRunResource($s->latestRun))->toArray($request) : null,
             'created_at' => $s->created_at?->toIso8601String(),
             'updated_at' => $s->updated_at?->toIso8601String(),

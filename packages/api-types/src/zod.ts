@@ -720,6 +720,12 @@ export const requestShipmentRequestSchema = z.object({
 });
 export type RequestShipmentRequestInput = z.input<typeof requestShipmentRequestSchema>;
 
+/** `POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) — resend a failed run for the */
+export const resendReportRunRequestSchema = z.object({
+    "user_id": z.number().int().nullable().optional(),
+});
+export type ResendReportRunRequestInput = z.input<typeof resendReportRunRequestSchema>;
+
 /** `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7). */
 export const restoreCartRequestSchema = z.object({
     "token": z.string().min(16).max(64).regex(new RegExp("^[A-Za-z0-9]+$")),

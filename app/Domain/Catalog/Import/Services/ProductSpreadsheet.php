@@ -34,7 +34,7 @@ use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
  * construction.
  *
  * Formula injection: every exported cell is a string cell (never a formula), and in
- * CSV a value starting with = + - @ is prefixed with an apostrophe, which the reader
+ * CSV a value starting with = + - @, a tab or a carriage return is prefixed with an apostrophe, which the reader
  * strips again — so a product named "=HYPERLINK(...)" cannot run in Excel.
  */
 final class ProductSpreadsheet
@@ -206,7 +206,7 @@ final class ProductSpreadsheet
             return null;
         }
 
-        if ($format === SpreadsheetFormat::Csv && preg_match('/^\'[=+\-@]/', $text) === 1) {
+        if ($format === SpreadsheetFormat::Csv && preg_match('/^\'[=+\-@\t\r]/', $text) === 1) {
             $text = substr($text, 1);
         }
 
@@ -252,7 +252,7 @@ final class ProductSpreadsheet
     private function row(array $values, SpreadsheetFormat $format): Row
     {
         return new Row(array_map(static function (string $value) use ($format): Cell {
-            if ($format === SpreadsheetFormat::Csv && preg_match('/^[=+\-@]/', $value) === 1) {
+            if ($format === SpreadsheetFormat::Csv && preg_match('/^[=+\-@\t\r]/', $value) === 1) {
                 $value = "'".$value;
             }
 

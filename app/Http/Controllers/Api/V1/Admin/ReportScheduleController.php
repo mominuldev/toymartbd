@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Reporting\Actions\DeleteReportSchedule;
+use App\Domain\Reporting\Actions\ResendReportRun;
 use App\Domain\Reporting\Actions\SaveReportSchedule;
 use App\Domain\Reporting\Enums\ReportType;
 use App\Domain\Reporting\Models\ReportSchedule;
+use App\Domain\Reporting\Models\ReportScheduleRun;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Reports\ReportQuery;
 use App\Http\Requests\Admin\Reports\ReportScheduleRequest;
+use App\Http\Requests\Admin\Reports\ResendReportRunRequest;
 use App\Http\Resources\Admin\Reports\ReportScheduleResource;
 use App\Http\Resources\Admin\Reports\ReportScheduleRunResource;
 use App\Models\User;
@@ -22,8 +25,9 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 /**
- * Scheduled report emails (P8): CRUD, the recent sent-log, and the staff who may receive a
- * report type. reports.view + reports.export (ReportSchedulePolicy).
+ * Scheduled report emails (P8): CRUD, the recent sent-log with each recipient's copy, a
+ * staff resend of a failed run (P9), and the staff who may receive a report type.
+ * reports.view + reports.export (ReportSchedulePolicy).
  */
 final class ReportScheduleController extends ApiController
 {
@@ -81,7 +85,25 @@ final class ReportScheduleController extends ApiController
     {
         $this->authorize('view', $schedule);
 
-        return ReportScheduleRunResource::collection($schedule->runs()->limit(20)->get());
+        return ReportScheduleRunResource::collection($schedule->runs()->with(ReportScheduleRunResource::RELATIONS)->limit(20)->get());
+    }
+
+    /**
+     * `POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) — resend a FAILED run for the
+     * same period: every copy that failed, or one recipient's (`user_id`). Queued on `reports`;
+     * a copy already sent is never mailed again. Idempotent: a run already queued or sending
+     * queues nothing more and answers 202 with its state.
+     */
+    #[OpenApiResponse(403, 'Missing reports.view or reports.export (`forbidden`)')]
+    #[OpenApiResponse(409, 'The run did not fail, the copy was already sent, nothing is left to resend, or an older run must be resent one recipient at a time (`conflict`)')]
+    #[OpenApiResponse(422, 'The recipient is not on the schedule, inactive, or no longer allowed to see the report (`validation-error`)')]
+    public function resend(ResendReportRunRequest $request, ReportSchedule $schedule, ReportScheduleRun $run, ResendReportRun $resend): JsonResponse
+    {
+        $user = $request->user();
+        assert($user instanceof User);
+        $resent = $resend->handle($schedule, $run, $user, $request->userId());
+
+        return (new ReportScheduleRunResource($resent->load(ReportScheduleRunResource::RELATIONS)))->response()->setStatusCode(202);
     }
 
     /**

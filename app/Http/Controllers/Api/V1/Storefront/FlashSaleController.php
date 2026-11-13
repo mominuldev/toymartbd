@@ -56,6 +56,7 @@ final class FlashSaleController extends ApiController
         $productIds = \App\Domain\Catalog\Models\ProductVariant::query()->whereIn('id', $variantIds)->distinct()->pluck('product_id')->all();
         $products = Product::query()->published()->whereIn('id', $productIds)->with(ProductListing::RELATIONS)
             ->orderBy('id')->limit(self::MAX_PRODUCTS)->get();
+        StorefrontProductCardResource::primeStock($products); // one stock query for every card (Phase 9 P-10)
 
         return [
             'id' => $promotion->id,

@@ -18,6 +18,20 @@ use App\Domain\Catalog\Models\ProductImage;
  */
 final class ProductImageMediaMirror
 {
+    /** Deadlock retries for every media-side writer that takes these locks (P9 F-7). */
+    public const int ATTEMPTS = 3;
+
+    /**
+     * Locks every product image linked to the media, ascending id — call it BEFORE locking the
+     * media row. The product-image actions (Crop/Update/DeleteProductImage, AttachMediaToProduct)
+     * lock product → product_images → media; a media-side writer that locked media first and
+     * then UPDATEd the images inverted that order (P9 audit F-7, LOAD-AND-CONCURRENCY.md).
+     */
+    public function lockLinkedImages(int $mediaId): void
+    {
+        ProductImage::query()->where('media_id', $mediaId)->orderBy('id')->lockForUpdate()->pluck('id');
+    }
+
     public function sync(Media $media, bool $revalidate = true): void
     {
         ProductImage::query()->where('media_id', $media->id)->update([

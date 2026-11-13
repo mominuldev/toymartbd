@@ -13,6 +13,7 @@ use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Fulfilment\Services\ShipmentBookingRecorder;
 use App\Domain\Fulfilment\Services\ShipmentTransitions;
 use App\Support\Money;
+use Illuminate\Database\DeadlockException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -118,7 +119,7 @@ final readonly class ApplyCourierStatus
             };
 
             return $locked;
-        });
+        }, 3); // a deadlock victim (rethrown by complete()) is retried from the top
     }
 
     /** The courier has the parcel (or it is past that) but our order was never dispatched for it. */
@@ -146,6 +147,11 @@ final readonly class ApplyCourierStatus
             ));
 
             return true;
+        } catch (DeadlockException $e) {
+            // A deadlock or lock-wait timeout is not a refusal: InnoDB has already rolled back
+            // the WHOLE transaction (the shipment lock included), so writing on here would run
+            // outside it. Let the outer transaction retry (P9, LOAD-AND-CONCURRENCY F-5).
+            throw $e;
         } catch (Throwable $e) {
             Log::error('courier.status.completion_failed', ['shipment_id' => $locked->id, 'exception' => $e::class, 'message' => $e->getMessage()]);
             $locked->refresh();

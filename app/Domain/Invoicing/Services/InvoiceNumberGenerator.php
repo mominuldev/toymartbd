@@ -29,6 +29,11 @@ final readonly class InvoiceNumberGenerator
     public function prepare(NumberSeries $type, ?CarbonImmutable $at = null): void
     {
         $year = (int) DhakaDate::local($at ?? CarbonImmutable::now())->format('Y');
+        // A plain read first (P9): the common case takes no lock at all, even if a caller
+        // ever runs this inside an outer transaction.
+        if (DB::table('invoice_number_sequences')->where('series', $type->series())->where('year', $year)->exists()) {
+            return;
+        }
         DB::table('invoice_number_sequences')->insertOrIgnore(['series' => $type->series(), 'year' => $year, 'last_value' => 0]);
     }
 

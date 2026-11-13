@@ -19853,6 +19853,92 @@
                 }
             }
         },
+        "/admin/reports/schedules/{schedule}/runs/{run}/resend": {
+            "post": {
+                "operationId": "v1.admin.reports.schedules.runs.resend",
+                "summary": "`POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) \u2014 resend a FAILED run for the\nsame period: every copy that failed, or one recipient's (`user_id`). Queued on `reports`;\na copy already sent is never mailed again. Idempotent: a run already queued or sending\nqueues nothing more and answers 202 with its state",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "description": "The schedule ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendReportRunRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`ReportScheduleRun`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReportScheduleRun"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "The recipient is not on the schedule, inactive, or no longer allowed to see the report (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view or reports.export (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The run did not fail, the copy was already sent, nothing is left to resend, or an older run must be resent one recipient at a time (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/reports/schedules": {
             "get": {
                 "operationId": "v1.admin.reports.schedules.index",
@@ -34073,6 +34159,7 @@
                     },
                     "candidates": {
                         "type": "array",
+                        "description": "One query per relation for the whole list, not two per candidate (Phase 9 N+1 guard).",
                         "items": {
                             "$ref": "#/components/schemas/CourierLocation"
                         }
@@ -35073,6 +35160,12 @@
                             "null"
                         ]
                     },
+                    "amount_in_words_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "issued_by": {
                         "type": "object",
                         "description": "The company details as at the credit note's issue.",
@@ -35227,6 +35320,7 @@
                     "tax",
                     "adjustment",
                     "amount_in_words",
+                    "amount_in_words_bn",
                     "issued_by",
                     "issued_to",
                     "lines"
@@ -41041,6 +41135,13 @@
                             "null"
                         ]
                     },
+                    "amount_in_words_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Bangla words (P9); null on an invoice issued before them."
+                    },
                     "due_at": {
                         "type": [
                             "string",
@@ -41217,6 +41318,7 @@
                     "shipping",
                     "tax",
                     "amount_in_words",
+                    "amount_in_words_bn",
                     "due_at",
                     "issued_by",
                     "issued_to",
@@ -41463,6 +41565,13 @@
                             "null"
                         ]
                     },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Admin preview of the chosen logo (a 320px rendition); null when none or not ready."
+                    },
                     "footer_en": {
                         "type": [
                             "string",
@@ -41494,6 +41603,7 @@
                     "trade_licence",
                     "bin",
                     "logo_media_id",
+                    "logo_url",
                     "footer_en",
                     "footer_bn",
                     "placeholders"
@@ -49474,7 +49584,14 @@
                                 "type": "string"
                             },
                             "status": {
-                                "type": "string"
+                                "type": "string",
+                                "enum": [
+                                    "queued",
+                                    "sending",
+                                    "sent",
+                                    "skipped",
+                                    "failed"
+                                ]
                             },
                             "recipients_sent": {
                                 "type": "integer"
@@ -49505,6 +49622,93 @@
                                     "string",
                                     "null"
                                 ]
+                            },
+                            "resend_count": {
+                                "type": "integer"
+                            },
+                            "last_resent_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last_resent_by": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name"
+                                ]
+                            },
+                            "deliveries": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user_id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "queued",
+                                                "sent",
+                                                "skipped",
+                                                "failed"
+                                            ]
+                                        },
+                                        "attempts": {
+                                            "type": "integer"
+                                        },
+                                        "error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sent_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "resent_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "resent_by": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "user_id",
+                                        "name",
+                                        "status",
+                                        "attempts",
+                                        "error",
+                                        "sent_at",
+                                        "resent_at",
+                                        "resent_by"
+                                    ]
+                                }
                             }
                         },
                         "required": [
@@ -49517,7 +49721,11 @@
                             "error",
                             "due_at",
                             "sent_at",
-                            "created_at"
+                            "created_at",
+                            "resend_count",
+                            "last_resent_at",
+                            "last_resent_by",
+                            "deliveries"
                         ]
                     },
                     "created_at": {
@@ -49655,6 +49863,96 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "resend_count": {
+                        "type": "integer",
+                        "description": "How many times staff resent this run (P9)."
+                    },
+                    "last_resent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_resent_by": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The staff member who last resent it \u2014 name only.",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "deliveries": {
+                        "type": "array",
+                        "description": "Each recipient's copy (P9; empty on runs from before per-recipient records, or when\nnot loaded). Staff names only, never an email address.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "user_id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "queued",
+                                        "sent",
+                                        "skipped",
+                                        "failed"
+                                    ]
+                                },
+                                "attempts": {
+                                    "type": "integer"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "sent_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "resent_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "resent_by": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "user_id",
+                                "name",
+                                "status",
+                                "attempts",
+                                "error",
+                                "sent_at",
+                                "resent_at",
+                                "resent_by"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -49667,7 +49965,11 @@
                     "error",
                     "due_at",
                     "sent_at",
-                    "created_at"
+                    "created_at",
+                    "resend_count",
+                    "last_resent_at",
+                    "last_resent_by",
+                    "deliveries"
                 ],
                 "title": "ReportScheduleRun"
             },
@@ -49735,6 +50037,20 @@
                     }
                 },
                 "title": "RequestShipmentRequest"
+            },
+            "ResendReportRunRequest": {
+                "type": "object",
+                "description": "`POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) \u2014 resend a failed run for the\nsame period. Needs reports.view + reports.export (ReportSchedulePolicy::resend), and the\nactor must be able to open the report type themselves.\n\n- no body (or `user_id: null`): every copy that failed or never went out;\n- `user_id`: that one recipient's copy \u2014 a current recipient of the schedule, still active\n  and still holding the report's permissions (re-checked now, and again at send time).",
+                "properties": {
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "One recipient's copy only; omit for every failed copy."
+                    }
+                },
+                "title": "ResendReportRunRequest"
             },
             "RestoreCartRequest": {
                 "type": "object",
@@ -60809,7 +61125,7 @@
                             "integer",
                             "null"
                         ],
-                        "description": "A media library image; stored on the invoice snapshot (not yet drawn on the PDF)."
+                        "description": "A media library image whose renditions are ready. Drawn on invoices, supplementary\ninvoices and credit notes issued from now on; each keeps the logo file it was issued with."
                     },
                     "footer_en": {
                         "type": [

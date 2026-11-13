@@ -90,10 +90,10 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
     Route::post('/items', [CartController::class, 'addItem'])->name('items.store');
     Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item')->name('items.update');
     Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
-    Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.store');
+    Route::post('/coupon', [CartController::class, 'applyCoupon'])->middleware('throttle:coupon')->name('coupon.store');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.destroy');
     // Abandoned-cart recovery (P7, docs/api/cart-recovery.md): contact + consent, and the SMS link.
-    Route::put('/contact', [App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'contact'])->name('contact.update');
+    Route::put('/contact', [App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'contact'])->middleware('throttle:cart-contact')->name('contact.update');
     Route::post('/restore', [App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'restore'])->middleware('throttle:order-track')->name('restore');
 });
 

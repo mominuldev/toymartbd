@@ -34,6 +34,7 @@ final readonly class ReplaceMedia
 
         try {
             $media = DB::transaction(function () use ($media, $stored, $clientName, $isImage): Media {
+                $this->mirror->lockLinkedImages($media->id);
                 $media = Media::query()->lockForUpdate()->findOrFail($media->id);
                 $old = $media->base_path;
 
@@ -55,7 +56,7 @@ final readonly class ReplaceMedia
                 DeleteMediaFiles::dispatch($old);
 
                 return $media;
-            });
+            }, ProductImageMediaMirror::ATTEMPTS);
         } catch (Throwable $e) {
             MediaFiles::discard($stored['base']);
 

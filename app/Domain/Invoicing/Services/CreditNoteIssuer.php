@@ -199,6 +199,7 @@ final readonly class CreditNoteIssuer
             'adjustment' => $totals['adjustment'],
             'total' => $total,
             'amount_in_words' => AmountInWords::english($total),
+            'amount_in_words_bn' => AmountInWords::bangla($total),
             'issued_at' => now(),
             'template' => CreditNote::TEMPLATE_STANDARD,
             'created_by' => $userId,

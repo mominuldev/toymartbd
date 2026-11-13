@@ -212,7 +212,11 @@ final class CourierLocationController extends ApiController
         $district = District::query()->findOrFail($request->districtId() ?? 0);
         $upazila = $request->upazilaId() === null ? null : Upazila::query()->where('district_id', $district->id)->findOrFail($request->upazilaId());
 
-        return CourierZoneSuggestionResource::collection($suggester->zonesFor($p, $district, $upazila));
+        $suggestions = $suggester->zonesFor($p, $district, $upazila);
+        // One query per relation for every suggested row, not two per row (Phase 9 N+1 guard).
+        (new \Illuminate\Database\Eloquent\Collection(array_map(static fn (array $s): CourierLocation => $s['location'], $suggestions)))->loadMissing(['district', 'upazila']);
+
+        return CourierZoneSuggestionResource::collection($suggestions);
     }
 
     /** `GET /courier-locations/{provider}/locations/{location}/suggestions` — SUGGESTED places of ours for one courier row. */

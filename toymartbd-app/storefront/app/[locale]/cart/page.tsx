@@ -144,12 +144,14 @@ export default async function CartPage({ params }: Props) {
             {!empty && cart ? (
                 // CartTotalBar — Figma 120:3034: mobile only, fixed above MobileNav; total + Checkout.
                 <div className="fixed inset-x-0 bottom-[calc(--spacing(16)+env(safe-area-inset-bottom))] z-20 flex h-19 items-center gap-3 border-t border-line-brand-subtle bg-surface px-4 shadow-up-nav lg:hidden">
-                    <a href="#cart-summary-title" className="flex min-w-0 grow items-center gap-3" aria-label={c.showSummary}>
+                    <a href="#cart-summary-title" className="flex min-w-0 grow items-center gap-3">
                         <span className="flex flex-col">
                             <span className="t-caption text-fg-secondary">{c.total}</span>
                             <span className="t-price-current-card tabular-nums text-fg-price">{formatPrice(cart.totals.grand_total)}</span>
                         </span>
                         <Icon name="caretUp" className="size-icon-md text-fg-primary" />
+                        {/* Visually hidden, not aria-label: the visible total stays in the name (WCAG 2.5.3). */}
+                        <span className="sr-only">{c.showSummary}</span>
                     </a>
                     {ready ? (
                         <a href={checkoutHref} className={`${buttonClass('primary')} w-50 shrink-0`}>

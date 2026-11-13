@@ -133,4 +133,65 @@ final class RobotsTxt
 
         return $errors;
     }
+
+    /**
+     * Whether the served robots.txt lets a crawler (`User-agent: *` group, or the default when no
+     * group names it) fetch this path — Google's matching (RFC 9309): the longest matching rule
+     * wins, Allow wins a tie, `*` matches any run of characters and `$` anchors the end. Used to
+     * keep the sitemap from submitting a URL robots.txt blocks.
+     */
+    public static function allows(string $path, ?string $content = null): bool
+    {
+        $rules = self::rulesForAll($content ?? self::served());
+        $best = null;
+        foreach ($rules as [$allow, $pattern]) {
+            if ($pattern === '' || ! self::matches($pattern, $path)) {
+                continue;
+            }
+            $length = strlen($pattern);
+            if ($best === null || $length > $best[1] || ($length === $best[1] && $allow)) {
+                $best = [$allow, $length];
+            }
+        }
+
+        return $best === null || $best[0];
+    }
+
+    /** @return list<array{bool, string}> [allow?, pattern] of the group(s) for `*` */
+    private static function rulesForAll(string $content): array
+    {
+        $rules = [];
+        $agents = [];
+        $inRules = false;
+        foreach (preg_split('/\r\n|\n|\r/', $content) ?: [] as $raw) {
+            $line = trim((string) preg_replace('/#.*$/', '', $raw));
+            if ($line === '' || ! str_contains($line, ':')) {
+                continue;
+            }
+            [$directive, $value] = array_map(trim(...), explode(':', $line, 2));
+            $key = strtolower($directive);
+            if ($key === 'user-agent') {
+                if ($inRules) {
+                    $agents = [];
+                    $inRules = false;
+                }
+                $agents[] = strtolower($value);
+            } elseif ($key === 'allow' || $key === 'disallow') {
+                $inRules = true;
+                if (in_array('*', $agents, true)) {
+                    $rules[] = [$key === 'allow', $value];
+                }
+            }
+        }
+
+        return $rules;
+    }
+
+    private static function matches(string $pattern, string $path): bool
+    {
+        $anchored = str_ends_with($pattern, '$');
+        $regex = implode('.*', array_map(static fn (string $part): string => preg_quote($part, '#'), explode('*', $anchored ? substr($pattern, 0, -1) : $pattern)));
+
+        return preg_match('#^'.$regex.($anchored ? '$' : '').'#', $path) === 1;
+    }
 }

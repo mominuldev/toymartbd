@@ -25,6 +25,9 @@ final readonly class Money implements JsonSerializable, Stringable
     /** DECIMAL(14,2): twelve integer digits. */
     private const MAX_ABS = '999999999999.99';
 
+    /** Canonical form: exactly two decimals, no leading zero, at most twelve integer digits. */
+    private const CANONICAL = '/^-?(?:0|[1-9]\d{0,11})\.\d\d$/';
+
     private function __construct(public string $amount) {}
 
     /**
@@ -36,6 +39,9 @@ final readonly class Money implements JsonSerializable, Stringable
     {
         $value = is_int($amount) ? (string) $amount : trim($amount);
 
+        if (preg_match(self::CANONICAL, $value) === 1 && $value !== '-0.00') {
+            return new self($value); // already what normalise() would return (fast path, see there)
+        }
         if (preg_match('/^-?\d+(\.\d+)?$/', $value) !== 1) {
             throw new InvalidArgumentException("Not a decimal amount: [{$value}]");
         }
@@ -55,12 +61,12 @@ final readonly class Money implements JsonSerializable, Stringable
 
     public function plus(self $other): self
     {
-        return self::normalise(bcadd($this->amount, $other->amount, self::SCALE));
+        return self::exact(bcadd($this->amount, $other->amount, self::SCALE));
     }
 
     public function minus(self $other): self
     {
-        return self::normalise(bcsub($this->amount, $other->amount, self::SCALE));
+        return self::exact(bcsub($this->amount, $other->amount, self::SCALE));
     }
 
     /** Multiply by a quantity or a decimal factor ("1.5"), rounding half away from zero. */
@@ -184,9 +190,30 @@ final readonly class Money implements JsonSerializable, Stringable
         return $value;
     }
 
+    /**
+     * The sum or difference of two Money values at scale 2: bcmath already returns it in canonical
+     * form (two decimals, no leading zero), so only the range and negative zero need checking.
+     */
+    private static function exact(string $value): self
+    {
+        if ($value !== '-0.00' && strlen($value) - ($value[0] === '-' ? 1 : 0) <= 15) {
+            return new self($value);
+        }
+
+        return self::normalise($value);
+    }
+
     /** Round half away from zero to two places, and enforce the column's range. */
     private static function normalise(string $value): self
     {
+        // Fast path (Phase 9, docs/audits/PERFORMANCE.md P-04): a value already in canonical form —
+        // exactly two decimals, no leading zero, at most twelve integer digits, not negative zero —
+        // is what the rounding below would return unchanged. plus()/minus() of two Money values
+        // always lands here, and report loops do hundreds of thousands of them.
+        if (preg_match(self::CANONICAL, $value) === 1 && $value !== '-0.00') {
+            return new self($value);
+        }
+
         $negative = str_starts_with($value, '-');
         $abs = ltrim($value, '-');
         $rounded = bcadd($abs, '0.005', self::SCALE + 1);

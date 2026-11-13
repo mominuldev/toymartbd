@@ -104,7 +104,9 @@ final class Profitability
         $all = self::emptyFigures();
         $orders = [];
 
-        foreach ($this->lines($period, $filters)->lazyById(1000, 'order_items.id', 'id') as $line) {
+        // One streamed query (cursor), not lazyById: lazyById re-runs the joins and the sort for every
+        // 1,000-row chunk — 91 queries / ~18 s for a year at 150k lines (Phase 9, docs/audits/PERFORMANCE.md P-03).
+        foreach ($this->lines($period, $filters)->orderBy('order_items.id')->cursor() as $line) {
             $figures = self::lineFigures($line);
             $head = $group($line);
             $key = (string) $head['key'];

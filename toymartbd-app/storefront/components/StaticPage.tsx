@@ -5,6 +5,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
 import { getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { cmsPaths } from '@/lib/site-config';
 import type { AboutBlocks, StaticPageContent } from '@/lib/static-pages';
 import blocks from '@/public/mock/about/blocks.jpg';
 import shapeSorter from '@/public/mock/about/shape-sorter.jpg';
@@ -175,11 +176,11 @@ function AboutContent({ locale, content, about }: { locale: Locale; content: Sta
                     </p>
                 </div>
                 <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-3">
-                    <a href={localizedPath(locale, '/pages/contact')} className={buttonClass('primary')}>
+                    <a href={localizedPath(locale, cmsPaths.contact)} className={buttonClass('primary')}>
                         <Icon name="mapPin" className={buttonIconClass.lg} />
                         {about.visit.directions}
                     </a>
-                    <a href={localizedPath(locale, '/pages/contact')} className={buttonClass('secondary')}>
+                    <a href={localizedPath(locale, cmsPaths.contact)} className={buttonClass('secondary')}>
                         <Icon name="chatCircleDots" className={buttonIconClass.lg} />
                         {about.visit.contact}
                     </a>

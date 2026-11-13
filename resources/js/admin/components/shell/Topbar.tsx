@@ -46,12 +46,17 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
     const [open, setOpen] = useState(false);
     const menuId = useId();
     const root = useRef<HTMLDivElement>(null);
+    const trigger = useRef<HTMLButtonElement>(null);
     const firstName = me.name.trim().split(/\s+/)[0] ?? me.name;
 
     useEffect(() => {
         if (!open) return;
         const close = (event: MouseEvent | KeyboardEvent) => {
-            if (event instanceof KeyboardEvent ? event.key === 'Escape' : !root.current?.contains(event.target as Node)) setOpen(false);
+            if (event instanceof KeyboardEvent) {
+                if (event.key !== 'Escape') return;
+                setOpen(false);
+                trigger.current?.focus(); // Escape returns focus to the button (UI-UX spec §7)
+            } else if (!root.current?.contains(event.target as Node)) setOpen(false);
         };
         document.addEventListener('mousedown', close);
         document.addEventListener('keydown', close);
@@ -64,15 +69,18 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
     return (
         <div ref={root} className="relative">
             <button
+                ref={trigger}
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-controls={open ? menuId : undefined}
-                aria-label={t('shell.userMenu', { name: me.name })}
                 onClick={() => setOpen((value) => !value)}
                 className="flex items-center gap-2 rounded-sm p-0.5 text-fg-primary hover:bg-subtle"
             >
+                {/* Named by its content, not an aria-label (WCAG 2.5.3 label in name): below lg only the
+                    avatar shows, so the full label is visually hidden there; from lg the visible name and role. */}
                 <Avatar name={me.name} />
+                <span className="sr-only lg:hidden">{t('shell.userMenu', { name: me.name })}</span>
                 <span className="hidden min-w-0 flex-col items-start text-start lg:flex">
                     <span className="max-w-32 truncate t-admin-body-strong text-fg-primary">{firstName}</span>
                     <span className="max-w-32 truncate t-admin-caption text-fg-tertiary">{roleLabel}</span>

@@ -28,7 +28,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale).listing;
-    return listingPageMetadata({ locale, path: PATH, state: parseListingState(await searchParams, SCOPE), title: t.allToys, description: t.metaAll });
+    const state = parseListingState(await searchParams, SCOPE);
+    // A cursor page: the same (deduplicated) listing fetch the page makes, to spot a stale cursor.
+    const listing = state.cursor ? await fetchListing(state, SCOPE, locale) : null;
+    return listingPageMetadata({ locale, path: PATH, state, title: t.allToys, description: t.metaAll, listing });
 }
 
 export default async function AllToysPage({ params, searchParams }: Props) {
