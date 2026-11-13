@@ -19,6 +19,7 @@ import {
     WalletIcon,
     StackIcon,
     MegaphoneSimpleIcon,
+    ReceiptIcon,
     type Icon,
 } from '@phosphor-icons/react';
 import type { MessageKey } from '@/i18n/messages';
@@ -29,7 +30,14 @@ export type NavItem = {
     icon: Icon;
     /** Hidden unless the signed-in user holds this permission (App\Models\Enums\Permission). */
     permission: string;
+    /**
+     * Second-level links shown under the item while the route is inside it (Figma `Sidebar`
+     * `storeSubmenu`, `SidebarSubItem` 321:59233). They inherit the item's permission.
+     */
+    children?: NavChild[];
 };
+
+export type NavChild = { key: MessageKey; path: string };
 
 export type NavGroup = { label: MessageKey | null; items: NavItem[] };
 
@@ -80,11 +88,31 @@ export const navigation: NavGroup[] = [
     },
     {
         label: 'nav.group.store',
-        items: [{ key: 'nav.store', path: '/store', icon: BrowserIcon, permission: 'content.view' }],
+        items: [
+            {
+                key: 'nav.store',
+                path: '/store',
+                icon: BrowserIcon,
+                permission: 'content.view',
+                children: [
+                    { key: 'nav.store.home', path: '/store/home' },
+                    { key: 'nav.store.pages', path: '/store/pages' },
+                    { key: 'nav.store.navigation', path: '/store/navigation' },
+                    { key: 'nav.store.blog', path: '/store/blog' },
+                    { key: 'nav.store.banners', path: '/store/banners' },
+                    { key: 'nav.store.testimonials', path: '/store/testimonials' },
+                    { key: 'nav.store.media', path: '/store/media' },
+                ],
+            },
+        ],
     },
     {
         label: 'nav.group.money',
-        items: [{ key: 'nav.finance', path: '/finance', icon: WalletIcon, permission: 'finance.view' }],
+        items: [
+            { key: 'nav.finance', path: '/finance', icon: WalletIcon, permission: 'finance.view' },
+            // P8 invoices: customer invoices need orders.view (supplier ones purchasing.view + view_cost, filtered server-side).
+            { key: 'nav.invoices', path: '/invoices', icon: ReceiptIcon, permission: 'orders.view' },
+        ],
     },
     {
         label: 'nav.group.settings',

@@ -7,6 +7,7 @@ import { fontVariables } from '@/lib/fonts';
 import { getMessages, htmlLang } from '@/lib/i18n';
 import { LOCALE_HEADER, PATH_HEADER, requestContext } from '@/lib/locale-route';
 import { siteUrl } from '@/lib/seo';
+import { getTitleSeparator } from '@/lib/seo/fetch';
 import './globals.css';
 
 // The 404 for every URL that matches no route, in both locales (`/no-such-page`,
@@ -30,7 +31,7 @@ async function context() {
 export async function generateMetadata(): Promise<Metadata> {
     const { locale } = await context();
     const t = getMessages(locale);
-    return { metadataBase: siteUrl(), title: `${t.notFound.title} · ${t.site.name}` };
+    return { metadataBase: siteUrl(), title: `${t.notFound.title}${await getTitleSeparator()}${t.site.name}` };
 }
 
 export default async function GlobalNotFound() {

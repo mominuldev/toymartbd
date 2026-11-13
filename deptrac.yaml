@@ -112,11 +112,25 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Search\\(?!Events\\)#'
+    # Reporting (P8): read-only analytics over orders, the ledger and the catalog — sales,
+    # dashboard and customer analytics queries, exports, scheduled report emails. It never
+    # writes to another domain's tables; nothing depends on it except Http and Providers.
+    - name: Reporting
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Reporting\\(?!Events\\)#'
+    # Invoicing (P8, PRD N-13): issued invoices snapshot an order or a PO at issue and are
+    # immutable afterwards. Reads Ordering and Purchasing; writes only `invoices` and its
+    # number sequence. Nothing depends on it except Http and Providers.
+    - name: Invoicing
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Invoicing\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -136,9 +150,11 @@ deptrac:
     Customer: [Support, Models, DomainEvents, Catalog, NotificationContracts]
     # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
     Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
-    # Content writes its pages' seo_meta and slug_history rows (Seo depends only on Catalog: no cycle).
-    Content: [Support, Models, DomainEvents, Catalog, Customer, Seo, SeoContracts]
-    # Seo writes a static page with its seo_meta/slug_history (SaveCmsPageWithSeo), as it does products.
+    # Content reaches the SEO module only through SeoContracts (subject providers, SeoMetaStore)
+    # and Seo events (SlugChanged, SeoPagesStale) — never Seo internals, so there is no cycle.
+    Content: [Support, Models, DomainEvents, Catalog, Customer, SeoContracts]
+    # Seo writes a static page with its seo_meta/slug_history (SaveCmsPageWithSeo), as it does
+    # products, and reads static pages for their SEO subjects. One direction only: Seo → Content.
     Seo: [Support, Models, DomainEvents, Catalog, Customer, Content, SeoContracts]
     # Tracking (P7 batch 2) reads orders to build purchase/refund conversions (never writes
     # them) and queues Content's storefront revalidation job for `tracking-config`.
@@ -152,3 +168,6 @@ deptrac:
     # except through NotificationContracts. It writes only its own tables. P7: it also reads
     # carts for abandoned-cart recovery (cart_recoveries is Notification's table).
     Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Cart, NotificationContracts]
+    # Reporting reads the read models of the domains it reports on (P8 batch 1 brief).
+    Reporting: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Finance, Inventory, Fulfilment]
+    Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing]

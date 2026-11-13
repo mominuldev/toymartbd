@@ -38,8 +38,7 @@ export function BannersPage() {
 
     return (
         <section className="flex flex-col gap-6">
-            <StoreHeader action={newBanner} />
-            <p className="t-admin-body text-fg-secondary">{t('content.banners.subtitle')}</p>
+            <StoreHeader section="banners" action={newBanner} />
 
             <div role="group" aria-label={t('content.banners.placementFilter')} className="scrollbar-none flex overflow-x-auto border-b border-line-default">
                 <TabButton active={placement === 'all'} label={t('common.all')} onClick={() => setPlacement('all')} />

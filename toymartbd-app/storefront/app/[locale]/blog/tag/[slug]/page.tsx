@@ -5,6 +5,7 @@ import { cache } from 'react';
 import { listMetadata, renderList, termSpec } from '@/components/blog/pages';
 import { isLocale, type Locale } from '@/lib/i18n';
 import { getTerm } from '@/lib/blog/fetch';
+import { getSeo } from '@/lib/seo/fetch';
 import { parsePage } from '@/lib/blog/format';
 
 // Blog tag archive (Phase 7): the tag's live posts, numbered pages. 404 for an unknown tag or
@@ -26,7 +27,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     if (!isLocale(locale) || page === null) return {};
     const term = await load(slug, locale);
     if (!term) return {};
-    return listMetadata(termSpec('tag', term, locale, page));
+    return listMetadata({ ...termSpec('tag', term, locale, page), seo: await getSeo('blog_tag', slug) });
 }
 
 export default async function BlogTagPage({ params, searchParams }: Props) {

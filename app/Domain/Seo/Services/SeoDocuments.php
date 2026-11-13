@@ -22,7 +22,6 @@ final readonly class SeoDocuments
     /** @return array{title: string, title_bn: string, description: string, description_bn: string, og_image: string|null} */
     public function defaults(SeoSubject $subject): array
     {
-        $site = ProductSeo::SITE_NAME;
         $nameBn = $subject->nameBn !== null && $subject->nameBn !== '' ? $subject->nameBn : $subject->name;
 
         $description = $subject->description ?? '';
@@ -36,8 +35,8 @@ final readonly class SeoDocuments
         }
 
         return [
-            'title' => $subject->name.' | '.$site,
-            'title_bn' => $nameBn.' | '.$site,
+            'title' => SiteTitle::of($subject->name),
+            'title_bn' => SiteTitle::of($nameBn),
             'description' => $description,
             'description_bn' => $descriptionBn,
             'og_image' => $subject->image,
@@ -103,7 +102,7 @@ final readonly class SeoDocuments
         $key = 'seo.default_description.'.$type;
         $text = __($key, ['name' => $name], $locale);
 
-        return is_string($text) && $text !== $key ? $text : $name.' — '.ProductSeo::SITE_NAME;
+        return is_string($text) && $text !== $key ? $text : $name.' — '.SiteTitle::siteName();
     }
 
     private static function pick(?string $override, string $default): string

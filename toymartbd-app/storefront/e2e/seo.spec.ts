@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { MOCK_API_URL, STOREFRONT_URL } from './constants';
+import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 
 // Phase 7 SEO plumbing (docs/api/seo.md): the server-rendered <head> a crawler sees, JS disabled.
-test.use({ javaScriptEnabled: false });
+// A crawler UA: an HTML-limited bot gets every metadata tag in <head> (next.config.ts htmlLimitedBots).
+test.use({ javaScriptEnabled: false, userAgent: CRAWLER_UA });
 
 test.beforeAll(async ({ request }) => {
     await request.post(`${MOCK_API_URL}/__control/reset`);
@@ -109,4 +110,22 @@ test('/robots.txt and /sitemap.xml are served', async ({ request }) => {
     expect(await index.text()).toContain('<sitemapindex');
     expect((await request.get('/sitemaps/sitemap-products-bn-1.xml')).status()).toBe(200);
     expect((await request.get('/sitemaps/secret.xml')).status()).toBe(404);
+});
+
+// next.config.ts `htmlLimitedBots`: an HTML-limited crawler gets blocking metadata — every tag in
+// <head> of the first HTML. A browser may get it streamed after the shell instead (when
+// generateMetadata is still pending as the shell flushes — timing-dependent, so not asserted
+// beyond "the same canonical is in the document").
+test('a crawler gets metadata in <head>; a browser gets the same metadata', async ({ request }) => {
+    const browserUa = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+    const canonical = `<link rel="canonical" href="${abs('/search')}`;
+    const fetchAs = async (ua: string) => (await request.get('/search?q=lego', { headers: { 'user-agent': ua } })).text();
+
+    const bot = await fetchAs(CRAWLER_UA);
+    expect(bot.indexOf(canonical)).toBeGreaterThan(-1);
+    expect(bot.indexOf(canonical)).toBeLessThan(bot.indexOf('</head>'));
+    // The layout's title template uses the one separator (config/seo.php; " | " when the API is silent).
+    expect(bot).toMatch(/<title>[^<]+ \| Toy Mart BD<\/title>/);
+
+    expect(await fetchAs(browserUa)).toContain(canonical);
 });

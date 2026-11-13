@@ -8,6 +8,7 @@ use App\Domain\Content\Blocks\DTOs\BlockSettings;
 use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
+use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -44,6 +45,7 @@ final class CreateBlock
                 'updated_by' => $userId,
             ]);
             $block->save();
+            CmsBlockMedia::syncDraft($placement); // Media Library "where used"
 
             return $block->refresh();
         });

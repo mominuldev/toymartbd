@@ -8,7 +8,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
-import { useReceivables } from '../api';
+import { useReceivables, useRefundsOwed } from '../api';
 import { compares, pnlExportUrl, usePnl, type Compare, type PnlBlock, type PnlStatement } from './api';
 import { Card, ExportLink, Money, PeriodPicker, ReportTabs, TAKA, formatAmount, formatCount, formatDay, isNegative, useRangeParams } from './parts';
 
@@ -204,6 +204,8 @@ function CashCard({ data }: { data: PnlStatement }) {
     // "Still with the courier": COD recognised on delivery but not yet remitted, as at the
     // period's last Dhaka day — the server's receivables figure (rule 10), never derived here.
     const receivables = useReceivables(data.to, can(me, 'finance.view'));
+    // "Owed back to a customer": refunds approved but not yet paid out, as at the same day (server figure).
+    const owed = useRefundsOwed(data.to, can(me, 'finance.view'));
     return (
         <Card className="flex flex-col gap-2 p-5">
             <p className="t-admin-overline text-fg-secondary">{t('reports.cash.overline')}</p>
@@ -214,6 +216,11 @@ function CashCard({ data }: { data: PnlStatement }) {
             {receivables.data && (
                 <Row label={t('reports.cash.courier')}>
                     <Money amount={receivables.data.outstanding} />
+                </Row>
+            )}
+            {owed.data && (
+                <Row label={t('reports.cash.owed')}>
+                    <Money amount={owed.data.total === '0.00' ? owed.data.total : `-${owed.data.total}`} />
                 </Row>
             )}
             <Row label={t('reports.cash.out')}>

@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlogArticle } from '@/components/blog/BlogArticle';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { BlogPagination } from '@/components/blog/BlogPagination';
-import { postMetadata } from '@/components/blog/pages';
+import { listMetadata, postMetadata } from '@/components/blog/pages';
+import type { SeoDocument } from '@/lib/seo/types';
 import { BLOG_TAG, blogPostTags, getBlogTeaser, getPost, getPreview, listPosts } from '@/lib/blog/fetch';
 import { budgetLabel, pagePath, parsePage, postDate, readTime } from '@/lib/blog/format';
 import { blogMessages } from '@/lib/blog/messages';
@@ -198,6 +199,36 @@ describe('blog metadata and schema', () => {
         expect(bn.alternates?.languages).toMatchObject({ en: '/guides/best-toys-3-5', bn: '/bn/guides/best-toys-3-5', 'x-default': '/guides/best-toys-3-5' });
         expect(postMetadata(post, 'en').title).toBe('Best toys for 3–5 year olds');
         expect(postMetadata(post, 'en', { preview: true }).robots).toEqual({ index: false, follow: false });
+    });
+
+    it('overlays a blog archive SEO document on page 1 only, keeping hreflang both ways', async () => {
+        const doc: SeoDocument = {
+            type: 'blog_category',
+            slug: 'stem',
+            path: '/blog/category/stem',
+            robots: { index: false, follow: true },
+            canonical_url: null,
+            sitemap_exclude: false,
+            twitter_card: 'summary_large_image',
+            og_image: null,
+            en: { title: 'STEM toys guide | Toy Mart BD', description: 'Admin description', og_title: 'STEM', og_description: 'OG' },
+            bn: { title: 'স্টেম খেলনা | Toy Mart BD', description: 'বিবরণ', og_title: 'স্টেম', og_description: 'ওজি' },
+            updated_at: null,
+        };
+        const spec = { locale: 'bn' as const, path: '/blog/category/stem', page: 1, title: 'Category: STEM', description: 'Default', seo: doc };
+        const first = await listMetadata(spec);
+        expect(first.title).toEqual({ absolute: 'স্টেম খেলনা | Toy Mart BD' });
+        expect(first.description).toBe('বিবরণ');
+        expect(first.robots).toEqual({ index: false, follow: true });
+        expect(first.alternates?.languages).toMatchObject({ en: '/blog/category/stem', bn: '/bn/blog/category/stem', 'x-default': '/blog/category/stem' });
+
+        const second = await listMetadata({ ...spec, page: 2 });
+        expect(typeof second.title).toBe('string'); // its own "page 2" title, the layout adds the site name
+        expect(second.alternates?.canonical).toBe('/bn/blog/category/stem?page=2');
+        expect(second.robots).toEqual({ index: false, follow: true }); // a noindex still applies
+
+        const none = await listMetadata({ ...spec, seo: null });
+        expect(none.title).toBe('Category: STEM');
     });
 
     it('emits valid Article JSON-LD', () => {

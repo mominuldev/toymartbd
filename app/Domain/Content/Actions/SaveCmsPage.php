@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
  * allowlist sanitiser; FAQ questions are plain text. Publishing without a date publishes now;
  * a future `published_at` schedules it. The slug changes only when one is given explicitly.
  *
- * SEO and slug history are written around this by {@see \App\Domain\Seo\Actions\SaveCmsPageWithSeo}.
+ * SEO and slug history are written around this by the SEO module (Seo\Actions\SaveCmsPageWithSeo).
  */
 final class SaveCmsPage
 {

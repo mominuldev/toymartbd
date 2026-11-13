@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { PaperPlaneTiltIcon, PencilSimpleIcon } from '@phosphor-icons/react';
+import { PaperPlaneTiltIcon, PencilSimpleIcon, PrinterIcon } from '@phosphor-icons/react';
 import { ApiError } from '@/lib/api';
+import { openPdf } from '@/lib/pdf';
 import { useI18n } from '@/i18n/I18nProvider';
 import { formatDhakaDate } from '@/lib/format';
 import { can, useMe } from '@/features/auth/api';
@@ -85,6 +86,8 @@ function PurchaseDetail({ purchase }: { purchase: Purchase }) {
                                 {t('po.close')}
                             </Button>
                         )}
+                        {/* P8 supplier invoice (PINV-…): issued on the first print, reprinted from its snapshot. */}
+                        {purchase.status !== 'draft' && purchase.status !== 'cancelled' && can(me, 'catalog.view_cost') && <PrintInvoiceButton purchaseId={purchase.id} />}
                         {canCreate && purchase.can.edit && (
                             <Link to={`/purchasing/${purchase.id}/edit`} className={buttonClass('outline')}>
                                 <PencilSimpleIcon size={16} aria-hidden />
@@ -231,5 +234,27 @@ function PurchaseDetail({ purchase }: { purchase: Purchase }) {
             <CloseShortDialog open={closing} onClose={() => setClosing(false)} purchase={purchase} />
             <PaymentDialog open={paying} onClose={() => setPaying(false)} supplier={purchase.supplier} purchaseId={purchase.id} purchases={[{ id: purchase.id, number: purchase.number }]} />
         </section>
+    );
+}
+
+/** Opens the PO's supplier invoice PDF (`GET /purchases/{id}/invoice`). */
+function PrintInvoiceButton({ purchaseId }: { purchaseId: number }) {
+    const { t } = useI18n();
+    const { notify } = useToast();
+    const [printing, setPrinting] = useState(false);
+    return (
+        <Button
+            variant="outline"
+            disabled={printing}
+            onClick={() => {
+                setPrinting(true);
+                openPdf(`/purchases/${purchaseId}/invoice`)
+                    .catch((error: unknown) => notify(error instanceof ApiError ? (error.problem.detail ?? error.problem.title) : t('invoices.printFailed'), 'danger'))
+                    .finally(() => setPrinting(false));
+            }}
+        >
+            <PrinterIcon size={16} aria-hidden />
+            {printing ? t('invoices.printing') : t('invoices.printPurchase')}
+        </Button>
     );
 }

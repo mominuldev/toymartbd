@@ -11,12 +11,16 @@ import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
+import { SeoPanel } from '@/features/seo';
 import { MediaField, type PickedImage } from '../shared/MediaField';
 import { apiFieldErrors, issuesToErrors, type FieldErrors } from '../shared/errors';
 import { useDeleteTerm, useSaveTerm, useTerms, type BlogTerm, type BlogTermInput, type TermKind } from './api';
 import { BlogHeader, cardClass } from './parts';
 
 type TermForm = { name: string; name_bn: string; slug: string; description: string; description_bn: string; position: string; avatar: PickedImage | null };
+
+/** The SEO module's morph key per archive kind (docs/api/seo.md §1). */
+const seoTypes: Record<TermKind, string> = { categories: 'blog_category', tags: 'blog_tag', authors: 'blog_author' };
 
 const titles: Record<TermKind, MessageKey> = { categories: 'blog.terms.categories.title', tags: 'blog.terms.tags.title', authors: 'blog.terms.authors.title' };
 
@@ -201,6 +205,13 @@ export function BlogTermsPage({ kind }: { kind: TermKind }) {
                     </form>
                 )}
             </div>
+
+            {/* Search & social for the archive page (P7 SEO module): its own form, saved separately. */}
+            {editing !== null && editing !== 'new' && can(me, 'seo.view') && (
+                <div className={`${cardClass} w-full min-w-0 max-w-3xl`}>
+                    <SeoPanel type={seoTypes[kind]} id={editing.id} />
+                </div>
+            )}
 
             {deleting && (
                 <ConfirmDialog

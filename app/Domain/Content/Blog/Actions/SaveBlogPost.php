@@ -16,7 +16,7 @@ use App\Domain\Content\Blog\Services\BlogHtml;
 use App\Domain\Content\Blog\Services\BlogSlugHistory;
 use App\Domain\Content\Blog\Services\BlogSlugs;
 use App\Domain\Content\Blog\Services\ReadingTime;
-use App\Domain\Seo\Models\SeoMeta;
+use App\Domain\Seo\Contracts\SeoMetaStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +41,7 @@ final class SaveBlogPost
     public function __construct(
         private readonly BlogSlugs $slugs,
         private readonly BlogSlugHistory $history,
+        private readonly SeoMetaStore $seoMeta,
     ) {}
 
     public function handle(?BlogPost $existing, BlogPostData $data, ?int $actorId = null): BlogPost
@@ -98,9 +99,8 @@ final class SaveBlogPost
                 $this->history->record(BlogPost::SEO_TYPE, $post->id, $previousSlug, $post->slug, $wasLive, $actorId);
 
                 if ($data->seo !== null && $data->seo !== []) {
-                    $meta = SeoMeta::query()->firstOrNew(['seoable_type' => BlogPost::SEO_TYPE, 'seoable_id' => $post->id]);
-                    $meta->fill(array_intersect_key($data->seo, array_flip(self::SEO_COLUMNS)));
-                    $meta->save();
+                    // The SEO module's one write path (merge: the panel's other columns stay).
+                    $this->seoMeta->merge(BlogPost::SEO_TYPE, $post->id, array_intersect_key($data->seo, array_flip(self::SEO_COLUMNS)));
                 }
 
                 BlogCacheTags::purge([$post->id => array_values(array_unique(array_filter([$post->slug, $previousSlug])))]);

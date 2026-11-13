@@ -18,6 +18,7 @@ import { AGE_BANDS } from '@/lib/listing/state';
 import { fetchRail } from '@/lib/products';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo/jsonld';
+import { getTitleSeparator } from '@/lib/seo/fetch';
 import { homeMetadata } from '@/lib/seo/metadata';
 
 // Home — the CMS homepage (Phase 7): the published blocks from GET /storefront/content/home,
@@ -47,7 +48,7 @@ async function localeOf(params: Props['params']): Promise<Locale> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const locale = await localeOf(params);
-    return homeMetadata(locale);
+    return homeMetadata(locale, await getTitleSeparator());
 }
 
 const CATEGORY_TILES = 8;

@@ -5,6 +5,7 @@ import { cache } from 'react';
 import { listMetadata, renderList, termSpec } from '@/components/blog/pages';
 import { isLocale, type Locale } from '@/lib/i18n';
 import { getTerm } from '@/lib/blog/fetch';
+import { getSeo } from '@/lib/seo/fetch';
 import { parsePage } from '@/lib/blog/format';
 
 // Blog author archive (Phase 7): the author's live posts, numbered pages. 404 for an unknown author or
@@ -26,7 +27,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     if (!isLocale(locale) || page === null) return {};
     const term = await load(slug, locale);
     if (!term) return {};
-    return listMetadata(termSpec('author', term, locale, page));
+    return listMetadata({ ...termSpec('author', term, locale, page), seo: await getSeo('blog_author', slug) });
 }
 
 export default async function BlogAuthorPage({ params, searchParams }: Props) {

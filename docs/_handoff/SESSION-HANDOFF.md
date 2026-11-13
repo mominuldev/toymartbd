@@ -1,6 +1,6 @@
 # Session handoff — continue on another machine / account
 
-**Updated:** 2026-11-13. PR #17 (Phase 7 batch 1) and #18 merged. **Branch:** `phase-7/batch-2` — server-side tracking (4 agents, brief `docs/_handoff/briefs/brief-p7b2-common.md`) complete; PR open, merge after all 4 CI jobs. Progress: IMPLEMENTATION-PLAN "Phase 7 batch 2". Next: batch-1 follow-ups below, then Phase 8.
+**Updated:** 2026-11-13 (later). PR #19 (Phase 7 batch 2, tracking) merged; PR #20 (demo seed) open. **Branch:** `phase-8/batch-1` (off origin/main + the demo-seed commit) — 5 agents (all finished, integrated, full checks green; progress in IMPLEMENTATION-PLAN "Phase 8 batch 1"), brief `docs/_handoff/briefs/brief-p8b1-common.md`: 1 dashboard, 2 customers + customer analytics, 3 Reporting domain + sales analytics + scheduled report emails + exports, 4 invoicing + review-request/birthday automations, 5 Phase 7 follow-ups. If the session dies: agent files stay on disk; re-send each agent its brief row plus "continue from what's on disk".
 The owner moves to a different PC and Claude account; nothing outside the git repo travels. Read this, then
 `CLAUDE.md`, then `docs/IMPLEMENTATION-PLAN.md` (progress sections are the source of truth for what is done).
 

@@ -8,6 +8,7 @@ export type ExpenseCategory = Schema<'ExpenseCategory'>;
 export type ExpenseSummary = Schema<'ExpenseSummary'>;
 export type LedgerEntry = Schema<'FinanceLedgerEntry'>;
 export type Receivables = Schema<'FinanceReceivables'>;
+export type RefundsOwed = Schema<'FinanceRefundsOwed'>;
 export type CodReceipt = Schema<'ManualCodReceipt'>;
 export type ExpenseStatus = Expense['status'];
 export type LedgerType = LedgerEntry['type'];
@@ -56,6 +57,7 @@ const keys = {
     categories: ['finance', 'expense-categories'] as const,
     ledger: (f: LedgerFilters) => ['finance', 'ledger', f] as const,
     receivables: ['finance', 'receivables'] as const,
+    refundsOwed: ['finance', 'refunds-owed'] as const,
 };
 
 function query(entries: Record<string, string | null | undefined>): string {
@@ -135,6 +137,15 @@ export function useReceivables(asOf?: string, enabled = true) {
     return useQuery({
         queryKey: [...keys.receivables, asOf ?? 'today'],
         queryFn: () => api<Receivables>(`/finance/receivables${asOf ? `?as_of=${encodeURIComponent(asOf)}` : ''}`),
+        enabled,
+    });
+}
+
+/** "Owed back to a customer": refunds approved but not paid out, as at a Dhaka date (default today). */
+export function useRefundsOwed(asOf?: string, enabled = true) {
+    return useQuery({
+        queryKey: [...keys.refundsOwed, asOf ?? 'today'],
+        queryFn: () => api<RefundsOwed>(`/finance/reports/refunds-owed${asOf ? `?as_of=${encodeURIComponent(asOf)}` : ''}`),
         enabled,
     });
 }

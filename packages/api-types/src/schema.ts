@@ -90,6 +90,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /dashboard` — needs dashboard.view */
+        get: operations["v1.admin.dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/brands": {
         parameters: {
             query?: never;
@@ -1578,6 +1595,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/marketing/lookups/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /marketing/lookups/variants?q=` — sellable variants by name (EN/BN), SKU or barcode,
+         *     with their price and the stock available now (the same search the order composer uses)
+         */
+        get: operations["v1.admin.marketing.lookups.variants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/marketing/lookups/names": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /marketing/lookups/names?kind=&ids=` — id → name for scope chips. Archived rows are
+         *     included (a saved scope may still name them); unknown ids are left out
+         */
+        get: operations["v1.admin.marketing.lookups.names"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/promotions": {
         parameters: {
             query?: never;
@@ -2270,8 +2327,13 @@ export interface paths {
         put?: never;
         /**
          * `POST /orders/bulk/invoices` — the selected orders' invoices in one PDF, in the order
-         *     requested. Never all-or-nothing: ids that do not exist are left out and listed in
-         *     the `X-Orders-Not-Found` header (comma-separated); if none exist it is a 404
+         *     requested; each order's invoice is issued on its first print. Never all-or-nothing,
+         *     the outcome is reported per order in headers (comma-separated):
+         * @description - `X-Invoice-Numbers` — `{order id}:{invoice number}` for every order printed;
+         *      - `X-Orders-Not-Found` — ids that do not exist;
+         *      - `X-Orders-Not-Invoiced` — `{order id}:{reason}` (`cancelled`, `error`) left out.
+         *
+         *     404 when none of the ids exist; 409 when some exist but none could be printed.
          */
         post: operations["v1.admin.orders.bulk.invoices"];
         delete?: never;
@@ -2287,9 +2349,106 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /orders/{order}/invoice` — one order's invoice as `application/pdf` */
+        /** `GET /orders/{order}/invoice` — one order's invoice as `application/pdf` (issued on first print) */
         get: operations["v1.admin.orders.invoice"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /invoices` — newest first, cursor-paginated. Only the types the caller may see
+         *     (customer: orders.view; supplier: purchasing.view + catalog.view_cost)
+         * @description Filters: `filter[type]` (`sales`|`purchase`), `filter[search]` (invoice number, order /
+         *     PO number or the customer / supplier name contains), `filter[issued_from]` and
+         *     `filter[issued_to]` (Dhaka dates, Y-m-d, inclusive). Sorts: `issued_at`, `-issued_at`
+         *     (default), `number`, `-number`. Anything else is a 400.
+         */
+        get: operations["v1.admin.invoices.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invoices/{invoice}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /invoices/{invoice}` — the snapshot: company, recipient (PII masked without customers.view_pii), lines, totals */
+        get: operations["v1.admin.invoices.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invoices/{invoice}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /invoices/{invoice}/pdf` — reprint from the snapshot (`locale` optional) */
+        get: operations["v1.admin.invoices.pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /purchases/{purchase}/invoice` — the PO's supplier invoice as a PDF, issued
+         *     (`PINV-YY-NNNNNN`) on the first print. English unless `locale=bn`. A draft or
+         *     cancelled PO is a 409
+         */
+        get: operations["v1.admin.purchases.invoice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/invoice` */
+        get: operations["v1.admin.settings.invoice.show"];
+        /** `PUT /settings/invoice` */
+        put: operations["v1.admin.settings.invoice.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2683,6 +2842,42 @@ export interface paths {
         get: operations["v1.admin.notifications.preferences.show"];
         /** `PUT /notifications/customers/{customer}/preferences` — needs customers.update */
         put: operations["v1.admin.notifications.preferences.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/automations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/automations` — settings.view */
+        get: operations["v1.admin.notifications.automations.show"];
+        /** `PUT /notifications/automations` — settings.update */
+        put: operations["v1.admin.notifications.automations.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/notifications/customers/{customer}/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /notifications/customers/{customer}/consents` — customers.view */
+        get: operations["v1.admin.notifications.consents.show"];
+        /** `PUT /notifications/customers/{customer}/consents` — customers.update; source `admin` */
+        put: operations["v1.admin.notifications.consents.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3541,6 +3736,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/finance/reports/refunds-owed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/reports/refunds-owed` — refunds approved but not paid out, as at `as_of` (default today, Dhaka) */
+        get: operations["v1.admin.finance.reports.refunds-owed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/reports/inventory-valuation": {
         parameters: {
             query?: never;
@@ -3604,6 +3816,114 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/sales` */
+        get: operations["v1.admin.analytics.sales"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/sales/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/sales/export` — every section, as CSV (sections one after another) or XLSX (one sheet each) */
+        get: operations["v1.admin.analytics.sales.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/schedules/recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /reports/schedules/recipients` — active staff who may receive a report type, by
+         *     name and role (no email addresses)
+         */
+        get: operations["v1.admin.reports.schedules.recipients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/schedules/{schedule}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/schedules/{schedule}/runs` — the last 20 sends, newest period first */
+        get: operations["v1.admin.reports.schedules.runs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/schedules` */
+        get: operations["v1.admin.reports.schedules.index"];
+        put?: never;
+        /** `POST /reports/schedules` */
+        post: operations["v1.admin.reports.schedules.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/schedules/{schedule}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/schedules/{schedule}` */
+        get: operations["v1.admin.reports.schedules.show"];
+        /** `PUT /reports/schedules/{schedule}` — the full document */
+        put: operations["v1.admin.reports.schedules.update"];
+        post?: never;
+        /** `DELETE /reports/schedules/{schedule}` — with its sent-log */
+        delete: operations["v1.admin.reports.schedules.destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4298,6 +4618,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /customers` — needs customers.view. Page-numbered (`page`), 25 a page. The phone
+         *     is always masked in the list (rule 20). `meta.counts` holds the customers per segment
+         *     plus `blacklisted` and `all`, under every filter except `segment` (the stat tiles);
+         *     `meta.thresholds` the segment thresholds in force (placeholders until the owner sets
+         *     them, config/customers.php)
+         * @description Anything not listed below is a 400 (rule 16).
+         */
+        get: operations["v1.admin.customers.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/customers/{customer}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /customers/{customer}` — needs customers.view. Full phone, e-mail and street
+         *     addresses only with customers.view_pii (rule 20); `risk` only with risk.view. The 20
+         *     latest orders are listed; the order board filters by `filter[customer_id]` for the rest
+         */
+        get: operations["v1.admin.customers.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/customers/{customer}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /customers/{customer}/notes` — needs customers.view. Newest first, pinned ones first */
+        get: operations["v1.admin.customers.notes.index"];
+        put?: never;
+        /** `POST /customers/{customer}/notes` — needs customers.update. 201 with the note */
+        post: operations["v1.admin.customers.notes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/customers` */
+        get: operations["v1.admin.reports.customers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/ping": {
         parameters: {
             query?: never;
@@ -4591,6 +4991,26 @@ export interface paths {
          *     (the same figures as the product's `rating_avg` / `rating_count`)
          */
         get: operations["v1.storefront.products.reviews.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/seo/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /seo/settings` — how a `<title>` ends (config/seo.php): the storefront's layout title
+         *     template is `%s{title_separator}{site_name}`, the same as every server default title
+         */
+        get: operations["v1.storefront.seo.settings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5825,6 +6245,26 @@ export interface components {
             roles: string[];
             permissions: string[];
         };
+        /** AutomationSettings */
+        AutomationSettings: {
+            review_delay_days: number;
+            /** @description Dhaka, HH:MM. */
+            quiet_from: string;
+            /** @description Dhaka, HH:MM. */
+            quiet_to: string;
+            /** @description Fixed: birthday messages go out at this Dhaka time. */
+            birthday_send_at: string;
+            /** @description Last 30 days, per automation (`review_request`, `birthday`). */
+            stats: {
+                [key: string]: {
+                    queued: number;
+                    skipped: number;
+                    skip_reasons: {
+                        [key: string]: number;
+                    };
+                };
+            };
+        };
         /** Banner */
         Banner: {
             id: number;
@@ -6814,6 +7254,445 @@ export interface components {
             width: number;
             height: number;
         };
+        /** CustomerAnalytics */
+        CustomerAnalytics: {
+            range: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            /** @description Segment thresholds in force — PLACEHOLDERS until the owner sets them (config/customers.php). */
+            thresholds: {
+                vip_min_lifetime_value: string;
+                at_risk_after_days: number;
+                lapsed_after_days: number;
+            };
+            /** @description One row per segment in precedence order, every segment present. */
+            segments: {
+                /** @enum {string} */
+                segment: "no_orders" | "lapsed" | "at_risk" | "vip" | "new" | "active";
+                customers: number;
+                lifetime_value: string;
+            }[];
+            /** @description Over customers with a delivered lifetime value above zero. `to` null = open-ended bucket. */
+            lifetime_value: {
+                customers_with_value: number;
+                total: string;
+                average: string | null;
+                median: string | null;
+                buckets: {
+                    from: string;
+                    to: string | null;
+                    customers: number;
+                    lifetime_value: string;
+                }[];
+            };
+            /** @description All time: customers with 2+ delivered orders ÷ customers with 1+. */
+            repeat_purchase: {
+                customers_with_delivered: number;
+                repeat_customers: number;
+                rate: string | null;
+            };
+            /** @description Customers who placed a non-cancelled order in the range: first-time vs returning. */
+            period: {
+                customers: number;
+                new_customers: number;
+                returning_customers: number;
+                returning_share: string | null;
+            };
+            /**
+             * @description Acquisition cohorts by the Dhaka month of the first non-cancelled order, for every
+             *     month the range touches. `retention[k]` = share of the cohort that ordered in month k.
+             */
+            cohorts: {
+                month: string;
+                customers: number;
+                lifetime_value: string;
+                average_lifetime_value: string | null;
+                retention: {
+                    offset: number;
+                    month: string;
+                    customers: number;
+                    rate: string | null;
+                }[];
+            }[];
+            /** @description Highest lifetime values; phone always masked. */
+            top_customers: {
+                id: number;
+                name: string;
+                phone_masked: string;
+                orders_count: number;
+                delivered_orders_count: number;
+                lifetime_value: string;
+                last_order_at: string | null;
+            }[];
+        };
+        /** CustomerListItem */
+        CustomerListItem: {
+            id: number;
+            name: string;
+            /** @description `01712•••318` */
+            phone_masked: string;
+            /** @description A storefront account: the phone was verified by OTP at least once. */
+            has_account: boolean;
+            /** @enum {string} */
+            source: "web" | "facebook" | "phone" | "walk_in" | "whatsapp";
+            tags: string[];
+            /** @description Latest order's district name (as entered on the order). */
+            district: string | null;
+            /** @description Orders placed, cancelled excluded. */
+            orders_count: number;
+            delivered_orders_count: number;
+            /** @description Delivered revenue from the ledger (order_financials), decimal string. */
+            lifetime_value: string;
+            /** @enum {string} */
+            segment: "no_orders" | "lapsed" | "at_risk" | "vip" | "new" | "active";
+            risk: {
+                score: number;
+                /** @enum {string} */
+                level: "low" | "medium" | "high";
+                /** @enum {string} */
+                status: "normal" | "watch" | "blacklist" | "whitelist";
+            } | null;
+            last_order_at: string | null;
+            created_at: string | null;
+        };
+        /** CustomerNote */
+        CustomerNote: {
+            id: number;
+            body: string;
+            is_pinned: boolean;
+            user_id: number | null;
+            user_name: string | null;
+            created_at: string | null;
+        };
+        /** CustomerProfile */
+        CustomerProfile: {
+            id: number;
+            name: string;
+            pii_masked: boolean;
+            /** @description E.164 with customers.view_pii, otherwise `017****5678`. */
+            phone: string;
+            /** @description Full with customers.view_pii, otherwise `j***@gmail.com`. */
+            email: string | null;
+            has_account: boolean;
+            /** @enum {string} */
+            preferred_language: "bn" | "en";
+            /** @enum {string} */
+            source: "web" | "facebook" | "phone" | "walk_in" | "whatsapp";
+            /** @enum {string} */
+            status: "active" | "blocked";
+            tags: string[];
+            /** @enum {string} */
+            segment: "no_orders" | "lapsed" | "at_risk" | "vip" | "new" | "active";
+            created_at: string | null;
+            first_order_at: string | null;
+            last_order_at: string | null;
+            stats: {
+                /** @description Orders placed, cancelled excluded. */
+                orders_count: number;
+                /** @description Delivered, completed or partially returned. */
+                delivered_orders_count: number;
+                returned_orders_count: number;
+                cancelled_orders_count: number;
+                lifetime_value: string;
+                delivered_revenue: string;
+                refunds: string;
+                /** @description lifetime_value ÷ delivered orders; null before a delivery. */
+                average_order_value: string | null;
+                /** @description delivered ÷ (delivered + returned) × 100, two places; null with neither. */
+                delivery_success_rate: string | null;
+            };
+            addresses: {
+                id: number;
+                label: string | null;
+                type: string;
+                is_default_shipping: boolean;
+                recipient_name: string | null;
+                phone: string;
+                area: string | null;
+                upazila: string | null;
+                district: string | null;
+                district_bn: string | null;
+                division: string | null;
+                address_line: string | null;
+                landmark: string | null;
+                postcode: string | null;
+            }[];
+            orders: {
+                id: number;
+                number: string;
+                status: string;
+                payment_status: string;
+                grand_total: string;
+                placed_at: string | null;
+                delivered_at: string | null;
+                items_count: number;
+                items: {
+                    name: string;
+                    name_bn: string | null;
+                    variant: string | null;
+                    quantity: number;
+                }[];
+            }[];
+            /** @description True when there are more orders than `orders` lists (open the order board filtered by customer). */
+            orders_truncated: boolean;
+            risk: {
+                ours: {
+                    stored: boolean;
+                    internal_score: number;
+                    /** @enum {string} */
+                    level: "low" | "medium" | "high";
+                    breakdown: {
+                        code: string;
+                        weight: number;
+                        value: string;
+                        contribution: number;
+                    }[];
+                    score_computed_at: string | null;
+                    counts: {
+                        total_orders: number;
+                        delivered: number;
+                        cancelled: number;
+                        returned: number;
+                        failed_delivery: number;
+                        refused: number;
+                    };
+                    last_order_at: string | null;
+                };
+                status: {
+                    /** @enum {string} */
+                    value: "normal" | "watch" | "blacklist" | "whitelist";
+                    reason: string | null;
+                    set_by: string | null;
+                    set_at: string | null;
+                };
+            } | null;
+            notes_count: number;
+            pinned_note: {
+                id: number;
+                body: string;
+                is_pinned: boolean;
+                user_id: number | null;
+                user_name: string | null;
+                created_at: string | null;
+            } | null;
+        };
+        /** Dashboard */
+        Dashboard: {
+            range: {
+                /** @enum {string} */
+                preset: "today" | "7d" | "30d" | "this_month" | "last_month" | "custom";
+                from: string;
+                to: string;
+                days: number;
+                /** @enum {string} */
+                granularity: "day" | "week" | "month";
+            };
+            /** @description The comparison range the deltas are against. */
+            previous: {
+                from: string;
+                to: string;
+                days: number;
+            };
+            visibility: {
+                orders: boolean;
+                finance: boolean;
+                customers: boolean;
+                inventory: boolean;
+            };
+            kpis: {
+                orders_placed: {
+                    count: number;
+                    previous_count: number;
+                    count_delta_percent: string | null;
+                    value: string;
+                    previous_value: string;
+                    value_delta_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        count: number;
+                        value: string;
+                    }[];
+                } | null;
+                average_order_value: {
+                    value: string | null;
+                    previous: string | null;
+                    delta_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        value: string | null;
+                    }[];
+                } | null;
+                recognised_revenue: {
+                    value: string;
+                    previous: string;
+                    delta_percent: string | null;
+                    /** @enum {string} */
+                    source: "ledger" | "summaries" | "mixed";
+                    sparkline: {
+                        key: string;
+                        value: string;
+                    }[];
+                } | null;
+                gross_profit: {
+                    value: string;
+                    previous: string;
+                    delta_percent: string | null;
+                    margin_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        value: string;
+                    }[];
+                } | null;
+                net_profit: {
+                    value: string;
+                    previous: string;
+                    delta_percent: string | null;
+                    margin_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        value: string;
+                    }[];
+                } | null;
+                cash_collected: {
+                    value: string;
+                    previous: string;
+                    delta_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        value: string;
+                    }[];
+                } | null;
+                customers: {
+                    customers: number;
+                    new: number;
+                    returning: number;
+                    previous_customers: number;
+                    previous_new: number;
+                    previous_returning: number;
+                    new_delta_percent: string | null;
+                    sparkline: {
+                        key: string;
+                        value: number;
+                    }[];
+                } | null;
+                low_stock: {
+                    low: number;
+                    out: number;
+                } | null;
+            };
+            /** @description Live order counts by status (not range-bound) and the open pipeline. Needs orders.view. */
+            status: {
+                counts: {
+                    pending: number;
+                    on_hold: number;
+                    confirmed: number;
+                    processing: number;
+                    ready_to_ship: number;
+                    shipped: number;
+                    delivered: number;
+                    completed: number;
+                    cancelled: number;
+                    returned: number;
+                    partially_returned: number;
+                };
+                open: {
+                    count: number;
+                    value: string;
+                };
+            } | null;
+            /**
+             * @description Placed value / orders / units per bucket against the comparison range (aligned by
+             *     position), and recognised revenue per bucket when finance is visible (else null).
+             */
+            trend: {
+                /** @enum {string} */
+                granularity: "day" | "week" | "month";
+                placed_value: string;
+                previous_placed_value: string;
+                recognised_revenue: string | null;
+                buckets: {
+                    key: string;
+                    from: string;
+                    to: string;
+                    placed_value: string;
+                    placed_count: number;
+                    units: number;
+                    previous_key: string | null;
+                    previous_placed_value: string | null;
+                    previous_placed_count: number | null;
+                    previous_units: number | null;
+                    recognised_revenue: string | null;
+                }[];
+            } | null;
+            /** @description Recognised item revenue of the orders delivered in the range, by top-level category. */
+            categories: {
+                total: string;
+                slices: {
+                    category_id: number | null;
+                    name: string | null;
+                    name_bn: string | null;
+                    other: boolean;
+                    amount: string;
+                    share_percent: string | null;
+                }[];
+            } | null;
+            best_sellers: {
+                rows: {
+                    product_id: number | null;
+                    name: string;
+                    name_bn: string | null;
+                    sku: string;
+                    image_url: string | null;
+                    units: number;
+                    value: string;
+                }[];
+                units: number;
+                products: number;
+                value: string;
+            } | null;
+            low_stock: {
+                location_id: number;
+                low: number;
+                out: number;
+                rows: {
+                    variant_id: number;
+                    product_id: number;
+                    name: string;
+                    name_bn: string | null;
+                    variant_name: string | null;
+                    sku: string;
+                    on_hand: number;
+                    reserved: number;
+                    available: number;
+                    reorder_point: number;
+                }[];
+            } | null;
+            /**
+             * @description Live queues the viewer may act on — count and the oldest item's age; only the queues
+             *     the viewer's permissions allow are listed.
+             */
+            attention: {
+                /** @enum {string} */
+                key: "verification" | "failed_bookings" | "unmapped_areas" | "submitted" | "cod_variances" | "expenses" | "refunds" | "low_stock";
+                count: number;
+                oldest_at: string | null;
+            }[];
+            /** @description Newest order timeline events, structured only — no notes, descriptions or customer data. */
+            activity: {
+                id: number;
+                type: string;
+                field: string | null;
+                from: string | null;
+                to: string | null;
+                order_id: number;
+                order_number: string;
+                actor: string | null;
+                at: string;
+            }[] | null;
+        };
         /**
          * DeliverOrderRequest
          * @description `POST /orders/{order}/deliver` — manual delivery confirmation (P5, until Phase 6
@@ -7092,6 +7971,23 @@ export interface components {
                 "16_30": string;
                 "31_plus": string;
             };
+        };
+        /** FinanceRefundsOwed */
+        FinanceRefundsOwed: {
+            as_of: string;
+            total: string;
+            count: number;
+            oldest_approved_at: string | null;
+            refunds: {
+                id: number;
+                order_id: number;
+                order_number: string | null;
+                amount: string;
+                /** @enum {string} */
+                status: "approved" | "processing" | "failed" | "completed";
+                method: string;
+                approved_at: string | null;
+            }[];
         };
         /**
          * Gender
@@ -7699,6 +8595,106 @@ export interface components {
             }[];
             truncated: boolean;
         };
+        /** Invoice */
+        Invoice: {
+            id: number;
+            /** @enum {string} */
+            type: "sales" | "purchase";
+            /** @description `INV-26-000001` (customer) or `PINV-26-000001` (supplier). */
+            number: string;
+            /** @description The order number (customer) or PO number (supplier) at issue. */
+            reference: string;
+            order_id: number | null;
+            purchase_id: number | null;
+            /** @description Customer or supplier name, as issued. */
+            issued_to_name: string;
+            total: string;
+            paid: string;
+            due: string;
+            payment_method: string | null;
+            /** @description Required company fields that were still placeholders when this was issued. */
+            placeholders: string[];
+            /** @description ISO 8601, UTC. */
+            issued_at: string;
+            /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
+            can_print: boolean;
+            /** @constant */
+            template: "standard";
+            subtotal: string;
+            discount: string;
+            shipping: string;
+            tax: string;
+            amount_in_words: string | null;
+            due_at: string | null;
+            /** @description The company details as issued. */
+            issued_by: {
+                name_en: string | null;
+                name_bn: string | null;
+                address_en: string | null;
+                address_bn: string | null;
+                hotline: string | null;
+                email: string | null;
+                website: string | null;
+                trade_licence: string | null;
+                bin: string | null;
+                logo_media_id: number | null;
+            };
+            /** @description The customer (ship-to) or supplier as issued; PII masked without customers.view_pii. */
+            issued_to: {
+                [key: string]: unknown;
+            };
+            lines: {
+                name: string;
+                name_bn: string | null;
+                variant: string | null;
+                sku: string;
+                quantity: number;
+                unit_price: string;
+                discount: string;
+                line_total: string;
+            }[];
+        };
+        /** InvoiceListItem */
+        InvoiceListItem: {
+            id: number;
+            /** @enum {string} */
+            type: "sales" | "purchase";
+            /** @description `INV-26-000001` (customer) or `PINV-26-000001` (supplier). */
+            number: string;
+            /** @description The order number (customer) or PO number (supplier) at issue. */
+            reference: string;
+            order_id: number | null;
+            purchase_id: number | null;
+            /** @description Customer or supplier name, as issued. */
+            issued_to_name: string;
+            total: string;
+            paid: string;
+            due: string;
+            payment_method: string | null;
+            /** @description Required company fields that were still placeholders when this was issued. */
+            placeholders: string[];
+            /** @description ISO 8601, UTC. */
+            issued_at: string;
+            /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
+            can_print: boolean;
+        };
+        /** InvoiceSettings */
+        InvoiceSettings: {
+            name_en: string | null;
+            name_bn: string | null;
+            address_en: string | null;
+            address_bn: string | null;
+            hotline: string | null;
+            email: string | null;
+            website: string | null;
+            trade_licence: string | null;
+            bin: string | null;
+            logo_media_id: number | null;
+            footer_en: string | null;
+            footer_bn: string | null;
+            /** @description Required fields not set yet. */
+            placeholders: string[];
+        };
         /**
          * IssueCmsPreviewTokenRequest
          * @description `POST /content/home/preview-token` — `locale` en|bn picks the storefront prefix of the preview URL.
@@ -7920,6 +8916,15 @@ export interface components {
          * @enum {string}
          */
         MenuLocation: "header" | "footer" | "mobile";
+        /** MessageConsents */
+        MessageConsents: {
+            birthday: {
+                consented: boolean;
+                consented_at: string | null;
+                withdrawn_at: string | null;
+                source: string | null;
+            };
+        };
         /** MessagingSettings */
         MessagingSettings: {
             /**
@@ -9709,6 +10714,94 @@ export interface components {
             reply: string | null;
         };
         /**
+         * ReportFileFormat
+         * @enum {string}
+         */
+        ReportFileFormat: "csv" | "xlsx";
+        /**
+         * ReportFrequency
+         * @description How often a scheduled report goes out, and which Dhaka-date period each send covers: daily    every day; covers the previous day   weekly   every Saturday; covers the previous Saturday–Friday week (the shop's week,            ReportPeriod::WEEK_STARTS_ON)   monthly  on the 1st; covers the previous calendar month
+         * @enum {string}
+         */
+        ReportFrequency: "daily" | "weekly" | "monthly";
+        /** ReportSchedule */
+        ReportSchedule: {
+            id: number;
+            name: string;
+            /** @enum {string} */
+            report_type: "sales" | "pnl" | "couriers";
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly";
+            /** @description HH:MM, Asia/Dhaka */
+            send_time: string;
+            /** @enum {string} */
+            locale: "en" | "bn";
+            /** @enum {string} */
+            format: "csv" | "xlsx";
+            is_active: boolean;
+            recipients: {
+                id: number;
+                name: string;
+                roles: string[];
+            }[];
+            next_send_at: string | null;
+            latest_run: {
+                id: number;
+                period_from: string;
+                period_to: string;
+                status: string;
+                recipients_sent: number;
+                recipients_skipped: number;
+                error: string | null;
+                due_at: string | null;
+                sent_at: string | null;
+                created_at: string | null;
+            } | null;
+            created_at: string | null;
+            updated_at: string | null;
+        };
+        /**
+         * ReportScheduleRequest
+         * @description A scheduled report, for `POST /reports/schedules` and `PUT /reports/schedules/{schedule}`
+         *     (the full document both times).
+         *
+         *     - `send_time` is HH:MM in Asia/Dhaka, on a quarter hour (the sweep runs every 15 minutes).
+         *     - `recipient_ids` are staff users only — never a free-typed address — each active and
+         *       holding the report type's permissions (ReportType::requiredPermissions()).
+         *     - The actor must be able to open the report type themselves.
+         */
+        ReportScheduleRequest: {
+            name: string;
+            report_type: components["schemas"]["ReportType"];
+            frequency: components["schemas"]["ReportFrequency"];
+            send_time: string;
+            /** @enum {string} */
+            locale: "en" | "bn";
+            format: components["schemas"]["ReportFileFormat"];
+            is_active: boolean;
+            recipient_ids: number[];
+        };
+        /** ReportScheduleRun */
+        ReportScheduleRun: {
+            id: number;
+            period_from: string;
+            period_to: string;
+            /** @enum {string} */
+            status: "queued" | "sending" | "sent" | "skipped" | "failed";
+            recipients_sent: number;
+            recipients_skipped: number;
+            error: string | null;
+            due_at: string | null;
+            sent_at: string | null;
+            created_at: string | null;
+        };
+        /**
+         * ReportType
+         * @description A report that can be scheduled by email. Each names the permissions a recipient must hold to receive it — the same ones its admin screen needs — so an email never shows a staff member more than their role may see (rule 20/21).
+         * @enum {string}
+         */
+        ReportType: "sales" | "pnl" | "couriers";
+        /**
          * RequestOtpRequest
          * @description `POST /storefront/auth/otp` (P4-STO-11) — text a sign-in code. Called by the Next.js
          *     server with its storefront token; the route's ability authorises it.
@@ -9882,6 +10975,233 @@ export interface components {
             default_content: string;
             sitemap_url: string;
             served: string;
+        };
+        /** SalesAnalytics */
+        SalesAnalytics: {
+            range: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            comparison: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            /** @enum {string} */
+            granularity: "day" | "week" | "month";
+            profit_visible: boolean;
+            /** @enum {string} */
+            source: "ledger" | "summaries" | "mixed";
+            summary: {
+                placed: {
+                    orders: number;
+                    value: string;
+                    cancelled_orders: number;
+                    cancelled_value: string;
+                    net_orders: number;
+                    net_value: string;
+                    units: number;
+                    aov: string | null;
+                    cancel_rate: string | null;
+                };
+                delivered: {
+                    orders: number;
+                    value: string;
+                    aov: string | null;
+                };
+                recognised: {
+                    product_revenue: string;
+                    delivery_revenue: string;
+                    gross_revenue: string;
+                    discounts: string;
+                    net_revenue: string;
+                    cogs: string | null;
+                    gross_profit: string | null;
+                    gross_margin_percent: string | null;
+                };
+                customers: {
+                    customers: number;
+                    returning: number;
+                    new: number;
+                    repeat_rate: string | null;
+                };
+            };
+            previous: {
+                placed: {
+                    orders: number;
+                    value: string;
+                    cancelled_orders: number;
+                    cancelled_value: string;
+                    net_orders: number;
+                    net_value: string;
+                    units: number;
+                    aov: string | null;
+                    cancel_rate: string | null;
+                };
+                delivered: {
+                    orders: number;
+                    value: string;
+                    aov: string | null;
+                };
+                recognised: {
+                    product_revenue: string;
+                    delivery_revenue: string;
+                    gross_revenue: string;
+                    discounts: string;
+                    net_revenue: string;
+                    cogs: string | null;
+                    gross_profit: string | null;
+                    gross_margin_percent: string | null;
+                };
+                customers: {
+                    customers: number;
+                    returning: number;
+                    new: number;
+                    repeat_rate: string | null;
+                };
+            };
+            deltas: {
+                placed_value: string | null;
+                placed_orders: string | null;
+                aov: string | null;
+                recognised_revenue: string | null;
+                repeat_rate_points: string | null;
+            };
+            /**
+             * @description One row per bucket (Saturday-start weeks), Dhaka dates. `previous_*` is the
+             *     comparison range's bucket at the same position, or null.
+             */
+            trend: {
+                key: string;
+                from: string;
+                to: string;
+                days: number;
+                placed_orders: number;
+                placed_value: string;
+                units: number;
+                cancelled_orders: number;
+                outcomes: {
+                    delivered: number;
+                    shipped: number;
+                    open: number;
+                    cancelled: number;
+                    returned: number;
+                };
+                delivered_orders: number;
+                recognised_revenue: string;
+                gross_profit: string | null;
+                previous_placed_orders: number | null;
+                previous_placed_value: string | null;
+                previous_units: number | null;
+            }[];
+            categories: {
+                category_id: number | null;
+                name: string;
+                name_bn: string | null;
+                orders: number;
+                units_sold: number;
+                units_returned: number;
+                units: number;
+                net_revenue: string;
+                cogs: string | null;
+                gross_profit: string | null;
+                margin_percent: string | null;
+                return_rate: string | null;
+            }[];
+            brands: {
+                brand_id: number | null;
+                name: string | null;
+                name_bn: string | null;
+                orders: number;
+                units_sold: number;
+                units_returned: number;
+                units: number;
+                net_revenue: string;
+                cogs: string | null;
+                gross_profit: string | null;
+                margin_percent: string | null;
+                return_rate: string | null;
+            }[];
+            lines_total: {
+                orders: number;
+                units_sold: number;
+                units_returned: number;
+                units: number;
+                net_revenue: string;
+                cogs: string | null;
+                gross_profit: string | null;
+                margin_percent: string | null;
+                return_rate: string | null;
+            };
+            reconciliation: {
+                ledger_product_revenue: string;
+                lines_net_revenue: string;
+                difference: string;
+            };
+            payment_methods: {
+                method: string;
+                orders: number;
+                value: string;
+                orders_percent: string | null;
+                value_percent: string | null;
+                aov: string | null;
+            }[];
+            channels: {
+                source: string;
+                orders: number;
+                value: string;
+                orders_percent: string | null;
+                value_percent: string | null;
+                aov: string | null;
+            }[];
+            discounts: {
+                orders_with_discount: number;
+                orders_with_discount_percent: string | null;
+                discount_total: string;
+                coupon_discount: string;
+                promotion_discount: string;
+                shipping_discount: string;
+                aov_with_discount: string | null;
+                aov_without_discount: string | null;
+                recognised_discounts: string;
+                coupons: {
+                    code: string;
+                    orders: number;
+                    discount: string;
+                    value: string;
+                }[];
+                promotions: {
+                    promotion_id: number;
+                    name: string;
+                    name_bn: string | null;
+                    orders: number;
+                    discount: string;
+                }[];
+            };
+            recommendations: {
+                source: string;
+                placed_lines: number;
+                placed_units: number;
+                placed_orders: number;
+                placed_value: string;
+                placed_value_percent: string | null;
+                delivered_units: number;
+                net_revenue: string;
+                gross_profit: string | null;
+                return_rate: string | null;
+            }[];
+            /**
+             * @description Conversion is not reported: no server-side page views and consent-gated browser
+             *     events leave no defensible session denominator.
+             */
+            conversion: {
+                available: boolean;
+                /** @constant */
+                reason: "no_session_denominator";
+            };
         };
         /**
          * SaveRedirectRequest
@@ -10437,6 +11757,15 @@ export interface components {
             };
             first_order_only?: boolean;
             is_active?: boolean;
+        };
+        /**
+         * StoreCustomerNoteRequest
+         * @description `POST /customers/{customer}/notes` — needs customers.update. Notes are append-only.
+         */
+        StoreCustomerNoteRequest: {
+            body: string;
+            /** @description Pinned notes show on the profile's summary rail. */
+            is_pinned?: boolean;
         };
         /**
          * StoreMediaRequest
@@ -12012,6 +13341,19 @@ export interface components {
             color_hex?: string | null;
         };
         /**
+         * UpdateAutomationSettingsRequest
+         * @description `PUT /notifications/automations` — Settings → Automations scheduling (P8); needs
+         *     settings.update. Whether each automation runs is its templates' on/off switch.
+         */
+        UpdateAutomationSettingsRequest: {
+            /** @description Days after delivery before the review request goes out (1–30). */
+            review_delay_days: number;
+            /** @description Dhaka quiet hours start, HH:MM (24 h). Nothing automated is sent inside the window. */
+            quiet_from: string;
+            /** @description Dhaka quiet hours end, HH:MM (24 h); may be earlier than the start (wraps midnight). */
+            quiet_to: string;
+        };
+        /**
          * UpdateBrandRequest
          * @description `PATCH /brands/{brand}` — every field optional; only the fields sent change.
          *     `slug: null` (or omitted) keeps the current slug: a rename never moves the URL.
@@ -12159,6 +13501,30 @@ export interface components {
             free_shipping_threshold: string | null;
         };
         /**
+         * UpdateInvoiceSettingsRequest
+         * @description `PUT /settings/invoice` — Admin → Settings → Invoice details; needs settings.update. The
+         *     whole document: a null or empty field removes the saved value (a required one then prints
+         *     "[placeholder]"). Affects invoices issued after the save only (each keeps its snapshot).
+         */
+        UpdateInvoiceSettingsRequest: {
+            name_en?: string | null;
+            name_bn?: string | null;
+            address_en?: string | null;
+            address_bn?: string | null;
+            /** @description As printed, e.g. `09600 123456`. */
+            hotline?: string | null;
+            /** Format: email */
+            email?: string | null;
+            website?: string | null;
+            trade_licence?: string | null;
+            /** @description Business Identification Number (NBR), 9 or 13 digits; not otherwise checked. */
+            bin?: string | null;
+            /** @description A media library image; stored on the invoice snapshot (not yet drawn on the PDF). */
+            logo_media_id?: number | null;
+            footer_en?: string | null;
+            footer_bn?: string | null;
+        };
+        /**
          * UpdateMediaRequest
          * @description `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500),
          *     `folder_id` (a folder id or null). Only the keys present change. Needs media.manage.
@@ -12168,6 +13534,15 @@ export interface components {
             alt_text_bn?: string | null;
             caption?: string | null;
             folder_id?: number | null;
+        };
+        /**
+         * UpdateMessageConsentRequest
+         * @description `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message
+         *     consent as told to staff (P8); needs customers.update, like the channel preferences.
+         */
+        UpdateMessageConsentRequest: {
+            /** @description The customer agreed to a message on their birthday (reads their date of birth). */
+            birthday: boolean;
         };
         /**
          * UpdateMessagingSettingsRequest
@@ -12794,6 +14169,50 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.dashboard": {
+        parameters: {
+            query?: {
+                range?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Dashboard` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+            /** @description Unknown parameter, unlisted preset, or an invalid / missing date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing dashboard.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.brands.index": {
@@ -17057,6 +18476,67 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "v1.admin.marketing.lookups.variants": {
+        parameters: {
+            query: {
+                /** @description Name, Bangla name, SKU or barcode, at least 2 characters. */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `OrderComposerVariant` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderComposerVariant"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.marketing.lookups.names": {
+        parameters: {
+            query: {
+                /** @description products | categories | brands */
+                kind: "products" | "categories" | "brands";
+                /** @description Comma-separated ids, at most 200. */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                            name_bn: string | null;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.promotions.index": {
         parameters: {
             query?: {
@@ -18862,6 +20342,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description None of the existing orders could be invoiced (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -18880,6 +20369,133 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description The invoice PDF; header `X-Invoice-Numbers` = `{order id}:{invoice number}` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is cancelled and was never invoiced (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.invoices.index": {
+        parameters: {
+            query?: {
+                /** @description Invoice type. */
+                "filter[type]"?: "sales" | "purchase";
+                /** @description Invoice number, order/PO number or customer/supplier name contains. */
+                "filter[search]"?: string;
+                /** @description Issued on or after this Dhaka date (Y-m-d). */
+                "filter[issued_from]"?: string;
+                /** @description Issued on or before this Dhaka date (Y-m-d). */
+                "filter[issued_to]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "issued_at" | "-issued_at" | "number" | "-number";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InvoiceListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InvoiceListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.invoices.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The invoice ID */
+                invoice: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Invoice` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.invoices.pdf": {
+        parameters: {
+            query?: {
+                locale?: "en" | "bn" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The invoice ID */
+                invoice: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
             /** @description The invoice PDF */
             200: {
                 headers: {
@@ -18893,6 +20509,94 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.purchases.invoice": {
+        parameters: {
+            query?: {
+                locale?: "en" | "bn" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The supplier invoice PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The PO is a draft or cancelled (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.invoice.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InvoiceSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.invoice.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateInvoiceSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `InvoiceSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -19840,6 +21544,112 @@ export interface operations {
                     "application/json": {
                         data: components["schemas"]["NotificationPreference"][];
                     };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.automations.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AutomationSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.notifications.automations.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAutomationSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `AutomationSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.notifications.consents.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `MessageConsents` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageConsents"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.notifications.consents.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMessageConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description `MessageConsents` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageConsents"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -22070,6 +23880,40 @@ export interface operations {
             };
         };
     };
+    "v1.admin.finance.reports.refunds-owed": {
+        parameters: {
+            query?: {
+                /** @description A Dhaka date, YYYY-MM-DD. */
+                as_of?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FinanceRefundsOwed` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceRefundsOwed"];
+                };
+            };
+            /** @description as_of is not a date, or an unknown parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
     "v1.admin.reports.inventory-valuation": {
         parameters: {
             query?: {
@@ -22262,6 +24106,340 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+        };
+    };
+    "v1.admin.analytics.sales": {
+        parameters: {
+            query?: {
+                /** @description Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 7d, or custom when dates are given. */
+                range?: string;
+                /** @description Custom range: first Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Custom range: last Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[to]"?: string;
+                /** @description Trend bucket: day, week (Saturday–Friday) or month. Default: day ≤ 31 days, week ≤ 186, else month. */
+                group?: "day" | "week" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SalesAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesAnalytics"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown preset, a malformed or future date, or too many buckets (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.sales.export": {
+        parameters: {
+            query?: {
+                /** @description csv or xlsx. */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and sheet names. */
+                locale?: "en" | "bn";
+                /** @description As on GET /analytics/sales. */
+                range?: string;
+                /** @description As on GET /analytics/sales. */
+                "filter[from]"?: string;
+                /** @description As on GET /analytics/sales. */
+                "filter[to]"?: string;
+                /** @description As on GET /analytics/sales. */
+                group?: "day" | "week" | "month";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Unlisted parameter or filter, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.schedules.recipients": {
+        parameters: {
+            query?: {
+                /** @description sales, pnl or couriers. */
+                report_type?: "sales" | "pnl" | "couriers";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                            roles: {
+                                relations: [
+                                    "roles"
+                                ];
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Unlisted parameter or an unknown report type (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.reports.schedules.runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The schedule ID */
+                schedule: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ReportScheduleRun` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportScheduleRun"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.reports.schedules.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ReportSchedule` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportSchedule"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.schedules.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportSchedule` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSchedule"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Invalid schedule, a report type the actor cannot open, or a recipient who may not receive it (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.schedules.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The schedule ID */
+                schedule: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ReportSchedule` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSchedule"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.reports.schedules.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The schedule ID */
+                schedule: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportSchedule` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSchedule"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description As on POST (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.schedules.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The schedule ID */
+                schedule: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "v1.admin.risk.queue.index": {
@@ -24081,6 +26259,230 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.customers.index": {
+        parameters: {
+            query?: {
+                /** @description Name, 4+ phone digits, or an order number (prefix). */
+                "filter[search]"?: string;
+                /** @description no_orders|lapsed|at_risk|vip|new|active */
+                "filter[segment]"?: string;
+                /** @description 1: storefront account (phone verified by OTP); 0: guest only. */
+                "filter[has_account]"?: string;
+                /** @description Risk list status: normal|watch|blacklist|whitelist. */
+                "filter[risk]"?: string;
+                /** @description Last order on or after this Dhaka date (Y-m-d). */
+                "filter[last_order_from]"?: string;
+                /** @description Last order on or before this Dhaka date (Y-m-d). */
+                "filter[last_order_to]"?: string;
+                /** @description Ordered to, or has a saved address in, this district. */
+                "filter[district_id]"?: number;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "last_order" | "-last_order" | "lifetime_value" | "-lifetime_value" | "orders_count" | "-orders_count" | "created" | "-created";
+                /** @description Page number, from 1. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CustomerListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CustomerListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                            counts: {
+                                [key: string]: number;
+                            };
+                            thresholds: {
+                                vip_min_lifetime_value: string;
+                                at_risk_after_days: number;
+                                lapsed_after_days: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter, filter or sort, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing customers.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.customers.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CustomerProfile` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerProfile"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.customers.notes.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CustomerNote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CustomerNote"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.customers.notes.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCustomerNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `CustomerNote` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerNote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.reports.customers": {
+        parameters: {
+            query?: {
+                /** @description today|7d|30d|this_month|last_month|custom. Default: the last six Dhaka months (custom). */
+                range?: string;
+                /** @description First Dhaka date (Y-m-d), with range=custom. */
+                from?: string;
+                /** @description Last Dhaka date (Y-m-d), with range=custom. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CustomerAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAnalytics"];
+                };
+            };
+            /** @description Unlisted parameter, an unknown preset or a malformed date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or customers.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.storefront.ping": {
         parameters: {
             query?: never;
@@ -24865,6 +27267,29 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.seo.settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        site_name: string;
+                        title_separator: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
     "v1.storefront.seo.show": {

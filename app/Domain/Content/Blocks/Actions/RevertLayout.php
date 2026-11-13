@@ -6,6 +6,7 @@ namespace App\Domain\Content\Blocks\Actions;
 
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
+use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use App\Domain\Content\Blocks\Services\HomeLayoutCache;
 use App\Domain\Content\Events\CmsLayoutPublished;
 use Carbon\CarbonImmutable;
@@ -49,6 +50,8 @@ final class RevertLayout
                 $block->save();
             }
 
+            CmsBlockMedia::syncDraft($placement); // Media Library "where used"
+
             if (! $publish) {
                 return null;
             }
@@ -68,6 +71,7 @@ final class RevertLayout
                 'published_at' => CarbonImmutable::now('UTC'),
             ]);
 
+            CmsBlockMedia::syncLive($placement);
             CmsLayoutPublished::dispatch($placement->value, $version->version);
 
             return $version;

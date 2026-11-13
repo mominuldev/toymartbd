@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Content\Blocks\Actions;
 
 use App\Domain\Content\Blocks\Models\CmsBlock;
+use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use Illuminate\Support\Facades\DB;
 
 /** Removes a block from the draft and closes the gap. Published versions keep their copy. */
@@ -21,6 +22,7 @@ final class DeleteBlock
                     $rest->forceFill(['position' => $index])->save();
                 }
             }
+            CmsBlockMedia::syncDraft($placement); // Media Library "where used"
         });
     }
 }

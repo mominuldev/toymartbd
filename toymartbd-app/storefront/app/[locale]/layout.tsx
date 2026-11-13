@@ -7,6 +7,8 @@ import { WishlistHearts } from '@/components/wishlist/WishlistHearts';
 import { fontVariables } from '@/lib/fonts';
 import { getMessages, htmlLang, isLocale, localizedPath } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
+import { getTitleSeparator } from '@/lib/seo/fetch';
+import { titleTemplate } from '@/lib/seo/metadata';
 import { getTrackingConfig } from '@/lib/tracking/fetch';
 import '../globals.css';
 
@@ -30,7 +32,9 @@ export async function generateMetadata({ params }: Omit<LayoutProps, 'children'>
     const t = getMessages(locale);
     return {
         metadataBase: siteUrl(),
-        title: { default: t.site.name, template: `%s · ${t.site.name}` },
+        // One separator for every title (config/seo.php via the API) — the same one the server's SEO
+        // documents end with, so a page title never carries two different suffixes.
+        title: { default: t.site.name, template: titleTemplate(t.site.name, await getTitleSeparator()) },
         description: t.site.tagline,
     };
 }

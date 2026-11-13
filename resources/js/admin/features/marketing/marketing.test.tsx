@@ -11,7 +11,8 @@ afterEach(() => {
     localStorage.clear();
 });
 
-const marketer: Me = { ...viewer, roles: ['manager'], permissions: ['dashboard.view', 'marketing.view', 'marketing.manage', 'orders.create'] };
+// No orders.create: the flash-sale picker and scope names live under marketing permissions.
+const marketer: Me = { ...viewer, roles: ['manager'], permissions: ['dashboard.view', 'marketing.view', 'marketing.manage'] };
 const reader: Me = { ...viewer, roles: ['content_editor'], permissions: ['dashboard.view', 'marketing.view'] };
 
 const coupon: Coupon = {
@@ -132,17 +133,19 @@ const recoveries: CartRecovery[] = [
     },
 ];
 
-function marketingApi(me: Me) {
+function marketingApi(me: Me, couponOverride: Partial<Coupon> = {}) {
     return mockApi((url, init) => {
         const method = String(init?.method ?? 'GET');
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
+        if (url.includes('/marketing/lookups/names?kind=products&ids=3,5'))
+            return { status: 200, body: { data: [{ id: 3, name: 'LEGO Classic', name_bn: 'লেগো ক্লাসিক' }, { id: 5, name: 'Rubik Cube', name_bn: null }] } };
         if (url.includes('/coupons/generate')) {
             const body = JSON.parse(String(init?.body)) as { count: number; batch: string; prefix: string | null };
             return { status: 201, body: { batch: body.batch, count: body.count, codes: Array.from({ length: body.count }, (_, i) => `${body.prefix}-CODE${i}`) } };
         }
         if (/\/coupons\/7\/report$/.test(url))
             return { status: 200, body: { summary: { orders: 12, discount_total: '2400.00', gross_sales: '36000.00', delivered_orders: 8, delivered_revenue: '24000.00' }, batch: null, recent: [] } };
-        if (/\/coupons\/7$/.test(url)) return { status: 200, body: coupon };
+        if (/\/coupons\/7$/.test(url)) return { status: 200, body: { ...coupon, ...couponOverride } };
         if (url.includes('/coupons') && method === 'POST') return { status: 201, body: { ...coupon, id: 8, code: 'NEWCODE' } };
         if (url.includes('/coupons')) return { status: 200, body: { data: [coupon, { ...coupon, id: 9, code: 'SMS-7K4MQ2PA', batch: 'SMSNOV', type: 'free_shipping', value: '0.00' }], links: {}, meta: { next_cursor: null } } };
         if (/\/promotions\/3\/report$/.test(url)) return { status: 200, body: { summary: { orders: 4, discount_total: '1200.00', gross_sales: '5000.00', delivered_orders: 0, delivered_revenue: '0.00' }, recent: [] } };
@@ -151,7 +154,8 @@ function marketingApi(me: Me) {
         if (url.includes('/promotions')) return { status: 200, body: { data: [flash], links: {}, meta: { next_cursor: null } } };
         if (url.includes('/cart-recoveries/summary')) return { status: 200, body: summary };
         if (url.includes('/cart-recoveries')) return { status: 200, body: { data: recoveries, links: {}, meta: { next_cursor: null } } };
-        if (url.includes('/orders/compose/variants'))
+        if (url.includes('/orders/compose/variants')) return { status: 403 };
+        if (url.includes('/marketing/lookups/variants'))
             return { status: 200, body: { data: [{ variant_id: 41, product_id: 9, product_name: 'Building Blocks', product_name_bn: 'বিল্ডিং ব্লক', variant_name: null, sku: 'BB-100', price: '2000.00', available: 12, image_url: null }] } };
         return { status: 404 };
     });
@@ -223,6 +227,15 @@ describe('coupons', () => {
         const region = await screen.findByRole('region', { name: '3 codes created in batch SMSNOV' });
         expect(within(region).getByText('SMS-CODE0')).toBeTruthy();
         expect(within(region).getByRole('link', { name: 'Download CSV' }).getAttribute('download')).toBe('SMSNOV.csv');
+    });
+
+    it('names the saved scope chips from the server, never "#id"', async () => {
+        const calls = marketingApi(marketer, { applies_to: 'products', scope_ids: [5, 3] });
+        renderApp('/marketing/coupons/7');
+        expect(await screen.findByText('LEGO Classic')).toBeTruthy();
+        expect(screen.getByText('Rubik Cube')).toBeTruthy();
+        expect(screen.queryByText('#3')).toBeNull();
+        expect(calls.mock.calls.some(([url]) => String(url).includes('/marketing/lookups/names?kind=products&ids=3,5'))).toBe(true);
     });
 
     it('shows the usage report from the server on an existing coupon', async () => {

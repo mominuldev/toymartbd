@@ -63,6 +63,7 @@ export const marketingKeys = {
     recoverySummary: (from: string, to: string) => ['marketing', 'recoveries', 'summary', from, to] as const,
     pick: (kind: string, q: string) => ['marketing', 'pick', kind, q] as const,
     variants: (q: string) => ['marketing', 'variants', q] as const,
+    names: (kind: string, ids: string) => ['marketing', 'names', kind, ids] as const,
 };
 
 function query(params: Record<string, string>, cursor: string | null): string {
@@ -212,12 +213,24 @@ export function usePick(kind: PickKind, q: string) {
     });
 }
 
-/** Variant search for flash-sale lines — the order composer's lookup (price + stock, server-side). */
+/** Variant search for flash-sale lines (price + stock, server-side) — under marketing.manage, not orders.create. */
 export function useVariantSearch(q: string) {
     return useQuery({
         queryKey: marketingKeys.variants(q),
-        queryFn: () => api<{ data: ComposerVariant[] }>(`/orders/compose/variants?q=${encodeURIComponent(q)}`).then((r) => r.data),
+        queryFn: () => api<{ data: ComposerVariant[] }>(`/marketing/lookups/variants?q=${encodeURIComponent(q)}`).then((r) => r.data),
         enabled: q.trim().length >= 2,
+        placeholderData: keepPreviousData,
+    });
+}
+
+/** Names for ids a saved scope holds (chips read "LEGO Classic", not "#3"). Sorted ids keep the cache key stable. */
+export function useScopeNames(kind: PickKind, ids: number[]) {
+    const key = [...ids].sort((a, b) => a - b).join(',');
+    return useQuery({
+        queryKey: marketingKeys.names(kind, key),
+        queryFn: () => api<{ data: PickItem[] }>(`/marketing/lookups/names?kind=${kind}&ids=${key}`).then((r) => r.data),
+        enabled: ids.length > 0,
+        staleTime: 5 * 60_000,
         placeholderData: keepPreviousData,
     });
 }

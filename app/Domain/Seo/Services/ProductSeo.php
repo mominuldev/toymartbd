@@ -25,6 +25,7 @@ use App\Domain\Seo\Models\SlugHistory;
  */
 final readonly class ProductSeo
 {
+    /** Fallback only: the site name is config('seo.site_name') — see {@see SiteTitle}. */
     public const string SITE_NAME = 'Toy Mart BD';
 
     public const string SITE_URL = 'https://toymartbd.com';
@@ -48,8 +49,8 @@ final readonly class ProductSeo
         $primary = self::primaryImage($product);
 
         return [
-            'title' => $product->name.' | '.self::SITE_NAME,
-            'title_bn' => ($product->name_bn ?? $product->name).' | '.self::SITE_NAME,
+            'title' => SiteTitle::of($product->name),
+            'title_bn' => SiteTitle::of($product->name_bn ?? $product->name),
             'description' => self::summary($product->short_description, $product->description),
             'description_bn' => self::summary($product->short_description_bn, $product->description_bn)
                 ?: self::summary($product->short_description, $product->description),

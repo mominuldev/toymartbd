@@ -3,8 +3,8 @@
 
 import type { Locale } from '../i18n/config';
 
-/** Morph keys of docs/api/seo.md §1. Blog articles and buying guides share `blog_post`. */
-export const SEO_TYPES = ['product', 'category', 'brand', 'page', 'blog_post'] as const;
+/** Morph keys of docs/api/seo.md §1. Blog articles and buying guides share `blog_post`; blog archives are `blog_category|tag|author`. */
+export const SEO_TYPES = ['product', 'category', 'brand', 'page', 'blog_post', 'blog_category', 'blog_tag', 'blog_author'] as const;
 export type SeoType = (typeof SEO_TYPES)[number];
 
 export interface SeoLocaleText {

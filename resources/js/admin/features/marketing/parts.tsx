@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import { dataTable } from '@/components/ui/DataTable';
-import { scopeTypes, usePick, type Coupon, type PickItem, type PickKind, type PromotionStatus, type ScopeType, type UsageRow, type UsageSummary } from './api';
+import { scopeTypes, usePick, useScopeNames, type Coupon, type PickItem, type PickKind, type PromotionStatus, type ScopeType, type UsageRow, type UsageSummary } from './api';
 
 type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -189,6 +189,13 @@ export function IdPicker({ kind, label, value, onChange, error }: { kind: PickKi
     const [names, setNames] = useState<Record<number, string>>({});
     const results = usePick(kind, q);
     const name = (item: PickItem) => (locale === 'bn' ? (item.name_bn ?? item.name) : item.name);
+    // Saved ids arrive without names: the server names them (picked ones are known locally).
+    const saved = useScopeNames(kind, value);
+    const chipName = (v: number): string => {
+        if (names[v] !== undefined) return names[v];
+        const item = saved.data?.find((i) => i.id === v);
+        return item ? name(item) : `#${v}`;
+    };
     const add = (item: PickItem) => {
         setNames((n) => ({ ...n, [item.id]: name(item) }));
         if (!value.includes(item.id)) onChange([...value, item.id]);
@@ -204,8 +211,8 @@ export function IdPicker({ kind, label, value, onChange, error }: { kind: PickKi
                         <ul className="flex flex-wrap gap-1.5" aria-label={label}>
                             {value.map((v) => (
                                 <li key={v} className="inline-flex h-7 items-center gap-1 rounded-sm border border-line-default bg-subtle ps-2 pe-1 t-admin-caption text-fg-primary">
-                                    {names[v] ?? `#${v}`}
-                                    <button type="button" className="inline-flex size-5 items-center justify-center rounded-xs hover:bg-surface" aria-label={t('mkt.scope.remove', { name: names[v] ?? `#${v}` })} onClick={() => onChange(value.filter((x) => x !== v))}>
+                                    {chipName(v)}
+                                    <button type="button" className="inline-flex size-5 items-center justify-center rounded-xs hover:bg-surface" aria-label={t('mkt.scope.remove', { name: chipName(v) })} onClick={() => onChange(value.filter((x) => x !== v))}>
                                         <XIcon size={12} aria-hidden />
                                     </button>
                                 </li>

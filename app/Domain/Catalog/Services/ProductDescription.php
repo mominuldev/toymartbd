@@ -14,7 +14,10 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
  * that reaches the column passes through {@see sanitize()}, an allowlist:
  *
  * - p, h2, h3, strong, em, ul, ol, li, blockquote, br — no attributes;
- * - a[href] with http, https or mailto only; an external web link gets rel="noopener nofollow";
+ * - a[href] with http, https or mailto, or a site-relative link — root-relative (`/pages/x`,
+ *   `/bn/blog/y`) or an in-page `#anchor`; javascript:, data:, vbscript: and every other scheme,
+ *   protocol-relative `//host` tricks and bare relative paths (`foo/bar`) lose their href.
+ *   An external web link gets rel="noopener nofollow";
  * - img[src, alt, width, height] only from our own media: the stable `/m/…` URL (relative or on
  *   the app host) or the public media disk / CDN base (config/media.php).
  *
@@ -128,7 +131,8 @@ final class ProductDescription
             ->allowElement('a', ['href'])
             ->allowElement('img', ['src', 'alt', 'width', 'height'])
             ->allowLinkSchemes(['http', 'https', 'mailto'])
-            ->allowRelativeLinks(false)
+            // Relative hrefs pass the sanitiser; markExternalLinks() keeps only `/…` and `#…`.
+            ->allowRelativeLinks(true)
             ->allowMediaSchemes(['http', 'https'])
             ->allowRelativeMedias()
             // The request allows 50,000 characters; Bangla is three bytes each.
@@ -209,11 +213,36 @@ final class ProductDescription
             }
 
             $url = html_entity_decode($href[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if (! self::isAllowedHref($url)) {
+                return '<a>';
+            }
             $host = self::hostOf($url);
             $internal = $host === null || in_array($host, self::internalHosts(), true);
 
             return '<a href="'.$href[1].'"'.($internal ? '' : ' rel="noopener nofollow"').'>';
         }, $html);
+    }
+
+    /**
+     * http(s)/mailto (the sanitiser already refused every other scheme), or a site-relative link:
+     * root-relative `/x` (not `//host`, not `/\host`) or a fragment `#x`. A bare relative path
+     * would resolve differently under /bn, so it is dropped.
+     */
+    public static function isAllowedHref(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '' || preg_match('/[\x00-\x20\\\\]/', $url) === 1) {
+            return false;
+        }
+        if ($url[0] === '#') {
+            return true;
+        }
+        if ($url[0] === '/') {
+            return ! str_starts_with($url, '//');
+        }
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        return is_string($scheme) && in_array(strtolower($scheme), ['http', 'https', 'mailto'], true);
     }
 
     /** @return list<string> */

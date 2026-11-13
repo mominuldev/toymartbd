@@ -8,6 +8,7 @@ use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Exceptions\NothingToPublish;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
+use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use App\Domain\Content\Blocks\Services\HomeLayoutCache;
 use App\Domain\Content\Events\CmsLayoutPublished;
 use Carbon\CarbonImmutable;
@@ -47,6 +48,7 @@ final class PublishLayout
                 'published_at' => CarbonImmutable::now('UTC'),
             ]);
 
+            CmsBlockMedia::syncLive($placement); // Media Library "where used": the live version's images
             CmsLayoutPublished::dispatch($placement->value, $version->version);
 
             return $version;

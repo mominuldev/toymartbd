@@ -91,6 +91,9 @@ class AuthServiceProvider extends ServiceProvider
         StockLocation::class => StockPolicy::class,
         Customer::class => CustomerPolicy::class,
         Address::class => CustomerPolicy::class,
+        \App\Domain\Customer\Models\CustomerNote::class => CustomerPolicy::class,
+        // Customer analytics (P8) has no model; the query class is the policy subject.
+        \App\Domain\Reporting\Queries\Customers\CustomerAnalytics::class => \App\Policies\CustomerAnalyticsPolicy::class,
         // Storefront customers reach their own wishlist through the `customer` guard, scoped by query.
         WishlistItem::class => CustomerPolicy::class,
         CustomerOtp::class => CustomerOtpPolicy::class,
@@ -122,8 +125,13 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Catalog\Reviews\Models\Review::class => \App\Policies\ReviewPolicy::class,
         // Finance reports have no model; FinanceReport is the policy subject (P5 reports).
         \App\Domain\Finance\Reports\FinanceReport::class => \App\Policies\FinanceReportPolicy::class,
+        // Admin dashboard (P8) has no model; the report class is the policy subject.
+        \App\Domain\Reporting\Queries\Dashboard\DashboardReport::class => \App\Policies\DashboardPolicy::class,
         // Courier performance report (P6) has no model; the report class is the policy subject.
         \App\Domain\Fulfilment\Reports\CourierPerformanceReport::class => \App\Policies\CourierPerformanceReportPolicy::class,
+        // P8 sales analytics (no model; the query is the policy subject) and report schedules.
+        \App\Domain\Reporting\Queries\Sales\SalesAnalytics::class => \App\Policies\SalesAnalyticsPolicy::class,
+        \App\Domain\Reporting\Models\ReportSchedule::class => \App\Policies\ReportSchedulePolicy::class,
         // Finance ledger, expenses, COD receipts, daily rollup (P5 finance).
         \App\Domain\Finance\Models\FinancialTransaction::class => \App\Policies\FinancialTransactionPolicy::class,
         \App\Domain\Finance\Models\Expense::class => \App\Policies\ExpensePolicy::class,
@@ -133,6 +141,8 @@ class AuthServiceProvider extends ServiceProvider
         // Server-side tracking diagnostics (P7, K-03): read-only, settings.view.
         \App\Domain\Tracking\Models\TrackingEvent::class => \App\Policies\TrackingEventPolicy::class,
         \App\Domain\Tracking\Models\OrderTrackingContext::class => \App\Policies\TrackingEventPolicy::class,
+        // Invoices (P8, N-13): customer → orders.view (+ view_pii to print); supplier → purchasing.view + catalog.view_cost.
+        \App\Domain\Invoicing\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
     ];
 
     /**

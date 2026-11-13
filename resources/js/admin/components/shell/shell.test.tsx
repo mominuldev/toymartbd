@@ -20,7 +20,7 @@ describe('app shell', () => {
         const nav = await screen.findAllByRole('navigation', { name: 'Main navigation' });
         const links = within(nav[0]!).getAllByRole('link').map((a) => a.textContent);
 
-        expect(links).toEqual(['Overview', 'Orders', 'Products']);
+        expect(links).toEqual(['Overview', 'Orders', 'Products', 'Invoices']);
     });
 
     it('switches the whole UI to Bangla and sets <html lang>', async () => {
@@ -29,7 +29,7 @@ describe('app shell', () => {
 
         fireEvent.click((await screen.findAllByRole('button', { name: 'বাং' }))[0]!);
 
-        expect(await screen.findByRole('heading', { name: 'ড্যাশবোর্ড' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'সংক্ষিপ্ত চিত্র' })).toBeTruthy();
         expect(document.documentElement.lang).toBe('bn');
         expect(localStorage.getItem('tm-admin-locale')).toBe('bn');
     });
@@ -58,9 +58,38 @@ describe('app shell', () => {
         expect(document.activeElement).toBe(menu);
     });
 
+    it('opens the Online store submenu inside the store and marks the current sub-page', async () => {
+        signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
+        renderApp('/store/banners');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        const submenu = await within(nav).findByRole('list', { name: 'Online store' });
+
+        expect(within(submenu).getAllByRole('link').map((a) => a.textContent)).toEqual([
+            'Homepage',
+            'Pages',
+            'Navigation',
+            'Blog',
+            'Banners',
+            'Testimonials',
+            'Media library',
+        ]);
+        expect(within(submenu).getByRole('link', { name: 'Banners' }).getAttribute('aria-current')).toBe('page');
+        expect(within(submenu).getByRole('link', { name: 'Pages' }).getAttribute('aria-current')).toBeNull();
+    });
+
+    it('keeps the Online store submenu closed outside the store', async () => {
+        signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        expect(within(nav).getByRole('link', { name: 'Online store' })).toBeTruthy();
+        expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull();
+    });
+
     it('renders a placeholder for designed-but-unbuilt sections', async () => {
         signedInAs(viewer);
-        renderApp('/customers');
+        renderApp('/inbox');
 
         expect(await screen.findByText('This section is being built.')).toBeTruthy();
     });

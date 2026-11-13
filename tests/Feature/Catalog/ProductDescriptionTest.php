@@ -55,6 +55,39 @@ describe('ProductDescription::sanitize', function (): void {
             ->and($clean)->toContain('<a href="https://toymartbd.com/products/x">own</a>');
     });
 
+    it('keeps safe site-relative links (/, /bn/, #anchor) and still blocks dangerous ones', function (): void {
+        $clean = (string) ProductDescription::sanitize(
+            '<p><a href="/">home</a> <a href="/pages/privacy">privacy</a> <a href="/bn/blog/stem-toys?page=2">bn</a> <a href="#returns">anchor</a>'
+            .' <a href="//evil.example/x">proto</a> <a href="/\\evil.example">backslash</a> <a href="pages/x">bare</a>'
+            .' <a href="javascript:alert(1)">js</a> <a href=" javascript:alert(1)">spacejs</a> <a href="data:text/html,hi">data</a>'
+            .' <a href="vbscript:msgbox(1)">vb</a> <a href="jav&#x09;ascript:alert(1)">tab</a></p>'
+        );
+
+        expect($clean)->toContain('<a href="/">home</a>')
+            ->and($clean)->toContain('<a href="/pages/privacy">privacy</a>')
+            ->and($clean)->toContain('<a href="/bn/blog/stem-toys?page=2">bn</a>')
+            ->and($clean)->toContain('<a href="#returns">anchor</a>')
+            ->and($clean)->toContain('<a>proto</a>')
+            ->and($clean)->toContain('<a>backslash</a>')
+            ->and($clean)->toContain('<a>bare</a>')
+            ->and($clean)->not->toContain('javascript')
+            ->and($clean)->not->toContain('vbscript')
+            ->and($clean)->not->toContain('data:')
+            ->and($clean)->not->toContain('evil.example')
+            // Relative links are on our own site: no rel="nofollow".
+            ->and($clean)->not->toContain('nofollow');
+    });
+
+    it('allows relative links through every body that shares the sanitiser (pages, blog, rich-text blocks)', function (): void {
+        expect(App\Domain\Content\Blog\Services\BlogHtml::sanitize('<p><a href="/bn/pages/about">about</a></p>'))->toBe('<p><a href="/bn/pages/about">about</a></p>')
+            ->and(ProductDescription::isAllowedHref('#faq'))->toBeTrue()
+            ->and(ProductDescription::isAllowedHref('/toys'))->toBeTrue()
+            ->and(ProductDescription::isAllowedHref('//cdn.evil'))->toBeFalse()
+            ->and(ProductDescription::isAllowedHref('javascript:alert(1)'))->toBeFalse()
+            ->and(ProductDescription::isAllowedHref('data:text/html,x'))->toBeFalse()
+            ->and(ProductDescription::isAllowedHref('../x'))->toBeFalse();
+    });
+
     it('keeps only images from our own media', function (): void {
         $clean = (string) ProductDescription::sanitize(
             '<p>a</p><img src="https://evil.example/x.png" alt="evil">'

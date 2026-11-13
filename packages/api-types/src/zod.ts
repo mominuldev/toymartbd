@@ -70,6 +70,15 @@ export type RecommendationPlacement = z.infer<typeof recommendationPlacementSche
 export const relationTypeSchema = z.enum(["related","upsell","cross_sell","bundle","age_progression"]);
 export type RelationType = z.infer<typeof relationTypeSchema>;
 
+export const reportFileFormatSchema = z.enum(["csv","xlsx"]);
+export type ReportFileFormat = z.infer<typeof reportFileFormatSchema>;
+
+export const reportFrequencySchema = z.enum(["daily","weekly","monthly"]);
+export type ReportFrequency = z.infer<typeof reportFrequencySchema>;
+
+export const reportTypeSchema = z.enum(["sales","pnl","couriers"]);
+export type ReportType = z.infer<typeof reportTypeSchema>;
+
 export const returnReasonSchema = z.enum(["damaged_in_transit","defective","wrong_item","missing_parts","not_as_described","changed_mind","other"]);
 export type ReturnReason = z.infer<typeof returnReasonSchema>;
 
@@ -683,6 +692,19 @@ export const replyToReviewRequestSchema = z.object({
 });
 export type ReplyToReviewRequestInput = z.input<typeof replyToReviewRequestSchema>;
 
+/** A scheduled report, for `POST /reports/schedules` and `PUT /reports/schedules/{schedule}` */
+export const reportScheduleRequestSchema = z.object({
+    "name": z.string().min(2).max(120),
+    "report_type": reportTypeSchema,
+    "frequency": reportFrequencySchema,
+    "send_time": z.string().min(1).regex(new RegExp("^([01]\\d|2[0-3]):(00|15|30|45)$")),
+    "locale": z.enum(["en","bn"]),
+    "format": reportFileFormatSchema,
+    "is_active": z.boolean(),
+    "recipient_ids": z.array(z.number().int()).min(1).max(20),
+});
+export type ReportScheduleRequestInput = z.input<typeof reportScheduleRequestSchema>;
+
 /** `POST /storefront/auth/otp` (P4-STO-11) — text a sign-in code. Called by the Next.js */
 export const requestOtpRequestSchema = z.object({
     "phone": z.string().min(1).max(32),
@@ -918,6 +940,13 @@ export const storeCouponRequestSchema = z.object({
     "is_active": z.boolean().optional(),
 });
 export type StoreCouponRequestInput = z.input<typeof storeCouponRequestSchema>;
+
+/** `POST /customers/{customer}/notes` — needs customers.update. Notes are append-only. */
+export const storeCustomerNoteRequestSchema = z.object({
+    "body": z.string().min(1).max(2000),
+    "is_pinned": z.boolean().optional(),
+});
+export type StoreCustomerNoteRequestInput = z.input<typeof storeCustomerNoteRequestSchema>;
 
 /** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a */
 export const storeMediaRequestSchema = z.object({
@@ -1286,6 +1315,14 @@ export const updateAttributeValueRequestSchema = z.object({
 });
 export type UpdateAttributeValueRequestInput = z.input<typeof updateAttributeValueRequestSchema>;
 
+/** `PUT /notifications/automations` — Settings → Automations scheduling (P8); needs */
+export const updateAutomationSettingsRequestSchema = z.object({
+    "review_delay_days": z.number().int().min(1).max(30),
+    "quiet_from": z.string().min(1),
+    "quiet_to": z.string().min(1),
+});
+export type UpdateAutomationSettingsRequestInput = z.input<typeof updateAutomationSettingsRequestSchema>;
+
 /** `PATCH /brands/{brand}` — every field optional; only the fields sent change. */
 export const updateBrandRequestSchema = z.object({
     "name": z.string().max(120).optional(),
@@ -1388,6 +1425,23 @@ export const updateDeliverySettingsRequestSchema = z.object({
 });
 export type UpdateDeliverySettingsRequestInput = z.input<typeof updateDeliverySettingsRequestSchema>;
 
+/** `PUT /settings/invoice` — Admin → Settings → Invoice details; needs settings.update. The */
+export const updateInvoiceSettingsRequestSchema = z.object({
+    "name_en": z.string().max(120).nullable().optional(),
+    "name_bn": z.string().max(120).nullable().optional(),
+    "address_en": z.string().max(300).nullable().optional(),
+    "address_bn": z.string().max(300).nullable().optional(),
+    "hotline": z.string().max(32).regex(new RegExp("^\\+?[0-9 ()-]{5,32}$")).nullable().optional(),
+    "email": z.email().max(191).nullable().optional(),
+    "website": z.string().max(191).nullable().optional(),
+    "trade_licence": z.string().max(64).nullable().optional(),
+    "bin": z.string().max(32).regex(new RegExp("^[0-9-]{5,32}$")).nullable().optional(),
+    "logo_media_id": z.number().int().nullable().optional(),
+    "footer_en": z.string().max(200).nullable().optional(),
+    "footer_bn": z.string().max(200).nullable().optional(),
+});
+export type UpdateInvoiceSettingsRequestInput = z.input<typeof updateInvoiceSettingsRequestSchema>;
+
 /** `PATCH /media/{media}` — any of `alt_text`, `alt_text_bn` (≤ 255), `caption` (≤ 500), */
 export const updateMediaRequestSchema = z.object({
     "alt_text": z.string().max(255).nullable().optional(),
@@ -1396,6 +1450,12 @@ export const updateMediaRequestSchema = z.object({
     "folder_id": z.number().int().nullable().optional(),
 });
 export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
+
+/** `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message */
+export const updateMessageConsentRequestSchema = z.object({
+    "birthday": z.boolean(),
+});
+export type UpdateMessageConsentRequestInput = z.input<typeof updateMessageConsentRequestSchema>;
 
 /** `PUT /settings/messaging` — Admin → Integrations → Messaging; needs */
 export const updateMessagingSettingsRequestSchema = z.object({

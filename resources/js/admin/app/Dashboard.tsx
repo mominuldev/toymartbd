@@ -1,18 +1,5 @@
-import { useMe } from '@/features/auth/api';
-import { useI18n } from '@/i18n/I18nProvider';
-
 /**
- * Placeholder until the dashboard API lands (Figma page 07 §14, docs/_design/04-admin-spec.md Part B).
- * It proves the signed-in shell end to end: session, locale, theme, tokens.
+ * The router's index route. The dashboard itself lives in features/dashboard (P8, Figma
+ * B · 01 Dashboard 241:29848); this re-export keeps routes.tsx untouched.
  */
-export function Dashboard() {
-    const { t } = useI18n();
-    const { data: me } = useMe();
-
-    return (
-        <section className="space-y-4">
-            <h1 className="t-admin-page-title text-fg-primary">{t('dashboard.title')}</h1>
-            <p className="t-admin-body max-w-prose text-fg-secondary">{t('dashboard.welcome', { name: me?.name ?? '' })}</p>
-        </section>
-    );
-}
+export { DashboardPage as Dashboard } from '@/features/dashboard/DashboardPage';

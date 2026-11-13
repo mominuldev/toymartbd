@@ -33,6 +33,10 @@ import { contentBn, contentEn } from './messages.content';
 import { contentHomeBn, contentHomeEn } from './messages.contentHome';
 import { blogBn, blogEn } from './messages.blog';
 import { trackingBn, trackingEn } from './messages.tracking';
+import { invoicesBn, invoicesEn } from './messages.invoices';
+import { customersBn, customersEn } from './messages.customers';
+import { dashboardBn, dashboardEn } from './messages.dashboard';
+import { analyticsBn, analyticsEn } from './messages.analytics';
 
 export const en = {
     ...productsEn,
@@ -61,6 +65,10 @@ export const en = {
     ...contentHomeEn,
     ...blogEn,
     ...trackingEn,
+    ...invoicesEn,
+    ...customersEn,
+    ...dashboardEn,
+    ...analyticsEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -88,6 +96,13 @@ export const en = {
     'nav.analytics': 'Analytics',
     'nav.seo': 'SEO',
     'nav.store': 'Online store',
+    'nav.store.home': 'Homepage',
+    'nav.store.pages': 'Pages',
+    'nav.store.navigation': 'Navigation',
+    'nav.store.blog': 'Blog',
+    'nav.store.banners': 'Banners',
+    'nav.store.testimonials': 'Testimonials',
+    'nav.store.media': 'Media library',
     'nav.finance': 'Finance',
     'nav.staff': 'Staff & roles',
     'nav.automations': 'Automations',
@@ -343,6 +358,10 @@ export const bn: Messages = {
     ...contentHomeBn,
     ...blogBn,
     ...trackingBn,
+    ...invoicesBn,
+    ...customersBn,
+    ...dashboardBn,
+    ...analyticsBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',
@@ -370,6 +389,13 @@ export const bn: Messages = {
     'nav.analytics': 'অ্যানালিটিক্স',
     'nav.seo': 'এসইও',
     'nav.store': 'অনলাইন স্টোর',
+    'nav.store.home': 'হোমপেজ',
+    'nav.store.pages': 'পাতা',
+    'nav.store.navigation': 'নেভিগেশন',
+    'nav.store.blog': 'ব্লগ',
+    'nav.store.banners': 'ব্যানার',
+    'nav.store.testimonials': 'গ্রাহকের মতামত',
+    'nav.store.media': 'মিডিয়া লাইব্রেরি',
     'nav.finance': 'ফাইন্যান্স',
     'nav.staff': 'স্টাফ ও ভূমিকা',
     'nav.automations': 'অটোমেশন',

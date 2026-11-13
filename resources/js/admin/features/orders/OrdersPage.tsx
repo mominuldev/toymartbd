@@ -204,8 +204,9 @@ export function OrdersPage() {
     const printSelected = () => {
         setPrinting(true);
         openInvoices([...selected])
-            .then(({ missing }) => {
+            .then(({ missing, notInvoiced }) => {
                 if (missing.length > 0) toast.notify(t('orders.invoice.missing', { count: missing.length }), 'danger');
+                if (notInvoiced.length > 0) toast.notify(t('invoices.bulk.notInvoiced', { count: notInvoiced.length }), 'danger');
             })
             .catch((error: unknown) => toast.notify(error instanceof ApiError ? (error.problem.detail ?? error.problem.title) : t('orders.invoice.failed'), 'danger'))
             .finally(() => setPrinting(false));

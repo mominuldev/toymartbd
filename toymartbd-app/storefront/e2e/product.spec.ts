@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { MOCK_API_URL, STOREFRONT_URL } from './constants';
+import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 
 // P4-STO-05 product page, asserted with JavaScript DISABLED: the selected variant is the URL
 // (`?variant=`), options are links, tabs are fragment links and the mobile accordion is <details>,
 // so this is what every visitor and crawler gets before hydration. Fixture: e2e/fixtures/product-detail.json
 // (Set 90/484 × Packaging Box/Tub; 484 + Tub is sold out; the default 484 + Box has 3 left).
-test.use({ javaScriptEnabled: false });
+// A crawler UA: an HTML-limited bot gets every metadata tag in <head> (next.config.ts htmlLimitedBots).
+test.use({ javaScriptEnabled: false, userAgent: CRAWLER_UA });
 
 test.beforeAll(async ({ request }) => {
     await request.post(`${MOCK_API_URL}/__control/reset`);
