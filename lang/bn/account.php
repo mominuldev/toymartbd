@@ -15,6 +15,11 @@ return [
     'address' => [
         'limit' => 'সর্বোচ্চ :max টি ঠিকানা রাখা যায়। আগে একটি মুছুন।',
     ],
+    // My kids (P8 batch 3): first name/nickname + birthday, year optional.
+    'child' => [
+        'limit' => 'সর্বোচ্চ :max জন সন্তানের তথ্য রাখা যায়। আগে একজনকে মুছুন।',
+        'birthday_invalid' => 'এই জন্মদিনটি সঠিক তারিখ নয়। দিন, মাস ও বছর দেখে নিন।',
+    ],
     'wishlist' => [
         'limit' => 'পছন্দের তালিকা পূর্ণ (:max টি খেলনা)। আগে একটি সরান।',
         'unavailable' => 'এই খেলনাটি পাওয়া যাচ্ছে না।',

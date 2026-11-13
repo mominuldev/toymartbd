@@ -34,6 +34,9 @@ final class CouponUsages
 
         $coupon = Coupon::query()->lockForUpdate()->findOrFail($coupon->id);
 
+        if ($coupon->redeemableBy($phone, $customerId) !== true) {
+            throw new CouponRejected(CouponRejection::NotForCustomer);
+        }
         if ($coupon->usage_limit_total !== null && $coupon->used_count >= $coupon->usage_limit_total) {
             throw new CouponRejected(CouponRejection::UsageLimitReached);
         }

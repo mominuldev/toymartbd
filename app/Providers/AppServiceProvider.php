@@ -55,6 +55,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\Catalog\Import\Contracts\ProductRowWriter::class, \App\Http\Imports\FormRequestProductRowWriter::class);
         // first_order_only coupons read real order history (replaces NoCustomerOrderHistory).
         $this->app->bind(\App\Domain\Marketing\Contracts\CustomerOrderHistory::class, \App\Domain\Ordering\Queries\PhoneOrderHistory::class);
+        // Birthday-reminder offers (P8 batch 3): Notification mints a personal coupon through this seam.
+        $this->app->bind(\App\Domain\Marketing\Contracts\PersonalCouponIssuer::class, \App\Domain\Marketing\Actions\IssuePersonalCoupon::class);
         // The nightly stock reconciliation checks reserved against open orders (§7 invariant 5).
         $this->app->bind(\App\Domain\Inventory\Contracts\OpenOrderReservations::class, \App\Domain\Ordering\Queries\EloquentOpenOrderReservations::class);
 
@@ -100,6 +102,9 @@ class AppServiceProvider extends ServiceProvider
         // P8 batch 2: an invoiced order cancelled, or a refund paid on one, gets a credit note.
         Event::listen(\App\Domain\Ordering\Events\OrderCancelled::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnOrderCancelled::class);
         Event::listen(\App\Domain\Ordering\Events\RefundPaid::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnRefundPaid::class);
+        // P8 batch 3: an edit after issue gets a credit note / supplementary invoice; a courier return (RTO) a credit note.
+        Event::listen(\App\Domain\Ordering\Events\OrderEdited::class, \App\Domain\Invoicing\Listeners\IssueDocumentsOnOrderEdited::class);
+        Event::listen(\App\Domain\Ordering\Events\OrderReturned::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnOrderReturned::class);
         Event::listen(\App\Domain\Marketing\Events\PromotionChanged::class, \App\Domain\Content\Listeners\RevalidatePromotionPages::class);
         Event::listen(OrderPlaced::class, \App\Domain\Notification\Listeners\MarkCartRecoveredOnOrderPlaced::class);
         // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).

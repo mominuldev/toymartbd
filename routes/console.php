@@ -107,15 +107,15 @@ Schedule::command('toymart:carts:recover')
     ->onOneServer();
 
 // P8 notification automation. Review requests hourly (delay after delivery, consent and the
-// Dhaka quiet hours are in the Action); birthday messages at 10:00 Dhaka, once a year each.
+// Dhaka quiet hours are in the Action); birthday reminders hourly too (from 10:00 Dhaka, outside
+// quiet hours, `lead_days` before each child's birthday, once per child per year — P8 batch 3).
 Schedule::command('toymart:automations:review-requests')
     ->hourlyAt(5)
     ->withoutOverlapping(30)
     ->onOneServer();
 
 Schedule::command('toymart:automations:birthdays')
-    ->dailyAt('10:00')
-    ->timezone('Asia/Dhaka')
+    ->hourlyAt(10)
     ->withoutOverlapping(30)
     ->onOneServer();
 

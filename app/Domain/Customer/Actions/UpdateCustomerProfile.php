@@ -8,13 +8,14 @@ use App\Domain\Customer\Models\Customer;
 
 /**
  * The customer edits their own details (P4-STO-11). The phone is the identity and is not
- * editable here: changing it would need an OTP to the new number. The date of birth (Y-m-d)
- * feeds birthday messages only when the customer has also opted in to them.
+ * editable here: changing it would need an OTP to the new number. (Birthday reminders are about
+ * the customer's children, P8 batch 3 — see SaveCustomerChild; the customer's own date of birth
+ * is no longer collected.)
  */
 final readonly class UpdateCustomerProfile
 {
     /**
-     * @param  array{name?: string, email?: string|null, preferred_language?: string, date_of_birth?: string|null}  $changes
+     * @param  array{name?: string, email?: string|null, preferred_language?: string}  $changes
      */
     public function handle(Customer $customer, array $changes): Customer
     {

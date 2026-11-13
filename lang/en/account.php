@@ -15,6 +15,11 @@ return [
     'address' => [
         'limit' => 'You can save up to :max addresses. Remove one first.',
     ],
+    // My kids (P8 batch 3): first name/nickname + birthday, year optional.
+    'child' => [
+        'limit' => 'You can add up to :max children. Remove one first.',
+        'birthday_invalid' => 'That birthday is not a real date. Check the day, month and year.',
+    ],
     'wishlist' => [
         'limit' => 'Your wishlist is full (:max toys). Remove one first.',
         'unavailable' => 'This toy is not available.',

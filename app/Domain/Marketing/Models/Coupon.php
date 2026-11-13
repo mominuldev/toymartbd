@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Marketing\Models;
 
+use App\Domain\Customer\Models\Customer;
 use App\Domain\Marketing\Enums\CouponType;
 use App\Domain\Marketing\Enums\ProductScopeType;
 use App\Support\Casts\MoneyCast;
 use App\Support\Money;
+use App\Support\PhoneNumber;
 use Database\Factories\CouponFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $excludes `{product_ids?, category_ids?, brand_ids?}`
  * @property bool $first_order_only
  * @property int|null $customer_segment_id
+ * @property int|null $customer_id set = a personal coupon only that customer may redeem (P8 batch 3); never mass-assigned
  * @property bool $is_active
  * @property int|null $created_by
  * @property Carbon|null $created_at
@@ -84,6 +87,7 @@ final class Coupon extends Model
             'excludes' => 'array',
             'first_order_only' => 'boolean',
             'customer_segment_id' => 'integer',
+            'customer_id' => 'integer',
             'is_active' => 'boolean',
             'created_by' => 'integer',
         ];
@@ -98,6 +102,28 @@ final class Coupon extends Model
     public static function findByCode(string $code): ?self
     {
         return self::query()->where('code', self::normaliseCode($code))->first();
+    }
+
+    /**
+     * May this shopper redeem it? Always for an ordinary coupon. A personal one
+     * (`customer_id` set) only for that customer — their id, or their phone at checkout.
+     * Null when the shopper is not known yet (a guest cart before checkout): checkout always
+     * knows the phone and decides then, as for the per-customer limit.
+     */
+    public function redeemableBy(?PhoneNumber $phone, ?int $customerId): ?bool
+    {
+        if ($this->customer_id === null) {
+            return true;
+        }
+        if ($customerId !== null && $customerId === $this->customer_id) {
+            return true;
+        }
+        if ($phone === null) {
+            return $customerId === null ? null : false;
+        }
+        $owner = Customer::query()->withTrashed()->whereKey($this->customer_id)->value('phone');
+
+        return is_string($owner) && $owner === $phone->e164();
     }
 
     /** @return HasMany<CouponUsage, $this> */

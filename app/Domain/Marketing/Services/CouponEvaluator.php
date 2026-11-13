@@ -19,7 +19,8 @@ use DateTimeInterface;
  * The coupon stage of the pricing pipeline (P4-CRT-04). Checks, in order: exists,
  * active, window, total limit, per-customer limit (keyed on the E.164 phone, plus the
  * customer id when known — so it holds across guest checkouts on one phone), first
- * order only, scope/exclusions, minimum order. Then computes the discount on the
+ * order only, scope/exclusions, minimum order. A personal coupon (`customer_id`, P8 batch 3) is
+ * refused to anyone else once the shopper is known. Then computes the discount on the
  * eligible lines' post-promotion amounts.
  *
  * Without a phone (a cart before checkout) the per-customer and first-order checks
@@ -102,6 +103,7 @@ final readonly class CouponEvaluator
             ! $coupon->is_active => CouponRejection::Inactive,
             $coupon->starts_at !== null && $coupon->starts_at->greaterThan($now) => CouponRejection::NotStarted,
             $coupon->ends_at !== null && ! $coupon->ends_at->greaterThan($now) => CouponRejection::Expired,
+            $coupon->redeemableBy($phone, $customerId) === false => CouponRejection::NotForCustomer,
             $coupon->usage_limit_total !== null && $coupon->used_count >= $coupon->usage_limit_total => CouponRejection::UsageLimitReached,
             $coupon->usage_limit_per_customer !== null && ($phone !== null || $customerId !== null)
                 && CouponUsages::countFor($coupon, $phone, $customerId) >= $coupon->usage_limit_per_customer => CouponRejection::CustomerLimitReached,

@@ -14,8 +14,8 @@ import { TabButton, TabList } from '@/components/ui/Tabs';
 import { Tag } from '@/components/ui/Tag';
 import { useToast } from '@/components/ui/Toast';
 import { ApiError } from '@/lib/api';
-import { useAddCustomerNote, useCustomer, useCustomerNotes, useNotificationPreferences, type CustomerNote, type CustomerProfile } from './api';
-import { Taka, count, dhakaDay, dhakaDayTime, dhakaDayYear, percentText, takaText } from './format';
+import { useAddCustomerNote, useCustomer, useCustomerNotes, useMessageConsents, useNotificationPreferences, type CustomerNote, type CustomerProfile } from './api';
+import { Taka, count, dayMonth, dhakaDay, dhakaDayTime, dhakaDayYear, percentText, takaText } from './format';
 import { BirthdayPanel } from './BirthdayPanel';
 import { Panel, RiskPill, RiskStatusTag, SegmentTag, Stat, riskTint } from './parts';
 
@@ -33,8 +33,9 @@ const outcomeTone = (status: Order['status']): StatusTone => {
 /**
  * Customer profile (Figma B · 18 241:41374, Theme B): header with the contact line (masked
  * without customers.view_pii, rule 20) and actions; four StatCards (lifetime value from the
- * ledger, delivery success, orders, returns); Orders / Notes tabs; and the rail — profile,
- * birthday messages (date of birth + consent, P8 — no frame; Panel pattern), addresses, OUR
+ * ledger, delivery success, orders, returns); Orders / Notes tabs; and the rail — profile (with
+ * "Children" and "Birthday reminders" rows, P8 batch 3), kids & birthday reminders (edit + consent —
+ * no frame; Panel pattern), addresses, OUR
  * risk score, the courier-evidence pointer (kept separate, rule 24) and the pinned note. Every figure is the server's (rule 1).
  */
 /** Items an order has beyond the ones the profile lists (a count, not money). */
@@ -49,6 +50,7 @@ export function CustomerProfilePage() {
     const tab: Tab = params.get('tab') === 'notes' ? 'notes' : 'orders';
     const setTab = (next: Tab) => setParams(next === 'orders' ? {} : { tab: next }, { replace: true });
     const prefs = useNotificationPreferences(id, can(me, 'customers.view'));
+    const consents = useMessageConsents(id, can(me, 'customers.view'));
     const c = customer.data;
 
     if (customer.isError) {
@@ -126,12 +128,16 @@ export function CustomerProfilePage() {
                             {c.tags.map((tag) => (
                                 <Tag key={tag} label={tag} tone="lavender" />
                             ))}
+                            {c.children_count > 0 && <Tag label={t(c.children_count === 1 ? 'customers.kids.tagOne' : 'customers.kids.tag', { count: c.children_count })} tone="lavender" />}
                         </div>
                         <dl className="flex flex-col gap-3">
                             <Row label={t('customers.card.account')} value={t(c.has_account ? 'customers.card.accountYes' : 'customers.card.accountNo')} />
                             <Row label={t('customers.card.source')} value={t(`customers.source.${c.source}` as MessageKey)} />
                             <Row label={t('customers.card.language')} value={t(`customers.language.${c.preferred_language}` as MessageKey)} />
                             {c.first_order_at && <Row label={t('customers.card.firstOrder')} value={dhakaDayYear(c.first_order_at, locale)} />}
+                            {/* Figma B · 18 241:41502 / 241:41505 — children's data: names and dates only with customers.view_pii. */}
+                            <Row label={t('customers.card.children')} value={<span className="tabular">{childrenSummary(c, t)}</span>} />
+                            <Row label={t('customers.card.reminders')} value={<span className="tabular">{remindersSummary(c, consents.data?.birthday.consented ?? false, t, locale)}</span>} />
                         </dl>
                         {prefs.data && (
                             <div className="flex flex-col gap-2 border-t border-line-default pt-3">
@@ -192,6 +198,22 @@ export function CustomerProfilePage() {
             </div>
         </section>
     );
+}
+
+type T = ReturnType<typeof useI18n>['t'];
+
+/** "Arian (6) · Mehrin (3)" (Figma 241:41504); a count only without customers.view_pii. */
+function childrenSummary(c: CustomerProfile, t: T): string {
+    if (c.children_count === 0) return t('customers.kids.noneShort');
+    if (c.children === null) return t('customers.kids.hiddenShort', { count: c.children_count });
+    return c.children.map((k) => (k.age === null ? (k.name ?? t('customers.kids.unnamed')) : `${k.name ?? t('customers.kids.unnamed')} (${k.age})`)).join(' · ');
+}
+
+/** "12 Mar · 04 Aug" (Figma 241:41507) while the consent is on; "Off" otherwise. */
+function remindersSummary(c: CustomerProfile, consented: boolean, t: T, locale: string): string {
+    if (!consented || c.children_count === 0) return t('customers.prefs.off');
+    if (c.children === null) return t('customers.prefs.on');
+    return c.children.map((k) => dayMonth(k.birth_month, k.birth_day, locale)).join(' · ');
 }
 
 function Row({ label, value }: { label: string; value: ReactNode }) {

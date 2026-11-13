@@ -9,8 +9,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Customers, their saved addresses and staff notes (§3.3). Registered for Customer, Address
- * and CustomerNote (rule 21). `viewPii` gates the full phone and address (rule 20).
+ * Customers, their saved addresses, staff notes and children (§3.3). Registered for Customer,
+ * Address, CustomerNote and CustomerChild (rule 21). `viewPii` gates the full phone and address (rule 20).
  */
 final class CustomerPolicy extends Policy
 {
@@ -40,8 +40,11 @@ final class CustomerPolicy extends Policy
         return $this->allows($user, Permission::CustomersUpdate);
     }
 
-    /** Change the date of birth (personal data): customers.update AND customers.view_pii (rule 20). */
-    public function updateDateOfBirth(User $user, Model $customer): bool
+    /**
+     * Add, edit or remove a customer's children (P8 batch 3) — children's data, so
+     * customers.update AND customers.view_pii (rule 20).
+     */
+    public function manageChildren(User $user, Model $customer): bool
     {
         return $this->allows($user, Permission::CustomersUpdate) && $this->allows($user, Permission::CustomersViewPii);
     }

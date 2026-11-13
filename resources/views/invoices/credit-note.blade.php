@@ -110,11 +110,15 @@
                         @if (! empty($line['variant']))
                             <div class="muted">{{ $line['variant'] }}</div>
                         @endif
+                        @if (($line['kind'] ?? 'item') === 'adjustment')
+                            <div class="muted">{{ $tr('supplementary.adjustment_line') }}</div>
+                        @endif
                     @endif
                 </td>
+                @php $adjustment = ($line['kind'] ?? 'item') === 'adjustment'; @endphp
                 <td class="muted">{{ $line['sku'] ?? '' }}</td>
-                <td class="num">{{ \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
-                <td class="num">{{ $money((string) $line['unit_price']) }}</td>
+                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
+                <td class="num">{{ $adjustment ? '' : $money((string) $line['unit_price']) }}</td>
                 <td class="num">{{ $money((string) $line['amount']) }}</td>
             </tr>
         @endforeach

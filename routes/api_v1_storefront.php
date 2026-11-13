@@ -130,9 +130,14 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
 Route::middleware(['auth:customer', CheckAbilities::class.':customer', EnsureActiveCustomer::class])->prefix('account')->name('account.')->group(function (): void {
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
-    // Purpose consents (P8): birthday messages, opted in on the profile page — never on checkout.
+    // Purpose consents (P8): birthday reminders with offers, opted in on the profile page — never on checkout.
     Route::get('/consents', [AccountConsentController::class, 'show'])->name('consents.show');
     Route::put('/consents', [AccountConsentController::class, 'update'])->name('consents.update');
+    // My kids (P8 batch 3): first name/nickname + birthday, for birthday reminders with an offer.
+    Route::get('/children', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'index'])->name('children.index');
+    Route::post('/children', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'store'])->name('children.store');
+    Route::patch('/children/{child}', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'update'])->whereNumber('child')->name('children.update');
+    Route::delete('/children/{child}', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'destroy'])->whereNumber('child')->name('children.destroy');
     Route::post('/logout', [AccountAuthController::class, 'logout'])->name('logout');
     Route::get('/orders', [AccountOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{number}', [AccountOrderController::class, 'show'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');

@@ -255,22 +255,26 @@ final class TemplateCatalog
                 ],
             ],
 
-            // Birthday message (P8 automation): 10:00 Dhaka on the day, once a year, only with the
-            // customer's birthday consent (customer_message_consents). Marketing. No offer in the
-            // copy: a discount would be a promotion the owner has not defined.
+            // Birthday reminder (P8 batch 3, owner decision 2026-11-13): to the PARENT, `lead_days`
+            // (default 7) before each child's birthday, from 10:00 Dhaka outside quiet hours, once
+            // per child per year, only with the birthday consent. Marketing. `offer_sentence` holds
+            // the personal coupon line (lang notifications.birthday.offer_sentence) or is empty while
+            // the offer is off — WhatsApp then gets a non-empty line instead (Meta refuses an empty
+            // parameter). `coupon_code` / `coupon_expiry` are there for edited copy; empty without
+            // an offer. Copy adapted from the approved batch-2 text — NEW sentences for owner review.
             'customer.birthday' => [
                 'category' => NotificationCategory::Marketing,
-                'variables' => ['name', 'store_url'],
-                'whatsapp_parameters' => ['name'],
+                'variables' => ['name', 'child_possessive', 'birthday_date', 'offer_sentence', 'coupon_code', 'coupon_expiry', 'store_url'],
+                'whatsapp_parameters' => ['name', 'child_possessive', 'birthday_date', 'offer_sentence'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Happy birthday, {name}! Warm wishes from everyone at Toy Mart BD. {store_url}',
-                        'body_bn' => 'শুভ জন্মদিন, {name}! টয় মার্ট বিডির সবার পক্ষ থেকে শুভেচ্ছা। {store_url}',
+                        'body_en' => 'Toy Mart BD: {child_possessive} birthday is on {birthday_date}! {offer_sentence} Gifts: {store_url}',
+                        'body_bn' => 'টয় মার্ট বিডি: {birthday_date} {child_possessive} জন্মদিন! {offer_sentence} {store_url}',
                     ],
                     'whatsapp' => [
-                        'provider_template' => 'customer_birthday',
-                        'body_en' => 'Happy birthday, {name}! Everyone at Toy Mart BD wishes you a wonderful year ahead.',
-                        'body_bn' => 'শুভ জন্মদিন, {name}! টয় মার্ট বিডির সবার পক্ষ থেকে আপনার জন্য রইল নতুন বছরের শুভেচ্ছা।',
+                        'provider_template' => 'child_birthday_reminder',
+                        'body_en' => 'Hello {name}, {child_possessive} birthday is coming up on {birthday_date}. {offer_sentence} Find a gift they will love: {store_url}',
+                        'body_bn' => '{name}, {birthday_date} {child_possessive} জন্মদিন আসছে। {offer_sentence} পছন্দের উপহারটি খুঁজে নিন: {store_url}',
                     ],
                 ],
             ],
@@ -329,6 +333,16 @@ final class TemplateCatalog
             'rider_phone' => '01712345678',
             'date' => '14/11/2026',
             'refund_sentence' => '',
+            // Birthday reminder (P8 batch 3): the longest realistic case — a named child and an offer.
+            'child_possessive' => $bn ? 'আয়ান-এর' : "Ayaan's",
+            'birthday_date' => $bn ? '12 মার্চ 2027' : '12 Mar 2027',
+            'coupon_code' => 'BDAY-7KQ2MXRT',
+            'coupon_expiry' => $bn ? '19 মার্চ 2027' : '19 Mar 2027',
+            'offer_sentence' => (string) trans('notifications.birthday.offer_sentence', [
+                'code' => 'BDAY-7KQ2MXRT',
+                'offer' => trans('notifications.birthday.offer_fixed', ['value' => '1000'], $locale),
+                'expiry' => $bn ? '19 মার্চ 2027' : '19 Mar 2027',
+            ], $locale),
             // A real restore link is 24 random characters under the storefront origin.
             // A review link: the storefront PDP of a typical product slug, `#reviews`.
             'review_url' => rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://toymartbd.com')), '/').($bn ? '/bn' : '').'/products/remote-control-racing-car-red#reviews',

@@ -29,3 +29,4 @@ export interface AccountFlash {
     /** What the customer typed, so a no-JS round trip keeps it. */
     draft: Record<string, string>;
 }
+export type AccountChild = Schema<'StorefrontAccountChild'>;

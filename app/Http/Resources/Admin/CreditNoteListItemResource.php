@@ -45,13 +45,14 @@ final class CreditNoteListItemResource extends ApiResource
             /** @var int */
             'order_id' => $note->order_id,
             /**
-             * Why it was issued: the order was cancelled after the invoice, or a refund was paid.
+             * Why it was issued: the order was cancelled after the invoice, a refund was paid, the
+             * order was edited down after issue, or the courier returned it (RTO; P8 batch 3).
              *
-             * @var 'order_cancelled'|'refund'
+             * @var 'order_cancelled'|'refund'|'order_edited'|'courier_return'
              */
             'reason' => $note->reason->value,
             /**
-             * The order number (cancellation) or the RMA number (refund), as issued.
+             * The order number (cancellation, edit, courier return) or the RMA number (refund), as issued.
              *
              * @var string|null
              */

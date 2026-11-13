@@ -63,6 +63,8 @@
         $locale = $entry['locale'];
         $bn = $locale === 'bn';
         $sales = $invoice->type === \App\Domain\Invoicing\Enums\InvoiceType::Sales;
+        // P8 batch 3: the increase of an order edited upwards after its invoice was issued.
+        $supplementary = $invoice->isSupplementary();
         $tr = static fn (string $key, array $replace = []): string => (string) __('invoices.'.$key, $replace, $locale);
         $by = $invoice->issued_by;
         $to = $invoice->issued_to;
@@ -84,8 +86,14 @@
                 <div class="muted">{{ $tr('trade_licence') }}: {{ $field('trade_licence') }} · {{ $tr('bin') }}: {{ $field('bin') }}</div>
             </td>
             <td style="width: 45%; text-align: right">
-                <div style="font-size: 14pt; font-weight: bold">{{ $sales ? $tr('title') : $tr('purchase_title') }}</div>
+                <div style="font-size: 14pt; font-weight: bold">{{ $supplementary ? $tr('supplementary.title') : ($sales ? $tr('title') : $tr('purchase_title')) }}</div>
                 <div>{{ $tr('number') }}: <b>{{ $invoice->number }}</b></div>
+                @if ($supplementary)
+                    <div>{{ $tr('supplementary.original') }}: <b>{{ $to['original_invoice_number'] ?? '' }}</b></div>
+                    @if (! empty($to['original_issued_at']))
+                        <div class="muted">{{ $tr('credit_note.invoice_date') }}: {{ $date($to['original_issued_at']) }}</div>
+                    @endif
+                @endif
                 <div>{{ $sales ? $tr('order') : $tr('purchase_ref') }}: {{ $invoice->reference }}</div>
                 <div class="muted">{{ $tr('issued') }}: {{ \App\Support\Locale\Formatter::date($invoice->issued_at, $locale) }}</div>
                 @if ($sales && ! empty($to['placed_at']))
@@ -139,15 +147,19 @@
         <tbody>
         @foreach ($invoice->lines as $line)
             <tr>
+                @php $adjustment = ($line['kind'] ?? 'item') === 'adjustment'; @endphp
                 <td>
                     {{ $bn && ! empty($line['name_bn']) ? $line['name_bn'] : $line['name'] }}
                     @if (! empty($line['variant']))
                         <div class="muted">{{ $line['variant'] }}</div>
                     @endif
+                    @if ($adjustment)
+                        <div class="muted">{{ $tr('supplementary.adjustment_line') }}</div>
+                    @endif
                 </td>
                 <td class="muted">{{ $line['sku'] }}</td>
-                <td class="num">{{ \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
-                <td class="num">{{ $sales ? $money((string) $line['unit_price']) : $cost((string) $line['unit_price']) }}</td>
+                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
+                <td class="num">{{ $adjustment ? '' : ($sales ? $money((string) $line['unit_price']) : $cost((string) $line['unit_price'])) }}</td>
                 <td class="num">{{ $money((string) $line['line_total']) }}</td>
             </tr>
         @endforeach
@@ -171,17 +183,20 @@
         @if (! $invoice->tax->isZero())
             <tr><td></td><td>{{ $tr('tax') }}</td><td class="num">{{ $money($invoice->tax) }}</td></tr>
         @endif
-        <tr class="grand"><td></td><td>{{ $sales ? $tr('grand_total') : $tr('po_total') }}</td><td class="num">{{ $money($invoice->total) }}</td></tr>
+        <tr class="grand"><td></td><td>{{ $supplementary ? $tr('supplementary.total') : ($sales ? $tr('grand_total') : $tr('po_total')) }}</td><td class="num">{{ $money($invoice->total) }}</td></tr>
         @if (! $invoice->paid->isZero())
             <tr><td></td><td>{{ $tr('paid') }}</td><td class="num">{{ $money($invoice->paid) }}</td></tr>
         @endif
         @if ($sales)
-            <tr class="due"><td></td><td>{{ $tr('due') }}</td><td class="num">{{ $money($invoice->due) }}</td></tr>
+            <tr class="due"><td></td><td>{{ $supplementary ? $tr('supplementary.due') : $tr('due') }}</td><td class="num">{{ $money($invoice->due) }}</td></tr>
         @endif
     </table>
 
     @if (! $bn && $invoice->amount_in_words)
         <div class="muted" style="margin-top: 6pt">{{ $tr('in_words') }}: {{ $invoice->amount_in_words }}</div>
+    @endif
+    @if ($supplementary)
+        <div class="muted" style="margin-top: 6pt">{{ $tr('supplementary.explain', ['invoice' => $to['original_invoice_number'] ?? '']) }}</div>
     @endif
     @if ($sales)
         <div style="margin-top: 8pt">{{ $tr('payment') }}: {{ $invoice->payment_method === 'cod' ? $tr('cod') : $invoice->payment_method }}</div>

@@ -14,7 +14,8 @@ use App\Http\Resources\Storefront\Account\AccountConsentResource;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 
 /**
- * The signed-in customer's own message consents (P8): today birthday messages only. There is
+ * The signed-in customer's own message consents (P8): today birthday reminders with offers
+ * (before each child's birthday, P8 batch 3) only. There is
  * no customer id in the path — the token is the customer, so nobody can read or change
  * another customer's consent. Never asked on checkout (the profile page only).
  */

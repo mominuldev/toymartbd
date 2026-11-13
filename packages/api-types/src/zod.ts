@@ -739,6 +739,24 @@ export const reviewSettlementLineRequestSchema = z.object({
 });
 export type ReviewSettlementLineRequestInput = z.input<typeof reviewSettlementLineRequestSchema>;
 
+/** `POST /storefront/account/children` and `PATCH …/children/{child}` (P8 batch 3) — the signed-in */
+export const saveAccountChildRequestSchema = z.object({
+    "name": z.string().min(1).max(40).nullable(),
+    "birth_month": z.number().int().min(1).max(12),
+    "birth_day": z.number().int().min(1).max(31),
+    "birth_year": z.number().int().min(1990).max(2200).nullable(),
+});
+export type SaveAccountChildRequestInput = z.input<typeof saveAccountChildRequestSchema>;
+
+/** `POST /customers/{customer}/children` and `PATCH …/children/{child}` (P8 batch 3) — staff add */
+export const saveCustomerChildRequestSchema = z.object({
+    "name": z.string().min(1).max(40).nullable(),
+    "birth_month": z.number().int().min(1).max(12),
+    "birth_day": z.number().int().min(1).max(31),
+    "birth_year": z.number().int().min(1990).max(2200).nullable(),
+});
+export type SaveCustomerChildRequestInput = z.input<typeof saveCustomerChildRequestSchema>;
+
 /** `POST /seo/redirects` and `PATCH /seo/redirects/{redirect}`. Shape only; the */
 export const saveRedirectRequestSchema = z.object({
     "from_path": z.string().min(1).max(512),
@@ -1320,6 +1338,15 @@ export const updateAutomationSettingsRequestSchema = z.object({
     "review_delay_days": z.number().int().min(1).max(30),
     "quiet_from": z.string().min(1),
     "quiet_to": z.string().min(1),
+    "birthday_lead_days": z.number().int().min(0).max(30).optional(),
+    "birthday_offer": z.object({
+    "enabled": z.boolean().optional(),
+    "type": z.enum(["percent","fixed"]).optional(),
+    "value": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "max_discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "min_order_amount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "valid_days": z.number().int().min(1).max(90).optional(),
+}).optional(),
 });
 export type UpdateAutomationSettingsRequestInput = z.input<typeof updateAutomationSettingsRequestSchema>;
 
@@ -1425,12 +1452,6 @@ export const updateCourierRatesRequestSchema = z.object({
 });
 export type UpdateCourierRatesRequestInput = z.input<typeof updateCourierRatesRequestSchema>;
 
-/** `PUT /customers/{customer}/date-of-birth` — needs customers.update AND customers.view_pii: */
-export const updateCustomerDateOfBirthRequestSchema = z.object({
-    "date_of_birth": z.string().min(1).nullable(),
-});
-export type UpdateCustomerDateOfBirthRequestInput = z.input<typeof updateCustomerDateOfBirthRequestSchema>;
-
 /** `PUT /settings/delivery` — the store-level free-delivery threshold; needs */
 export const updateDeliverySettingsRequestSchema = z.object({
     "free_shipping_threshold": z.string().min(1).regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable(),
@@ -1463,10 +1484,12 @@ export const updateMediaRequestSchema = z.object({
 });
 export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
 
-/** `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message */
+/** `PUT /notifications/customers/{customer}/consents` — records the customer's consent to birthday */
 export const updateMessageConsentRequestSchema = z.object({
     "birthday": z.boolean(),
     "customer_confirmed": z.boolean().optional(),
+    "confirmation_method": z.enum(["phone_call","in_person","written","other"]).nullable().optional(),
+    "confirmation_note": z.string().max(200).nullable().optional(),
 });
 export type UpdateMessageConsentRequestInput = z.input<typeof updateMessageConsentRequestSchema>;
 
@@ -1620,12 +1643,11 @@ export const updateProductRequestSchema = z.object({
 });
 export type UpdateProductRequestInput = z.input<typeof updateProductRequestSchema>;
 
-/** `PATCH /storefront/account` — the customer's own name, email, language and date of birth. */
+/** `PATCH /storefront/account` — the customer's own name, email and language. */
 export const updateProfileRequestSchema = z.object({
     "name": z.string().min(2).max(160).optional(),
     "email": z.email().max(191).nullable().optional(),
     "preferred_language": z.enum(["en","bn"]).optional(),
-    "date_of_birth": z.string().nullable().optional(),
 });
 export type UpdateProfileRequestInput = z.input<typeof updateProfileRequestSchema>;
 

@@ -46,7 +46,7 @@ final class CreditNoteResource extends ApiResource
              */
             'invoice_issued_at' => $note->invoice_issued_at->toIso8601String(),
             /**
-             * The refund's reason text (refund credit notes); null for a cancellation.
+             * The refund's reason text (refund credit notes) or the edit's note (order_edited); null otherwise.
              *
              * @var string|null
              */
@@ -91,7 +91,7 @@ final class CreditNoteResource extends ApiResource
              * @var array<string, mixed>
              */
             'issued_to' => $to,
-            /** @var list<array{kind: 'item'|'balance', name: string, name_bn: string|null, variant: string|null, sku: string|null, quantity: int, unit_price: string, amount: string}> */
+            /** @var list<array{kind: 'item'|'balance'|'adjustment', name: string, name_bn: string|null, variant: string|null, sku: string|null, quantity: int, unit_price: string, amount: string}> */
             'lines' => $note->lines,
         ];
     }

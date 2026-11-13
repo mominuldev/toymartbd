@@ -92,6 +92,8 @@ class AuthServiceProvider extends ServiceProvider
         Customer::class => CustomerPolicy::class,
         Address::class => CustomerPolicy::class,
         \App\Domain\Customer\Models\CustomerNote::class => CustomerPolicy::class,
+        // A customer's children (P8 batch 3): manageChildren = customers.update + customers.view_pii.
+        \App\Domain\Customer\Models\CustomerChild::class => CustomerPolicy::class,
         // Customer analytics (P8) has no model; the query class is the policy subject.
         \App\Domain\Reporting\Queries\Customers\CustomerAnalytics::class => \App\Policies\CustomerAnalyticsPolicy::class,
         // Storefront customers reach their own wishlist through the `customer` guard, scoped by query.

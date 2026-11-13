@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Invoicing\Actions\IssuePurchaseInvoice;
+use App\Domain\Invoicing\Enums\InvoiceKind;
 use App\Domain\Invoicing\Enums\InvoiceType;
 use App\Domain\Invoicing\Models\Invoice;
 use App\Domain\Purchasing\Models\Purchase;
@@ -39,12 +40,14 @@ final class InvoiceController extends ApiController
      * `GET /invoices` — newest first, cursor-paginated. Only the types the caller may see
      * (customer: orders.view; supplier: purchasing.view + catalog.view_cost).
      *
-     * Filters: `filter[type]` (`sales`|`purchase`), `filter[search]` (invoice number, order /
+     * Filters: `filter[type]` (`sales`|`purchase`), `filter[kind]` (`original`|`supplementary`,
+     * P8 batch 3), `filter[search]` (invoice number, order /
      * PO number or the customer / supplier name contains), `filter[issued_from]` and
      * `filter[issued_to]` (Dhaka dates, Y-m-d, inclusive). Sorts: `issued_at`, `-issued_at`
      * (default), `number`, `-number`. Anything else is a 400.
      */
     #[QueryParameter('filter[type]', 'Invoice type.', type: "'sales'|'purchase'")]
+    #[QueryParameter('filter[kind]', 'Original invoices, or the supplementary invoices of orders edited upwards after issue.', type: "'original'|'supplementary'")]
     #[QueryParameter('filter[search]', 'Invoice number, order/PO number or customer/supplier name contains.', type: 'string')]
     #[QueryParameter('filter[issued_from]', 'Issued on or after this Dhaka date (Y-m-d).', type: 'string')]
     #[QueryParameter('filter[issued_to]', 'Issued on or before this Dhaka date (Y-m-d).', type: 'string')]
@@ -61,7 +64,7 @@ final class InvoiceController extends ApiController
         $sort = $request->query('sort', '-issued_at');
         $descending = ! is_string($sort) || str_starts_with($sort, '-');
 
-        $invoices = QueryBuilder::for(Invoice::query()->with('creditNotes')->whereIn('type', $types), $request)
+        $invoices = QueryBuilder::for(Invoice::query()->with(['creditNotes', 'supplementaryInvoices', 'originalInvoice:id,number'])->whereIn('type', $types), $request)
             ->allowedFilters(
                 AllowedFilter::callback('type', static function (Builder $query, mixed $value): void {
                     $type = is_string($value) ? InvoiceType::tryFrom($value) : null;
@@ -69,6 +72,13 @@ final class InvoiceController extends ApiController
                         throw new BadRequestHttpException('filter[type] must be one of: '.implode(', ', InvoiceType::values()).'.');
                     }
                     $query->where('type', $type->value);
+                }),
+                AllowedFilter::callback('kind', static function (Builder $query, mixed $value): void {
+                    $kind = is_string($value) ? InvoiceKind::tryFrom($value) : null;
+                    if ($kind === null) {
+                        throw new BadRequestHttpException('filter[kind] must be one of: '.implode(', ', InvoiceKind::values()).'.');
+                    }
+                    $query->where('kind', $kind->value);
                 }),
                 AllowedFilter::callback('search', static function (Builder $query, mixed $value): void {
                     $term = trim(is_array($value) ? implode(',', array_map(strval(...), $value)) : (string) $value);
@@ -98,7 +108,7 @@ final class InvoiceController extends ApiController
     {
         $this->authorize('view', $invoice);
 
-        return new InvoiceResource($invoice);
+        return new InvoiceResource($invoice->load(['creditNotes', 'supplementaryInvoices', 'originalInvoice:id,number']));
     }
 
     /** `GET /invoices/{invoice}/pdf` — reprint from the snapshot (`locale` optional). */

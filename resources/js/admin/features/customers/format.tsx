@@ -38,6 +38,13 @@ export function percentText(value: string): string {
 const tag = (locale: string) => (locale === 'bn' ? 'bn-BD' : 'en-GB');
 const latn = { timeZone: 'Asia/Dhaka', numberingSystem: 'latn' } as const;
 
+/** "12 Mar" — a birthday (month + day, no year), Western digits (rule 36). 29 Feb formats in any locale. */
+export const dayMonth = (month: number, day: number, locale: string): string =>
+    new Intl.DateTimeFormat(tag(locale), { timeZone: 'UTC', numberingSystem: 'latn', day: '2-digit', month: 'short' }).format(new Date(Date.UTC(2000, month - 1, day)));
+
+/** "March" / "মার্চ" — a month name for the birthday picker. */
+export const monthName = (month: number, locale: string): string => new Intl.DateTimeFormat(tag(locale), { timeZone: 'UTC', month: 'long' }).format(new Date(Date.UTC(2000, month - 1, 1)));
+
 /** "02 Nov" — a Dhaka day, Western digits (rules 11, 36). */
 export const dhakaDay = (iso: string, locale: string): string => new Intl.DateTimeFormat(tag(locale), { ...latn, day: '2-digit', month: 'short' }).format(new Date(iso));
 

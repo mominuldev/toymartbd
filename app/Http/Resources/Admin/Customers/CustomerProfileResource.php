@@ -6,6 +6,7 @@ namespace App\Http\Resources\Admin\Customers;
 
 use App\Domain\Customer\Models\Address;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerChild;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderItem;
@@ -64,10 +65,15 @@ final class CustomerProfileResource extends ApiResource
             /** @var string|null Full with customers.view_pii, otherwise `j***@gmail.com`. */
             'email' => $c->email === null ? null : ($pii ? $c->email : self::maskEmail($c->email)),
             'has_account' => $c->phone_verified_at !== null,
-            /** @var string|null Y-m-d with customers.view_pii (personal data, rule 20), otherwise null. */
-            'date_of_birth' => $pii ? $c->date_of_birth?->format('Y-m-d') : null,
-            /** Whether a birth date is on file — told to every role, the date itself only with customers.view_pii. */
-            'has_date_of_birth' => $c->date_of_birth !== null,
+            /** How many children the parent told us about (P8 batch 3) — told to every role. */
+            'children_count' => $c->children->count(),
+            /**
+             * The children (first name/nickname, birthday, optional year → age) — children's data,
+             * so only with customers.view_pii (rule 20); null otherwise.
+             *
+             * @var list<array{id: int, name: string|null, birth_month: int, birth_day: int, birth_year: int|null, age: int|null, next_birthday: string}>|null
+             */
+            'children' => $pii ? $c->children->map(static fn (CustomerChild $k): array => CustomerChildResource::present($k))->values()->all() : null,
             /** @var 'bn'|'en' */
             'preferred_language' => $c->preferred_language,
             /** @var 'web'|'facebook'|'phone'|'walk_in'|'whatsapp' */

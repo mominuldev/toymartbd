@@ -2390,7 +2390,8 @@ export interface paths {
         /**
          * `GET /invoices` — newest first, cursor-paginated. Only the types the caller may see
          *     (customer: orders.view; supplier: purchasing.view + catalog.view_cost)
-         * @description Filters: `filter[type]` (`sales`|`purchase`), `filter[search]` (invoice number, order /
+         * @description Filters: `filter[type]` (`sales`|`purchase`), `filter[kind]` (`original`|`supplementary`,
+         *     P8 batch 3), `filter[search]` (invoice number, order /
          *     PO number or the customer / supplier name contains), `filter[issued_from]` and
          *     `filter[issued_to]` (Dhaka dates, Y-m-d, inclusive). Sorts: `issued_at`, `-issued_at`
          *     (default), `number`, `-number`. Anything else is a 400.
@@ -2955,7 +2956,7 @@ export interface paths {
         };
         /** `GET /notifications/customers/{customer}/consents` — customers.view */
         get: operations["v1.admin.notifications.consents.show"];
-        /** `PUT /notifications/customers/{customer}/consents` — customers.update; source `admin` */
+        /** `PUT /notifications/customers/{customer}/consents` — customers.update; source `admin`; a "yes" needs how the customer agreed */
         put: operations["v1.admin.notifications.consents.update"];
         post?: never;
         delete?: never;
@@ -4760,7 +4761,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/customers/{customer}/date-of-birth": {
+    "/admin/customers/{customer}/children": {
         parameters: {
             query?: never;
             header?: never;
@@ -4768,13 +4769,31 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** `PUT /customers/{customer}/date-of-birth` — needs customers.update and customers.view_pii */
-        put: operations["v1.admin.customers.date-of-birth.update"];
-        post?: never;
+        put?: never;
+        /** `POST /customers/{customer}/children` — 201 with the child. At most 6 per customer */
+        post: operations["v1.admin.customers.children.store"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/admin/customers/{customer}/children/{child}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /customers/{customer}/children/{child}` — 204. Deleted, not soft-deleted */
+        delete: operations["v1.admin.customers.children.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /customers/{customer}/children/{child}` — replaces every field */
+        patch: operations["v1.admin.customers.children.update"];
         trace?: never;
     };
     "/admin/reports/customers": {
@@ -5817,6 +5836,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/account/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/children` — in birthday order (month, day) */
+        get: operations["v1.storefront.account.children.index"];
+        put?: never;
+        /** `POST /account/children` — 201. At most 6 */
+        post: operations["v1.storefront.account.children.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/account/children/{child}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /account/children/{child}` — 204 */
+        delete: operations["v1.storefront.account.children.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /account/children/{child}` — replaces every field */
+        patch: operations["v1.storefront.account.children.update"];
+        trace?: never;
+    };
     "/storefront/account/logout": {
         parameters: {
             query?: never;
@@ -6368,6 +6423,25 @@ export interface components {
             quiet_to: string;
             /** @description Fixed: birthday messages go out at this Dhaka time. */
             birthday_send_at: string;
+            /**
+             * @description Days before each child's birthday the parent is reminded (0 = on the day).
+             *     Default 7 is a PLACEHOLDER pending the owner.
+             */
+            birthday_lead_days: number;
+            /**
+             * @description The personal single-use coupon in each reminder. `is_placeholder` = never saved: the
+             *     values are suggestions, and nothing is minted until the offer is saved as on.
+             */
+            birthday_offer: {
+                enabled: boolean;
+                /** @enum {string} */
+                type: "percent" | "fixed";
+                value: string;
+                max_discount: string | null;
+                min_order_amount: string;
+                valid_days: number;
+                is_placeholder: boolean;
+            };
             /** @description Last 30 days, per automation (`review_request`, `birthday`). */
             stats: {
                 [key: string]: {
@@ -7038,6 +7112,12 @@ export interface components {
             /** @description Shown on the order's activity timeline next to the change. */
             note?: string | null;
         };
+        /**
+         * ConsentConfirmationMethod
+         * @description How staff confirmed a customer agreed to a purpose consent (P8 batch 3, owner decision 2026-11-13). Required when staff record a "yes" in the admin; null for a storefront opt-in.
+         * @enum {string}
+         */
+        ConsentConfirmationMethod: "phone_call" | "in_person" | "written" | "other";
         /** Coupon */
         Coupon: {
             id: number;
@@ -7367,11 +7447,12 @@ export interface components {
             invoice_number: string;
             order_id: number;
             /**
-             * @description Why it was issued: the order was cancelled after the invoice, or a refund was paid.
+             * @description Why it was issued: the order was cancelled after the invoice, a refund was paid, the
+             *     order was edited down after issue, or the courier returned it (RTO; P8 batch 3).
              * @enum {string}
              */
-            reason: "order_cancelled" | "refund";
-            /** @description The order number (cancellation) or the RMA number (refund), as issued. */
+            reason: "order_cancelled" | "refund" | "order_edited" | "courier_return";
+            /** @description The order number (cancellation, edit, courier return) or the RMA number (refund), as issued. */
             source_reference: string | null;
             /** @description Customer name, as on the invoice. */
             issued_to_name: string;
@@ -7382,7 +7463,7 @@ export interface components {
             can_print: boolean;
             /** @description When the credited invoice was issued. ISO 8601, UTC. */
             invoice_issued_at: string;
-            /** @description The refund's reason text (refund credit notes); null for a cancellation. */
+            /** @description The refund's reason text (refund credit notes) or the edit's note (order_edited); null otherwise. */
             note: string | null;
             /** @constant */
             template: "standard";
@@ -7411,7 +7492,7 @@ export interface components {
             };
             lines: {
                 /** @enum {string} */
-                kind: "item" | "balance";
+                kind: "item" | "balance" | "adjustment";
                 name: string;
                 name_bn: string | null;
                 variant: string | null;
@@ -7431,11 +7512,12 @@ export interface components {
             invoice_number: string;
             order_id: number;
             /**
-             * @description Why it was issued: the order was cancelled after the invoice, or a refund was paid.
+             * @description Why it was issued: the order was cancelled after the invoice, a refund was paid, the
+             *     order was edited down after issue, or the courier returned it (RTO; P8 batch 3).
              * @enum {string}
              */
-            reason: "order_cancelled" | "refund";
-            /** @description The order number (cancellation) or the RMA number (refund), as issued. */
+            reason: "order_cancelled" | "refund" | "order_edited" | "courier_return";
+            /** @description The order number (cancellation, edit, courier return) or the RMA number (refund), as issued. */
             source_reference: string | null;
             /** @description Customer name, as on the invoice. */
             issued_to_name: string;
@@ -7530,11 +7612,21 @@ export interface components {
                 last_order_at: string | null;
             }[];
         };
-        /** CustomerDateOfBirth */
-        CustomerDateOfBirth: {
+        /** CustomerChild */
+        CustomerChild: {
             id: number;
-            /** @description Y-m-d. */
-            date_of_birth: string | null;
+            /** @description First name or nickname, if the parent gave one. */
+            name: string | null;
+            /** @description 1–12. */
+            birth_month: number;
+            /** @description 1–31. */
+            birth_day: number;
+            /** @description Optional. */
+            birth_year: number | null;
+            /** @description Whole years today (Dhaka); null without a birth year. */
+            age: number | null;
+            /** @description Y-m-d (Dhaka): the next day the birthday is celebrated, today included. */
+            next_birthday: string;
         };
         /** CustomerListItem */
         CustomerListItem: {
@@ -7585,10 +7677,21 @@ export interface components {
             /** @description Full with customers.view_pii, otherwise `j***@gmail.com`. */
             email: string | null;
             has_account: boolean;
-            /** @description Y-m-d with customers.view_pii (personal data, rule 20), otherwise null. */
-            date_of_birth: string | null;
-            /** @description Whether a birth date is on file — told to every role, the date itself only with customers.view_pii. */
-            has_date_of_birth: boolean;
+            /** @description How many children the parent told us about (P8 batch 3) — told to every role. */
+            children_count: number;
+            /**
+             * @description The children (first name/nickname, birthday, optional year → age) — children's data,
+             *     so only with customers.view_pii (rule 20); null otherwise.
+             */
+            children: {
+                id: number;
+                name: string | null;
+                birth_month: number;
+                birth_day: number;
+                birth_year: number | null;
+                age: number | null;
+                next_birthday: string;
+            }[] | null;
             /** @enum {string} */
             preferred_language: "bn" | "en";
             /** @enum {string} */
@@ -8812,6 +8915,16 @@ export interface components {
             id: number;
             /** @enum {string} */
             type: "sales" | "purchase";
+            /**
+             * @description `original` (the order's or PO's invoice) or `supplementary` (the increase of an
+             *     order edited upwards after its invoice was issued; P8 batch 3).
+             * @enum {string}
+             */
+            kind: "original" | "supplementary";
+            /** @description The original invoice a supplementary invoice adds to; null for an original. */
+            original_invoice_id: number | null;
+            /** @description Its number, e.g. `INV-26-000001`; null for an original. */
+            original_invoice_number: string | null;
             /** @description `INV-26-000001` (customer) or `PINV-26-000001` (supplier). */
             number: string;
             /** @description The order number (customer) or PO number (supplier) at issue. */
@@ -8830,9 +8943,17 @@ export interface components {
             issued_at: string;
             /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
             can_print: boolean;
+            /**
+             * @description The original's total plus its supplementary invoices (P8 batch 3) — everything
+             *     invoiced for the order; a supplementary invoice's own total.
+             */
+            invoiced_total: string;
             /** @description Σ credit notes issued against this invoice (P8 batch 2); `0.00` when none. */
             credited: string;
-            /** @description The invoice total less everything credited — what still stands. */
+            /**
+             * @description `invoiced_total` less everything credited — what still stands. Credit notes
+             *     reference the original, so a supplementary invoice's balance is its total.
+             */
             balance: string;
             /**
              * @description `none` (nothing credited), `partial`, or `full` (balance is zero).
@@ -8841,6 +8962,14 @@ export interface components {
             credit_status: "none" | "partial" | "full";
             /** @description Credit notes issued against this invoice, oldest first. */
             credit_notes: components["schemas"]["CreditNoteListItem"][];
+            /** @description An original's supplementary invoices, oldest first (P8 batch 3); empty otherwise. */
+            supplementary_invoices: {
+                id: number;
+                number: string;
+                total: string;
+                issued_at: string;
+                can_print: boolean;
+            }[];
             /** @constant */
             template: "standard";
             subtotal: string;
@@ -8866,7 +8995,13 @@ export interface components {
             issued_to: {
                 [key: string]: unknown;
             };
+            /**
+             * @description `kind` appears on a supplementary invoice's lines only: `item` (units added) or
+             *     `adjustment` (the line's amount rose with no units added).
+             */
             lines: {
+                /** @enum {string} */
+                kind?: "item" | "adjustment";
                 name: string;
                 name_bn: string | null;
                 variant: string | null;
@@ -8882,6 +9017,16 @@ export interface components {
             id: number;
             /** @enum {string} */
             type: "sales" | "purchase";
+            /**
+             * @description `original` (the order's or PO's invoice) or `supplementary` (the increase of an
+             *     order edited upwards after its invoice was issued; P8 batch 3).
+             * @enum {string}
+             */
+            kind: "original" | "supplementary";
+            /** @description The original invoice a supplementary invoice adds to; null for an original. */
+            original_invoice_id: number | null;
+            /** @description Its number, e.g. `INV-26-000001`; null for an original. */
+            original_invoice_number: string | null;
             /** @description `INV-26-000001` (customer) or `PINV-26-000001` (supplier). */
             number: string;
             /** @description The order number (customer) or PO number (supplier) at issue. */
@@ -8900,9 +9045,17 @@ export interface components {
             issued_at: string;
             /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
             can_print: boolean;
+            /**
+             * @description The original's total plus its supplementary invoices (P8 batch 3) — everything
+             *     invoiced for the order; a supplementary invoice's own total.
+             */
+            invoiced_total: string;
             /** @description Σ credit notes issued against this invoice (P8 batch 2); `0.00` when none. */
             credited: string;
-            /** @description The invoice total less everything credited — what still stands. */
+            /**
+             * @description `invoiced_total` less everything credited — what still stands. Credit notes
+             *     reference the original, so a supplementary invoice's balance is its total.
+             */
             balance: string;
             /**
              * @description `none` (nothing credited), `partial`, or `full` (balance is zero).
@@ -8911,6 +9064,14 @@ export interface components {
             credit_status: "none" | "partial" | "full";
             /** @description Credit notes issued against this invoice, oldest first. */
             credit_notes: components["schemas"]["CreditNoteListItem"][];
+            /** @description An original's supplementary invoices, oldest first (P8 batch 3); empty otherwise. */
+            supplementary_invoices: {
+                id: number;
+                number: string;
+                total: string;
+                issued_at: string;
+                can_print: boolean;
+            }[];
         };
         /** InvoiceSettings */
         InvoiceSettings: {
@@ -9155,7 +9316,8 @@ export interface components {
             /**
              * @description `consented_at` is when it was last given (kept after a withdrawal); `source` and
              *     `recorded_by` describe the latest change — `recorded_by` is null when the customer
-             *     changed it themselves on the storefront.
+             *     changed it themselves on the storefront. `confirmation_method` / `confirmation_note`: how staff confirmed the customer agreed
+             *     (kept with `consented_at`; null for a storefront opt-in).
              */
             birthday: {
                 consented: boolean;
@@ -9167,6 +9329,9 @@ export interface components {
                     id: number;
                     name: string;
                 } | null;
+                /** @enum {string|null} */
+                confirmation_method: "phone_call" | "in_person" | "written" | "other" | null;
+                confirmation_note: string | null;
             };
         };
         /** MessagingSettings */
@@ -11448,6 +11613,37 @@ export interface components {
             };
         };
         /**
+         * SaveAccountChildRequest
+         * @description `POST /storefront/account/children` and `PATCH …/children/{child}` (P8 batch 3) — the signed-in
+         *     parent adds or edits one of their own children. PATCH replaces every field.
+         */
+        SaveAccountChildRequest: {
+            /** @description First name or nickname — optional; nothing else about the child is stored. */
+            name: string | null;
+            /** @description 1–12. */
+            birth_month: number;
+            /** @description 1–31; 29 February is fine (celebrated 28 February in other years). */
+            birth_day: number;
+            /** @description Optional, only to show an age; within the last 25 years. */
+            birth_year: number | null;
+        };
+        /**
+         * SaveCustomerChildRequest
+         * @description `POST /customers/{customer}/children` and `PATCH …/children/{child}` (P8 batch 3) — staff add
+         *     or edit a child as the parent told them. Children's data: customers.update AND
+         *     customers.view_pii (rule 20). PATCH replaces every field.
+         */
+        SaveCustomerChildRequest: {
+            /** @description First name or nickname — optional; nothing else about the child is stored. */
+            name: string | null;
+            /** @description 1–12. */
+            birth_month: number;
+            /** @description 1–31; 29 February is fine (celebrated 28 February in other years). */
+            birth_day: number;
+            /** @description Optional, only to show an age; within the last 25 years. */
+            birth_year: number | null;
+        };
+        /**
          * SaveRedirectRequest
          * @description `POST /seo/redirects` and `PATCH /seo/redirects/{redirect}`. Shape only; the
          *     conflict, loop and chain rules live in App\Domain\Seo\Actions\SaveRedirect.
@@ -12471,8 +12667,6 @@ export interface components {
             name: string;
             phone: string;
             email: string | null;
-            /** @description Y-m-d — the customer's own; birthday messages need it plus their consent. */
-            date_of_birth: string | null;
             /** @enum {string} */
             preferred_language: "en" | "bn";
             phone_verified_at: string | null;
@@ -12482,6 +12676,40 @@ export interface components {
                 wishlist: number;
                 addresses: number;
             };
+        };
+        /** StorefrontAccountChild */
+        StorefrontAccountChild: {
+            id: number;
+            /**
+             * @description First name or nickname, if given.
+             *     First name or nickname, if the parent gave one.
+             */
+            name: string | null;
+            /**
+             * @description 1–12.
+             *     1–12.
+             */
+            birth_month: number;
+            /**
+             * @description 1–31.
+             *     1–31.
+             */
+            birth_day: number;
+            /**
+             * @description Optional.
+             *     Optional.
+             */
+            birth_year: number | null;
+            /**
+             * @description Whole years today (Dhaka); null without a birth year.
+             *     Whole years today (Dhaka); null without a birth year.
+             */
+            age: number | null;
+            /**
+             * @description Y-m-d (Dhaka): the next day the birthday is celebrated, today included.
+             *     Y-m-d (Dhaka): the next day the birthday is celebrated, today included.
+             */
+            next_birthday: string;
         };
         /** StorefrontAccountConsents */
         StorefrontAccountConsents: {
@@ -13597,7 +13825,8 @@ export interface components {
         /**
          * UpdateAutomationSettingsRequest
          * @description `PUT /notifications/automations` — Settings → Automations scheduling (P8); needs
-         *     settings.update. Whether each automation runs is its templates' on/off switch.
+         *     settings.update. Whether each automation runs is its templates' on/off switch. P8 batch 3:
+         *     the birthday reminder's lead days and its offer — optional; left out, they stay as they are.
          */
         UpdateAutomationSettingsRequest: {
             /** @description Days after delivery before the review request goes out (1–30). */
@@ -13606,6 +13835,23 @@ export interface components {
             quiet_from: string;
             /** @description Dhaka quiet hours end, HH:MM (24 h); may be earlier than the start (wraps midnight). */
             quiet_to: string;
+            /** @description Days before each child's birthday the parent is reminded (0 = on the day, up to 30). */
+            birthday_lead_days?: number;
+            /** @description The personal coupon in each reminder. Omit to leave it as it is. */
+            birthday_offer?: {
+                /** @description Off until the owner turns it on: the reminder then goes without a code. */
+                enabled?: boolean;
+                /** @enum {string} */
+                type?: "percent" | "fixed";
+                /** @description Percent (above 0, at most 100) or taka off, as a decimal string. */
+                value?: string;
+                /** @description Percent offers only: the most taka it takes off. Null = no cap. */
+                max_discount?: string | null;
+                /** @description Goods total the code needs; "0.00" = none. */
+                min_order_amount?: string;
+                /** @description Whole Dhaka days the code works after the reminder (1–90). */
+                valid_days?: number;
+            };
         };
         /**
          * UpdateBrandRequest
@@ -13666,10 +13912,11 @@ export interface components {
         /**
          * UpdateConsentRequest
          * @description `PUT /storefront/account/consents` — the signed-in customer opts in to (or out of) birthday
-         *     messages (P8). Recorded with source `storefront`; a "no" withdraws, it never deletes.
+         *     reminders with offers — a message before each child's birthday, with a gift code when the shop
+         *     runs one (P8 batch 3). Recorded with source `storefront`; a "no" withdraws, it never deletes.
          */
         UpdateConsentRequest: {
-            /** @description True: send me a message on my birthday. False: stop. */
+            /** @description True: remind me before my children's birthdays, with offers. False: stop. */
             birthday: boolean;
         };
         /**
@@ -13755,18 +14002,6 @@ export interface components {
             return_charge: string;
         };
         /**
-         * UpdateCustomerDateOfBirthRequest
-         * @description `PUT /customers/{customer}/date-of-birth` — needs customers.update AND customers.view_pii:
-         *     a birth date is personal data, so only staff who may see it may change it (rule 20).
-         */
-        UpdateCustomerDateOfBirthRequest: {
-            /**
-             * Format: date
-             * @description Y-m-d, in the past; null clears it.
-             */
-            date_of_birth: string | null;
-        };
-        /**
          * UpdateDeliverySettingsRequest
          * @description `PUT /settings/delivery` — the store-level free-delivery threshold; needs
          *     shipments.manage_rates. null switches free delivery off. Decimal string (rule 6).
@@ -13812,18 +14047,27 @@ export interface components {
         };
         /**
          * UpdateMessageConsentRequest
-         * @description `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message
-         *     consent as told to staff (P8); needs customers.update, like the channel preferences.
-         *     Recording a "yes" needs `customer_confirmed: true` — staff never opt a customer in on a guess.
+         * @description `PUT /notifications/customers/{customer}/consents` — records the customer's consent to birthday
+         *     reminders with offers (before each child's birthday, P8 batch 3) as told to staff; needs
+         *     customers.update, like the channel preferences. Recording a "yes" needs `customer_confirmed:
+         *     true` AND how the customer agreed (`confirmation_method`, owner decision 2026-11-13) — staff
+         *     never opt a customer in on a guess.
          */
         UpdateMessageConsentRequest: {
-            /** @description The customer agreed to a message on their birthday (reads their date of birth). */
+            /** @description The customer agreed to birthday reminders with a gift offer, before each child's birthday. */
             birthday: boolean;
             /**
              * @description Required (and must be true) when recording consent: staff confirm the customer
              *     agreed — e.g. on a phone call. Not needed to withdraw.
              */
             customer_confirmed?: boolean;
+            /**
+             * @description Required when recording consent: how the customer agreed. Ignored on a withdrawal.
+             * @enum {string|null}
+             */
+            confirmation_method?: "phone_call" | "in_person" | "written" | "other" | null;
+            /** @description Optional short note, e.g. "agreed on the call about order TMB-26-00118". No phone numbers. */
+            confirmation_note?: string | null;
         };
         /**
          * UpdateMessagingSettingsRequest
@@ -14033,7 +14277,7 @@ export interface components {
         };
         /**
          * UpdateProfileRequest
-         * @description `PATCH /storefront/account` — the customer's own name, email, language and date of birth.
+         * @description `PATCH /storefront/account` — the customer's own name, email and language.
          */
         UpdateProfileRequest: {
             name?: string;
@@ -14041,11 +14285,6 @@ export interface components {
             email?: string | null;
             /** @enum {string} */
             preferred_language?: "en" | "bn";
-            /**
-             * Format: date
-             * @description Y-m-d, in the past; null clears it. Read only by birthday messages, and only with their consent.
-             */
-            date_of_birth?: string | null;
         };
         /**
          * UpdatePromotionRequest
@@ -20730,6 +20969,8 @@ export interface operations {
             query?: {
                 /** @description Invoice type. */
                 "filter[type]"?: "sales" | "purchase";
+                /** @description Original invoices, or the supplementary invoices of orders edited upwards after issue. */
+                "filter[kind]"?: "original" | "supplementary";
                 /** @description Invoice number, order/PO number or customer/supplier name contains. */
                 "filter[search]"?: string;
                 /** @description Issued on or after this Dhaka date (Y-m-d). */
@@ -20890,7 +21131,7 @@ export interface operations {
                 /** @description Credit notes of this order id. */
                 "filter[order]"?: number;
                 /** @description Why it was issued. */
-                "filter[reason]"?: "order_cancelled" | "refund";
+                "filter[reason]"?: "order_cancelled" | "refund" | "order_edited" | "courier_return";
                 /** @description Credit-note or invoice number, order/RMA reference or customer name contains. */
                 "filter[search]"?: string;
                 /** @description Issued on or after this Dhaka date (Y-m-d). */
@@ -26915,7 +27156,7 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
-    "v1.admin.customers.date-of-birth.update": {
+    "v1.admin.customers.children.store": {
         parameters: {
             query?: never;
             header?: never;
@@ -26927,17 +27168,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateCustomerDateOfBirthRequest"];
+                "application/json": components["schemas"]["SaveCustomerChildRequest"];
             };
         };
         responses: {
-            /** @description `CustomerDateOfBirth` */
-            200: {
+            /** @description `CustomerChild` */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CustomerDateOfBirth"];
+                    "application/json": components["schemas"]["CustomerChild"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -26951,7 +27192,104 @@ export interface operations {
                 };
             };
             404: components["responses"]["ModelNotFoundException"];
-            /** @description Not a past Y-m-d date (`validation-error`) */
+            /** @description Not a real birthday, or the customer already has 6 children (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.customers.children.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+                child: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing customers.update or customers.view_pii (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not one of this customer's children (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.customers.children.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+                child: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerChildRequest"];
+            };
+        };
+        responses: {
+            /** @description `CustomerChild` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerChild"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing customers.update or customers.view_pii (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not one of this customer's children (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a real birthday (`validation-error`) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -29555,6 +29893,176 @@ export interface operations {
             };
             403: components["responses"]["AuthorizationException"];
             /** @description A field is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.children.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StorefrontAccountChild` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StorefrontAccountChild"][];
+                    };
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.children.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAccountChildRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountChild` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountChild"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not a real birthday, or 6 children already (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.children.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                child: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not one of the customer's children (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.children.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                child: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAccountChildRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountChild` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountChild"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description Not one of the customer's children (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a real birthday (`validation-error`) */
             422: {
                 headers: {
                     [name: string]: unknown;

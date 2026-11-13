@@ -35,8 +35,6 @@ final class AccountResource extends ApiResource
             'phone' => $phone?->national() ?? '',
             /** @var string|null */
             'email' => $customer->email,
-            /** @var string|null Y-m-d — the customer's own; birthday messages need it plus their consent. */
-            'date_of_birth' => $customer->date_of_birth?->format('Y-m-d'),
             /** @var 'en'|'bn' */
             'preferred_language' => $customer->preferred_language === 'en' ? 'en' : 'bn',
             /** @var string|null */

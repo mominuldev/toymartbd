@@ -67,6 +67,8 @@ return [
         'reason' => 'Reason',
         'reason_order_cancelled' => 'Order cancelled after the invoice was issued',
         'reason_refund' => 'Refund paid on a return',
+        'reason_order_edited' => 'Order edited after the invoice was issued',
+        'reason_courier_return' => 'Returned by the courier (RTO)',
         'source' => 'Reference',
         'credited_to' => 'Credited to',
         'balance_line' => 'Remaining balance of invoice :number',
@@ -74,6 +76,15 @@ return [
         'adjustment' => 'Adjustment',
         'total' => 'Total credited',
         'issued_copy' => 'Issued :date against invoice :invoice. Reprints show the details current at issue.',
+    ],
+    // P8 batch 3: supplementary invoice — the increase of an order edited after its invoice was issued.
+    'supplementary' => [
+        'title' => 'Supplementary Invoice',
+        'original' => 'Original invoice',
+        'total' => 'Total added',
+        'due' => 'Collect on delivery (in addition)',
+        'adjustment_line' => 'Price adjustment',
+        'explain' => 'Issued because the order was changed after invoice :invoice. It adds to that invoice; it does not replace it.',
     ],
     'conflict' => [
         'cancelled_order' => 'Order :number is cancelled and has no invoice; a cancelled order is not invoiced.',

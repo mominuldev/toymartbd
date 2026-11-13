@@ -78,7 +78,12 @@ final class InvoiceResource extends ApiResource
              * @var array<string, mixed>
              */
             'issued_to' => $to,
-            /** @var list<array{name: string, name_bn: string|null, variant: string|null, sku: string, quantity: int, unit_price: string, discount: string, line_total: string}> */
+            /**
+             * `kind` appears on a supplementary invoice's lines only: `item` (units added) or
+             * `adjustment` (the line's amount rose with no units added).
+             *
+             * @var list<array{kind?: 'item'|'adjustment', name: string, name_bn: string|null, variant: string|null, sku: string, quantity: int, unit_price: string, discount: string, line_total: string}>
+             */
             'lines' => $invoice->lines,
         ];
     }

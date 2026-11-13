@@ -71,7 +71,13 @@ deptrac:
     - name: Marketing
       collectors:
         - type: classNameRegex
-          value: '#^App\\Domain\\Marketing\\(?!Events\\)#'
+          value: '#^App\\Domain\\Marketing\\(?!Events\\|Contracts\\(PersonalCouponIssuer|PersonalCouponTerms|IssuedCoupon)$)#'
+    # Personal coupons (P8 batch 3): the seam Notification calls to mint a birthday-offer
+    # coupon without writing Marketing's tables (rule 2). Marketing implements it.
+    - name: MarketingContracts
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Marketing\\Contracts\\(PersonalCouponIssuer|PersonalCouponTerms|IssuedCoupon)$#'
     - name: Content
       collectors:
         - type: classNameRegex
@@ -128,10 +134,10 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Domain\\Invoicing\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -150,7 +156,7 @@ deptrac:
     Finance: [Support, Models, DomainEvents, Catalog, Customer, Ordering]
     Customer: [Support, Models, DomainEvents, Catalog, NotificationContracts]
     # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
-    Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
+    Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment, MarketingContracts]
     # Content reaches the SEO module only through SeoContracts (subject providers, SeoMetaStore)
     # and Seo events (SlugChanged, SeoPagesStale) — never Seo internals, so there is no cycle.
     Content: [Support, Models, DomainEvents, Catalog, Customer, SeoContracts]
@@ -164,11 +170,12 @@ deptrac:
     Purchasing: [Support, Models, DomainEvents, Catalog, Customer, Inventory]
     Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]
     NotificationContracts: [Support]
+    MarketingContracts: [Support]
     SeoContracts: ~
     # Notification reads orders and customers to render messages; nothing depends back on it
     # except through NotificationContracts. It writes only its own tables. P7: it also reads
     # carts for abandoned-cart recovery (cart_recoveries is Notification's table).
-    Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Cart, NotificationContracts]
+    Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Cart, NotificationContracts, MarketingContracts]
     # Reporting reads the read models of the domains it reports on (P8 batch 1 brief).
     Reporting: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Finance, Inventory, Fulfilment]
     # Credit notes (P8 batch 2) read the paid refund (Payment\Models\Refund) they credit.
