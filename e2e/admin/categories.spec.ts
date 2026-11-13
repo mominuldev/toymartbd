@@ -22,7 +22,7 @@ test('owner creates a subcategory, then reorders and outdents it with the keyboa
     await page.getByLabel('Name (English)').fill('Wooden Toys');
     await page.getByLabel('Name (Bangla)').fill('কাঠের খেলনা');
     await page.getByLabel('Parent category').selectOption({ label: 'Puzzles & Games' });
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Category created.')).toBeVisible();
 
     // Split view: the saved category stays open in the panel beside the tree, and the URL carries it.
