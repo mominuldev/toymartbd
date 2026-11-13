@@ -8,6 +8,7 @@ import { RefreshOnDistrict } from '@/components/account/RefreshOnDistrict';
 import { card } from '@/components/account/styles';
 import { Field, inputClass, SelectBox, textareaClass } from '@/components/cart/fields';
 import { buttonClass } from '@/components/layout/button-styles';
+import { nationalPhone } from '@/lib/account/flash';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getAddresses, readAccountFlash, requireAccount } from '@/lib/account/server';
@@ -68,11 +69,7 @@ export default async function AddressesPage({ params, searchParams }: Props) {
     const notice = noticeText(flash?.message, m) ?? (Object.keys(errors).length > 0 ? a.errorSummary : null);
 
     return (
-        <AccountShell locale={locale} path={PATH} account={account} section="addresses" title={a.title}>
-            <header className="flex flex-col gap-1">
-                <h1 className="t-h1 text-fg-primary">{a.title}</h1>
-                <p className="t-body-sm text-fg-secondary">{a.sub}</p>
-            </header>
+        <AccountShell locale={locale} path={PATH} account={account} section="addresses" title={a.title} heading={{ sub: a.sub }}>
 
             {notice ? <AccountNotice kind={flash?.kind ?? 'error'} text={notice} /> : null}
 
@@ -100,7 +97,7 @@ export default async function AddressesPage({ params, searchParams }: Props) {
                     <input id="recipient_name" name="recipient_name" type="text" autoComplete="name" required minLength={2} maxLength={160} defaultValue={value('recipient_name', editing?.recipient_name ?? account.name)} className={inputClass} {...invalid('recipient_name')} />
                 </Field>
                 <Field id="phone" label={a.phone} required requiredLabel={a.required} help={a.phoneHelp} error={err('phone')}>
-                    <input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" required maxLength={20} defaultValue={value('phone', editing?.phone ?? account.phone)} aria-describedby="phone-help" className={`${inputClass} tabular-nums`} {...invalid('phone')} />
+                    <input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" required maxLength={20} defaultValue={value('phone', nationalPhone(editing?.phone ?? account.phone) ?? editing?.phone ?? account.phone)} aria-describedby="phone-help" className={`${inputClass} tabular-nums`} {...invalid('phone')} />
                 </Field>
                 <div className="grid gap-3.5 sm:grid-cols-2">
                     <Field id="district_id" label={a.district} required requiredLabel={a.required} help={a.districtHelp} error={err('district_id')}>

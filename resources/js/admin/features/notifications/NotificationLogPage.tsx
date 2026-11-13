@@ -241,5 +241,5 @@ function Stat({ label, hint, edge, children }: { label: string; hint: string; ed
 }
 
 function Th({ children, end, className = '' }: { children: ReactNode; end?: boolean; className?: string }) {
-    return <th className={`${dataTable.th} ${end ? 'text-end' : ''} ${className}`}>{children}</th>;
+    return <th className={`${end ? dataTable.th.replace('text-start', 'text-end') : dataTable.th} ${className}`}>{children}</th>;
 }

@@ -166,6 +166,15 @@ describe('purchase orders', () => {
         expect(screen.getByRole('link', { name: /New purchase order/ })).toBeTruthy();
     });
 
+    it('opens on the first open PO with its receive card showing (Figma B · 16)', async () => {
+        purchasingApi(manager);
+        renderApp('/purchasing');
+
+        expect(await screen.findByRole('region', { name: 'Receive PO-2026-0044' })).toBeTruthy();
+        const table = screen.getByRole('table');
+        expect(within(table).getByText('PO-2026-0044').closest('tr')?.getAttribute('aria-selected')).toBe('true');
+    });
+
     it('hides PO money from a role without catalog.view_cost and offers no create', async () => {
         purchasingApi(readOnly);
         renderApp('/purchasing');

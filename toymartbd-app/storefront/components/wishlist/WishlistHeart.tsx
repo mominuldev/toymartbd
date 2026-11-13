@@ -22,6 +22,9 @@ interface Props {
 // reads the signed-in customer's saved ids from a small private endpoint, fills the saved hearts
 // (outline `color/text/secondary` → filled `color/bg/brand`), toggles in place and announces it.
 // The page itself stays the same cached HTML for everyone; the filled state is client-side only.
+// Off → on plays the A22 "pop": scale 1 → 0.88 → 1.08 → 1 on the spring curve (320ms) with a 2px coral
+// ring expanding to 1.6× and fading (globals.css `.wishlist-heart[data-burst]`, set by WishlistHearts
+// only after a tap that saved — never on first paint). Reduced motion: no animation.
 export function WishlistHeart({ productId, label, locale, back, className = '', buttonClassName, iconClassName }: Props) {
     return (
         <form method="post" action="/api/account/wishlist" data-wishlist-form="" className={className}>
@@ -35,10 +38,14 @@ export function WishlistHeart({ productId, label, locale, back, className = '', 
                 aria-pressed="false"
                 aria-label={label}
                 data-wishlist-heart={productId}
-                className={`group relative transition-transform duration-(--tm-duration-fast) ease-standard motion-safe:active:scale-90 in-aria-busy:opacity-60 ${buttonClassName}`}
+                className={`wishlist-heart group relative transition-[transform,color] duration-(--tm-duration-fast) ease-standard after:pointer-events-none after:absolute after:inset-0 after:rounded-full hover:after:bg-fg-primary/8 motion-safe:active:scale-90 ${buttonClassName}`}
             >
-                <Icon name="heart" className={`${iconClassName} group-aria-pressed:hidden`} />
-                <Icon name="heartFill" className={`${iconClassName} hidden text-brand group-aria-pressed:block`} />
+                {/* Saved → filled coral; Loading → a 16 spinner in the same box (the button keeps its size). */}
+                <span className="contents in-aria-busy:hidden">
+                    <Icon name="heart" className={`${iconClassName} group-aria-pressed:hidden`} />
+                    <Icon name="heartFill" className={`${iconClassName} hidden text-brand group-aria-pressed:block`} />
+                </span>
+                <span aria-hidden="true" className="hidden size-4 animate-spin rounded-full border-2 border-line-default border-t-brand in-aria-busy:block" />
             </button>
         </form>
     );

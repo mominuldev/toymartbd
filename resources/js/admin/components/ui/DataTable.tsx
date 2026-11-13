@@ -13,7 +13,7 @@ export const dataTable = {
     card: 'overflow-hidden rounded-md border border-line-default bg-surface shadow-e1',
     table: 'w-full border-collapse',
     head: 'bg-subtle',
-    th: 'h-10 px-3 text-start align-middle t-admin-overline whitespace-nowrap text-fg-secondary',
+    th: 'h-10 px-3 [:where(&)]:text-start align-middle t-admin-overline whitespace-nowrap text-fg-secondary',
     row: 'border-t border-line-default hover:bg-subtle',
     /* No type class here: add t-admin-body (or mono/caption) per cell, so a Bangla twin of
        one style never overrides another style on the same element. */

@@ -100,12 +100,15 @@ describe('bulk manual fulfilment on the board', () => {
         const bar = screen.getByRole('region', { name: 'Bulk actions' });
         expect(within(bar).getByRole('button', { name: 'Book courier' }).getAttribute('aria-disabled')).toBe('true');
 
-        fireEvent.click(within(bar).getByRole('button', { name: 'Mark shipped' }));
+        // Mark shipped / delivered live in the bar's ⋯ overflow (Figma BulkActionBar 193:740).
+        fireEvent.click(within(bar).getByRole('button', { name: 'More actions' }));
+        fireEvent.click(screen.getByRole('menuitem', { name: 'Mark shipped' }));
         await waitFor(() => expect(postedTo(calls, '/orders/bulk/ship')).toEqual({ order_ids: [126, 127] }));
         expect(headerOf(calls, '/orders/bulk/ship')).not.toBeNull();
         expect(await within(bar).findByText(/cannot move from pending to shipped/)).toBeTruthy();
         expect((within(table).getByRole('checkbox', { name: 'Select TMB-26-00126' }) as HTMLInputElement).checked).toBe(true);
-        expect(within(bar).getByRole('button', { name: 'Mark delivered' })).toBeTruthy();
+        fireEvent.click(within(bar).getByRole('button', { name: 'More actions' }));
+        expect(screen.getByRole('menuitem', { name: 'Mark delivered' })).toBeTruthy();
     });
 
     it('hides bulk ship and deliver without shipments.book', async () => {
@@ -116,5 +119,6 @@ describe('bulk manual fulfilment on the board', () => {
         const bar = screen.getByRole('region', { name: 'Bulk actions' });
         expect(within(bar).queryByRole('button', { name: 'Mark shipped' })).toBeNull();
         expect(within(bar).queryByRole('button', { name: 'Mark delivered' })).toBeNull();
+        expect(within(bar).queryByRole('button', { name: 'More actions' })).toBeNull();
     });
 });

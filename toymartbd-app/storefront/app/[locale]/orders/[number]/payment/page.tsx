@@ -108,13 +108,15 @@ export default async function OrderPaymentPage({ params }: Props) {
     return (
         <PageShell locale={locale} path={path} top="tight">
             <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
-                <header role={view === 'failed' ? 'alert' : 'status'} className={`flex items-start gap-3 rounded-sm p-4 lg:p-6 ${tone[view].box}`}>
-                    <Icon name={tone[view].icon} className="size-icon-lg shrink-0 text-fg-primary lg:size-8" />
-                    <div className="flex flex-col gap-1">
-                        <h1 className="t-h2 text-fg-primary">{title}</h1>
-                        <p className="t-body text-fg-secondary">{body}</p>
-                        {flash ? <p className="t-body-sm-strong text-feedback-danger">{flash}</p> : null}
-                    </div>
+                {/* No frame of its own: drawn as the order page's status card (Figma 237:10143) — a tinted tile,
+                    22px icon inline with the title, the explanation in body-sm under it. */}
+                <header role={view === 'failed' ? 'alert' : 'status'} className={`flex flex-col gap-1.5 rounded-sm p-4 lg:p-6 ${tone[view].box}`}>
+                    <h1 className="t-h3 lg:t-h2 flex items-start gap-2 text-fg-primary">
+                        <Icon name={tone[view].icon} className="mt-0.5 size-5.5 shrink-0 lg:mt-1" />
+                        {title}
+                    </h1>
+                    <p className="t-body-sm lg:t-body text-fg-primary">{body}</p>
+                    {flash ? <p className="t-body-sm-strong text-feedback-danger">{flash}</p> : null}
                 </header>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
                     <div className="flex min-w-0 flex-col gap-4 lg:grow">

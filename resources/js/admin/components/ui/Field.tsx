@@ -61,7 +61,7 @@ export const controlHeight = { sm: 'h-8', md: 'h-10' } as const;
  * error border/danger; disabled bg/disabled.
  */
 export const inputClass =
-    'w-full rounded-sm border border-line-default bg-surface px-3 t-admin-body text-fg-primary placeholder:text-fg-tertiary focus:border-line-focus focus:ring-1 focus:ring-inset focus:ring-line-focus aria-invalid:border-line-danger disabled:cursor-not-allowed disabled:bg-disabled disabled:text-fg-disabled';
+    '[:where(&)]:w-full rounded-sm border border-line-default bg-surface px-3 t-admin-body text-fg-primary placeholder:text-fg-tertiary focus:border-line-focus focus:ring-1 focus:ring-inset focus:ring-line-focus aria-invalid:border-line-danger disabled:cursor-not-allowed disabled:bg-disabled disabled:text-fg-disabled';
 
 /** `inputClass` set in JetBrains Mono (slugs, SKUs, hex). Swaps the type class rather than
  *  stacking one: under :lang(bn) the Bangla twin of t-admin-body would beat t-admin-mono. */

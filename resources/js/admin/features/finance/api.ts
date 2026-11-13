@@ -130,8 +130,13 @@ export function useLedger(filters: LedgerFilters) {
     });
 }
 
-export function useReceivables() {
-    return useQuery({ queryKey: keys.receivables, queryFn: () => api<Receivables>('/finance/receivables') });
+/** COD receivables as at the end of a Dhaka date (`asOf`, default today) — the server's figure. */
+export function useReceivables(asOf?: string, enabled = true) {
+    return useQuery({
+        queryKey: [...keys.receivables, asOf ?? 'today'],
+        queryFn: () => api<Receivables>(`/finance/receivables${asOf ? `?as_of=${encodeURIComponent(asOf)}` : ''}`),
+        enabled,
+    });
 }
 
 /** Multipart POST (the browser sets the boundary); the same RFC 9457 contract as `api()`. */

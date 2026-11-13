@@ -11,13 +11,15 @@ type ContentHeaderProps = {
     subtitle?: ReactNode;
     /** AdminButtons (md), 12 apart; the primary goes last. */
     actions?: ReactNode;
+    /** Inline next to the title, 12 apart (Order detail 206:1475: the OrderStatusBadge). */
+    titleAddon?: ReactNode;
 };
 
 /**
  * Figma ContentHeader 187:530 — breadcrumb (Admin/caption, text/tertiary), page title
  * (Admin/page-title), subtitle (Admin/body, text/secondary), 4 apart; actions on the right.
  */
-export function ContentHeader({ title, breadcrumb, subtitle, actions }: ContentHeaderProps) {
+export function ContentHeader({ title, breadcrumb, subtitle, actions, titleAddon }: ContentHeaderProps) {
     const { t } = useI18n();
 
     return (
@@ -47,7 +49,14 @@ export function ContentHeader({ title, breadcrumb, subtitle, actions }: ContentH
                         </ol>
                     </nav>
                 )}
-                <h1 className="t-admin-page-title text-fg-primary">{title}</h1>
+                {titleAddon ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <h1 className="t-admin-page-title text-fg-primary">{title}</h1>
+                        {titleAddon}
+                    </div>
+                ) : (
+                    <h1 className="t-admin-page-title text-fg-primary">{title}</h1>
+                )}
                 {subtitle && <p className="t-admin-body text-fg-secondary">{subtitle}</p>}
             </div>
             {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}

@@ -40,7 +40,7 @@ export function OrderCard({ order, locale, t, m }: { order: OrderSummary; locale
                     {order.preview.map((item, i) => {
                         const alt = (locale === 'bn' ? item.image?.alt_bn : item.image?.alt) ?? (locale === 'bn' && item.name_bn ? item.name_bn : item.name);
                         return (
-                            <li key={i} className="size-14 shrink-0 overflow-hidden rounded-xs-plus bg-image">
+                            <li key={i} className={`size-14 shrink-0 overflow-hidden rounded-xs-plus ${item.image ? 'bg-image' : 'bg-tile-pink'}`}>
                                 {item.image ? <img src={item.image.url} alt={alt} width={56} height={56} loading="lazy" className="size-full object-cover" /> : <span className="sr-only">{alt}</span>}
                             </li>
                         );

@@ -48,11 +48,14 @@ export function OrderHeaderCard({ order, t }: { order: StorefrontOrder; t: Messa
     );
 }
 
-/** OrderTimeline — Figma 121:1558: a vertical rail of OrderSteps (done ✓ coral, current ring, upcoming grey). */
+/** OrderTimeline — Figma 121:1558 / OrderStep 121:1557: 72-tall steps, a 24 gutter holding the 24px marker
+ *  and the rail beneath it (coral under a done step, hairline otherwise), label body-strong (upcoming:
+ *  body, tertiary) · timestamp caption tertiary. Done = coral disc + check 14; Current = white disc, 2px
+ *  coral ring, 8px coral core; Upcoming = subtle disc + hairline; Stopped = danger disc + x. */
 export function OrderTimeline({ order, t }: { order: StorefrontOrder; t: Messages }) {
     const steps = timelineSteps(order);
     return (
-        <section aria-labelledby="order-timeline" className={`${card} px-4 py-5`}>
+        <section aria-labelledby="order-timeline" className={card}>
             <h2 id="order-timeline" className="sr-only">
                 {t.order.timelineTitle}
             </h2>
@@ -60,27 +63,27 @@ export function OrderTimeline({ order, t }: { order: StorefrontOrder; t: Message
                 {steps.map((step, i) => {
                     const last = i === steps.length - 1;
                     const reached = step.state !== 'upcoming';
-                    const next = steps[i + 1];
                     return (
-                        <li key={step.stage} aria-current={step.state === 'current' ? 'step' : undefined} className="relative flex min-h-12.5 gap-3 pb-4 last:pb-0">
-                            {!last ? <span aria-hidden="true" className={`absolute start-2.25 top-5 bottom-0 w-0.5 ${next && next.state !== 'upcoming' ? 'bg-brand' : 'bg-line-default'}`} /> : null}
-                            <span
-                                aria-hidden="true"
-                                className={`relative z-10 flex size-5 shrink-0 items-center justify-center rounded-full ${
-                                    step.state === 'complete'
-                                        ? 'bg-brand text-fg-on-brand'
-                                        : step.state === 'current'
-                                          ? 'border-2 border-brand bg-surface'
-                                          : step.state === 'stopped'
-                                            ? 'bg-feedback-danger text-fg-on-danger'
-                                            : 'bg-subtle'
-                                }`}
-                            >
-                                {step.state === 'complete' ? <Icon name="check" className="size-3" /> : step.state === 'current' ? <span className="size-2 rounded-full bg-brand" /> : step.state === 'stopped' ? <Icon name="x" className="size-3" /> : null}
+                        <li key={step.stage} aria-current={step.state === 'current' ? 'step' : undefined} className="flex min-h-18 gap-4">
+                            <span aria-hidden="true" className="flex w-6 shrink-0 flex-col items-center">
+                                <span
+                                    className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
+                                        step.state === 'complete'
+                                            ? 'bg-brand text-fg-on-brand'
+                                            : step.state === 'current'
+                                              ? 'border-2 border-brand bg-surface'
+                                              : step.state === 'stopped'
+                                                ? 'bg-feedback-danger text-fg-on-danger'
+                                                : 'border border-line-default bg-subtle'
+                                    }`}
+                                >
+                                    {step.state === 'complete' ? <Icon name="check" className="size-3.5" /> : step.state === 'current' ? <span className="size-2 rounded-full bg-brand" /> : step.state === 'stopped' ? <Icon name="x" className="size-3.5" /> : null}
+                                </span>
+                                {!last ? <span className={`w-0.5 grow ${step.state === 'complete' ? 'bg-brand' : 'bg-line-default'}`} /> : null}
                             </span>
-                            <span className="flex flex-col gap-0.5">
-                                <span className={`t-body-sm ${reached ? 'text-fg-primary' : 'text-fg-tertiary'}`}>{t.order.stages[step.stage]}</span>
-                                {step.at ? <span className="t-caption text-fg-secondary tabular-nums">{orderDateTime(step.at, t)}</span> : null}
+                            <span className="flex min-w-0 flex-col gap-0.5 pb-4">
+                                <span className={reached ? 't-body-strong text-fg-primary' : 't-body text-fg-tertiary'}>{t.order.stages[step.stage]}</span>
+                                {step.at ? <span className="t-caption text-fg-tertiary tabular-nums">{orderDateTime(step.at, t)}</span> : null}
                             </span>
                         </li>
                     );

@@ -72,9 +72,16 @@ export function DailyReportsPage() {
 
 type Label = (bucket: { from: string; to: string }) => string;
 
+/** The axis tick for a bucket: "07 Nov" by day or week, "Nov 2026" by month, "2026" by year (Western digits, rule 36). */
+function axisLabel(from: string, granularity: PnlSeries['granularity'], locale: string): string {
+    const options: Intl.DateTimeFormatOptions =
+        granularity === 'year' ? { year: 'numeric' } : granularity === 'month' ? { month: 'short', year: 'numeric' } : { day: '2-digit', month: 'short' };
+    return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', { timeZone: 'UTC', numberingSystem: 'latn', ...options }).format(new Date(`${from}T00:00:00Z`));
+}
+
 function Chart({ data, label }: { data: PnlSeries; label: Label }) {
-    const { t } = useI18n();
-    const points = data.buckets.map((b) => ({ key: b.key, label: label(b), short: b.from.slice(5), amount: b.totals.net_profit, value: Number(b.totals.net_profit) }));
+    const { t, locale } = useI18n();
+    const points = data.buckets.map((b) => ({ key: b.key, label: label(b), short: axisLabel(b.from, data.granularity, locale), amount: b.totals.net_profit, value: Number(b.totals.net_profit) }));
     return (
         <Card className="flex flex-col gap-3 p-5">
             <h2 className="t-admin-section text-fg-primary">{t('reports.daily.chart', { group: t(`reports.daily.group.${data.granularity}` as MessageKey).toLowerCase() })}</h2>
@@ -136,11 +143,11 @@ function Table({ data, label }: { data: PnlSeries; label: Label }) {
                             {t('reports.daily.col.period')}
                         </th>
                         {columns.map((c) => (
-                            <th key={c} scope="col" className={`${dataTable.th} text-end`}>
+                            <th key={c} scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>
                                 {t(`reports.pnl.line.${c}` as MessageKey)}
                             </th>
                         ))}
-                        <th scope="col" className={`${dataTable.th} text-end`}>
+                        <th scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>
                             {t('reports.daily.col.margin')}
                         </th>
                     </tr>

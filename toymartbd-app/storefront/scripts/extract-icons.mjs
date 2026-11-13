@@ -83,6 +83,13 @@ const ICONS = {
     arrowLeft: 'ArrowLeft',
     ticket: 'Ticket',
     shoppingBagOpen: 'ShoppingBagOpen',
+    // Account sign-off pass (Figma 236:2384 AddressCard, 237:10066 order detail, 135:1600 reviews).
+    pencilSimple: 'PencilSimple',
+    buildings: 'Buildings',
+    wallet: 'Wallet',
+    arrowSquareOut: 'ArrowSquareOut',
+    thumbsUp: 'ThumbsUp',
+    creditCard: 'CreditCard',
 };
 
 const require = createRequire(import.meta.url);

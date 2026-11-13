@@ -25,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
     return (
         <div
-            className={`flex ${controlHeight[size]} w-full items-center gap-2 rounded-sm border border-line-default bg-surface px-3 text-fg-tertiary focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger has-disabled:bg-disabled ${className}`}
+            className={`flex ${controlHeight[size]} [:where(&)]:w-full items-center gap-2 rounded-sm border border-line-default bg-surface px-3 text-fg-tertiary focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger has-disabled:bg-disabled ${className}`}
         >
             {leading && <span className="flex shrink-0 text-fg-secondary">{leading}</span>}
             {prefix && <span className="shrink-0 t-admin-num text-fg-tertiary">{prefix}</span>}

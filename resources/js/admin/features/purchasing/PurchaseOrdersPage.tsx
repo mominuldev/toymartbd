@@ -28,14 +28,17 @@ export function PurchaseOrdersPage() {
     const [params, setParams] = useSearchParams();
     const statusParam = params.get('status') as PurchaseStatus | null;
     const status: PurchaseStatus = statusParam && purchaseStatuses.includes(statusParam) ? statusParam : 'ordered';
-    const selectedId = /^\d+$/.test(params.get('po') ?? '') ? Number(params.get('po')) : null;
+    const poParam = /^\d+$/.test(params.get('po') ?? '') ? Number(params.get('po')) : null;
 
     const counts = usePurchaseCounts();
     const list = usePurchases({ status, supplier: '', search: '' });
     const rows = useMemo(() => list.data?.pages.flatMap((p) => p.data) ?? [], [list.data]);
-    const selected = usePurchase(selectedId);
     const viewCost = can(me, 'catalog.view_cost');
     const canReceive = can(me, 'purchasing.receive');
+    // Figma opens on the first open PO with its receive card already showing.
+    const receivable = status === 'ordered' || status === 'partially_received';
+    const selectedId = poParam ?? (receivable && canReceive ? (rows[0]?.id ?? null) : null);
+    const selected = usePurchase(selectedId);
 
     const set = (key: string, value: string | null) =>
         setParams(

@@ -73,3 +73,29 @@
     /* Header language menu (a <details>): close the caret affordance's marker in Safari. */
     .locale-menu > summary::-webkit-details-marker { display: none; }
 }
+
+/* WishlistButton Off → On (storefront spec §A22): a 320ms spring pop of the heart and a 2px coral ring
+   that expands from the icon to 1.6× and fades. Only after a tap that saved (`data-burst`, set by
+   components/wishlist/WishlistHearts.tsx); the global reduced-motion rule above turns it off. */
+@layer components {
+    .wishlist-heart[data-burst] {
+        animation: tm-heart-pop var(--tm-duration-slow) var(--tm-ease-spring);
+    }
+
+    .wishlist-heart[data-burst]::after {
+        border: var(--tm-border-width-strong) solid var(--color-brand);
+        animation: tm-heart-ring var(--tm-duration-slow) var(--tm-ease-decelerate) forwards;
+    }
+}
+
+@keyframes tm-heart-pop {
+    0% { transform: scale(1); }
+    30% { transform: scale(0.88); }
+    65% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes tm-heart-ring {
+    from { opacity: 1; transform: scale(0.6); }
+    to { opacity: 0; transform: scale(1.6); }
+}

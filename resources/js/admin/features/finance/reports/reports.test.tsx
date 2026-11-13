@@ -113,6 +113,8 @@ function reportsApi(me: Me = accountant) {
         if (url.includes('/finance/reports/pnl')) return { status: 200, body: statement };
         if (url.includes('/finance/reports/profitability')) return { status: 200, body: profitability };
         if (url.includes('/reports/inventory-valuation')) return { status: 200, body: valuation };
+        if (url.includes('/finance/receivables?as_of=2026-11-08'))
+            return { status: 200, body: { as_of: '2026-11-08', recognised: '9540.00', received: '8753.00', outstanding: '787.00', open_orders: 1, aging: { '0_7': '787.00', '8_15': '0.00', '16_30': '0.00', '31_plus': '0.00' } } };
         if (url.includes('/inventory/low-stock-count')) return { status: 200, body: { location_id: 1, count: 0 } };
         return { status: 404 };
     });
@@ -132,7 +134,9 @@ describe('profit & loss', () => {
         }
         // True minus on deductions; values exactly as the server sent them.
         expect(screen.getAllByText(text('−৳5,800')).length).toBeGreaterThan(0);
-        expect(screen.getByText('Gross profit · 39.01%')).toBeTruthy();
+        // Margins to one place, as Figma sets them; the server's gross_revenue subtotal is not drawn (B · 31).
+        expect(screen.getByText('Gross profit · 39.0%')).toBeTruthy();
+        expect(screen.queryByText('Gross revenue')).toBeNull();
         expect(screen.getAllByText(text('−৳602')).length).toBeGreaterThan(0);
         expect(screen.getByText('The period lost money.')).toBeTruthy();
         // Zero quiet lines are hidden; a zero core line is shown.
@@ -141,9 +145,12 @@ describe('profit & loss', () => {
         // Cash kept apart from profit.
         expect(screen.getByText('Cash, not profit')).toBeTruthy();
         expect(screen.getAllByText(text('+৳1,953')).length).toBeGreaterThan(0);
+        // "Still with the courier" is the server's COD receivable as at the period's last day.
+        expect(await screen.findByText('Still with the courier')).toBeTruthy();
+        expect(screen.getAllByText(text('৳787')).length).toBeGreaterThan(0);
         expect(screen.getByText('Reconciled with the ledger')).toBeTruthy();
         expect(screen.getByText('Open orders not yet delivered: ৳18,000 across 4 orders')).toBeTruthy();
-        expect(screen.getByText('Stock on hand ৳136,741 at cost — an asset, not a cost')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Stock on hand ৳136,741 at cost — an asset, not a cost' }).getAttribute('href')).toBe('/inventory/valuation');
         // Export is a link to the server-built CSV.
         expect(screen.getByRole('link', { name: /Export/ }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/export');
     });

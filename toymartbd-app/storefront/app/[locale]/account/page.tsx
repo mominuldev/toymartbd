@@ -6,7 +6,8 @@ import { AccountShell, SignOutButton } from '@/components/account/AccountShell';
 import { OrderCard } from '@/components/account/OrderCard';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
-import { firstName, noticeText } from '@/lib/account/format';
+import { displayPhone } from '@/lib/account/flash';
+import { firstName, initials, monthYear, noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getOrders, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
@@ -39,6 +40,9 @@ export default async function AccountHomePage({ params }: Props) {
     const [active, flash] = await Promise.all([getOrders(token, locale, 'active', null), readAccountFlash()]);
     const latest = active.data[0] ?? null;
     const onTheWay = active.summary.active;
+    const greeting = account.name ? format(m.home.greeting, { name: firstName(account.name) }) : m.home.greetingNoName;
+    const phone = displayPhone(account.phone);
+    const since = monthYear(account.member_since, t);
 
     const tiles: Array<{ path: string; icon: IconName; tone: string; title: string; sub: string }> = [
         { path: '/account/orders', icon: 'cube', tone: 'bg-tile-pink', title: m.home.tiles.orders, sub: onTheWay > 0 ? format(m.home.tiles.ordersSub, { count: String(onTheWay) }) : m.home.tiles.ordersNone },
@@ -49,9 +53,17 @@ export default async function AccountHomePage({ params }: Props) {
 
     return (
         <AccountShell locale={locale} path={PATH} account={account} section="overview" title={m.nav.myAccount}>
-            <header className="flex flex-col gap-1">
-                <h1 className="t-h1 text-fg-primary">{account.name ? format(m.home.greeting, { name: firstName(account.name) }) : m.home.greetingNoName}</h1>
-                <p className="t-body-sm text-fg-secondary">{m.home.sub}</p>
+            {/* 390: the "Hello" card (237:9572: Bloom-sky, avatar 56 with initials, h2 + phone · member since).
+                1440 (239:11547): a plain h1 + sub above the tiles. One h1 either way. */}
+            <header className="flex items-center gap-3 rounded-lg bg-(image:--tm-gradient-bloom-sky) px-4 py-4.5 lg:flex-col lg:items-start lg:gap-1 lg:rounded-none lg:bg-none lg:p-0">
+                <span aria-hidden="true" className="t-h3 flex size-14 shrink-0 items-center justify-center rounded-full bg-surface text-fg-brand lg:hidden">
+                    {initials(account.name) ?? <Icon name="user" className="size-icon-lg" />}
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5 lg:gap-1">
+                    <h1 className="t-h2 lg:t-h1 text-fg-primary">{greeting}</h1>
+                    <span className="t-caption text-fg-secondary tabular-nums lg:hidden">{since ? format(m.home.memberSince, { phone, date: since }) : phone}</span>
+                    <span className="t-body-sm hidden text-fg-secondary lg:block">{m.home.sub}</span>
+                </span>
             </header>
 
             <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m)} />
@@ -68,12 +80,12 @@ export default async function AccountHomePage({ params }: Props) {
             <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
                 {tiles.map((tile) => (
                     <li key={tile.path}>
-                        <a href={localizedPath(locale, tile.path)} className={`flex h-full flex-col gap-3 rounded-sm p-4 ${tile.tone}`}>
+                        <a href={localizedPath(locale, tile.path)} className={`flex h-full flex-col gap-1.5 rounded-md px-3 py-3.5 ${tile.tone}`}>
                             <span className="flex size-9 items-center justify-center rounded-full bg-surface text-fg-brand">
-                                <Icon name={tile.icon} className="size-icon-sm" />
+                                <Icon name={tile.icon} className="size-icon-md" />
                             </span>
-                            <span className="flex flex-col">
-                                <span className="t-body-sm-strong text-fg-primary">{tile.title}</span>
+                            <span className="flex flex-col gap-1.5">
+                                <span className="t-h4 text-fg-primary">{tile.title}</span>
                                 <span className="t-caption text-fg-secondary tabular-nums">{tile.sub}</span>
                             </span>
                         </a>

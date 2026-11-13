@@ -146,10 +146,12 @@ export function InventoryPage() {
                                 <StatCard
                                     label={t('inventory.stat.value')}
                                     value={
-                                        <span className="t-admin-currency-num-lg">
+                                        // The figure opens the full valuation report (by variant, branch and category).
+                                        <Link to="/inventory/valuation" title={t('inventory.stat.valueLink')} className="t-admin-currency-num-lg hover:underline">
                                             {TAKA}
                                             {formatMoney(data.total_value)}
-                                        </span>
+                                            <span className="sr-only"> — {t('inventory.stat.valueLink')}</span>
+                                        </Link>
                                     }
                                     hint={
                                         <>
