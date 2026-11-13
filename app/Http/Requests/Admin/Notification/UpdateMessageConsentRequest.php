@@ -10,6 +10,7 @@ use App\Http\Requests\ApiFormRequest;
 /**
  * `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message
  * consent as told to staff (P8); needs customers.update, like the channel preferences.
+ * Recording a "yes" needs `customer_confirmed: true` — staff never opt a customer in on a guess.
  */
 final class UpdateMessageConsentRequest extends ApiFormRequest
 {
@@ -24,6 +25,11 @@ final class UpdateMessageConsentRequest extends ApiFormRequest
         return [
             /** The customer agreed to a message on their birthday (reads their date of birth). */
             'birthday' => ['required', 'boolean'],
+            /**
+             * Required (and must be true) when recording consent: staff confirm the customer
+             * agreed — e.g. on a phone call. Not needed to withdraw.
+             */
+            'customer_confirmed' => ['required_if:birthday,true', 'boolean', 'accepted_if:birthday,true'],
         ];
     }
 

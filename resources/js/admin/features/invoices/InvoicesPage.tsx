@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { GearIcon, PrinterIcon } from '@phosphor-icons/react';
+import { GearIcon, PrinterIcon, ReceiptXIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
@@ -16,7 +16,7 @@ import { SearchField } from '@/components/ui/SearchField';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { TabButton } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
-import { invoiceTypes, useInvoices, type InvoiceFilters, type InvoiceListItem, type InvoiceType } from './api';
+import { invoiceTabs, invoiceTypes, useCreditNotes, useInvoices, type CreditNoteListItem, type InvoiceFilters, type InvoiceListItem, type InvoiceTab, type InvoiceType } from './api';
 import { Taka, formatIssued } from './parts';
 
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,20 +36,28 @@ function useDebounced<T>(value: T, delay = 350): T {
  * search + issued-date filter row, the table. Every figure is the snapshot the server took
  * at issue (rule 1). An invoice is issued by its first print from the order or PO screen;
  * here it is only reprinted. Filters live in the URL.
+ *
+ * Credit notes (P8 batch 2, no Figma frame either): a "Credit notes" tab lists them from
+ * their own endpoint with the same search and date filters; an invoice row shows what has
+ * been credited (server figure) and its credit notes, each printable.
  */
 export function InvoicesPage() {
     const { t, locale } = useI18n();
     const { data: me } = useMe();
     const [params, setParams] = useSearchParams();
-    const typeParam = params.get('type') as InvoiceType | null;
-    const type: InvoiceType | '' = typeParam && invoiceTypes.includes(typeParam) ? typeParam : '';
+    const tabParam = (params.get('type') ?? '') as InvoiceTab;
+    const tab: InvoiceTab = invoiceTabs.includes(tabParam) ? tabParam : '';
+    const creditTab = tab === 'credit_notes';
+    const type: InvoiceType | '' = invoiceTypes.includes(tab as InvoiceType) ? (tab as InvoiceType) : '';
     const [search, setSearch] = useState(params.get('q') ?? '');
     const debounced = useDebounced(search);
     const from = ymd.test(params.get('from') ?? '') ? (params.get('from') ?? '') : '';
     const to = ymd.test(params.get('to') ?? '') ? (params.get('to') ?? '') : '';
     const filters: InvoiceFilters = { type, search: debounced, from, to };
-    const list = useInvoices(filters);
+    const list = useInvoices(filters, !creditTab);
     const rows = useMemo(() => list.data?.pages.flatMap((p) => p.data) ?? [], [list.data]);
+    const credits = useCreditNotes({ search: debounced, from, to }, creditTab);
+    const creditRows = useMemo(() => credits.data?.pages.flatMap((p) => p.data) ?? [], [credits.data]);
 
     const set = (key: string, value: string) =>
         setParams(
@@ -82,13 +90,19 @@ export function InvoicesPage() {
             />
 
             <div role="group" aria-label={t('invoices.tabs')} className="scrollbar-none flex overflow-x-auto border-b border-line-default">
-                {(['', ...invoiceTypes] as const).map((value) => (
-                    <TabButton key={value || 'all'} active={type === value} label={t(`invoices.tab.${value || 'all'}` as MessageKey)} onClick={() => set('type', value)} />
+                {invoiceTabs.map((value) => (
+                    <TabButton key={value || 'all'} active={tab === value} label={t(`invoices.tab.${value || 'all'}` as MessageKey)} onClick={() => set('type', value)} />
                 ))}
             </div>
 
             <div className="flex flex-wrap items-end gap-3">
-                <SearchField label={t('invoices.search')} placeholder={t('invoices.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full sm:w-80" />
+                <SearchField
+                    label={t(creditTab ? 'creditNotes.search' : 'invoices.search')}
+                    placeholder={t(creditTab ? 'creditNotes.searchPlaceholder' : 'invoices.searchPlaceholder')}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full sm:w-80"
+                />
                 <label className="flex flex-col gap-1 t-admin-caption text-fg-secondary">
                     {t('invoices.from')}
                     <input type="date" value={from} max={to || undefined} onChange={(e) => set('from', e.target.value)} className={`h-9 ${inputClass}`} />
@@ -99,7 +113,9 @@ export function InvoicesPage() {
                 </label>
             </div>
 
-            {list.isError ? (
+            {creditTab ? (
+                <CreditNotesTable query={credits} rows={creditRows} />
+            ) : list.isError ? (
                 <QueryError error={list.error} onRetry={() => void list.refetch()} />
             ) : list.isPending ? (
                 <p className="t-admin-body text-fg-tertiary" aria-busy="true">
@@ -118,6 +134,7 @@ export function InvoicesPage() {
                                 <th scope="col" className={dataTable.th}>{t('invoices.col.issued')}</th>
                                 <th scope="col" className={`${dataTable.th} text-end`}>{t('invoices.col.total')}</th>
                                 <th scope="col" className={`${dataTable.th} text-end`}>{t('invoices.col.due')}</th>
+                                <th scope="col" className={`${dataTable.th} text-end`}>{t('invoices.col.credited')}</th>
                                 <th scope="col" className={dataTable.th}>
                                     <span className="sr-only">{t('invoices.col.actions')}</span>
                                 </th>
@@ -130,6 +147,7 @@ export function InvoicesPage() {
                                         <span className="flex flex-col items-start gap-0.5">
                                             <span className="t-admin-mono text-fg-primary">{row.number}</span>
                                             <StatusChip label={t(`invoices.type.${row.type}`)} tone={row.type === 'sales' ? 'info' : 'neutral'} showIcon={false} />
+                                            {row.credit_notes.length > 0 && <CreditNoteLinks row={row} />}
                                         </span>
                                     </td>
                                     <td className={cell}>
@@ -142,6 +160,16 @@ export function InvoicesPage() {
                                     </td>
                                     <td className={`${cell} t-admin-num tabular whitespace-nowrap text-fg-secondary lg:text-end`}>
                                         <Taka amount={row.due} />
+                                    </td>
+                                    <td className={`${cell} lg:text-end`}>
+                                        {row.credit_status !== 'none' && (
+                                            <span className="flex flex-col items-start gap-0.5 lg:items-end">
+                                                <span className="t-admin-num tabular whitespace-nowrap text-fg-primary">
+                                                    <Taka amount={row.credited} />
+                                                </span>
+                                                <StatusChip label={t(row.credit_status === 'full' ? 'invoices.creditedFull' : 'invoices.creditedPart')} tone={row.credit_status === 'full' ? 'warning' : 'neutral'} showIcon={false} />
+                                            </span>
+                                        )}
                                     </td>
                                     <td className={`${cell} lg:text-end`}>{row.can_print && <PrintButton row={row} />}</td>
                                 </tr>
@@ -158,6 +186,114 @@ export function InvoicesPage() {
                 </div>
             )}
         </section>
+    );
+}
+
+type CreditNotesQuery = ReturnType<typeof useCreditNotes>;
+
+/** The "Credit notes" tab: server figures only; each credit note reprints from its snapshot. */
+function CreditNotesTable({ query, rows }: { query: CreditNotesQuery; rows: CreditNoteListItem[] }) {
+    const { t, locale } = useI18n();
+    const cell = `${dataTable.td} max-lg:h-auto max-lg:p-0`;
+
+    if (query.isError) return <QueryError error={query.error} onRetry={() => void query.refetch()} />;
+    if (query.isPending)
+        return (
+            <p className="t-admin-body text-fg-tertiary" aria-busy="true">
+                {t('common.loading')}
+            </p>
+        );
+    if (rows.length === 0) return <EmptyState title={t('creditNotes.empty')} body={t('creditNotes.emptyBody')} />;
+
+    return (
+        <div className={dataTable.card}>
+            <table className={dataTable.table}>
+                <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
+                    <tr className="border-b border-line-strong">
+                        <th scope="col" className={dataTable.th}>{t('creditNotes.col.number')}</th>
+                        <th scope="col" className={dataTable.th}>{t('creditNotes.col.invoice')}</th>
+                        <th scope="col" className={dataTable.th}>{t('invoices.col.issuedTo')}</th>
+                        <th scope="col" className={dataTable.th}>{t('invoices.col.issued')}</th>
+                        <th scope="col" className={`${dataTable.th} text-end`}>{t('creditNotes.col.amount')}</th>
+                        <th scope="col" className={dataTable.th}>
+                            <span className="sr-only">{t('invoices.col.actions')}</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row) => (
+                        <tr key={row.id} className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${dataTable.row}`}>
+                            <td className={`${cell} basis-full lg:basis-auto`}>
+                                <span className="flex flex-col items-start gap-0.5">
+                                    <span className="t-admin-mono text-fg-primary">{row.number}</span>
+                                    <StatusChip label={t(`creditNotes.reason.${row.reason}`)} tone={row.reason === 'refund' ? 'info' : 'warning'} showIcon={false} />
+                                </span>
+                            </td>
+                            <td className={cell}>
+                                <span className="flex flex-col items-start gap-0.5">
+                                    <span className="t-admin-mono text-fg-primary">{row.invoice_number}</span>
+                                    {row.source_reference && (
+                                        <Link to={`/orders/${row.order_id}`} className="t-admin-caption text-fg-link hover:underline">
+                                            {row.source_reference}
+                                        </Link>
+                                    )}
+                                </span>
+                            </td>
+                            <td className={`${cell} t-admin-body text-fg-primary`}>{row.issued_to_name}</td>
+                            <td className={`${cell} t-admin-body whitespace-nowrap text-fg-secondary`}>{formatIssued(row.issued_at, locale)}</td>
+                            <td className={`${cell} t-admin-num tabular whitespace-nowrap lg:text-end`}>
+                                <Taka amount={row.total} />
+                            </td>
+                            <td className={`${cell} lg:text-end`}>{row.can_print && <PrintCreditNoteButton note={row} />}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            {query.hasNextPage && (
+                <DataTableFooter summary={t('creditNotes.count', { count: rows.length })}>
+                    <Button variant="outline" size="sm" onClick={() => void query.fetchNextPage()} disabled={query.isFetchingNextPage}>
+                        {query.isFetchingNextPage ? t('common.loading') : t('common.loadMore')}
+                    </Button>
+                </DataTableFooter>
+            )}
+        </div>
+    );
+}
+
+/** An invoice's credit notes, under its number: each one prints from its own snapshot. */
+function CreditNoteLinks({ row }: { row: InvoiceListItem }) {
+    const { t } = useI18n();
+    return (
+        <ul aria-label={t('invoices.creditNotesOf', { number: row.number })} className="flex flex-col gap-0.5">
+            {row.credit_notes.map((note) => (
+                <li key={note.id} className="t-admin-caption flex items-center gap-1 text-fg-secondary">
+                    <ReceiptXIcon size={14} aria-hidden />
+                    {note.can_print ? <PrintCreditNoteButton note={note} compact /> : <span className="t-admin-mono">{note.number}</span>}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function PrintCreditNoteButton({ note, compact = false }: { note: CreditNoteListItem; compact?: boolean }) {
+    const { t } = useI18n();
+    const { notify } = useToast();
+    const [printing, setPrinting] = useState(false);
+    const print = () => {
+        setPrinting(true);
+        openPdf(`/credit-notes/${note.id}/pdf`)
+            .catch((error: unknown) => notify(error instanceof ApiError ? error.problem.title : t('creditNotes.printFailed'), 'danger'))
+            .finally(() => setPrinting(false));
+    };
+    return compact ? (
+        <button type="button" disabled={printing} onClick={print} aria-label={t('invoices.printCreditNoteAria', { number: note.number })} className="t-admin-mono text-fg-link hover:underline disabled:opacity-60">
+            {note.number}
+        </button>
+    ) : (
+        <Button variant="ghost" size="sm" disabled={printing} aria-label={t('invoices.printCreditNoteAria', { number: note.number })} onClick={print}>
+            <PrinterIcon size={16} aria-hidden />
+            {t('creditNotes.print')}
+        </Button>
     );
 }
 

@@ -9,6 +9,7 @@ use App\Domain\Invoicing\Exceptions\InvoiceImmutable;
 use App\Support\Casts\MoneyCast;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -54,6 +55,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CreditNote> $creditNotes
  */
 final class Invoice extends Model
 {
@@ -67,6 +69,28 @@ final class Invoice extends Model
     {
         self::updating(static fn (self $invoice): never => throw InvoiceImmutable::make($invoice->number));
         self::deleting(static fn (self $invoice): never => throw InvoiceImmutable::make($invoice->number));
+    }
+
+    /**
+     * Credit notes issued against this (customer) invoice, oldest first (P8 batch 2).
+     *
+     * @return HasMany<CreditNote, $this>
+     */
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class)->orderBy('id');
+    }
+
+    /** Σ credit-note totals — what has been credited so far. Needs `creditNotes` (loads it if not). */
+    public function credited(): Money
+    {
+        return $this->creditNotes->reduce(static fn (Money $sum, CreditNote $note): Money => $sum->plus($note->total), Money::zero());
+    }
+
+    /** The invoice total less everything credited: what still stands. Never negative by construction. */
+    public function balance(): Money
+    {
+        return $this->total->minus($this->credited());
     }
 
     /** @return array<string, string> */

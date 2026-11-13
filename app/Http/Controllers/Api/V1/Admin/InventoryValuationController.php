@@ -6,20 +6,22 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Finance\Reports\FinanceReport;
 use App\Domain\Inventory\Reports\InventoryValuationReport;
+use App\Domain\Reporting\Exports\ReportSheets;
+use App\Domain\Reporting\Exports\Spreadsheet;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Reports\ReportQuery;
 use App\Http\Resources\Admin\Reports\InventoryValuationResource;
-use App\Support\CsvReport;
 use App\Support\DhakaDate;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Inventory valuation at cost (P5): now from the stock projection, or as at a past Dhaka
  * date replayed from the movement ledger. Read-only. Needs catalog.view_cost and either
- * finance.view or inventory.view; the CSV also needs finance.export.
+ * finance.view or inventory.view; the CSV / XLSX export also needs finance.export.
  */
 final class InventoryValuationController extends ApiController
 {
@@ -35,36 +37,42 @@ final class InventoryValuationController extends ApiController
     {
         $this->authorize('viewValuation', FinanceReport::class);
 
-        return new InventoryValuationResource($this->report($request, $valuation));
+        return new InventoryValuationResource($this->report(self::query($request, []), $valuation));
     }
 
-    /** `GET /reports/inventory-valuation/export` — every row as CSV. */
+    /** `GET /reports/inventory-valuation/export` — every row, then the total, as CSV or XLSX. */
     #[QueryParameter('filter[as_at]', 'As on GET /reports/inventory-valuation.', type: 'string', format: 'date')]
     #[QueryParameter('filter[location_id]', 'As on GET /reports/inventory-valuation.', type: 'int')]
     #[QueryParameter('filter[category_id]', 'As on GET /reports/inventory-valuation.', type: 'int')]
     #[QueryParameter('filter[search]', 'As on GET /reports/inventory-valuation.', type: 'string')]
     #[QueryParameter('sort', 'As on GET /reports/inventory-valuation.', type: 'string', default: '-value')]
-    #[OpenApiResponse(400, 'Unlisted parameter, filter or sort (`bad-request`)')]
+    #[QueryParameter('format', 'csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).', type: "'csv'|'xlsx'", default: 'csv')]
+    #[QueryParameter('locale', 'Language of the labels and the sheet name. Default: the request locale.', type: "'en'|'bn'")]
+    #[OpenApiResponse(400, 'Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`)')]
     #[OpenApiResponse(403, 'Missing the view permissions or finance.export (`forbidden`)')]
-    public function export(Request $request, InventoryValuationReport $valuation): BinaryFileResponse
+    public function export(Request $request, InventoryValuationReport $valuation): BinaryFileResponse|StreamedResponse
     {
         $this->authorize('exportValuation', FinanceReport::class);
-        $report = $this->report($request, $valuation);
-        $columns = ['sku', 'name', 'name_bn', 'variant_name', 'category_name', 'location_code', 'location_name', 'on_hand', 'unit_cost', 'value', 'estimated'];
+        $query = self::query($request, ['format', 'locale']);
+        [$format, $locale] = $query->exportOptions();
+        $report = $this->report($query, $valuation);
 
-        $rows = array_map(static fn (array $row): array => array_map(
-            static fn (string $c): string => is_bool($row[$c]) ? ($row[$c] ? '1' : '0') : (string) ($row[$c] ?? ''),
-            $columns,
-        ), $report['rows']);
-        $rows[] = ['', __('reports.valuation.total'), '', '', '', '', '', (string) $report['totals']['on_hand'], '', $report['totals']['value'], ''];
+        return Spreadsheet::downloadSheet(
+            'inventory-valuation-'.($report['as_at'] ?? DhakaDate::today()),
+            $format,
+            ReportSheets::inventoryValuation($report, $locale)[0],
+        );
+    }
 
-        return CsvReport::download('inventory-valuation-'.($report['as_at'] ?? DhakaDate::today()).'.csv', $columns, $rows);
+    /** @param  list<string>  $extra  further allowed parameters (the export's format and locale) */
+    private static function query(Request $request, array $extra): ReportQuery
+    {
+        return ReportQuery::from($request, ['as_at', 'location_id', 'category_id', 'search'], ['sort', ...$extra]);
     }
 
     /** @return array<string, mixed> */
-    private function report(Request $request, InventoryValuationReport $valuation): array
+    private function report(ReportQuery $query, InventoryValuationReport $valuation): array
     {
-        $query = ReportQuery::from($request, ['as_at', 'location_id', 'category_id', 'search'], ['sort']);
         $sort = $query->sort(InventoryValuationReport::SORTS, '-value');
         $asAt = $query->date('as_at');
 

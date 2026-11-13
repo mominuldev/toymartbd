@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Domain\Invoicing\Models\CreditNote;
 use App\Domain\Invoicing\Models\Invoice;
 use Illuminate\Support\Facades\File;
 use Mpdf\Config\ConfigVariables;
@@ -11,7 +12,7 @@ use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 /**
- * Renders issued invoices — customer and supplier — from their snapshots through
+ * Renders issued invoices — customer and supplier — and credit notes from their snapshots through
  * resources/views/invoices/invoice.blade.php to one PDF (P4-ORD-08, P8 N-13).
  *
  * mPDF, not dompdf: Bangla needs OpenType shaping — conjuncts (ন্ট্র, ক্ষ), reph and
@@ -29,13 +30,37 @@ final class OrderInvoicePdf
     /** @param  list<array{invoice: Invoice, locale: string}>  $invoices */
     public function render(array $invoices): string
     {
+        $mpdf = $this->mpdf();
+        $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Toy Mart BD — invoices');
+        $mpdf->WriteHTML(view('invoices.invoice', ['invoices' => $invoices])->render());
+
+        return $mpdf->Output('', 'S');
+    }
+
+    /**
+     * Credit notes (P8 batch 2), from their snapshots, through
+     * resources/views/invoices/credit-note.blade.php — same engine, font and page as invoices.
+     *
+     * @param  list<array{credit_note: CreditNote, locale: string}>  $notes
+     */
+    public function renderCreditNotes(array $notes): string
+    {
+        $mpdf = $this->mpdf();
+        $mpdf->SetTitle(count($notes) === 1 ? $notes[0]['credit_note']->number : 'Toy Mart BD — credit notes');
+        $mpdf->WriteHTML(view('invoices.credit-note', ['notes' => $notes])->render());
+
+        return $mpdf->Output('', 'S');
+    }
+
+    private function mpdf(): Mpdf
+    {
         $tempDir = storage_path('framework/cache/mpdf');
         File::ensureDirectoryExists($tempDir);
 
         $defaults = (new ConfigVariables)->getDefaults();
         $fonts = (new FontVariables)->getDefaults();
 
-        $mpdf = new Mpdf([
+        return new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
             'margin_left' => 14,
@@ -55,9 +80,5 @@ final class OrderInvoicePdf
             'autoScriptToLang' => false,
             'autoLangToFont' => false,
         ]);
-        $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Toy Mart BD — invoices');
-        $mpdf->WriteHTML(view('invoices.invoice', ['invoices' => $invoices])->render());
-
-        return $mpdf->Output('', 'S');
     }
 }

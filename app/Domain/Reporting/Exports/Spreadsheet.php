@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\Reporting\Exports;
 
-use OpenSpout\Common\Entity\Cell;
+use App\Support\CsvReport;
 use OpenSpout\Common\Entity\Cell\NumericCell;
 use OpenSpout\Common\Entity\Cell\StringCell;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Writer\CSV\Options as CsvOptions;
 use OpenSpout\Writer\CSV\Writer as CsvWriter;
 use OpenSpout\Writer\WriterInterface;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -25,7 +27,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *   ever written as a formula cell.
  * - CSV is UTF-8 with a BOM, so Excel opens Bangla as UTF-8; several sections are written one
  *   after another, each under its own title row and header. XLSX gets one worksheet per
- *   section, and a plain number is a numeric cell so the owner can sum a column.
+ *   section, and a plain number is a numeric cell so the owner can sum a column; a money-shaped
+ *   value (two decimals) is shown with two decimals. A column the sheet marks as text (a SKU,
+ *   a code) stays text even when it looks like a number, so "00123" keeps its zeros.
  * - Streamed straight to the response (php://output), so a large export never sits in memory.
  */
 final class Spreadsheet
@@ -65,6 +69,17 @@ final class Spreadsheet
     }
 
     /**
+     * One-section report: CSV through App\Support\CsvReport — byte-for-byte the CSV these
+     * reports produced before XLSX existed (no title row) — and XLSX as one worksheet.
+     */
+    public static function downloadSheet(string $basename, string $format, Sheet $sheet): BinaryFileResponse|StreamedResponse
+    {
+        return $format === self::XLSX
+            ? self::download($basename, self::XLSX, [$sheet])
+            : CsvReport::download($basename.'.'.self::CSV, $sheet->header, $sheet->rows);
+    }
+
+    /**
      * The file's bytes — for a mail attachment.
      *
      * @param  list<Sheet>  $sheets
@@ -96,6 +111,8 @@ final class Spreadsheet
             $writer = new CsvWriter($options);
         }
         $writer->openToFile($target);
+        // One style object per file: openspout stamps a registered style with that writer's id.
+        $money = (new Style)->setFormat('#,##0.00');
 
         foreach ($sheets as $index => $sheet) {
             if ($xlsx) {
@@ -110,8 +127,9 @@ final class Spreadsheet
                 }
             }
             self::add($writer, $sheet->header, false);
+            $text = array_keys(array_intersect($sheet->header, $sheet->text));
             foreach ($sheet->rows as $row) {
-                self::add($writer, $row, $xlsx);
+                self::add($writer, $row, $xlsx, $text, $money);
             }
         }
         $writer->close();
@@ -128,17 +146,26 @@ final class Spreadsheet
         return preg_match('/^[=+\-@\t\r]/', $text) === 1 ? "'".$text : $text;
     }
 
-    /** @param  list<string|int|null>  $values */
-    private static function add(WriterInterface $writer, array $values, bool $numeric): void
+    /**
+     * @param  list<string|int|null>  $values
+     * @param  list<int>  $textColumns  column indexes that never become numeric cells
+     * @param  Style|null  $money  display format for a money-shaped number: 1,320.00 (the value stays exact)
+     */
+    private static function add(WriterInterface $writer, array $values, bool $numeric, array $textColumns = [], ?Style $money = null): void
     {
-        $writer->addRow(new Row(array_map(static function (string|int|null $value) use ($numeric): Cell {
+        $cells = [];
+        foreach ($values as $index => $value) {
             $text = (string) $value;
-            if ($numeric && $text !== '' && self::isNumber($text)) {
-                return new NumericCell(str_contains($text, '.') ? (float) $text : (int) $text, null);
-            }
+            if ($numeric && $text !== '' && ! in_array($index, $textColumns, true) && self::isNumber($text)) {
+                $cells[] = str_contains($text, '.')
+                    ? new NumericCell((float) $text, preg_match('/\.\d{2}$/', $text) === 1 ? $money : null)
+                    : new NumericCell((int) $text, null);
 
-            return new StringCell(self::safe($value), null);
-        }, $values)));
+                continue;
+            }
+            $cells[] = new StringCell(self::safe($value), null);
+        }
+        $writer->addRow(new Row($cells));
     }
 
     private static function isNumber(string $text): bool

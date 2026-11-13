@@ -198,6 +198,38 @@ describe('dashboard', () => {
         await waitFor(() => expect(urls(calls).some((u) => u.endsWith('/dashboard?range=30d'))).toBe(true));
     });
 
+    it('offers CSV and Excel exports of the range on screen, built by the server', async () => {
+        dashboardApi();
+        renderApp('/?range=custom&from=2026-10-01&to=2026-10-31');
+        await screen.findByText(/here is the shop for/);
+
+        expect(screen.getByText('Export')).toBeTruthy();
+        const xlsx = screen.getByRole('link', { name: 'Excel (.xlsx)' });
+        const csv = screen.getByRole('link', { name: 'CSV' });
+        expect(xlsx.getAttribute('href')).toBe('/api/v1/admin/dashboard/export?range=custom&from=2026-10-01&to=2026-10-31&format=xlsx&locale=en');
+        expect(csv.getAttribute('href')).toBe('/api/v1/admin/dashboard/export?range=custom&from=2026-10-01&to=2026-10-31&format=csv&locale=en');
+        expect(csv.hasAttribute('download')).toBe(true);
+
+        // Changing the range changes what is exported.
+        fireEvent.change(screen.getByLabelText('Date range'), { target: { value: '30d' } });
+        await waitFor(() => expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toBe('/api/v1/admin/dashboard/export?range=30d&format=csv&locale=en'));
+    });
+
+    it('asks for Bangla labels in Bangla, and hides Export when the role sees no block', async () => {
+        dashboardApi();
+        renderApp('/', { locale: 'bn' });
+        expect(await screen.findByText('এক্সপোর্ট')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'এক্সেল (.xlsx)' }).getAttribute('href')).toBe('/api/v1/admin/dashboard/export?format=xlsx&locale=bn');
+        cleanup();
+
+        const nothing: Dashboard = { ...noFinance, visibility: { orders: false, finance: false, customers: false, inventory: false }, kpis: { ...noFinance.kpis, orders_placed: null, average_order_value: null }, status: null, trend: null, best_sellers: null, activity: null };
+        dashboardApi(nothing, { ...viewer, permissions: ['dashboard.view'] });
+        renderApp('/');
+        expect(await screen.findByRole('heading', { name: 'Overview' })).toBeTruthy();
+        await screen.findByText(/here is the shop for/);
+        expect(screen.queryByText('Export')).toBeNull();
+    });
+
     it('renders in Bangla with Western digits', async () => {
         dashboardApi();
         renderApp('/', { locale: 'bn' });

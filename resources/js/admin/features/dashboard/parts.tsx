@@ -8,6 +8,7 @@ import {
     CheckCircleIcon,
     CheckIcon,
     ClockIcon,
+    DownloadSimpleIcon,
     GaugeIcon,
     InfoIcon,
     MapPinIcon,
@@ -29,7 +30,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { buttonClass } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { rangePresets, type ActivityEvent, type AttentionItem, type Dashboard, type DashboardRange, type DashboardRangePreset } from './api';
+import { dashboardExportUrl, rangePresets, type ActivityEvent, type AttentionItem, type Dashboard, type DashboardRange, type DashboardRangePreset } from './api';
 import { TAKA, MINUS, deltaText, formatCount, groupDecimal, isNegative, minutesSince, dhakaTime } from './format';
 
 /** A taka amount as Figma sets it: true minus, ৳ in the currency face, figures in the surrounding style. */
@@ -253,6 +254,31 @@ export function RangePicker({ range, shown, onChange, today }: { range: Dashboar
                 </>
             )}
         </div>
+    );
+}
+
+/**
+ * Figma B · 01 header Export button (AdminButton outline md, download icon, 241:29860) opening
+ * the two formats. Plain download links for the range on screen; the server builds the file with
+ * only the blocks this role may see, so the menu has nothing to compute.
+ */
+export function ExportMenu({ range }: { range: DashboardRange }) {
+    const { t, locale } = useI18n();
+    return (
+        <details className="relative">
+            <summary className={`${buttonClass('outline')} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} title={t('dash.export.hint')}>
+                <DownloadSimpleIcon size={16} aria-hidden />
+                {t('dash.export.button')}
+            </summary>
+            <div className="absolute end-0 z-10 mt-1 flex w-48 flex-col rounded-sm border border-line-default bg-surface p-1 shadow-e2">
+                <a href={dashboardExportUrl(range, 'xlsx', locale)} download className="rounded-xs px-3 py-2 t-admin-body text-fg-primary hover:bg-subtle">
+                    {t('dash.export.xlsx')}
+                </a>
+                <a href={dashboardExportUrl(range, 'csv', locale)} download className="rounded-xs px-3 py-2 t-admin-body text-fg-primary hover:bg-subtle">
+                    {t('dash.export.csv')}
+                </a>
+            </div>
+        </details>
     );
 }
 

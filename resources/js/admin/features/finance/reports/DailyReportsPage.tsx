@@ -4,10 +4,11 @@ import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { granularities, seriesExportUrl, usePnlSeries, type Granularity, type PnlSeries } from './api';
-import { Card, ExportLink, Money, PeriodPicker, Percent, ReportTabs, TAKA, formatAmount, formatDay, isNegative, useRangeParams } from './parts';
+import { Card, Money, PeriodPicker, Percent, ReportTabs, TAKA, formatAmount, formatDay, isNegative, useRangeParams } from './parts';
 
 const columns = ['net_revenue', 'gross_profit', 'profit_after_delivery', 'profit_after_losses', 'net_profit'] as const;
 
@@ -45,7 +46,7 @@ export function DailyReportsPage() {
                             value={active}
                             onChange={(g) => set({ group: g })}
                         />
-                        <ExportLink href={seriesExportUrl(range, group)} />
+                        <ExportMenu href={(format, locale) => seriesExportUrl(range, group, { format, locale })} />
                     </>
                 }
             />

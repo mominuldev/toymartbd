@@ -107,6 +107,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/dashboard/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /dashboard/export` — the same report as CSV (sections one after another) or XLSX (one
+         *     sheet each). Needs dashboard.view; a block the viewer may not see is left out of the file,
+         *     never written as zero. No activity feed, no needs-attention items, no customer data
+         */
+        get: operations["v1.admin.dashboard.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/brands": {
         parameters: {
             query?: never;
@@ -2438,6 +2459,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/credit-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /credit-notes` — newest first, cursor-paginated (orders.view)
+         * @description Filters: `filter[invoice]` (invoice id), `filter[order]` (order id), `filter[reason]`
+         *     (`order_cancelled`|`refund`), `filter[search]` (credit-note number, invoice number,
+         *     order / RMA reference or customer name contains), `filter[issued_from]` /
+         *     `filter[issued_to]` (Dhaka dates, Y-m-d, inclusive). Sorts: `issued_at`, `-issued_at`
+         *     (default), `number`, `-number`, `total`, `-total`. Anything else is a 400.
+         */
+        get: operations["v1.admin.credit-notes.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/credit-notes/{creditNote}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /credit-notes/{creditNote}` — the snapshot: invoice credited, company, recipient (PII masked without customers.view_pii), lines, totals */
+        get: operations["v1.admin.credit-notes.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/credit-notes/{creditNote}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /credit-notes/{creditNote}/pdf` — reprint from the snapshot; the customer's language unless `locale` says otherwise */
+        get: operations["v1.admin.credit-notes.pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/invoice": {
         parameters: {
             query?: never;
@@ -3651,7 +3730,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /finance/reports/pnl/export` — the statement as CSV, one row per line. Needs finance.view + finance.export */
+        /** `GET /finance/reports/pnl/export` — the statement as CSV or XLSX, one row per line. Needs finance.view + finance.export */
         get: operations["v1.admin.finance.reports.pnl.export"];
         put?: never;
         post?: never;
@@ -3688,7 +3767,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /finance/reports/pnl/series/export` — the series as CSV, one row per bucket. Needs finance.view + finance.export */
+        /** `GET /finance/reports/pnl/series/export` — the series as CSV or XLSX, one row per bucket. Needs finance.view + finance.export */
         get: operations["v1.admin.finance.reports.pnl.series.export"];
         put?: never;
         post?: never;
@@ -3726,7 +3805,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /finance/reports/profitability/export` — as GET /finance/reports/profitability, every row. Needs finance.export too */
+        /** `GET /finance/reports/profitability/export` — as GET /finance/reports/profitability, every row, as CSV or XLSX. Needs finance.export too */
         get: operations["v1.admin.finance.reports.profitability.export"];
         put?: never;
         post?: never;
@@ -3777,7 +3856,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /reports/inventory-valuation/export` — every row as CSV */
+        /** `GET /reports/inventory-valuation/export` — every row, then the total, as CSV or XLSX */
         get: operations["v1.admin.reports.inventory-valuation.export"];
         put?: never;
         post?: never;
@@ -3811,7 +3890,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /reports/couriers/export` — the provider rows, then the district rows, as CSV */
+        /** `GET /reports/couriers/export` — the total, the provider rows, then the district rows, as CSV or XLSX */
         get: operations["v1.admin.reports.couriers.export"];
         put?: never;
         post?: never;
@@ -4675,6 +4754,23 @@ export interface paths {
         put?: never;
         /** `POST /customers/{customer}/notes` — needs customers.update. 201 with the note */
         post: operations["v1.admin.customers.notes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/customers/{customer}/date-of-birth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /customers/{customer}/date-of-birth` — needs customers.update and customers.view_pii */
+        put: operations["v1.admin.customers.date-of-birth.update"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5699,8 +5795,26 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** `PATCH /account` — name, email, language. The phone is the identity and not editable here */
+        /** `PATCH /account` — name, email, language, date of birth. The phone is the identity and not editable here */
         patch: operations["v1.storefront.account.update"];
+        trace?: never;
+    };
+    "/storefront/account/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/consents` — the customer's own; no row reads as not consented */
+        get: operations["v1.storefront.account.consents.show"];
+        /** `PUT /account/consents` — opt in or out; recorded with source `storefront`, a withdrawal is kept, not deleted */
+        put: operations["v1.storefront.account.consents.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/storefront/account/logout": {
@@ -7243,6 +7357,94 @@ export interface components {
             score: number;
             location: components["schemas"]["CourierLocation"];
         };
+        /** CreditNote */
+        CreditNote: {
+            id: number;
+            /** @description `CN-26-000001`. */
+            number: string;
+            invoice_id: number;
+            /** @description The invoice credited, e.g. `INV-26-000001`. */
+            invoice_number: string;
+            order_id: number;
+            /**
+             * @description Why it was issued: the order was cancelled after the invoice, or a refund was paid.
+             * @enum {string}
+             */
+            reason: "order_cancelled" | "refund";
+            /** @description The order number (cancellation) or the RMA number (refund), as issued. */
+            source_reference: string | null;
+            /** @description Customer name, as on the invoice. */
+            issued_to_name: string;
+            total: string;
+            /** @description ISO 8601, UTC. */
+            issued_at: string;
+            /** @description Whether this user may print it (orders.view + customers.view_pii). */
+            can_print: boolean;
+            /** @description When the credited invoice was issued. ISO 8601, UTC. */
+            invoice_issued_at: string;
+            /** @description The refund's reason text (refund credit notes); null for a cancellation. */
+            note: string | null;
+            /** @constant */
+            template: "standard";
+            subtotal: string;
+            discount: string;
+            shipping: string;
+            tax: string;
+            /** @description Signed: what the parts above do not explain (e.g. a refund capped below its lines). */
+            adjustment: string;
+            amount_in_words: string | null;
+            /** @description The company details as at the credit note's issue. */
+            issued_by: {
+                name_en: string | null;
+                name_bn: string | null;
+                address_en: string | null;
+                address_bn: string | null;
+                hotline: string | null;
+                email: string | null;
+                website: string | null;
+                trade_licence: string | null;
+                bin: string | null;
+            };
+            /** @description The customer as on the invoice; PII masked without customers.view_pii. */
+            issued_to: {
+                [key: string]: unknown;
+            };
+            lines: {
+                /** @enum {string} */
+                kind: "item" | "balance";
+                name: string;
+                name_bn: string | null;
+                variant: string | null;
+                sku: string | null;
+                quantity: number;
+                unit_price: string;
+                amount: string;
+            }[];
+        };
+        /** CreditNoteListItem */
+        CreditNoteListItem: {
+            id: number;
+            /** @description `CN-26-000001`. */
+            number: string;
+            invoice_id: number;
+            /** @description The invoice credited, e.g. `INV-26-000001`. */
+            invoice_number: string;
+            order_id: number;
+            /**
+             * @description Why it was issued: the order was cancelled after the invoice, or a refund was paid.
+             * @enum {string}
+             */
+            reason: "order_cancelled" | "refund";
+            /** @description The order number (cancellation) or the RMA number (refund), as issued. */
+            source_reference: string | null;
+            /** @description Customer name, as on the invoice. */
+            issued_to_name: string;
+            total: string;
+            /** @description ISO 8601, UTC. */
+            issued_at: string;
+            /** @description Whether this user may print it (orders.view + customers.view_pii). */
+            can_print: boolean;
+        };
         /**
          * CropProductImageRequest
          * @description `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the
@@ -7328,6 +7530,12 @@ export interface components {
                 last_order_at: string | null;
             }[];
         };
+        /** CustomerDateOfBirth */
+        CustomerDateOfBirth: {
+            id: number;
+            /** @description Y-m-d. */
+            date_of_birth: string | null;
+        };
         /** CustomerListItem */
         CustomerListItem: {
             id: number;
@@ -7377,6 +7585,10 @@ export interface components {
             /** @description Full with customers.view_pii, otherwise `j***@gmail.com`. */
             email: string | null;
             has_account: boolean;
+            /** @description Y-m-d with customers.view_pii (personal data, rule 20), otherwise null. */
+            date_of_birth: string | null;
+            /** @description Whether a birth date is on file — told to every role, the date itself only with customers.view_pii. */
+            has_date_of_birth: boolean;
             /** @enum {string} */
             preferred_language: "bn" | "en";
             /** @enum {string} */
@@ -8618,6 +8830,17 @@ export interface components {
             issued_at: string;
             /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
             can_print: boolean;
+            /** @description Σ credit notes issued against this invoice (P8 batch 2); `0.00` when none. */
+            credited: string;
+            /** @description The invoice total less everything credited — what still stands. */
+            balance: string;
+            /**
+             * @description `none` (nothing credited), `partial`, or `full` (balance is zero).
+             * @enum {string}
+             */
+            credit_status: "none" | "partial" | "full";
+            /** @description Credit notes issued against this invoice, oldest first. */
+            credit_notes: components["schemas"]["CreditNoteListItem"][];
             /** @constant */
             template: "standard";
             subtotal: string;
@@ -8677,6 +8900,17 @@ export interface components {
             issued_at: string;
             /** @description Whether this user may print it (customer: orders.view + customers.view_pii). */
             can_print: boolean;
+            /** @description Σ credit notes issued against this invoice (P8 batch 2); `0.00` when none. */
+            credited: string;
+            /** @description The invoice total less everything credited — what still stands. */
+            balance: string;
+            /**
+             * @description `none` (nothing credited), `partial`, or `full` (balance is zero).
+             * @enum {string}
+             */
+            credit_status: "none" | "partial" | "full";
+            /** @description Credit notes issued against this invoice, oldest first. */
+            credit_notes: components["schemas"]["CreditNoteListItem"][];
         };
         /** InvoiceSettings */
         InvoiceSettings: {
@@ -8918,11 +9152,21 @@ export interface components {
         MenuLocation: "header" | "footer" | "mobile";
         /** MessageConsents */
         MessageConsents: {
+            /**
+             * @description `consented_at` is when it was last given (kept after a withdrawal); `source` and
+             *     `recorded_by` describe the latest change — `recorded_by` is null when the customer
+             *     changed it themselves on the storefront.
+             */
             birthday: {
                 consented: boolean;
                 consented_at: string | null;
                 withdrawn_at: string | null;
-                source: string | null;
+                /** @enum {string|null} */
+                source: "admin" | "storefront" | null;
+                recorded_by: {
+                    id: number;
+                    name: string;
+                } | null;
             };
         };
         /** MessagingSettings */
@@ -12227,6 +12471,8 @@ export interface components {
             name: string;
             phone: string;
             email: string | null;
+            /** @description Y-m-d — the customer's own; birthday messages need it plus their consent. */
+            date_of_birth: string | null;
             /** @enum {string} */
             preferred_language: "en" | "bn";
             phone_verified_at: string | null;
@@ -12235,6 +12481,14 @@ export interface components {
                 orders: number;
                 wishlist: number;
                 addresses: number;
+            };
+        };
+        /** StorefrontAccountConsents */
+        StorefrontAccountConsents: {
+            birthday: {
+                consented: boolean;
+                consented_at: string | null;
+                withdrawn_at: string | null;
             };
         };
         /** StorefrontAccountSession */
@@ -13410,6 +13664,15 @@ export interface components {
             ends_at?: string | null;
         };
         /**
+         * UpdateConsentRequest
+         * @description `PUT /storefront/account/consents` — the signed-in customer opts in to (or out of) birthday
+         *     messages (P8). Recorded with source `storefront`; a "no" withdraws, it never deletes.
+         */
+        UpdateConsentRequest: {
+            /** @description True: send me a message on my birthday. False: stop. */
+            birthday: boolean;
+        };
+        /**
          * UpdateCouponRequest
          * @description `PUT /coupons/{coupon}` — the whole document; needs marketing.manage.
          */
@@ -13492,6 +13755,18 @@ export interface components {
             return_charge: string;
         };
         /**
+         * UpdateCustomerDateOfBirthRequest
+         * @description `PUT /customers/{customer}/date-of-birth` — needs customers.update AND customers.view_pii:
+         *     a birth date is personal data, so only staff who may see it may change it (rule 20).
+         */
+        UpdateCustomerDateOfBirthRequest: {
+            /**
+             * Format: date
+             * @description Y-m-d, in the past; null clears it.
+             */
+            date_of_birth: string | null;
+        };
+        /**
          * UpdateDeliverySettingsRequest
          * @description `PUT /settings/delivery` — the store-level free-delivery threshold; needs
          *     shipments.manage_rates. null switches free delivery off. Decimal string (rule 6).
@@ -13539,10 +13814,16 @@ export interface components {
          * UpdateMessageConsentRequest
          * @description `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message
          *     consent as told to staff (P8); needs customers.update, like the channel preferences.
+         *     Recording a "yes" needs `customer_confirmed: true` — staff never opt a customer in on a guess.
          */
         UpdateMessageConsentRequest: {
             /** @description The customer agreed to a message on their birthday (reads their date of birth). */
             birthday: boolean;
+            /**
+             * @description Required (and must be true) when recording consent: staff confirm the customer
+             *     agreed — e.g. on a phone call. Not needed to withdraw.
+             */
+            customer_confirmed?: boolean;
         };
         /**
          * UpdateMessagingSettingsRequest
@@ -13752,7 +14033,7 @@ export interface components {
         };
         /**
          * UpdateProfileRequest
-         * @description `PATCH /storefront/account` — the customer's own name, email and language.
+         * @description `PATCH /storefront/account` — the customer's own name, email, language and date of birth.
          */
         UpdateProfileRequest: {
             name?: string;
@@ -13760,6 +14041,11 @@ export interface components {
             email?: string | null;
             /** @enum {string} */
             preferred_language?: "en" | "bn";
+            /**
+             * Format: date
+             * @description Y-m-d, in the past; null clears it. Read only by birthday messages, and only with their consent.
+             */
+            date_of_birth?: string | null;
         };
         /**
          * UpdatePromotionRequest
@@ -14194,6 +14480,51 @@ export interface operations {
                 };
             };
             /** @description Unknown parameter, unlisted preset, or an invalid / missing date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing dashboard.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.dashboard.export": {
+        parameters: {
+            query?: {
+                range?: string;
+                from?: string;
+                to?: string;
+                format?: string;
+                locale?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Unknown parameter, unlisted preset, format or locale, or an invalid / missing date (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -20551,6 +20882,128 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.credit-notes.index": {
+        parameters: {
+            query?: {
+                /** @description Credit notes of this invoice id. */
+                "filter[invoice]"?: number;
+                /** @description Credit notes of this order id. */
+                "filter[order]"?: number;
+                /** @description Why it was issued. */
+                "filter[reason]"?: "order_cancelled" | "refund";
+                /** @description Credit-note or invoice number, order/RMA reference or customer name contains. */
+                "filter[search]"?: string;
+                /** @description Issued on or after this Dhaka date (Y-m-d). */
+                "filter[issued_from]"?: string;
+                /** @description Issued on or before this Dhaka date (Y-m-d). */
+                "filter[issued_to]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "issued_at" | "-issued_at" | "number" | "-number" | "total" | "-total";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CreditNoteListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CreditNoteListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.credit-notes.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The credit note ID */
+                creditNote: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CreditNote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditNote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.credit-notes.pdf": {
+        parameters: {
+            query?: {
+                locale?: "en" | "bn" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The credit note ID */
+                creditNote: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The credit note PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.settings.invoice.show": {
         parameters: {
             query?: never;
@@ -23640,6 +24093,10 @@ export interface operations {
                 "filter[from]"?: string;
                 /** @description As on GET /finance/reports/pnl. */
                 "filter[to]"?: string;
+                /** @description csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells). */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and the sheet name. Default: the request locale. */
+                locale?: "en" | "bn";
             };
             header?: never;
             path?: never;
@@ -23650,14 +24107,15 @@ export interface operations {
             200: {
                 headers: {
                     /** @example attachment; filename=.csv */
-                    "Content-Disposition": string;
+                    "Content-Disposition"?: string;
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": Record<string, never>;
                     "text/csv; charset=UTF-8": string;
                 };
             };
-            /** @description Unlisted parameter or filter (`bad-request`) */
+            /** @description Unlisted parameter or filter, or an unknown format or locale (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -23733,6 +24191,10 @@ export interface operations {
                 "filter[to]"?: string;
                 /** @description As on GET /finance/reports/pnl/series. */
                 group?: "day" | "week" | "month" | "year";
+                /** @description csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells). */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and the sheet name. Default: the request locale. */
+                locale?: "en" | "bn";
             };
             header?: never;
             path?: never;
@@ -23743,14 +24205,15 @@ export interface operations {
             200: {
                 headers: {
                     /** @example attachment; filename=.csv */
-                    "Content-Disposition": string;
+                    "Content-Disposition"?: string;
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": Record<string, never>;
                     "text/csv; charset=UTF-8": string;
                 };
             };
-            /** @description Unlisted parameter or filter (`bad-request`) */
+            /** @description Unlisted parameter or filter, or an unknown format or locale (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -23842,6 +24305,10 @@ export interface operations {
                 "filter[source]"?: string;
                 /** @description As on GET /finance/reports/profitability. */
                 sort?: string;
+                /** @description csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells). */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and the sheet name. Default: the request locale. */
+                locale?: "en" | "bn";
             };
             header?: never;
             path?: never;
@@ -23852,14 +24319,15 @@ export interface operations {
             200: {
                 headers: {
                     /** @example attachment; filename=.csv */
-                    "Content-Disposition": string;
+                    "Content-Disposition"?: string;
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": Record<string, never>;
                     "text/csv; charset=UTF-8": string;
                 };
             };
-            /** @description Unlisted parameter, filter or sort (`bad-request`) */
+            /** @description Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -23977,6 +24445,10 @@ export interface operations {
                 "filter[search]"?: string;
                 /** @description As on GET /reports/inventory-valuation. */
                 sort?: string;
+                /** @description csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells). */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and the sheet name. Default: the request locale. */
+                locale?: "en" | "bn";
             };
             header?: never;
             path?: never;
@@ -23987,14 +24459,15 @@ export interface operations {
             200: {
                 headers: {
                     /** @example attachment; filename=.csv */
-                    "Content-Disposition": string;
+                    "Content-Disposition"?: string;
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": Record<string, never>;
                     "text/csv; charset=UTF-8": string;
                 };
             };
-            /** @description Unlisted parameter, filter or sort (`bad-request`) */
+            /** @description Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -24070,6 +24543,10 @@ export interface operations {
                 "filter[to]"?: string;
                 /** @description As on GET /reports/couriers. */
                 "filter[provider]"?: string;
+                /** @description csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells). */
+                format?: "csv" | "xlsx";
+                /** @description Language of the labels and the sheet name. Default: the request locale. */
+                locale?: "en" | "bn";
             };
             header?: never;
             path?: never;
@@ -24080,14 +24557,15 @@ export interface operations {
             200: {
                 headers: {
                     /** @example attachment; filename=.csv */
-                    "Content-Disposition": string;
+                    "Content-Disposition"?: string;
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": Record<string, never>;
                     "text/csv; charset=UTF-8": string;
                 };
             };
-            /** @description Unlisted parameter or filter (`bad-request`) */
+            /** @description Unlisted parameter or filter, or an unknown format or locale (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -26435,6 +26913,53 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.customers.date-of-birth.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The customer ID */
+                customer: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCustomerDateOfBirthRequest"];
+            };
+        };
+        responses: {
+            /** @description `CustomerDateOfBirth` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDateOfBirth"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing customers.update or customers.view_pii (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a past Y-m-d date (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.reports.customers": {
@@ -28943,6 +29468,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StorefrontAccount"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description A field is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.consents.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontAccountConsents` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountConsents"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.consents.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountConsents` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountConsents"];
                 };
             };
             /** @description No valid customer token (`unauthenticated`) */

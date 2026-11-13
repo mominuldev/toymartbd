@@ -20,12 +20,13 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * Anything outside the allowlist — an unknown parameter, an unlisted preset, a date with a
  * preset, a malformed or impossible date, a range longer than ReportPeriod::MAX_DAYS — is a
  * 400 `bad-request`, never silently ignored. Authorisation: dashboard.view.
+ * {@see DashboardExportRequest} extends the allowlist with `format` and `locale`.
  */
-final class DashboardRequest extends FormRequest
+class DashboardRequest extends FormRequest
 {
     public const array PARAMETERS = ['range', 'from', 'to'];
 
-    public function authorize(): bool
+    final public function authorize(): bool
     {
         return $this->user()?->can('view', DashboardReport::class) ?? false;
     }
@@ -42,11 +43,11 @@ final class DashboardRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $unknown = array_diff(array_map(strval(...), array_keys($this->query->all())), self::PARAMETERS);
+        $unknown = array_diff(array_map(strval(...), array_keys($this->query->all())), static::PARAMETERS);
         if ($unknown !== []) {
-            throw new BadRequestHttpException('Unknown parameter(s): '.implode(', ', $unknown).'. Allowed: '.implode(', ', self::PARAMETERS).'.');
+            throw new BadRequestHttpException('Unknown parameter(s): '.implode(', ', $unknown).'. Allowed: '.implode(', ', static::PARAMETERS).'.');
         }
-        foreach (self::PARAMETERS as $name) {
+        foreach (static::PARAMETERS as $name) {
             if ($this->query->has($name) && ! is_string($this->query->all()[$name])) {
                 throw new BadRequestHttpException("`{$name}` must be a single value.");
             }
@@ -54,7 +55,7 @@ final class DashboardRequest extends FormRequest
     }
 
     /** The Dhaka date range the dashboard covers. */
-    public function dateRange(): DateRange
+    final public function dateRange(): DateRange
     {
         $value = static fn (mixed $v): ?string => is_string($v) && trim($v) !== '' ? trim($v) : null;
 

@@ -7,8 +7,8 @@ namespace App\Domain\Reporting\Exports;
 use App\Support\Money;
 
 /**
- * Turns report arrays (SalesAnalytics, ProfitAndLoss::statement, CourierPerformanceReport)
- * into export sections. Headers are stable machine keys like the other report CSVs; labels
+ * Turns report arrays (SalesAnalytics, ProfitAndLoss statement and series, Profitability,
+ * InventoryValuationReport, CourierPerformanceReport) into export sections. Headers are stable machine keys like the other report CSVs; labels
  * and sheet titles are in the requested locale. Numerals are Western in both (rule 36).
  * A value the viewer may not see (null under a hidden-profit report) is an empty cell.
  */
@@ -95,30 +95,109 @@ final class ReportSheets
     }
 
     /**
-     * The P&L statement as one section, one row per line (the shape of the P&L CSV).
+     * The P&L statement as one section, one row per line — exactly the rows of the P&L CSV
+     * export (`/finance/reports/pnl/export`), so the CSV, the XLSX and the scheduled email agree.
      *
      * @param  array<string, mixed>  $statement  ProfitAndLoss::statement()
      * @return list<Sheet>
      */
     public static function pnl(array $statement, string $locale): array
     {
+        $t = static fn (string $key): string => (string) __('reports.pnl.'.$key, [], $locale);
         $rows = [];
         foreach ($statement['blocks'] as $block) {
             foreach ($block['rows'] as $row) {
-                $rows[] = [(string) $block['number'], (string) __('reports.pnl.block.'.$block['key'], [], $locale), $row['kind'], $row['key'], (string) __('reports.pnl.line.'.$row['key'], [], $locale), self::cell($row['amount'])];
+                $rows[] = [(string) $block['number'], $t('block.'.$block['key']), $row['kind'], $row['key'], $t('line.'.$row['key']), implode(' ', $row['types'] ?? []), self::cell($row['amount'])];
             }
         }
         foreach ($statement['expenses_by_category'] as $category) {
-            $rows[] = ['', (string) __('reports.pnl.expenses_by_category', [], $locale), 'category', (string) $category['category_id'], $category['name'], self::cell($category['amount'])];
+            $rows[] = ['', $t('expenses_by_category'), 'category', (string) $category['category_id'], (string) $category['name'], self::cell($category['type']), self::cell($category['amount'])];
         }
-        $rows[] = ['', (string) __('reports.pnl.cash', [], $locale), 'cash', 'cash_in', (string) __('reports.pnl.cash_in', [], $locale), self::cell($statement['cash']['in'])];
-        $rows[] = ['', (string) __('reports.pnl.cash', [], $locale), 'cash', 'cash_out', (string) __('reports.pnl.cash_out', [], $locale), self::cell($statement['cash']['out']->negate())];
-        $rows[] = ['', (string) __('reports.pnl.cash', [], $locale), 'cash', 'cash_net', (string) __('reports.pnl.cash_net', [], $locale), self::cell($statement['cash']['net'])];
+        $rows[] = ['', $t('cash'), 'cash', 'cash_in', $t('cash_in'), '', self::cell($statement['cash']['in'])];
+        $rows[] = ['', $t('cash'), 'cash', 'cash_out', $t('cash_out'), '', self::cell($statement['cash']['out']->negate())];
+        $rows[] = ['', $t('cash'), 'cash', 'cash_net', $t('cash_net'), '', self::cell($statement['cash']['net'])];
 
-        return [new Sheet((string) __('analytics.sheet.pnl', [], $locale), ['block', 'block_name', 'kind', 'key', 'label', 'amount'], $rows)];
+        return [new Sheet(
+            (string) __('analytics.sheet.pnl', [], $locale),
+            ['block', 'block_name', 'kind', 'key', 'label', 'ledger_types', 'amount'],
+            $rows,
+            ['block_name', 'kind', 'key', 'label', 'ledger_types'],
+        )];
     }
 
     /**
+     * The P&L subtotals per Dhaka day / Saturday week / month / year, one row per bucket.
+     *
+     * @param  array<string, mixed>  $series  ProfitAndLoss::series()
+     * @return list<Sheet>
+     */
+    public static function pnlSeries(array $series, string $locale): array
+    {
+        $lineKeys = array_keys($series['buckets'][0]['lines'] ?? []);
+        $totalKeys = ['gross_revenue', 'net_revenue', 'gross_profit', 'profit_after_delivery', 'profit_after_losses', 'net_profit'];
+        $rows = array_map(static fn (array $b): array => [
+            $b['from'], $b['to'], (string) $b['days'],
+            ...array_map(static fn (string $k): string => self::cell($b['lines'][$k]), $lineKeys),
+            ...array_map(static fn (string $k): string => self::cell($b['totals'][$k]), $totalKeys),
+            self::cell($b['net_margin_percent'] ?? null),
+        ], $series['buckets']);
+
+        return [new Sheet(
+            (string) __('analytics.sheet.pnl_by.'.$series['granularity'], [], $locale),
+            ['from', 'to', 'days', ...$lineKeys, ...$totalKeys, 'net_margin_percent'],
+            $rows,
+            ['from', 'to'],
+        )];
+    }
+
+    /**
+     * Profitability by product, category or recommendation source — every row of the report.
+     * The export needs catalog.view_cost, so cost and profit are always present here; a null
+     * figure (no margin on zero revenue) is an empty cell, never zero.
+     *
+     * @param  array<string, mixed>  $report  Profitability::byProduct()/byCategory()/bySource() + `by`
+     * @return list<Sheet>
+     */
+    public static function profitability(array $report, string $locale): array
+    {
+        $identity = match ($report['by']) {
+            'product' => ['product_id', 'sku', 'name', 'name_bn', 'category_name'],
+            'category' => ['category_id', 'parent_id', 'name', 'name_bn', 'products'],
+            default => ['source', 'products'],
+        };
+        $header = [...$identity, 'orders', 'units_sold', 'units_returned', 'units', 'gross_revenue', 'reversals', 'net_revenue', 'cogs', 'gross_profit', 'margin_percent'];
+
+        return [new Sheet(
+            (string) __('analytics.sheet.profitability.'.$report['by'], [], $locale),
+            $header,
+            array_map(static fn (array $row): array => self::pick($row, $header), $report['rows']),
+            ['sku', 'name', 'name_bn', 'category_name', 'source'],
+        )];
+    }
+
+    /**
+     * Inventory valuation at cost, one row per variant × location, then the total row.
+     *
+     * @param  array<string, mixed>  $report  InventoryValuationReport::report()
+     * @return list<Sheet>
+     */
+    public static function inventoryValuation(array $report, string $locale): array
+    {
+        $header = ['sku', 'name', 'name_bn', 'variant_name', 'category_name', 'location_code', 'location_name', 'on_hand', 'unit_cost', 'value', 'estimated'];
+        $rows = array_map(static fn (array $row): array => self::pick($row, $header), $report['rows']);
+        $rows[] = ['', (string) __('reports.valuation.total', [], $locale), '', '', '', '', '', self::cell($report['totals']['on_hand']), '', self::cell($report['totals']['value']), ''];
+
+        return [new Sheet(
+            (string) __('analytics.sheet.inventory_valuation', [], $locale),
+            $header,
+            $rows,
+            ['sku', 'name', 'name_bn', 'variant_name', 'category_name', 'location_code', 'location_name'],
+        )];
+    }
+
+    /**
+     * Courier performance: the total row, one row per provider, then one per district.
+     *
      * @param  array<string, mixed>  $data  CourierPerformanceReport::report()
      * @return list<Sheet>
      */
@@ -138,7 +217,12 @@ final class ReportSheets
             $rows[] = $line('district', $row['district'] === null ? '' : (string) $row['district']['id'], $row['district']['name'] ?? (string) __('reports.couriers.no_district', [], $locale), (string) ($row['district']['name_bn'] ?? ''), $row);
         }
 
-        return [new Sheet((string) __('analytics.sheet.couriers', [], $locale), ['scope', 'code', 'name', 'name_bn', ...$metrics], $rows)];
+        return [new Sheet(
+            (string) __('analytics.sheet.couriers', [], $locale),
+            ['scope', 'code', 'name', 'name_bn', ...$metrics],
+            $rows,
+            ['code', 'name', 'name_bn'],
+        )];
     }
 
     /** A report value as cell text: Money as its decimal, null as empty. */

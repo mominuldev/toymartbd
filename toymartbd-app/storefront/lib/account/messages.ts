@@ -67,6 +67,8 @@ const en = {
         failed: 'Something went wrong. Please try again, or call us on {phone}.',
         expired: 'Your code expired. Ask for a new one.',
         sessionEnded: 'Please sign in again.',
+        birthdayNeedsDate: 'Add your date of birth so we know when to send your birthday message.',
+        dateInvalid: 'Enter your date of birth as a date in the past.',
     },
     home: {
         greeting: 'Hi, {name}!',
@@ -195,6 +197,19 @@ const en = {
         signOutBody: 'Signing out on a shared phone keeps your orders private.',
         signOut: 'Sign out',
         welcome: 'Welcome! Add your name so we know what to call you.',
+        // P8 birthday messages. PLACEHOLDER COPY — the owner approves the wording and the channel
+        // (today: SMS; WhatsApp once a Business account is approved). Plain language: what is sent,
+        // how, how often, and how to stop.
+        birthday: {
+            title: 'Birthday message',
+            dob: 'Date of birth (optional)',
+            dobHelp: 'Only used for your birthday message, and only if you tick the box below.',
+            optIn: 'Yes, send me a birthday message',
+            what: 'On your birthday we send one short “Happy birthday” greeting from Toy Mart BD, by SMS (or WhatsApp once we offer it), at about 10 am. Once a year, nothing else.',
+            stop: 'To stop, untick the box and save. You can change your mind any time.',
+            on: 'You get a birthday message.',
+            withdrawn: 'You stopped birthday messages on {date}.',
+        },
     },
 };
 
@@ -262,6 +277,8 @@ const bn: AccountMessages = {
         failed: 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন, অথবা {phone} নম্বরে ফোন করুন।',
         expired: 'কোডের মেয়াদ শেষ। নতুন কোড চান।',
         sessionEnded: 'অনুগ্রহ করে আবার সাইন ইন করুন।',
+        birthdayNeedsDate: 'জন্মদিনের বার্তা কবে পাঠাব জানতে আপনার জন্মতারিখ দিন।',
+        dateInvalid: 'জন্মতারিখ হিসেবে অতীতের একটি তারিখ দিন।',
     },
     home: {
         greeting: 'হাই, {name}!',
@@ -389,6 +406,17 @@ const bn: AccountMessages = {
         signOutBody: 'শেয়ার করা ফোনে সাইন আউট করলে আপনার অর্ডার গোপন থাকে।',
         signOut: 'সাইন আউট',
         welcome: 'স্বাগতম! আপনার নাম দিন, যাতে আমরা আপনাকে নাম ধরে ডাকতে পারি।',
+        // PLACEHOLDER COPY (P8) — owner and a native speaker to approve.
+        birthday: {
+            title: 'জন্মদিনের বার্তা',
+            dob: 'জন্মতারিখ (ঐচ্ছিক)',
+            dobHelp: 'শুধু জন্মদিনের বার্তার জন্য ব্যবহার হয়, আর তাও কেবল নিচের বক্সে টিক দিলে।',
+            optIn: 'হ্যাঁ, আমাকে জন্মদিনের বার্তা পাঠান',
+            what: 'আপনার জন্মদিনে টয় মার্ট বিডি থেকে একটি ছোট “শুভ জন্মদিন” শুভেচ্ছা পাঠাই — এসএমএসে (চালু হলে হোয়াটসঅ্যাপে), সকাল 10টার দিকে। বছরে একবার, এর বেশি কিছু নয়।',
+            stop: 'বন্ধ করতে বক্সের টিক তুলে সেভ করুন। যেকোনো সময় মত বদলাতে পারেন।',
+            on: 'আপনি জন্মদিনের বার্তা পাবেন।',
+            withdrawn: 'আপনি {date} তারিখে জন্মদিনের বার্তা বন্ধ করেছেন।',
+        },
     },
 };
 

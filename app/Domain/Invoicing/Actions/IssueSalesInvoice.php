@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\DB;
  *
  * WHEN: the docs do not fix the moment, so it is issued on the first print (single or bulk)
  * of a non-cancelled order. Printing a cancelled order that has no invoice is refused
- * (`cancelled`); one issued before the cancellation stays and reprints (a credit note is an
- * open item).
+ * (`cancelled`); one issued before the cancellation stays and reprints, corrected by a
+ * credit note (IssueCancellationCreditNote, P8 batch 2).
  *
  * HOW: one transaction — the series counter is locked FIRST, so every issuer serialises on
  * it; then the order is checked for an invoice under that lock (a concurrent issuer for the

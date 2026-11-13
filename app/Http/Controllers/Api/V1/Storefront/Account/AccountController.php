@@ -21,7 +21,7 @@ final class AccountController extends ApiController
         return new AccountResource($request->customer());
     }
 
-    /** `PATCH /account` — name, email, language. The phone is the identity and not editable here. */
+    /** `PATCH /account` — name, email, language, date of birth. The phone is the identity and not editable here. */
     #[OpenApiResponse(401, 'No valid customer token (`unauthenticated`)')]
     #[OpenApiResponse(422, 'A field is invalid (`validation-error`)')]
     public function update(UpdateProfileRequest $request, UpdateCustomerProfile $update): AccountResource

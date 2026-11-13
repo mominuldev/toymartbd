@@ -97,6 +97,9 @@ class AppServiceProvider extends ServiceProvider
         // promotion saves and start/end boundaries revalidate the storefront; a reminded cart
         // that becomes an order is recovered.
         Event::listen(\App\Domain\Ordering\Events\OrderCancelled::class, \App\Domain\Marketing\Listeners\ReverseUsageOnOrderCancelled::class);
+        // P8 batch 2: an invoiced order cancelled, or a refund paid on one, gets a credit note.
+        Event::listen(\App\Domain\Ordering\Events\OrderCancelled::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnOrderCancelled::class);
+        Event::listen(\App\Domain\Ordering\Events\RefundPaid::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnRefundPaid::class);
         Event::listen(\App\Domain\Marketing\Events\PromotionChanged::class, \App\Domain\Content\Listeners\RevalidatePromotionPages::class);
         Event::listen(OrderPlaced::class, \App\Domain\Notification\Listeners\MarkCartRecoveredOnOrderPlaced::class);
         // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).

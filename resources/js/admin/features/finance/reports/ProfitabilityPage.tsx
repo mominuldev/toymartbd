@@ -5,11 +5,12 @@ import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { profitBys, profitSorts, profitabilityExportUrl, useProfitability, type ProfitBy, type ProfitSort, type ProfitabilityRow } from './api';
-import { ExportLink, Money, PeriodPicker, Percent, ReportTabs, formatCount, formatDay, useRangeParams } from './parts';
+import { Money, PeriodPicker, Percent, ReportTabs, formatCount, formatDay, useRangeParams } from './parts';
 
 type Column = { key: ProfitSort | 'returned' | 'reversals' | 'category' | 'products'; label: MessageKey; numeric: boolean; sortable: boolean };
 
@@ -71,7 +72,7 @@ export function ProfitabilityPage() {
                 actions={
                     <>
                         <PeriodPicker range={range} preset={preset} onPreset={choosePreset} onRange={(r) => set({ preset: 'custom', ...r })} />
-                        <ExportLink href={profitabilityExportUrl(range, filters)} />
+                        <ExportMenu href={(format, locale) => profitabilityExportUrl(range, filters, { format, locale })} />
                     </>
                 }
             />

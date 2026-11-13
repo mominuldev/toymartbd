@@ -8,7 +8,7 @@ import type { StorefrontOrder } from '../cart/types';
 import { localizedPath, type Locale } from '../i18n/config';
 import { ACCOUNT_COOKIE, ACCOUNT_FLASH_COOKIE } from './cookies';
 import { decodeFlash } from './flash';
-import type { Account, AccountFlash, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
+import type { Account, AccountConsents, AccountFlash, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
 
 // The customer account, server side (P4-STO-11, docs/api/account.md). The customer's Sanctum token
 // lives in an httpOnly cookie, is read only here and in the account Server Actions, and is sent to
@@ -97,10 +97,15 @@ export async function getWishlist(token: string, locale: Locale): Promise<Wishli
     return (await read<{ data: WishlistItem[] }>('storefront/account/wishlist', token, locale)).data;
 }
 
+/** The customer's own message consents (P8: birthday). No customer id is sent — the token is the customer. */
+export async function getConsents(token: string, locale: Locale): Promise<AccountConsents> {
+    return read<AccountConsents>('storefront/account/consents', token, locale);
+}
+
 export type Write<T> = { ok: true; data: T } | { ok: false; status: number; message: string | null; errors: Record<string, string> };
 
 /** A customer write; 4xx come back as a result (field errors keyed by the API's field), 5xx throw. */
-export async function accountWrite<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, token: string | null, locale: Locale, body?: unknown, headers: Record<string, string> = {}): Promise<Write<T>> {
+export async function accountWrite<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, token: string | null, locale: Locale, body?: unknown, headers: Record<string, string> = {}): Promise<Write<T>> {
     try {
         const { data } = await send<T>(method, path, { locale, body, headers: { ...(token ? customerHeaders(token) : {}), ...headers } });
         return { ok: true, data };

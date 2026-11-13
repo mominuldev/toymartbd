@@ -14,6 +14,7 @@ use Database\Seeders\DeliverySeeder;
 use Database\Seeders\GeographySeeder;
 use Tests\Feature\Orders\Support;
 use Tests\Support\RoleMatrix;
+use Tests\Support\Xlsx;
 
 /*
  * P6 — courier performance per provider and district over Dhaka dates. The expected figures
@@ -126,6 +127,54 @@ it('exports the same figures as CSV', function (): void {
         ->and($csv)->toContain('provider,steadfast,Steadfast,স্টেডফাস্ট,5,2,0,1,0,2,66.67,33.33,1.5,92.50,3800.00,1500.00,1500.00');
 });
 
+it('keeps the courier CSV byte-for-byte as before XLSX', function (): void {
+    Support::actingAs(Role::Accountant);
+    [$dhaka, $ctg] = reportFixtures();
+    $names = District::query()->whereIn('id', [$dhaka, $ctg])->get()->keyBy('id');
+
+    $response = $this->get('/api/v1/admin/reports/couriers/export?filter[from]=2026-11-01&filter[to]=2026-11-07&format=csv')->assertOk();
+    $response->assertHeader('Content-Disposition', 'attachment; filename=courier-performance-2026-11-01-to-2026-11-07.csv');
+
+    expect(file_get_contents($response->getFile()->getPathname()))->toBe(
+        "\u{FEFF}scope,code,name,name_bn,booked,delivered,partially_delivered,returned,cancelled,in_flight,delivery_rate,return_rate,average_days_to_deliver,average_charge,cod_expected,cod_collected,cod_outstanding\n"
+        ."total,,\"All couriers\",,7,3,1,1,1,2,75.00,25.00,2.0,86.00,4400.00,1750.00,1500.00\n"
+        ."provider,steadfast,Steadfast,স্টেডফাস্ট,5,2,0,1,0,2,66.67,33.33,1.5,92.50,3800.00,1500.00,1500.00\n"
+        ."provider,pathao,Pathao,পাঠাও,2,1,1,0,1,0,100.00,0.00,3.0,60.00,600.00,250.00,0.00\n"
+        ."district,{$dhaka},{$names[$dhaka]->name},{$names[$dhaka]->name_bn},4,2,1,0,0,2,100.00,0.00,2.5,66.67,3100.00,1250.00,1500.00\n"
+        ."district,{$ctg},{$names[$ctg]->name},{$names[$ctg]->name_bn},3,1,0,1,1,0,50.00,50.00,1.0,115.00,1300.00,500.00,0.00\n",
+    );
+});
+
+it('exports the same figures as XLSX, with Bangla labels and guarded text', function (): void {
+    Support::actingAs(Role::Manager);
+    reportFixtures();
+    CourierProvider::query()->where('code', 'pathao')->update(['name' => '=cmd|calc']);
+    $range = 'filter[from]=2026-11-01&filter[to]=2026-11-07';
+
+    $json = $this->getJson("/api/v1/admin/reports/couriers?{$range}")->assertOk()->json();
+    $response = $this->get("/api/v1/admin/reports/couriers/export?{$range}&format=xlsx&locale=bn");
+    $response->assertHeader('Content-Disposition', 'attachment; filename="courier-performance-2026-11-01-to-2026-11-07.xlsx"');
+    $sheet = Xlsx::single($response);
+
+    expect($sheet['name'])->toBe('কুরিয়ার পারফরম্যান্স')
+        ->and($sheet['rows'])->toHaveCount(1 + count($json['providers']) + count($json['districts']));
+    $expected = [$json['totals'], ...$json['providers'], ...$json['districts']];
+    foreach ($expected as $i => $figures) {
+        foreach (['booked', 'delivered', 'partially_delivered', 'returned', 'cancelled', 'in_flight'] as $count) {
+            expect($sheet['rows'][$i][$count])->toBe($figures[$count]);
+        }
+        foreach (['delivery_rate', 'return_rate', 'average_days_to_deliver', 'average_charge', 'cod_expected', 'cod_collected', 'cod_outstanding'] as $decimal) {
+            expect($sheet['rows'][$i][$decimal])->toEqual(Xlsx::number($figures[$decimal]));
+        }
+    }
+    $pathao = collect($sheet['rows'])->firstWhere('code', 'pathao');
+    expect($sheet['rows'][0]['name'])->toBe((string) __('reports.couriers.all', [], 'bn'))
+        ->and($pathao['name'])->toBe("'=cmd|calc")
+        ->and($pathao['name_bn'])->toBe('পাঠাও')
+        // A district id is a code, not a quantity: it stays text.
+        ->and(collect($sheet['rows'])->firstWhere('scope', 'district')['code'])->toBe((string) $json['districts'][0]['district']['id']);
+});
+
 describe('role matrix', function (): void {
     it('guards the report with reports.view + shipments.view', function (Role $role): void {
         $allowed = RoleMatrix::allows($role, Permission::ReportsView) && RoleMatrix::allows($role, Permission::ShipmentsView);
@@ -135,6 +184,15 @@ describe('role matrix', function (): void {
     it('guards the export with reports.export too', function (Role $role): void {
         $allowed = RoleMatrix::allows($role, Permission::ReportsView) && RoleMatrix::allows($role, Permission::ShipmentsView) && RoleMatrix::allows($role, Permission::ReportsExport);
         RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->get('/api/v1/admin/reports/couriers/export', ['Accept' => 'application/json']));
+    })->with(array_map(static fn (Role $r): array => [$r], Role::cases()));
+
+    it('guards the XLSX export the same way, and refuses an unknown format or locale with 400', function (Role $role): void {
+        $allowed = RoleMatrix::allows($role, Permission::ReportsView) && RoleMatrix::allows($role, Permission::ShipmentsView) && RoleMatrix::allows($role, Permission::ReportsExport);
+        RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->get('/api/v1/admin/reports/couriers/export?format=xlsx', ['Accept' => 'application/json']));
+        if ($allowed) {
+            $this->get('/api/v1/admin/reports/couriers/export?format=pdf', ['Accept' => 'application/json'])->assertStatus(400)->assertJsonPath('type', 'https://toymartbd.com/problems/bad-request');
+            $this->get('/api/v1/admin/reports/couriers/export?locale=fr', ['Accept' => 'application/json'])->assertStatus(400);
+        }
     })->with(array_map(static fn (Role $r): array => [$r], Role::cases()));
 
     it('refuses a guest with 401', function (): void {

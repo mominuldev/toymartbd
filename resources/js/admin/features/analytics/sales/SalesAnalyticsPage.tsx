@@ -1,14 +1,14 @@
 import { useId, useState, type ReactNode } from 'react';
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { DownloadSimpleIcon, InfoIcon } from '@phosphor-icons/react';
+import { InfoIcon } from '@phosphor-icons/react';
 import { useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -107,7 +107,7 @@ export function SalesAnalyticsPage() {
                                 </div>
                             </>
                         )}
-                        {can(me, 'reports.export') && <ExportMenu filters={filters} />}
+                        {can(me, 'reports.export') && <ExportMenu href={(format, lang) => salesExportUrl(filters, format, lang)} />}
                     </>
                 }
             />
@@ -166,27 +166,6 @@ export function SalesAnalyticsPage() {
                 </>
             )}
         </section>
-    );
-}
-
-/** Figma Export button (outline md) opening the two formats; plain download links to the server-built file. */
-function ExportMenu({ filters }: { filters: SalesFilters }) {
-    const { t, locale } = useI18n();
-    return (
-        <details className="relative">
-            <summary className={`${buttonClass('outline')} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
-                <DownloadSimpleIcon size={16} aria-hidden />
-                {t('reports.export')}
-            </summary>
-            <div className="absolute end-0 z-10 mt-1 flex w-48 flex-col rounded-sm border border-line-default bg-surface p-1 shadow-e2">
-                <a href={salesExportUrl(filters, 'xlsx', locale)} download className="rounded-xs px-3 py-2 t-admin-body text-fg-primary hover:bg-subtle">
-                    {t('sales.export.xlsx')}
-                </a>
-                <a href={salesExportUrl(filters, 'csv', locale)} download className="rounded-xs px-3 py-2 t-admin-body text-fg-primary hover:bg-subtle">
-                    {t('sales.export.csv')}
-                </a>
-            </div>
-        </details>
     );
 }
 

@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
 
     // Dashboard (P8): KPIs, status strip, trend, best sellers, low stock, needs attention. Read-only.
     Route::get('/dashboard', [App\Http\Controllers\Api\V1\Admin\DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/dashboard/export', [App\Http\Controllers\Api\V1\Admin\DashboardController::class, 'export'])->name('dashboard.export');
 
     // Catalog. DELETE archives (a brand is never hard-deleted; products reference it).
     Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
@@ -296,6 +297,11 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/invoices/{invoice}', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
     Route::get('/invoices/{invoice}/pdf', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'pdf'])->whereNumber('invoice')->name('invoices.pdf');
     Route::get('/purchases/{purchase}/invoice', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'purchase'])->whereNumber('purchase')->name('purchases.invoice');
+    // Credit notes (P8 batch 2): issued by Invoicing's listeners on cancellation after issue
+    // and on a paid refund; read and reprinted here only (immutable).
+    Route::get('/credit-notes', [App\Http\Controllers\Api\V1\Admin\CreditNoteController::class, 'index'])->name('credit-notes.index');
+    Route::get('/credit-notes/{creditNote}', [App\Http\Controllers\Api\V1\Admin\CreditNoteController::class, 'show'])->whereNumber('creditNote')->name('credit-notes.show');
+    Route::get('/credit-notes/{creditNote}/pdf', [App\Http\Controllers\Api\V1\Admin\CreditNoteController::class, 'pdf'])->whereNumber('creditNote')->name('credit-notes.pdf');
     Route::get('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'show'])->name('settings.invoice.show');
     Route::put('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'update'])->name('settings.invoice.update');
 

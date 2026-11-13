@@ -7,7 +7,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useDashboard, useDashboardRange, type Dashboard } from './api';
 import { BestSellersCard, CategoryDonut, LowStockCard, TrendCard } from './cards';
 import { formatCount, moneyText, onePlace, rangeText, dhakaHour } from './format';
-import { ActivityFeed, AttentionStack, Delta, Money, RangePicker, Sparkline, StatCard, StatusStrip } from './parts';
+import { ActivityFeed, AttentionStack, Delta, ExportMenu, Money, RangePicker, Sparkline, StatCard, StatusStrip } from './parts';
 
 /** Today's Dhaka date (rule 11) — the date inputs' upper bound only. */
 function dhakaToday(): string {
@@ -38,7 +38,14 @@ export function DashboardPage() {
             <ContentHeader
                 title={t('dash.title')}
                 subtitle={data ? t(`dash.greeting.${part}` as MessageKey, { name: me?.name ?? '', range: summary }) : undefined}
-                actions={<RangePicker range={range} shown={shown} onChange={setRange} today={dhakaToday()} />}
+                actions={
+                    <div className="flex w-full items-start gap-3 lg:w-auto">
+                        <div className="min-w-0 flex-1">
+                            <RangePicker range={range} shown={shown} onChange={setRange} today={dhakaToday()} />
+                        </div>
+                        {data && Object.values(data.visibility).some(Boolean) && <ExportMenu range={range} />}
+                    </div>
+                }
             />
             {query.isError && !data ? (
                 <QueryError error={query.error} onRetry={() => void query.refetch()} />

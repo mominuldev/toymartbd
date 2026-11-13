@@ -120,8 +120,9 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Domain\\Reporting\\(?!Events\\)#'
     # Invoicing (P8, PRD N-13): issued invoices snapshot an order or a PO at issue and are
-    # immutable afterwards. Reads Ordering and Purchasing; writes only `invoices` and its
-    # number sequence. Nothing depends on it except Http and Providers.
+    # immutable afterwards. Reads Ordering, Purchasing and (credit notes)
+    # Payment refunds; writes only `invoices`, `credit_notes` and their number sequence.
+    # Nothing depends on it except Http and Providers.
     - name: Invoicing
       collectors:
         - type: classNameRegex
@@ -170,4 +171,5 @@ deptrac:
     Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Cart, NotificationContracts]
     # Reporting reads the read models of the domains it reports on (P8 batch 1 brief).
     Reporting: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Finance, Inventory, Fulfilment]
-    Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing]
+    # Credit notes (P8 batch 2) read the paid refund (Payment\Models\Refund) they credit.
+    Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing, Payment]

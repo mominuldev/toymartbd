@@ -17,6 +17,7 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Xlsx;
 
 /*
  * P&L statement and series (P5 reports): correctness on a hand-computed scenario with a
@@ -298,3 +299,85 @@ it('refuses unlisted parameters, filters, values and too many buckets with 400',
     'reversed range' => ['filter[from]=2026-11-08&filter[to]=2026-11-01'],
     'too many days' => ['filter[from]=2024-01-01&filter[to]=2026-01-01&group=day'],
 ]);
+
+it('keeps the P&L CSV byte-for-byte as before XLSX (format=csv is the default)', function (): void {
+    ['ads' => $ads, 'sms' => $sms] = pnlScenario();
+    $user = pnlStaff();
+    $range = 'filter[from]=2026-11-02&filter[to]=2026-11-08';
+
+    $default = $this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/export?{$range}");
+    $default->assertOk()
+        ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+        ->assertHeader('Content-Disposition', 'attachment; filename=profit-and-loss-2026-11-02-to-2026-11-08.csv');
+    $explicit = $this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/export?{$range}&format=csv");
+
+    $block = static fn (int $n, string $name, array $lines): string => implode('', array_map(static fn (string $line): string => "{$n},{$name},{$line}\n", $lines));
+    $expected = "\u{FEFF}block,block_name,kind,key,label,ledger_types,amount\n"
+        .$block(1, '"What customers owed us"', ['line,product_revenue,"Product revenue",sale_revenue,9250.00', 'line,delivery_revenue,"Delivery charges collected",shipping_revenue,360.00', 'subtotal,gross_revenue,"Gross revenue",,9610.00', 'line,discounts,"Discounts and coupons",discount_given,-100.00', 'subtotal,net_revenue,"Net revenue",,9510.00'])
+        .$block(2, '"What the toys cost us"', ['line,cogs,"Cost of goods sold",cogs,-5800.00', 'subtotal,gross_profit,"Gross profit",,3710.00'])
+        .$block(3, '"What it cost to deliver and get paid"', ['line,courier_charges,"Courier delivery charges",courier_charge,-540.00', 'line,cod_fees,"COD collection fees",courier_cod_fee,-97.00', 'line,return_charges,"Courier return charges",courier_return_charge,-70.00', 'line,gateway_fees,"Payment gateway fees",gateway_fee,0.00', 'line,packaging,Packaging,packaging,-125.00', 'subtotal,profit_after_delivery,"Profit after delivery",,2878.00'])
+        .$block(4, '"What went wrong"', ['line,refunds,"Refunds to customers",refund,-300.00', 'line,write_offs,"Damaged stock written off",inventory_write_off,-1280.00', 'subtotal,profit_after_losses,"Profit after losses",,1298.00'])
+        .$block(5, '"What it cost to run the shop"', ['line,marketing,Advertising,marketing,-1400.00', 'line,salaries,Salaries,salary,0.00', 'line,rent,Rent,rent,0.00', 'line,utilities,Utilities,utility,0.00', 'line,other_expenses,"Other running costs",other_expense,-500.00', 'line,other_income,"Other income",other_income,0.00', 'subtotal,net_profit,"Net profit",,-602.00'])
+        .",\"Expenses by category\",category,{$ads->id},\"Facebook ads\",marketing,-1400.00\n"
+        .",\"Expenses by category\",category,{$sms->id},\"SMS credit\",operating,-500.00\n"
+        .",\"Cash, not profit\",cash,cash_in,Received,,9153.00\n"
+        .",\"Cash, not profit\",cash,cash_out,\"Paid out\",,-7200.00\n"
+        .",\"Cash, not profit\",cash,cash_net,\"Net cash movement\",,1953.00\n";
+
+    expect($default->streamedContent())->toBe($expected)
+        ->and($explicit->streamedContent())->toBe($expected);
+
+    $series = $this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/series/export?{$range}&group=week");
+    $series->assertHeader('Content-Disposition', 'attachment; filename=profit-and-loss-by-week-2026-11-02-to-2026-11-08.csv');
+    expect($series->streamedContent())->toBe(
+        "\u{FEFF}from,to,days,product_revenue,delivery_revenue,discounts,cogs,courier_charges,cod_fees,return_charges,gateway_fees,packaging,refunds,write_offs,marketing,salaries,rent,utilities,other_expenses,other_income,gross_revenue,net_revenue,gross_profit,profit_after_delivery,profit_after_losses,net_profit,net_margin_percent\n"
+        ."2026-11-02,2026-11-06,5,10450.00,360.00,-100.00,-6440.00,-540.00,-97.00,-70.00,0.00,-125.00,-300.00,-1280.00,0.00,0.00,0.00,0.00,-500.00,0.00,10810.00,10710.00,4270.00,3438.00,1858.00,1358.00,12.68\n"
+        ."2026-11-07,2026-11-08,2,-1200.00,0.00,0.00,640.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,-1400.00,0.00,0.00,0.00,0.00,0.00,-1200.00,-1200.00,-560.00,-560.00,-560.00,-1960.00,163.33\n",
+    );
+});
+
+it('exports the P&L statement and series as XLSX equal to the JSON, with Bangla labels and guarded text', function (): void {
+    ['ads' => $ads] = pnlScenario();
+    $ads->update(['name' => '=HYPERLINK("http://evil.example")']);
+    $user = pnlStaff();
+    $range = 'filter[from]=2026-11-02&filter[to]=2026-11-08';
+
+    $json = $this->actingAs($user)->getJson("/api/v1/admin/finance/reports/pnl?{$range}&compare=none")->assertOk()->json();
+    $response = $this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/export?{$range}&format=xlsx&locale=bn");
+    $response->assertHeader('Content-Disposition', 'attachment; filename="profit-and-loss-2026-11-02-to-2026-11-08.xlsx"');
+    $sheet = Xlsx::single($response);
+
+    expect($sheet['name'])->toBe('লাভ-ক্ষতি')
+        ->and($sheet['header'])->toBe(['block', 'block_name', 'kind', 'key', 'label', 'ledger_types', 'amount']);
+    $rows = [];
+    foreach ($sheet['rows'] as $row) {
+        $rows[$row['kind'] === 'category' ? 'category:'.$row['key'] : $row['key']] = $row;
+    }
+    foreach ($json['blocks'] as $block) {
+        foreach ($block['rows'] as $line) {
+            expect($rows[$line['key']]['amount'])->toEqual(Xlsx::number($line['amount']))
+                ->and($rows[$line['key']]['block'])->toBe($block['number']);
+        }
+    }
+    expect($rows['product_revenue']['block_name'])->toBe('গ্রাহকদের কাছে আমাদের পাওনা')
+        ->and($rows['net_profit']['label'])->toBe((string) __('reports.pnl.line.net_profit', [], 'bn'))
+        ->and($rows['net_profit']['amount'])->toEqual(-602)
+        ->and($rows['category:'.$ads->id]['label'])->toBe("'=HYPERLINK(\"http://evil.example\")")
+        ->and($rows['cash_in']['amount'])->toEqual(Xlsx::number($json['cash']['in']))
+        ->and($rows['cash_out']['amount'])->toEqual(-1 * Xlsx::number($json['cash']['out']))
+        ->and($rows['cash_net']['amount'])->toEqual(Xlsx::number($json['cash']['net']));
+
+    $seriesJson = $this->actingAs($user)->getJson("/api/v1/admin/finance/reports/pnl/series?{$range}&group=week")->assertOk()->json();
+    $series = Xlsx::single($this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/series/export?{$range}&group=week&format=xlsx&locale=en"));
+
+    expect($series['name'])->toBe('P&L by week')
+        ->and(array_column($series['rows'], 'from'))->toBe(array_column($seriesJson['buckets'], 'from'));
+    foreach ($seriesJson['buckets'] as $i => $bucket) {
+        foreach ([...$bucket['lines'], ...$bucket['totals']] as $key => $amount) {
+            expect($series['rows'][$i][$key])->toEqual(Xlsx::number($amount));
+        }
+        expect($series['rows'][$i]['days'])->toBe($bucket['days'])
+            ->and($series['rows'][$i]['net_margin_percent'])->toEqual(Xlsx::number($bucket['net_margin_percent']));
+    }
+    expect(Xlsx::single($this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/series/export?{$range}&group=day&format=xlsx&locale=bn"))['name'])->toBe('দৈনিক লাভ-ক্ষতি');
+});

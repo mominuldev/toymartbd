@@ -25,6 +25,11 @@ export const dashboardEn = {
     'dash.range.to': 'To',
     'dash.range.summary': '{preset} · {dates}',
 
+    'dash.export.button': 'Export',
+    'dash.export.xlsx': 'Excel (.xlsx)',
+    'dash.export.csv': 'CSV',
+    'dash.export.hint': 'Downloads this period as shown for your role',
+
     'dash.kpi.placedValue': 'Gross order value',
     'dash.kpi.ordersPlaced': 'Orders placed',
     'dash.kpi.revenue': 'Net revenue (delivered)',
@@ -143,6 +148,11 @@ export const dashboardBn: Record<keyof typeof dashboardEn, string> = {
     'dash.range.from': 'শুরু',
     'dash.range.to': 'শেষ',
     'dash.range.summary': '{preset} · {dates}',
+
+    'dash.export.button': 'এক্সপোর্ট',
+    'dash.export.xlsx': 'এক্সেল (.xlsx)',
+    'dash.export.csv': 'CSV',
+    'dash.export.hint': 'আপনার ভূমিকায় যা দেখা যায়, এই সময়ের তা-ই ডাউনলোড হবে',
 
     'dash.kpi.placedValue': 'মোট অর্ডার মূল্য',
     'dash.kpi.ordersPlaced': 'দেওয়া অর্ডার',

@@ -9,14 +9,16 @@ import { buttonClass } from '@/components/layout/button-styles';
 import { displayPhone } from '@/lib/account/flash';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
-import { readAccountFlash, requireAccount } from '@/lib/account/server';
-import { isLocale } from '@/lib/i18n';
+import { getConsents, readAccountFlash, requireAccount } from '@/lib/account/server';
+import { format, getMessages, isLocale } from '@/lib/i18n';
+import { orderDate } from '@/lib/order/format';
 import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/profile — Profile & settings, Figma 239:13856 (1440) / 238:10951 (390): "Your details" (name,
 // verified mobile — read-only, it is the sign-in identity — and optional email) plus the language for
-// messages, then sign out. Not built yet (no backend): "My kids" (child names + birthdays), WhatsApp/SMS
-// notification toggles and account deletion.
+// messages, a "Birthday message" card (P8: own date of birth + an opt-in that is never pre-ticked; no
+// Figma frame — it follows the Preferences card), then sign out. Not built yet (no backend): "My kids"
+// (child names + birthdays), WhatsApp/SMS notification toggles and account deletion.
 
 const PATH = '/account/profile';
 
@@ -39,13 +41,19 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     const m = accountMessages(locale);
     const p = m.profile;
     const query = await searchParams;
-    const { account } = await requireAccount(locale, PATH);
+    const { account, token } = await requireAccount(locale, PATH);
+    const consents = await getConsents(token, locale);
+    const birthday = consents.birthday;
+    const b = p.birthday;
     const flash = await readAccountFlash();
     const draft = flash?.kind === 'error' ? flash.draft : {};
     const errors = flash?.kind === 'error' ? flash.errors : {};
     const err = (key: string) => noticeText(errors[key], m);
     const welcome = query.welcome === '1' && !account.name;
     const notice = noticeText(flash?.message, m) ?? (welcome ? p.welcome : null);
+    // Ticked only when the customer opted in (or just ticked it before an error) — never by default.
+    const optedIn = draft.birthday_messages !== undefined ? draft.birthday_messages === '1' : birthday.consented;
+    const birthdayState = birthday.consented ? b.on : birthday.withdrawn_at ? format(b.withdrawn, { date: orderDate(birthday.withdrawn_at, getMessages(locale)) }) : null;
 
     return (
         <AccountShell locale={locale} path={PATH} account={account} section="profile" title={p.title} heading={{}}>
@@ -92,6 +100,35 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                             {err('preferred_language')}
                         </p>
                     ) : null}
+                </fieldset>
+                <fieldset className={`${card} flex flex-col gap-3`} aria-describedby="birthday-what birthday-stop">
+                    <legend className="contents">
+                        <span className="t-h4 text-fg-primary">{b.title}</span>
+                    </legend>
+                    <p id="birthday-what" className="t-body-sm text-fg-secondary">
+                        {b.what}
+                    </p>
+                    <Field id="date_of_birth" label={b.dob} help={b.dobHelp} error={err('date_of_birth')}>
+                        <input
+                            id="date_of_birth"
+                            name="date_of_birth"
+                            type="date"
+                            autoComplete="bday"
+                            min="1900-01-01"
+                            defaultValue={draft.date_of_birth ?? account.date_of_birth ?? ''}
+                            aria-describedby="date_of_birth-help"
+                            aria-invalid={err('date_of_birth') ? true : undefined}
+                            className={`${inputClass} tabular-nums`}
+                        />
+                    </Field>
+                    <label className="t-body-sm flex min-h-11 items-center gap-3 text-fg-primary">
+                        <input type="checkbox" name="birthday_messages" value="1" defaultChecked={optedIn} className="size-5 shrink-0 accent-brand" />
+                        {b.optIn}
+                    </label>
+                    {birthdayState ? <p className="t-caption text-fg-secondary">{birthdayState}</p> : null}
+                    <p id="birthday-stop" className="t-caption text-fg-secondary">
+                        {b.stop}
+                    </p>
                 </fieldset>
                 <button type="submit" className={`${buttonClass('primary', 'md')} w-full lg:w-fit`}>
                     {p.save}

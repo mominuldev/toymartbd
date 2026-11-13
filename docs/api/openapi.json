@@ -328,6 +328,90 @@
                 }
             }
         },
+        "/admin/dashboard/export": {
+            "get": {
+                "operationId": "v1.admin.dashboard.export",
+                "summary": "`GET /dashboard/export` \u2014 the same report as CSV (sections one after another) or XLSX (one\nsheet each). Needs dashboard.view; a block the viewer may not see is left out of the file,\nnever written as zero. No activity feed, no needs-attention items, no customer data",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Missing dashboard.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unknown parameter, unlisted preset, format or locale, or an invalid / missing date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/brands": {
             "get": {
                 "operationId": "v1.admin.brands.index",
@@ -12487,6 +12571,314 @@
                 }
             }
         },
+        "/admin/credit-notes": {
+            "get": {
+                "operationId": "v1.admin.credit-notes.index",
+                "description": "Filters: `filter[invoice]` (invoice id), `filter[order]` (order id), `filter[reason]`\n(`order_cancelled`|`refund`), `filter[search]` (credit-note number, invoice number,\norder / RMA reference or customer name contains), `filter[issued_from]` /\n`filter[issued_to]` (Dhaka dates, Y-m-d, inclusive). Sorts: `issued_at`, `-issued_at`\n(default), `number`, `-number`, `total`, `-total`. Anything else is a 400.",
+                "summary": "`GET /credit-notes` \u2014 newest first, cursor-paginated (orders.view)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[invoice]",
+                        "in": "query",
+                        "description": "Credit notes of this invoice id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[order]",
+                        "in": "query",
+                        "description": "Credit notes of this order id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[reason]",
+                        "in": "query",
+                        "description": "Why it was issued.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "order_cancelled",
+                                "refund"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Credit-note or invoice number, order/RMA reference or customer name contains.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[issued_from]",
+                        "in": "query",
+                        "description": "Issued on or after this Dhaka date (Y-m-d).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[issued_to]",
+                        "in": "query",
+                        "description": "Issued on or before this Dhaka date (Y-m-d).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "issued_at",
+                                "-issued_at",
+                                "number",
+                                "-number",
+                                "total",
+                                "-total"
+                            ],
+                            "default": "-issued_at"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `CreditNoteListItem`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CreditNoteListItem"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/credit-notes/{creditNote}": {
+            "get": {
+                "operationId": "v1.admin.credit-notes.show",
+                "summary": "`GET /credit-notes/{creditNote}` \u2014 the snapshot: invoice credited, company, recipient (PII masked without customers.view_pii), lines, totals",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "creditNote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The credit note ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CreditNote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreditNote"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/credit-notes/{creditNote}/pdf": {
+            "get": {
+                "operationId": "v1.admin.credit-notes.pdf",
+                "summary": "`GET /credit-notes/{creditNote}/pdf` \u2014 reprint from the snapshot; the customer's language unless `locale` says otherwise",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "creditNote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The credit note ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "en",
+                                "bn",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The credit note PDF",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/admin/settings/invoice": {
             "get": {
                 "operationId": "v1.admin.settings.invoice.show",
@@ -18096,7 +18488,7 @@
         "/admin/finance/reports/pnl/export": {
             "get": {
                 "operationId": "v1.admin.finance.reports.pnl.export",
-                "summary": "`GET /finance/reports/pnl/export` \u2014 the statement as CSV, one row per line. Needs finance.view + finance.export",
+                "summary": "`GET /finance/reports/pnl/export` \u2014 the statement as CSV or XLSX, one row per line. Needs finance.view + finance.export",
                 "tags": [
                     "Admin"
                 ],
@@ -18118,12 +18510,42 @@
                             "type": "string",
                             "format": "date"
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ],
+                            "default": "csv"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "Language of the labels and the sheet name. Default: the request locale.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            },
                             "text/csv; charset=UTF-8": {
                                 "schema": {
                                     "type": "string",
@@ -18133,7 +18555,6 @@
                         },
                         "headers": {
                             "Content-Disposition": {
-                                "required": true,
                                 "schema": {
                                     "type": "string"
                                 },
@@ -18142,7 +18563,7 @@
                         }
                     },
                     "400": {
-                        "description": "Unlisted parameter or filter (`bad-request`)",
+                        "description": "Unlisted parameter or filter, or an unknown format or locale (`bad-request`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18248,7 +18669,7 @@
         "/admin/finance/reports/pnl/series/export": {
             "get": {
                 "operationId": "v1.admin.finance.reports.pnl.series.export",
-                "summary": "`GET /finance/reports/pnl/series/export` \u2014 the series as CSV, one row per bucket. Needs finance.view + finance.export",
+                "summary": "`GET /finance/reports/pnl/series/export` \u2014 the series as CSV or XLSX, one row per bucket. Needs finance.view + finance.export",
                 "tags": [
                     "Admin"
                 ],
@@ -18284,12 +18705,42 @@
                                 "year"
                             ]
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ],
+                            "default": "csv"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "Language of the labels and the sheet name. Default: the request locale.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            },
                             "text/csv; charset=UTF-8": {
                                 "schema": {
                                     "type": "string",
@@ -18299,7 +18750,6 @@
                         },
                         "headers": {
                             "Content-Disposition": {
-                                "required": true,
                                 "schema": {
                                     "type": "string"
                                 },
@@ -18308,7 +18758,7 @@
                         }
                     },
                     "400": {
-                        "description": "Unlisted parameter or filter (`bad-request`)",
+                        "description": "Unlisted parameter or filter, or an unknown format or locale (`bad-request`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18447,7 +18897,7 @@
         "/admin/finance/reports/profitability/export": {
             "get": {
                 "operationId": "v1.admin.finance.reports.profitability.export",
-                "summary": "`GET /finance/reports/profitability/export` \u2014 as GET /finance/reports/profitability, every row. Needs finance.export too",
+                "summary": "`GET /finance/reports/profitability/export` \u2014 as GET /finance/reports/profitability, every row, as CSV or XLSX. Needs finance.export too",
                 "tags": [
                     "Admin"
                 ],
@@ -18516,12 +18966,42 @@
                             "type": "string",
                             "default": "-gross_profit"
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ],
+                            "default": "csv"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "Language of the labels and the sheet name. Default: the request locale.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            },
                             "text/csv; charset=UTF-8": {
                                 "schema": {
                                     "type": "string",
@@ -18531,7 +19011,6 @@
                         },
                         "headers": {
                             "Content-Disposition": {
-                                "required": true,
                                 "schema": {
                                     "type": "string"
                                 },
@@ -18553,7 +19032,7 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     },
                     "400": {
-                        "description": "Unlisted parameter, filter or sort (`bad-request`)",
+                        "description": "Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18704,7 +19183,7 @@
         "/admin/reports/inventory-valuation/export": {
             "get": {
                 "operationId": "v1.admin.reports.inventory-valuation.export",
-                "summary": "`GET /reports/inventory-valuation/export` \u2014 every row as CSV",
+                "summary": "`GET /reports/inventory-valuation/export` \u2014 every row, then the total, as CSV or XLSX",
                 "tags": [
                     "Admin"
                 ],
@@ -18750,12 +19229,42 @@
                             "type": "string",
                             "default": "-value"
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ],
+                            "default": "csv"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "Language of the labels and the sheet name. Default: the request locale.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            },
                             "text/csv; charset=UTF-8": {
                                 "schema": {
                                     "type": "string",
@@ -18765,7 +19274,6 @@
                         },
                         "headers": {
                             "Content-Disposition": {
-                                "required": true,
                                 "schema": {
                                     "type": "string"
                                 },
@@ -18787,7 +19295,7 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     },
                     "400": {
-                        "description": "Unlisted parameter, filter or sort (`bad-request`)",
+                        "description": "Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18845,6 +19353,16 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown provider or a malformed date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
                     "403": {
                         "description": "Missing reports.view or shipments.view (`forbidden`)",
                         "content": {
@@ -18857,16 +19375,6 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "400": {
-                        "description": "Unlisted parameter or filter, an unknown provider or a malformed date (`bad-request`)",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ProblemDetails"
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -18874,7 +19382,7 @@
         "/admin/reports/couriers/export": {
             "get": {
                 "operationId": "v1.admin.reports.couriers.export",
-                "summary": "`GET /reports/couriers/export` \u2014 the provider rows, then the district rows, as CSV",
+                "summary": "`GET /reports/couriers/export` \u2014 the total, the provider rows, then the district rows, as CSV or XLSX",
                 "tags": [
                     "Admin"
                 ],
@@ -18904,12 +19412,42 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "xlsx"
+                            ],
+                            "default": "csv"
+                        }
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "description": "Language of the labels and the sheet name. Default: the request locale.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            },
                             "text/csv; charset=UTF-8": {
                                 "schema": {
                                     "type": "string",
@@ -18919,11 +19457,20 @@
                         },
                         "headers": {
                             "Content-Disposition": {
-                                "required": true,
                                 "schema": {
                                     "type": "string"
                                 },
                                 "example": "attachment; filename=.csv"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, or an unknown format or locale (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
                             }
                         }
                     },
@@ -18939,16 +19486,6 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "400": {
-                        "description": "Unlisted parameter or filter (`bad-request`)",
-                        "content": {
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ProblemDetails"
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -23096,6 +23633,74 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/customers/{customer}/date-of-birth": {
+            "put": {
+                "operationId": "v1.admin.customers.date-of-birth.update",
+                "summary": "`PUT /customers/{customer}/date-of-birth` \u2014 needs customers.update and customers.view_pii",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The customer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCustomerDateOfBirthRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CustomerDateOfBirth`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CustomerDateOfBirth"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Not a past Y-m-d date (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing customers.update or customers.view_pii (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -27582,7 +28187,7 @@
             },
             "patch": {
                 "operationId": "v1.storefront.account.update",
-                "summary": "`PATCH /account` \u2014 name, email, language. The phone is the identity and not editable here",
+                "summary": "`PATCH /account` \u2014 name, email, language, date of birth. The phone is the identity and not editable here",
                 "tags": [
                     "Storefront"
                 ],
@@ -27602,6 +28207,95 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/StorefrontAccount"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid customer token (`unauthenticated`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A field is invalid (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/storefront/account/consents": {
+            "get": {
+                "operationId": "v1.storefront.account.consents.show",
+                "summary": "`GET /account/consents` \u2014 the customer's own; no row reads as not consented",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountConsents`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountConsents"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid customer token (`unauthenticated`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.storefront.account.consents.update",
+                "summary": "`PUT /account/consents` \u2014 opt in or out; recorded with source `storefront`, a withdrawal is kept, not deleted",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateConsentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountConsents`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountConsents"
                                 }
                             }
                         }
@@ -33857,6 +34551,318 @@
                 ],
                 "title": "CourierZoneSuggestion"
             },
+            "CreditNote": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "`CN-26-000001`."
+                    },
+                    "invoice_id": {
+                        "type": "integer"
+                    },
+                    "invoice_number": {
+                        "type": "string",
+                        "description": "The invoice credited, e.g. `INV-26-000001`."
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Why it was issued: the order was cancelled after the invoice, or a refund was paid.",
+                        "enum": [
+                            "order_cancelled",
+                            "refund"
+                        ]
+                    },
+                    "source_reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The order number (cancellation) or the RMA number (refund), as issued."
+                    },
+                    "issued_to_name": {
+                        "type": "string",
+                        "description": "Customer name, as on the invoice."
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "issued_at": {
+                        "type": "string",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "can_print": {
+                        "type": "boolean",
+                        "description": "Whether this user may print it (orders.view + customers.view_pii)."
+                    },
+                    "invoice_issued_at": {
+                        "type": "string",
+                        "description": "When the credited invoice was issued. ISO 8601, UTC."
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The refund's reason text (refund credit notes); null for a cancellation."
+                    },
+                    "template": {
+                        "type": "string",
+                        "const": "standard"
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "discount": {
+                        "type": "string"
+                    },
+                    "shipping": {
+                        "type": "string"
+                    },
+                    "tax": {
+                        "type": "string"
+                    },
+                    "adjustment": {
+                        "type": "string",
+                        "description": "Signed: what the parts above do not explain (e.g. a refund capped below its lines)."
+                    },
+                    "amount_in_words": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "issued_by": {
+                        "type": "object",
+                        "description": "The company details as at the credit note's issue.",
+                        "properties": {
+                            "name_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "hotline": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "email": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "website": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "trade_licence": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "bin": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name_en",
+                            "name_bn",
+                            "address_en",
+                            "address_bn",
+                            "hotline",
+                            "email",
+                            "website",
+                            "trade_licence",
+                            "bin"
+                        ]
+                    },
+                    "issued_to": {
+                        "type": "object",
+                        "description": "The customer as on the invoice; PII masked without customers.view_pii.",
+                        "additionalProperties": {}
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                        "item",
+                                        "balance"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "sku": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "amount": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "kind",
+                                "name",
+                                "name_bn",
+                                "variant",
+                                "sku",
+                                "quantity",
+                                "unit_price",
+                                "amount"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "invoice_id",
+                    "invoice_number",
+                    "order_id",
+                    "reason",
+                    "source_reference",
+                    "issued_to_name",
+                    "total",
+                    "issued_at",
+                    "can_print",
+                    "invoice_issued_at",
+                    "note",
+                    "template",
+                    "subtotal",
+                    "discount",
+                    "shipping",
+                    "tax",
+                    "adjustment",
+                    "amount_in_words",
+                    "issued_by",
+                    "issued_to",
+                    "lines"
+                ],
+                "title": "CreditNote"
+            },
+            "CreditNoteListItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "`CN-26-000001`."
+                    },
+                    "invoice_id": {
+                        "type": "integer"
+                    },
+                    "invoice_number": {
+                        "type": "string",
+                        "description": "The invoice credited, e.g. `INV-26-000001`."
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Why it was issued: the order was cancelled after the invoice, or a refund was paid.",
+                        "enum": [
+                            "order_cancelled",
+                            "refund"
+                        ]
+                    },
+                    "source_reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The order number (cancellation) or the RMA number (refund), as issued."
+                    },
+                    "issued_to_name": {
+                        "type": "string",
+                        "description": "Customer name, as on the invoice."
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "issued_at": {
+                        "type": "string",
+                        "description": "ISO 8601, UTC."
+                    },
+                    "can_print": {
+                        "type": "boolean",
+                        "description": "Whether this user may print it (orders.view + customers.view_pii)."
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "invoice_id",
+                    "invoice_number",
+                    "order_id",
+                    "reason",
+                    "source_reference",
+                    "issued_to_name",
+                    "total",
+                    "issued_at",
+                    "can_print"
+                ],
+                "title": "CreditNoteListItem"
+            },
             "CropProductImageRequest": {
                 "type": "object",
                 "description": "`POST /products/{product}/images/{image}/crop` \u2014 `{ x, y, width, height }` in the\nimage's current pixels (`width` \u00d7 `height` on the resource). Needs catalog.update.",
@@ -34188,6 +35194,26 @@
                 ],
                 "title": "CustomerAnalytics"
             },
+            "CustomerDateOfBirth": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Y-m-d."
+                    }
+                },
+                "required": [
+                    "id",
+                    "date_of_birth"
+                ],
+                "title": "CustomerDateOfBirth"
+            },
             "CustomerListItem": {
                 "type": "object",
                 "properties": {
@@ -34380,6 +35406,17 @@
                     },
                     "has_account": {
                         "type": "boolean"
+                    },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Y-m-d with customers.view_pii (personal data, rule 20), otherwise null."
+                    },
+                    "has_date_of_birth": {
+                        "type": "boolean",
+                        "description": "Whether a birth date is on file \u2014 told to every role, the date itself only with customers.view_pii."
                     },
                     "preferred_language": {
                         "type": "string",
@@ -34875,6 +35912,8 @@
                     "phone",
                     "email",
                     "has_account",
+                    "date_of_birth",
+                    "has_date_of_birth",
                     "preferred_language",
                     "source",
                     "status",
@@ -39385,6 +40424,30 @@
                         "type": "boolean",
                         "description": "Whether this user may print it (customer: orders.view + customers.view_pii)."
                     },
+                    "credited": {
+                        "type": "string",
+                        "description": "\u03a3 credit notes issued against this invoice (P8 batch 2); `0.00` when none."
+                    },
+                    "balance": {
+                        "type": "string",
+                        "description": "The invoice total less everything credited \u2014 what still stands."
+                    },
+                    "credit_status": {
+                        "type": "string",
+                        "description": "`none` (nothing credited), `partial`, or `full` (balance is zero).",
+                        "enum": [
+                            "none",
+                            "partial",
+                            "full"
+                        ]
+                    },
+                    "credit_notes": {
+                        "type": "array",
+                        "description": "Credit notes issued against this invoice, oldest first.",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditNoteListItem"
+                        }
+                    },
                     "template": {
                         "type": "string",
                         "const": "standard"
@@ -39560,6 +40623,10 @@
                     "placeholders",
                     "issued_at",
                     "can_print",
+                    "credited",
+                    "balance",
+                    "credit_status",
+                    "credit_notes",
                     "template",
                     "subtotal",
                     "discount",
@@ -39639,6 +40706,30 @@
                     "can_print": {
                         "type": "boolean",
                         "description": "Whether this user may print it (customer: orders.view + customers.view_pii)."
+                    },
+                    "credited": {
+                        "type": "string",
+                        "description": "\u03a3 credit notes issued against this invoice (P8 batch 2); `0.00` when none."
+                    },
+                    "balance": {
+                        "type": "string",
+                        "description": "The invoice total less everything credited \u2014 what still stands."
+                    },
+                    "credit_status": {
+                        "type": "string",
+                        "description": "`none` (nothing credited), `partial`, or `full` (balance is zero).",
+                        "enum": [
+                            "none",
+                            "partial",
+                            "full"
+                        ]
+                    },
+                    "credit_notes": {
+                        "type": "array",
+                        "description": "Credit notes issued against this invoice, oldest first.",
+                        "items": {
+                            "$ref": "#/components/schemas/CreditNoteListItem"
+                        }
                     }
                 },
                 "required": [
@@ -39655,7 +40746,11 @@
                     "payment_method",
                     "placeholders",
                     "issued_at",
-                    "can_print"
+                    "can_print",
+                    "credited",
+                    "balance",
+                    "credit_status",
+                    "credit_notes"
                 ],
                 "title": "InvoiceListItem"
             },
@@ -40636,6 +41731,7 @@
                 "properties": {
                     "birthday": {
                         "type": "object",
+                        "description": "`consented_at` is when it was last given (kept after a withdrawal); `source` and\n`recorded_by` describe the latest change \u2014 `recorded_by` is null when the customer\nchanged it themselves on the storefront.",
                         "properties": {
                             "consented": {
                                 "type": "boolean"
@@ -40656,6 +41752,29 @@
                                 "type": [
                                     "string",
                                     "null"
+                                ],
+                                "enum": [
+                                    "admin",
+                                    "storefront",
+                                    null
+                                ]
+                            },
+                            "recorded_by": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name"
                                 ]
                             }
                         },
@@ -40663,7 +41782,8 @@
                             "consented",
                             "consented_at",
                             "withdrawn_at",
-                            "source"
+                            "source",
+                            "recorded_by"
                         ]
                     }
                 },
@@ -53321,6 +54441,13 @@
                             "null"
                         ]
                     },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Y-m-d \u2014 the customer's own; birthday messages need it plus their consent."
+                    },
                     "preferred_language": {
                         "type": "string",
                         "enum": [
@@ -53365,12 +54492,47 @@
                     "name",
                     "phone",
                     "email",
+                    "date_of_birth",
                     "preferred_language",
                     "phone_verified_at",
                     "member_since",
                     "counts"
                 ],
                 "title": "StorefrontAccount"
+            },
+            "StorefrontAccountConsents": {
+                "type": "object",
+                "properties": {
+                    "birthday": {
+                        "type": "object",
+                        "properties": {
+                            "consented": {
+                                "type": "boolean"
+                            },
+                            "consented_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "withdrawn_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "consented",
+                            "consented_at",
+                            "withdrawn_at"
+                        ]
+                    }
+                },
+                "required": [
+                    "birthday"
+                ],
+                "title": "StorefrontAccountConsents"
             },
             "StorefrontAccountSession": {
                 "type": "object",
@@ -58471,6 +59633,20 @@
                 },
                 "title": "UpdateCmsBlockRequest"
             },
+            "UpdateConsentRequest": {
+                "type": "object",
+                "description": "`PUT /storefront/account/consents` \u2014 the signed-in customer opts in to (or out of) birthday\nmessages (P8). Recorded with source `storefront`; a \"no\" withdraws, it never deletes.",
+                "properties": {
+                    "birthday": {
+                        "type": "boolean",
+                        "description": "True: send me a message on my birthday. False: stop."
+                    }
+                },
+                "required": [
+                    "birthday"
+                ],
+                "title": "UpdateConsentRequest"
+            },
             "UpdateCouponRequest": {
                 "type": "object",
                 "description": "`PUT /coupons/{coupon}` \u2014 the whole document; needs marketing.manage.",
@@ -58697,6 +59873,24 @@
                 ],
                 "title": "UpdateCourierRatesRequest"
             },
+            "UpdateCustomerDateOfBirthRequest": {
+                "type": "object",
+                "description": "`PUT /customers/{customer}/date-of-birth` \u2014 needs customers.update AND customers.view_pii:\na birth date is personal data, so only staff who may see it may change it (rule 20).",
+                "properties": {
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "Y-m-d, in the past; null clears it."
+                    }
+                },
+                "required": [
+                    "date_of_birth"
+                ],
+                "title": "UpdateCustomerDateOfBirthRequest"
+            },
             "UpdateDeliverySettingsRequest": {
                 "type": "object",
                 "description": "`PUT /settings/delivery` \u2014 the store-level free-delivery threshold; needs\nshipments.manage_rates. null switches free delivery off. Decimal string (rule 6).",
@@ -58847,11 +60041,15 @@
             },
             "UpdateMessageConsentRequest": {
                 "type": "object",
-                "description": "`PUT /notifications/customers/{customer}/consents` \u2014 records the customer's birthday-message\nconsent as told to staff (P8); needs customers.update, like the channel preferences.",
+                "description": "`PUT /notifications/customers/{customer}/consents` \u2014 records the customer's birthday-message\nconsent as told to staff (P8); needs customers.update, like the channel preferences.\nRecording a \"yes\" needs `customer_confirmed: true` \u2014 staff never opt a customer in on a guess.",
                 "properties": {
                     "birthday": {
                         "type": "boolean",
                         "description": "The customer agreed to a message on their birthday (reads their date of birth)."
+                    },
+                    "customer_confirmed": {
+                        "type": "boolean",
+                        "description": "Required (and must be true) when recording consent: staff confirm the customer\nagreed \u2014 e.g. on a phone call. Not needed to withdraw."
                     }
                 },
                 "required": [
@@ -59659,7 +60857,7 @@
             },
             "UpdateProfileRequest": {
                 "type": "object",
-                "description": "`PATCH /storefront/account` \u2014 the customer's own name, email and language.",
+                "description": "`PATCH /storefront/account` \u2014 the customer's own name, email, language and date of birth.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -59680,6 +60878,14 @@
                             "en",
                             "bn"
                         ]
+                    },
+                    "date_of_birth": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "Y-m-d, in the past; null clears it. Read only by birthday messages, and only with their consent."
                     }
                 },
                 "title": "UpdateProfileRequest"

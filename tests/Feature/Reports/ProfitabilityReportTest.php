@@ -15,6 +15,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Xlsx;
 
 /*
  * Product / category / recommendation-source profitability (P5): the lines of orders
@@ -186,4 +187,49 @@ it('serves profitability and its CSV over the API with an allowlisted sort', fun
     $this->actingAs($user)->getJson('/api/v1/admin/finance/reports/profitability?sort=cost_price')->assertStatus(400);
     $this->actingAs($user)->getJson('/api/v1/admin/finance/reports/profitability?by=brand')->assertStatus(400);
     $this->actingAs($user)->getJson('/api/v1/admin/finance/reports/profitability?filter[source]=x%20y')->assertStatus(400);
+});
+
+it('keeps the profitability CSV byte-for-byte as before XLSX', function (): void {
+    $user = profitStaff();
+    $response = $this->actingAs($user)->get('/api/v1/admin/finance/reports/profitability/export?by=product&sort=name&filter[from]=2026-11-02&filter[to]=2026-11-08');
+
+    $response->assertOk()->assertHeader('Content-Disposition', 'attachment; filename=profitability-by-product-2026-11-02-to-2026-11-08.csv');
+    expect($response->streamedContent())->toBe(
+        "\u{FEFF}product_id,sku,name,name_bn,category_name,orders,units_sold,units_returned,units,gross_revenue,reversals,net_revenue,cogs,gross_profit,margin_percent\n"
+        ."{$this->doll->id},{$this->doll->variants()->value('sku')},\"Rag Doll\",\"কাপড়ের পুতুল\",Dolls,1,1,0,1,700.00,0.00,700.00,350.00,350.00,50.00\n"
+        ."{$this->puzzle->id},{$this->puzzle->variants()->value('sku')},\"Wooden Puzzle\",\"কাঠের পাজল\",Puzzles,2,5,1,4,6000.00,1500.00,4500.00,3221.00,1279.00,28.42\n",
+    );
+});
+
+it('exports profitability as XLSX equal to the JSON, by product, category and source, with guarded text', function (): void {
+    $user = profitStaff();
+    // A product name a spreadsheet would evaluate, and a numeric-looking SKU that must keep its zeros.
+    DB::table('order_items')->where('product_id', $this->doll->id)->update(['product_name' => '=HYPERLINK("http://evil.example")', 'sku' => '000123']);
+    $this->doll->update(['name' => '=HYPERLINK("http://evil.example")']);
+    $this->doll->variants()->update(['sku' => '000123']);
+    $range = 'filter[from]=2026-11-02&filter[to]=2026-11-08';
+
+    foreach (['product' => 'পণ্য অনুযায়ী লাভজনকতা', 'category' => 'ক্যাটাগরি অনুযায়ী লাভজনকতা', 'source' => 'সুপারিশ অনুযায়ী লাভজনকতা'] as $by => $title) {
+        $json = $this->actingAs($user)->getJson("/api/v1/admin/finance/reports/profitability?by={$by}&{$range}")->assertOk()->json();
+        $response = $this->actingAs($user)->get("/api/v1/admin/finance/reports/profitability/export?by={$by}&{$range}&format=xlsx&locale=bn");
+        $response->assertHeader('Content-Disposition', "attachment; filename=\"profitability-by-{$by}-2026-11-02-to-2026-11-08.xlsx\"");
+        $sheet = Xlsx::single($response);
+
+        expect($sheet['name'])->toBe($title)->and($sheet['rows'])->toHaveCount(count($json['data']));
+        foreach ($json['data'] as $i => $row) {
+            foreach (['gross_revenue', 'reversals', 'net_revenue', 'cogs', 'gross_profit', 'margin_percent'] as $money) {
+                expect($sheet['rows'][$i][$money])->toEqual(Xlsx::number($row[$money]));
+            }
+            foreach (['orders', 'units_sold', 'units_returned', 'units'] as $count) {
+                expect($sheet['rows'][$i][$count])->toBe($row[$count]);
+            }
+        }
+    }
+
+    $product = Xlsx::single($this->actingAs($user)->get("/api/v1/admin/finance/reports/profitability/export?by=product&sort=name&{$range}&format=xlsx"));
+    $doll = collect($product['rows'])->firstWhere('product_id', $this->doll->id);
+    expect($product['name'])->toBe('Profitability by product')
+        ->and($doll['name'])->toBe("'=HYPERLINK(\"http://evil.example\")")
+        ->and($doll['sku'])->toBe('000123')
+        ->and(collect($product['rows'])->firstWhere('product_id', $this->puzzle->id)['name_bn'])->toBe('কাঠের পাজল');
 });

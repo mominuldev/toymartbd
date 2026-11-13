@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Records a customer's consent to (or withdrawal from) one purpose of message (P8) — today
  * birthday messages. Keeps provenance: when it was given, when withdrawn, from where, by whom.
+ * A withdrawal updates the row (never deletes it); `consented_at` keeps when it was last given.
  */
 final readonly class SetMessageConsent
 {
@@ -20,7 +21,9 @@ final readonly class SetMessageConsent
             $row = MessageConsent::query()->where('customer_id', $customerId)->where('purpose', $purpose->value)->lockForUpdate()->first()
                 ?? new MessageConsent(['customer_id' => $customerId, 'purpose' => $purpose, 'consented' => false]);
 
-            if ($row->exists && $row->consented === $consented) {
+            // Unchanged is a no-op. "No" with no row is also a no-op: no row already means not
+            // consented, and a withdrawal stamp on something never given would be false provenance.
+            if ($row->consented === $consented) {
                 return $row;
             }
 

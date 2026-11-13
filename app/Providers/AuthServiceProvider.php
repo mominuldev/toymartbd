@@ -143,6 +143,8 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Tracking\Models\OrderTrackingContext::class => \App\Policies\TrackingEventPolicy::class,
         // Invoices (P8, N-13): customer → orders.view (+ view_pii to print); supplier → purchasing.view + catalog.view_cost.
         \App\Domain\Invoicing\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
+        // Credit notes (P8 batch 2): customer invoices only — orders.view (+ view_pii to print).
+        \App\Domain\Invoicing\Models\CreditNote::class => \App\Policies\CreditNotePolicy::class,
     ];
 
     /**
