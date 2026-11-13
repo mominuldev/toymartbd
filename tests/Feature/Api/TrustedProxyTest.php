@@ -57,14 +57,7 @@ it('does not trust X-Forwarded-Host even from a trusted proxy', function (): voi
 });
 
 it('parses TRUSTED_PROXIES and refuses wildcards', function (): void {
-    $parse = function (string $value): array {
-        putenv("TRUSTED_PROXIES={$value}");
-        try {
-            return (require config_path('trustedproxy.php'))['proxies'];
-        } finally {
-            putenv('TRUSTED_PROXIES');
-        }
-    };
+    $parse = fn (string $value): array => App\Support\TrustedProxies::parse($value);
 
     expect($parse(''))->toBe([])
         ->and($parse('*'))->toBe([])

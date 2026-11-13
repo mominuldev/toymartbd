@@ -9,12 +9,12 @@ async function signIn(page: Page) {
     await expect(page.getByRole('heading', { name: 'Inventory', exact: true })).toBeVisible();
 }
 
-test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfer, disabled until those features exist', async ({ page }) => {
+test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfer', async ({ page }) => {
     await signIn(page);
 
     await expect(page.getByText(/^Across 3 branches · /)).toBeVisible();
     await expect(page.getByRole('button', { name: /Dhaka HQ · Mirpur/ })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('button', { name: /Transfer stock/ })).toBeDisabled();
+    await expect(page.getByRole('button', { name: /Transfer stock/ })).toBeEnabled();
     // The nav badge is the server's low-stock count at Dhaka HQ, the same as the Low stock tab.
     await expect(page.getByRole('link', { name: /Inventory.*3 low on stock/ }).first()).toBeAttached();
     await page.getByRole('button', { name: /^Low stock\s*3$/ }).click();
@@ -23,8 +23,8 @@ test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfe
     // The Barbie doll: 3 at Dhaka, 4 available in Chattogram (seeded opening balances).
     const barbie = page.getByRole('row', { name: /Barbie/ });
     await expect(barbie).toContainText('CTG 4 · SYL 0');
-    await expect(barbie.getByRole('button', { name: 'Create PO' })).toBeDisabled();
-    await expect(barbie.getByRole('button', { name: 'Transfer 4' })).toBeDisabled();
+    await expect(barbie.getByRole('link', { name: 'Create PO' })).toHaveAttribute('href', /\/purchasing\/new\?sku=/);
+    await expect(barbie.getByRole('button', { name: 'Transfer 4' })).toBeEnabled();
 
     // Selecting Chattogram scopes the page; the URL carries it.
     await page.getByRole('button', { name: /Chattogram · Agrabad/ }).click();

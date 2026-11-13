@@ -18,10 +18,7 @@ declare(strict_types=1);
  * auto-trust of `*` from applying.
  */
 
-$proxies = array_values(array_filter(
-    array_map(trim(...), explode(',', (string) env('TRUSTED_PROXIES', ''))),
-    static fn (string $proxy): bool => $proxy !== '' && $proxy !== '*' && $proxy !== '**',
-));
+$proxies = App\Support\TrustedProxies::parse((string) env('TRUSTED_PROXIES', ''));
 
 return [
     'proxies' => $proxies,
