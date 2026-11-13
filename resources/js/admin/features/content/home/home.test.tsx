@@ -124,6 +124,47 @@ describe('homepage builder', () => {
         expect(await screen.findByText(/autosaved/)).toBeTruthy();
     });
 
+    it('is a live editor: canvas clicks select a section, autosaves refresh the frame in place', { timeout: 20_000 }, async () => {
+        api(editor, (url, init) => (url.endsWith('/content/home/blocks/2') && init?.method === 'PATCH' ? { status: 200, body: { ...blocks[1]!, content: { ...blocks[1]!.content, title: 'Eid best sellers' } } } : null));
+        renderApp('/store/home');
+
+        const frame = (await screen.findByTitle('Live preview of the draft homepage', {}, { timeout: 5000 })) as HTMLIFrameElement;
+        const canvas = frame.contentWindow!;
+        const sent = vi.spyOn(canvas, 'postMessage').mockImplementation(() => undefined);
+        const fromCanvas = (data: unknown, origin = 'https://shop.test', source: Window | null = canvas) =>
+            act(() => {
+                window.dispatchEvent(new MessageEvent('message', { data, origin, source }));
+            });
+        const messages = () => sent.mock.calls.map(([data, origin]) => ({ ...(data as Record<string, unknown>), origin }));
+
+        // The frame's bridge reports ready: it gets the section names and the current selection.
+        fromCanvas({ source: 'tm-home-builder', type: 'ready' });
+        expect(messages()).toContainEqual({ source: 'tm-home-builder', type: 'labels', labels: { 'uuid-1': 'Hero banner · Eid collection', 'uuid-2': 'Product rail · Best sellers', 'uuid-3': 'FAQ · FAQ' }, origin: 'https://shop.test' });
+        expect(messages()).toContainEqual({ source: 'tm-home-builder', type: 'select', id: 'uuid-1', scroll: true, origin: 'https://shop.test' });
+
+        // A click from another origin, or another window, is ignored.
+        fromCanvas({ source: 'tm-home-builder', type: 'select', id: 'uuid-2' }, 'https://evil.test');
+        fromCanvas({ source: 'tm-home-builder', type: 'select', id: 'uuid-2' }, 'https://shop.test', window);
+        expect(screen.getByLabelText('শিরোনাম (বাংলা)', { exact: false })).toBeTruthy(); // still the hero
+
+        // A click on the canvas opens that section in the panel, without scrolling the canvas.
+        sent.mockClear();
+        fromCanvas({ source: 'tm-home-builder', type: 'select', id: 'uuid-2' });
+        const heading = await screen.findByLabelText('Heading (EN)');
+        expect(messages()).toContainEqual({ source: 'tm-home-builder', type: 'select', id: 'uuid-2', scroll: false, origin: 'https://shop.test' });
+
+        // An autosave re-renders the frame in place: a refresh message, not a new iframe.
+        sent.mockClear();
+        fireEvent.change(heading, { target: { value: 'Eid best sellers' } });
+        await waitFor(() => expect(messages()).toContainEqual({ source: 'tm-home-builder', type: 'refresh', origin: 'https://shop.test' }), { timeout: 3000 });
+        expect(screen.getByTitle('Live preview of the draft homepage')).toBe(frame);
+
+        // Choosing a section in the list scrolls the canvas to it.
+        sent.mockClear();
+        fireEvent.click(screen.getByRole('button', { name: /^Eid collection/ }));
+        await waitFor(() => expect(messages()).toContainEqual({ source: 'tm-home-builder', type: 'select', id: 'uuid-1', scroll: true, origin: 'https://shop.test' }));
+    });
+
     it('adds a section below the selected one and publishes', { timeout: 20_000 }, async () => {
         const calls = api(editor, (url, init) => {
             if (url.endsWith('/content/home/blocks') && init?.method === 'POST') return { status: 201, body: block(9, 'testimonials', { title: 'What parents say', limit: 6 }) };

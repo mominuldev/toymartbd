@@ -4,6 +4,7 @@ import { cookies, draftMode } from 'next/headers';
 import { CategoryTile, TileLink } from '@/components/CategoryTile';
 import { Band } from '@/components/content/blocks/shared';
 import { HomeBlocks, PreviewBar } from '@/components/content/HomeBlocks';
+import { PreviewBridge } from '@/components/content/PreviewBridge';
 import { HomeHero } from '@/components/home/HomeHero';
 import { UspBand } from '@/components/home/UspBand';
 import { ageIcon } from '@/components/listing/ProductCard';
@@ -13,6 +14,7 @@ import { getCategoryTree } from '@/lib/categories';
 import { fetchHome, fetchHomePreview } from '@/lib/content/home';
 import type { HomeLayout } from '@/lib/content/home-blocks';
 import { HOME_PREVIEW_COOKIE } from '@/lib/content/preview';
+import { adminOrigin } from '@/lib/content/preview-bridge';
 import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib/i18n';
 import { AGE_BANDS } from '@/lib/listing/state';
 import { fetchRail } from '@/lib/products';
@@ -67,9 +69,14 @@ export default async function HomePage({ params }: Props) {
 
     return (
         <PageShell locale={locale} path="/" announcement mobileSearch top="tight" bleed>
-            {home?.preview ? <PreviewBar locale={locale} /> : null}
+            {home?.preview ? (
+                <>
+                    <PreviewBar locale={locale} />
+                    <PreviewBridge adminOrigin={adminOrigin({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL })} />
+                </>
+            ) : null}
             <JsonLd data={[organizationJsonLd(locale), websiteJsonLd(locale)]} />
-            {home && home.blocks.length > 0 ? <HomeBlocks blocks={home.blocks} locale={locale} /> : <BuiltInHome locale={locale} />}
+            {home && home.blocks.length > 0 ? <HomeBlocks blocks={home.blocks} locale={locale} editable={home.preview === true} /> : <BuiltInHome locale={locale} />}
         </PageShell>
     );
 }

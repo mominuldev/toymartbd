@@ -42,6 +42,8 @@ export function BannerPopup({ id, title, body, lang, bangla, link, linkLabel, im
 
     useEffect(() => {
         if (dismissed(id)) return;
+        // Never inside a frame: the homepage builder's canvas must stay clickable.
+        if (window.self !== window.top) return;
         setReady(true);
     }, [id]);
 

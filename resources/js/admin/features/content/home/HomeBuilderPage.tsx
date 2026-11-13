@@ -25,6 +25,7 @@ import {
     type CmsBlock,
 } from './api';
 import type { MediaThumb } from './BlockForm';
+import { blockTitle, typeLabel } from './content';
 import { PreviewCanvas, type Device } from './PreviewCanvas';
 import { SectionList } from './SectionList';
 import { SettingsPanel, type PanelTab } from './SettingsPanel';
@@ -85,6 +86,18 @@ export function HomeBuilderPage() {
     const selected = blocks.find((b) => b.id === selectedId) ?? blocks[0] ?? null;
     const media: ReadonlyMap<number, MediaThumb> = useMemo(() => new Map((draft.data?.media ?? []).map((m): [number, MediaThumb] => [m.id, m])), [draft.data?.media]);
     const refreshPreview = () => setRevision((r) => r + 1);
+    // Canvas outline names: the section type, then the name the section list shows ("Product rail · Best sellers").
+    const labels = useMemo(
+        () =>
+            Object.fromEntries(
+                blocks.map((b): [string, string] => {
+                    const type = t(typeLabel(b.type));
+                    const name = b.label || blockTitle(b);
+                    return [b.uuid, name ? `${type} · ${name}` : type];
+                }),
+            ),
+        [blocks, t],
+    );
 
     const save = (block: CmsBlock, patch: BlockPatch, record: 'push' | 'none' = 'push') => {
         const before = beforeOf(block, patch);
@@ -244,7 +257,20 @@ export function HomeBuilderPage() {
                                 adding={create.isPending}
                             />
                         </div>
-                        <PreviewCanvas url={token.data?.url} loading={token.isPending} device={device} revision={revision} />
+                        <PreviewCanvas
+                            url={token.data?.url}
+                            loading={token.isPending}
+                            device={device}
+                            revision={revision}
+                            selectedId={selected?.uuid ?? null}
+                            labels={labels}
+                            onSelect={(uuid) => {
+                                const block = blocks.find((b) => b.uuid === uuid);
+                                if (!block) return;
+                                setSelectedId(block.id);
+                                setTab('content');
+                            }}
+                        />
                         <div className="w-85 shrink-0 max-md:hidden">
                             {selected ? (
                                 <SettingsPanel

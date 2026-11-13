@@ -99,3 +99,50 @@
     from { opacity: 1; transform: scale(0.6); }
     to { opacity: 0; transform: scale(1.6); }
 }
+
+/* Homepage builder live editor (components/content/PreviewBridge.tsx). Only inside the builder's
+   frame, where the bridge sets `data-tm-editing` on <html>: a hover outline with the section's
+   name, a solid outline on the selected section. Outlines sit inside the section (negative
+   offset) so a full-bleed band or an overflow-hidden parent never clips them. */
+@layer components {
+    html[data-tm-editing] [data-block-id] {
+        position: relative;
+        cursor: pointer;
+        /* Clear the sticky header when the builder scrolls to a section (as scroll-mt-34 elsewhere). */
+        scroll-margin-top: calc(var(--spacing) * 34);
+        outline: var(--tm-border-width-strong) dashed transparent;
+        outline-offset: calc(var(--tm-border-width-strong) * -1);
+        transition: outline-color var(--tm-duration-fast);
+    }
+
+    html[data-tm-editing] [data-block-id][data-tm-hover] {
+        outline-color: var(--color-line-focus);
+    }
+
+    html[data-tm-editing] [data-block-id][data-tm-selected] {
+        outline-style: solid;
+        outline-color: var(--color-brand);
+    }
+
+    html[data-tm-editing] [data-block-id][data-tm-label]:is([data-tm-hover], [data-tm-selected])::before {
+        @apply t-caption-strong;
+        content: attr(data-tm-label);
+        position: absolute;
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        z-index: 20; /* under the sticky header (z-30) */
+        max-inline-size: 60%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: var(--tm-space-0-5) var(--tm-space-2);
+        border-end-end-radius: var(--radius-xs);
+        background: var(--color-line-focus);
+        color: var(--color-fg-on-brand);
+        pointer-events: none;
+    }
+
+    html[data-tm-editing] [data-block-id][data-tm-label][data-tm-selected]::before {
+        background: var(--color-brand);
+    }
+}
