@@ -16,6 +16,8 @@ export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
 # The demo catalogue without its Figma photos: 16 × 9 image encodes would slow every run.
 export DEMO_SEED_IMAGES=false
+# Specs count orders and queue badges exactly: no demo order history in this run.
+export DEMO_SEED_TRANSACTIONS=false
 # Every spec signs in; the production limit (5/min) would throttle the sixth.
 export AUTH_LOGIN_PER_MINUTE=60
 

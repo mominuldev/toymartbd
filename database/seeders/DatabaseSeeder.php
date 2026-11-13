@@ -38,6 +38,10 @@ class DatabaseSeeder extends Seeder
             $this->call(BrandDemoSeeder::class);
             $this->call(DemoCatalogSeeder::class);
             $this->call(DemoInventorySeeder::class);
+
+            if ((bool) config('demo.transactions')) {
+                $this->call(DemoDataSeeder::class);
+            }
         }
     }
 }
