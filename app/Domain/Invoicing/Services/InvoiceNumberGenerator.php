@@ -44,13 +44,22 @@ final readonly class InvoiceNumberGenerator
         }
 
         $year = (int) DhakaDate::local($at ?? CarbonImmutable::now())->format('Y');
-        // Normally a no-op (prepare() ran); kept so a caller that skipped it still works.
-        DB::table('invoice_number_sequences')->insertOrIgnore(['series' => $type->series(), 'year' => $year, 'last_value' => 0]);
-        $last = (int) DB::table('invoice_number_sequences')
+        $locked = fn (): mixed => DB::table('invoice_number_sequences')
             ->where('series', $type->series())->where('year', $year)
             ->lockForUpdate()->value('last_value');
 
-        return ['year' => $year, 'next' => $last + 1];
+        // prepare() created the row before the transaction. Never INSERT IGNORE it here
+        // unconditionally: on an existing row that takes a shared lock, and two issuers that
+        // both hold it deadlock upgrading to FOR UPDATE (InvoiceNumberRaceTest on MySQL).
+        // Only a missing row (prepare() skipped, or the Dhaka year turned between the two
+        // calls) takes the insert path.
+        $last = $locked();
+        if ($last === null) {
+            DB::table('invoice_number_sequences')->insertOrIgnore(['series' => $type->series(), 'year' => $year, 'last_value' => 0]);
+            $last = $locked();
+        }
+
+        return ['year' => $year, 'next' => (int) $last + 1];
     }
 
     /** Advances the locked counter to `$sequence` (the value {@see self::lock()} returned). */
