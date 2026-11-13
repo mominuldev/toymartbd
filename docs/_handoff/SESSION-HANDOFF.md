@@ -24,7 +24,7 @@ Each item below lists its scope; check the code on disk to see how far it got, t
 | 1 | CMS typed blocks + homepage builder + signed live preview + scheduling (app/Domain/Content, admin features/content/home, storefront components/content/blocks) | running |
 | 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | running |
 | 3 | Blog: posts/categories/tags/authors, buying guides with live product picks, related posts | **done** (shared `App\Support\PreviewToken`; SEO type `blog_post`) |
-| 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | running (had a helper subagent for the storefront half) |
+| 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | **done** — rows 4–7 except Search Console metrics/site audit (`docs/api/seo.md`) |
 | 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | **done** — see open items below |
 | 6 | Owner decisions 2026-11-13 (risk confirmed, verify→confirmed, rider phone on shipment + no-rider SMS variant, managers get integrations, non-masking numeric sender, ৳0.26/segment) | **done** |
 | 7 | Message templates library screen (`/automations/templates`): list, editor with EN/BN + server preview/segments, versions, custom marketing/manual templates | running |
@@ -48,6 +48,8 @@ Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the
 - Cart-recovery log rows: admin "Retry" goes through the order notification job and fails (`notifiable_missing`).
 - Flash-item variant picker uses an endpoint needing `orders.create`; scope chips saved earlier show as `#id`.
 - Storefront `/pages/privacy` 404 Playwright check (agent 2's pages work).
+
+- SEO follow-ups: title separator mismatch (server " | " vs storefront template " · "); Content↔Seo deptrac cycle to review; blog/CMS actions write seo_meta/slug_history themselves alongside generic SaveSeoMeta/RecordSlugChange — fold into one path; blog_category/tag/author have no SEO provider (not in panel/sitemaps); `next.config.ts` `htmlLimitedBots: /.*/` makes metadata fetches count against TTFB.
 
 ## Owner decisions still open
 - Managers can now change courier/SMS credentials (decision 6) — confirm the security impact is understood.

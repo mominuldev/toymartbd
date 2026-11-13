@@ -41,7 +41,11 @@ final class SaveSeoMeta
         ));
 
         if ($meta->wasRecentlyCreated || $meta->wasChanged()) {
-            SeoPagesStale::dispatch(['seo', $subject->type.':'.$subject->slug]);
+            $tags = ['seo', $subject->type.':'.$subject->slug];
+            if ($subject->type === 'blog_post') {
+                $tags[] = 'post:'.$subject->slug; // the blog's own page tag
+            }
+            SeoPagesStale::dispatch($tags);
         }
 
         return $meta;

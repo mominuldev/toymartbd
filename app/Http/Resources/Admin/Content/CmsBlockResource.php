@@ -31,7 +31,7 @@ final class CmsBlockResource extends ApiResource
         return [
             'id' => $block->id,
             'uuid' => $block->uuid,
-            /** @var 'hero'|'category_tiles'|'age_tiles'|'product_rail'|'brand_strip'|'usp_band'|'promo_split'|'testimonials'|'blog_teaser'|'rich_text'|'faq' */
+            /** @var 'hero'|'category_tiles'|'age_tiles'|'product_rail'|'flash_sale'|'brand_strip'|'usp_band'|'promo_split'|'testimonials'|'blog_teaser'|'rich_text'|'faq' */
             'type' => $block->type->value,
             'label' => $block->label,
             /** @var array<string, mixed> */

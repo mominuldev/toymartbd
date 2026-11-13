@@ -27799,12 +27799,13 @@
             },
             "BlockType": {
                 "type": "string",
-                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |",
+                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |",
                 "enum": [
                     "hero",
                     "category_tiles",
                     "age_tiles",
                     "product_rail",
+                    "flash_sale",
                     "brand_strip",
                     "usp_band",
                     "promo_split",
@@ -29176,6 +29177,7 @@
                             "category_tiles",
                             "age_tiles",
                             "product_rail",
+                            "flash_sale",
                             "brand_strip",
                             "usp_band",
                             "promo_split",

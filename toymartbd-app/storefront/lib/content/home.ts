@@ -8,9 +8,9 @@ import { normalizeHome, type HomeLayout } from './home-blocks';
 // Fetching the CMS homepage (Phase 7). The published layout is ISR-cached under `content:home`
 // (sent on publish/revert and at every schedule boundary) plus the tags of the data the blocks
 // show: `products` (rails), `categories` (tiles), `brands` (strip), `content:testimonials`,
-// `content:blog` (docs/api/revalidation.md). The draft is never cached.
+// `content:blog`, `flash-sale` (docs/api/revalidation.md). The draft is never cached.
 
-export const HOME_TAGS = ['content:home', 'products', 'categories', 'brands', 'content:testimonials', 'content:blog'] as const;
+export const HOME_TAGS = ['content:home', 'products', 'categories', 'brands', 'content:testimonials', 'content:blog', 'flash-sale'] as const;
 
 /** The live homepage, or null when the API cannot answer — the page then shows its built-in home. */
 export async function fetchHome(locale: Locale): Promise<HomeLayout | null> {

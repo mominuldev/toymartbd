@@ -167,6 +167,8 @@ final class LayoutResolver
                 return $items === [] ? null : [$content, []];
 
             case BlockType::UspBand:
+            case BlockType::FlashSale:
+                // The flash sale is Marketing's: the storefront reads GET /storefront/flash-sales itself.
                 return [$content, []];
         }
     }

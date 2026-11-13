@@ -10,7 +10,7 @@ export type AttributeType = z.infer<typeof attributeTypeSchema>;
 export const bannerPlacementSchema = z.enum(["announcement_bar","category_page","info_strip","popup"]);
 export type BannerPlacement = z.infer<typeof bannerPlacementSchema>;
 
-export const blockTypeSchema = z.enum(["hero","category_tiles","age_tiles","product_rail","brand_strip","usp_band","promo_split","testimonials","blog_teaser","rich_text","faq"]);
+export const blockTypeSchema = z.enum(["hero","category_tiles","age_tiles","product_rail","flash_sale","brand_strip","usp_band","promo_split","testimonials","blog_teaser","rich_text","faq"]);
 export type BlockType = z.infer<typeof blockTypeSchema>;
 
 export const cancellationReasonSchema = z.enum(["customer_request","customer_unreachable","fake_order","duplicate_order","out_of_stock","pricing_error","address_unserviceable","payment_failed","other"]);

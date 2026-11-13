@@ -106,6 +106,7 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
             );
         case 'age_tiles':
         case 'testimonials':
+        case 'flash_sale':
             return <Bilingual content={content} keyName="title" set={set} ctx={ctx} />;
         case 'blog_teaser':
             return (
@@ -289,6 +290,8 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
             return howMany(3, 24, 12, count);
         case 'testimonials':
             return howMany(1, 12, 6, count);
+        case 'flash_sale':
+            return howMany(2, 12, 8, (n) => t('homeBuilder.f.howManyRail', { count: n }));
         case 'blog_teaser':
             return howMany(1, 6, 3, count);
         case 'promo_split':

@@ -30,6 +30,9 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
         case 'faq':
             parts.push(t('homeBuilder.summary.items', { count: rows(c.items).length }));
             break;
+        case 'flash_sale':
+            parts.push(t('homeBuilder.summary.flashSale', { count: num(c.limit, 8) }));
+            break;
         case 'testimonials':
         case 'blog_teaser':
             parts.push(t('homeBuilder.summary.latest', { count: num(c.limit, block.type === 'blog_teaser' ? 3 : 6) }));

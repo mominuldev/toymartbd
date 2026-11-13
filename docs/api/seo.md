@@ -80,7 +80,7 @@ Truncation is computed on the server at Google's desktop pixel metric (`SerpMeas
 
 - Paths are locale-independent: `/bn/x` is stored as `/x` and the redirect applies in both locales.
 - `from_path` must start with `/`, no query or fragment, ≤ 512 chars, and must not be a **live** URL
-  (a live product/category/brand/page/post/guide, or a reserved route such as `/`, `/cart`, `/checkout`).
+  (a live product/category/brand/page/article/guide, or a reserved route such as `/`, `/cart`, `/checkout`).
 - `to_path` is a path starting with `/` or an absolute `https://` URL; `from_path ≠ to_path`.
 - **No loops:** following the target through existing redirects must not reach `from_path`.
 - **No chains:** a target that is itself redirected is stored as its final target, and redirects
@@ -113,7 +113,7 @@ complete `<title>` (it already carries the site name) — use it as `title.absol
 
 - `metadata.ts` — `buildMetadata(input)` plus one function per template: `homeMetadata`,
   `listingPageMetadata` (category / brand / toys, pagination + facets), `productMetadata`,
-  `contentMetadata` (page / post / guide), `searchMetadata` (noindex), `privateMetadata`
+  `contentMetadata` (page / article / guide — all `blog_post` posts share one type), `searchMetadata` (noindex), `privateMetadata`
   (cart / checkout / account / order pages — noindex), `trackMetadata`. Every result carries
   canonical, `hreflang` en + bn + `x-default`, robots, Open Graph (per-locale title/description,
   `og:locale` `en_US` / `bn_BD` + alternate) and Twitter.

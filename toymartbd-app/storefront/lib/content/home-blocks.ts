@@ -40,6 +40,7 @@ export type HomeBlock = Base &
         | { type: 'category_tiles'; content: { title: string; show_see_all: boolean }; categories: CategoryNode[] }
         | { type: 'age_tiles'; content: { title: string; show_see_all: boolean }; age_counts: Record<string, number> }
         | { type: 'product_rail'; content: { title: string }; products: ProductCard[]; see_all_href: string | null }
+        | { type: 'flash_sale'; content: { title: string; limit: number } }
         | { type: 'brand_strip'; content: { title: string }; brands: Array<{ name: string; slug: string; logo_url: string | null }> }
         | { type: 'usp_band'; content: { eyebrow: string | null; title: string; items: Array<{ icon: UspIconKey; title: string; detail: string | null }> } }
         | {
@@ -136,6 +137,10 @@ function block(raw: unknown): HomeBlock | null {
         case 'product_rail': {
             const products = list(raw.products).filter(isCard);
             return title && products.length ? { ...base, type: 'product_rail', content: { title }, products, see_all_href: safeHref(raw.see_all_href) } : null;
+        }
+        case 'flash_sale': {
+            const limit = typeof c.limit === 'number' && c.limit >= 1 ? Math.min(12, Math.floor(c.limit)) : 8;
+            return title ? { ...base, type: 'flash_sale', content: { title, limit } } : null;
         }
         case 'brand_strip': {
             const brands = nonEmpty(

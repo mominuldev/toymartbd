@@ -5766,6 +5766,7 @@ export interface components {
          *     | `category_tiles` <br/>  |
          *     | `age_tiles` <br/> "Shop by age" tiles with live counts from the catalogue. |
          *     | `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |
+         *     | `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |
          *     | `brand_strip` <br/>  |
          *     | `usp_band` <br/>  |
          *     | `promo_split` <br/>  |
@@ -5775,7 +5776,7 @@ export interface components {
          *     | `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -6161,7 +6162,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
             label: string | null;
             content: {
                 [key: string]: unknown;

@@ -5,6 +5,7 @@ import { BlogTeaserBlock } from '@/components/content/blocks/BlogTeaserBlock';
 import { BrandStripBlock } from '@/components/content/blocks/BrandStripBlock';
 import { CategoryTilesBlock } from '@/components/content/blocks/CategoryTilesBlock';
 import { FaqBlock } from '@/components/content/blocks/FaqBlock';
+import { FlashSaleBlock } from '@/components/content/blocks/FlashSaleBlock';
 import { HeroBlock } from '@/components/content/blocks/HeroBlock';
 import { ProductRailBlock } from '@/components/content/blocks/ProductRailBlock';
 import { PromoSplitBlock } from '@/components/content/blocks/PromoSplitBlock';
@@ -31,6 +32,8 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean): ReactNode
             return <AgeTilesBlock id={block.id} title={block.content.title} showSeeAll={block.content.show_see_all} counts={block.age_counts} locale={locale} t={t.home} />;
         case 'product_rail':
             return <ProductRailBlock id={block.id} title={block.content.title} products={block.products} seeAllHref={block.see_all_href} locale={locale} t={t} />;
+        case 'flash_sale':
+            return <FlashSaleBlock id={block.id} title={block.content.title} limit={block.content.limit} locale={locale} />;
         case 'brand_strip':
             return <BrandStripBlock id={block.id} title={block.content.title} brands={block.brands} locale={locale} t={t.brands} />;
         case 'usp_band':

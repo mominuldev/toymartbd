@@ -10,6 +10,7 @@ use App\Domain\Content\Blocks\Schemas\BlogTeaserSchema;
 use App\Domain\Content\Blocks\Schemas\BrandStripSchema;
 use App\Domain\Content\Blocks\Schemas\CategoryTilesSchema;
 use App\Domain\Content\Blocks\Schemas\FaqSchema;
+use App\Domain\Content\Blocks\Schemas\FlashSaleSchema;
 use App\Domain\Content\Blocks\Schemas\HeroSchema;
 use App\Domain\Content\Blocks\Schemas\ProductRailSchema;
 use App\Domain\Content\Blocks\Schemas\PromoSplitSchema;
@@ -31,6 +32,8 @@ enum BlockType: string
     case AgeTiles = 'age_tiles';
     /** Product rail by rule: new, best sellers, category, brand or a manual pick. */
     case ProductRail = 'product_rail';
+    /** Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. */
+    case FlashSale = 'flash_sale';
     case BrandStrip = 'brand_strip';
     case UspBand = 'usp_band';
     case PromoSplit = 'promo_split';
@@ -49,6 +52,7 @@ enum BlockType: string
             self::CategoryTiles => new CategoryTilesSchema,
             self::AgeTiles => new AgeTilesSchema,
             self::ProductRail => new ProductRailSchema,
+            self::FlashSale => new FlashSaleSchema,
             self::BrandStrip => new BrandStripSchema,
             self::UspBand => new UspBandSchema,
             self::PromoSplit => new PromoSplitSchema,

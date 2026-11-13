@@ -9,7 +9,7 @@ import type { BlockType, CmsBlock } from './api';
 export type Content = Record<string, unknown>;
 
 export const BLOCK_TYPES: readonly BlockType[] = [
-    'hero', 'category_tiles', 'age_tiles', 'product_rail', 'brand_strip', 'usp_band', 'promo_split', 'testimonials', 'blog_teaser', 'rich_text', 'faq',
+    'hero', 'category_tiles', 'age_tiles', 'product_rail', 'flash_sale', 'brand_strip', 'usp_band', 'promo_split', 'testimonials', 'blog_teaser', 'rich_text', 'faq',
 ];
 
 export const typeLabel = (type: BlockType): MessageKey => `homeBuilder.type.${type}` as MessageKey;

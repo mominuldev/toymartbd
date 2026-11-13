@@ -247,14 +247,16 @@ it('revalidates content:home when a schedule boundary of the live version passes
     CarbonImmutable::setTestNow();
 });
 
-it('seeds the default homepage once, published as version 1', function (): void {
+it('seeds the default homepage once, published as version 1, without queueing a revalidation', function (): void {
+    Bus::fake();
     $this->seed(CmsHomeBlocksSeeder::class);
     $this->seed(CmsHomeBlocksSeeder::class);
 
     expect(CmsLayoutVersion::query()->count())->toBe(1)
         ->and(array_column(CmsLayoutVersion::latestFor(BlockPlacement::Home)?->blocks ?? [], 'type'))
-        ->toBe(['hero', 'category_tiles', 'age_tiles', 'product_rail', 'product_rail', 'usp_band', 'testimonials', 'blog_teaser']);
+        ->toBe(['hero', 'category_tiles', 'flash_sale', 'age_tiles', 'product_rail', 'product_rail', 'usp_band', 'testimonials', 'blog_teaser']);
+    Bus::assertNothingDispatched();
 
     // With an empty catalogue the data-driven blocks hide themselves; nothing renders empty.
-    expect(CmsKit::types(CmsKit::home()))->toBe(['hero', 'age_tiles', 'usp_band']);
+    expect(CmsKit::types(CmsKit::home()))->toBe(['hero', 'flash_sale', 'age_tiles', 'usp_band']);
 });

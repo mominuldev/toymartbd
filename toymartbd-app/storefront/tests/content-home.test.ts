@@ -69,6 +69,9 @@ describe('normalizeHome', () => {
         });
         expect(home.blocks.map((b) => b.id)).toEqual(['e']);
         expect(normalizeHome(null)).toEqual({ version: null, preview: false, blocks: [] });
+        // The flash-sale slot carries only its title and size; the storefront reads the sale itself.
+        const flash = normalizeHome({ blocks: [{ id: 's', type: 'flash_sale', content: { title: 'Flash sale', limit: 40 } }] }).blocks[0];
+        expect(flash).toMatchObject({ type: 'flash_sale', content: { title: 'Flash sale', limit: 12 } });
     });
 
     it('never passes on an unsafe link', () => {
