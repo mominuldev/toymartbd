@@ -27,7 +27,7 @@ Each item below lists its scope; check the code on disk to see how far it got, t
 | 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | **done** — rows 4–7 except Search Console metrics/site audit (`docs/api/seo.md`) |
 | 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | **done** — see open items below |
 | 6 | Owner decisions 2026-11-13 (risk confirmed, verify→confirmed, rider phone on shipment + no-rider SMS variant, managers get integrations, non-masking numeric sender, ৳0.26/segment) | **done** |
-| 7 | Message templates library screen (`/automations/templates`): list, editor with EN/BN + server preview/segments, versions, custom marketing/manual templates | running |
+| 7 | Message templates library screen (`/automations/templates`): list, editor with EN/BN + server preview/segments, versions, custom marketing/manual templates | **done** (no Figma frame — owner to review screens) |
 | — | Phase 7 server-side tracking (GA4 MP, Meta CAPI, dedup, consent, diagnostics) | not started — next batch |
 
 Known failing at handoff (other agents mid-edit): OpenApiSpecTest (NotificationTemplateController being edited),

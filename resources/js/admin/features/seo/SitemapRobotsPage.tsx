@@ -15,6 +15,9 @@ import { useToast } from '@/components/ui/Toast';
 import { fieldErrors, useRegenerateSitemap, useRobots, useSaveRobots, useSitemapStatus, type SitemapStatus } from './api';
 import { formatCount } from './parts';
 
+/** The sitemap file a partition is served as — a file name, not translatable copy. */
+const sitemapFileName = (partition: string): string => `sitemap-${partition}.xml`;
+
 /** File names, not copy. */
 const ROBOTS_FILE = 'robots.txt';
 const INDEX_FILE = 'sitemap.xml';
@@ -61,7 +64,7 @@ export function SeoOverviewPage() {
                     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {partitions(sitemap.data).map((p) => (
                             <li key={p.partition} className="flex min-w-0 flex-col gap-1 rounded-sm bg-subtle p-3">
-                                <p className="truncate t-admin-mono text-fg-primary">{`sitemap-${p.partition}.xml`}</p>
+                                <p className="truncate t-admin-mono text-fg-primary">{sitemapFileName(p.partition)}</p>
                                 <p className="t-admin-caption tabular text-fg-secondary">{t('seo.crawling.urls', { count: formatCount(p.urls), locales: p.locales })}</p>
                                 {sitemap.data?.generated_at && (
                                     <p className="flex items-center gap-1 t-admin-caption text-fg-secondary">

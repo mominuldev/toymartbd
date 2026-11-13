@@ -28,6 +28,9 @@ import {
 } from './api';
 import { ModalDialog, RowMenu, RowMenuItem, formatCount } from './parts';
 
+/** The CSV header the importer expects — a file format, not translatable copy. */
+const CSV_SAMPLE = 'from_path,to_path,status_code,note\n/old-page,/toys,301,';
+
 type View = 'all' | 'automatic' | 'manual';
 type FormErrors = Partial<Record<'from_path' | 'to_path' | 'status_code' | 'note', string>>;
 
@@ -435,7 +438,7 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
         >
             <div className="flex w-full flex-col gap-3">
                 <p className="t-admin-caption text-fg-secondary">{t('seo.redirects.importHint')}</p>
-                <pre className="rounded-sm bg-subtle p-3 t-admin-mono-sm text-fg-secondary">{'from_path,to_path,status_code,note\n/old-page,/toys,301,'}</pre>
+                <pre className="rounded-sm bg-subtle p-3 t-admin-mono-sm text-fg-secondary">{CSV_SAMPLE}</pre>
                 <Field label={t('seo.redirects.importFile')} error={problem ?? undefined}>
                     {({ id, describedBy, invalid }) => (
                         <input id={id} type="file" accept=".csv,text/csv" aria-describedby={describedBy} aria-invalid={invalid || undefined} onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="t-admin-body text-fg-primary" />
