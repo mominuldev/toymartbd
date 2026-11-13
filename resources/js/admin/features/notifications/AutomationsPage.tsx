@@ -17,9 +17,10 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import { channels, useLogs, useSaveTemplate, useSaveTemplates, useTemplatePreview, useTemplates, type Channel, type NotificationTemplate, type TemplateInput } from './api';
 import { FlowLine, FlowStep, Panel, Taka, Toggle, channelIcon, channelLabel, dhakaWhen, eventLabel, whenLabel } from './parts';
+import { AutomationSchedulePanel } from './AutomationSchedulePanel';
 
 /** Lifecycle order for the list; any key the API adds later follows, alphabetically. */
-const keyOrder = ['order.placed', 'order.confirmed', 'order.shipped', 'order.out_for_delivery', 'order.out_for_delivery.no_rider', 'order.delivered', 'order.cancelled', 'otp.login'];
+const keyOrder = ['order.placed', 'order.confirmed', 'order.shipped', 'order.out_for_delivery', 'order.out_for_delivery.no_rider', 'order.delivered', 'order.cancelled', 'review.request', 'customer.birthday', 'otp.login'];
 
 type Group = { key: string; templates: Partial<Record<Channel, NotificationTemplate>> };
 
@@ -112,6 +113,8 @@ export function AutomationsPage() {
                     </ul>
                     <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
                         <FlowPanel group={selected} />
+                        {/* P8 scheduled automations (review request, birthday): timing + consent. */}
+                        <AutomationSchedulePanel templateKey={selected.key} />
                         <TemplateEditor
                             key={`${selected.key}.${channel}`}
                             template={selected.templates[channel]!}
@@ -213,7 +216,7 @@ function FlowPanel({ group }: { group: Group }) {
             </FlowStep>
             <FlowLine />
             <FlowStep icon={FunnelSimpleIcon} label={t('notif.flow.if')} tone="subtle">
-                {security ? t('notif.flow.ifSecurity') : t('notif.flow.ifOptIn')}
+                {security ? t('notif.flow.ifSecurity') : Object.values(group.templates).some((tpl) => tpl.category === 'marketing') ? t('automations.flow.ifMarketing') : t('notif.flow.ifOptIn')}
             </FlowStep>
             <FlowLine />
             {wa ? (

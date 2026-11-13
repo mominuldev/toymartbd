@@ -9,8 +9,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Customers and their saved addresses (§3.3). Registered for Customer and Address
- * (rule 21). `viewPii` gates the full phone and address (rule 20).
+ * Customers, their saved addresses and staff notes (§3.3). Registered for Customer, Address
+ * and CustomerNote (rule 21). `viewPii` gates the full phone and address (rule 20).
  */
 final class CustomerPolicy extends Policy
 {
@@ -30,6 +30,12 @@ final class CustomerPolicy extends Policy
     }
 
     public function update(User $user, Model $customer): bool
+    {
+        return $this->allows($user, Permission::CustomersUpdate);
+    }
+
+    /** Append a staff note to a customer (customer_notes) — customers.update. */
+    public function addNote(User $user, Model $customer): bool
     {
         return $this->allows($user, Permission::CustomersUpdate);
     }

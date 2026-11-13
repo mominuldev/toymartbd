@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { MOCK_API_URL, STOREFRONT_URL } from './constants';
+import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 
 // P4-STO-01 layout + P4-STO-12 status pages. Asserted with JavaScript DISABLED (the HTML a
 // crawler or a visitor on a weak connection gets), except the keyboard block at the end.
-test.use({ javaScriptEnabled: false });
+// A crawler UA: an HTML-limited bot gets every metadata tag in <head> (next.config.ts htmlLimitedBots).
+test.use({ javaScriptEnabled: false, userAgent: CRAWLER_UA });
 
 test.beforeAll(async ({ request }) => {
     await request.post(`${MOCK_API_URL}/__control/reset`);

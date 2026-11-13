@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { MOCK_API_URL, STOREFRONT_URL } from './constants';
+import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 
 // P3-STO-04 / P3-I18N-02: everything here is asserted with JavaScript DISABLED, i.e. against the
 // server-rendered HTML a crawler sees.
-test.use({ javaScriptEnabled: false });
+// A crawler UA: an HTML-limited bot gets every metadata tag in <head> (next.config.ts htmlLimitedBots).
+test.use({ javaScriptEnabled: false, userAgent: CRAWLER_UA });
 
 test.beforeAll(async ({ request }) => {
     await request.post(`${MOCK_API_URL}/__control/reset`);

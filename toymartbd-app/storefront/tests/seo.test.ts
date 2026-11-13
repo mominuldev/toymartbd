@@ -18,7 +18,10 @@ import {
     productMetadata,
     searchMetadata,
     staticMetadata,
+    titleSeparatorOf,
+    titleTemplate,
     trackMetadata,
+    DEFAULT_TITLE_SEPARATOR,
 } from '@/lib/seo/metadata';
 import { redirectIndex, recordHit, resetRedirectCache } from '@/lib/seo/redirect-map';
 import { indexRedirects, resolveRedirect } from '@/lib/seo/redirects';
@@ -73,7 +76,9 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
     it('home: absolute title, indexable', () => {
         const meta = homeMetadata(locale);
         expectHead(meta, locale, '/');
-        expect(meta.title).toEqual({ absolute: `${t.site.name} · ${t.site.tagline}` });
+        expect(meta.title).toEqual({ absolute: `${t.site.name} | ${t.site.tagline}` });
+        // The owner's separator (config/seo.php) replaces it everywhere, never doubled.
+        expect(homeMetadata(locale, ' · ').title).toEqual({ absolute: `${t.site.name} · ${t.site.tagline}` });
         expect(meta.description).toBe(t.home.metaDescription);
         expect(meta.robots).toBeUndefined(); // index,follow: no robots meta
     });
@@ -169,6 +174,27 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
 
     it('404 / maintenance: noindex, no canonical', () => {
         expect(noindexMetadata('Not found')).toEqual({ title: 'Not found', robots: { index: false, follow: false } });
+    });
+});
+
+describe('title separator (one value: config/seo.php via GET /storefront/seo/settings)', () => {
+    it('defaults to the API default, " | "', () => {
+        expect(DEFAULT_TITLE_SEPARATOR).toBe(' | ');
+        expect(titleTemplate('Toy Mart BD')).toBe('%s | Toy Mart BD');
+    });
+
+    it('uses the API value and falls back on anything malformed', () => {
+        expect(titleSeparatorOf({ site_name: 'Toy Mart BD', title_separator: ' · ' })).toBe(' · ');
+        expect(titleTemplate('Toy Mart BD', titleSeparatorOf({ title_separator: ' · ' }))).toBe('%s · Toy Mart BD');
+        for (const bad of [null, 'x', {}, { title_separator: '' }, { title_separator: '   ' }, { title_separator: 7 }, { title_separator: '<script>alert(1)</script>' }]) {
+            expect(titleSeparatorOf(bad)).toBe(' | ');
+        }
+    });
+
+    it('matches the server default titles, so an SEO document title never gets a second suffix', () => {
+        // The SEO document's title is used as `title.absolute` (it already ends " | Toy Mart BD").
+        const meta = productMetadata({ locale: 'en', slug: 'lego', name: 'LEGO', description: 'd', seo: seoDoc() });
+        expect(meta.title).toEqual({ absolute: 'LEGO Classic Bricks | Toy Mart BD' });
     });
 });
 

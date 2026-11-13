@@ -115,6 +115,8 @@ function reportsApi(me: Me = accountant) {
         if (url.includes('/reports/inventory-valuation')) return { status: 200, body: valuation };
         if (url.includes('/finance/receivables?as_of=2026-11-08'))
             return { status: 200, body: { as_of: '2026-11-08', recognised: '9540.00', received: '8753.00', outstanding: '787.00', open_orders: 1, aging: { '0_7': '787.00', '8_15': '0.00', '16_30': '0.00', '31_plus': '0.00' } } };
+        if (url.includes('/finance/reports/refunds-owed?as_of=2026-11-08'))
+            return { status: 200, body: { as_of: '2026-11-08', total: '200.00', count: 1, oldest_approved_at: '2026-11-07T04:00:00Z', refunds: [] } };
         if (url.includes('/inventory/low-stock-count')) return { status: 200, body: { location_id: 1, count: 0 } };
         return { status: 404 };
     });
@@ -148,6 +150,9 @@ describe('profit & loss', () => {
         // "Still with the courier" is the server's COD receivable as at the period's last day.
         expect(await screen.findByText('Still with the courier')).toBeTruthy();
         expect(screen.getAllByText(text('৳787')).length).toBeGreaterThan(0);
+        // "Owed back to a customer": the server's refunds approved but unpaid, as at the same day.
+        expect(await screen.findByText('Owed back to a customer')).toBeTruthy();
+        expect(screen.getAllByText(text('−৳200')).length).toBeGreaterThan(0);
         expect(screen.getByText('Reconciled with the ledger')).toBeTruthy();
         expect(screen.getByText('Open orders not yet delivered: ৳18,000 across 4 orders')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Stock on hand ৳136,741 at cost — an asset, not a cost' }).getAttribute('href')).toBe('/inventory/valuation');

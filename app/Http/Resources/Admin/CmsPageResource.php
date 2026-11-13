@@ -8,6 +8,7 @@ use App\Domain\Catalog\Services\ProductDescription;
 use App\Domain\Content\Enums\PageStatus;
 use App\Domain\Content\Models\CmsPage;
 use App\Domain\Seo\Models\SeoMeta;
+use App\Domain\Seo\Services\SiteTitle;
 use App\Http\Resources\ApiResource;
 use App\Http\Resources\Content\ContentFormat;
 use Dedoc\Scramble\Attributes\SchemaName;
@@ -77,8 +78,8 @@ final class CmsPageResource extends ApiResource
                 'twitter_card' => $meta === null ? 'summary_large_image' : $meta->twitter_card->value,
                 'focus_keyword' => $meta?->focus_keyword,
                 'defaults' => [
-                    'title' => $page->title.' | Toy Mart BD',
-                    'title_bn' => ($page->title_bn ?? $page->title).' | Toy Mart BD',
+                    'title' => SiteTitle::of($page->title),
+                    'title_bn' => SiteTitle::of($page->title_bn ?? $page->title),
                     'description' => mb_strlen($summary) > 155 ? rtrim(mb_substr($summary, 0, 154)).'…' : $summary,
                 ],
             ] : null,

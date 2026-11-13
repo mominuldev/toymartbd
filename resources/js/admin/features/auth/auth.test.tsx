@@ -64,7 +64,7 @@ describe('session loss', () => {
     it('sends the user to login when any request answers 401', async () => {
         mockApi((url) => (url.endsWith('/auth/me') ? { status: 200, body: viewer } : { status: 401, body: { type: 'https://toymartbd.com/problems/unauthenticated', title: 'Unauthenticated', status: 401 } }));
         const { client } = renderApp('/');
-        await screen.findByRole('heading', { name: 'Dashboard' });
+        await screen.findByRole('heading', { name: 'Overview' });
 
         await client.fetchQuery({ queryKey: ['orders'], queryFn: () => api('/orders') }).catch(() => undefined);
 
@@ -84,7 +84,8 @@ describe('failed queries', () => {
 
         fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
 
-        expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy();
-        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(await screen.findByRole('heading', { name: 'Overview' })).toBeTruthy();
+        // The session query ran twice (failed, then retried); the dashboard's own query is not counted.
+        expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/auth/me'))).toHaveLength(2);
     });
 });

@@ -73,6 +73,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
 
+    // Dashboard (P8): KPIs, status strip, trend, best sellers, low stock, needs attention. Read-only.
+    Route::get('/dashboard', [App\Http\Controllers\Api\V1\Admin\DashboardController::class, 'show'])->name('dashboard');
+
     // Catalog. DELETE archives (a brand is never hard-deleted; products reference it).
     Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
     Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
@@ -223,6 +226,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/coupons/{coupon}/report', [CouponController::class, 'report'])->name('coupons.report');
 
     // Promotions and flash sales (P7, docs/api/promotions.md). DELETE deactivates.
+    // Builder lookups under marketing permissions (P7 follow-up): flash-sale variant picker and scope-chip names.
+    Route::get('/marketing/lookups/variants', [App\Http\Controllers\Api\V1\Admin\MarketingLookupController::class, 'variants'])->name('marketing.lookups.variants');
+    Route::get('/marketing/lookups/names', [App\Http\Controllers\Api\V1\Admin\MarketingLookupController::class, 'names'])->name('marketing.lookups.names');
     Route::get('/promotions', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'index'])->name('promotions.index');
     Route::post('/promotions', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'store'])->name('promotions.store');
     Route::get('/promotions/{promotion}', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'show'])->whereNumber('promotion')->name('promotions.show');
@@ -284,6 +290,15 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/orders/bulk/invoices', [OrderInvoiceController::class, 'bulk'])->name('orders.bulk.invoices');
     Route::get('/orders/{order}/invoice', [OrderInvoiceController::class, 'show'])->name('orders.invoice');
 
+    // Invoices (P8, PRD N-13): issued on first print, gap-free INV-/PINV- numbers, immutable
+    // company + line snapshot; reprints render the snapshot. Supplier invoice = a PO's PDF.
+    Route::get('/invoices', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{invoice}', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'show'])->whereNumber('invoice')->name('invoices.show');
+    Route::get('/invoices/{invoice}/pdf', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'pdf'])->whereNumber('invoice')->name('invoices.pdf');
+    Route::get('/purchases/{purchase}/invoice', [App\Http\Controllers\Api\V1\Admin\InvoiceController::class, 'purchase'])->whereNumber('purchase')->name('purchases.invoice');
+    Route::get('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'show'])->name('settings.invoice.show');
+    Route::put('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'update'])->name('settings.invoice.update');
+
     // Returns & refunds (DATABASE-DESIGN §4.7, PRD O-21, Figma 211:5121). Paying a refund out
     // moves money, so a double submit must replay, not pay twice.
     Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
@@ -315,6 +330,12 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/notifications/logs/{log}/retry', [NotificationLogController::class, 'retry'])->whereNumber('log')->name('notifications.logs.retry');
     Route::get('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'show'])->name('notifications.preferences.show');
     Route::put('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'update'])->name('notifications.preferences.update');
+    // Scheduled automations (P8): review requests + birthday messages — scheduling values and
+    // the birthday consent (on/off and copy are the templates above).
+    Route::get('/notifications/automations', [App\Http\Controllers\Api\V1\Admin\AutomationController::class, 'show'])->name('notifications.automations.show');
+    Route::put('/notifications/automations', [App\Http\Controllers\Api\V1\Admin\AutomationController::class, 'update'])->name('notifications.automations.update');
+    Route::get('/notifications/customers/{customer}/consents', [App\Http\Controllers\Api\V1\Admin\AutomationController::class, 'consents'])->name('notifications.consents.show');
+    Route::put('/notifications/customers/{customer}/consents', [App\Http\Controllers\Api\V1\Admin\AutomationController::class, 'updateConsents'])->name('notifications.consents.update');
 
     // Integrations → Messaging (owner request 2026-11-13): SMS credentials in the admin,
     // encrypted in `settings`, env as the fallback. Credentials page → manage_integrations
@@ -404,11 +425,20 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/finance/reports/pnl/series/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportSeries'])->name('finance.reports.pnl.series.export');
     Route::get('/finance/reports/profitability', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'profitability'])->name('finance.reports.profitability');
     Route::get('/finance/reports/profitability/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportProfitability'])->name('finance.reports.profitability.export');
+    // "Owed back to a customer": refunds approved but not yet paid out (P7 follow-up).
+    Route::get('/finance/reports/refunds-owed', App\Http\Controllers\Api\V1\Admin\FinanceRefundsOwedController::class)->name('finance.reports.refunds-owed');
     Route::get('/reports/inventory-valuation', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'index'])->name('reports.inventory-valuation');
     Route::get('/reports/inventory-valuation/export', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'export'])->name('reports.inventory-valuation.export');
     // Courier performance (P6): per provider and district, Dhaka dates; CSV like the other reports.
     Route::get('/reports/couriers', [App\Http\Controllers\Api\V1\Admin\CourierPerformanceController::class, 'index'])->name('reports.couriers');
     Route::get('/reports/couriers/export', [App\Http\Controllers\Api\V1\Admin\CourierPerformanceController::class, 'export'])->name('reports.couriers.export');
+    // P8 sales analytics (Dhaka dates, Saturday weeks) + CSV/XLSX, and scheduled report emails.
+    Route::get('/analytics/sales', [App\Http\Controllers\Api\V1\Admin\SalesAnalyticsController::class, 'index'])->name('analytics.sales');
+    Route::get('/analytics/sales/export', [App\Http\Controllers\Api\V1\Admin\SalesAnalyticsController::class, 'export'])->name('analytics.sales.export');
+    Route::get('/reports/schedules/recipients', [App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class, 'recipients'])->name('reports.schedules.recipients');
+    Route::get('/reports/schedules/{schedule}/runs', [App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class, 'runs'])->whereNumber('schedule')->name('reports.schedules.runs');
+    Route::apiResource('/reports/schedules', App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class)
+        ->parameters(['schedules' => 'schedule'])->where(['schedule' => '[0-9]+'])->names('reports.schedules');
 
     // Fraud & risk (P6, checklist §2.4, rules 23/24/24b/33b): the verification queue (held
     // orders; a PERSON verifies or cancels — scoring never does), phone lookup with our score
@@ -432,4 +462,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
 
     // Homepage builder (Phase 7): CMS blocks, publish/versions/revert, preview token — routes/api_v1_admin_cms_blocks.php.
     require __DIR__.'/api_v1_admin_cms_blocks.php';
+
+    // Customers (P8): list, profile, notes, customer analytics — routes/api_v1_admin_customers.php.
+    require __DIR__.'/api_v1_admin_customers.php';
 });

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { cached } from '../api';
+import { DEFAULT_TITLE_SEPARATOR, titleSeparatorOf } from './metadata';
 import { SEO_TYPES, type SeoDocument, type SeoType } from './types';
 
 // The admin's SEO document for one page (docs/api/seo.md §3), tag-cached under `seo` and the
@@ -26,5 +27,22 @@ export async function getSeo(type: SeoType, slug: string): Promise<SeoDocument |
         return isSeoDocument(doc) ? doc : null;
     } catch {
         return null;
+    }
+}
+
+/** Cache tag of the title settings; any SEO purge (`seo`) refreshes it too. */
+export const SEO_SETTINGS_TAG = 'seo-settings';
+
+/**
+ * How every `<title>` ends — config/seo.php on the API (`GET /storefront/seo/settings`), the same
+ * value the server's default titles use, so a page never carries two different suffixes. Never
+ * throws: an unreachable API falls back to the API's own default separator.
+ */
+export async function getTitleSeparator(): Promise<string> {
+    try {
+        const body = await cached<unknown>('storefront/seo/settings', ['seo', SEO_SETTINGS_TAG]);
+        return titleSeparatorOf(body);
+    } catch {
+        return DEFAULT_TITLE_SEPARATOR;
     }
 }

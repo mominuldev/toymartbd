@@ -204,6 +204,33 @@ describe('blog post editor', () => {
 });
 
 describe('blog terms', () => {
+    it.each([
+        ['categories', 'Buying guides', '/seo/meta/blog_category/3'],
+        ['tags', 'educational', '/seo/meta/blog_tag/9'],
+        ['authors', 'Mominul Islam', '/seo/meta/blog_author/5'],
+    ])('opens the SEO panel for an existing %s archive', { timeout: 20_000 }, async (kind, name, seoUrl) => {
+        const calls = mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: { ...editor, permissions: [...editor.permissions, 'seo.view', 'seo.manage'] } };
+            if (url.endsWith(seoUrl)) return { status: 404 };
+            return terms(url) ?? { status: 404 };
+        });
+
+        renderApp(`/store/blog/${kind}`);
+        fireEvent.click(await screen.findByRole('button', { name: `Edit ${name}` }, { timeout: 5000 }));
+        await waitFor(() => expect(calls.mock.calls.some(([url]) => String(url).endsWith(seoUrl))).toBe(true));
+    });
+
+    it('shows no SEO panel without seo.view', { timeout: 20_000 }, async () => {
+        const calls = mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: editor };
+            return terms(url) ?? { status: 404 };
+        });
+        renderApp('/store/blog/categories');
+        fireEvent.click(await screen.findByRole('button', { name: 'Edit Buying guides' }, { timeout: 5000 }));
+        await screen.findByRole('button', { name: 'Save' });
+        expect(calls.mock.calls.some(([url]) => String(url).includes('/seo/meta/'))).toBe(false);
+    });
+
     it('lists categories and creates one', { timeout: 20_000 }, async () => {
         const calls = mockApi((url, init) => {
             if (url.endsWith('/auth/me')) return { status: 200, body: editor };

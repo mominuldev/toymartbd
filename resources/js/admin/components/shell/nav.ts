@@ -19,6 +19,7 @@ import {
     WalletIcon,
     StackIcon,
     MegaphoneSimpleIcon,
+    ReceiptIcon,
     type Icon,
 } from '@phosphor-icons/react';
 import type { MessageKey } from '@/i18n/messages';
@@ -107,7 +108,11 @@ export const navigation: NavGroup[] = [
     },
     {
         label: 'nav.group.money',
-        items: [{ key: 'nav.finance', path: '/finance', icon: WalletIcon, permission: 'finance.view' }],
+        items: [
+            { key: 'nav.finance', path: '/finance', icon: WalletIcon, permission: 'finance.view' },
+            // P8 invoices: customer invoices need orders.view (supplier ones purchasing.view + view_cost, filtered server-side).
+            { key: 'nav.invoices', path: '/invoices', icon: ReceiptIcon, permission: 'orders.view' },
+        ],
     },
     {
         label: 'nav.group.settings',

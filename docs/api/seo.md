@@ -14,10 +14,21 @@ these helpers; nothing builds its own `<head>`, JSON-LD, sitemap entry or redire
 | `category` | `/categories/{slug}` | `CategorySubjects` — live = active |
 | `brand` | `/brands/{slug}` | `BrandSubjects` — live = active |
 | `page` | `/pages/{slug}` | `PageSubjects` (CMS `CmsPage::MORPH`) — live = published, `published_at` reached |
-| `blog_post` | `/blog/{slug}` (article) · `/guides/{slug}` (buying guide) | `BlogPostSubjects` (`BlogPost::SEO_TYPE`) |
+| `blog_post` | `/blog/{slug}` (article) · `/guides/{slug}` (buying guide) | `Content\Blog\Seo\BlogPostSeoSubjects` (`BlogPost::SEO_TYPE`) |
+| `blog_category` · `blog_tag` · `blog_author` | `/blog/category/{slug}` · `/blog/tag/{slug}` · `/blog/author/{slug}` | `Content\Blog\Seo\Blog{Category,Tag,Author}SeoSubjects` — live = at least one live post |
 
-`blog_category`, `blog_tag` and `blog_author` rows exist in `seo_meta` (written by the blog's own
-Actions) but have no provider yet, so they are not in the generic panel or the sitemap.
+Blog archives are in the SEO panel (admin Blog → Categories / Tags / Authors, when editing one),
+the `blog` sitemap partition (both locales, hreflang) and the storefront archive `<head>`.
+
+**One write path.** `seo_meta` is written only by `Seo\Actions\SaveSeoMeta` (`handle()` for the
+panel, `write()` for SaveProductWithSeo / SaveCmsPageWithSeo, and the `Seo\Contracts\SeoMetaStore`
+contract — `merge()` / `forget()` — for the blog editor). `slug_history` is written only by
+`RecordSlugChange` (directly, or via the `SlugChanged` event). Content depends on Seo only
+through `SeoContracts` and Seo events (deptrac), so there is no Content ↔ Seo cycle.
+
+**Title separator.** `config/seo.php` `title_separator` (default `" | "`, owner decision open) ends
+every server default title (`SiteTitle::of()`); the storefront reads the same value from
+`GET /storefront/seo/settings` for its layout template, so a title never carries two suffixes.
 Bangla is always the same path under `/bn` (rule 37). The path a provider returns is the truth;
 the table is the default.
 
@@ -92,6 +103,7 @@ Truncation is computed on the server at Google's desktop pixel metric (`SerpMeas
 | Method | Path | Cache tags (storefront) |
 |---|---|---|
 | GET | `/seo/{type}/{slug}` | `seo`, `{type}:{slug}` (e.g. `product:x`, `page:x`, `blog_post:x`) — effective SEO for **both** locales (404 when not live) |
+| GET | `/seo/settings` | `seo`, `seo-settings` — `{site_name, title_separator}` (config/seo.php) for the layout title template |
 | GET | `/redirects` | `redirects` — the whole collapsed map `{redirects: [{id, from, to, status}]}` |
 | POST | `/redirects/{id}/hit` | — counts one hit (fire-and-forget from the proxy) |
 | GET | `/sitemaps/{file}` | `sitemaps` — `sitemap.xml` (index) or `sitemap-{type}-{en|bn}-{n}.xml` |

@@ -81,6 +81,7 @@ export const reportsEn = {
     'reports.cash.intro': 'Profit and cash are different numbers and both are correct. This card is cash.',
     'reports.cash.in': 'Received in your bank',
     'reports.cash.courier': 'Still with the courier',
+    'reports.cash.owed': 'Owed back to a customer',
     'reports.cash.out': 'Paid out of your bank',
     'reports.cash.net': 'Net cash movement',
 
@@ -242,6 +243,7 @@ export const reportsBn: Record<keyof typeof reportsEn, string> = {
     'reports.cash.intro': 'মুনাফা আর নগদ আলাদা সংখ্যা, দুটোই সঠিক। এই কার্ডটি নগদের।',
     'reports.cash.in': 'আপনার ব্যাংকে এসেছে',
     'reports.cash.courier': 'এখনো কুরিয়ারের কাছে',
+    'reports.cash.owed': 'গ্রাহককে ফেরত দেওয়া বাকি',
     'reports.cash.out': 'আপনার ব্যাংক থেকে গেছে',
     'reports.cash.net': 'নিট নগদ প্রবাহ',
 

@@ -11,7 +11,8 @@ import { pagePath, pick, pickOptional, postTitle, termName } from '@/lib/blog/fo
 import { blogMessages } from '@/lib/blog/messages';
 import { postPath, termPath, type BlogPage, type BlogPost, type BlogTerm, type BlogTermKind } from '@/lib/blog/types';
 import { articleJsonLd, breadcrumbJsonLd } from '@/lib/seo/jsonld';
-import { buildMetadata, INDEX, NOINDEX_FOLLOW, NOINDEX_NOFOLLOW, type Robots } from '@/lib/seo/metadata';
+import { buildMetadata, INDEX, NOINDEX_FOLLOW, NOINDEX_NOFOLLOW, withSeoDocument, type Robots } from '@/lib/seo/metadata';
+import type { SeoDocument } from '@/lib/seo/types';
 import { BlogArticle } from './BlogArticle';
 import { BlogList } from './BlogList';
 import type { BlogCrumb } from './Breadcrumbs';
@@ -35,10 +36,18 @@ export interface ListSpec {
     chips?: boolean;
 }
 
-export async function listMetadata(spec: Omit<ListSpec, 'crumbs' | 'query' | 'chips'>): Promise<Metadata> {
+/**
+ * A list page's metadata. `seo` is the archive's SEO document (blog category/tag/author, set in
+ * the admin's SEO panel): it overrides title, description, OG, robots and canonical on page 1;
+ * later pages keep their own "page n" title and self-canonical, but still honour a noindex.
+ */
+export async function listMetadata(spec: Omit<ListSpec, 'crumbs' | 'query' | 'chips'> & { seo?: SeoDocument | null }): Promise<Metadata> {
     const t = blogMessages(spec.locale);
     const title = spec.page > 1 ? format(t.pageTitle, { title: spec.title, page: String(spec.page) }) : spec.title;
-    return buildMetadata({ locale: spec.locale, path: pagePath(spec.path, spec.page), title, description: spec.description, robots: INDEX });
+    const base = { locale: spec.locale, path: pagePath(spec.path, spec.page), title, description: spec.description, robots: INDEX };
+    if (!spec.seo) return buildMetadata(base);
+    const merged = withSeoDocument(base, spec.seo);
+    return buildMetadata(spec.page > 1 ? { ...base, robots: merged.robots } : merged);
 }
 
 export async function renderList(spec: ListSpec) {

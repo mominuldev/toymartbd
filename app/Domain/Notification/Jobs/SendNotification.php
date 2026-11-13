@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Jobs;
 
+use App\Domain\Customer\Models\Customer;
 use App\Domain\Notification\Actions\QueueSmsFallback;
 use App\Domain\Notification\Contracts\WhatsAppGateway;
 use App\Domain\Notification\Enums\NotificationChannel;
@@ -77,6 +78,23 @@ final class SendNotification implements ShouldQueue
             return;
         }
 
+        // A message about the customer rather than an order (P8 birthday automation): the
+        // recipient is the customer's own phone, re-read now like an order's. SMS / WhatsApp only.
+        if ($log->notifiable_type === NotificationLog::NOTIFIABLE_CUSTOMER) {
+            $customer = Customer::query()->find($log->notifiable_id);
+            if ($customer === null || $log->channel === NotificationChannel::Email) {
+                $this->finish($log, NotificationStatus::Failed, error: $customer === null ? 'notifiable_missing' : 'channel_unsupported');
+
+                return;
+            }
+            $phone = PhoneNumber::tryParse($customer->phone);
+            $log->channel === NotificationChannel::Sms
+                ? $this->sendSms($log, $template, $phone, $log->variables(), $sms)
+                : $this->sendWhatsApp($log, $template, $phone, $log->variables(), $whatsApp, $fallback);
+
+            return;
+        }
+
         $order = $log->notifiable_type === NotificationLog::NOTIFIABLE_ORDER
             ? Order::query()->with(['customer', 'items'])->find($log->notifiable_id)
             : null;
@@ -93,9 +111,10 @@ final class SendNotification implements ShouldQueue
             $variables['rider_phone'] = $riders->phoneFor($order->id)?->national() ?? '';
         }
 
+        $phone = PhoneNumber::tryParse($order->shipping_phone);
         match ($log->channel) {
-            NotificationChannel::Sms => $this->sendSms($log, $template, $order, $variables, $sms),
-            NotificationChannel::WhatsApp => $this->sendWhatsApp($log, $template, $order, $variables, $whatsApp, $fallback),
+            NotificationChannel::Sms => $this->sendSms($log, $template, $phone, $variables, $sms),
+            NotificationChannel::WhatsApp => $this->sendWhatsApp($log, $template, $phone, $variables, $whatsApp, $fallback),
             NotificationChannel::Email => $this->sendEmail($log, $template, $order, $variables),
         };
     }
@@ -116,9 +135,8 @@ final class SendNotification implements ShouldQueue
     }
 
     /** @param  array<string, string>  $variables */
-    private function sendSms(NotificationLog $log, NotificationTemplate $template, Order $order, array $variables, SmsDrivers $sms): void
+    private function sendSms(NotificationLog $log, NotificationTemplate $template, ?PhoneNumber $phone, array $variables, SmsDrivers $sms): void
     {
-        $phone = PhoneNumber::tryParse($order->shipping_phone);
         if ($phone === null) {
             $this->finish($log, NotificationStatus::Failed, error: 'invalid_recipient');
 
@@ -145,9 +163,8 @@ final class SendNotification implements ShouldQueue
     }
 
     /** @param  array<string, string>  $variables */
-    private function sendWhatsApp(NotificationLog $log, NotificationTemplate $template, Order $order, array $variables, WhatsAppGateway $whatsApp, QueueSmsFallback $fallback): void
+    private function sendWhatsApp(NotificationLog $log, NotificationTemplate $template, ?PhoneNumber $phone, array $variables, WhatsAppGateway $whatsApp, QueueSmsFallback $fallback): void
     {
-        $phone = PhoneNumber::tryParse($order->shipping_phone);
         if ($phone === null) {
             $this->finish($log, NotificationStatus::Failed, error: 'invalid_recipient');
 

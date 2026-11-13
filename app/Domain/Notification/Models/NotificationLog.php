@@ -50,6 +50,9 @@ final class NotificationLog extends Model
     /** `notifiable_type` for an order. Stored as a short alias, not a class name. */
     public const string NOTIFIABLE_ORDER = 'order';
 
+    /** `notifiable_type` for a message about the customer, not an order (P8 birthday automation). */
+    public const string NOTIFIABLE_CUSTOMER = 'customer';
+
     /** @var list<string> */
     protected $guarded = ['id'];
 

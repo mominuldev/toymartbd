@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     // Approved reviews + rating summary for the product page (P4-CAT-12).
     Route::get('/products/{slug}/reviews', [ReviewController::class, 'index'])->name('products.reviews.index');
     // SEO (P7, docs/api/seo.md §3): head data, the redirect map, sitemaps and robots.txt.
+    Route::get('/seo/settings', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'settings'])->name('seo.settings');
     Route::get('/seo/{type}/{slug}', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'show'])->where(['type' => '[a-z_]{1,64}', 'slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->name('seo.show');
     Route::get('/redirects', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'redirects'])->name('redirects.index');
     Route::post('/redirects/{id}/hit', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'hit'])->whereNumber('id')->middleware('throttle:120,1')->name('redirects.hit');

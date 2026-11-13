@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class SaveProductWithSeo
 {
-    public function __construct(private readonly RecordSlugChange $slugs) {}
+    public function __construct(private readonly RecordSlugChange $slugs, private readonly SaveSeoMeta $meta) {}
 
     /** @param  Closure(): Product  $write */
     public function handle(?Product $existing, Closure $write, ?SeoMetaData $seo, ?int $actorId = null): Product
@@ -44,24 +44,7 @@ final class SaveProductWithSeo
             }
 
             if ($seo !== null) {
-                $meta = SeoMeta::query()->updateOrCreate(
-                    ['seoable_type' => SeoMeta::TYPE_PRODUCT, 'seoable_id' => $product->id],
-                    [
-                        'title' => $seo->title,
-                        'title_bn' => $seo->titleBn,
-                        'description' => $seo->description,
-                        'description_bn' => $seo->descriptionBn,
-                        'canonical_url' => $seo->canonicalUrl,
-                        'robots' => $seo->robots,
-                        'sitemap_exclude' => $seo->sitemapExclude,
-                        'og_title' => $seo->ogTitle,
-                        'og_description' => $seo->ogDescription,
-                        'og_image' => $seo->ogImage,
-                        'twitter_card' => $seo->twitterCard,
-                        'schema_override' => $seo->schemaOverride,
-                        'focus_keyword' => $seo->focusKeyword,
-                    ],
-                );
+                $meta = $this->meta->write(SeoMeta::TYPE_PRODUCT, $product->id, self::editorColumns($seo));
 
                 // The storefront's <head> reads it: purge the product's pages (after commit).
                 if ($meta->wasRecentlyCreated || $meta->wasChanged()) {
@@ -71,5 +54,16 @@ final class SaveProductWithSeo
 
             return $product;
         });
+    }
+
+    /**
+     * The columns an entity editor (product, static page) saves with its document: everything
+     * but the Bangla Open Graph pair, which only the SEO panel edits — so they keep their value.
+     *
+     * @return array<string, mixed>
+     */
+    public static function editorColumns(SeoMetaData $seo): array
+    {
+        return array_diff_key(SaveSeoMeta::columns($seo), array_flip(['og_title_bn', 'og_description_bn']));
     }
 }

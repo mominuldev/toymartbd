@@ -14,8 +14,8 @@ use Illuminate\Support\Carbon;
  * Search and social overrides for one page (DATABASE-DESIGN §3.9 `seo_meta`).
  * Polymorphic by a short type ("product"), not a class name, so a model rename never
  * orphans rows. Every text column is optional; an empty one falls back to the page's
- * server-side default. Written only through {@see \App\Domain\Seo\Actions\SaveProductWithSeo}
- * (with the product document) and {@see \App\Domain\Seo\Actions\SaveSeoMeta} (every type).
+ * server-side default. Written only through {@see \App\Domain\Seo\Actions\SaveSeoMeta} — directly,
+ * from SaveProductWithSeo / SaveCmsPageWithSeo, or via the SeoMetaStore contract (blog posts).
  *
  * @property int $id
  * @property string $seoable_type

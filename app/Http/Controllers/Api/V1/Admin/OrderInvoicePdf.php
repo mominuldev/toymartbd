@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Domain\Ordering\Models\Order;
+use App\Domain\Invoicing\Models\Invoice;
 use Illuminate\Support\Facades\File;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 
 /**
- * Renders resources/views/invoices/orders.blade.php to a PDF (P4-ORD-08).
+ * Renders issued invoices — customer and supplier — from their snapshots through
+ * resources/views/invoices/invoice.blade.php to one PDF (P4-ORD-08, P8 N-13).
  *
  * mPDF, not dompdf: Bangla needs OpenType shaping — conjuncts (ন্ট্র, ক্ষ), reph and
  * pre-base vowel reordering (ি, ে) — which dompdf does not do (verified: it prints
@@ -25,7 +26,7 @@ final class OrderInvoicePdf
 {
     public const string FONT = 'hindsiliguri';
 
-    /** @param  list<array{order: Order, locale: string}>  $invoices */
+    /** @param  list<array{invoice: Invoice, locale: string}>  $invoices */
     public function render(array $invoices): string
     {
         $tempDir = storage_path('framework/cache/mpdf');
@@ -54,8 +55,8 @@ final class OrderInvoicePdf
             'autoScriptToLang' => false,
             'autoLangToFont' => false,
         ]);
-        $mpdf->SetTitle('Toy Mart BD — invoices');
-        $mpdf->WriteHTML(view('invoices.orders', ['invoices' => $invoices])->render());
+        $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Toy Mart BD — invoices');
+        $mpdf->WriteHTML(view('invoices.invoice', ['invoices' => $invoices])->render());
 
         return $mpdf->Output('', 'S');
     }

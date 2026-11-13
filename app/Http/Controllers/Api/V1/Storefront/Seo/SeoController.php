@@ -10,6 +10,7 @@ use App\Domain\Seo\Services\RedirectMap;
 use App\Domain\Seo\Services\RobotsTxt;
 use App\Domain\Seo\Services\SeoSubjects;
 use App\Domain\Seo\Services\SitemapBuilder;
+use App\Domain\Seo\Services\SiteTitle;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Storefront\Seo\RecordRedirectHitRequest;
 use App\Http\Resources\Storefront\Seo\StorefrontSeoResource;
@@ -20,6 +21,17 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /** The storefront's SEO reads (docs/api/seo.md §3): head data, redirects, sitemaps, robots.txt. */
 final class SeoController extends ApiController
 {
+    /**
+     * `GET /seo/settings` — how a `<title>` ends (config/seo.php): the storefront's layout title
+     * template is `%s{title_separator}{site_name}`, the same as every server default title.
+     *
+     * @response array{site_name: string, title_separator: string}
+     */
+    public function settings(): JsonResponse
+    {
+        return response()->json(['site_name' => SiteTitle::siteName(), 'title_separator' => SiteTitle::separator()]);
+    }
+
     /** `GET /seo/{type}/{slug}` — effective SEO of a live page, both locales; 404 when not live. */
     public function show(string $type, string $slug, SeoSubjects $subjects): StorefrontSeoResource
     {

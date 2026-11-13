@@ -8,6 +8,12 @@ export const MOCK_API_URL = `http://127.0.0.1:${MOCK_API_PORT}`;
 export const STOREFRONT_URL = `http://127.0.0.1:${STOREFRONT_PORT}`;
 export const FAKE_TOKEN = 'e2e-fake-storefront-token-7Qx9Lm2Vp4';
 export const FAKE_REVALIDATE_SECRET = 'e2e-fake-revalidate-secret-3Hk8Zr6Wn1';
+/**
+ * An HTML-limited crawler (in next.config.ts `htmlLimitedBots`): it gets BLOCKING metadata, every
+ * <head> tag in the first HTML. The no-JS specs that assert "what a crawler sees" send it; a
+ * normal browser UA gets streamed metadata instead (Next.js streaming metadata, faster TTFB).
+ */
+export const CRAWLER_UA = 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)';
 export const E2E_DIST_DIR = process.env.E2E_DIST_DIR ?? '.next-e2e';
 
 /** A consent answer of "Reject" under the mock API's policy version (e2e/mock-api.mjs TRACKING_CONFIG). */

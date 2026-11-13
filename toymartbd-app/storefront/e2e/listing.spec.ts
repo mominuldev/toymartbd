@@ -1,11 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { MOCK_API_URL, STOREFRONT_URL } from './constants';
+import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 
 // P4-STO-03: category and brand listings, asserted with JavaScript DISABLED — the filter form,
 // chips, sort and "load more" are plain GET forms and links, so this is what every visitor gets
 // before hydration (and what a crawler sees). The mock API pages 4 products at a time.
-test.use({ javaScriptEnabled: false });
+// A crawler UA: an HTML-limited bot gets every metadata tag in <head> (next.config.ts htmlLimitedBots).
+test.use({ javaScriptEnabled: false, userAgent: CRAWLER_UA });
 
 test.beforeAll(async ({ request }) => {
     await request.post(`${MOCK_API_URL}/__control/reset`);

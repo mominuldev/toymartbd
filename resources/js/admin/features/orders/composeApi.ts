@@ -151,7 +151,7 @@ export function useBulkPack() {
  * Fetch the invoice PDF (one order, or many in one file) and open it in a new tab for the
  * browser's print dialog. Returns the ids the server reported missing.
  */
-export async function openInvoices(orderIds: number[]): Promise<{ missing: number[] }> {
+export async function openInvoices(orderIds: number[]): Promise<{ missing: number[]; notInvoiced: number[] }> {
     const single = orderIds.length === 1;
     const response = await fetch(single ? `/api/v1/admin/orders/${orderIds[0]}/invoice` : '/api/v1/admin/orders/bulk/invoices', {
         method: single ? 'GET' : 'POST',
@@ -171,5 +171,7 @@ export async function openInvoices(orderIds: number[]): Promise<{ missing: numbe
     window.open(url, '_blank', 'noopener');
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     const header = response.headers.get('X-Orders-Not-Found');
-    return { missing: header ? header.split(',').map(Number) : [] };
+    // P8: `{order id}:{reason}` for orders left out (a cancelled order is never invoiced).
+    const refused = response.headers.get('X-Orders-Not-Invoiced');
+    return { missing: header ? header.split(',').map(Number) : [], notInvoiced: refused ? refused.split(',').map((part) => Number(part.split(':')[0])) : [] };
 }

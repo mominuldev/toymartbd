@@ -46,6 +46,24 @@ export const INDEX: Robots = { index: true, follow: true };
 export const NOINDEX_FOLLOW: Robots = { index: false, follow: true };
 export const NOINDEX_NOFOLLOW: Robots = { index: false, follow: false };
 
+/**
+ * Joins a page name and the site name in every `<title>`. The API's config/seo.php owns the value
+ * (`GET /storefront/seo/settings`, read by ./fetch.ts `getTitleSeparator`); this is only the
+ * fallback when the API cannot be reached, and equals the API's default.
+ */
+export const DEFAULT_TITLE_SEPARATOR = ' | ';
+
+/** The separator from a `GET /storefront/seo/settings` body; the default for anything malformed. */
+export function titleSeparatorOf(body: unknown): string {
+    const value = typeof body === 'object' && body !== null ? (body as { title_separator?: unknown }).title_separator : undefined;
+    return typeof value === 'string' && value.trim() !== '' && value.length <= 10 ? value : DEFAULT_TITLE_SEPARATOR;
+}
+
+/** The layout's title template: `%s | Toy Mart BD`. */
+export function titleTemplate(siteName: string, separator: string = DEFAULT_TITLE_SEPARATOR): string {
+    return `%s${separator}${siteName}`;
+}
+
 /** `og:locale` per locale (Open Graph wants language_TERRITORY). */
 export const ogLocale: Record<Locale, string> = { en: 'en_US', bn: 'bn_BD' };
 
@@ -154,9 +172,9 @@ export function withSeoDocument(input: PageSeoInput, doc: SeoDocument | null | u
 
 // ── Per-template builders ──────────────────────────────────────────────────────────────────────
 
-export function homeMetadata(locale: Locale): Metadata {
+export function homeMetadata(locale: Locale, separator: string = DEFAULT_TITLE_SEPARATOR): Metadata {
     const t = getMessages(locale);
-    return buildMetadata({ locale, path: '/', title: `${t.site.name} · ${t.site.tagline}`, absoluteTitle: true, description: t.home.metaDescription });
+    return buildMetadata({ locale, path: '/', title: `${t.site.name}${separator}${t.site.tagline}`, absoluteTitle: true, description: t.home.metaDescription });
 }
 
 /** An indexable page with no SEO document of its own (category/brand indexes, about, delivery, track). */

@@ -233,6 +233,47 @@ final class TemplateCatalog
                     ],
                 ],
             ],
+
+            // Review request (P8 automation): N days after delivery, once per order. Marketing
+            // (opt-in only, NotificationCategory). The WhatsApp body is its own Meta template,
+            // not submitted yet — no WhatsApp Business account exists. Links to the PDP's
+            // "Write a review" form.
+            'review.request' => [
+                'category' => NotificationCategory::Marketing,
+                'variables' => ['name', 'order_number', 'review_url', 'store_url'],
+                'whatsapp_parameters' => ['name', 'order_number', 'review_url'],
+                'channels' => [
+                    'sms' => [
+                        'body_en' => 'Toy Mart BD: how are the toys from order {order_number}? Please rate them: {review_url}',
+                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} এর খেলনা কেমন লাগল? রিভিউ দিন: {review_url}',
+                    ],
+                    'whatsapp' => [
+                        'provider_template' => 'review_request',
+                        'body_en' => 'Hello {name}, we hope the toys from order *{order_number}* are a hit. Would you rate them? It takes a minute and helps other parents choose: {review_url}',
+                        'body_bn' => '{name}, আশা করি অর্ডার *{order_number}* এর খেলনাগুলো ভালো লেগেছে। একটা রিভিউ দেবেন? এক মিনিট লাগবে, আর অন্য বাবা-মায়েদের বেছে নিতে সাহায্য করবে: {review_url}',
+                    ],
+                ],
+            ],
+
+            // Birthday message (P8 automation): 10:00 Dhaka on the day, once a year, only with the
+            // customer's birthday consent (customer_message_consents). Marketing. No offer in the
+            // copy: a discount would be a promotion the owner has not defined.
+            'customer.birthday' => [
+                'category' => NotificationCategory::Marketing,
+                'variables' => ['name', 'store_url'],
+                'whatsapp_parameters' => ['name'],
+                'channels' => [
+                    'sms' => [
+                        'body_en' => 'Happy birthday, {name}! Warm wishes from everyone at Toy Mart BD. {store_url}',
+                        'body_bn' => 'শুভ জন্মদিন, {name}! টয় মার্ট বিডির সবার পক্ষ থেকে শুভেচ্ছা। {store_url}',
+                    ],
+                    'whatsapp' => [
+                        'provider_template' => 'customer_birthday',
+                        'body_en' => 'Happy birthday, {name}! Everyone at Toy Mart BD wishes you a wonderful year ahead.',
+                        'body_bn' => 'শুভ জন্মদিন, {name}! টয় মার্ট বিডির সবার পক্ষ থেকে আপনার জন্য রইল নতুন বছরের শুভেচ্ছা।',
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -289,6 +330,8 @@ final class TemplateCatalog
             'date' => '14/11/2026',
             'refund_sentence' => '',
             // A real restore link is 24 random characters under the storefront origin.
+            // A review link: the storefront PDP of a typical product slug, `#reviews`.
+            'review_url' => rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://toymartbd.com')), '/').($bn ? '/bn' : '').'/products/remote-control-racing-car-red#reviews',
             'restore_url' => rtrim((string) config('cart_recovery.storefront_url', 'https://toymartbd.com'), '/').($bn ? '/bn' : '').'/cart/restore/'.str_repeat('x', 24),
         ];
     }

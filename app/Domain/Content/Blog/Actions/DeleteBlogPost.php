@@ -7,7 +7,7 @@ namespace App\Domain\Content\Blog\Actions;
 use App\Domain\Content\Blog\Enums\PostStatus;
 use App\Domain\Content\Blog\Models\BlogPost;
 use App\Domain\Content\Blog\Services\BlogCacheTags;
-use App\Domain\Seo\Models\SeoMeta;
+use App\Domain\Seo\Contracts\SeoMetaStore;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +18,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class DeleteBlogPost
 {
+    public function __construct(private readonly SeoMetaStore $seoMeta) {}
+
     public function handle(BlogPost $post): void
     {
         if ($post->status !== PostStatus::Draft) {
@@ -25,7 +27,7 @@ final class DeleteBlogPost
         }
 
         DB::transaction(function () use ($post): void {
-            SeoMeta::query()->where('seoable_type', BlogPost::SEO_TYPE)->where('seoable_id', $post->id)->delete();
+            $this->seoMeta->forget(BlogPost::SEO_TYPE, $post->id);
             $purge = [$post->id => $post->slug];
             $post->delete();
             BlogCacheTags::purge($purge);

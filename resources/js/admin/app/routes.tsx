@@ -31,6 +31,8 @@ import { MessageTemplatesPage } from '@/features/notifications/MessageTemplatesP
 import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
 import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
+import { InvoicesPage } from '@/features/invoices/InvoicesPage';
+import { InvoiceSettingsPage } from '@/features/invoices/InvoiceSettingsPage';
 import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
@@ -48,6 +50,10 @@ import { ExpenseCategoriesPage } from '@/features/finance/ExpenseCategoriesPage'
 import { LedgerPage } from '@/features/finance/LedgerPage';
 import { InventoryValuationPage } from '@/features/reports/InventoryValuationPage';
 import { CourierPerformancePage } from '@/features/reports/couriers/CourierPerformancePage';
+import { SalesAnalyticsPage } from '@/features/analytics/sales/SalesAnalyticsPage';
+import { ReportSchedulesPage } from '@/features/reports/schedules/ReportSchedulesPage';
+import { CustomerProfilePage, CustomersPage } from '@/features/customers';
+import { CustomerAnalyticsPage } from '@/features/analytics/customers';
 import { LocationMappingPage } from '@/features/couriers/locations/LocationMappingPage';
 import { CourierSettingsPage, FailedBookingsPage } from '@/features/couriers';
 import { PhoneLookupPage, RiskRulesPage, VerificationQueuePage } from '@/features/risk';
@@ -64,7 +70,7 @@ import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -120,8 +126,16 @@ export const routes: RouteObject[] = [
                     // P5 reports: inventory valuation, and the finance P&L (Figma B · 31 241:47268), daily reports, profitability.
                     { path: 'inventory/valuation', element: <InventoryValuationPage /> },
                     // P6 Analytics → Couriers (no frame; B · 24 Analytics 241:30584 language). Analytics' other tabs are not built yet.
-                    { path: 'analytics', element: <Navigate to="/analytics/couriers" replace /> },
+                    { path: 'analytics', element: <Navigate to="/analytics/sales" replace /> },
+                    // P8: sales analytics (Figma B · 24 241:30584) and scheduled report emails.
+                    { path: 'analytics/sales', element: <SalesAnalyticsPage /> },
+                    { path: 'analytics/schedules', element: <ReportSchedulesPage /> },
                     { path: 'analytics/couriers', element: <CourierPerformancePage /> },
+                    // P8 Analytics → Customers (no frame; B · 24 Analytics 241:30584 language): LTV, cohorts, repeat rate, segments.
+                    { path: 'analytics/customers', element: <CustomerAnalyticsPage /> },
+                    // P8 Customers list (Figma B · 17 241:40845) and profile (B · 18 241:41374).
+                    { path: 'customers', element: <CustomersPage /> },
+                    { path: 'customers/:customerId', element: <CustomerProfilePage /> },
                     // Finance opens on the P&L, its first sub-page (06-admin-feature-checklist §1).
                     { path: 'finance', element: <Navigate to="/finance/pnl" replace /> },
                     { path: 'finance/pnl', element: <ProfitLossPage /> },
@@ -195,6 +209,11 @@ export const routes: RouteObject[] = [
                     // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
                     { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
+                    // P8 invoicing: the list (no frame; Purchase orders B · 16 DataTable pattern) and
+                    // Settings → Invoice details (Store settings B · 38 241:50827 "Business" card).
+                    { path: 'invoices', element: <InvoicesPage /> },
+                    { path: 'settings', element: <Navigate to="/settings/invoice" replace /> },
+                    { path: 'settings/invoice', element: <InvoiceSettingsPage /> },
                     // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).
                     { path: 'integrations/tracking', element: <TrackingSettingsPage /> },
                     { path: 'integrations/tracking/diagnostics', element: <TrackingDiagnosticsPage /> },

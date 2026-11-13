@@ -36,8 +36,11 @@ final readonly class QueueOrderNotification
         private OrderMessageData $data,
     ) {}
 
-    /** @return list<NotificationLog> */
-    public function handle(int $orderId, string $key): array
+    /**
+     * @param  array<string, string>  $extra  variables the order alone cannot supply (P8: `review_url`)
+     * @return list<NotificationLog>
+     */
+    public function handle(int $orderId, string $key, array $extra = []): array
     {
         $definition = TemplateCatalog::find($key);
         $order = Order::query()->with(['customer', 'items'])->find($orderId);
@@ -49,7 +52,7 @@ final readonly class QueueOrderNotification
         $category = $definition['category'];
         $customer = $order->customer;
         $locale = in_array($customer->preferred_language, ['en', 'bn'], true) ? $customer->preferred_language : 'bn';
-        $variables = $this->data->variables($order, $locale);
+        $variables = array_merge($this->data->variables($order, $locale), $extra);
         $phone = PhoneNumber::tryParse($order->shipping_phone);
 
         $logs = DB::transaction(function () use ($key, $category, $order, $customer, $locale, $variables, $phone): array {

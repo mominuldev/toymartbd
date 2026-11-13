@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
-import { TabList, TabLink } from '@/components/ui/Tabs';
+import { AnalyticsTabs } from '@/features/analytics/AnalyticsTabs';
 import { courierReportExportUrl, useCourierPerformance, type CourierFilters, type Metrics } from './api';
 
 const TAKA = '৳';
@@ -61,16 +61,6 @@ function Stat({ label, value, hint }: { label: string; value: ReactNode; hint: R
             <p className="t-admin-num-lg text-fg-primary">{value}</p>
             <p className="t-admin-caption text-fg-tertiary tabular">{hint}</p>
         </div>
-    );
-}
-
-/** Analytics' tab strip (B · 24 241:30584: Sales · Visitors & funnel · Products · Couriers · Marketing ROI · Live). Only Couriers is built. */
-function AnalyticsTabs() {
-    const { t } = useI18n();
-    return (
-        <TabList label={t('courierReport.tabs')}>
-            <TabLink to="/analytics/couriers" label={t('courierReport.tab')} />
-        </TabList>
     );
 }
 

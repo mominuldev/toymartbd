@@ -20,7 +20,7 @@ describe('app shell', () => {
         const nav = await screen.findAllByRole('navigation', { name: 'Main navigation' });
         const links = within(nav[0]!).getAllByRole('link').map((a) => a.textContent);
 
-        expect(links).toEqual(['Overview', 'Orders', 'Products']);
+        expect(links).toEqual(['Overview', 'Orders', 'Products', 'Invoices']);
     });
 
     it('switches the whole UI to Bangla and sets <html lang>', async () => {
@@ -29,7 +29,7 @@ describe('app shell', () => {
 
         fireEvent.click((await screen.findAllByRole('button', { name: 'বাং' }))[0]!);
 
-        expect(await screen.findByRole('heading', { name: 'ড্যাশবোর্ড' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'সংক্ষিপ্ত চিত্র' })).toBeTruthy();
         expect(document.documentElement.lang).toBe('bn');
         expect(localStorage.getItem('tm-admin-locale')).toBe('bn');
     });
@@ -89,7 +89,7 @@ describe('app shell', () => {
 
     it('renders a placeholder for designed-but-unbuilt sections', async () => {
         signedInAs(viewer);
-        renderApp('/customers');
+        renderApp('/inbox');
 
         expect(await screen.findByText('This section is being built.')).toBeTruthy();
     });

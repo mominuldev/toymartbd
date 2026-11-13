@@ -52,6 +52,8 @@ export function usageContext(usage: MediaUsage, t: T): string {
         return t(usage.is_primary ? 'media.usage.productPrimary' : 'media.usage.product', { position: usage.position });
     }
     if (usage.type === 'seo_og_image') return t('media.usage.seoOg');
+    if (usage.type === 'cms_block_live') return t('media.usage.cmsBlockLive');
+    if (usage.type === 'cms_block_draft') return t('media.usage.cmsBlockDraft');
     return t('media.usage.other', { type: usage.subject_type });
 }
 
