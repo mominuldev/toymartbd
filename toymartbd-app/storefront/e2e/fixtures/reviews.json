@@ -1,0 +1,42 @@
+{
+    "_comment": "GET /storefront/products/lego-classic-creative-bricks/reviews (P4-CAT-12): approved reviews, EN and BN, one with a shop reply. The summary mirrors the product's own 4.70 / 42.",
+    "data": [
+        {
+            "id": 9001,
+            "reviewer_name": "Sabrina Akter",
+            "rating": 5,
+            "title": null,
+            "body": "The box had the hologram — genuine LEGO. My son has played with nothing else for three days. A base plate would have helped; I bought one separately. Arrived in one day inside Dhaka.",
+            "is_verified_purchase": true,
+            "locale": "en",
+            "admin_reply": null,
+            "created_at": "2026-10-12T06:00:00Z"
+        },
+        {
+            "id": 9002,
+            "reviewer_name": "মাহমুদা রহমান",
+            "rating": 4,
+            "title": "ভালো মানের ব্রিক",
+            "body": "রংগুলো খুব সুন্দর, আমার মেয়ে (৫ বছর) প্রতিদিন খেলছে। বক্সটা একটু চাপা খেয়েছিল, তবে ভেতরের সব ঠিক ছিল।",
+            "is_verified_purchase": true,
+            "locale": "bn",
+            "admin_reply": "ধন্যবাদ! পরের বার আরও শক্ত প্যাকিং দেব।",
+            "created_at": "2026-10-05T09:30:00Z"
+        },
+        {
+            "id": 9003,
+            "reviewer_name": "Tanvir Hasan",
+            "rating": 5,
+            "title": "Great gift",
+            "body": "Bought it for my nephew's birthday. Cash on delivery was easy and the rider called before coming.",
+            "is_verified_purchase": false,
+            "locale": "en",
+            "admin_reply": "Thank you! The 90-piece base plate set is back in stock if you need one.",
+            "created_at": "2026-09-28T12:00:00Z"
+        }
+    ],
+    "meta": {
+        "next_cursor": null,
+        "summary": { "rating_avg": "4.70", "rating_count": 42, "distribution": { "5": 31, "4": 8, "3": 2, "2": 1, "1": 0 } }
+    }
+}

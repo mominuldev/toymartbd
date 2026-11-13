@@ -52,13 +52,13 @@ export default async function VerifyPage({ params }: Props) {
     return (
         <PageShell locale={locale} path={PATH} top="tight">
             <div className="mx-auto flex w-full max-w-120 flex-col gap-4 pb-8 lg:pb-20">
-                <header className="flex items-center gap-3">
-                    <a href={localizedPath(locale, '/account/login')} aria-label={m.verify.back} className="flex size-11 shrink-0 items-center justify-center rounded-full border border-line-default bg-surface text-fg-primary">
-                        <Icon name="arrowLeft" className="size-icon-md" />
+                <header className="flex items-center gap-2">
+                    <a href={localizedPath(locale, '/account/login')} aria-label={m.verify.back} className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line-default bg-surface text-fg-primary">
+                        <Icon name="arrowLeft" className="size-4.5" />
                     </a>
                     <div className="flex min-w-0 flex-col">
                         <h1 className="t-h2 text-fg-primary">{m.verify.title}</h1>
-                        <p className="t-caption text-fg-secondary tabular-nums">{format(m.verify.sentTo, { phone })}</p>
+                        <p className="t-caption text-fg-tertiary tabular-nums">{format(m.verify.sentTo, { phone })}</p>
                     </div>
                 </header>
 
@@ -66,7 +66,7 @@ export default async function VerifyPage({ params }: Props) {
 
                 {/* Boxes → resend timer → Verify (Figma order). Two forms cannot nest, so the Verify button
                     sits after the resend form and joins the code form through its `form` attribute. */}
-                <div className={`${card} flex flex-col items-center gap-5 px-5 py-6`}>
+                <div className={`${card} flex flex-col items-center gap-4.5 px-4 py-6`}>
                     <form id="verify-form" method="post" action="/api/account/verify" className="flex w-full flex-col gap-2">
                         <input type="hidden" name="locale" value={locale} />
                         <OtpBoxes digitLabel={m.verify.digit} label={m.verify.codeLabel} invalid={Boolean(codeError)} describedBy={codeError ? 'code-error' : undefined} />
@@ -76,7 +76,7 @@ export default async function VerifyPage({ params }: Props) {
                             </p>
                         ) : null}
                     </form>
-                    <form method="post" action="/api/account/otp" className="flex items-center gap-2">
+                    <form method="post" action="/api/account/otp" className="t-body-sm flex items-center gap-1.5 text-fg-secondary">
                         <input type="hidden" name="locale" value={locale} />
                         <input type="hidden" name="intent" value="resend" />
                         <Icon name="clock" className="size-icon-sm text-fg-secondary" />
@@ -95,7 +95,7 @@ export default async function VerifyPage({ params }: Props) {
                     {m.verify.change}
                 </a>
 
-                <section className="flex flex-col gap-1.5 rounded-sm bg-tile-sky p-4">
+                <section className="flex flex-col gap-1 rounded-sm bg-tile-sky p-4">
                     <h2 className="t-body-sm-strong text-fg-primary">{m.verify.helpTitle}</h2>
                     <p className="t-caption text-fg-secondary">{format(m.verify.helpBody, { phone: contact.hotline.display })}</p>
                 </section>

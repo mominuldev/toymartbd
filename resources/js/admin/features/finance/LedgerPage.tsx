@@ -22,7 +22,7 @@ type Range = (typeof ranges)[number];
 const kinds = ['', 'recognised', 'cash', 'noncash'] as const;
 type Kind = (typeof kinds)[number];
 const agingBuckets = ['0_7', '8_15', '16_30', '31_plus'] as const;
-const knownSources = ['order', 'order_reversal', 'expense', 'expense_payment', 'expense_void', 'manual_cod_receipt'];
+const knownSources = ['order', 'order_reversal', 'expense', 'expense_payment', 'expense_void', 'manual_cod_receipt', 'stock_adjustment', 'supplier_payment', 'purchase', 'order_return', 'refund', 'refund_payout'];
 
 function sourceLabel(entry: LedgerEntry, t: (key: MessageKey, vars?: Record<string, string | number>) => string): string {
     return knownSources.includes(entry.source_type)
@@ -229,8 +229,8 @@ export function LedgerPage() {
                                 <th scope="col" className={dataTable.th}>{t('finLedger.col.source')}</th>
                                 <th scope="col" className={dataTable.th}>{t('finLedger.col.description')}</th>
                                 <th scope="col" className={dataTable.th}>{t('finLedger.col.flags')}</th>
-                                <th scope="col" className={`${dataTable.th} text-end`}>{t('finLedger.col.in')}</th>
-                                <th scope="col" className={`${dataTable.th} text-end`}>{t('finLedger.col.out')}</th>
+                                <th scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>{t('finLedger.col.in')}</th>
+                                <th scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>{t('finLedger.col.out')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -240,7 +240,8 @@ export function LedgerPage() {
                                     <td className={`${cell} t-admin-body`}>{t(ledgerTypeLabel(entry.type))}</td>
                                     <td className={`${cell} t-admin-mono-sm whitespace-nowrap`}>{sourceLabel(entry, t)}</td>
                                     <td className={`${cell} t-admin-caption text-fg-secondary max-lg:basis-full`}>
-                                        {entry.category_id !== null && <span className="t-admin-caption-strong text-fg-primary">{(locale === 'bn' ? entry.category_name_bn : null) ?? entry.category_name} · </span>}
+                                        {/* The server's expense descriptions already lead with the category name; don't print it twice. */}
+                                        {entry.category_id !== null && !(entry.description ?? '').startsWith(entry.category_name ?? '\u0000') && <span className="t-admin-caption-strong text-fg-primary">{(locale === 'bn' ? entry.category_name_bn : null) ?? entry.category_name} · </span>}
                                         {entry.description ?? '—'}
                                     </td>
                                     <td className={`${cell} t-admin-caption whitespace-nowrap text-fg-secondary`}>

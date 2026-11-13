@@ -107,7 +107,7 @@ export function ExpenseCategoriesPage() {
                                 <th scope="col" className={dataTable.th}>{t('finCat.col.type')}</th>
                                 <th scope="col" className={dataTable.th}>{t('finCat.col.ledger')}</th>
                                 <th scope="col" className={dataTable.th}>{t('finCat.col.fixed')}</th>
-                                <th scope="col" className={`${dataTable.th} text-end`}>{t('finCat.col.expenses')}</th>
+                                <th scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>{t('finCat.col.expenses')}</th>
                                 <th scope="col" className={dataTable.th}>{t('finCat.col.status')}</th>
                                 <th scope="col" className={dataTable.th}>
                                     <span className="sr-only">{t('common.actions')}</span>

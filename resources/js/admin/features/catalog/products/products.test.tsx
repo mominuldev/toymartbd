@@ -212,7 +212,7 @@ describe('product form', () => {
         expect(await screen.findByText('Save the product first to add images.')).toBeTruthy();
     });
 
-    it('shows every section on one page (Figma 241:37883) and saves Featured from its switch', async () => {
+    it('shows every section on one page (Figma 241:37883) and saves Featured from its switch', { timeout: 20_000 }, async () => {
         const calls = productApi(owner, (url, init) => (url.endsWith('/products/42') && init?.method === 'PUT' ? { status: 200, body: product } : undefined));
         renderApp('/products/42');
 

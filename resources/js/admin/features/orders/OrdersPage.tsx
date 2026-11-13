@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
     ArrowLeftIcon,
@@ -6,6 +6,8 @@ import {
     CalendarBlankIcon,
     CheckCircleIcon,
     CheckIcon,
+    DotsThreeIcon,
+    FunnelIcon,
     PackageIcon,
     PlusIcon,
     PrinterIcon,
@@ -87,6 +89,8 @@ export function OrdersPage() {
     const debounced = useDebounced(search.trim());
     const cursor = params.get('cursor');
     const today = dhakaDate(0);
+    const desktop = useDesktop();
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     const filters: BoardFilters = useMemo(
         () => ({
@@ -210,100 +214,138 @@ export function OrdersPage() {
 
     const subtitleCount = counts.all ?? 0;
     const highRisk = rows.filter((row) => selected.has(row.id) && row.risk_level === 'high').length;
+    const activeFilters = [filters.payment, filters.source, filters.risk, range === 'all' ? '' : range, filters.onlyAnomalies ? '1' : ''].filter(Boolean).length;
+
+    const rangeSelect = (
+        <label className="relative flex w-full sm:w-65">
+            <span className="sr-only">{t('orders.range')}</span>
+            <CalendarBlankIcon size={16} aria-hidden className="pointer-events-none absolute start-3 top-1/2 z-10 -translate-y-1/2 text-fg-secondary" />
+            <Select className="w-full [&_select]:h-9 [&_select]:ps-9" value={range} onChange={(e) => setParam({ range: e.target.value === 'all' ? '' : e.target.value })}>
+                {ranges.map((value) => (
+                    <option key={value} value={value}>
+                        {rangeText(value)}
+                    </option>
+                ))}
+            </Select>
+        </label>
+    );
+
+    const filterControls = (
+        <>
+            <FilterSelect label={t('orders.filter.payment')} value={filters.payment} onChange={(v) => setParam({ payment: v })} all={t('orders.filter.paymentAll')}>
+                {paymentStatuses.map((value) => (
+                    <option key={value} value={value}>
+                        {t(paymentLabel(value))}
+                    </option>
+                ))}
+            </FilterSelect>
+            <FilterSelect label={t('orders.filter.source')} value={filters.source} onChange={(v) => setParam({ source: v })} all={t('orders.filter.sourceAll')}>
+                {sources.map((value) => (
+                    <option key={value} value={value}>
+                        {t(sourceLabel(value))}
+                    </option>
+                ))}
+            </FilterSelect>
+            <FilterSelect label={t('orders.filter.risk')} value={filters.risk} onChange={(v) => setParam({ risk: v })} all={t('orders.filter.riskAll')}>
+                {riskLevels.map((value) => (
+                    <option key={value} value={value}>
+                        {t(`orders.risk.level.${value}` as MessageKey)}
+                    </option>
+                ))}
+            </FilterSelect>
+            <label className="ms-2 inline-flex items-center gap-2 t-admin-body text-fg-primary">
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={filters.onlyAnomalies}
+                    onClick={() => setParam({ anomalies: filters.onlyAnomalies ? '' : '1' })}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 ease-standard ${filters.onlyAnomalies ? 'bg-brand' : 'bg-line-strong'}`}
+                >
+                    <span aria-hidden className={`size-4 rounded-full bg-surface shadow-e1 transition-transform duration-150 ease-standard ${filters.onlyAnomalies ? 'translate-x-4' : 'translate-x-0'}`} />
+                </button>
+                {t('orders.filter.onlyAnomalies')}
+            </label>
+        </>
+    );
+
+    const searchField = (
+        <SearchField
+            label={t('orders.searchLabel')}
+            placeholder={t('orders.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={desktop ? 'w-full sm:w-85' : 'min-w-0 flex-1'}
+        />
+    );
 
     return (
-        <section className="flex flex-col gap-4 pb-24">
+        <section className={`flex flex-col gap-4 ${desktop ? 'pb-24' : 'pb-36'}`}>
             <ContentHeader
                 breadcrumb={[{ label: t('nav.group.sell') }, { label: t('orders.crumb') }]}
                 title={t('orders.title')}
                 subtitle={orders.data && t('orders.subtitle', { count: subtitleCount, range: rangeText(range) })}
                 actions={
                     <>
-                    <label className="relative flex w-full sm:w-65">
-                        <span className="sr-only">{t('orders.range')}</span>
-                        <CalendarBlankIcon size={16} aria-hidden className="pointer-events-none absolute start-3 top-1/2 z-10 -translate-y-1/2 text-fg-secondary" />
-                        <Select className="w-full [&_select]:h-9 [&_select]:ps-9" value={range} onChange={(e) => setParam({ range: e.target.value === 'all' ? '' : e.target.value })}>
-                            {ranges.map((value) => (
-                                <option key={value} value={value}>
-                                    {rangeText(value)}
-                                </option>
-                            ))}
-                        </Select>
-                    </label>
-                    {can(me, 'orders.create') && (
-                        <Link to="/orders/new" className={buttonClass('primary')}>
-                            <PlusIcon size={16} aria-hidden />
-                            {t('orders.new')}
-                        </Link>
-                    )}
+                        {desktop && rangeSelect}
+                        {can(me, 'orders.create') && (
+                            <Link to="/orders/new" className={buttonClass('primary')}>
+                                <PlusIcon size={16} aria-hidden />
+                                {desktop ? t('orders.new') : t('orders.newShort')}
+                            </Link>
+                        )}
                     </>
                 }
             />
 
-            <div className="flex items-end gap-2 border-b border-line-default">
-                <TabList label={t('orders.tabs')} className="min-w-0 flex-1 border-b-0">
-                    {tabs.map((value) => (
-                        <button key={value} type="button" aria-pressed={tab === value} onClick={() => setParam({ tab: value === 'all' ? '' : value })} className={tabClass(tab === value)}>
-                            {t(tabLabel(value))}
-                            <CountBadge count={counts[value] ?? 0} />
-                        </button>
-                    ))}
-                </TabList>
-                {/* Pinned Anomalies tab: a warning-edged chip, the exception the eye should land on. */}
-                <button
-                    type="button"
-                    aria-pressed={tab === 'anomalies'}
-                    onClick={() => setParam({ tab: tab === 'anomalies' ? '' : 'anomalies' })}
-                    className={`mb-1 inline-flex h-8.25 shrink-0 items-center gap-1.5 rounded-xs border-l-2 border-feedback-warning px-3 t-admin-body-strong whitespace-nowrap text-fg-primary ${tab === 'anomalies' ? 'bg-warning-subtle' : 'bg-subtle hover:bg-warning-subtle'}`}
-                >
-                    <WarningIcon size={14} aria-hidden className="text-feedback-warning" />
-                    {t('orders.tab.anomalies')}
-                    <span className="t-admin-caption-strong tabular">{counts.anomalies ?? 0}</span>
-                </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <SearchField
-                    label={t('orders.searchLabel')}
-                    placeholder={t('orders.searchPlaceholder')}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full sm:w-85"
-                />
-                <FilterSelect label={t('orders.filter.payment')} value={filters.payment} onChange={(v) => setParam({ payment: v })} all={t('orders.filter.paymentAll')}>
-                    {paymentStatuses.map((value) => (
-                        <option key={value} value={value}>
-                            {t(paymentLabel(value))}
-                        </option>
-                    ))}
-                </FilterSelect>
-                <FilterSelect label={t('orders.filter.source')} value={filters.source} onChange={(v) => setParam({ source: v })} all={t('orders.filter.sourceAll')}>
-                    {sources.map((value) => (
-                        <option key={value} value={value}>
-                            {t(sourceLabel(value))}
-                        </option>
-                    ))}
-                </FilterSelect>
-                <FilterSelect label={t('orders.filter.risk')} value={filters.risk} onChange={(v) => setParam({ risk: v })} all={t('orders.filter.riskAll')}>
-                    {riskLevels.map((value) => (
-                        <option key={value} value={value}>
-                            {t(`orders.risk.level.${value}` as MessageKey)}
-                        </option>
-                    ))}
-                </FilterSelect>
-                <label className="ms-2 inline-flex items-center gap-2 t-admin-body text-fg-primary">
+            {desktop ? (
+                <div className="flex items-end gap-2 border-b border-line-default">
+                    <TabList label={t('orders.tabs')} className="min-w-0 flex-1 border-b-0">
+                        {tabs.map((value) => (
+                            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setParam({ tab: value === 'all' ? '' : value })} className={tabClass(tab === value)}>
+                                {t(tabLabel(value))}
+                                <CountBadge count={counts[value] ?? 0} />
+                            </button>
+                        ))}
+                    </TabList>
+                    {/* Pinned Anomalies tab: a warning-edged chip, the exception the eye should land on. */}
                     <button
                         type="button"
-                        role="switch"
-                        aria-checked={filters.onlyAnomalies}
-                        onClick={() => setParam({ anomalies: filters.onlyAnomalies ? '' : '1' })}
-                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 ease-standard ${filters.onlyAnomalies ? 'bg-brand' : 'bg-line-strong'}`}
+                        aria-pressed={tab === 'anomalies'}
+                        onClick={() => setParam({ tab: tab === 'anomalies' ? '' : 'anomalies' })}
+                        className={`mb-1 inline-flex h-8.25 shrink-0 items-center gap-1.5 rounded-xs border-l-2 border-feedback-warning px-3 t-admin-body-strong whitespace-nowrap text-fg-primary ${tab === 'anomalies' ? 'bg-warning-subtle' : 'bg-subtle hover:bg-warning-subtle'}`}
                     >
-                        <span aria-hidden className={`size-4 rounded-full bg-surface shadow-e1 transition-transform duration-150 ease-standard ${filters.onlyAnomalies ? 'translate-x-4' : 'translate-x-0'}`} />
+                        <WarningIcon size={14} aria-hidden className="text-feedback-warning" />
+                        {t('orders.tab.anomalies')}
+                        <span className="t-admin-caption-strong tabular">{counts.anomalies ?? 0}</span>
                     </button>
-                    {t('orders.filter.onlyAnomalies')}
-                </label>
-            </div>
+                </div>
+            ) : (
+                <ChipTabs tab={tab} counts={counts} onPick={(value) => setParam({ tab: value === 'all' ? '' : value })} />
+            )}
+
+            {desktop ? (
+                <div className="flex flex-wrap items-center gap-2">
+                    {searchField}
+                    {filterControls}
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        {searchField}
+                        <Button variant="outline" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+                            <FunnelIcon size={16} aria-hidden />
+                            {t('orders.filters')}
+                            {activeFilters > 0 && <span className="tabular">{activeFilters}</span>}
+                        </Button>
+                    </div>
+                    {filtersOpen && (
+                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-line-default bg-surface p-3">
+                            {rangeSelect}
+                            {filterControls}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {orders.isError ? (
                 <QueryError error={orders.error} onRetry={() => void orders.refetch()} />
@@ -313,10 +355,10 @@ export function OrdersPage() {
                 </p>
             ) : rows.length === 0 ? (
                 <EmptyState reason="allClear" title={t('orders.empty')} body={t('orders.emptyBody')} />
-            ) : (
+            ) : desktop ? (
                 <div className={dataTable.card}>
-                    <table className={`${dataTable.table} lg:table-fixed`}>
-                        <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
+                    <table className={`${dataTable.table} table-fixed`}>
+                        <thead className={dataTable.head}>
                             <tr className="border-b border-line-strong">
                                 <th scope="col" className={`${dataTable.th} w-10 px-0 text-center`}>
                                     {canConfirm && <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label={t('orders.selectPage')} className="size-4 accent-brand" />}
@@ -353,10 +395,32 @@ export function OrdersPage() {
                         </Button>
                     </DataTableFooter>
                 </div>
+            ) : (
+                <>
+                    {/* 768: OrderCard 228:1891 replaces the table row. */}
+                    <ul className="flex flex-col gap-4" aria-label={t('orders.title')}>
+                        {rows.map((row) => (
+                            <OrderCardView key={row.id} row={row} selectable={canConfirm} selected={selected.has(row.id)} onToggle={() => toggle(row.id)} />
+                        ))}
+                    </ul>
+                    <div className="flex gap-2">
+                        {prev && (
+                            <Button variant="outline" className="flex-1" onClick={() => setParam({ cursor: prev }, true)}>
+                                <ArrowLeftIcon size={16} aria-hidden />
+                                {t('orders.newer')}
+                            </Button>
+                        )}
+                        <Button variant="outline" className="flex-1" disabled={!next} onClick={() => setParam({ cursor: next ?? '' }, true)}>
+                            {t('orders.older')}
+                            <ArrowRightIcon size={16} aria-hidden />
+                        </Button>
+                    </div>
+                </>
             )}
 
             {(selected.size > 0 || result) && (
                 <BulkActionBar
+                    docked={!desktop}
                     count={selected.size}
                     highRisk={highRisk}
                     pending={bulk.isPending}
@@ -380,6 +444,95 @@ export function OrdersPage() {
                 />
             )}
         </section>
+    );
+}
+
+/** Below 1024 the board switches to the 768 layout (Figma 229:21429); jsdom has no matchMedia and lays out as 1440. */
+function useDesktop(): boolean {
+    const query = '(min-width: 64rem)';
+    const read = () => typeof window === 'undefined' || typeof window.matchMedia !== 'function' || window.matchMedia(query).matches;
+    const [desktop, setDesktop] = useState(read);
+    useEffect(() => {
+        if (typeof window.matchMedia !== 'function') return;
+        const list = window.matchMedia(query);
+        const update = () => setDesktop(list.matches);
+        list.addEventListener('change', update);
+        return () => list.removeEventListener('change', update);
+    }, []);
+    return desktop;
+}
+
+/**
+ * 768 status tabs (Figma 229:21477): a scrolling row of chips — the active one brand-edged,
+ * Anomalies warning-edged — with empty statuses left out and All last.
+ */
+function ChipTabs({ tab, counts, onPick }: { tab: BoardTab; counts: Partial<Record<string, number>>; onPick: (tab: BoardTab) => void }) {
+    const { t } = useI18n();
+    const order: BoardTab[] = [...tabs.filter((value) => value !== 'all').flatMap((value) => (value === 'pending' ? [value, 'anomalies' as BoardTab] : [value])), 'all'];
+    const shown = order.filter((value) => value === 'all' || value === tab || (counts[value] ?? 0) > 0);
+    return (
+        <div role="group" aria-label={t('orders.tabs')} className="flex gap-2 overflow-x-auto">
+            {shown.map((value) => {
+                const active = tab === value;
+                const anomalies = value === 'anomalies';
+                const look = active ? 'border-2 border-brand bg-brand-subtle' : anomalies ? 'border-l-2 border-feedback-warning bg-subtle' : 'border border-line-default bg-surface hover:bg-subtle';
+                return (
+                    <button
+                        key={value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onPick(active && value !== 'all' ? 'all' : value)}
+                        className={`inline-flex shrink-0 items-center gap-1 rounded-xs px-2.5 py-1 t-admin-caption-strong whitespace-nowrap text-fg-primary ${look}`}
+                    >
+                        {anomalies && <WarningIcon size={14} aria-hidden className="text-feedback-warning" />}
+                        {t(tabLabel(value))}
+                        <span className="tabular">{counts[value] ?? 0}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+/**
+ * Figma OrderCard 228:1891: order + money, customer, then the workflow chip, our RiskPill and
+ * only the exceptions. Selected = bg/brand-subtle.
+ */
+function OrderCardView({ row, selectable, selected, onToggle }: { row: OrderRow; selectable: boolean; selected: boolean; onToggle: () => void }) {
+    const { t } = useI18n();
+    const verify = row.verification_status === 'pending';
+    return (
+        <li className={`flex flex-col gap-2 rounded-md border border-line-default p-4 ${selected ? 'bg-brand-subtle' : 'bg-surface'}`} aria-selected={selectable ? selected : undefined}>
+            <div className="flex items-center gap-2.5">
+                {selectable && (
+                    <label className="-my-3 -ms-1 grid size-11 shrink-0 place-items-center">
+                        <input type="checkbox" checked={selected} onChange={onToggle} aria-label={t('orders.select', { number: row.number })} className="size-5 accent-brand" />
+                    </label>
+                )}
+                <Link to={`/orders/${row.id}`} className="min-w-0 flex-1 truncate t-admin-mono text-fg-primary hover:text-fg-link hover:underline">
+                    {row.number}
+                </Link>
+                <p className="t-admin-num tabular whitespace-nowrap text-fg-primary">
+                    <Taka amount={row.grand_total} />
+                </p>
+            </div>
+            <p className="truncate t-admin-caption tabular text-fg-secondary">{[row.customer_name, row.customer_phone_masked, row.district].filter(Boolean).join(' · ')}</p>
+            <OrderStatusBadge
+                form="compact"
+                order={{ ...row, paid: row.paid_total, refunded: row.refunded_total }}
+                extra={
+                    <>
+                        <RiskPill level={row.risk_level} score={row.risk_score} />
+                        {verify && (
+                            <span className="inline-flex h-5.5 items-center gap-1 rounded-xs border-l-2 border-feedback-warning bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary">
+                                <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />
+                                {t('orders.courier.verifyFirst')}
+                            </span>
+                        )}
+                    </>
+                }
+            />
+        </li>
     );
 }
 
@@ -408,7 +561,7 @@ function OrderRowView({ row, selectable, selected, onToggle }: { row: OrderRow; 
 
     return (
         <tr
-            className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${dataTable.row} ${selected ? 'bg-brand-subtle hover:bg-brand-subtle' : ''} ${edge}`}
+            className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${selected ? `${dataTable.row.replace('hover:bg-subtle', '')} bg-brand-subtle` : dataTable.row} ${edge}`}
             aria-selected={selectable ? selected : undefined}
         >
             <td className={`${cell} w-10 lg:px-0 lg:text-center ${verify ? 'lg:border-s-2 lg:border-s-feedback-danger' : ''}`}>
@@ -467,13 +620,16 @@ function OrderRowView({ row, selectable, selected, onToggle }: { row: OrderRow; 
 }
 
 /**
- * Figma BulkActionBar 193:740 — floating over the content at 1440/1024, docked at 768.
- * Confirm · Mark packed · Mark shipped / delivered (manual, P5) · Book courier (Phase 6:
- * disabled, with a tooltip) · Print invoices
- * (P4-ORD-08), each shown only with its permission. The result is always two
- * numbers, never "done": the failures stay selected and are listed with the server's reason.
+ * Figma BulkActionBar 193:740 (board instance 241:31951): one 64-high row floating 24 above
+ * the viewport bottom at 1440/1024 — count, context, then Confirm · Mark packed · Book courier
+ * (Phase 6: disabled, with a tooltip) · Print invoices · the ⋯ overflow (Mark shipped /
+ * delivered, manual until couriers, P5) · divider · close. Docked to the bottom at 768
+ * (Figma 229:21704): summary + Clear, then equal-width actions. Each action shows only with
+ * its permission. The result is always two numbers, never "done": the failures stay selected
+ * and are listed with the server's reason.
  */
 function BulkActionBar({
+    docked,
     count,
     highRisk,
     pending,
@@ -492,6 +648,7 @@ function BulkActionBar({
     onPrint,
     onClear,
 }: {
+    docked: boolean;
     count: number;
     highRisk: number;
     pending: boolean;
@@ -511,53 +668,109 @@ function BulkActionBar({
     onClear: () => void;
 }) {
     const { t } = useI18n();
+    const grow = docked ? 'min-w-0 flex-1' : '';
+
+    const confirm = canConfirm && (
+        <Button onClick={onConfirm} disabled={count === 0 || pending} className={grow}>
+            <CheckIcon size={16} aria-hidden />
+            {pending ? t('orders.bulk.confirming', { count }) : t('orders.bulk.confirm', { count })}
+        </Button>
+    );
+    const packButton = canPack && (
+        <Button variant="outline" onClick={onPack} disabled={count === 0 || packing} className={grow}>
+            <PackageIcon size={16} aria-hidden />
+            {packing ? t('orders.bulk.packing', { count }) : t('orders.bulk.pack')}
+        </Button>
+    );
+    const print = canPrint && (
+        <Button variant="outline" onClick={onPrint} disabled={count === 0 || printing} aria-busy={printing || undefined} className={grow}>
+            <PrinterIcon size={16} aria-hidden />
+            {printing ? t('orders.invoice.printing') : docked ? t('orders.bulk.print') : t('orders.bulk.printInvoices')}
+        </Button>
+    );
+    const more = canFulfil && (
+        <MoreMenu
+            label={t('orders.bulk.more')}
+            items={[
+                { key: 'ship', icon: <TruckIcon size={18} aria-hidden />, label: shipping ? t('orders.bulk.shipping', { count }) : t('orders.bulk.ship'), disabled: count === 0 || shipping, onSelect: () => onFulfil('ship') },
+                { key: 'deliver', icon: <CheckCircleIcon size={18} aria-hidden />, label: delivering ? t('orders.bulk.delivering', { count }) : t('orders.bulk.deliver'), disabled: count === 0 || delivering, onSelect: () => onFulfil('deliver') },
+            ]}
+        />
+    );
+
+    const resultView = result && (
+        <div className="flex flex-col gap-1.5 border-t border-line-default pt-3" aria-live="polite">
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 t-admin-body text-fg-primary">
+                <span className="inline-flex items-center gap-1.5">
+                    <CheckCircleIcon size={16} aria-hidden className="text-feedback-success" />
+                    {t('orders.bulk.done', { count: result.done })}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                    <WarningCircleIcon size={16} aria-hidden className="text-feedback-danger" />
+                    {t('orders.bulk.failed', { count: result.failed.length })}
+                </span>
+            </p>
+            {result.failed.length > 0 && (
+                <ul className="flex flex-col gap-1">
+                    {result.failed.map((failure) => (
+                        <li key={failure.order_id} className="t-admin-caption text-fg-secondary">
+                            <span className="t-admin-mono-sm text-fg-primary">{failure.number ?? `#${failure.order_id}`}</span>
+                            {' · '}
+                            {failure.detail ?? t(failure.outcome === 'not_found' ? 'orders.bulk.notFound' : 'orders.bulk.conflict')}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+
+    if (docked) {
+        return (
+            <div role="region" aria-label={t('orders.bulk.label')} className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2.5 rounded-t-lg border border-line-strong bg-surface-raised px-4 pt-3 pb-4 shadow-e4">
+                <div className="flex items-center gap-2">
+                    <p className="min-w-0 flex-1 t-admin-body-strong text-fg-primary" aria-live="polite">
+                        {t('orders.bulk.selectedShort', { count })}
+                        {highRisk > 0 && ` · ${t('orders.bulk.highRisk', { count: highRisk })}`}
+                    </p>
+                    <Button variant="ghost" size="sm" onClick={onClear}>
+                        {t('orders.bulk.clearShort')}
+                    </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                    {confirm}
+                    {packButton}
+                    {print}
+                    {more}
+                </div>
+                {resultView}
+            </div>
+        );
+    }
 
     return (
         <div
             role="region"
             aria-label={t('orders.bulk.label')}
-            className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-3 rounded-t-xl border border-line-strong bg-surface-raised px-4 py-3 shadow-e4 md:inset-x-auto md:bottom-6 md:start-1/2 md:w-[min(60rem,calc(100%-3rem))] md:min-w-140 md:-translate-x-1/2 md:rounded-lg lg:start-[calc(50%+7.75rem)]"
+            className="fixed bottom-6 start-[calc(50%+7.75rem)] z-40 flex w-[min(70rem,calc(100%-18.5rem))] -translate-x-1/2 flex-col gap-3 rounded-md border border-line-strong bg-surface-raised py-3 ps-4 pe-3 shadow-e4"
         >
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
-                    <p className="t-admin-body-strong text-fg-primary" aria-live="polite">
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-col">
+                    <p className="t-admin-body-strong whitespace-nowrap text-fg-primary" aria-live="polite">
                         {t('orders.bulk.selected', { count })}
                     </p>
-                    <button type="button" onClick={onClear} className="self-start t-admin-caption-strong text-fg-secondary hover:text-fg-primary hover:underline">
+                    <button type="button" onClick={onClear} className="self-start t-admin-caption text-fg-link hover:underline">
                         {t('orders.bulk.clear')}
                     </button>
                 </div>
                 {highRisk > 0 && (
-                    <p className="flex items-center gap-1 t-admin-caption text-fg-secondary">
+                    <p className="flex items-center gap-1.5 t-admin-caption-strong whitespace-nowrap text-fg-primary">
                         <ShieldWarningIcon size={14} aria-hidden className="text-feedback-danger" />
                         {t('orders.bulk.highRisk', { count: highRisk })}
                     </p>
                 )}
                 <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
-                    {canConfirm && (
-                        <Button onClick={onConfirm} disabled={count === 0 || pending}>
-                            <CheckIcon size={16} aria-hidden />
-                            {pending ? t('orders.bulk.confirming', { count }) : t('orders.bulk.confirm', { count })}
-                        </Button>
-                    )}
-                    {canPack && (
-                        <Button variant="outline" onClick={onPack} disabled={count === 0 || packing}>
-                            <PackageIcon size={16} aria-hidden />
-                            {packing ? t('orders.bulk.packing', { count }) : t('orders.bulk.pack')}
-                        </Button>
-                    )}
-                    {canFulfil && (
-                        <>
-                            <Button variant="outline" onClick={() => onFulfil('ship')} disabled={count === 0 || shipping}>
-                                <TruckIcon size={16} aria-hidden />
-                                {shipping ? t('orders.bulk.shipping', { count }) : t('orders.bulk.ship')}
-                            </Button>
-                            <Button variant="outline" onClick={() => onFulfil('deliver')} disabled={count === 0 || delivering}>
-                                <CheckCircleIcon size={16} aria-hidden />
-                                {delivering ? t('orders.bulk.delivering', { count }) : t('orders.bulk.deliver')}
-                            </Button>
-                        </>
-                    )}
+                    {confirm}
+                    {packButton}
                     <Soon label={t('orders.bulk.bookCourierSoon')}>
                         {(id) => (
                             <Button variant="outline" aria-disabled="true" aria-describedby={id} onClick={(e) => e.preventDefault()} className="cursor-not-allowed !text-fg-disabled hover:!bg-surface">
@@ -566,41 +779,64 @@ function BulkActionBar({
                             </Button>
                         )}
                     </Soon>
-                    {canPrint && (
-                        <Button variant="outline" onClick={onPrint} disabled={count === 0 || printing} aria-busy={printing || undefined}>
-                            <PrinterIcon size={16} aria-hidden />
-                            {printing ? t('orders.invoice.printing') : t('orders.bulk.printInvoices')}
-                        </Button>
-                    )}
-                    <span aria-hidden className="h-8 w-px bg-line-default" />
-                    <IconButton aria-label={t('orders.bulk.clear')} onClick={onClear}>
-                        <XIcon size={18} aria-hidden />
-                    </IconButton>
+                    {print}
+                    {more}
                 </div>
+                <span aria-hidden className="h-8 w-px bg-line-default" />
+                <IconButton aria-label={t('orders.bulk.clear')} onClick={onClear}>
+                    <XIcon size={18} aria-hidden />
+                </IconButton>
             </div>
-            {result && (
-                <div className="flex flex-col gap-1.5 border-t border-line-default pt-3" aria-live="polite">
-                    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 t-admin-body text-fg-primary">
-                        <span className="inline-flex items-center gap-1.5">
-                            <CheckCircleIcon size={16} aria-hidden className="text-feedback-success" />
-                            {t('orders.bulk.done', { count: result.done })}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                            <WarningCircleIcon size={16} aria-hidden className="text-feedback-danger" />
-                            {t('orders.bulk.failed', { count: result.failed.length })}
-                        </span>
-                    </p>
-                    {result.failed.length > 0 && (
-                        <ul className="flex flex-col gap-1">
-                            {result.failed.map((failure) => (
-                                <li key={failure.order_id} className="t-admin-caption text-fg-secondary">
-                                    <span className="t-admin-mono-sm text-fg-primary">{failure.number ?? `#${failure.order_id}`}</span>
-                                    {' · '}
-                                    {failure.detail ?? t(failure.outcome === 'not_found' ? 'orders.bulk.notFound' : 'orders.bulk.conflict')}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+            {resultView}
+        </div>
+    );
+}
+
+type MenuItem = { key: string; icon: ReactNode; label: string; disabled: boolean; onSelect: () => void };
+
+/** The bar's ⋯ overflow (AdminIconButton outline + a surface-raised e3 menu, opening upwards). */
+function MoreMenu({ label, items }: { label: string; items: MenuItem[] }) {
+    const [open, setOpen] = useState(false);
+    const menuId = useId();
+    const root = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const close = (event: MouseEvent | KeyboardEvent) => {
+            if (event instanceof KeyboardEvent ? event.key === 'Escape' : !root.current?.contains(event.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        document.addEventListener('keydown', close);
+        return () => {
+            document.removeEventListener('mousedown', close);
+            document.removeEventListener('keydown', close);
+        };
+    }, [open]);
+
+    return (
+        <div ref={root} className="relative">
+            <IconButton variant="outline" aria-label={label} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => setOpen((value) => !value)}>
+                <DotsThreeIcon size={18} aria-hidden />
+            </IconButton>
+            {open && (
+                <div id={menuId} role="menu" aria-label={label} className="absolute end-0 bottom-full z-50 mb-1 min-w-52 rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3">
+                    {items.map((item, index) => (
+                        <button
+                            key={item.key}
+                            type="button"
+                            role="menuitem"
+                            autoFocus={index === 0}
+                            disabled={item.disabled}
+                            onClick={() => {
+                                setOpen(false);
+                                item.onSelect();
+                            }}
+                            className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body whitespace-nowrap text-fg-primary hover:bg-subtle disabled:text-fg-disabled"
+                        >
+                            {item.icon}
+                            {item.label}
+                        </button>
+                    ))}
                 </div>
             )}
         </div>

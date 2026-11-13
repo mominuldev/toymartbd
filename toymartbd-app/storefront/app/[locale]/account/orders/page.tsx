@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { AccountShell } from '@/components/account/AccountShell';
 import { OrderCard } from '@/components/account/OrderCard';
 import { smallButton } from '@/components/account/styles';
+import { monthYear } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getOrders, requireAccount } from '@/lib/account/server';
 import { ORDER_GROUPS, type OrderGroup } from '@/lib/account/types';
@@ -44,16 +45,14 @@ export default async function OrdersPage({ params, searchParams }: Props) {
     const page = await getOrders(token, locale, group, cursor);
     const total = Object.values(page.summary).reduce((a, b) => a + b, 0);
     const next = page.meta.next_cursor;
+    const since = monthYear(account.member_since, t);
 
     return (
-        <AccountShell locale={locale} path={PATH} account={account} section="orders" title={m.orders.title}>
-            <header className="flex flex-col gap-1">
-                <h1 className="t-h1 text-fg-primary">{m.orders.title}</h1>
-                <p className="t-body-sm text-fg-secondary tabular-nums">{format(m.orders.sub, { count: String(total) })}</p>
-            </header>
+        <AccountShell locale={locale} path={PATH} account={account} section="orders" title={m.orders.title} heading={{ sub: since ? format(m.orders.subSince, { count: String(total), date: since }) : format(m.orders.sub, { count: String(total) }) }}>
 
             <nav aria-label={m.orders.tabsLabel} className="-mx-gutter-mobile overflow-x-auto px-gutter-mobile md:mx-0 md:px-0">
-                <ul className="flex w-max gap-1 rounded-full bg-subtle p-1">
+                {/* Tabs/Item Pill (237:9859): no track; active = surface + e1, label Tabs/Label-active; others body-strong secondary. */}
+                <ul className="flex w-max gap-2">
                     {ORDER_GROUPS.map((key) => {
                         const current = key === group;
                         return (
@@ -61,10 +60,10 @@ export default async function OrdersPage({ params, searchParams }: Props) {
                                 <a
                                     href={`${localizedPath(locale, PATH)}?group=${key}`}
                                     aria-current={current ? 'page' : undefined}
-                                    className={`t-body-sm flex h-10 items-center gap-2 rounded-full px-4 ${current ? 'bg-surface font-semibold text-fg-primary shadow-e1' : 'text-fg-secondary'}`}
+                                    className={`flex h-11 min-w-18 items-center justify-center gap-2 rounded-full px-4 whitespace-nowrap ${current ? 't-tabs-label-active bg-surface text-fg-primary shadow-e1' : 't-body-strong text-fg-secondary hover:bg-subtle'}`}
                                 >
                                     {m.orders.tabs[key]}
-                                    <span className={`t-caption-strong inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 tabular-nums ${current ? 'bg-brand-subtle text-fg-brand' : 'bg-surface text-fg-secondary'}`}>
+                                    <span className={`t-badge inline-flex h-5 min-w-5 items-center justify-center rounded-full px-2 tabular-nums ${current ? 'bg-brand-subtle text-fg-primary' : 'bg-subtle text-fg-secondary'}`}>
                                         {page.summary[key]}
                                     </span>
                                 </a>

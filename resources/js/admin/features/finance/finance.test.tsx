@@ -35,6 +35,17 @@ describe('expenses', () => {
         expect(screen.getByRole('heading', { name: 'Add expense' })).toBeTruthy();
     });
 
+    it('keeps Figma’s columns: no status column, a non-approved state as a chip, secondary actions in a row menu', async () => {
+        financeApi(manager);
+        renderApp('/finance/expenses');
+        const table = await screen.findByRole('table');
+
+        expect(within(table).queryByRole('columnheader', { name: 'Status' })).toBeNull();
+        expect(within(table).getByText('Pending approval')).toBeTruthy();
+        expect(within(table).getAllByTitle('Actions').every((el) => el.tagName === 'SUMMARY')).toBe(true);
+        expect(within(table).getByRole('button', { name: 'Reject' }).closest('details')).toBeTruthy();
+    });
+
     it('filters on the server with the filter in the URL', async () => {
         const calls = financeApi(accountant);
         renderApp('/finance/expenses');

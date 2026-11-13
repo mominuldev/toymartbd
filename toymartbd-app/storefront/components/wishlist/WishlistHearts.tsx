@@ -78,6 +78,12 @@ export function WishlistHearts({ locale, labels }: Props) {
                     if (add) saved.add(id);
                     else saved.delete(id);
                     paint();
+                    if (add) {
+                        button.removeAttribute('data-burst');
+                        void button.offsetWidth; // restart the animation on a quick re-save
+                        button.setAttribute('data-burst', '');
+                        window.setTimeout(() => button.removeAttribute('data-burst'), 400);
+                    }
                     setMessage(add ? labels.saved : labels.removed);
                 } catch {
                     setMessage(labels.failed);

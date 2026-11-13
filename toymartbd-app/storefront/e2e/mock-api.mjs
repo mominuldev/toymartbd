@@ -9,6 +9,8 @@
 //        MOCK_PER_PAGE (4) per page so "load more" is reachable with a dozen fixtures
 //   GET  /api/v1/storefront/products/{slug} → StorefrontProduct (fixtures/product-detail.json, P4-STO-05;
 //        `related` are the listing cards named in its `_related`) or 404 problem+json
+//   GET  /api/v1/storefront/products/{slug}/reviews → approved reviews + summary (fixtures/reviews.json for
+//        the detail fixture; an empty page for the other products), P4-CAT-12
 //   GET  /api/v1/storefront/search          → P4-CAT-14 search over the same fixtures: `q` matched as a
 //        case-insensitive substring of the EN/BN name or brand (plus a tiny synonym table), the
 //        listing's filters and facets, `page` paging (MOCK_PER_PAGE), `related_searches` from the
@@ -17,6 +19,7 @@
 //   GET  /api/v1/storefront/districts, /districts/{id}/upazilas, /delivery-rates, /delivery-quote
 //   /api/v1/storefront/cart…, POST /checkout, GET /orders/{number}, POST /orders/track
 //        → an in-memory cart, checkout and order store (docs/api/cart.md, docs/api/checkout.md)
+//   GET  /api/v1/storefront/payment-methods → COD (default) + SSLCommerz sandbox, so checkout shows both cards
 //   POST /auth/otp, /auth/otp/verify (code 123456) and /storefront/account/* with the customer's own
 //        bearer token → a signed-in customer with Bangla fixtures: orders in every group, an order
 //        detail, two addresses (with landmarks) and a wishlist (docs/api/account.md, P4-STO-11)
@@ -37,6 +40,7 @@ const fixtures = JSON.parse(readFileSync(new URL('./fixtures/brands.json', impor
 const categoryTree = JSON.parse(readFileSync(new URL('./fixtures/categories.json', import.meta.url), 'utf8'));
 const productFixtures = JSON.parse(readFileSync(new URL('./fixtures/products.json', import.meta.url), 'utf8')).data;
 const productDetail = JSON.parse(readFileSync(new URL('./fixtures/product-detail.json', import.meta.url), 'utf8'));
+const reviewFixtures = JSON.parse(readFileSync(new URL('./fixtures/reviews.json', import.meta.url), 'utf8'));
 let brands = structuredClone(fixtures);
 let hits = {};
 
@@ -482,7 +486,11 @@ async function cartRoutes(req, res, url) {
         const placedAt = '2026-11-12T05:02:00Z';
         const order = {
             number, stage: 'placed', placed_at: placedAt,
-            payment: { method: 'cod', status: 'unpaid', next_action: null, online: false, retry_allowed: false, expires_at: null },
+            // An online order comes back as a failed payment with a retry (the mock has no gateway), so the
+            // payment page's "failed → try again" view can be rendered.
+            payment: body.payment_method === 'sslcommerz'
+                ? { method: 'sslcommerz', status: 'failed', next_action: null, online: true, retry_allowed: true, expires_at: '2026-11-12T05:32:00Z' }
+                : { method: 'cod', status: 'unpaid', next_action: null, online: false, retry_allowed: false, expires_at: null },
             contact: { name: body.name, phone_masked: masked, email: body.email ?? null },
             shipping: {
                 name: body.name, phone_masked: masked, division: district.division,
@@ -670,12 +678,23 @@ createServer(async (req, res) => {
     hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
 
     if (url.pathname.startsWith('/api/v1/storefront/auth/')) return accountRoutes(req, res, url);
+    // Checkout's payment options (P4-PAY-02): COD (default, rule 33) plus SSLCommerz in sandbox.
+    if (url.pathname === '/api/v1/storefront/payment-methods') {
+        return send(res, 200, { data: [{ method: 'cod', online: false, default: true, sandbox: false }, { method: 'sslcommerz', online: true, default: false, sandbox: true }] });
+    }
     if (/^\/api\/v1\/storefront\/(districts|delivery-|cart|checkout|orders)/.test(url.pathname)) return cartRoutes(req, res, url);
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     if (url.pathname === '/api/v1/storefront/products') return listProducts(res, url.searchParams);
     if (url.pathname === '/api/v1/storefront/search') return searchProducts(res, url.searchParams);
     if (url.pathname === '/api/v1/storefront/search/suggest') return suggest(res, url.searchParams);
+    const reviews = url.pathname.match(/^\/api\/v1\/storefront\/products\/([^/]+)\/reviews$/);
+    if (reviews) {
+        const slug = decodeURIComponent(reviews[1]);
+        if (slug === productDetail.slug) return send(res, 200, { data: reviewFixtures.data, meta: reviewFixtures.meta });
+        if (!productFixtures.some((p) => p.slug === slug)) return problem(res, 404, 'Not Found', `No product "${reviews[1]}".`);
+        return send(res, 200, { data: [], meta: { next_cursor: null, summary: { rating_avg: null, rating_count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } } } });
+    }
     const product = url.pathname.match(/^\/api\/v1\/storefront\/products\/([^/]+)$/);
     if (product) {
         const slug = decodeURIComponent(product[1]);

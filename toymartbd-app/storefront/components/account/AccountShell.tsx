@@ -34,17 +34,20 @@ interface Props {
     title: string;
     /** Where the mobile back button goes (defaults to the account home; the home has none). */
     back?: { path: string; label: string };
+    /** The page heading. 390: back circle 40 + h2-size title + caption (Figma "Back" row, e.g. 237:9851);
+     *  1440: h1 + body-sm line. `subDesktop` replaces `sub` at 1440 when the design shows more there. */
+    heading?: { sub?: ReactNode; subDesktop?: ReactNode };
     children: ReactNode;
 }
 
-export function AccountShell({ locale, path, account, section, title, back, children }: Props) {
+export function AccountShell({ locale, path, account, section, title, back, heading, children }: Props) {
     const m = accountMessages(locale);
     const mark = initials(account.name);
     const backTo = back ?? (section === 'overview' ? null : { path: '/account', label: m.nav.myAccount });
 
     return (
         <PageShell locale={locale} path={path} top="crumb">
-            <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
+            <div className="flex flex-col gap-4 pt-3 pb-8 lg:gap-6 lg:pt-0 lg:pb-20">{/* 390: body starts 20 below the header (8 + 12) */}
                 <nav aria-label={m.nav.myAccount} className="hidden lg:block">
                     <ol className="t-body-sm flex items-center gap-2 whitespace-nowrap">
                         <li>
@@ -74,15 +77,6 @@ export function AccountShell({ locale, path, account, section, title, back, chil
                         ) : null}
                     </ol>
                 </nav>
-
-                {backTo ? (
-                    <a href={localizedPath(locale, backTo.path)} className="t-body-sm-strong flex w-fit items-center gap-3 text-fg-primary lg:hidden">
-                        <span className="flex size-11 items-center justify-center rounded-full border border-line-default bg-surface">
-                            <Icon name="arrowLeft" className="size-icon-md" />
-                        </span>
-                        {backTo.label}
-                    </a>
-                ) : null}
 
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
                     <aside className="hidden w-70 shrink-0 flex-col gap-1 rounded-sm border border-line-default bg-surface p-3 lg:flex">
@@ -118,7 +112,30 @@ export function AccountShell({ locale, path, account, section, title, back, chil
                             </ul>
                         </nav>
                     </aside>
-                    <div className="flex min-w-0 grow flex-col gap-4 lg:gap-6">{children}</div>
+                    <div className="flex min-w-0 grow flex-col gap-4 lg:gap-6">
+                        {heading ? (
+                            <header className="flex items-center gap-2 lg:flex-col lg:items-start lg:gap-1">
+                                {backTo ? (
+                                    <a href={localizedPath(locale, backTo.path)} aria-label={backTo.label} className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line-default bg-surface text-fg-primary lg:hidden">
+                                        <Icon name="arrowLeft" className="size-4.5" />
+                                    </a>
+                                ) : null}
+                                <div className="flex min-w-0 flex-col lg:gap-1">
+                                    <h1 className="t-h2 lg:t-h1 text-fg-primary tabular-nums">{title}</h1>
+                                    {heading.sub ? <p className={`t-caption lg:t-body-sm text-fg-tertiary tabular-nums lg:text-fg-secondary ${heading.subDesktop ? 'lg:hidden' : ''}`}>{heading.sub}</p> : null}
+                                    {heading.subDesktop ? <p className="t-body-sm hidden text-fg-secondary tabular-nums lg:block">{heading.subDesktop}</p> : null}
+                                </div>
+                            </header>
+                        ) : backTo ? (
+                            <a href={localizedPath(locale, backTo.path)} className="t-body-sm-strong flex w-fit items-center gap-2 text-fg-primary lg:hidden">
+                                <span className="flex size-10 items-center justify-center rounded-full border border-line-default bg-surface">
+                                    <Icon name="arrowLeft" className="size-4.5" />
+                                </span>
+                                {backTo.label}
+                            </a>
+                        ) : null}
+                        {children}
+                    </div>
                 </div>
             </div>
         </PageShell>

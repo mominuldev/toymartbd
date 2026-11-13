@@ -6,17 +6,19 @@ import { AccountShell } from '@/components/account/AccountShell';
 import { smallButton } from '@/components/account/styles';
 import { Icon } from '@/components/icons/Icon';
 import { ProductCard } from '@/components/listing/ProductCard';
-import { buttonClass } from '@/components/layout/button-styles';
+import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getWishlist, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
+import { siteUrl } from '@/lib/seo';
 
 // /account/wishlist — My wishlist, Figma 239:13228 (1440) / 238:10450 (390): the saved toys as the
 // standard ProductCard (Version B), 3-up on desktop, 2-up on mobile, each with a Remove form. Price,
 // was-price and stock are read live from the API on every visit — never what they were when saved.
 // A toy that has been archived or unpublished shows as "No longer available" with only Remove.
-// Not built yet: back-in-stock alerts and "Share on WhatsApp" / "Copy link" (no backend).
+// "Share on WhatsApp" sends names + product links (no public wishlist page). Not built yet: back-in-stock
+// alerts (no notification backend).
 
 const PATH = '/account/wishlist';
 
@@ -39,13 +41,17 @@ export default async function WishlistPage({ params }: Props) {
     const t = getMessages(locale);
     const { token, account } = await requireAccount(locale, PATH);
     const [items, flash] = await Promise.all([getWishlist(token, locale), readAccountFlash()]);
+    // A plain share text (product names + links), not a public wishlist page: the list stays private.
+    const shared = items.filter((item) => item.product);
+    const shareHref =
+        shared.length > 0
+            ? `https://wa.me/?text=${encodeURIComponent(
+                  [m.wishlist.shareText, ...shared.map((item) => `• ${locale === 'bn' && item.product!.name_bn ? item.product!.name_bn : item.product!.name} — ${new URL(localizedPath(locale, `/products/${item.product!.slug}`), siteUrl()).toString()}`)].join('\n'),
+              )}`
+            : null;
 
     return (
-        <AccountShell locale={locale} path={PATH} account={account} section="wishlist" title={m.wishlist.title}>
-            <header className="flex flex-col gap-1">
-                <h1 className="t-h1 text-fg-primary">{m.wishlist.title}</h1>
-                <p className="t-body-sm text-fg-secondary tabular-nums">{format(m.wishlist.sub, { count: String(items.length) })}</p>
-            </header>
+        <AccountShell locale={locale} path={PATH} account={account} section="wishlist" title={m.wishlist.title} heading={{ sub: format(m.wishlist.sub, { count: String(items.length) }) }}>
 
             <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m)} />
 
@@ -85,6 +91,18 @@ export default async function WishlistPage({ params }: Props) {
                     })}
                 </ul>
             )}
+
+            {shareHref ? (
+                // "Birthday coming up?" (238:10450): butter card, share the list with family over WhatsApp.
+                <section className="flex flex-col gap-2 rounded-sm bg-tile-butter p-4 lg:max-w-136">
+                    <h2 className="t-h4 text-fg-primary">{m.wishlist.shareTitle}</h2>
+                    <p className="t-body-sm text-fg-secondary">{m.wishlist.shareBody}</p>
+                    <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`${buttonClass('primary')} mt-1 w-full lg:w-fit`}>
+                        <Icon name="whatsappLogo" className={buttonIconClass.lg} />
+                        {m.wishlist.shareCta}
+                    </a>
+                </section>
+            ) : null}
         </AccountShell>
     );
 }

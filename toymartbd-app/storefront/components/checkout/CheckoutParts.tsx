@@ -134,8 +134,18 @@ export function DeliveryBox({ cart, locale, t, changeHref }: { cart: Cart; local
 /** RadioCard (Figma 44:379): 64 tall, radius lg, 1.5px border; selected = brand border + filled dot. */
 export function RadioCard({ name, value, checked, label, readOnly = false }: { name: string; value: string; checked: boolean; label: string; readOnly?: boolean }) {
     return (
-        <label className="flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border-(length:--tm-border-width-control) border-line-default bg-surface p-4 has-checked:border-brand">
-            <input type="radio" name={name} value={value} defaultChecked={checked} readOnly={readOnly} className="mt-0.5 size-5 shrink-0 accent-(--tm-color-bg-brand)" />
+        // Radio/Card 44:435: the card is the control (1.5px border/default in every state, radius lg, min 64,
+        // 16 inset); Selected = the 20px dot turns coral (2px ring, white gap, coral core) and the label
+        // goes semibold. Hover = the 8% navy scrim; focus ring on the card.
+        <label className="relative flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border-(length:--tm-border-width-control) border-line-default bg-surface p-4 after:pointer-events-none after:absolute after:inset-0 after:rounded-lg hover:after:bg-fg-primary/8 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-line-focus">
+            <input
+                type="radio"
+                name={name}
+                value={value}
+                defaultChecked={checked}
+                readOnly={readOnly}
+                className="mt-0.5 size-5 shrink-0 appearance-none rounded-full border-(length:--tm-border-width-control) border-line-strong bg-surface outline-none checked:border-2 checked:border-brand checked:bg-brand checked:shadow-[inset_0_0_0_calc(var(--spacing)*0.75)_var(--color-surface)]"
+            />
             <span className="t-body text-fg-primary in-has-checked:font-semibold">{label}</span>
         </label>
     );

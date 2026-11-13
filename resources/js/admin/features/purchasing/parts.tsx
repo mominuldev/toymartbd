@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { ImageIcon } from '@phosphor-icons/react';
+import { CircleDashedIcon, ImageIcon, TruckIcon, type Icon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
@@ -58,10 +58,13 @@ const statusTone: Record<PurchaseStatus, StatusTone> = {
     closed_short: 'anomaly',
 };
 
+/** Figma B · 16 draws "Ordered" with a truck and "Partly received" with a dashed circle. */
+const statusIcon: Partial<Record<PurchaseStatus, Icon>> = { ordered: TruckIcon, partially_received: CircleDashedIcon };
+
 /** PO status: text + icon shape + tint (Figma StatusChip 185:79), never colour alone. */
 export function PurchaseStatusChip({ status }: { status: PurchaseStatus }) {
     const { t } = useI18n();
-    return <StatusChip label={t(`purchasing.status.${status}` as MessageKey)} tone={statusTone[status]} />;
+    return <StatusChip label={t(`purchasing.status.${status}` as MessageKey)} tone={statusTone[status]} icon={statusIcon[status]} />;
 }
 
 export function supplierTerms(days: number, t: (key: MessageKey, values?: Record<string, string | number>) => string): string {

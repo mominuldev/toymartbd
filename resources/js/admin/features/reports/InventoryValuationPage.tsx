@@ -90,7 +90,7 @@ export function InventoryValuationPage() {
                         <label htmlFor={asAtId} className="t-admin-body text-fg-secondary">
                             {t('reports.valuation.asAt')}
                         </label>
-                        <Input id={asAtId} type="date" max={dhakaToday()} value={asAt} onChange={(e) => set('as_at', e.target.value)} className="w-40 tabular" />
+                        <div className="w-40 shrink-0"><Input id={asAtId} type="date" max={dhakaToday()} value={asAt} onChange={(e) => set('as_at', e.target.value)} className="tabular" /></div>
                         {can(me, 'finance.export') && (
                             <a href={valuationExportUrl(filters)} download className={buttonClass('outline')}>
                                 <DownloadSimpleIcon size={16} aria-hidden />
@@ -148,15 +148,16 @@ export function InventoryValuationPage() {
 
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
                         <div className="min-w-0 flex-1">
-                            <Input
-                                type="search"
-                                aria-label={t('reports.valuation.search')}
-                                placeholder={t('reports.valuation.search')}
-                                leading={<MagnifyingGlassIcon size={16} aria-hidden />}
-                                value={draft}
-                                onChange={(e) => setDraft(e.target.value)}
-                                className="mb-4 w-72"
-                            />
+                            <div className="mb-4 w-full sm:w-72">
+                                <Input
+                                    type="search"
+                                    aria-label={t('reports.valuation.search')}
+                                    placeholder={t('reports.valuation.search')}
+                                    leading={<MagnifyingGlassIcon size={16} aria-hidden />}
+                                    value={draft}
+                                    onChange={(e) => setDraft(e.target.value)}
+                                />
+                            </div>
                             <Rows data={data} sort={sort} onSort={(key) => set('sort', sort === `-${key}` ? key : `-${key}`)} name={name} />
                         </div>
                         <ByCategory data={data} name={name} />

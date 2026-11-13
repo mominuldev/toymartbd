@@ -4,28 +4,39 @@ import type { AccountMessages } from '@/lib/account/messages';
 import type { SavedAddress } from '@/lib/account/types';
 import { placeName } from '@/lib/delivery/format';
 import { localizedPath, type Locale } from '@/lib/i18n';
-import { card } from './styles';
+import type { IconName } from '@/components/icons/paths';
 
 // AddressCard — Figma 236:2384 (Default / Other): type tag (+ "Default"), name · phone, the address,
 // the landmark with a pin. Default has the 2px coral border. Edit is a link (the form below fills in);
 // Remove and Make default are POST forms, so all of it works without JavaScript.
 // The design's per-area delivery charge line needs a parcel to quote, so it is not shown here.
 
+/** Tag tint + glyph per type (236:2384: Home pink + house, Office sky + buildings). */
+const TAG: Record<SavedAddress['type'], { tone: string; icon: IconName }> = {
+    home: { tone: 'bg-tile-pink', icon: 'house' },
+    office: { tone: 'bg-tile-sky', icon: 'buildings' },
+    other: { tone: 'bg-tile-lavender', icon: 'mapPin' },
+};
+
 export function AddressCard({ address, locale, m }: { address: SavedAddress; locale: Locale; m: AccountMessages }) {
     const bn = locale === 'bn';
     const place = [address.area, address.upazila ? placeName(address.upazila, bn) : null, placeName(address.district, bn)].filter(Boolean).join(', ');
     const tag = address.label || m.addresses.types[address.type];
     return (
-        <article className={`${card} flex flex-col gap-2 ${address.is_default ? 'border-2 border-line-brand' : ''}`}>
+        <article className={`flex flex-col gap-2 rounded-sm bg-surface p-4 ${address.is_default ? 'border-2 border-line-brand' : 'border border-line-default'}`}>
             <div className="flex items-center gap-2">
-                <span className="t-caption-strong rounded-full bg-tile-pink px-2.5 py-1 text-fg-primary">{tag}</span>
+                <span className={`t-caption-strong flex items-center gap-1.5 rounded-full py-1 ps-2 pe-2.5 text-fg-primary ${TAG[address.type].tone}`}>
+                    <Icon name={TAG[address.type].icon} className="size-3.5" />
+                    {tag}
+                </span>
                 {address.is_default ? (
                     <span className="t-caption-strong flex items-center gap-1 text-fg-brand">
-                        <Icon name="checkCircle" className="size-4" />
+                        <Icon name="checkCircle" className="size-3.5" />
                         {m.addresses.default}
                     </span>
                 ) : null}
-                <a href={`${localizedPath(locale, '/account/addresses')}?edit=${address.id}#address-form`} className="t-body-sm-strong ms-auto flex h-11 items-center text-fg-primary">
+                <a href={`${localizedPath(locale, '/account/addresses')}?edit=${address.id}#address-form`} className="t-button-small ms-auto flex h-11 items-center gap-2 rounded-full px-4 text-fg-primary hover:bg-subtle">
+                    <Icon name="pencilSimple" className="size-4" />
                     {m.addresses.edit}
                 </a>
             </div>
@@ -36,8 +47,8 @@ export function AddressCard({ address, locale, m }: { address: SavedAddress; loc
                 {address.address_line}, {place}
             </p>
             {address.landmark ? (
-                <p className="t-caption flex items-center gap-1.5 text-fg-primary">
-                    <Icon name="mapPin" className="size-4 text-fg-brand" />
+                <p className="t-caption-strong flex items-center gap-1.5 text-fg-primary">
+                    <Icon name="mapPin" className="size-4 shrink-0 text-fg-brand" />
                     {address.landmark}
                 </p>
             ) : null}

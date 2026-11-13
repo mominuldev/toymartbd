@@ -84,15 +84,16 @@ export function ProfitabilityPage() {
                     value={by}
                     onChange={(b) => set({ by: b === 'product' ? '' : b })}
                 />
-                <Input
-                    type="search"
-                    aria-label={t('reports.profit.search')}
-                    placeholder={t('reports.profit.search')}
-                    leading={<MagnifyingGlassIcon size={16} aria-hidden />}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    className="w-72"
-                />
+                <div className="w-full sm:w-72">
+                    <Input
+                        type="search"
+                        aria-label={t('reports.profit.search')}
+                        placeholder={t('reports.profit.search')}
+                        leading={<MagnifyingGlassIcon size={16} aria-hidden />}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                    />
+                </div>
             </div>
 
             {report.isError ? (

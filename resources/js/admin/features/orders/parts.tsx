@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import {
     ArrowClockwiseIcon,
     ArrowUUpLeftIcon,
@@ -141,7 +141,7 @@ function SlotView({ slot, icon: Icon, size }: { slot: Slot; icon: ComponentType<
  * Figma OrderStatusBadge 190:384 — fixed triad: workflow · money · goods. `stacked` for table
  * rows, `inline` for the detail header; `compact` (the 768 card) drops expected slots.
  */
-export function OrderStatusBadge({ order, form = 'stacked' }: { order: TriadInput; form?: 'stacked' | 'inline' | 'compact' }) {
+export function OrderStatusBadge({ order, form = 'stacked', extra }: { order: TriadInput; form?: 'stacked' | 'inline' | 'compact'; extra?: ReactNode }) {
     const { t } = useI18n();
     const money = moneySlot(order, t);
     const goods = goodsSlot(order, t);
@@ -151,6 +151,8 @@ export function OrderStatusBadge({ order, form = 'stacked' }: { order: TriadInpu
     return (
         <span className={`flex ${form === 'inline' ? 'flex-wrap items-center gap-2' : form === 'compact' ? 'flex-wrap items-center gap-1.5' : 'flex-col items-start gap-1'}`}>
             <WorkflowChip status={order.status} size={size} />
+            {/* The 768 OrderCard 228:1891 puts the RiskPill straight after the workflow chip. */}
+            {extra}
             {form === 'inline' && <span aria-hidden className="h-4 w-px bg-line-default" />}
             {show(money) && <SlotView slot={money} icon={MoneyIcon} size={size} />}
             {form === 'inline' && <span aria-hidden className="h-4 w-px bg-line-default" />}

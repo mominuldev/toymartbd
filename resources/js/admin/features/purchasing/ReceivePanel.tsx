@@ -132,7 +132,8 @@ export function ReceivePanel({ purchase }: { purchase: Purchase }) {
 
     const lineError = (index: number) => errors[`lines.${index}.quantity`] ?? quoteError?.fieldError(`lines.${index}.quantity`);
     const costField = (key: keyof Costs, label: MessageKey) => (
-        <Field label={t(label)} error={errors[key] ?? quoteError?.fieldError(key)} optional>
+        // No "Optional" marker: three to a row in a 440-wide card, it wrapped every label onto two lines.
+        <Field label={t(label)} error={errors[key] ?? quoteError?.fieldError(key)}>
             {({ id, describedBy, invalid }) => (
                 <Input
                     id={id}
@@ -175,15 +176,18 @@ export function ReceivePanel({ purchase }: { purchase: Purchase }) {
                                     )}
                                 </div>
                                 <span className="t-admin-caption whitespace-nowrap text-fg-secondary">{t('receive.ordered', { count: formatUnits(line.quantity_ordered) })}</span>
-                                <Input
-                                    size="sm"
-                                    aria-label={t('receive.qtyLabel', { name: lineName(line, locale) })}
-                                    aria-invalid={error ? true : undefined}
-                                    inputMode="numeric"
-                                    className="w-16 tabular"
-                                    value={quantities[line.id] ?? ''}
-                                    onChange={(e) => setQuantities((qs) => ({ ...qs, [line.id]: e.target.value }))}
-                                />
+                                {/* The 64-wide units box: the wrapper sets the width (Input itself is w-full). */}
+                                <div className="w-16 shrink-0">
+                                    <Input
+                                        size="sm"
+                                        aria-label={t('receive.qtyLabel', { name: lineName(line, locale) })}
+                                        aria-invalid={error ? true : undefined}
+                                        inputMode="numeric"
+                                        className="tabular"
+                                        value={quantities[line.id] ?? ''}
+                                        onChange={(e) => setQuantities((qs) => ({ ...qs, [line.id]: e.target.value }))}
+                                    />
+                                </div>
                             </div>
                             {error && (
                                 <p role="alert" className="flex items-start gap-1 t-admin-caption text-fg-primary">

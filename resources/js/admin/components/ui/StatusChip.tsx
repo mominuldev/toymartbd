@@ -30,6 +30,8 @@ type StatusChipProps = {
     /** Shorthand kept for existing callers: true → success, false → neutral. */
     active?: boolean;
     showIcon?: boolean;
+    /** Figma's icon swap: a status may draw its own glyph (a truck for "Ordered") in the tone's tint. */
+    icon?: ComponentType<IconProps>;
 };
 
 /**
@@ -37,9 +39,9 @@ type StatusChipProps = {
  * bg/subtle with a border/default hairline and a text/primary label; anomaly swaps the
  * hairline for a 2px warning left edge.
  */
-export function StatusChip({ label, tone, active, showIcon = true }: StatusChipProps) {
+export function StatusChip({ label, tone, active, showIcon = true, icon }: StatusChipProps) {
     const resolved: StatusTone = tone ?? (active === undefined ? 'neutral' : active ? 'success' : 'neutral');
-    const Icon = icons[resolved];
+    const Icon = icon ?? icons[resolved];
     const edge = resolved === 'anomaly' ? 'border-l-2 border-feedback-warning' : 'border border-line-default';
 
     return (

@@ -123,7 +123,7 @@ export const productsEn = {
     'products.field.openingStock': 'Opening stock',
     'products.field.openingStockHint': 'Units on hand now. Recorded once, as the opening balance.',
     'products.stock.summary': '{available} available · {onHand} on hand · {reserved} reserved',
-    'products.stock.readOnly': 'Stock is read-only here. Changes are made through stock adjustments, which are coming soon.',
+    'products.stock.readOnly': 'Stock is read-only here. Change it with a stock adjustment on the Inventory page.',
     'products.pricing.locked': 'Prices are read-only: changing a price needs the “Update prices” permission.',
 
     'products.matrix.noAttributes': 'Add a variant-defining attribute, such as Color or Size, then pick its values.',
@@ -461,7 +461,7 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.field.openingStock': 'শুরুর স্টক',
     'products.field.openingStockHint': 'এখন হাতে থাকা ইউনিট। শুরুর ব্যালান্স হিসেবে একবারই লেখা হয়।',
     'products.stock.summary': '{available}টি পাওয়া যাবে · হাতে {onHand}টি · সংরক্ষিত {reserved}টি',
-    'products.stock.readOnly': 'এখানে স্টক শুধু দেখা যাবে। স্টক বদলানো হবে স্টক সমন্বয়ের মাধ্যমে, যা শীঘ্রই আসছে।',
+    'products.stock.readOnly': 'এখানে স্টক শুধু দেখা যাবে। স্টক বদলাতে ইনভেন্টরি পেজে স্টক সমন্বয় করুন।',
     'products.pricing.locked': 'দাম শুধু দেখা যাবে: দাম বদলাতে “দাম হালনাগাদ” অনুমতি লাগে।',
 
     'products.matrix.noAttributes': 'রং বা সাইজের মতো একটি ভ্যারিয়েন্ট-নির্ধারক অ্যাট্রিবিউট যোগ করুন, তারপর মান বাছুন।',

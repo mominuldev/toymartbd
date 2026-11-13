@@ -74,7 +74,9 @@ export function safeNext(value: string | null | undefined): string {
 }
 
 /** 01712345678 → "01712 345 678" for display (Western digits, rule 36). */
-export function displayPhone(national: string): string {
+export function displayPhone(phone: string): string {
+    // The API stores and returns E.164 (+8801…, rule 30); people read the national 01XXX XXX XXX form.
+    const national = nationalPhone(phone) ?? phone;
     return /^\d{11}$/.test(national) ? `${national.slice(0, 5)} ${national.slice(5, 8)} ${national.slice(8)}` : national;
 }
 

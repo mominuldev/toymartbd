@@ -110,16 +110,19 @@ export function ReturnsPage() {
                                     ))}
                                 </tbody>
                             </table>
-                            <DataTableFooter summary={t('returns.footer', { count: rows.length })}>
-                                <Button variant="outline" size="sm" disabled={!returns.data?.meta.prev_cursor} onClick={() => set({ cursor: returns.data?.meta.prev_cursor ?? '' })}>
-                                    <ArrowLeftIcon size={16} aria-hidden />
-                                    {t('returns.newer')}
-                                </Button>
-                                <Button variant="outline" size="sm" disabled={!returns.data?.meta.next_cursor} onClick={() => set({ cursor: returns.data?.meta.next_cursor ?? '' })}>
-                                    {t('returns.older')}
-                                    <ArrowRightIcon size={16} aria-hidden />
-                                </Button>
-                            </DataTableFooter>
+                            {/* Figma's queue has no footer; it appears only when there is another page to reach. */}
+                            {(returns.data?.meta.prev_cursor || returns.data?.meta.next_cursor) && (
+                                <DataTableFooter summary={t('returns.footer', { count: rows.length })}>
+                                    <Button variant="outline" size="sm" disabled={!returns.data?.meta.prev_cursor} onClick={() => set({ cursor: returns.data?.meta.prev_cursor ?? '' })}>
+                                        <ArrowLeftIcon size={16} aria-hidden />
+                                        {t('returns.newer')}
+                                    </Button>
+                                    <Button variant="outline" size="sm" disabled={!returns.data?.meta.next_cursor} onClick={() => set({ cursor: returns.data?.meta.next_cursor ?? '' })}>
+                                        {t('returns.older')}
+                                        <ArrowRightIcon size={16} aria-hidden />
+                                    </Button>
+                                </DataTableFooter>
+                            )}
                         </div>
                     )}
                 </div>

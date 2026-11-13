@@ -146,11 +146,11 @@ export function PeriodPicker({ range, preset, onPreset, onRange, today = dhakaTo
                     <label htmlFor={`${id}-from`} className="sr-only">
                         {t('reports.period.from')}
                     </label>
-                    <Input id={`${id}-from`} type="date" max={range.to || today} value={range.from} onChange={(e) => onRange({ ...range, from: e.target.value })} className="w-40 tabular" />
+                    <div className="w-40 shrink-0"><Input id={`${id}-from`} type="date" max={range.to || today} value={range.from} onChange={(e) => onRange({ ...range, from: e.target.value })} className="tabular" /></div>
                     <label htmlFor={`${id}-to`} className="sr-only">
                         {t('reports.period.to')}
                     </label>
-                    <Input id={`${id}-to`} type="date" min={range.from} max={today} value={range.to} onChange={(e) => onRange({ ...range, to: e.target.value })} className="w-40 tabular" />
+                    <div className="w-40 shrink-0"><Input id={`${id}-to`} type="date" min={range.from} max={today} value={range.to} onChange={(e) => onRange({ ...range, to: e.target.value })} className="tabular" /></div>
                 </>
             )}
         </div>

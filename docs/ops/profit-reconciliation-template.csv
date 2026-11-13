@@ -1,0 +1,11 @@
+order_number,order_id,status,payment_method,placed_on,delivered_on,revenue_recognised,order_item_revenue,ledger_item_revenue,order_discount,ledger_discount,order_delivery_charge,ledger_delivery_charge,order_cogs,ledger_cogs,order_cogs_reversed,ledger_cogs_reversed,order_write_off,ledger_write_off,order_refunds,ledger_refunds,order_courier_charges,ledger_courier_charges,order_gateway_fees,ledger_gateway_fees,order_order_expenses,ledger_order_expenses,order_other,ledger_other,order_net_profit,ledger_net_profit,projection_net_profit,difference,mismatched_components,result,hand_net_profit,hand_matches_ledger,checked_by,notes
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

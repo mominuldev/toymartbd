@@ -80,9 +80,9 @@ export const reportsEn = {
     'reports.cash.overline': 'Cash, not profit',
     'reports.cash.intro': 'Profit and cash are different numbers and both are correct. This card is cash.',
     'reports.cash.in': 'Received in your bank',
+    'reports.cash.courier': 'Still with the courier',
     'reports.cash.out': 'Paid out of your bank',
     'reports.cash.net': 'Net cash movement',
-    'reports.cash.note': 'Courier charges never leave your bank as a payment — they are deducted on the settlement statement, so they appear as expenses above and inside the net settlement here. They are counted once.',
 
     'reports.waterfall.title': 'Where the money went',
     'reports.waterfall.net_revenue': 'Net rev.',
@@ -241,9 +241,9 @@ export const reportsBn: Record<keyof typeof reportsEn, string> = {
     'reports.cash.overline': 'নগদ, মুনাফা নয়',
     'reports.cash.intro': 'মুনাফা আর নগদ আলাদা সংখ্যা, দুটোই সঠিক। এই কার্ডটি নগদের।',
     'reports.cash.in': 'আপনার ব্যাংকে এসেছে',
+    'reports.cash.courier': 'এখনো কুরিয়ারের কাছে',
     'reports.cash.out': 'আপনার ব্যাংক থেকে গেছে',
     'reports.cash.net': 'নিট নগদ প্রবাহ',
-    'reports.cash.note': 'কুরিয়ার চার্জ আলাদা পেমেন্ট হিসেবে ব্যাংক থেকে যায় না — সেটেলমেন্ট থেকে কেটে রাখা হয়, তাই উপরে খরচ হিসেবে আর এখানে নিট সেটেলমেন্টের ভেতরে থাকে। একবারই গোনা হয়।',
 
     'reports.waterfall.title': 'টাকা কোথায় গেল',
     'reports.waterfall.net_revenue': 'নিট আয়',

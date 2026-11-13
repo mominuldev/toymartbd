@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { decodeFlash, decodeOtp, displayPhone, encodeFlash, encodeOtp, nationalPhone, safeNext } from '@/lib/account/flash';
-import { clock, firstName, initials, noticeText } from '@/lib/account/format';
+import { clock, firstName, initials, monthYear, noticeText } from '@/lib/account/format';
+import { getMessages } from '@/lib/i18n';
 import { accountBn, accountEn, accountMessages } from '@/lib/account/messages';
 
 // P4-STO-11 — the account pages' pure helpers and copy.
@@ -42,6 +43,12 @@ describe('phone input (rule 30)', () => {
 
     it('formats for display with Western digits', () => {
         expect(displayPhone('01985164739')).toBe('01985 164 739');
+    });
+
+    it('shows the API’s E.164 phone in the national form (it rendered "+8801712345678" before)', () => {
+        expect(displayPhone('+8801712345678')).toBe('01712 345 678');
+        expect(displayPhone('8801712345678')).toBe('01712 345 678');
+        expect(displayPhone('not a phone')).toBe('not a phone');
     });
 });
 
@@ -96,5 +103,15 @@ describe('display helpers', () => {
         expect(clock(42)).toBe('0:42');
         expect(clock(61)).toBe('1:01');
         expect(clock(-3)).toBe('0:00');
+    });
+});
+
+describe('member since', () => {
+    it('is the Dhaka month and year with Western digits in both locales', () => {
+        // 18:30 UTC on 31 Mar is already 1 Apr in Dhaka (rule 11).
+        expect(monthYear('2026-03-31T18:30:00Z', getMessages('en'))).toBe(`${getMessages('en').delivery.months[3]} 2026`);
+        expect(monthYear('2026-03-14T04:00:00Z', getMessages('bn'))).toBe(`${getMessages('bn').delivery.months[2]} 2026`);
+        expect(monthYear(null, getMessages('en'))).toBeNull();
+        expect(monthYear('nonsense', getMessages('en'))).toBeNull();
     });
 });

@@ -66,11 +66,9 @@ export function OrderDetailPage() {
             <ContentHeader
                 breadcrumb={[{ label: t('nav.group.sell') }, { label: t('orders.crumb'), to: '/orders' }, { label: o.number }]}
                 title={o.number}
+                titleAddon={<OrderStatusBadge form="inline" order={{ ...o, paid: o.totals.paid_total, refunded: o.totals.refunded_total }} />}
                 subtitle={
                     <>
-                        <span className="mb-1.5 flex">
-                            <OrderStatusBadge form="inline" order={{ ...o, paid: o.totals.paid_total, refunded: o.totals.refunded_total }} />
-                        </span>
                         <span className="tabular">
                             {t('orders.detail.subtitle', {
                                 placed: placed ? `${placed.dayYear}, ${placed.time}` : '—',

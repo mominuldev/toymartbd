@@ -4,6 +4,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
 import { TabLink, TabList } from '@/components/ui/Tabs';
 import { Button } from '@/components/ui/Button';
+import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ExpenseStatus, LedgerType, PaymentMethod } from './api';
 
 /** The taka sign — a currency symbol, not translatable copy. */
@@ -57,7 +58,9 @@ export function monthName(ymd: string, locale: string): string {
 /** "02–08 Nov" for a range label. */
 export function rangeLabel(from: string, to: string): string {
     const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', numberingSystem: 'latn', ...opts }).format(new Date(`${iso}T00:00:00Z`));
-    return `${fmt(from, { day: '2-digit' })}–${fmt(to, { day: '2-digit', month: 'short' })}`;
+    // "15 Oct–13 Nov" when the range crosses a month, "07–13 Nov" when it does not.
+    const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+    return `${fmt(from, sameMonth ? { day: '2-digit' } : { day: '2-digit', month: 'short' })}–${fmt(to, { day: '2-digit', month: 'short' })}`;
 }
 
 export const statusLabel = (status: ExpenseStatus): MessageKey => `expenses.status.${status}` as MessageKey;
@@ -189,6 +192,47 @@ export function Toggle({ checked, onChange, label, disabled }: { checked: boolea
             }`}
         >
             <span aria-hidden className={`size-4 rounded-full bg-surface shadow-e1 transition-transform duration-150 ease-standard ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+    );
+}
+
+/**
+ * A row's secondary actions behind one "More actions" button (Figma's expense rows carry no
+ * action column, so the row keeps its single height). Native <details>: keyboard and screen
+ * reader support come with it; it closes when focus or a click leaves it, or on Escape.
+ */
+export function RowMenu({ label, children }: { label: string; children: ReactNode }) {
+    const ref = useRef<HTMLDetailsElement>(null);
+    useEffect(() => {
+        const close = (event: Event) => {
+            const el = ref.current;
+            if (!el?.open) return;
+            if (event instanceof KeyboardEvent ? event.key === 'Escape' : !el.contains(event.target as Node)) el.open = false;
+        };
+        document.addEventListener('pointerdown', close);
+        document.addEventListener('keydown', close);
+        return () => {
+            document.removeEventListener('pointerdown', close);
+            document.removeEventListener('keydown', close);
+        };
+    }, []);
+    return (
+        <details ref={ref} className="relative">
+            <summary aria-label={label} title={label} className="inline-grid size-8 cursor-pointer list-none place-items-center rounded-sm text-fg-primary hover:bg-subtle [&::-webkit-details-marker]:hidden">
+                <DotsThreeIcon size={16} aria-hidden />
+            </summary>
+            <div className="absolute end-0 top-full z-20 mt-1 flex min-w-40 flex-col rounded-md border border-line-default bg-surface p-1 shadow-e2" onClick={() => ref.current?.removeAttribute('open')}>
+                {children}
+            </div>
+        </details>
+    );
+}
+
+/** One item in a RowMenu. */
+export function RowMenuItem({ onClick, children, disabled }: { onClick: () => void; children: ReactNode; disabled?: boolean }) {
+    return (
+        <button type="button" disabled={disabled} onClick={onClick} className="flex h-8 items-center rounded-xs px-3 text-start t-admin-body text-fg-primary hover:bg-subtle disabled:text-fg-disabled">
+            {children}
         </button>
     );
 }

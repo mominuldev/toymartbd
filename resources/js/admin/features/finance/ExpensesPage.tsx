@@ -15,7 +15,6 @@ import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
 import { Select } from '@/components/ui/Select';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
-import { Tag, type TagTone } from '@/components/ui/Tag';
 import { useToast } from '@/components/ui/Toast';
 import {
     expenseStatuses,
@@ -33,20 +32,20 @@ import {
     type PaymentMethod,
 } from './api';
 import { ExpenseForm } from './ExpenseForm';
-import { FinanceTabs, FormDialog, StatCard, TAKA, Taka, dhakaDate, formatCount, formatMoney, methodLabel, monthName, rangeLabel, shortDate, statusLabel } from './parts';
+import { FinanceTabs, FormDialog, RowMenu, RowMenuItem, StatCard, TAKA, Taka, dhakaDate, formatCount, formatMoney, methodLabel, monthName, rangeLabel, shortDate, statusLabel } from './parts';
 
 const ranges = ['7', '30', '90', 'all'] as const;
 type Range = (typeof ranges)[number];
 
 const statusTone: Record<ExpenseStatus, StatusTone> = { pending: 'warning', approved: 'success', rejected: 'danger', void: 'neutral' };
-const categoryTone: Record<ExpenseCategory['type'], TagTone> = { marketing: 'pink', operating: 'butter', logistics: 'sky', cogs: 'mint', other: 'lavender' };
 
 type Pending = { expense: Expense; action: Exclude<ExpenseAction, 'approve'> } | null;
 
 /**
- * Expenses (Figma Expenses 222:13676, Theme B colours): ContentHeader with the date range,
+ * Expenses (Figma B · 32 Expenses 241:47706; Theme A 222:13676): ContentHeader with the date range,
  * Recurring and Add expense; four StatCards computed by the server; the expense DataTable
- * (date, category tag, description, status, paid by, amount, receipt) beside the Add expense
+ * (date, category tag, description, paid by, amount, receipt; a non-approved state is a chip under
+ * the description, secondary actions sit in a row menu) beside the Add expense
  * card. Approve / reject / void / pay / delete per row, each guarded by the server.
  * Filters live in the URL (`?range=30&status=pending&recurring=true`).
  */
@@ -263,9 +262,8 @@ export function ExpensesPage() {
                                         <th scope="col" className={dataTable.th}>{t('expenses.col.date')}</th>
                                         <th scope="col" className={dataTable.th}>{t('expenses.col.category')}</th>
                                         <th scope="col" className={dataTable.th}>{t('expenses.col.description')}</th>
-                                        <th scope="col" className={dataTable.th}>{t('expenses.col.status')}</th>
                                         <th scope="col" className={dataTable.th}>{t('expenses.col.paidBy')}</th>
-                                        <th scope="col" className={`${dataTable.th} text-end`}>{t('expenses.col.amount')}</th>
+                                        <th scope="col" className={`${dataTable.th.replace('text-start', 'text-end')}`}>{t('expenses.col.amount')}</th>
                                         <th scope="col" className={dataTable.th}>{t('expenses.col.receipt')}</th>
                                         <th scope="col" className={dataTable.th}>
                                             <span className="sr-only">{t('expenses.col.actions')}</span>
@@ -277,18 +275,21 @@ export function ExpensesPage() {
                                         <tr key={e.id} className={`${dataTable.row} max-lg:flex max-lg:flex-wrap max-lg:gap-x-3 max-lg:gap-y-1 max-lg:p-3`}>
                                             <td className={`${cell} t-admin-body-strong tabular whitespace-nowrap`}>{shortDate(e.expense_date, locale)}</td>
                                             <td className={cell}>
-                                                <Tag label={categoryName(e.category)} tone={categoryTone[e.category.type]} />
+                                                <span className="inline-flex h-6 items-center rounded-xs border border-line-default bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary">{categoryName(e.category)}</span>
                                             </td>
                                             <td className={`${cell} t-admin-body max-lg:basis-full lg:max-w-60`}>
                                                 <span className="line-clamp-2">{[e.vendor, e.description].filter(Boolean).join(' · ') || '—'}</span>
                                                 {e.is_recurring && e.recurrence && (
                                                     <span className="block t-admin-caption text-fg-tertiary">{t('expenses.recurringTag', { recurrence: t(`expenses.recurrence.${e.recurrence}` as MessageKey) })}</span>
                                                 )}
+                                                {/* Figma draws approved rows only; any other state is flagged inline instead of a status column. */}
+                                                {e.status !== 'approved' && (
+                                                    <span className="mt-1 block">
+                                                        <StatusChip label={t(statusLabel(e.status))} tone={statusTone[e.status]} />
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td className={cell}>
-                                                <StatusChip label={t(statusLabel(e.status))} tone={statusTone[e.status]} />
-                                            </td>
-                                            <td className={`${cell} t-admin-body`}>{e.payment_method ? t(methodLabel(e.payment_method)) : <span className="text-fg-tertiary">{t('expenses.unpaid')}</span>}</td>
+                                            <td className={`${cell} t-admin-body text-fg-secondary`}>{e.payment_method ? t(methodLabel(e.payment_method)) : <span className="text-fg-tertiary">{t('expenses.unpaid')}</span>}</td>
                                             <td className={`${cell} t-admin-num tabular whitespace-nowrap lg:text-end`}>
                                                 <Taka amount={e.amount} />
                                             </td>
@@ -303,37 +304,21 @@ export function ExpensesPage() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className={`${cell} max-lg:basis-full`}>
-                                                <div className="flex flex-wrap justify-end gap-1">
+                                            <td className={`${cell} max-lg:ms-auto`}>
+                                                <div className="flex items-center justify-end gap-1">
                                                     {e.can.approve && (
                                                         <Button size="sm" variant="secondary" disabled={action.isPending} onClick={() => run(e, 'approve')}>
                                                             {t('expenses.action.approve')}
                                                         </Button>
                                                     )}
-                                                    {e.can.reject && (
-                                                        <Button size="sm" variant="ghost" onClick={() => openDialog(e, 'reject')}>
-                                                            {t('expenses.action.reject')}
-                                                        </Button>
-                                                    )}
-                                                    {e.can.update && (
-                                                        <Button size="sm" variant="ghost" onClick={() => setEditing(e)}>
-                                                            {t('expenses.action.edit')}
-                                                        </Button>
-                                                    )}
-                                                    {e.can.pay && (
-                                                        <Button size="sm" variant="ghost" onClick={() => openDialog(e, 'pay')}>
-                                                            {t('expenses.action.pay')}
-                                                        </Button>
-                                                    )}
-                                                    {e.can.void && (
-                                                        <Button size="sm" variant="ghost" onClick={() => openDialog(e, 'void')}>
-                                                            {t('expenses.action.void')}
-                                                        </Button>
-                                                    )}
-                                                    {e.can.delete && (
-                                                        <Button size="sm" variant="ghost" onClick={() => openDialog(e, 'delete')}>
-                                                            {t('expenses.action.delete')}
-                                                        </Button>
+                                                    {(e.can.reject || e.can.update || e.can.pay || e.can.void || e.can.delete) && (
+                                                        <RowMenu label={t('expenses.col.actions')}>
+                                                            {e.can.reject && <RowMenuItem onClick={() => openDialog(e, 'reject')}>{t('expenses.action.reject')}</RowMenuItem>}
+                                                            {e.can.update && <RowMenuItem onClick={() => setEditing(e)}>{t('expenses.action.edit')}</RowMenuItem>}
+                                                            {e.can.pay && <RowMenuItem onClick={() => openDialog(e, 'pay')}>{t('expenses.action.pay')}</RowMenuItem>}
+                                                            {e.can.void && <RowMenuItem onClick={() => openDialog(e, 'void')}>{t('expenses.action.void')}</RowMenuItem>}
+                                                            {e.can.delete && <RowMenuItem onClick={() => openDialog(e, 'delete')}>{t('expenses.action.delete')}</RowMenuItem>}
+                                                        </RowMenu>
                                                     )}
                                                 </div>
                                             </td>

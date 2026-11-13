@@ -1,4 +1,4 @@
-import { format } from '../i18n';
+import { format, type Messages } from '../i18n';
 import { contact } from '../site-config';
 import type { AccountMessages } from './messages';
 
@@ -31,3 +31,14 @@ export function firstName(name: string): string {
 }
 
 export { clock } from './clock';
+
+/** "Oct 2026" (Dhaka month, Western digits — rule 36) for "member since"; null without a date. */
+export function monthYear(iso: string | null | undefined, t: Messages): string | null {
+    if (!iso) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    const fields = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', month: 'numeric', year: 'numeric' }).formatToParts(date);
+    const month = Number(fields.find((p) => p.type === 'month')?.value ?? '0');
+    const year = fields.find((p) => p.type === 'year')?.value ?? '';
+    return `${t.delivery.months[month - 1] ?? String(month)} ${year}`;
+}

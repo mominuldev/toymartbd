@@ -11,7 +11,7 @@ interface Props {
     describedBy?: string;
 }
 
-// The six code boxes (Figma Verify code 237:9412: 52 × 56, radius sm, focus ring teal). They are six
+// The six code boxes (Figma Verify code 237:9412: 46 × 56, gap 8, hairline border/default, radius sm, 2px border/focus when focused). They are six
 // plain inputs named d1…d6, so the form posts without JavaScript (the shopper tabs between them).
 // Hydrated, typing advances, Backspace goes back, and a pasted or SMS-autofilled code fills them all.
 // The first box carries `autocomplete="one-time-code"` so the phone can offer the SMS code.
@@ -51,7 +51,7 @@ export function OtpBoxes({ digitLabel, label, invalid, describedBy }: Props) {
     }
 
     return (
-        <fieldset className="flex justify-between gap-2" aria-describedby={describedBy}>
+        <fieldset className="flex justify-center gap-2" aria-describedby={describedBy}>
             <legend className="sr-only">{label}</legend>
             {[0, 1, 2, 3, 4, 5].map((i) => (
                 <input
@@ -72,7 +72,7 @@ export function OtpBoxes({ digitLabel, label, invalid, describedBy }: Props) {
                     onInput={(e) => onInput(i, e)}
                     onKeyDown={(e) => onKeyDown(i, e)}
                     onPaste={(e) => onPaste(i, e)}
-                    className="t-h3 h-14 w-full max-w-13 min-w-0 rounded-sm border border-line-strong bg-surface text-center text-fg-primary tabular-nums focus:border-line-focus aria-[invalid=true]:border-line-danger"
+                    className="t-h2 h-14 w-full max-w-11.5 min-w-0 rounded-sm border border-line-default bg-surface text-center text-fg-primary tabular-nums focus:border-2 focus:border-line-focus aria-[invalid=true]:border-line-danger"
                 />
             ))}
         </fieldset>
