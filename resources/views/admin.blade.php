@@ -22,6 +22,7 @@
          JetBrains Mono (ids, SKUs), Anek Bangla (Bangla UI), Baloo Da 2 (Bangla titles). --}}
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=hanken-grotesk:400,500,600,700,800|fredoka:500,600|jetbrains-mono:500|anek-bangla:400,500,600|baloo-da-2:600&display=swap">
+    @viteReactRefresh
     @vite(['resources/css/admin.css', 'resources/js/admin/main.tsx'])
 </head>
 <body class="h-full antialiased">
