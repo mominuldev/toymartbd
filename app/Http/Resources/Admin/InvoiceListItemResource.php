@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 /**
  * An issued invoice in the list (P8, N-13). Figures are the snapshot taken at issue, as
  * decimal strings (rule 1 — the admin only formats). No phone or address in the list.
+ * Credit notes (P8 batch 2) ride along with what has been credited and the balance;
+ * load `creditNotes` with the invoice to avoid one query per row.
  *
  * @property Invoice $resource
  */
@@ -73,6 +75,30 @@ final class InvoiceListItemResource extends ApiResource
             'issued_at' => $invoice->issued_at->toIso8601String(),
             /** Whether this user may print it (customer: orders.view + customers.view_pii). */
             'can_print' => $user instanceof User && $user->can('print', $invoice),
+            /**
+             * Σ credit notes issued against this invoice (P8 batch 2); `0.00` when none.
+             *
+             * @var string
+             */
+            'credited' => $invoice->credited()->toDecimal(),
+            /**
+             * The invoice total less everything credited — what still stands.
+             *
+             * @var string
+             */
+            'balance' => $invoice->balance()->toDecimal(),
+            /**
+             * `none` (nothing credited), `partial`, or `full` (balance is zero).
+             *
+             * @var 'none'|'partial'|'full'
+             */
+            'credit_status' => match (true) {
+                $invoice->credited()->isZero() => 'none',
+                $invoice->balance()->isZero() || $invoice->balance()->isNegative() => 'full',
+                default => 'partial',
+            },
+            /** Credit notes issued against this invoice, oldest first. */
+            'credit_notes' => CreditNoteListItemResource::collection($invoice->creditNotes),
         ];
     }
 }

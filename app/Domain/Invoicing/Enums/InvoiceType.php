@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Invoicing\Enums;
 
+use App\Domain\Invoicing\Contracts\NumberSeries;
+
 /**
  * `invoices.type` (DATABASE-DESIGN §3.5). Each type has its own gap-free number series:
  * `INV-YY-NNNNNN` for a customer (sales) invoice, `PINV-YY-NNNNNN` for a supplier
  * (purchase) invoice.
  */
-enum InvoiceType: string
+enum InvoiceType: string implements NumberSeries
 {
     case Sales = 'sales';
     case Purchase = 'purchase';

@@ -156,8 +156,9 @@ describe('profit & loss', () => {
         expect(screen.getByText('Reconciled with the ledger')).toBeTruthy();
         expect(screen.getByText('Open orders not yet delivered: ৳18,000 across 4 orders')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Stock on hand ৳136,741 at cost — an asset, not a cost' }).getAttribute('href')).toBe('/inventory/valuation');
-        // Export is a link to the server-built CSV.
-        expect(screen.getByRole('link', { name: /Export/ }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/export');
+        // Export offers the server-built Excel and CSV files as plain links.
+        expect(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/export?format=xlsx&locale=en');
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/export?format=csv&locale=en');
     });
 
     it('sends the period and comparison to the server from the URL', async () => {
@@ -175,6 +176,9 @@ describe('profit & loss', () => {
         renderApp('/finance/pnl', { locale: 'bn' });
         expect(await screen.findByText('গ্রাহকদের কাছে আমাদের পাওনা')).toBeTruthy();
         expect(screen.getAllByText(text('−৳5,800')).length).toBeGreaterThan(0);
+        // The file's labels and sheet name follow the admin's language.
+        expect(screen.getByText('এক্সপোর্ট')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'এক্সেল (.xlsx)' }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/export?format=xlsx&locale=bn');
     });
 });
 
@@ -189,6 +193,8 @@ describe('daily reports', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Month' }));
         await waitFor(() => expect(urls(calls).some((u) => u.includes('group=month'))).toBe(true));
+        expect(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/series/export?group=month&format=xlsx&locale=en');
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toBe('/api/v1/admin/finance/reports/pnl/series/export?group=month&format=csv&locale=en');
     });
 });
 
@@ -205,6 +211,10 @@ describe('profitability', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Recommendations' }));
         await waitFor(() => expect(urls(calls).some((u) => u.includes('by=source'))).toBe(true));
+        const xlsx = decodeURIComponent(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href') ?? '');
+        expect(xlsx).toContain('/api/v1/admin/finance/reports/profitability/export?by=source&sort=-margin_percent');
+        expect(xlsx).toContain('&format=xlsx&locale=en');
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toContain('format=csv');
     });
 });
 
@@ -219,6 +229,10 @@ describe('inventory valuation', () => {
 
         fireEvent.change(screen.getByLabelText('As at'), { target: { value: '2026-11-06' } });
         await waitFor(() => expect(urls(calls).some((u) => u.includes('filter[as_at]=2026-11-06'))).toBe(true));
+        expect(decodeURIComponent(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href') ?? '')).toBe(
+            '/api/v1/admin/reports/inventory-valuation/export?filter[as_at]=2026-11-06&sort=-value&format=xlsx&locale=en',
+        );
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toContain('format=csv&locale=en');
     });
 });
 

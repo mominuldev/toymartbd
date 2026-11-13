@@ -1,9 +1,7 @@
 import { useId, type ReactNode } from 'react';
-import { DownloadSimpleIcon } from '@phosphor-icons/react';
 import { useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
-import { buttonClass } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { FinanceTabs } from '../parts';
@@ -154,17 +152,6 @@ export function PeriodPicker({ range, preset, onPreset, onRange, today = dhakaTo
                 </>
             )}
         </div>
-    );
-}
-
-/** Export (Figma Button outline md "Export"): a plain download link to the server-built CSV. */
-export function ExportLink({ href }: { href: string }) {
-    const { t } = useI18n();
-    return (
-        <a href={href} download className={buttonClass('outline')}>
-            <DownloadSimpleIcon size={16} aria-hidden />
-            {t('reports.export')}
-        </a>
     );
 }
 

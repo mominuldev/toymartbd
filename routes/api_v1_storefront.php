@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Storefront\Account\AccountController;
 use App\Http\Controllers\Api\V1\Storefront\Account\AddressController as AccountAddressController;
 use App\Http\Controllers\Api\V1\Storefront\Account\AuthController as AccountAuthController;
+use App\Http\Controllers\Api\V1\Storefront\Account\ConsentController as AccountConsentController;
 use App\Http\Controllers\Api\V1\Storefront\Account\OrderController as AccountOrderController;
 use App\Http\Controllers\Api\V1\Storefront\Account\ReviewController as AccountReviewController;
 use App\Http\Controllers\Api\V1\Storefront\Account\WishlistController as AccountWishlistController;
@@ -129,6 +130,9 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
 Route::middleware(['auth:customer', CheckAbilities::class.':customer', EnsureActiveCustomer::class])->prefix('account')->name('account.')->group(function (): void {
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
+    // Purpose consents (P8): birthday messages, opted in on the profile page — never on checkout.
+    Route::get('/consents', [AccountConsentController::class, 'show'])->name('consents.show');
+    Route::put('/consents', [AccountConsentController::class, 'update'])->name('consents.update');
     Route::post('/logout', [AccountAuthController::class, 'logout'])->name('logout');
     Route::get('/orders', [AccountOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{number}', [AccountOrderController::class, 'show'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');

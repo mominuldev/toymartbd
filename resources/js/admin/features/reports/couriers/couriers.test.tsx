@@ -57,7 +57,7 @@ function api(me: Me = accountant, body: CourierPerformance = report) {
 const urls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.map(([url]) => decodeURIComponent(String(url)));
 
 describe('courier performance', () => {
-    it('lays out the server’s totals, the per-courier and per-district tables, and the CSV link', async () => {
+    it('lays out the server’s totals, the per-courier and per-district tables, and the Excel / CSV links', async () => {
         api();
         renderApp('/analytics/couriers');
 
@@ -75,7 +75,9 @@ describe('courier performance', () => {
         expect(within(districts).getByRole('row', { name: /No district/ })).toBeTruthy();
         expect(within(districts).getAllByText('—').length).toBeGreaterThan(0);
 
-        expect(screen.getByRole('link', { name: /Export/ }).getAttribute('href')).toBe('/api/v1/admin/reports/couriers/export');
+        expect(screen.getByText('Export')).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href')).toBe('/api/v1/admin/reports/couriers/export?format=xlsx&locale=en');
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toBe('/api/v1/admin/reports/couriers/export?format=csv&locale=en');
     });
 
     it('sends the period and courier to the server from the URL and the filters', async () => {
@@ -86,14 +88,16 @@ describe('courier performance', () => {
 
         fireEvent.change(screen.getByLabelText('Courier'), { target: { value: 'pathao' } });
         await waitFor(() => expect(urls(calls).some((u) => u.includes('filter[provider]=pathao'))).toBe(true));
-        expect(screen.getByRole('link', { name: /Export/ }).getAttribute('href')).toContain('filter%5Bprovider%5D=pathao');
+        expect(screen.getByRole('link', { name: 'CSV' }).getAttribute('href')).toContain('filter%5Bprovider%5D=pathao');
+        expect(screen.getByRole('link', { name: 'Excel (.xlsx)' }).getAttribute('href')).toContain('filter%5Bprovider%5D=pathao&format=xlsx');
     });
 
     it('hides Export without reports.export and shows the empty state for a quiet period', async () => {
         api(reader, { ...report, totals: metrics({ booked: 0 }), providers: [], districts: [] });
         renderApp('/analytics/couriers');
         expect(await screen.findByText('No parcels in this period')).toBeTruthy();
-        expect(screen.queryByRole('link', { name: /Export/ })).toBeNull();
+        expect(screen.queryByText('Export')).toBeNull();
+        expect(screen.queryByRole('link', { name: 'CSV' })).toBeNull();
     });
 
     it('renders in Bangla with Western digits', async () => {

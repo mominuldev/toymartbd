@@ -8,22 +8,22 @@ use App\Domain\Finance\Reports\FinanceReport;
 use App\Domain\Finance\Reports\Profitability;
 use App\Domain\Finance\Reports\ProfitAndLoss;
 use App\Domain\Inventory\Reports\InventoryValuationReport;
+use App\Domain\Reporting\Exports\ReportSheets;
+use App\Domain\Reporting\Exports\Spreadsheet;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Reports\ReportQuery;
 use App\Http\Resources\Admin\Reports\PnlSeriesResource;
 use App\Http\Resources\Admin\Reports\PnlStatementResource;
 use App\Http\Resources\Admin\Reports\ProfitabilityReportResource;
-use App\Support\CsvReport;
-use App\Support\Money;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
-use Generator;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Finance reports (P5): the P&L statement, the P&L by day/week/month/year, and product /
- * category / recommendation-source profitability, each with a CSV export. Read-only.
+ * category / recommendation-source profitability, each with a CSV or XLSX export. Read-only.
  *
  * Every figure is computed here, on the server (rule 1); periods are Dhaka dates (rule 11);
  * revenue is recognised on delivery and cash is reported apart from it (rule 10).
@@ -91,79 +91,55 @@ final class FinanceReportController extends ApiController
     {
         $this->authorize('viewProfitability', FinanceReport::class);
 
-        return new ProfitabilityReportResource($this->profitabilityReport($request, $profitability));
+        return new ProfitabilityReportResource($this->profitabilityReport(self::profitabilityQuery($request, []), $profitability));
     }
 
-    /** `GET /finance/reports/pnl/export` — the statement as CSV, one row per line. Needs finance.view + finance.export. */
+    /** `GET /finance/reports/pnl/export` — the statement as CSV or XLSX, one row per line. Needs finance.view + finance.export. */
     #[QueryParameter('filter[from]', 'As on GET /finance/reports/pnl.', type: 'string', format: 'date')]
     #[QueryParameter('filter[to]', 'As on GET /finance/reports/pnl.', type: 'string', format: 'date')]
-    #[OpenApiResponse(400, 'Unlisted parameter or filter (`bad-request`)')]
+    #[QueryParameter('format', 'csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).', type: "'csv'|'xlsx'", default: 'csv')]
+    #[QueryParameter('locale', 'Language of the labels and the sheet name. Default: the request locale.', type: "'en'|'bn'")]
+    #[OpenApiResponse(400, 'Unlisted parameter or filter, or an unknown format or locale (`bad-request`)')]
     #[OpenApiResponse(403, 'Missing finance.view or finance.export (`forbidden`)')]
-    public function exportPnl(Request $request, ProfitAndLoss $pnl): BinaryFileResponse
+    public function exportPnl(Request $request, ProfitAndLoss $pnl): BinaryFileResponse|StreamedResponse
     {
         $this->authorize('exportPnl', FinanceReport::class);
-        $period = ReportQuery::from($request, ['from', 'to'])->period();
+        $query = ReportQuery::from($request, ['from', 'to'], ['format', 'locale']);
+        [$format, $locale] = $query->exportOptions();
+        $period = $query->period();
         $statement = $pnl->statement($period, 'none');
 
-        $rows = (static function () use ($statement): Generator {
-            foreach ($statement['blocks'] as $block) {
-                foreach ($block['rows'] as $row) {
-                    yield [
-                        (string) $block['number'],
-                        __('reports.pnl.block.'.$block['key']),
-                        $row['kind'],
-                        $row['key'],
-                        __('reports.pnl.line.'.$row['key']),
-                        implode(' ', $row['types'] ?? []),
-                        $row['amount']->toDecimal(),
-                    ];
-                }
-            }
-            foreach ($statement['expenses_by_category'] as $category) {
-                yield ['', __('reports.pnl.expenses_by_category'), 'category', (string) $category['category_id'], $category['name'], $category['type'], $category['amount']->toDecimal()];
-            }
-            yield ['', __('reports.pnl.cash'), 'cash', 'cash_in', __('reports.pnl.cash_in'), '', $statement['cash']['in']->toDecimal()];
-            yield ['', __('reports.pnl.cash'), 'cash', 'cash_out', __('reports.pnl.cash_out'), '', $statement['cash']['out']->negate()->toDecimal()];
-            yield ['', __('reports.pnl.cash'), 'cash', 'cash_net', __('reports.pnl.cash_net'), '', $statement['cash']['net']->toDecimal()];
-        })();
-
-        return CsvReport::download(
-            "profit-and-loss-{$period->fromDate()}-to-{$period->toDate()}.csv",
-            ['block', 'block_name', 'kind', 'key', 'label', 'ledger_types', 'amount'],
-            $rows,
+        return Spreadsheet::downloadSheet(
+            "profit-and-loss-{$period->fromDate()}-to-{$period->toDate()}",
+            $format,
+            ReportSheets::pnl($statement, $locale)[0],
         );
     }
 
-    /** `GET /finance/reports/pnl/series/export` — the series as CSV, one row per bucket. Needs finance.view + finance.export. */
+    /** `GET /finance/reports/pnl/series/export` — the series as CSV or XLSX, one row per bucket. Needs finance.view + finance.export. */
     #[QueryParameter('filter[from]', 'As on GET /finance/reports/pnl/series.', type: 'string', format: 'date')]
     #[QueryParameter('filter[to]', 'As on GET /finance/reports/pnl/series.', type: 'string', format: 'date')]
     #[QueryParameter('group', 'As on GET /finance/reports/pnl/series.', type: "'day'|'week'|'month'|'year'")]
-    #[OpenApiResponse(400, 'Unlisted parameter or filter (`bad-request`)')]
+    #[QueryParameter('format', 'csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).', type: "'csv'|'xlsx'", default: 'csv')]
+    #[QueryParameter('locale', 'Language of the labels and the sheet name. Default: the request locale.', type: "'en'|'bn'")]
+    #[OpenApiResponse(400, 'Unlisted parameter or filter, or an unknown format or locale (`bad-request`)')]
     #[OpenApiResponse(403, 'Missing finance.view or finance.export (`forbidden`)')]
-    public function exportSeries(Request $request, ProfitAndLoss $pnl): BinaryFileResponse
+    public function exportSeries(Request $request, ProfitAndLoss $pnl): BinaryFileResponse|StreamedResponse
     {
         $this->authorize('exportPnl', FinanceReport::class);
-        $query = ReportQuery::from($request, ['from', 'to'], ['group']);
+        $query = ReportQuery::from($request, ['from', 'to'], ['group', 'format', 'locale']);
+        [$format, $locale] = $query->exportOptions();
         $period = $query->period();
         $series = $pnl->series($period, $query->granularity($period));
 
-        $lineKeys = array_keys($series['buckets'][0]['lines'] ?? []);
-        $totalKeys = ['gross_revenue', 'net_revenue', 'gross_profit', 'profit_after_delivery', 'profit_after_losses', 'net_profit'];
-        $rows = array_map(static fn (array $b): array => [
-            $b['from'], $b['to'], (string) $b['days'],
-            ...array_map(static fn (string $k): string => $b['lines'][$k]->toDecimal(), $lineKeys),
-            ...array_map(static fn (string $k): string => $b['totals'][$k]->toDecimal(), $totalKeys),
-            (string) ($b['net_margin_percent'] ?? ''),
-        ], $series['buckets']);
-
-        return CsvReport::download(
-            "profit-and-loss-by-{$series['granularity']}-{$period->fromDate()}-to-{$period->toDate()}.csv",
-            ['from', 'to', 'days', ...$lineKeys, ...$totalKeys, 'net_margin_percent'],
-            $rows,
+        return Spreadsheet::downloadSheet(
+            "profit-and-loss-by-{$series['granularity']}-{$period->fromDate()}-to-{$period->toDate()}",
+            $format,
+            ReportSheets::pnlSeries($series, $locale)[0],
         );
     }
 
-    /** `GET /finance/reports/profitability/export` — as GET /finance/reports/profitability, every row. Needs finance.export too. */
+    /** `GET /finance/reports/profitability/export` — as GET /finance/reports/profitability, every row, as CSV or XLSX. Needs finance.export too. */
     #[QueryParameter('by', 'As on GET /finance/reports/profitability.', type: "'product'|'category'|'source'", default: 'product')]
     #[QueryParameter('filter[from]', 'As on GET /finance/reports/profitability.', type: 'string', format: 'date')]
     #[QueryParameter('filter[to]', 'As on GET /finance/reports/profitability.', type: 'string', format: 'date')]
@@ -171,32 +147,33 @@ final class FinanceReportController extends ApiController
     #[QueryParameter('filter[search]', 'As on GET /finance/reports/profitability.', type: 'string')]
     #[QueryParameter('filter[source]', 'As on GET /finance/reports/profitability.', type: 'string')]
     #[QueryParameter('sort', 'As on GET /finance/reports/profitability.', type: 'string', default: '-gross_profit')]
-    #[OpenApiResponse(400, 'Unlisted parameter, filter or sort (`bad-request`)')]
+    #[QueryParameter('format', 'csv (default, unchanged since P5) or xlsx (one worksheet, numbers as numeric cells).', type: "'csv'|'xlsx'", default: 'csv')]
+    #[QueryParameter('locale', 'Language of the labels and the sheet name. Default: the request locale.', type: "'en'|'bn'")]
+    #[OpenApiResponse(400, 'Unlisted parameter, filter or sort, or an unknown format or locale (`bad-request`)')]
     #[OpenApiResponse(403, 'Missing finance.view, catalog.view_cost or finance.export (`forbidden`)')]
-    public function exportProfitability(Request $request, Profitability $profitability): BinaryFileResponse
+    public function exportProfitability(Request $request, Profitability $profitability): BinaryFileResponse|StreamedResponse
     {
         $this->authorize('exportProfitability', FinanceReport::class);
-        $report = $this->profitabilityReport($request, $profitability);
+        $query = self::profitabilityQuery($request, ['format', 'locale']);
+        [$format, $locale] = $query->exportOptions();
+        $report = $this->profitabilityReport($query, $profitability);
 
-        $identity = match ($report['by']) {
-            'product' => ['product_id', 'sku', 'name', 'name_bn', 'category_name'],
-            'category' => ['category_id', 'parent_id', 'name', 'name_bn', 'products'],
-            default => ['source', 'products'],
-        };
-        $figures = ['orders', 'units_sold', 'units_returned', 'units', 'gross_revenue', 'reversals', 'net_revenue', 'cogs', 'gross_profit', 'margin_percent'];
-        $cell = static fn (mixed $v): string => $v instanceof Money ? $v->toDecimal() : (is_scalar($v) ? (string) $v : '');
-
-        return CsvReport::download(
-            "profitability-by-{$report['by']}-{$report['from']}-to-{$report['to']}.csv",
-            [...$identity, ...$figures],
-            array_map(static fn (array $row): array => array_map(static fn (string $k): string => $cell($row[$k] ?? null), [...$identity, ...$figures]), $report['rows']),
+        return Spreadsheet::downloadSheet(
+            "profitability-by-{$report['by']}-{$report['from']}-to-{$report['to']}",
+            $format,
+            ReportSheets::profitability($report, $locale)[0],
         );
     }
 
-    /** @return array<string, mixed> */
-    private function profitabilityReport(Request $request, Profitability $profitability): array
+    /** @param  list<string>  $extra  further allowed parameters (the export's format and locale) */
+    private static function profitabilityQuery(Request $request, array $extra): ReportQuery
     {
-        $query = ReportQuery::from($request, ['from', 'to', 'category_id', 'search', 'source'], ['by', 'sort']);
+        return ReportQuery::from($request, ['from', 'to', 'category_id', 'search', 'source'], ['by', 'sort', ...$extra]);
+    }
+
+    /** @return array<string, mixed> */
+    private function profitabilityReport(ReportQuery $query, Profitability $profitability): array
+    {
         $period = $query->period();
         $by = $query->choice('by', self::BY, 'product');
         $sort = $query->sort(Profitability::SORTS, '-gross_profit');

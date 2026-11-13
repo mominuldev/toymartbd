@@ -1,13 +1,12 @@
 import { useId, type ReactNode } from 'react';
-import { DownloadSimpleIcon } from '@phosphor-icons/react';
 import { useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
@@ -201,10 +200,7 @@ export function CourierPerformancePage() {
                             <Input id={`${ids}-to`} type="date" min={filters.from} max={today} value={filters.to} onChange={(e) => set({ to: e.target.value })} className="tabular" />
                         </div>
                         {can(me, 'reports.export') && (
-                            <a href={courierReportExportUrl(filters)} download className={buttonClass('outline')}>
-                                <DownloadSimpleIcon size={16} aria-hidden />
-                                {t('reports.export')}
-                            </a>
+                            <ExportMenu href={(format, locale) => courierReportExportUrl(filters, format, locale)} />
                         )}
                     </>
                 }

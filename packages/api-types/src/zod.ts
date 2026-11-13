@@ -1367,6 +1367,12 @@ export const updateCmsBlockRequestSchema = z.object({
 });
 export type UpdateCmsBlockRequestInput = z.input<typeof updateCmsBlockRequestSchema>;
 
+/** `PUT /storefront/account/consents` — the signed-in customer opts in to (or out of) birthday */
+export const updateConsentRequestSchema = z.object({
+    "birthday": z.boolean(),
+});
+export type UpdateConsentRequestInput = z.input<typeof updateConsentRequestSchema>;
+
 /** `PUT /coupons/{coupon}` — the whole document; needs marketing.manage. */
 export const updateCouponRequestSchema = z.object({
     "code": z.string().min(1).max(40).regex(new RegExp("^[A-Z0-9][A-Z0-9_-]*$")),
@@ -1419,6 +1425,12 @@ export const updateCourierRatesRequestSchema = z.object({
 });
 export type UpdateCourierRatesRequestInput = z.input<typeof updateCourierRatesRequestSchema>;
 
+/** `PUT /customers/{customer}/date-of-birth` — needs customers.update AND customers.view_pii: */
+export const updateCustomerDateOfBirthRequestSchema = z.object({
+    "date_of_birth": z.string().min(1).nullable(),
+});
+export type UpdateCustomerDateOfBirthRequestInput = z.input<typeof updateCustomerDateOfBirthRequestSchema>;
+
 /** `PUT /settings/delivery` — the store-level free-delivery threshold; needs */
 export const updateDeliverySettingsRequestSchema = z.object({
     "free_shipping_threshold": z.string().min(1).regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable(),
@@ -1454,6 +1466,7 @@ export type UpdateMediaRequestInput = z.input<typeof updateMediaRequestSchema>;
 /** `PUT /notifications/customers/{customer}/consents` — records the customer's birthday-message */
 export const updateMessageConsentRequestSchema = z.object({
     "birthday": z.boolean(),
+    "customer_confirmed": z.boolean().optional(),
 });
 export type UpdateMessageConsentRequestInput = z.input<typeof updateMessageConsentRequestSchema>;
 
@@ -1607,11 +1620,12 @@ export const updateProductRequestSchema = z.object({
 });
 export type UpdateProductRequestInput = z.input<typeof updateProductRequestSchema>;
 
-/** `PATCH /storefront/account` — the customer's own name, email and language. */
+/** `PATCH /storefront/account` — the customer's own name, email, language and date of birth. */
 export const updateProfileRequestSchema = z.object({
     "name": z.string().min(2).max(160).optional(),
     "email": z.email().max(191).nullable().optional(),
     "preferred_language": z.enum(["en","bn"]).optional(),
+    "date_of_birth": z.string().nullable().optional(),
 });
 export type UpdateProfileRequestInput = z.input<typeof updateProfileRequestSchema>;
 

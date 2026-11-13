@@ -7,8 +7,10 @@ namespace App\Http\Requests\Admin\Reports;
 use App\Domain\Finance\Reports\Enums\ReportGranularity;
 use App\Domain\Finance\Reports\ReportPeriod;
 use App\Domain\Inventory\Models\StockLocation;
+use App\Domain\Reporting\Exports\Spreadsheet;
 use App\Support\DhakaDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -178,6 +180,23 @@ final readonly class ReportQuery
         }
 
         return $value;
+    }
+
+    /**
+     * A report export's `format` (csv by default, so callers from before XLSX get the same
+     * CSV) and the `locale` of its labels and sheet name (the request locale by default).
+     * Both must be allowed parameters of this query; an unknown value of either is a 400.
+     *
+     * @return array{0: 'csv'|'xlsx', 1: 'en'|'bn'}
+     */
+    public function exportOptions(): array
+    {
+        /** @var 'csv'|'xlsx' $format */
+        $format = $this->choice('format', Spreadsheet::formats(), Spreadsheet::CSV);
+        /** @var 'en'|'bn' $locale */
+        $locale = $this->choice('locale', ['en', 'bn'], App::getLocale() === 'bn' ? 'bn' : 'en');
+
+        return [$format, $locale];
     }
 
     /**

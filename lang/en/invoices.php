@@ -58,6 +58,23 @@ return [
     'po_total' => 'PO total',
     'balance_due' => 'Balance due',
     'issued_copy' => 'Issued :date. Reprints show the details current at issue.',
+    // P8 batch 2: credit notes (resources/views/invoices/credit-note.blade.php).
+    'credit_note' => [
+        'title' => 'Credit Note',
+        'number' => 'Credit note no.',
+        'invoice' => 'Original invoice',
+        'invoice_date' => 'Invoice date',
+        'reason' => 'Reason',
+        'reason_order_cancelled' => 'Order cancelled after the invoice was issued',
+        'reason_refund' => 'Refund paid on a return',
+        'source' => 'Reference',
+        'credited_to' => 'Credited to',
+        'balance_line' => 'Remaining balance of invoice :number',
+        'amount' => 'Amount',
+        'adjustment' => 'Adjustment',
+        'total' => 'Total credited',
+        'issued_copy' => 'Issued :date against invoice :invoice. Reprints show the details current at issue.',
+    ],
     'conflict' => [
         'cancelled_order' => 'Order :number is cancelled and has no invoice; a cancelled order is not invoiced.',
         'purchase_not_ordered' => 'Purchase order :number is :status; only a placed purchase order can be issued as an invoice.',

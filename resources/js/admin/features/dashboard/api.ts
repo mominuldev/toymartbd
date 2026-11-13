@@ -28,6 +28,24 @@ export function dashboardPath(range: DashboardRange): string {
     return `/dashboard${text ? `?${text}` : ''}`;
 }
 
+export type ExportFormat = 'csv' | 'xlsx';
+
+/**
+ * A plain download link to `GET /dashboard/export` for the range on screen: the server builds
+ * and streams the file, the cookie session authorises it (as on the sales analytics export).
+ */
+export function dashboardExportUrl(range: DashboardRange, format: ExportFormat, locale: string): string {
+    const params = new URLSearchParams();
+    if (range.preset !== '7d') params.set('range', range.preset);
+    if (range.preset === 'custom') {
+        params.set('from', range.from);
+        params.set('to', range.to);
+    }
+    params.set('format', format);
+    params.set('locale', locale === 'bn' ? 'bn' : 'en');
+    return `/api/v1/admin/dashboard/export?${params.toString()}`;
+}
+
 /**
  * The range lives in the URL (`?range=30d`, or `?range=custom&from=…&to=…`) so a dashboard view
  * is a shareable link. A custom range without both dates falls back to the default.

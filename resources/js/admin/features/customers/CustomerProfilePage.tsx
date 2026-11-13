@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ApiError } from '@/lib/api';
 import { useAddCustomerNote, useCustomer, useCustomerNotes, useNotificationPreferences, type CustomerNote, type CustomerProfile } from './api';
 import { Taka, count, dhakaDay, dhakaDayTime, dhakaDayYear, percentText, takaText } from './format';
+import { BirthdayPanel } from './BirthdayPanel';
 import { Panel, RiskPill, RiskStatusTag, SegmentTag, Stat, riskTint } from './parts';
 
 type Order = CustomerProfile['orders'][number];
@@ -33,8 +34,8 @@ const outcomeTone = (status: Order['status']): StatusTone => {
  * Customer profile (Figma B · 18 241:41374, Theme B): header with the contact line (masked
  * without customers.view_pii, rule 20) and actions; four StatCards (lifetime value from the
  * ledger, delivery success, orders, returns); Orders / Notes tabs; and the rail — profile,
- * addresses, OUR risk score, the courier-evidence pointer (kept separate, rule 24) and the
- * pinned note. Every figure is the server's (rule 1).
+ * birthday messages (date of birth + consent, P8 — no frame; Panel pattern), addresses, OUR
+ * risk score, the courier-evidence pointer (kept separate, rule 24) and the pinned note. Every figure is the server's (rule 1).
  */
 /** Items an order has beyond the ones the profile lists (a count, not money). */
 const extraItems = (o: { items_count: number; items: readonly unknown[] }): number => Math.max(0, o.items_count - o.items.length);
@@ -152,6 +153,8 @@ export function CustomerProfilePage() {
                             </div>
                         )}
                     </Panel>
+
+                    <BirthdayPanel customer={c} canUpdate={can(me, 'customers.update')} />
 
                     <Panel title={t('customers.addresses.title')} subtitle={t('customers.addresses.count', { count: count(c.addresses.length) })}>
                         {c.addresses.length === 0 ? (

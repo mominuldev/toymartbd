@@ -18,6 +18,18 @@ return [
         'recommendations' => 'Recommendations',
         'pnl' => 'Profit and loss',
         'couriers' => 'Courier performance',
+        'pnl_by' => [
+            'day' => 'P&L by day',
+            'week' => 'P&L by week',
+            'month' => 'P&L by month',
+            'year' => 'P&L by year',
+        ],
+        'profitability' => [
+            'product' => 'Profitability by product',
+            'category' => 'Profitability by category',
+            'source' => 'Profitability by source',
+        ],
+        'inventory_valuation' => 'Inventory valuation',
     ],
     'metric' => [
         'range' => 'Period (Dhaka dates)',

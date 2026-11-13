@@ -620,10 +620,11 @@ const ACCOUNT_PLACED = '2026-11-08T05:02:00Z';
 let account;
 let addresses;
 let wishlist;
+let birthdayConsent;
 
 function resetAccount() {
     account = {
-        id: 1, name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', email: 'sabrina@example.com', preferred_language: 'bn',
+        id: 1, name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', email: 'sabrina@example.com', date_of_birth: null, preferred_language: 'bn',
         phone_verified_at: '2026-11-01T04:00:00Z', member_since: '2026-03-14T04:00:00Z', counts: { orders: 4, wishlist: 2, addresses: 2 },
     };
     addresses = [
@@ -631,6 +632,7 @@ function resetAccount() {
         { id: 2, type: 'office', label: 'অফিস', recipient_name: 'সাবরিনা আক্তার', phone: '+8801812345678', division: { id: 2, name: 'Chattogram', name_bn: 'চট্টগ্রাম' }, district: { id: 20, name: 'Chattogram', name_bn: 'চট্টগ্রাম' }, upazila: { id: 201, name: 'Kotwali', name_bn: 'কোতোয়ালী' }, area: 'আগ্রাবাদ', address_line: 'ওয়ার্ল্ড ট্রেড সেন্টার, ১৪ তলা, আগ্রাবাদ বাণিজ্যিক এলাকা', landmark: 'বাদামতলী মোড়ের কাছে', is_default: false },
     ];
     wishlist = [productFixtures[0], productFixtures[1]].map((p) => p.id);
+    birthdayConsent = { consented: false, consented_at: null, withdrawn_at: null };
 }
 resetAccount();
 
@@ -684,8 +686,20 @@ async function accountRoutes(req, res, url) {
     if (req.headers.authorization !== `Bearer ${CUSTOMER_TOKEN}`) return problemOf(res, 401, 'unauthenticated', 'Unauthenticated');
     if (p === '/account' && req.method === 'GET') return send(res, 200, { ...account, counts: { ...account.counts, wishlist: wishlist.length, addresses: addresses.length } });
     if (p === '/account' && req.method === 'PATCH') {
-        Object.assign(account, await readJson(req));
+        const body = await readJson(req);
+        if (body.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(body.date_of_birth)) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'date_of_birth', message: 'Enter a real date in the past.' }]);
+        Object.assign(account, body);
         return send(res, 200, account);
+    }
+    // Birthday-message consent (P8): no row = not consented; a "no" after a "yes" is a withdrawal, kept.
+    if (p === '/account/consents' && req.method === 'GET') return send(res, 200, { birthday: birthdayConsent });
+    if (p === '/account/consents' && req.method === 'PUT') {
+        const { birthday } = await readJson(req);
+        if (typeof birthday !== 'boolean') return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'birthday', message: 'The birthday field must be true or false.' }]);
+        const now = new Date().toISOString();
+        if (birthday && !birthdayConsent.consented) birthdayConsent = { consented: true, consented_at: now, withdrawn_at: null };
+        else if (!birthday && birthdayConsent.consented) birthdayConsent = { ...birthdayConsent, consented: false, withdrawn_at: now };
+        return send(res, 200, { birthday: birthdayConsent });
     }
     if (p === '/account/logout') return res.writeHead(204).end();
     if (p === '/account/orders' && req.method === 'GET') {

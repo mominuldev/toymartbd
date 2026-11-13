@@ -204,7 +204,7 @@ it('reads and saves the automation settings and the birthday consent', function 
 
     $customer = Customer::factory()->create();
     $this->getJson("/api/v1/admin/notifications/customers/{$customer->id}/consents")->assertOk()->assertJsonPath('birthday.consented', false);
-    $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true])
+    $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true])
         ->assertOk()->assertJsonPath('birthday.consented', true)->assertJsonPath('birthday.source', 'admin');
 });
 
@@ -217,7 +217,7 @@ describe('role matrix', function (): void {
     it('guards the birthday consent (customers.view / customers.update)', function (): void {
         $customer = Customer::factory()->create();
         RoleMatrix::assert($this, Permission::CustomersView, fn () => $this->getJson("/api/v1/admin/notifications/customers/{$customer->id}/consents"));
-        RoleMatrix::assert($this, Permission::CustomersUpdate, fn () => $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true]));
+        RoleMatrix::assert($this, Permission::CustomersUpdate, fn () => $this->putJson("/api/v1/admin/notifications/customers/{$customer->id}/consents", ['birthday' => true, 'customer_confirmed' => true]));
     });
 });
 

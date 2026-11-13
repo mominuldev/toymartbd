@@ -6,11 +6,12 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
 import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
 import { useReceivables, useRefundsOwed } from '../api';
 import { compares, pnlExportUrl, usePnl, type Compare, type PnlBlock, type PnlStatement } from './api';
-import { Card, ExportLink, Money, PeriodPicker, ReportTabs, TAKA, formatAmount, formatCount, formatDay, isNegative, useRangeParams } from './parts';
+import { Card, Money, PeriodPicker, ReportTabs, TAKA, formatAmount, formatCount, formatDay, isNegative, useRangeParams } from './parts';
 
 /** Lines that are only drawn when the period has something on them (the Figma statement shows none of them). */
 const quietLines = new Set(['salaries', 'rent', 'utilities', 'other_income']);
@@ -75,7 +76,7 @@ export function ProfitLossPage() {
                                 </option>
                             ))}
                         </Select>
-                        <ExportLink href={pnlExportUrl(range)} />
+                        <ExportMenu href={(format, locale) => pnlExportUrl(range, { format, locale })} />
                     </>
                 }
             />

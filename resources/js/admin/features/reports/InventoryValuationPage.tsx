@@ -1,13 +1,13 @@
 import { useEffect, useId, useState } from 'react';
-import { CaretDownIcon, CaretUpIcon, DownloadSimpleIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
+import { CaretDownIcon, CaretUpIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { useValuation, valuationExportUrl, valuationSorts, type InventoryValuation, type ValuationSort } from './api';
@@ -92,10 +92,7 @@ export function InventoryValuationPage() {
                         </label>
                         <div className="w-40 shrink-0"><Input id={asAtId} type="date" max={dhakaToday()} value={asAt} onChange={(e) => set('as_at', e.target.value)} className="tabular" /></div>
                         {can(me, 'finance.export') && (
-                            <a href={valuationExportUrl(filters)} download className={buttonClass('outline')}>
-                                <DownloadSimpleIcon size={16} aria-hidden />
-                                {t('reports.export')}
-                            </a>
+                            <ExportMenu href={(format, locale) => valuationExportUrl(filters, format, locale)} />
                         )}
                     </>
                 }

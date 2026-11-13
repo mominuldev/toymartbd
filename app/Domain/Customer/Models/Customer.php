@@ -36,6 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $phone
  * @property Carbon|null $phone_verified_at
  * @property string|null $email
+ * @property Carbon|null $date_of_birth Personal data: shown to staff only with customers.view_pii.
  * @property string $preferred_language
  * @property CustomerSource $source
  * @property list<string>|null $tags

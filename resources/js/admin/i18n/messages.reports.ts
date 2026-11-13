@@ -14,6 +14,8 @@ export const reportsEn = {
     'reports.tab.daily': 'Daily reports',
     'reports.tab.profitability': 'Profitability',
     'reports.export': 'Export',
+    'reports.export.xlsx': 'Excel (.xlsx)',
+    'reports.export.csv': 'CSV',
     'reports.loading': 'Loading the report…',
     'reports.dhakaBasis': 'Asia/Dhaka',
 
@@ -176,6 +178,8 @@ export const reportsBn: Record<keyof typeof reportsEn, string> = {
     'reports.tab.daily': 'দৈনিক রিপোর্ট',
     'reports.tab.profitability': 'লাভজনকতা',
     'reports.export': 'এক্সপোর্ট',
+    'reports.export.xlsx': 'এক্সেল (.xlsx)',
+    'reports.export.csv': 'CSV',
     'reports.loading': 'রিপোর্ট লোড হচ্ছে…',
     'reports.dhakaBasis': 'এশিয়া/ঢাকা',
 

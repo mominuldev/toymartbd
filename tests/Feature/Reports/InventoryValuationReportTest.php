@@ -16,6 +16,7 @@ use App\Models\Enums\Role;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\Xlsx;
 
 /*
  * Inventory valuation (P5): on_hand × weighted-average cost per variant × location now,
@@ -119,4 +120,51 @@ it('filters by location and category and serves the CSV', function (): void {
     $this->actingAs($user)->getJson('/api/v1/admin/reports/inventory-valuation?filter[as_at]=2099-01-01')->assertStatus(400);
     $this->actingAs($user)->getJson('/api/v1/admin/reports/inventory-valuation?sort=-margin')->assertStatus(400);
     $this->actingAs($user)->getJson('/api/v1/admin/reports/inventory-valuation?filter[location_id]=999')->assertStatus(400);
+});
+
+it('keeps the valuation CSV byte-for-byte as before XLSX', function (): void {
+    (new RolesAndPermissionsSeeder)->run();
+    $user = User::factory()->withRole(Role::Accountant)->create()->refresh();
+    $this->puzzleVariant->product->update(['name_bn' => 'কাঠের পাজল']);
+    $this->dollVariant->product->update(['name_bn' => 'কাপড়ের পুতুল']);
+
+    $response = $this->actingAs($user)->get('/api/v1/admin/reports/inventory-valuation/export');
+    $response->assertOk()->assertHeader('Content-Disposition', 'attachment; filename=inventory-valuation-2026-11-12.csv');
+    expect($response->streamedContent())->toBe(
+        "\u{FEFF}sku,name,name_bn,variant_name,category_name,location_code,location_name,on_hand,unit_cost,value,estimated\n"
+        ."{$this->puzzleVariant->sku},\"Wooden Puzzle\",\"কাঠের পাজল\",,Puzzles,main,\"Main warehouse\",16,355.0000,5680.00,0\n"
+        ."{$this->dollVariant->sku},\"Rag Doll\",\"কাপড়ের পুতুল\",,Dolls,ctg,\"Chattogram · Agrabad\",3,99.5000,298.50,0\n"
+        .",Total,,,,,,19,,5978.50,\n",
+    );
+});
+
+it('exports the valuation as XLSX equal to the JSON, with Bangla labels, guarded text and text SKUs', function (): void {
+    (new RolesAndPermissionsSeeder)->run();
+    $user = User::factory()->withRole(Role::InventoryStaff)->create()->refresh();
+    $user->givePermissionTo('finance.export');
+    $this->puzzleVariant->product->update(['name' => '@SUM(A1:A9)', 'name_bn' => 'কাঠের পাজল']);
+    $this->puzzleVariant->update(['sku' => '00042']);
+
+    $json = $this->actingAs($user)->getJson('/api/v1/admin/reports/inventory-valuation')->assertOk()->json();
+    $response = $this->actingAs($user)->get('/api/v1/admin/reports/inventory-valuation/export?format=xlsx&locale=bn');
+    $response->assertHeader('Content-Disposition', 'attachment; filename="inventory-valuation-2026-11-12.xlsx"');
+    $sheet = Xlsx::single($response);
+
+    expect($sheet['name'])->toBe('ইনভেন্টরি মূল্যায়ন')
+        ->and($sheet['header'])->toBe(['sku', 'name', 'name_bn', 'variant_name', 'category_name', 'location_code', 'location_name', 'on_hand', 'unit_cost', 'value', 'estimated'])
+        ->and($sheet['rows'])->toHaveCount(count($json['data']) + 1);
+    foreach ($json['data'] as $i => $row) {
+        expect($sheet['rows'][$i]['sku'])->toBe($row['sku'])
+            ->and($sheet['rows'][$i]['on_hand'])->toBe($row['on_hand'])
+            ->and($sheet['rows'][$i]['unit_cost'])->toEqual(Xlsx::number($row['unit_cost']))
+            ->and($sheet['rows'][$i]['value'])->toEqual(Xlsx::number($row['value']))
+            ->and($sheet['rows'][$i]['estimated'])->toBe($row['estimated'] ? 1 : 0);
+    }
+    $puzzle = collect($sheet['rows'])->firstWhere('sku', '00042');
+    $total = $sheet['rows'][count($json['data'])];
+    expect($puzzle['name'])->toBe("'@SUM(A1:A9)")
+        ->and($puzzle['name_bn'])->toBe('কাঠের পাজল')
+        ->and($total['name'])->toBe((string) __('reports.valuation.total', [], 'bn'))
+        ->and($total['on_hand'])->toBe($json['totals']['on_hand'])
+        ->and($total['value'])->toEqual(Xlsx::number($json['totals']['value']));
 });

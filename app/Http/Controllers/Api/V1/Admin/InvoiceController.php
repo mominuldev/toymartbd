@@ -61,7 +61,7 @@ final class InvoiceController extends ApiController
         $sort = $request->query('sort', '-issued_at');
         $descending = ! is_string($sort) || str_starts_with($sort, '-');
 
-        $invoices = QueryBuilder::for(Invoice::query()->whereIn('type', $types), $request)
+        $invoices = QueryBuilder::for(Invoice::query()->with('creditNotes')->whereIn('type', $types), $request)
             ->allowedFilters(
                 AllowedFilter::callback('type', static function (Builder $query, mixed $value): void {
                     $type = is_string($value) ? InvoiceType::tryFrom($value) : null;

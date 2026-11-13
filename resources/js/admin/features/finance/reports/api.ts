@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import { api } from '@/lib/api';
+import type { ExportFormat } from '@/components/ui/ExportMenu';
 
 export type PnlStatement = Schema<'PnlStatement'>;
 export type PnlSeries = Schema<'PnlSeries'>;
@@ -41,11 +42,16 @@ export type ProfitFilters = { by: ProfitBy; sort: string; search: string; source
 export const profitabilityPath = (range: Range, f: ProfitFilters) =>
     `/finance/reports/profitability${query({ ...rangeParams(range), by: f.by, sort: f.sort, 'filter[search]': f.search, 'filter[source]': f.source })}`;
 
-/** CSV downloads are plain links: the server builds the file (rule 1), the cookie session authorises it. */
-export const pnlExportUrl = (range: Range) => `${BASE}/finance/reports/pnl/export${query(rangeParams(range))}`;
-export const seriesExportUrl = (range: Range, group: Granularity | '') => `${BASE}/finance/reports/pnl/series/export${query({ ...rangeParams(range), group })}`;
-export const profitabilityExportUrl = (range: Range, f: ProfitFilters) =>
-    `${BASE}/finance/reports/profitability/export${query({ ...rangeParams(range), by: f.by, sort: f.sort, 'filter[search]': f.search, 'filter[source]': f.source })}`;
+/**
+ * CSV / XLSX downloads are plain links: the server builds the file (rule 1), the cookie session
+ * authorises it. `locale` is the language of the labels and sheet names inside the file.
+ */
+export type ExportFile = { format: ExportFormat; locale: 'en' | 'bn' };
+export const pnlExportUrl = (range: Range, file: ExportFile) => `${BASE}/finance/reports/pnl/export${query({ ...rangeParams(range), ...file })}`;
+export const seriesExportUrl = (range: Range, group: Granularity | '', file: ExportFile) =>
+    `${BASE}/finance/reports/pnl/series/export${query({ ...rangeParams(range), group, ...file })}`;
+export const profitabilityExportUrl = (range: Range, f: ProfitFilters, file: ExportFile) =>
+    `${BASE}/finance/reports/profitability/export${query({ ...rangeParams(range), by: f.by, sort: f.sort, 'filter[search]': f.search, 'filter[source]': f.source, ...file })}`;
 
 export function usePnl(range: Range, compare: Compare) {
     return useQuery({

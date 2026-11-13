@@ -58,6 +58,23 @@ return [
     'po_total' => 'PO মোট',
     'balance_due' => 'বকেয়া',
     'issued_copy' => ':date তারিখে ইস্যু করা। পুনর্মুদ্রণে ইস্যুর সময়ের তথ্যই দেখায়।',
+    // P8 ব্যাচ ২: ক্রেডিট নোট (resources/views/invoices/credit-note.blade.php)।
+    'credit_note' => [
+        'title' => 'ক্রেডিট নোট',
+        'number' => 'ক্রেডিট নোট নং',
+        'invoice' => 'মূল ইনভয়েস',
+        'invoice_date' => 'ইনভয়েসের তারিখ',
+        'reason' => 'কারণ',
+        'reason_order_cancelled' => 'ইনভয়েস ইস্যুর পরে অর্ডার বাতিল হয়েছে',
+        'reason_refund' => 'রিটার্নের রিফান্ড পরিশোধ করা হয়েছে',
+        'source' => 'রেফারেন্স',
+        'credited_to' => 'যার নামে ক্রেডিট',
+        'balance_line' => 'ইনভয়েস :number-এর অবশিষ্ট অংশ',
+        'amount' => 'পরিমাণ',
+        'adjustment' => 'সমন্বয়',
+        'total' => 'মোট ক্রেডিট',
+        'issued_copy' => ':date তারিখে ইনভয়েস :invoice-এর বিপরীতে ইস্যু করা। পুনর্মুদ্রণে ইস্যুর সময়ের তথ্যই দেখায়।',
+    ],
     'conflict' => [
         'cancelled_order' => 'অর্ডার :number বাতিল হয়েছে, এর কোনো ইনভয়েস নেই; বাতিল অর্ডারের ইনভয়েস হয় না।',
         'purchase_not_ordered' => 'ক্রয় আদেশ :number এখন :status; শুধু পাঠানো ক্রয় আদেশের ইনভয়েস হয়।',

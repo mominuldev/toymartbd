@@ -40,6 +40,12 @@ final class CustomerPolicy extends Policy
         return $this->allows($user, Permission::CustomersUpdate);
     }
 
+    /** Change the date of birth (personal data): customers.update AND customers.view_pii (rule 20). */
+    public function updateDateOfBirth(User $user, Model $customer): bool
+    {
+        return $this->allows($user, Permission::CustomersUpdate) && $this->allows($user, Permission::CustomersViewPii);
+    }
+
     public function viewPii(User $user): bool
     {
         return $this->allows($user, Permission::CustomersViewPii);

@@ -52,6 +52,14 @@ export const dhakaDayTime = (iso: string, locale: string): string =>
 export const monthLabel = (month: string, locale: string): string =>
     new Intl.DateTimeFormat(tag(locale), { timeZone: 'UTC', numberingSystem: 'latn', month: 'short', year: 'numeric' }).format(new Date(`${month}-01T00:00:00Z`));
 
+/** "04 Nov 2026, 9:27 am" — a Dhaka moment with its year (consent provenance). */
+export const dhakaMoment = (iso: string, locale: string): string =>
+    new Intl.DateTimeFormat(tag(locale), { ...latn, day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso));
+
+/** "1990-05-04" → "04 May 1990": a calendar date with no time or zone (a birth date), never shifted. */
+export const calendarDay = (date: string, locale: string): string =>
+    new Intl.DateTimeFormat(tag(locale), { timeZone: 'UTC', numberingSystem: 'latn', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${date}T00:00:00Z`));
+
 /** A Dhaka calendar date (YYYY-MM-DD) `daysBack` days before today — filters are Dhaka dates (rule 11). */
 export function dhakaDate(daysBack: number, now: Date = new Date()): string {
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
