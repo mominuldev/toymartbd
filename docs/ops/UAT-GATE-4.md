@@ -21,15 +21,15 @@ Every button name below is the English label on screen. The Bangla label is give
 2. Run `php artisan toymart:payments:gateway sslcommerz` and confirm it is **inactive**.
 3. Note the date and time. The profit check in §10 uses it.
 
-**What you will and won't see for messages.** No SMS or WhatsApp provider has been chosen yet, so both are on **log drivers**:
+**What you will and won't see for messages.** SMS goes out for real through REVE SMS (`SMS_DRIVER=reve`); there is no WhatsApp account yet, so WhatsApp is switched off (`WHATSAPP_ENABLED=false`) and every order update goes by SMS. Before you start, the developer runs `php artisan toymart:sms:test <your number>` and `--bn` once each; both must arrive.
 
 | You will see | You will NOT see |
 |---|---|
-| A row per message in **Admin → Automations → Message log** (`/admin/automations/log`): template, channel, masked recipient (`017****5678`), order, status **Sent** | **Any SMS or WhatsApp on your phone.** Nothing leaves the server. |
-| The wording of each message, in the template preview on **Admin → Automations** (`/admin/automations`) | The exact text "sent" for your order. The log driver records only the template name and the masked phone, never the text. |
-| | The sign-in code (OTP) in the Message log. OTP is not written there; it is only in the server log. |
+| The sign-in code by SMS on your phone | Any WhatsApp message (no account yet) |
+| An SMS for each order event (placed, confirmed, shipped, delivered, cancelled), in the language you ordered in | The message text in the admin log — only the template, masked phone and status |
+| A row per message in **Admin → Automations → Message log** (`/admin/automations/log`): template, channel **SMS**, masked recipient (`017****5678`), status, segments and cost | |
 
-Order messages try **WhatsApp first** and fall back to SMS, so expect the **WhatsApp** channel in the log. The roadmap's "receive an SMS" therefore **cannot be passed literally until a provider is chosen**. For this gate we accept "a Sent row for each order event in the Message log". Choosing a provider is an **owner decision**; record it in §11.
+If a message does not arrive, find its row in the Message log: **Sent** with a provider message id means the provider accepted it (check the provider panel with that id); **Failed / Dead-lettered** shows the provider's reason.
 
 ## 1. Add a real product (admin)
 
@@ -163,7 +163,8 @@ Then follow `PROFIT-RECONCILIATION.md` for A and B. Every row should read **OK**
 
 **Owner decisions to record here:**
 
-- SMS / WhatsApp provider
+- SMS provider: REVE SMS (decided 2026-11-13) — contracted rate per segment: ____ ; sender ID: ____
+- WhatsApp Business provider
 - real delivery charges and free-delivery threshold
 - hotline number
 - refund approval threshold

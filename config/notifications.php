@@ -26,13 +26,22 @@ return [
     'backoff' => [30, 120],
 
     'sms' => [
-        // log | null | sms_net_bd (UNVERIFIED skeleton — see the driver's docblock)
+        // log | null | reve (owner's provider, 2026-11-13) | sms_net_bd (UNVERIFIED skeleton)
         'driver' => env('SMS_DRIVER', 'log'),
         'log_channel' => env('SMS_LOG_CHANNEL'),
         // PLACEHOLDER: sms.bd Basic-slab masking rate observed 2026-11-07, not a contract.
         // Applied by every driver except `null`, so cost accounting is visible in dev too.
         'cost_per_segment' => env('SMS_COST_PER_SEGMENT', '0.64'),
         'drivers' => [
+            // REVE SMS reseller endpoint (App\Domain\Notification\Drivers\ReveSmsGateway).
+            // Credentials only ever come from env; never commit them.
+            'reve' => [
+                'base_url' => env('SMS_REVE_BASE_URL', 'https://smpp.ajuratech.com:7790'),
+                'api_key' => env('SMS_REVE_API_KEY'),
+                'secret_key' => env('SMS_REVE_SECRET_KEY'),
+                'sender_id' => env('SMS_REVE_SENDER_ID'),
+                'timeout' => (int) env('SMS_REVE_TIMEOUT', 10),
+            ],
             'sms_net_bd' => [
                 'base_url' => env('SMS_NET_BD_BASE_URL', 'https://api.sms.net.bd'),
                 'api_key' => env('SMS_NET_BD_API_KEY'),

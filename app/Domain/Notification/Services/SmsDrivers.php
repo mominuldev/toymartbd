@@ -7,6 +7,7 @@ namespace App\Domain\Notification\Services;
 use App\Domain\Notification\Contracts\SmsGateway;
 use App\Domain\Notification\Drivers\LogSmsGateway;
 use App\Domain\Notification\Drivers\NullSmsGateway;
+use App\Domain\Notification\Drivers\ReveSmsGateway;
 use App\Domain\Notification\Drivers\SmsNetBdGateway;
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
@@ -33,6 +34,7 @@ final readonly class SmsDrivers
         return match ($this->name()) {
             'log' => $this->container->make(LogSmsGateway::class),
             'null' => $this->container->make(NullSmsGateway::class),
+            'reve' => $this->container->make(ReveSmsGateway::class),
             'sms_net_bd' => $this->container->make(SmsNetBdGateway::class),
             default => throw new InvalidArgumentException('Unknown SMS driver ['.$this->name().'].'),
         };
