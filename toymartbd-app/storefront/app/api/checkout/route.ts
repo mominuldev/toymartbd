@@ -13,12 +13,15 @@ import {
 import { clearCartCookies, readCartRequest, redirectTo, setFlash, type CartRequest } from '@/lib/cart/route';
 import { applyCoupon, removeCoupon, serializeDestination } from '@/lib/cart/server';
 import type { StorefrontOrder } from '@/lib/cart/types';
-import { checkoutBody, draftId, encodeDraft, encodeFlash, readDraft, splitErrors, validAmount, validKey, type CheckoutDraft, type CheckoutFlash } from '@/lib/checkout/form';
+import { checkoutBody, draftId, encodeDraft, encodeFlash, readDraft, readPaymentMethod, splitErrors, validAmount, validKey, type CheckoutDraft, type CheckoutFlash } from '@/lib/checkout/form';
 import { getMessages, localizedPath } from '@/lib/i18n';
+import { isOnlineMethod, ONLINE_METHODS } from '@/lib/payments/methods';
+import { startPayment } from '@/lib/payments/start';
 
 // POST /api/checkout — the checkout form (P4-STO-09, docs/api/checkout.md). One handler, four intents:
 //   place          → POST /storefront/checkout with the cart token, the page's Idempotency-Key and
-//                    the total the customer saw; 201 → confirmation, else back with the API's errors.
+//                    the total the customer saw; 201 → confirmation (COD) or, for an online method,
+//                    POST /orders/{n}/payment and on to the gateway's page; else back with the errors.
 //   refresh        → the address changed: remember the district/upazila so the page re-renders with
 //                    the API's delivery charge and total (the "Update total" button without JS).
 //   coupon / coupon_remove → the cart's coupon, without losing what was typed.
@@ -38,12 +41,18 @@ interface Outcome {
     /** Keep the typed fields for the no-JS round trip. */
     keepDraft?: boolean;
     after?: (response: NextResponse) => void;
+    /** An absolute https URL the API handed us (the gateway's hosted page) — overrides `next`. */
+    external?: string;
 }
 
 function respond(req: CartRequest, request: Request, draft: CheckoutDraft, outcome: Outcome): NextResponse {
-    const response = req.wantsJson
-        ? NextResponse.json(outcome.next === '/checkout' ? { refresh: true } : { redirect: localizedPath(req.locale, outcome.next) }, { headers: { 'Cache-Control': 'no-store' } })
-        : redirectTo(request, req.locale, outcome.next);
+    const response = outcome.external
+        ? req.wantsJson
+            ? NextResponse.json({ redirect: outcome.external }, { headers: { 'Cache-Control': 'no-store' } })
+            : new NextResponse(null, { status: 303, headers: { Location: outcome.external } })
+        : req.wantsJson
+          ? NextResponse.json(outcome.next === '/checkout' ? { refresh: true } : { redirect: localizedPath(req.locale, outcome.next) }, { headers: { 'Cache-Control': 'no-store' } })
+          : redirectTo(request, req.locale, outcome.next);
     const district = draftId(draft.district_id);
     if (district !== null) {
         response.cookies.set(DEST_COOKIE, serializeDestination({ districtId: district, upazilaId: draftId(draft.upazila_id) }), {
@@ -87,6 +96,7 @@ export async function POST(request: Request): Promise<Response> {
         return respond(req, request, draft, { next: '/checkout', keepDraft: true, flash: message ? notice(message) : undefined });
     }
 
+    const method = readPaymentMethod(req.form, ONLINE_METHODS);
     const key = validKey(req.form.get('idempotency_key'));
     const expected = validAmount(String(req.form.get('expected_total') ?? ''));
     if (!key || !expected) return respond(req, request, draft, { next: '/checkout', keepDraft: true, flash: notice(t.checkout.priceChanged) });
@@ -95,11 +105,16 @@ export async function POST(request: Request): Promise<Response> {
         const { data: order } = await send<StorefrontOrder>('POST', 'storefront/checkout', {
             locale: req.locale,
             headers: { 'X-Cart-Token': req.token, 'Idempotency-Key': key },
-            body: checkoutBody(draft, expected),
+            body: checkoutBody(draft, expected, method),
         });
         const token = req.token;
+        // Online (P4-PAY-02): the order is placed and its stock held; now open the gateway session
+        // (same key — the API scopes it by path) and send the browser there. If no session opens,
+        // the payment page explains and offers a retry. COD goes straight to the confirmation.
+        const started = isOnlineMethod(method) ? await startPayment(order.number, token, key, req.locale) : null;
         return respond(req, request, draft, {
-            next: `/orders/${order.number}`,
+            next: started ? `/orders/${order.number}/payment` : `/orders/${order.number}`,
+            external: started?.ok ? started.url : undefined,
             after: (response) => {
                 // The cart is closed; its token now only proves ownership of this order (checkout.md).
                 clearCartCookies(response);

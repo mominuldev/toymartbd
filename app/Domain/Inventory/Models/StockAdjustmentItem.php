@@ -16,6 +16,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $adjustment_id
  * @property int $variant_id
+ * @property int|null $requested_change
+ * @property int|null $counted
  * @property int $quantity_before
  * @property int $quantity_after
  * @property string|null $unit_cost
@@ -27,7 +29,7 @@ final class StockAdjustmentItem extends Model
     public const null UPDATED_AT = null;
 
     /** @var list<string> */
-    protected $fillable = ['adjustment_id', 'variant_id', 'quantity_before', 'quantity_after', 'unit_cost'];
+    protected $fillable = ['adjustment_id', 'variant_id', 'requested_change', 'counted', 'quantity_before', 'quantity_after', 'unit_cost'];
 
     public function change(): int
     {
@@ -46,6 +48,8 @@ final class StockAdjustmentItem extends Model
         return [
             'adjustment_id' => 'integer',
             'variant_id' => 'integer',
+            'requested_change' => 'integer',
+            'counted' => 'integer',
             'quantity_before' => 'integer',
             'quantity_after' => 'integer',
             'unit_cost' => 'decimal:4',

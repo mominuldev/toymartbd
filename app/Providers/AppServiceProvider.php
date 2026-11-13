@@ -54,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\Catalog\Import\Contracts\ProductRowWriter::class, \App\Http\Imports\FormRequestProductRowWriter::class);
         // first_order_only coupons read real order history (replaces NoCustomerOrderHistory).
         $this->app->bind(\App\Domain\Marketing\Contracts\CustomerOrderHistory::class, \App\Domain\Ordering\Queries\PhoneOrderHistory::class);
+        // The nightly stock reconciliation checks reserved against open orders (§7 invariant 5).
+        $this->app->bind(\App\Domain\Inventory\Contracts\OpenOrderReservations::class, \App\Domain\Ordering\Queries\EloquentOpenOrderReservations::class);
 
         // Media usage resolver (docs/api/media-library.md): every place a media row can be
         // referenced is a tagged provider. Blog covers, pages and banners add a line here.
@@ -64,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PaymentGatewayRegistry::class, static function ($app): PaymentGatewayRegistry {
             $registry = new PaymentGatewayRegistry($app);
             $registry->register(PaymentMethod::Cod, CashOnDeliveryGateway::class);
+            // Offered only while its payment_gateways row is active, configured and (in
+            // production) verified — OnlineGateways (P4-PAY-02).
+            $registry->register(PaymentMethod::Sslcommerz, \App\Domain\Payment\Gateways\Sslcommerz\SslcommerzGateway::class);
 
             return $registry;
         });
@@ -87,5 +92,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(OrderPlaced::class, RefreshAggregatesOnOrderChange::class);
         Event::listen(OrderStatusTransition::class, RefreshAggregatesOnOrderChange::class);
         Event::listen(PaymentStatusChanged::class, SyncPaymentStatusOnPaymentChange::class);
+        // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).
+        Event::listen(\App\Domain\Payment\Events\PaymentFlaggedForReview::class, \App\Domain\Ordering\Listeners\HoldOrderOnPaymentReview::class);
     }
 }

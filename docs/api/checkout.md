@@ -64,7 +64,7 @@ Errors are RFC 9457 `application/problem+json`; branch on `type`
 | `address_line` | required, 5–500 |
 | `landmark` | optional, ≤ 255 — never dropped (rule 31); encourage it in the UI |
 | `postcode` | optional, exactly 4 digits |
-| `payment_method` | required, `cod` (the only method until an online gateway ships, P4-PAY-02) |
+| `payment_method` | required: `cod` (default, always accepted), or an online method `GET /payment-methods` currently lists (`sslcommerz`, P4-PAY-02). An online method that is not enabled → 422 on this field. See "Online payment" below. |
 | `customer_note` | optional, ≤ 500 |
 | `expected_total` | required, decimal string — the **grand total the customer saw** on the button (`Place order · ৳4,320`), i.e. `totals.grand_total` of `GET /cart?district_id=&upazila_id=` for the same address |
 | `utm_source` / `utm_medium` / `utm_campaign` | optional, ≤ 128 each |
@@ -147,7 +147,10 @@ the cart token (in a short-lived cookie) to read the confirmation — the cart i
   storefront from this code.
 - `payment.status` — `unpaid` · `pending` · `partially_paid` · `paid` · `partially_refunded` ·
   `refunded` · `failed`. COD stays `unpaid` until the rider collects. `payment.next_action` is
-  `null` for COD; an online method will return `{ "type": "redirect", "url": "…" }` (P4-PAY-02).
+  `null` for COD; for an online order whose gateway session is still open it is
+  `{ "type": "redirect", "url": "…" }`. Also `payment.online` (bool), `payment.retry_allowed` (the
+  payment page may offer a retry) and `payment.expires_at` (when an unpaid online order's stock hold
+  lapses; null for COD). Public tracking never returns a session URL or a retry.
 - `due_total` is what the rider collects ("Cash on delivery · ৳1,930.00 due").
 - `timeline` — customer-visible events only, oldest first; `stage` codes as above.
 - `image` may be `null`. `slug` may be `null` if the product was since deleted.
@@ -188,3 +191,101 @@ Body: `{ "number": "TMB-26-00042", "phone": "5678" }`
 Already served (docs/api/delivery.md): `GET /districts` (with `division`, `upazila_required`,
 `city_option`) and `GET /districts/{id}/upazilas` (with `serviceable`). The "area" select's options
 are not modelled server-side yet — the field is free text to the API.
+
+
+---
+
+## Online payment — SSLCommerz (P4-PAY-02 / 03 / 04)
+
+**Status: built against the published v4 API and the official PHP library only.** No merchant
+account exists (Gate 1 decision 5); tests run on hand-authored fixtures
+(`tests/Fixtures/Sslcommerz`, labelled in `tests/Feature/Payment/Sslcommerz/Fixtures.php`) and never
+call the network. COD stays the default and needs none of this (rule 33).
+
+### Availability (rule 33a spirit)
+
+`payment_gateways` holds one row per online driver (`is_active`, `verified`, `sandbox`, encrypted
+`credentials`). An online method is offered only when the row is active, credentials exist (env
+`SSLCOMMERZ_STORE_ID` / `SSLCOMMERZ_STORE_PASSWORD`, or stored encrypted ones) and — in
+production — the row is `verified` **and** not sandbox. Seeded inactive and unverified. Switch with
+`php artisan toymart:payments:gateway sslcommerz --activate | --verify | --live` (verify only after a
+live store has been tested end to end; an owner decision).
+
+| Method | Path | Guard |
+|---|---|---|
+| GET | `/api/v1/storefront/payment-methods` | storefront token |
+| POST | `/api/v1/storefront/orders/{number}/payment` | storefront token + `X-Cart-Token` of the placing cart + `Idempotency-Key` |
+| POST | `/api/v1/storefront/payments/sslcommerz/return` | storefront token (the Next.js server forwards the browser's POST) |
+| POST | `/api/v1/webhooks/payments/sslcommerz/ipn` | none — signature (+ optional IP allowlist) |
+| POST | `/api/v1/admin/orders/{order}/payments/{payment}/verify` | `orders.update` + `Idempotency-Key` |
+
+`GET /payment-methods` → `{"data":[{"method":"cod","online":false,"default":true,"sandbox":false},
+{"method":"sslcommerz","online":true,"default":false,"sandbox":true}]}`. Uncached.
+
+### Flow
+
+1. `POST /checkout` with `payment_method: "sslcommerz"` places the order exactly as for COD —
+   **stock is reserved here, once** — with a `pending` payment carrying `expires_at`
+   (now + `PAYMENT_ONLINE_EXPIRY_MINUTES`, a **placeholder**, default 30).
+2. `POST /orders/{number}/payment` opens the hosted session (after commit, outside any transaction —
+   rule 4). Answer `200 {"data":{"order_number","payment":{"status","method","expires_at"},
+   "next_action":{"type":"redirect","url":"https://…gw.php?…"}|null,"resumed":bool}}`. Redirect the
+   browser to `url`. `next_action: null` → the session could not open (gateway refused / unreachable
+   / malformed): show the payment-failed page with retry. The same call is the **retry**:
+   - latest attempt `initiated` with a live session → re-queried first; still open → the **same**
+     URL comes back (`resumed: true`) — never two live sessions, so no double charge;
+   - latest attempt `failed` / `cancelled` → a **new payment row** (terminal payments never reopen),
+     new `tran_id`, fresh `expires_at` — and **no new reservation**.
+   - 409 `conflict` with a stable `reason`: `not_online` · `gateway_unavailable` · `already_paid` ·
+     `order_closed` · `under_review` · `too_many_attempts` (`PAYMENT_ONLINE_MAX_ATTEMPTS`, placeholder 5).
+3. SSLCommerz returns the browser to `{storefront}/api/payments/sslcommerz/{number}/{success|fail|cancel}?locale=`
+   (a POST). The storefront forwards the posted fields untouched to `POST /payments/sslcommerz/return`
+   and 303s to `/{locale}/orders/{number}/payment`, which **re-reads the order from the API** — the
+   path's outcome and every query parameter are ignored. The return answer is
+   `{"data":{"order_number","payment_status","order_payment_status"}}` (nulls for an unknown tran_id).
+4. Independently SSLCommerz POSTs the IPN to the webhook (URL sent as `ipn_url` and/or set in the
+   merchant panel). It answers `200 {"received":true,"replayed":bool}` fast and re-queries on the
+   `critical` queue.
+
+### What happens to a notification (IPN or return) — in this order
+
+1. **Signature first** (rule 19): `verify_sign` checked with the official library's algorithm —
+   fields named in `verify_key` + `store_passwd=md5(password)`, ksort, `k=v&…`, md5. Invalid → **401**,
+   nothing parsed into a domain object, nothing written. `verify_sign_sha2` is undocumented
+   ([UNVERIFIED]) and never relied on. Optional `SSLCOMMERZ_IPN_ALLOWED_IPS` → 403 before that.
+2. `webhook_receipts` row keyed `(sslcommerz, "{tran_id}:{status}:{val_id}")` — a replay of a processed
+   notification is a no-op (IPN and return carry the same fields, so whichever comes second is the replay).
+3. **Re-query** — the Order Validation API with the `val_id` for a VALID notification, else the query
+   by `tran_id`. Only that answer moves money. Paid = `VALID`/`VALIDATED` **and** our `tran_id`
+   **and** the payment's currency **and** the exact amount (stricter than the library's `< 1`).
+   A signed FAILED / CANCELLED / EXPIRED the re-query does not contradict closes the attempt (never as
+   paid). An unreachable / unreadable provider leaves the receipt unprocessed (`deferred`) for a retry.
+4. Apply through `PaymentTransitions`. An amount or currency mismatch, or `paid` for an attempt
+   already closed, is **never** marked paid: `payments.review_reason` is set, and the order goes
+   **on hold** (or gets a staff-only timeline note if it can no longer be held). Staff use
+   "Re-check with gateway" on the order's payment card (`…/payments/{id}/verify`).
+
+### Expiry (P4-PAY-04)
+
+`toymart:payments:expire` runs every five minutes. For each unpaid online order (pending / on hold,
+no payment under review) whose **latest** attempt's `expires_at` has passed: re-query every attempt
+that reached the gateway (a lost IPN may mean it was paid → marked paid, not expired); otherwise, in
+one transaction, open attempts → `expired`, then `CancelOrder` (reason `payment_failed`) — which
+releases the reservation through `ReleaseStock` (FOR UPDATE, ascending variant id). COD orders are
+never touched.
+
+### Refunds
+
+`SslcommerzGateway::refund()` (the `PaymentGateway` contract) calls the refund API with the paid
+payment's `bank_tran_id` (kept in `payments.gateway_reference` once paid). `success` means *initiated*
+(SSLCommerz: 5–7 working days), so it returns `processing` with `refund_ref_id`; `refundStatus()`
+reads the refund query (`refunded` → completed). **Gap:** nothing polls `refundStatus()` yet, so an
+SSLCommerz refund stays `processing` in `PayRefund` until one is built.
+
+### Not done / unverified
+
+- Online payments write **no ledger rows** yet (gateway fee is on `payments.fee_amount`; cash on
+  settlement is unmodelled — settlement timing is [UNVERIFIED]). COD cash stays `cod_received` only.
+- `shipping_method=NO` is sent (no shipping address to the gateway); whether SSLCommerz requires
+  shipping fields for this store profile is an onboarding question.
+- `cus_email` falls back to a placeholder (`SSLCOMMERZ_FALLBACK_EMAIL`) when checkout has none.

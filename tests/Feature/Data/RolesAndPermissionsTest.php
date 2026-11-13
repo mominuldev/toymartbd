@@ -50,8 +50,9 @@ it('pins the matrix shape so a change is deliberate', function (): void {
 
     expect($counts)->toBe([
         // P4-CAT-12: + reviews.moderate (super_admin, manager, content_editor).
-        'super_admin' => 66,
-        'manager' => 63,
+        // P5-INV: + inventory.approve_adjustments (super_admin, manager).
+        'super_admin' => 67,
+        'manager' => 64,
         'order_operator' => 23,
         'inventory_staff' => 12,
         'accountant' => 20,

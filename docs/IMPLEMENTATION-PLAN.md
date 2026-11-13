@@ -226,6 +226,15 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 
 **Open / owner decisions:** SMS provider and WhatsApp Business account (all rates placeholders); TrustProxies so per-IP OTP limits mean something; order edit re-prices at today's price; packed orders not editable; risk not re-scored after edit; `reviews.moderate` for content_editor; export needs only `catalog.view`; import creates simple products only; reviewer display name "First L."; unlisted account-order filters return 422 not 400; account pages not yet in the Bangla layout spec; wishlist hearts on cards/PDP not wired; Figma Bangla-frame comparison still owed. **Blocked:** P4-PAY-02/03/04 wait on the payment-gateway decision (Gate 1 decision 5).
 
+### Progress — Phase 4 gap closure (2026-11-13, with Phase 5 batch 1)
+
+**Done, with passing tests:**
+- **P4-PAY-02/03/04 (SSLCommerz)** — built against the published v4 API and the official PHP library only (research §1.7 recommends it; the owner has **not** confirmed the gateway or opened a merchant account, Gate 1 decision 5). Driver: session, validation, query, refund, refund status; hand-authored fixtures, no network in tests. IPN: md5 `verify_sign` first, `webhook_receipts` idempotency, re-query for the authoritative amount/currency/status, mismatch → flag for review + order on hold, never paid. Expiry sweeper (every 5 min) re-queries first, then expires and cancels, releasing stock; retry never re-reserves. `payment_gateways` row seeded **inactive and unverified** — production offers no online payment until `toymart:payments:gateway sslcommerz --activate --verify --live`. Storefront online option (COD stays default), payment status/retry page; admin "Re-check with gateway".
+- **Manual fulfilment** — `MarkOrderShipped` (consumes the reservation once: `sale_out` movements, ascending locks) and `MarkOrderDelivered` (COD payment paid, `OrderDelivered` → Finance recognises revenue/COGS; no cash until remittance), single and bulk, admin buttons. No `courier_charge` until Phase 6. Ordering now binds `OpenOrderReservations`, so nightly reconcile checks reserved vs open orders.
+- Wishlist hearts on cards/PDP (no-JS form; PDP stays cached, filled state from a private uncached endpoint); account pages in the Bangla layout audit; trusted proxy (`TRUSTED_PROXIES`, default none, wildcards refused) with the shopper IP forwarded by the Next server — OTP per-IP cap 30/h; rule 16 400s on account orders and product reviews; `recommendation_source` carried cart line → order item (no rails send it yet); cart lines carry image + variant attributes; generated `StorefrontOrder` type.
+
+**Open:** Gate 4 owner UAT on staging (needs owner infrastructure); production must set `TRUSTED_PROXIES`; payment window 30 min / 5 attempts are placeholders; no gateway-fee or settlement ledger rows for online payments; no poller for SSLCommerz refund status; manual failed-delivery/return-to-shop not built; guest wishlist (spec allows without sign-in; built sign-in-only); Figma comparison of the batch-6 admin screens and Bangla account screens still owed.
+
 ### Catalog (CAT)
 | ID | Task | Size | Tests |
 |---|---|---|---|
@@ -304,6 +313,19 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 ## 4. Phases 5–10 — Feature-level Plan
 
 Expanded to task level at each phase start. Each feature below carries its own tests; the phase gates are in `DEVELOPMENT-ROADMAP.md`.
+
+### Progress — Phase 5 batch 1 (2026-11-13)
+
+**Done, with passing tests** (1914 PHP; 220 admin Vitest; 260 storefront unit; PHPStan, Pint, deptrac, i18n lint clean):
+- **Purchasing** — suppliers, POs (draft → ordered → partially_received → received / cancelled / **closed_short**), receipts with landed costs (freight, customs, other) split by value/quantity/weight exact to the poisha, server quote endpoint, weighted-average cost per location on receipt (`ReceivePurchasedStock`), supplier payables and payments (`supplier_payment`, cash, not revenue). Third-party freight/customs → a **capitalised** expense (cash-out only, never a P&L line, since it is already in COGS via landed cost).
+- **Inventory operations** — adjustment approval above a threshold (placeholder 20 units / ৳5,000; no self-approval), write-offs (damage, loss, theft, expiry → `inventory_write_off`), branch transfers with two-location ordered locks, nightly reconciliation (03:30 Dhaka, alerts, never auto-corrects), low/out-of-stock alerts and a 09:00 Dhaka digest.
+- **Finance ledger** — `Ledger` contract, append-only `financial_transactions` idempotent on (source, type), revenue on delivery (not cash), manual "Record COD received" (gross amount; courier fee separate), receivables with aging, `order_financials` projection + `toymart:finance:verify` (01:30 Dhaka), expenses with categories, receipts, approval (no self-approval) and recurring generation, `daily_financial_summaries` rollup (01:00 Dhaka).
+- **Reports** — P&L day/week/month/year with expense breakdown, profitability by product/category/recommendation source, inventory valuation (live and as-at), CSV exports.
+- **Returns & refunds** — returns (request → receive/inspect → refund), resellable restock / damaged write-off at snapshot cost, server-computed refunds capped at captured, approval above ৳2,000, idempotent pay, ledger reversal (recognised on approval, cash on payment), manual COD refund methods, online refund through the gateway contract.
+
+**Owner decisions:** report weeks Saturday–Friday; refund approval threshold ৳2,000; close POs short allowed; third-party freight/customs recorded as a capitalised expense; COD received recorded gross (2026-11-12/13).
+
+**Open:** return window 7 vs 10 days (legal); stock-adjustment approval limits; self-approval for managers; gift/sample as marketing expense; capitalised freight expenses pending vs auto-approved; supplier VAT/AIT (0 today); supplier payment reversal; `stock_levels.incoming` for open POs; exchanges/store credit/open-box not built; customer-initiated returns; P&L PDF export; transfers have no in-transit state; staff mail English-only; who may mark shipped/delivered (orders.update + shipments.book today); the hand reconciliation of ten real orders required by the Phase 5 gate. Figma: most new screens are not drawn and were built from existing components; no screenshot comparison was possible (chrome-devtools not connected).
 
 **Phase 5 — Inventory & Operations (35d).** Stock levels and append-only ledger with locking · nightly reconciliation job with alerting · suppliers · purchase orders with partial receipt and landed-cost apportionment · weighted-average costing on receipt · stock adjustments with approval · damage and loss · low-stock alerts and reorder points · inventory valuation · stock-overview screens · financial ledger with the revenue/cash separation · expenses and categories · `order_financials` projection · product-, category- and order-wise profitability · P&L daily/weekly/monthly/yearly · supplier payments · returns and refunds with approval threshold, restocking, ledger reversal and gateway refund.
 

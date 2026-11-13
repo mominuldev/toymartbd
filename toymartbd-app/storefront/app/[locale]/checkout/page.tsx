@@ -21,6 +21,7 @@ import { getDeliveryReference } from '@/lib/delivery/fetch';
 import { placeName } from '@/lib/delivery/format';
 import { format, getMessages, isLocale, localizedPath, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
+import { getPaymentMethods } from '@/lib/payments/methods';
 import { contact } from '@/lib/site-config';
 
 // /checkout — P4-STO-09, Figma Checkout 131:2601 (390) / 137:3670 (1440), storefront spec §B4.
@@ -74,7 +75,8 @@ export default async function CheckoutPage({ params }: Props) {
     const c = t.checkout;
     const bn = locale === 'bn';
     const jar = await cookies();
-    const [{ cart, dest, notice, failed }, reference] = await Promise.all([loadCartPage(locale), getDeliveryReference(locale)]);
+    const [{ cart, dest, notice, failed }, reference, methods] = await Promise.all([loadCartPage(locale), getDeliveryReference(locale), getPaymentMethods(locale)]);
+    const online = methods.filter((m) => m.online);
     if (!failed && (!cart || cart.items.length === 0)) redirect(localizedPath(locale, '/cart'));
 
     const draft = decodeDraft(jar.get(CHECKOUT_DRAFT_COOKIE)?.value);
@@ -348,6 +350,14 @@ export default async function CheckoutPage({ params }: Props) {
                                 </h2>
                                 <RadioCard name="payment_method" value="cod" checked label={c.cod} />
                                 <p className="t-caption text-fg-secondary">{cart.delivery?.cod_advance ? format(c.codAdvance, { amount: formatPrice(cart.delivery.cod_advance) }) : c.codNote}</p>
+                                {/* Online methods only while the API reports the gateway enabled (P4-PAY-02); COD stays the default (rule 33). */}
+                                {online.map((m) => (
+                                    <div key={m.method} className="flex flex-col gap-1.5">
+                                        <RadioCard name="payment_method" value={m.method} checked={false} label={t.payment.online} />
+                                        <p className="t-caption text-fg-secondary">{t.payment.onlineNote}</p>
+                                        {m.sandbox ? <p className="t-caption text-feedback-warning">{t.payment.sandbox}</p> : null}
+                                    </div>
+                                ))}
                                 {err('payment_method') ? <p className="t-caption text-feedback-danger">{err('payment_method')}</p> : null}
                             </section>
                         </CheckoutForm>

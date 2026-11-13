@@ -17,6 +17,9 @@
 //   GET  /api/v1/storefront/districts, /districts/{id}/upazilas, /delivery-rates, /delivery-quote
 //   /api/v1/storefront/cart…, POST /checkout, GET /orders/{number}, POST /orders/track
 //        → an in-memory cart, checkout and order store (docs/api/cart.md, docs/api/checkout.md)
+//   POST /auth/otp, /auth/otp/verify (code 123456) and /storefront/account/* with the customer's own
+//        bearer token → a signed-in customer with Bangla fixtures: orders in every group, an order
+//        detail, two addresses (with landmarks) and a wishlist (docs/api/account.md, P4-STO-11)
 //   POST /__control/price {variant_id, price} → change a price (drives the price-changed path)
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
@@ -274,6 +277,17 @@ function variantInfo(variantId) {
     return problemOf(res, 404, 'not-found', 'Not Found', p);
 }
 
+// Cart line display data, as CartResource builds it: attribute labels in attribute order, one photo.
+function lineAttributes(info) {
+    const ids = info.variant.attribute_value_ids ?? [];
+    return (info.product.attributes ?? []).flatMap((a) => a.values.filter((v) => ids.includes(v.id)).map((v) => ({ name: a.name, name_bn: a.name_bn ?? null, value: v.value, value_bn: v.value_bn ?? null })));
+}
+
+function lineImage(product) {
+    const image = product.images?.[0] ?? product.image ?? null;
+    return image?.url ? { url: image.thumb_url || image.url, alt: image.alt ?? null, alt_bn: image.alt_bn ?? null } : null;
+}
+
 function quote(districtId, upazilaId, subtotal) {
     const district = DISTRICTS.find((d) => d.id === districtId);
     if (!district) return null;
@@ -305,7 +319,8 @@ function priceCart(cart, districtId, upazilaId, bn) {
         return {
             id: line.id, variant_id: line.variant_id,
             product: { id: info.product.id, name: info.product.name, name_bn: info.product.name_bn, slug: info.product.slug },
-            variant: { sku: info.variant.sku, name: info.variant.name ?? null, name_bn: info.variant.name_bn ?? null },
+            variant: { sku: info.variant.sku, name: info.variant.name ?? null, name_bn: info.variant.name_bn ?? null, attributes: lineAttributes(info) },
+            image: lineImage(info.product),
             quantity: line.quantity, available_quantity: info.available, in_stock: line.quantity <= info.available, sellable: true,
             unit_price: money(unit), added_unit_price: line.added_unit_price, price_changed: money(unit) !== line.added_unit_price,
             subtotal: money(unit * line.quantity), discount: '0.00', total: money(unit * line.quantity), _sub: unit * line.quantity,
@@ -467,7 +482,7 @@ async function cartRoutes(req, res, url) {
         const placedAt = '2026-11-12T05:02:00Z';
         const order = {
             number, stage: 'placed', placed_at: placedAt,
-            payment: { method: 'cod', status: 'unpaid', next_action: null },
+            payment: { method: 'cod', status: 'unpaid', next_action: null, online: false, retry_allowed: false, expires_at: null },
             contact: { name: body.name, phone_masked: masked, email: body.email ?? null },
             shipping: {
                 name: body.name, phone_masked: masked, division: district.division,
@@ -508,6 +523,112 @@ async function cartRoutes(req, res, url) {
     return problemOf(res, 404, 'not-found', 'Not Found', p);
 }
 
+// ---- Customer account (P4-STO-11) ----------------------------------------------------------------
+// One customer. Account calls carry the customer's token (not the server's), as the real API's
+// `customer` guard expects; the auth calls carry the server token.
+
+const CUSTOMER_TOKEN = '7|e2eCustomerToken0123456789abcdefXYZ';
+const OTP_CODE = '123456';
+const ACCOUNT_PLACED = '2026-11-08T05:02:00Z';
+let account;
+let addresses;
+let wishlist;
+
+function resetAccount() {
+    account = {
+        id: 1, name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', email: 'sabrina@example.com', preferred_language: 'bn',
+        phone_verified_at: '2026-11-01T04:00:00Z', member_since: '2026-03-14T04:00:00Z', counts: { orders: 4, wishlist: 2, addresses: 2 },
+    };
+    addresses = [
+        { id: 1, type: 'home', label: null, recipient_name: 'সাবরিনা আক্তার চৌধুরী', phone: '+8801712345678', division: DIVISION, district: { id: 13, name: 'Dhaka', name_bn: 'ঢাকা' }, upazila: { id: 101, name: 'Dhanmondi', name_bn: 'ধানমন্ডি' }, area: 'ধানমন্ডি ২৭', address_line: 'বাসা ১২, রোড ৫, ব্লক সি, দক্ষিণ পাশের গেট', landmark: 'আগোরার পাশে, ৩য় তলা', is_default: true },
+        { id: 2, type: 'office', label: 'অফিস', recipient_name: 'সাবরিনা আক্তার', phone: '+8801812345678', division: { id: 2, name: 'Chattogram', name_bn: 'চট্টগ্রাম' }, district: { id: 20, name: 'Chattogram', name_bn: 'চট্টগ্রাম' }, upazila: { id: 201, name: 'Kotwali', name_bn: 'কোতোয়ালী' }, area: 'আগ্রাবাদ', address_line: 'ওয়ার্ল্ড ট্রেড সেন্টার, ১৪ তলা, আগ্রাবাদ বাণিজ্যিক এলাকা', landmark: 'বাদামতলী মোড়ের কাছে', is_default: false },
+    ];
+    wishlist = [productFixtures[0], productFixtures[1]].map((p) => p.id);
+}
+resetAccount();
+
+const accountOrderItems = () =>
+    productFixtures.slice(0, 3).map((p, i) => ({
+        variant_id: 9000 + p.id, product_id: p.id, slug: p.slug, name: p.name, name_bn: p.name_bn, variant_name: null, sku: `TMB-${p.id}`,
+        image: null, quantity: i === 0 ? 2 : 1, unit_price: p.price, discount: '0.00', total: money(Number(p.price) * (i === 0 ? 2 : 1)),
+    }));
+
+function accountOrder(number, stage) {
+    const items = accountOrderItems();
+    const subtotal = items.reduce((n, i) => n + Number(i.total), 0);
+    const a = addresses[0];
+    return {
+        number, stage, placed_at: ACCOUNT_PLACED,
+        payment: { method: 'cod', status: stage === 'delivered' ? 'paid' : 'unpaid', next_action: null, online: false, retry_allowed: false, expires_at: null },
+        contact: { name: account.name, phone_masked: '017****5678', email: account.email },
+        shipping: { name: a.recipient_name, phone_masked: '017****5678', division: a.division, district: a.district, upazila: a.upazila, area: a.area, address_line: a.address_line, landmark: a.landmark, postcode: '1209' },
+        items, coupon_code: null,
+        totals: { subtotal: money(subtotal), promotion_discount: '0.00', coupon_discount: '0.00', discount_total: '0.00', shipping_charge: '70.00', grand_total: money(subtotal + 70), paid_total: stage === 'delivered' ? money(subtotal + 70) : '0.00', due_total: stage === 'delivered' ? '0.00' : money(subtotal + 70) },
+        timeline: [{ stage: 'placed', at: ACCOUNT_PLACED }, ...(stage === 'placed' ? [] : [{ stage: 'confirmed', at: '2026-11-08T06:30:00Z' }]), ...(stage === 'shipped' || stage === 'delivered' ? [{ stage: 'shipped', at: '2026-11-09T09:00:00Z' }] : []), ...(stage === 'delivered' ? [{ stage: 'delivered', at: '2026-11-10T11:15:00Z' }] : [])],
+    };
+}
+
+const ACCOUNT_ORDERS = [['TMB-26-00031', 'shipped', 'active'], ['TMB-26-00027', 'confirmed', 'active'], ['TMB-26-00019', 'delivered', 'delivered'], ['TMB-26-00012', 'cancelled', 'cancelled']];
+
+function orderSummary([number, stage]) {
+    const o = accountOrder(number, stage);
+    return {
+        number, stage, placed_at: o.placed_at, item_count: o.items.reduce((n, i) => n + i.quantity, 0), grand_total: o.totals.grand_total,
+        payment: { method: 'cod', status: o.payment.status },
+        preview: o.items.slice(0, 2).map((i) => ({ name: i.name, name_bn: i.name_bn, image: null })), more_items: Math.max(0, o.items.length - 2),
+    };
+}
+
+const wishlistItems = () =>
+    wishlist.map((id) => productFixtures.find((p) => p.id === id)).filter(Boolean).map((p) => ({ product_id: p.id, saved_at: '2026-11-05T08:00:00Z', available: p.in_stock !== false, product: card(p) }));
+
+async function accountRoutes(req, res, url) {
+    const p = url.pathname.replace('/api/v1/storefront', '');
+    if (p === '/auth/otp' && req.method === 'POST') {
+        const { phone } = await readJson(req);
+        if (!/^(?:\+?880|0)1[3-9]\d{8}$/.test(bnDigits(phone ?? '').replace(/[\s-]/g, ''))) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'phone', message: 'Enter an 11-digit mobile number starting with 01 (013–019).' }]);
+        return send(res, 200, { expires_in: 300, resend_in: 60, length: 6 });
+    }
+    if (p === '/auth/otp/verify' && req.method === 'POST') {
+        const { code } = await readJson(req);
+        if (code !== OTP_CODE) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'code', message: 'That code is not right. Check the SMS and try again.' }]);
+        return send(res, 200, { token: CUSTOMER_TOKEN, expires_at: '2099-01-01T00:00:00Z', is_new_customer: false, customer: account, cart: null });
+    }
+    if (req.headers.authorization !== `Bearer ${CUSTOMER_TOKEN}`) return problemOf(res, 401, 'unauthenticated', 'Unauthenticated');
+    if (p === '/account' && req.method === 'GET') return send(res, 200, { ...account, counts: { ...account.counts, wishlist: wishlist.length, addresses: addresses.length } });
+    if (p === '/account' && req.method === 'PATCH') {
+        Object.assign(account, await readJson(req));
+        return send(res, 200, account);
+    }
+    if (p === '/account/logout') return res.writeHead(204).end();
+    if (p === '/account/orders' && req.method === 'GET') {
+        const group = url.searchParams.get('group');
+        for (const key of url.searchParams.keys()) if (!['cursor', 'group', 'locale'].includes(key)) return badRequest(res, `Unknown query parameter(s): ${key}.`);
+        const rows = ACCOUNT_ORDERS.filter(([, , g]) => !group || g === group).map(orderSummary);
+        const summary = { active: 2, delivered: 1, cancelled: 1, returned: 0 };
+        return send(res, 200, { data: rows, meta: { next_cursor: null }, summary });
+    }
+    const order = p.match(/^\/account\/orders\/([^/]+)$/);
+    if (order) {
+        const row = ACCOUNT_ORDERS.find(([n]) => n === decodeURIComponent(order[1]).toUpperCase());
+        return row ? send(res, 200, accountOrder(row[0], row[1])) : problemOf(res, 404, 'not-found', 'Not Found');
+    }
+    if (p === '/account/addresses' && req.method === 'GET') return send(res, 200, { data: addresses });
+    if (p === '/account/wishlist' && req.method === 'GET') return send(res, 200, { data: wishlistItems() });
+    if (p === '/account/wishlist' && req.method === 'POST') {
+        const { product_id } = await readJson(req);
+        if (!productFixtures.some((x) => x.id === product_id)) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'product_id', message: 'Unknown product.' }]);
+        if (!wishlist.includes(product_id)) wishlist.unshift(product_id);
+        return send(res, 200, wishlistItems().find((i) => i.product_id === product_id));
+    }
+    const saved = p.match(/^\/account\/wishlist\/(\d+)$/);
+    if (saved && req.method === 'DELETE') {
+        wishlist = wishlist.filter((id) => id !== Number(saved[1]));
+        return res.writeHead(204).end();
+    }
+    return problemOf(res, 404, 'not-found', 'Not Found', p);
+}
+
 createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
 
@@ -520,6 +641,7 @@ createServer(async (req, res) => {
             orders = new Map();
             idempotency = new Map();
             priceOverrides = {};
+            resetAccount();
             return send(res, 200, { ok: true });
         }
         if (url.pathname === '/__control/price' && req.method === 'POST') {
@@ -537,11 +659,17 @@ createServer(async (req, res) => {
         return problem(res, 404, 'Not Found', url.pathname);
     }
 
+    // The customer's own token (account pages); sign-in itself uses the server token.
+    if (url.pathname.startsWith('/api/v1/storefront/account')) {
+        hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
+        return accountRoutes(req, res, url);
+    }
     if (req.headers.authorization !== `Bearer ${expectedToken}`) {
         return problem(res, 401, 'Unauthenticated', 'Missing or wrong storefront token.');
     }
     hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
 
+    if (url.pathname.startsWith('/api/v1/storefront/auth/')) return accountRoutes(req, res, url);
     if (/^\/api\/v1\/storefront\/(districts|delivery-|cart|checkout|orders)/.test(url.pathname)) return cartRoutes(req, res, url);
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);

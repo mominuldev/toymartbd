@@ -116,7 +116,7 @@ export function DeliveryDetails({ order, locale, t }: { order: StorefrontOrder; 
                 </div>
                 <div className="flex flex-col gap-1">
                     <dt className={label}>{o.payment}</dt>
-                    <dd>{cod ? o.cod : order.payment.method}</dd>
+                    <dd>{cod ? o.cod : order.payment.status === 'paid' ? `${t.payment.onlineShort} · ${o.paid}` : t.payment.onlineShort}</dd>
                     <dd className="tabular-nums">{cod && !isZero(order.totals.due_total) ? format(o.codDue, { amount: formatPrice(order.totals.due_total) }) : o.paid}</dd>
                 </div>
                 <div className="flex flex-col gap-1">

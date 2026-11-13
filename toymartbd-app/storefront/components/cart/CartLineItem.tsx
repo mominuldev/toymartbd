@@ -1,6 +1,5 @@
 import { Icon } from '@/components/icons/Icon';
 import { lineName, lineProblem, lowStockLabel, noticeText, variantName } from '@/lib/cart/format';
-import type { LineImage } from '@/lib/cart/page';
 import type { CartLine, CartNotice } from '@/lib/cart/types';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
@@ -8,7 +7,6 @@ import { CartForm } from './CartForm';
 
 interface Props {
     line: CartLine;
-    image: LineImage | null;
     locale: Locale;
     t: Messages;
     /** The flash notice of a no-JS post about this line (the API's "Only 2 left in stock."). */
@@ -23,7 +21,8 @@ const stepCell =
 // StockAlert. Every control is a real form POST to a cart Route Handler (works without JS);
 // CartForm enhances it in place and dims the line while it runs (the "Updating" state).
 // Unavailable lines are faded and their price struck: the API already excludes them from totals.
-export function CartLineItem({ line, image, locale, t, notice }: Props) {
+export function CartLineItem({ line, locale, t, notice }: Props) {
+    const image = line.image;
     const c = t.cart;
     const name = lineName(line, locale);
     const variant = variantName(line, locale);

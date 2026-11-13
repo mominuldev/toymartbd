@@ -56,7 +56,7 @@ final class CartController extends ApiController
     #[OpenApiResponse(422, 'Quantity beyond stock, item unavailable, or line limits (`validation-error`)')]
     public function addItem(AddCartItemRequest $request, AddCartLine $addLine): JsonResponse
     {
-        $priced = $addLine->handle($request->cartToken(), $request->variantId(), $request->quantity());
+        $priced = $addLine->handle($request->cartToken(), $request->variantId(), $request->quantity(), $request->recommendationSource());
 
         return (new CartResource($priced))->response()->setStatusCode($priced->cart->wasRecentlyCreated ? 201 : 200);
     }

@@ -1,6 +1,12 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { StoreStockAdjustmentRequestInput } from '@toymart/api-types/zod';
+import type {
+    AcknowledgeInventoryAlertRequestInput,
+    ApproveStockAdjustmentRequestInput,
+    RejectStockAdjustmentRequestInput,
+    StoreStockAdjustmentRequestInput,
+    StoreStockTransferRequestInput,
+} from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
 
 export type StockRow = Schema<'InventoryStockRow'>;
@@ -14,6 +20,11 @@ export type LowStockCount = Schema<'InventoryLowStockCount'>;
 export type AdjustmentReason = Adjustment['reason'];
 /** The POST body — the generated request type, never a hand-written copy (rule 27). */
 export type AdjustmentInput = StoreStockAdjustmentRequestInput;
+export type AdjustmentStatus = Adjustment['status'];
+export type Transfer = Schema<'InventoryTransfer'>;
+export type TransferInput = StoreStockTransferRequestInput;
+export type InventoryAlert = Schema<'InventoryAlert'>;
+export type AlertKind = InventoryAlert['kind'];
 
 export const stockStates = ['low', 'out', 'overstock', 'idle'] as const;
 export type StockState = (typeof stockStates)[number];
@@ -32,12 +43,16 @@ export const movementTypes: MovementType[] = [
     'opening_balance',
 ];
 
-export const adjustmentReasons: AdjustmentReason[] = ['damage', 'loss', 'found', 'recount', 'expiry', 'correction', 'gift_sample'];
+export const adjustmentReasons: AdjustmentReason[] = ['damage', 'loss', 'theft', 'found', 'recount', 'expiry', 'correction', 'gift_sample'];
+export const alertKinds: AlertKind[] = ['ledger_drift', 'reserved_drift', 'out_of_stock', 'low_stock'];
 
 export type StockFilters = { location: string; state: StockState | ''; search: string; variant?: string };
-export type MovementFilters = { variant: string; product: string; location: string; type: MovementType | ''; from: string; to: string };
+export type MovementFilters = { variant: string; product: string; location: string; type: MovementType | ''; reason?: AdjustmentReason | ''; from: string; to: string };
+export type AdjustmentFilters = { status: AdjustmentStatus | '' };
+export type AlertFilters = { kind: AlertKind | '' };
 
 type Page<T> = { data: T[]; meta: { next_cursor?: string | null } };
+type CountedPage<T, C> = Page<T> & { meta: { counts: C } };
 
 const keys = {
     all: ['inventory'] as const,
@@ -46,6 +61,8 @@ const keys = {
     stock: (filters: StockFilters) => ['inventory', 'stock', filters] as const,
     movements: (filters: MovementFilters) => ['inventory', 'movements', filters] as const,
     reconciliation: (filters: MovementFilters) => ['inventory', 'reconciliation', filters] as const,
+    adjustments: (filters: AdjustmentFilters) => ['inventory', 'adjustments', filters] as const,
+    alerts: (filters: AlertFilters) => ['inventory', 'alerts', filters] as const,
 };
 
 function query(entries: Record<string, string | null | undefined>): string {
@@ -72,6 +89,7 @@ export function movementsPath(filters: MovementFilters, cursor: string | null, w
         'filter[product_id]': filters.product,
         'filter[location_id]': filters.location,
         'filter[type]': withType ? filters.type : '',
+        'filter[reason]': withType ? filters.reason : '',
         'filter[from]': filters.from,
         'filter[to]': filters.to,
         cursor,
@@ -125,7 +143,7 @@ export function useMovements(filters: MovementFilters) {
 /** The type filter never applies: an opening/closing balance needs every movement. */
 export function useReconciliation(filters: MovementFilters) {
     return useQuery({
-        queryKey: keys.reconciliation({ ...filters, type: '' }),
+        queryKey: keys.reconciliation({ ...filters, type: '', reason: '' }),
         queryFn: () => api<Reconciliation>(`/inventory/movements/reconciliation${movementsPath(filters, null, false)}`),
         placeholderData: keepPreviousData,
     });
@@ -145,6 +163,85 @@ export function useAdjustStock() {
                 body: JSON.stringify(input),
                 headers: { 'Idempotency-Key': idempotencyKey },
             }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: keys.all }),
+    });
+}
+
+export type AdjustmentCounts = { pending: number };
+export type AlertCounts = Record<AlertKind, number>;
+
+/** The adjustment list; `filter[status]=pending` is the approval queue. `meta.counts.pending` is the queue size. */
+export function useAdjustments(filters: AdjustmentFilters, enabled = true) {
+    return useInfiniteQuery({
+        queryKey: keys.adjustments(filters),
+        queryFn: ({ pageParam }) =>
+            api<CountedPage<Adjustment, AdjustmentCounts>>(`/inventory/adjustments${query({ 'filter[status]': filters.status, cursor: pageParam })}`),
+        initialPageParam: null as string | null,
+        getNextPageParam: (last) => last.meta.next_cursor ?? null,
+        placeholderData: keepPreviousData,
+        enabled,
+    });
+}
+
+/**
+ * Approve (writes the movements, server-side, against the stock as it is now) or reject (writes
+ * nothing) a pending adjustment. Approve carries an Idempotency-Key minted per dialog opening.
+ */
+export function useDecideAdjustment() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            id,
+            decision,
+            input,
+            idempotencyKey,
+        }: { id: number; idempotencyKey: string } & (
+            | { decision: 'approve'; input: ApproveStockAdjustmentRequestInput }
+            | { decision: 'reject'; input: RejectStockAdjustmentRequestInput }
+        )) =>
+            api<Adjustment>(`/inventory/adjustments/${id}/${decision}`, {
+                method: 'POST',
+                body: JSON.stringify(input),
+                headers: decision === 'approve' ? { 'Idempotency-Key': idempotencyKey } : {},
+            }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: keys.all }),
+    });
+}
+
+/** Moves stock between two locations; one Idempotency-Key per dialog opening. */
+export function useTransferStock() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ input, idempotencyKey }: { input: TransferInput; idempotencyKey: string }) =>
+            api<Transfer>('/inventory/transfers', {
+                method: 'POST',
+                body: JSON.stringify(input),
+                headers: { 'Idempotency-Key': idempotencyKey },
+            }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: keys.all }),
+    });
+}
+
+/** Open inventory alerts (drift from the nightly reconciliation, low / out of stock); `meta.counts` per kind. */
+export function useAlerts(filters: AlertFilters, enabled = true) {
+    return useInfiniteQuery({
+        queryKey: keys.alerts(filters),
+        queryFn: ({ pageParam }) => api<CountedPage<InventoryAlert, AlertCounts>>(`/inventory/alerts${query({ 'filter[kind]': filters.kind, cursor: pageParam })}`),
+        initialPageParam: null as string | null,
+        getNextPageParam: (last) => last.meta.next_cursor ?? null,
+        placeholderData: keepPreviousData,
+        enabled,
+    });
+}
+
+export function useAcknowledgeAlert() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, input }: { id: number; input: AcknowledgeInventoryAlertRequestInput }) =>
+            api<InventoryAlert>(`/inventory/alerts/${id}/acknowledge`, { method: 'POST', body: JSON.stringify(input) }),
         onSuccess: () => void client.invalidateQueries({ queryKey: keys.all }),
     });
 }

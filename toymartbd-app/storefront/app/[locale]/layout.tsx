@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { WishlistHearts } from '@/components/wishlist/WishlistHearts';
 import { fontVariables } from '@/lib/fonts';
 import { getMessages, htmlLang, isLocale } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
@@ -41,9 +42,15 @@ export default async function RootLayout({ children, params }: LayoutProps) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
 
+    const t = getMessages(locale);
+
     return (
         <html lang={htmlLang[locale]} data-theme="light" className={fontVariables}>
-            <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>{children}</body>
+            <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>
+                {children}
+                {/* Every wishlist heart on the page (cards, PDP): filled state + in-place toggle. */}
+                <WishlistHearts locale={locale} labels={t.wishlist} />
+            </body>
         </html>
     );
 }

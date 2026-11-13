@@ -6,9 +6,14 @@ import { AddToCartEnhancer } from '@/components/cart/AddToCartEnhancer';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { CART_FORM_ID, INLINE_CTA_ID } from '@/lib/product/ids';
 import type { ProductVariant } from '@/lib/product/variants';
+import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
 import { QuantityStepper } from './QuantityStepper';
 
 interface Props {
+    /** The product (wishlist hearts save products, not variants). */
+    productId: number;
+    /** Locale-less product path without the variant (`/products/x`): sign-in's `?next=` for the heart. */
+    productPath: string;
     variant: ProductVariant;
     name: string;
     t: Messages;
@@ -28,7 +33,7 @@ interface Props {
 // The form POSTs to /api/cart/items (P4-STO-08): without JavaScript, Add → the cart page and Buy
 // now → checkout (303s); with it, AddToCartEnhancer sends Add in place and announces the result.
 // Cart lines need no Idempotency-Key (cart.md): a repeated add raises the quantity, as it should.
-export function PurchasePanel({ variant, name, t, locale, back, estimator, trust }: Props) {
+export function PurchasePanel({ productId, productPath, variant, name, t, locale, back, estimator, trust }: Props) {
     const soldOut = variant.stock_state === 'out_of_stock';
 
     return (
@@ -70,14 +75,15 @@ export function PurchasePanel({ variant, name, t, locale, back, estimator, trust
                     </div>
                 )}
             </form>
-            <button
-                type="button"
-                disabled
-                aria-label={format(t.pdp.wishlist, { name })}
-                className="hidden size-control-lg items-center justify-center rounded-full border border-line-default bg-surface text-fg-secondary lg:col-start-3 lg:row-start-1 lg:flex"
-            >
-                <Icon name="heart" className="size-icon-lg" />
-            </button>
+            <WishlistHeart
+                productId={productId}
+                label={format(t.pdp.wishlist, { name })}
+                locale={locale}
+                back={productPath}
+                className="hidden lg:col-start-3 lg:row-start-1 lg:block"
+                buttonClassName="flex size-control-lg items-center justify-center rounded-full border border-line-default bg-surface text-fg-secondary"
+                iconClassName="size-icon-lg"
+            />
             <div className={`order-2 lg:order-none lg:col-span-3 ${soldOut ? 'lg:row-start-2' : 'lg:row-start-3'}`}>{estimator}</div>
             <div className={`order-5 lg:order-none lg:col-span-3 ${soldOut ? 'lg:row-start-3' : 'lg:row-start-4'}`}>{trust}</div>
             <AddToCartEnhancer

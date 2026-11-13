@@ -78,7 +78,7 @@ change), converted or merged token is a 404 `not-found` — drop the cookie and 
 |---|---|---|---|
 | POST | `/cart` | — | 201, empty cart |
 | GET | `/cart` | `?district_id=&upazila_id=` (optional) | destination adds `delivery` and `totals.shipping_charge` |
-| POST | `/cart/items` | `{variant_id, quantity}` | no `X-Cart-Token` → creates the cart, **201**; existing line → quantity added |
+| POST | `/cart/items` | `{variant_id, quantity, recommendation_source?}` | no `X-Cart-Token` → creates the cart, **201**; existing line → quantity added. `recommendation_source` = the placement the add came from (`pdp_upsell`\|`pdp_cross_sell`\|`pdp_fbt`\|`pdp_age_progression`\|`cart_cross_sell`\|`confirmation_cross_sell`), stamped onto the order item at checkout (rule 25d) |
 | PATCH | `/cart/items/{item}` | `{quantity}` 1–99 | raising is stock-checked; lowering always allowed |
 | DELETE | `/cart/items/{item}` | — | |
 | POST | `/cart/coupon` | `{code}` | replaces any coupon; rejection → 422 on `code` with the reason |
@@ -97,7 +97,9 @@ Limits: 99 per line, 50 lines per cart. The cart check is advisory; checkout's r
   "items": [{
     "id": 12, "variant_id": 40,
     "product": {"id": 9, "name": "Remote Control Car", "name_bn": "রিমোট কন্ট্রোল গাড়ি", "slug": "remote-control-car"},
-    "variant": {"sku": "RCC-RED", "name": "Red", "name_bn": "লাল"},
+    "variant": {"sku": "RCC-RED", "name": "Red", "name_bn": "লাল",
+                "attributes": [{"name": "Colour", "name_bn": "রং", "value": "Red", "value_bn": "লাল"}]},
+    "image": {"url": "https://cdn…/160.webp", "alt": "Red remote control car", "alt_bn": "লাল রিমোট কন্ট্রোল গাড়ি"},
     "quantity": 2, "available_quantity": 5, "in_stock": true, "sellable": true,
     "unit_price": "1000.00", "added_unit_price": "1000.00", "price_changed": false,
     "subtotal": "2000.00", "discount": "200.00", "total": "1800.00"
@@ -114,6 +116,10 @@ Limits: 99 per line, 50 lines per cart. The cart check is advisory; checkout's r
   "checkout_ready": true
 }
 ```
+
+`image` is the variant's own photo, else the product's primary, else its first (160px rendition; null
+until one is processed) — the same choice the order item snapshots. `variant.attributes` are the
+variant-defining values in attribute order. The storefront needs no per-product fetch to draw a line.
 
 `adjustments` sum exactly to `totals.grand_total`. `checkout_ready` = at least one line, every line
 sellable and in stock, the coupon (if any) applied, and a serviced destination given.

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Storefront\CategoryController;
 use App\Http\Controllers\Api\V1\Storefront\CheckoutController;
 use App\Http\Controllers\Api\V1\Storefront\DeliveryController;
 use App\Http\Controllers\Api\V1\Storefront\OrderController;
+use App\Http\Controllers\Api\V1\Storefront\PaymentController;
 use App\Http\Controllers\Api\V1\Storefront\ProductController;
 use App\Http\Controllers\Api\V1\Storefront\ProductDetailController;
 use App\Http\Controllers\Api\V1\Storefront\ReviewController;
@@ -82,6 +83,15 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['throttle:checkout', 'idempotent'])->name('checkout.store');
     Route::post('/orders/track', [OrderController::class, 'track'])->middleware('throttle:order-track')->name('orders.track');
     Route::get('/orders/{number}', [OrderController::class, 'show'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
+});
+
+// Online payment (P4-PAY-02/03/04) — docs/api/checkout.md "Online payment". COD needs none of
+// it. Starting/retrying a payment needs the placing cart's token and an Idempotency-Key
+// (rule 17); the browser-return POST is signature-verified and re-queried, never trusted.
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
+    Route::get('/payment-methods', [PaymentController::class, 'methods'])->name('payment-methods.index');
+    Route::post('/orders/{number}/payment', [PaymentController::class, 'start'])->middleware(['throttle:checkout', 'idempotent'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.payment.store');
+    Route::post('/payments/sslcommerz/return', [PaymentController::class, 'sslcommerzReturn'])->middleware('throttle:checkout')->name('payments.sslcommerz.return');
 });
 
 // Customer sign-in (P4-STO-11) — docs/api/account.md. Phone + SMS code (never WhatsApp,

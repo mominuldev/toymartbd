@@ -147,6 +147,23 @@ export function useOrderMove(id: number) {
     });
 }
 
+/**
+ * Re-check an online payment with its gateway (P4-PAY-03): the server re-queries the provider
+ * and answers with the whole order. A fresh Idempotency-Key per click (rule 17).
+ */
+export function useVerifyPayment(id: number) {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: (paymentId: number) =>
+            api<Order>(`/orders/${id}/payments/${paymentId}/verify`, { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() } }),
+        onSuccess: (order) => {
+            client.setQueryData(orderKeys.detail(id), order);
+            void client.invalidateQueries({ queryKey: ['orders', 'list'] });
+        },
+    });
+}
+
 export function useAddNote(id: number) {
     const client = useQueryClient();
 

@@ -11,7 +11,8 @@ import { auditScreen, layoutProblems } from './layout-audit';
 // (e2e/layout-audit.ts). JavaScript is disabled so the measured HTML is the server's, the same
 // for every visitor, and the screenshots are deterministic.
 //
-// Account pages (app/[locale]/account) are not in this pass yet: they are being built in parallel.
+// Account pages (P4-STO-11) are signed in through the real OTP flow against the mock API's customer
+// (code 123456): login, verify, home, orders, order detail, addresses, wishlist and profile.
 test.use({ javaScriptEnabled: false, reducedMotion: 'reduce' });
 
 test.beforeAll(async ({ request }) => {
@@ -33,6 +34,16 @@ const STATIC_SCREENS: Array<[string, string]> = [
     ['delivery-charge', '/delivery-charge'],
     ['about', '/pages/about'],
     ['not-found', '/products/no-such-toy'],
+];
+
+const ACCOUNT_SCREENS: Array<[string, string]> = [
+    ['home', '/account'],
+    ['orders', '/account/orders'],
+    ['orders-delivered', '/account/orders?group=delivered'],
+    ['order-detail', '/account/orders/TMB-26-00031'],
+    ['addresses', '/account/addresses'],
+    ['wishlist', '/account/wishlist'],
+    ['profile', '/account/profile'],
 ];
 
 const WIDTHS = [
@@ -57,6 +68,25 @@ for (const [width, viewport] of WIDTHS) {
                     await page.goto(at(prefix, path));
                     await auditScreen(page, testInfo, `${locale}-${width}-${label}`);
                 }
+            });
+
+            test(`${locale}: account sign-in and every account page fit their boxes`, async ({ page }, testInfo) => {
+                await page.goto(at(prefix, '/account/login'));
+                await auditScreen(page, testInfo, `${locale}-${width}-account-login`);
+                await page.locator('#phone').fill('01712-345678');
+                await page.locator('form[action="/api/account/otp"] button[type="submit"]').click();
+                await expect(page).toHaveURL(new RegExp(`${prefix}/account/verify$`));
+                await auditScreen(page, testInfo, `${locale}-${width}-account-verify`);
+                for (const [i, digit] of [...'123456'].entries()) await page.locator(`input[name="d${i + 1}"]`).fill(digit);
+                await page.locator('button[form="verify-form"]').click();
+                await expect(page).toHaveURL(new RegExp(`${prefix}/account$`));
+
+                for (const [label, path] of ACCOUNT_SCREENS) {
+                    await page.goto(at(prefix, path));
+                    await expect(page).toHaveURL(new RegExp(`${prefix}${path.replace(/[?]/g, '\\?')}$`));
+                    await auditScreen(page, testInfo, `${locale}-${width}-account-${label}`);
+                }
+                await page.context().clearCookies();
             });
 
             test(`${locale}: cart, checkout, confirmation and tracking fit their boxes`, async ({ page }, testInfo) => {

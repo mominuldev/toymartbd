@@ -36,8 +36,16 @@ final class OrderController extends ApiController
     #[OpenApiResponse(429, 'Too many lookups')]
     public function show(OrderConfirmationRequest $request, string $number): StorefrontOrderResource
     {
+        return new StorefrontOrderResource(self::ownedOrFail($number, $request->cartToken()));
+    }
+
+    /**
+     * The order, when `$token` is the cart that placed it within CONFIRMATION_DAYS; else the
+     * same 404 for every miss. Shared with the payment endpoints (P4-PAY-02).
+     */
+    public static function ownedOrFail(string $number, ?string $token): Order
+    {
         $order = Order::query()->where('number', strtoupper($number))->first();
-        $token = $request->cartToken();
 
         $owns = $order !== null
             && $order->cart_id !== null
@@ -51,7 +59,7 @@ final class OrderController extends ApiController
             throw new NotFoundHttpException;
         }
 
-        return new StorefrontOrderResource($order);
+        return $order;
     }
 
     /**

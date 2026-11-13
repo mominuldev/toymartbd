@@ -31,6 +31,22 @@ final class DhakaDate
         return CarbonImmutable::now(self::zone())->toDateString();
     }
 
+    /**
+     * The current instant (UTC), for audit timestamps such as approved_at / computed_at.
+     * Finance code asks here rather than the raw clock (tests/Arch "finance never reads the
+     * raw clock"); Carbon's test clock (travelTo) still applies.
+     */
+    public static function instant(): CarbonImmutable
+    {
+        return CarbonImmutable::now('UTC');
+    }
+
+    /** Today's Dhaka calendar date as a CarbonImmutable at Dhaka midnight. */
+    public static function todayDate(): CarbonImmutable
+    {
+        return CarbonImmutable::now(self::zone())->startOfDay();
+    }
+
     /** The Dhaka calendar date an instant falls on, as Y-m-d. */
     public static function dayOf(DateTimeInterface $instant): string
     {

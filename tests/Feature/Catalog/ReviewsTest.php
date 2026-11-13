@@ -235,6 +235,9 @@ it('serves approved reviews and a rating summary to the product page, cursor-pag
     $cursor = $first->json('meta.next_cursor');
     expect($cursor)->toBeString();
     storefrontRead("/api/v1/storefront/products/{$this->product->slug}/reviews?cursor={$cursor}")->assertOk()->assertJsonCount(2, 'data');
+    // Rule 16: an unlisted parameter is a 400, not silently ignored.
+    storefrontRead("/api/v1/storefront/products/{$this->product->slug}/reviews?filter[rating]=5")->assertStatus(400);
+    storefrontRead("/api/v1/storefront/products/{$this->product->slug}/reviews?sort=rating")->assertStatus(400);
 
     storefrontRead('/api/v1/storefront/products/no-such-toy/reviews')->assertNotFound();
 });

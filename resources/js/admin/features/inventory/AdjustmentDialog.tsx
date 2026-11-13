@@ -22,7 +22,7 @@ type Errors = Partial<Record<FieldName, string>>;
  * The input side of each reason, so staff type "2 damaged", not "-2". The server is the
  * authority: AdjustStock refuses a reason moving stock the wrong way, whatever is sent.
  */
-const fixedSign: Partial<Record<AdjustmentReason, 1 | -1>> = { found: 1, damage: -1, loss: -1, expiry: -1, gift_sample: -1 };
+const fixedSign: Partial<Record<AdjustmentReason, 1 | -1>> = { found: 1, damage: -1, loss: -1, theft: -1, expiry: -1, gift_sample: -1 };
 
 /** API field → form field, for the server's 422 errors. */
 function formField(apiField: string): FieldName | null {
@@ -139,7 +139,7 @@ export function AdjustmentDialog({ open, onClose, row, initialReason, locations,
             { input, idempotencyKey },
             {
                 onSuccess: (adjustment) => {
-                    notify(t('adjust.saved', { number: adjustment.number }));
+                    notify(t(adjustment.status === 'pending' ? 'adjust.pendingSaved' : 'adjust.saved', { number: adjustment.number }));
                     onClose();
                 },
                 onError: (error) => {
@@ -183,6 +183,7 @@ export function AdjustmentDialog({ open, onClose, row, initialReason, locations,
                         {t('adjust.title')}
                     </h2>
                     <p className="t-admin-body text-fg-secondary">{t('adjust.body')}</p>
+                    <p className="t-admin-caption text-fg-tertiary">{t('adjust.approvalHint')}</p>
                 </div>
 
                 <fieldset disabled={save.isPending} className="flex min-w-0 flex-col gap-3.5 px-6 pb-5">

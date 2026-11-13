@@ -64,6 +64,8 @@ final readonly class MergeGuestCart
                     continue;
                 }
                 $same->quantity = min(Cart::MAX_LINE_QUANTITY, $same->quantity + $item->quantity);
+                // Rule 25d: keep the customer's placement; else take the guest line's.
+                $same->recommendation_source ??= $item->recommendation_source;
                 $same->save();
                 $item->delete();
             }

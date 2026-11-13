@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Requests\Storefront\Account;
 
 use App\Domain\Ordering\Queries\CustomerOrders;
-use Closure;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * `GET /storefront/account/orders` — newest first, cursor-paginated. One allowlisted
- * filter, `group` (rule 16): anything else in the query string is refused.
+ * filter, `group` (rule 16): an unlisted query parameter or an unknown group is a 400
+ * `bad-request`, the same as the catalog listing and every admin list.
  */
 final class AccountOrdersRequest extends AccountRequest
 {
+    /** Query parameters this endpoint accepts (`locale` is ResolveLocale's). */
+    public const array PARAMETERS = ['cursor', 'group', 'locale'];
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -22,18 +24,24 @@ final class AccountOrdersRequest extends AccountRequest
             /** Opaque cursor from `meta.next_cursor`. */
             'cursor' => ['nullable', 'string', 'max:512'],
             /** @var 'active'|'delivered'|'cancelled'|'returned' */
-            'group' => ['nullable', 'string', Rule::in(array_keys(CustomerOrders::GROUPS))],
+            'group' => ['nullable', 'string'],
         ];
     }
 
-    /** @return list<Closure(Validator): void> */
-    public function after(): array
+    /** @throws BadRequestHttpException */
+    protected function prepareForValidation(): void
     {
-        return [function (Validator $validator): void {
-            foreach (array_diff(array_keys($this->query()), ['cursor', 'group', 'locale']) as $unknown) {
-                $validator->errors()->add((string) $unknown, (string) __('validation.prohibited', ['attribute' => (string) $unknown]));
-            }
-        }];
+        $unknown = array_diff(array_map(strval(...), array_keys($this->query())), self::PARAMETERS);
+
+        if ($unknown !== []) {
+            throw new BadRequestHttpException('Unknown query parameter(s): '.implode(', ', $unknown).'. Allowed: cursor, group.');
+        }
+
+        $group = $this->query('group');
+
+        if ($group !== null && $group !== '' && (! is_string($group) || ! array_key_exists($group, CustomerOrders::GROUPS))) {
+            throw new BadRequestHttpException('group must be one of: '.implode(', ', array_keys(CustomerOrders::GROUPS)).'.');
+        }
     }
 
     public function group(): ?string

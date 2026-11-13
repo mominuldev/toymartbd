@@ -81,7 +81,7 @@ it('confirms a pending order through the state machine and records who did it', 
 
     expect($json['status'])->toBe('confirmed')
         ->and($json['confirmed_at'])->not->toBeNull()
-        ->and($json['available_actions'])->toBe(['hold', 'processing', 'ready_to_ship', 'cancel', 'add_note']);
+        ->and($json['available_actions'])->toBe(['hold', 'processing', 'ready_to_ship', 'ship', 'cancel', 'add_note']);
 
     $event = OrderEvent::query()->where('order_id', $order->id)->sole();
     expect($event->to_status)->toBe('confirmed')

@@ -977,15 +977,356 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * `GET /inventory/adjustments` — newest first, cursor-paginated (the approval queue is
+         *     `filter[status]=pending`). `meta.counts.pending` is the queue size, unaffected by filters
+         */
+        get: operations["v1.admin.inventory.adjustments.index"];
         put?: never;
         /**
          * `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key`.
          *     422 names each refused line: no change, a direction the reason does not allow
-         *     (found only adds; damage, loss, expiry and gift/sample only remove), or on hand
-         *     dropping below what is reserved for open orders
+         *     (found only adds; damage, loss, theft, expiry and gift/sample only remove), or on
+         *     hand dropping below what is reserved for open orders. Above the approval threshold
+         *     it is created `pending` and moves nothing — unless the requester holds
+         *     inventory.approve_adjustments, in which case it is `approved` by them at once
          */
         post: operations["v1.admin.inventory.adjustments.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/adjustments/{adjustment}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inventory/adjustments/{adjustment}` — needs inventory.view */
+        get: operations["v1.admin.inventory.adjustments.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/adjustments/{adjustment}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /inventory/adjustments/{adjustment}/approve` — needs inventory.approve_adjustments
+         *     and an `Idempotency-Key`. Re-checks every line against the stock now and writes the
+         *     movements. 409 when it is not pending; 422 when a line can no longer apply or the
+         *     approver is the requester
+         */
+        post: operations["v1.admin.inventory.adjustments.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/adjustments/{adjustment}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /inventory/adjustments/{adjustment}/reject` — needs inventory.approve_adjustments.
+         *     Writes no movement. 409 when it is not pending
+         */
+        post: operations["v1.admin.inventory.adjustments.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inventory/transfers` — newest first, cursor-paginated; needs inventory.view */
+        get: operations["v1.admin.inventory.transfers.index"];
+        put?: never;
+        /**
+         * `POST /inventory/transfers` — needs inventory.transfer and an `Idempotency-Key`. 422
+         *     names each line asking for more than is available at the source (on hand minus
+         *     reserved)
+         */
+        post: operations["v1.admin.inventory.transfers.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inventory/alerts` — newest first, cursor-paginated; open alerts unless
+         *     `filter[status]` says otherwise. `meta.counts` holds the open count per kind
+         */
+        get: operations["v1.admin.inventory.alerts.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/alerts/{alert}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inventory/alerts/{alert}/acknowledge` — closes an open alert; changes no stock. 409 when not open */
+        post: operations["v1.admin.inventory.alerts.acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /suppliers` — cursor-paginated, needs purchasing.view
+         * @description Filters: `filter[search]` (name, contact person or phone contains), `filter[status]` = `active|archived`.
+         *     Sorts: `name`, `-name`, `created_at`, `-created_at` (default `name`). Anything else is a 400.
+         */
+        get: operations["v1.admin.suppliers.index"];
+        put?: never;
+        /** `POST /suppliers` — needs purchasing.manage_suppliers */
+        post: operations["v1.admin.suppliers.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/suppliers/{supplier}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /suppliers/{supplier}` — archived included; the balance needs finance.view */
+        get: operations["v1.admin.suppliers.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /suppliers/{supplier}` — archives (idempotent), needs purchasing.manage_suppliers */
+        delete: operations["v1.admin.suppliers.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /suppliers/{supplier}` — needs purchasing.manage_suppliers */
+        patch: operations["v1.admin.suppliers.update"];
+        trace?: never;
+    };
+    "/admin/suppliers/{supplier}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /suppliers/{supplier}/payments` — newest first, cursor-paginated; needs finance.view. No filters */
+        get: operations["v1.admin.suppliers.payments.index"];
+        put?: never;
+        /**
+         * `POST /suppliers/{supplier}/payments` — needs finance.record_supplier_payments and an
+         *     `Idempotency-Key`. 422 when `purchase_id` belongs to another supplier or is a draft/cancelled PO
+         */
+        post: operations["v1.admin.suppliers.payments.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /purchases` — cursor-paginated, newest first; needs purchasing.view
+         * @description Filters: `filter[status]` (one PurchaseStatus), `filter[supplier_id]`, `filter[search]`
+         *     (PO number, supplier invoice number or supplier name contains). Sorts: `created_at`,
+         *     `-created_at` (default), `expected_date`, `-expected_date`. Anything else is a 400.
+         */
+        get: operations["v1.admin.purchases.index"];
+        put?: never;
+        /** `POST /purchases` — raises a draft PO; needs purchasing.create */
+        post: operations["v1.admin.purchases.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /purchases/counts` — POs per status, for the list's tabs; needs purchasing.view */
+        get: operations["v1.admin.purchases.counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /purchases/{purchase}` — lines and receipts; needs purchasing.view */
+        get: operations["v1.admin.purchases.show"];
+        /** `PUT /purchases/{purchase}` — replaces a draft; 409 once ordered. Needs purchasing.create */
+        put: operations["v1.admin.purchases.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /purchases/{purchase}/order` — draft → ordered; 409 otherwise. Needs purchasing.create */
+        post: operations["v1.admin.purchases.order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /purchases/{purchase}/cancel` — draft/ordered → cancelled; 409 once stock was received. Needs purchasing.create */
+        post: operations["v1.admin.purchases.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /purchases/{purchase}/close` — partially received → closed short, with a reason;
+         *     nothing more can be received and nothing is owed for the missing units. 409 unless
+         *     partially received. Needs purchasing.create
+         */
+        post: operations["v1.admin.purchases.close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/receipts/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /purchases/{purchase}/receipts/quote` — per-line value, landed-cost share, landed
+         *     unit cost and the weighted-average step, computed by the server (rule 1). Writes
+         *     nothing. Needs purchasing.receive. 422 on an over-receipt or unknown line, 409 unless the PO is receivable
+         */
+        post: operations["v1.admin.purchases.receipts.quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/{purchase}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /purchases/{purchase}/receipts` — receives the units into stock at the landed
+         *     cost; needs purchasing.receive and an `Idempotency-Key`. Returns the updated PO
+         *     (its newest receipt last). 409 unless the PO is ordered or partially received
+         */
+        post: operations["v1.admin.purchases.receipts.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1236,6 +1577,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/orders/{order}/payments/{payment}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/{order}/payments/{payment}/verify` — 200 with the order. Requires an Idempotency-Key */
+        post: operations["v1.admin.orders.payments.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/bulk/ship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/bulk/ship` — ships each order on its own; one result per requested id
+         *     (`done`, `conflict` with the current status, `not_found`) and `meta.done` /
+         *     `meta.failed`. A partial failure is a 200 with per-order results
+         */
+        post: operations["v1.admin.orders.bulk.ship"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/bulk/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /orders/bulk/deliver` — delivers each shipped order on its own; per-order results as bulk ship */
+        post: operations["v1.admin.orders.bulk.deliver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/ship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/{order}/ship` — confirmed, processing or ready to ship → shipped. Consumes
+         *     the stock reservation (`sale_out` movements) in the same transaction; the courier name
+         *     and tracking reference land on the timeline. Needs orders.update + shipments.book
+         */
+        post: operations["v1.admin.orders.ship"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/{order}/deliver` — shipped → delivered. A pending COD payment is marked
+         *     paid (the courier holds the cash: it is not cash in the ledger until remittance);
+         *     Finance recognises revenue from OrderDelivered. Needs orders.update + shipments.book
+         */
+        post: operations["v1.admin.orders.deliver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/orders/compose/customer": {
         parameters: {
             query?: never;
@@ -1402,6 +1840,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /returns` — cursor-paginated, newest first; needs returns.view. Filters:
+         *     `filter[status]` (requested|received|inspected|closed|rejected), `filter[search]`
+         *     (RMA or order number prefix). Anything else is a 400. `meta.counts` holds one count
+         *     per status, under the search filter only (for the tabs)
+         */
+        get: operations["v1.admin.returns.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/returns/{orderReturn}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /returns/{orderReturn}` — needs returns.view */
+        get: operations["v1.admin.returns.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/returns/{orderReturn}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /returns/{orderReturn}/receive` — the parcel is back. Needs returns.manage */
+        post: operations["v1.admin.returns.receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/returns/{orderReturn}/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /returns/{orderReturn}/inspect` — resellable / damaged per line. Restocks,
+         *     writes damaged units off, moves the order to partially_returned / returned and opens
+         *     the server-computed refund. Needs returns.manage
+         */
+        post: operations["v1.admin.returns.inspect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/returns/{orderReturn}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /returns/{orderReturn}/reject` — before inspection, with a reason. Needs returns.manage */
+        post: operations["v1.admin.returns.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/orders/{order}/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /orders/{order}/returns` — the order detail's Refund panel. Needs returns.view */
+        get: operations["v1.admin.orders.returns.index"];
+        put?: never;
+        /**
+         * `POST /orders/{order}/returns` — open a return on a delivered order. Needs
+         *     returns.manage. A quantity above what is still returnable is a 422; an order that is
+         *     not delivered is a 409
+         */
+        post: operations["v1.admin.orders.returns.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/refunds/{refund}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /refunds/{refund}/approve` */
+        post: operations["v1.admin.refunds.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/refunds/{refund}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /refunds/{refund}/reject` — a requested refund only, with a reason */
+        post: operations["v1.admin.refunds.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/refunds/{refund}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /refunds/{refund}/pay` — needs an `Idempotency-Key`. Manual payout (COD/cash
+         *     orders) needs `method` and `reference`; an online payment is refunded through its
+         *     gateway. Never more than was captured
+         */
+        post: operations["v1.admin.refunds.pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/notifications/templates": {
         parameters: {
             query?: never;
@@ -1522,6 +2131,377 @@ export interface paths {
         get: operations["v1.admin.notifications.preferences.show"];
         /** `PUT /notifications/customers/{customer}/preferences` — needs customers.update */
         put: operations["v1.admin.notifications.preferences.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/ledger` — ledger entries, cursor-paginated, newest Dhaka date first */
+        get: operations["v1.admin.finance.ledger.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/receivables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/receivables` — COD receivables (recognised − received) as at `as_of` (default today, Dhaka) */
+        get: operations["v1.admin.finance.receivables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/orders/{order}/cod-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/orders/{order}/cod-receipts` — needs finance.reconcile_cod and an `Idempotency-Key` */
+        post: operations["v1.admin.finance.cod-receipts.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expense-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/expense-categories` — every category with its expense count; needs finance.view */
+        get: operations["v1.admin.finance.expense-categories.index"];
+        put?: never;
+        /** `POST /finance/expense-categories` — needs finance.manage_expenses */
+        post: operations["v1.admin.finance.expense-categories.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expense-categories/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /finance/expense-categories/{category}` — deactivates (idempotent); needs finance.manage_expenses */
+        delete: operations["v1.admin.finance.expense-categories.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /finance/expense-categories/{category}` — needs finance.manage_expenses */
+        patch: operations["v1.admin.finance.expense-categories.update"];
+        trace?: never;
+    };
+    "/admin/finance/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/expenses` — cursor-paginated, newest expense date first; needs finance.view */
+        get: operations["v1.admin.finance.expenses.index"];
+        put?: never;
+        /** `POST /finance/expenses` — JSON or multipart with `receipt`; starts pending. Needs finance.manage_expenses */
+        post: operations["v1.admin.finance.expenses.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/expenses/summary` — the stat cards for a Dhaka date range (default: the last 7 days). Needs finance.view */
+        get: operations["v1.admin.finance.expenses.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/expenses/{expense}` — needs finance.view */
+        get: operations["v1.admin.finance.expenses.show"];
+        put?: never;
+        post?: never;
+        /** `DELETE /finance/expenses/{expense}` — pending or rejected only; an approved expense is voided instead */
+        delete: operations["v1.admin.finance.expenses.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /finance/expenses/{expense}` — pending or rejected only (a rejected one returns to pending) */
+        patch: operations["v1.admin.finance.expenses.update"];
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/expenses/{expense}/approve` — posts it to the ledger. Not by the person who entered it */
+        post: operations["v1.admin.finance.expenses.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/expenses/{expense}/reject` — with a `reason`; nothing reaches the ledger */
+        post: operations["v1.admin.finance.expenses.reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/expenses/{expense}/void` — with a `reason`; posts the reversing entry dated today (Dhaka) */
+        post: operations["v1.admin.finance.expenses.void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/expenses/{expense}/pay` — record payment of an unpaid expense (cash entry if approved) */
+        post: operations["v1.admin.finance.expenses.pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/expenses/{expense}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/expenses/{expense}/receipt` — the file, as a download only; needs finance.view */
+        get: operations["v1.admin.finance.expenses.receipt.show"];
+        put?: never;
+        /** `POST /finance/expenses/{expense}/receipt` — attach or replace the receipt (pending/rejected only) */
+        post: operations["v1.admin.finance.expenses.receipt.store"];
+        /** `DELETE /finance/expenses/{expense}/receipt` — remove the receipt (pending/rejected only) */
+        delete: operations["v1.admin.finance.expenses.receipt.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/pnl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/reports/pnl` — the five-block statement for a period. Needs finance.view */
+        get: operations["v1.admin.finance.reports.pnl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/pnl/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/reports/pnl/export` — the statement as CSV, one row per line. Needs finance.view + finance.export */
+        get: operations["v1.admin.finance.reports.pnl.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/pnl/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /finance/reports/pnl/series` — the P&L subtotals per day, week (Saturday start),
+         *     month or year. Needs finance.view
+         */
+        get: operations["v1.admin.finance.reports.pnl.series"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/pnl/series/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/reports/pnl/series/export` — the series as CSV, one row per bucket. Needs finance.view + finance.export */
+        get: operations["v1.admin.finance.reports.pnl.series.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/profitability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /finance/reports/profitability` — profitability of the lines of orders delivered in
+         *     the period, by product, primary category or recommendation source. Needs finance.view
+         *     and catalog.view_cost
+         */
+        get: operations["v1.admin.finance.reports.profitability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/reports/profitability/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/reports/profitability/export` — as GET /finance/reports/profitability, every row. Needs finance.export too */
+        get: operations["v1.admin.finance.reports.profitability.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/inventory-valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/inventory-valuation` */
+        get: operations["v1.admin.reports.inventory-valuation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/inventory-valuation/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /reports/inventory-valuation/export` — every row as CSV */
+        get: operations["v1.admin.reports.inventory-valuation.export"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1941,6 +2921,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/payment-methods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /payment-methods` — what checkout may offer now. COD is always first and default;
+         *     an online method appears only while its gateway is enabled (active, configured and —
+         *     in production — verified)
+         */
+        get: operations["v1.storefront.payment-methods.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/orders/{number}/payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /orders/{number}/payment` — start, resume or retry the order's online payment.
+         *     Requires an `Idempotency-Key`. Never reserves stock again: the reservation made at
+         *     checkout holds until the order is paid or its payment window lapses
+         */
+        post: operations["v1.storefront.orders.payment.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/payments/sslcommerz/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /payments/sslcommerz/return` — the customer's browser came back from SSLCommerz
+         *     and the storefront forwards the signed POST it received, untouched. Signature first,
+         *     then a re-query of SSLCommerz (never this body), then the order's status. The answer
+         *     tells the storefront where to send the customer; the page re-reads the order itself
+         */
+        post: operations["v1.storefront.payments.sslcommerz.return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/auth/otp": {
         parameters: {
             query?: never;
@@ -2187,6 +3231,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/payments/sslcommerz/ipn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1.webhooks.payments.sslcommerz.ipn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2204,14 +3264,26 @@ export interface components {
             status: "pending" | "approved" | "rejected";
         };
         /**
+         * AcknowledgeInventoryAlertRequest
+         * @description `POST /inventory/alerts/{alert}/acknowledge` — needs inventory.approve_adjustments.
+         *     `note` records what was found (a drift alert should say how it was resolved).
+         */
+        AcknowledgeInventoryAlertRequest: {
+            /** @description What was found and done. */
+            note?: string | null;
+        };
+        /**
          * AddCartItemRequest
-         * @description `POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is
+         * @description `POST /cart/items` `{ variant_id, quantity, recommendation_source? }`. Without `X-Cart-Token` a new cart is
          *     created (201) and its `token` returned for the storefront to store. Stock and
          *     sellability are checked by the Action (422 on `quantity` / `variant_id`).
+         *     `recommendation_source` is the placement the add came from (rule 25d), stamped onto
+         *     the order item at checkout.
          */
         AddCartItemRequest: {
             variant_id: number;
             quantity: number;
+            recommendation_source?: components["schemas"]["RecommendationPlacement"] | null;
         };
         /**
          * AddressRequest
@@ -2284,6 +3356,14 @@ export interface components {
          */
         ApplyCouponRequest: {
             code: string;
+        };
+        /**
+         * ApproveStockAdjustmentRequest
+         * @description `POST /inventory/adjustments/{adjustment}/approve` — needs inventory.approve_adjustments. Writes the adjustment's movements against the stock as it is now.
+         */
+        ApproveStockAdjustmentRequest: {
+            /** @description Why it was approved (optional). */
+            note?: string | null;
         };
         /** Attribute */
         Attribute: {
@@ -2358,6 +3438,17 @@ export interface components {
             order_ids: number[];
         };
         /**
+         * BulkFulfilOrdersRequest
+         * @description `POST /orders/bulk/ship` and `POST /orders/bulk/deliver` — manual fulfilment of many
+         *     orders from the board. Needs orders.update + shipments.book. Up to 100 ids; unknown ids
+         *     come back as `not_found` results. `courier_name` (ship only) applies to every order.
+         */
+        BulkFulfilOrdersRequest: {
+            order_ids: number[];
+            /** @description Bulk ship only: the courier every parcel was handed to. Ignored by bulk deliver. */
+            courier_name?: string | null;
+        };
+        /**
          * BulkMediaRequest
          * @description `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct
          *     integers. Both need media.delete (deleteAny). Delete reports unknown ids as
@@ -2412,7 +3503,10 @@ export interface components {
             /**
              * @description One entry per line. `sellable` false: the item can no longer be bought (it is
              *     excluded from every total; remove it). `in_stock` false: `quantity` exceeds
-             *     `available_quantity` (checkout will refuse until it is lowered).
+             *     `available_quantity` (checkout will refuse until it is lowered). `image` is the
+             *     variant's own photo, else the product's primary, else its first (a 160px rendition;
+             *     null until one is processed). `variant.attributes` are the variant-defining values,
+             *     in attribute order (e.g. Colour: Red), each with its Bangla label when set.
              */
             items: {
                 id: number;
@@ -2427,7 +3521,18 @@ export interface components {
                     sku: string;
                     name: string | null;
                     name_bn: string | null;
+                    attributes: {
+                        name: string;
+                        name_bn: string | null;
+                        value: string;
+                        value_bn: string | null;
+                    }[];
                 };
+                image: {
+                    url: string;
+                    alt: string | null;
+                    alt_bn: string | null;
+                } | null;
                 quantity: number;
                 available_quantity: number;
                 in_stock: boolean;
@@ -2536,7 +3641,10 @@ export interface components {
             address_line: string;
             landmark?: string | null;
             postcode?: string | null;
-            /** @enum {string} */
+            /**
+             * @description `cod`, or an online method `GET /payment-methods` lists as enabled (P4-PAY-02).
+             * @enum {string}
+             */
             payment_method: "cod";
             customer_note?: string | null;
             /** @description The grand total the customer was shown, e.g. "1930.00". */
@@ -2544,6 +3652,15 @@ export interface components {
             utm_source?: string | null;
             utm_medium?: string | null;
             utm_campaign?: string | null;
+        };
+        /**
+         * ClosePurchaseRequest
+         * @description `POST /purchases/{purchase}/close` — close a partly received PO short; needs
+         *     purchasing.create (like cancelling) and a reason. 409 unless partially received.
+         */
+        ClosePurchaseRequest: {
+            /** @description Why the rest will not arrive (supplier out of stock, discontinued …). */
+            reason: string;
         };
         /**
          * ConfirmOrderRequest
@@ -2602,6 +3719,15 @@ export interface components {
             y: number;
             width: number;
             height: number;
+        };
+        /**
+         * DeliverOrderRequest
+         * @description `POST /orders/{order}/deliver` — manual delivery confirmation (P5, until Phase 6
+         *     courier status updates). Needs orders.update + shipments.book.
+         */
+        DeliverOrderRequest: {
+            /** @description Shown on the order's activity timeline next to the change. */
+            note?: string | null;
         };
         /** DeliveryQuote */
         DeliveryQuote: {
@@ -2682,6 +3808,192 @@ export interface components {
             cutoff_time: string;
             timezone: string;
         };
+        /** Expense */
+        Expense: {
+            id: number;
+            category: components["schemas"]["ExpenseCategory"];
+            amount: string;
+            expense_date: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "void";
+            /** @enum {string|null} */
+            payment_method: "cash" | "bank_transfer" | "bkash" | "nagad" | "card" | "cheque" | null;
+            paid_on: string | null;
+            reference: string | null;
+            vendor: string | null;
+            description: string | null;
+            receipt: {
+                name: string;
+                mime: string;
+                size: number;
+            } | null;
+            is_recurring: boolean;
+            /** @enum {string|null} */
+            recurrence: "monthly" | "quarterly" | "yearly" | null;
+            recurrence_parent_id: number | null;
+            recurrence_period: string | null;
+            order_id: number | null;
+            shipment_id: number | null;
+            created_by: number | null;
+            approved_by: number | null;
+            approved_at: string | null;
+            rejected_reason: string | null;
+            voided_at: string | null;
+            void_reason: string | null;
+            created_at: string | null;
+            can: {
+                update: boolean;
+                delete: boolean;
+                approve: boolean;
+                reject: boolean;
+                void: boolean;
+                pay: boolean;
+            };
+        };
+        /** ExpenseCategory */
+        ExpenseCategory: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            /** @enum {string} */
+            type: "cogs" | "operating" | "marketing" | "logistics" | "other";
+            ledger_type: string | null;
+            resolved_ledger_type: string;
+            is_fixed: boolean;
+            is_active: boolean;
+            parent_id: number | null;
+            expenses_count: number;
+        };
+        /**
+         * ExpenseCategoryRequest
+         * @description An expense category, for `POST /finance/expense-categories` and `PATCH …/{category}`.
+         *     `parent_id` must be a top-level category (one level of nesting) and not itself.
+         *     `ledger_type` (optional) names the ledger type its expenses post as.
+         */
+        ExpenseCategoryRequest: {
+            name: string;
+            name_bn?: string | null;
+            type: components["schemas"]["ExpenseCategoryType"];
+            /** @enum {string|null} */
+            ledger_type?: "cogs" | "packaging" | "marketing" | "salary" | "rent" | "utility" | "courier_charge" | "gateway_fee" | "inventory_write_off" | "other_expense" | null;
+            is_fixed?: boolean;
+            is_active?: boolean;
+            parent_id?: number | null;
+        };
+        /**
+         * ExpenseCategoryType
+         * @description `expense_categories.type` (DATABASE-DESIGN §3.7).
+         * @enum {string}
+         */
+        ExpenseCategoryType: "cogs" | "operating" | "marketing" | "logistics" | "other";
+        /**
+         * ExpenseDecisionRequest
+         * @description `POST /finance/expenses/{expense}/approve|reject|void`. Reject and void need a `reason`
+         *     (kept on the expense); approve takes none. The ability checked is the route's action.
+         */
+        ExpenseDecisionRequest: {
+            reason?: string;
+        };
+        /**
+         * ExpensePaymentMethod
+         * @description How an expense was paid. A null `payment_method` means not paid yet (an accrual).
+         * @enum {string}
+         */
+        ExpensePaymentMethod: "cash" | "bank_transfer" | "bkash" | "nagad" | "card" | "cheque";
+        /**
+         * ExpenseReceiptRequest
+         * @description `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content).
+         */
+        ExpenseReceiptRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 10240 kilobytes.
+             */
+            receipt: string;
+        };
+        /**
+         * ExpenseRecurrence
+         * @description `expenses.recurrence` of a recurring template: generated on the 1st of each due month (Dhaka).
+         * @enum {string}
+         */
+        ExpenseRecurrence: "monthly" | "quarterly" | "yearly";
+        /**
+         * ExpenseRequest
+         * @description The expense document, for `POST /finance/expenses` (JSON or `multipart/form-data` with an
+         *     optional `receipt` file) and `PATCH /finance/expenses/{expense}` (JSON; the receipt has its
+         *     own endpoint). Money is a decimal string > 0. Dates are Dhaka dates (YYYY-MM-DD) and an
+         *     expense cannot be dated in the future. A null `payment_method` means "not paid yet".
+         */
+        ExpenseRequest: {
+            category_id: number;
+            amount: string;
+            /** Format: date */
+            expense_date: string;
+            payment_method?: components["schemas"]["ExpensePaymentMethod"] | null;
+            /** Format: date */
+            paid_on?: string | null;
+            reference?: string | null;
+            vendor?: string | null;
+            description?: string | null;
+            is_recurring?: boolean;
+            recurrence?: components["schemas"]["ExpenseRecurrence"] | null;
+            order_id?: number | null;
+            shipment_id?: number | null;
+            /**
+             * Format: binary
+             * @description Maximum file size: 10240 kilobytes.
+             */
+            receipt?: string | null;
+        };
+        /** ExpenseSummary */
+        ExpenseSummary: {
+            from: string;
+            to: string;
+            period_total: string;
+            period_top: {
+                category_id: number;
+                name: string;
+                name_bn: string | null;
+                amount: string;
+            }[];
+            month_to_date: string;
+            recurring_monthly: string;
+            ad_spend_ratio: string | null;
+            pending_count: number;
+        };
+        /** FinanceLedgerEntry */
+        FinanceLedgerEntry: {
+            id: number;
+            /** @enum {string} */
+            type: "sale_revenue" | "cogs" | "discount_given" | "shipping_revenue" | "courier_charge" | "courier_cod_fee" | "courier_return_charge" | "gateway_fee" | "packaging" | "marketing" | "salary" | "rent" | "utility" | "refund" | "inventory_write_off" | "supplier_payment" | "cod_received" | "other_income" | "other_expense";
+            /** @enum {string} */
+            direction: "in" | "out";
+            amount: string;
+            occurred_on: string;
+            source_type: string;
+            source_id: number;
+            category_id: number | null;
+            category_name: string | null;
+            category_name_bn: string | null;
+            description: string | null;
+            is_cash_movement: boolean;
+            is_recognised_revenue: boolean;
+            created_at: string | null;
+        };
+        /** FinanceReceivables */
+        FinanceReceivables: {
+            as_of: string;
+            recognised: string;
+            received: string;
+            outstanding: string;
+            open_orders: number;
+            aging: {
+                "0_7": string;
+                "8_15": string;
+                "16_30": string;
+                "31_plus": string;
+            };
+        };
         /**
          * Gender
          * @description `products.gender` — nullable: most toys need no gender at all.
@@ -2709,29 +4021,107 @@ export interface components {
             /** @description Why the order is paused, e.g. "Customer asked to deliver after Friday". */
             reason: string;
         };
+        /**
+         * InspectReturnRequest
+         * @description `POST /returns/{orderReturn}/inspect` — needs returns.manage. One row per returned line:
+         *     how many units are resellable and how many damaged; they must add up to the line's
+         *     returned quantity (checked by InspectReturn).
+         */
+        InspectReturnRequest: {
+            items: {
+                order_item_id: number;
+                resellable: number;
+                damaged: number;
+            }[];
+            note?: string | null;
+        };
         /** InventoryAdjustment */
         InventoryAdjustment: {
             id: number;
             /** @description ADJ-2026-0012. */
             number: string;
             location_id: number;
+            location_code: string;
             /** @enum {string} */
-            reason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample";
+            reason: "damage" | "loss" | "theft" | "found" | "recount" | "expiry" | "correction" | "gift_sample";
             note: string | null;
-            /** @constant */
-            status: "applied";
+            /**
+             * @description `applied` (below the approval threshold, moved at once), `pending` (waiting for
+             *     approval, nothing moved), `approved` (moved when approved), `rejected` (never moved).
+             * @enum {string}
+             */
+            status: "applied" | "pending" | "approved" | "rejected";
+            /** @description Whether this adjustment has written its stock movements. */
+            moved_stock: boolean;
+            /** @description Units the request changes (absolute, summed) — what the approval threshold reads. */
+            requested_units: number;
+            /** @description Their value at weighted-average cost, 2 dp; only with catalog.view_cost. */
+            requested_value?: string;
+            requested_by: string | null;
+            approved_by: string | null;
+            /** Format: date-time */
+            approved_at: string | null;
+            rejected_by: string | null;
+            /** Format: date-time */
+            rejected_at: string | null;
+            decision_note: string | null;
             /**
              * Format: date-time
              * @description ISO 8601, UTC.
              */
             created_at: string;
+            /**
+             * @description One per variant. `quantity_before`/`after` and `change` are provisional while pending
+             *     (re-read under the lock on approval) and final once moved.
+             */
             items: {
                 variant_id: number;
+                sku: string;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                image_url: string | null;
+                requested_change: number | null;
+                counted: number | null;
                 quantity_before: number;
                 quantity_after: number;
                 change: number;
                 unit_cost?: string | null;
             }[];
+        };
+        /** InventoryAlert */
+        InventoryAlert: {
+            id: number;
+            /** @enum {string} */
+            kind: "low_stock" | "out_of_stock" | "ledger_drift" | "reserved_drift";
+            /** @enum {string} */
+            status: "open" | "resolved" | "acknowledged";
+            variant_id: number;
+            product_id: number;
+            sku: string;
+            product_name: string;
+            product_name_bn: string | null;
+            variant_name: string | null;
+            image_url: string | null;
+            location_id: number;
+            location_code: string;
+            expected: number | null;
+            actual: number | null;
+            /** @description actual − expected, for a drift alert. */
+            difference: number | null;
+            /**
+             * Format: date
+             * @description The Dhaka calendar day it was raised, YYYY-MM-DD.
+             */
+            alert_date: string;
+            /** Format: date-time */
+            first_seen_at: string;
+            /** Format: date-time */
+            last_seen_at: string;
+            acknowledged_by: string | null;
+            /** Format: date-time */
+            acknowledged_at: string | null;
+            note: string | null;
         };
         /** InventoryLowStockCount */
         InventoryLowStockCount: {
@@ -2764,11 +4154,16 @@ export interface components {
             balance_after: number;
             /** @description Unit cost the units moved at, 4 dp; only with catalog.view_cost. */
             unit_cost?: string | null;
-            /** @description The source document: `stock_adjustment`, `product` (opening stock), and later order, purchase, shipment, refund. */
+            /** @description The source document: `stock_adjustment`, `stock_transfer`, `product` (opening stock), and later order, purchase, shipment, refund. */
             reference_type: string | null;
             reference_id: number | null;
-            /** @description The document's human number where it has one (ADJ-2026-0012). */
+            /** @description The document's human number where it has one (ADJ-2026-0012, TRF-2026-0003). */
             reference_number: string | null;
+            /**
+             * @description The adjustment's reason, for an adjustment movement.
+             * @enum {string|null}
+             */
+            adjustment_reason: "damage" | "loss" | "theft" | "found" | "recount" | "expiry" | "correction" | "gift_sample" | null;
             /** @description Staff member who recorded it; null for the system. */
             user_name: string | null;
             note: string | null;
@@ -2873,6 +4268,96 @@ export interface components {
                 value?: string;
             }[];
         };
+        /** InventoryTransfer */
+        InventoryTransfer: {
+            id: number;
+            /** @description TRF-2026-0003. */
+            number: string;
+            from_location_id: number;
+            from_location_code: string;
+            to_location_id: number;
+            to_location_code: string;
+            /**
+             * @description Booked in one step: no in-transit state.
+             * @constant
+             */
+            status: "completed";
+            note: string | null;
+            user_name: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+            items: {
+                variant_id: number;
+                sku: string;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                quantity: number;
+                unit_cost?: string | null;
+            }[];
+        };
+        /** InventoryValuation */
+        InventoryValuation: {
+            /** @description The Dhaka date valued (end of that day); null = the live projection. */
+            as_at: string | null;
+            sort: string;
+            /**
+             * @description `unit_cost` is 4 dp; `value` = on_hand × unit_cost, 2 dp. `estimated` = as-at
+             *     row whose movements carried no cost, valued at today's cost basis.
+             */
+            data: {
+                variant_id: number;
+                product_id: number;
+                sku: string;
+                name: string;
+                name_bn: string | null;
+                variant_name: string | null;
+                category_id: number | null;
+                category_name: string | null;
+                category_name_bn: string | null;
+                location_id: number;
+                location_code: string;
+                location_name: string;
+                location_name_bn: string | null;
+                on_hand: number;
+                unit_cost: string;
+                value: string;
+                estimated: boolean;
+            }[];
+            totals: {
+                on_hand: number;
+                value: string;
+                rows: number;
+                estimated_rows: number;
+            };
+            by_location: {
+                location_id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                on_hand: number;
+                value: string;
+                variants: number;
+            }[];
+            by_category: {
+                category_id: number | null;
+                name: string | null;
+                name_bn: string | null;
+                on_hand: number;
+                value: string;
+                variants: number;
+            }[];
+            truncated: boolean;
+        };
+        /**
+         * LandedCostMethod
+         * @description How a receipt's landed costs (freight, customs/duty, other) are split across its lines. `value` is the default and what DATABASE-DESIGN §3.2 specifies; `quantity` suits a shipment of similar items, `weight` a freight bill charged by the kilo (needs every line's `product_variants.weight_grams`).
+         * @enum {string}
+         */
+        LandedCostMethod: "value" | "quantity" | "weight";
         /**
          * LoginRequest
          * @description `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`.
@@ -2882,6 +4367,16 @@ export interface components {
             email: string;
             password: string;
             remember?: boolean;
+        };
+        /** ManualCodReceipt */
+        ManualCodReceipt: {
+            id: number;
+            order_id: number;
+            amount: string;
+            received_on: string;
+            reference: string | null;
+            note: string | null;
+            order_outstanding: string;
         };
         /**
          * MarginPreviewRequest
@@ -3201,11 +4696,24 @@ export interface components {
                 fee_amount: string;
                 transaction_id: string | null;
                 paid_at: string | null;
+                /** @description Online gateway ids and state (P4-PAY-02/03); null/false for COD. @var string|null */
+                gateway_reference: string | null;
+                val_id: string | null;
+                failure_reason: string | null;
+                review_reason: string | null;
+                expires_at: string | null;
+                verified_at: string | null;
+                gateway: {
+                    enabled: boolean;
+                    verified: boolean;
+                    sandbox: boolean;
+                    reason: string | null;
+                } | null;
             }[];
             timeline: {
                 id: number;
                 /** @enum {string} */
-                type: "placed" | "status_changed" | "payment_status_changed" | "fulfillment_status_changed" | "note" | "edited";
+                type: "placed" | "status_changed" | "payment_status_changed" | "fulfillment_status_changed" | "note" | "edited" | "return_requested" | "return_inspected" | "refund_approved" | "refund_rejected" | "refund_paid";
                 field: string | null;
                 from: string | null;
                 to: string | null;
@@ -3237,7 +4745,7 @@ export interface components {
              * @description What this user may do to the order now — the state machine and their permissions,
              *     decided here so the client never re-derives a transition rule.
              */
-            available_actions: ("confirm" | "hold" | "release" | "processing" | "ready_to_ship" | "cancel" | "add_note")[];
+            available_actions: ("confirm" | "hold" | "release" | "processing" | "ready_to_ship" | "ship" | "deliver" | "cancel" | "add_note")[];
             /** @description Whether this user may edit the order now (P4-ORD-07: pre-packing status and orders.update). */
             editable: boolean;
             /** @description Whether this user may print the invoice / packing slip (orders.view + customers.view_pii). */
@@ -3427,6 +4935,79 @@ export interface components {
             district_id?: number | null;
             upazila_id?: number | null;
         };
+        /** OrderRefundPanel */
+        OrderRefundPanel: {
+            order_id: number;
+            accepts_returns: boolean;
+            shipping_claimed: boolean;
+            captured: string | null;
+            refundable: string | null;
+            lines: {
+                order_item_id: number;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                sku: string;
+                quantity: number;
+                quantity_returned: number;
+                returnable: number;
+            }[];
+            returns: components["schemas"]["OrderReturn"][];
+            refunds: components["schemas"]["Refund"][];
+            can: {
+                create_return: boolean;
+            };
+        };
+        /** OrderReturn */
+        OrderReturn: {
+            id: number;
+            number: string;
+            /** @enum {string} */
+            status: "requested" | "received" | "inspected" | "closed" | "rejected";
+            /** @enum {string} */
+            reason: "damaged_in_transit" | "defective" | "wrong_item" | "missing_parts" | "not_as_described" | "changed_mind" | "other";
+            reason_note: string | null;
+            refund_shipping: boolean;
+            note: string | null;
+            /** @description Σ unit price × quantity returned, for the list's VALUE column (the refund itself is `refund.amount`). */
+            value: string;
+            order: {
+                id: number;
+                number: string;
+                customer_name: string;
+                /** @enum {string} */
+                status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped" | "delivered" | "completed" | "cancelled" | "returned" | "partially_returned";
+                /** @enum {string} */
+                payment_status: "unpaid" | "pending" | "partially_paid" | "paid" | "partially_refunded" | "refunded" | "failed";
+                payment_method: string | null;
+                delivered_at: string | null;
+            };
+            window_days: number;
+            within_window: boolean | null;
+            items: {
+                id: number;
+                order_item_id: number;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                sku: string;
+                image_path: string | null;
+                unit_price: string;
+                quantity: number;
+                quantity_resellable: number | null;
+                quantity_damaged: number | null;
+            }[];
+            /** @description A refund exists (shown in `refund` only with refunds.view). */
+            has_refund: boolean;
+            refund: components["schemas"]["Refund"] | null;
+            received_at: string | null;
+            inspected_at: string | null;
+            closed_at: string | null;
+            created_at: string | null;
+            can: {
+                manage: boolean;
+            };
+        };
         /**
          * OrderTrackRequest
          * @description `POST /storefront/orders/track` (P4-STO-10, rule 22): order number **plus** phone
@@ -3447,6 +5028,176 @@ export interface components {
         OrderWorkflowRequest: {
             /** @description Shown on the order's activity timeline next to the change. */
             note?: string | null;
+        };
+        /**
+         * PayExpenseRequest
+         * @description `POST /finance/expenses/{expense}/pay` — `payment_method` and `paid_on` (a Dhaka date, not in the future).
+         */
+        PayExpenseRequest: {
+            payment_method: components["schemas"]["ExpensePaymentMethod"];
+            /** Format: date */
+            paid_on: string;
+        };
+        /**
+         * PayRefundRequest
+         * @description `POST /refunds/{refund}/pay` — refunds.create or refunds.approve; needs an
+         *     `Idempotency-Key`. For a COD (or cash) order staff paid by hand: `method` (bkash, nagad,
+         *     cash, bank_transfer) and the transaction `reference` (not needed for cash) are required
+         *     then (checked by PayRefund). For an online payment both are ignored — the gateway pays.
+         */
+        PayRefundRequest: {
+            /** @enum {string|null} */
+            method?: "bkash" | "nagad" | "cash" | "bank_transfer" | null;
+            reference?: string | null;
+        };
+        /** PnlSeries */
+        PnlSeries: {
+            /** @enum {string} */
+            granularity: "day" | "week" | "month" | "year";
+            from: string;
+            to: string;
+            /** @enum {string} */
+            source: "ledger" | "summaries" | "mixed";
+            /** @description One bucket per period, oldest first, including empty ones. */
+            buckets: {
+                key: string;
+                from: string;
+                to: string;
+                days: number;
+                totals: {
+                    gross_revenue: string;
+                    net_revenue: string;
+                    gross_profit: string;
+                    profit_after_delivery: string;
+                    profit_after_losses: string;
+                    net_profit: string;
+                };
+                lines: {
+                    [key: string]: string;
+                };
+                net_margin_percent: string | null;
+            }[];
+            totals: {
+                gross_revenue: string;
+                net_revenue: string;
+                gross_profit: string;
+                profit_after_delivery: string;
+                profit_after_losses: string;
+                net_profit: string;
+            };
+        };
+        /** PnlStatement */
+        PnlStatement: {
+            /** @description First Dhaka day, inclusive. */
+            from: string;
+            /** @description Last Dhaka day, inclusive. */
+            to: string;
+            days: number;
+            /**
+             * @description The five blocks in order. A `line` carries the ledger types it sums; a
+             *     `subtotal` is the running total after the lines above it.
+             */
+            blocks: {
+                /** @enum {string} */
+                key: "revenue" | "goods" | "delivery" | "losses" | "running";
+                number: number;
+                rows: {
+                    /** @enum {string} */
+                    kind: "line" | "subtotal";
+                    key: string;
+                    types?: string[];
+                    amount: string;
+                }[];
+            }[];
+            totals: {
+                gross_revenue: string;
+                net_revenue: string;
+                gross_profit: string;
+                profit_after_delivery: string;
+                profit_after_losses: string;
+                net_profit: string;
+            };
+            /** @description Gross profit as % of net revenue, 2 dp; null without revenue. */
+            gross_margin_percent: string | null;
+            /** @description Net profit as % of net revenue, 2 dp; null without revenue. */
+            net_margin_percent: string | null;
+            /**
+             * @description Recognised entries of a type that does not belong in a P&L (e.g. a cash-only
+             *     type flagged as revenue). Not counted above; should always be empty.
+             */
+            unmapped: {
+                type: string;
+                amount: string;
+            }[];
+            /** @description Recognised entries with an expense category, per category, largest cost first. */
+            expenses_by_category: {
+                category_id: number;
+                name: string;
+                name_bn: string | null;
+                type: string;
+                parent_id: number | null;
+                amount: string;
+            }[];
+            /** @description Cash movements in the period (`is_cash_movement`), kept apart from the P&L. */
+            cash: {
+                in: string;
+                out: string;
+                net: string;
+                by_type: {
+                    type: string;
+                    in: string;
+                    out: string;
+                }[];
+            };
+            /**
+             * @description Recognised net split by whether the entry belongs to an order. `reconciled` is
+             *     true when the two parts add up to the statement's net profit.
+             */
+            reconciliation: {
+                orders: string;
+                order_count: number;
+                other: string;
+                total: string;
+                reconciled: boolean;
+            };
+            /**
+             * @description Orders placed and not yet delivered, cancelled or returned — current, not per
+             *     period. Not in the statement.
+             */
+            open_orders: {
+                count: number;
+                value: string;
+            };
+            /** @description Inventory on hand at cost, now; only with catalog.view_cost. Not in the statement. */
+            inventory_at_cost: string | null;
+            /** @description The comparison period's subtotals and the % change of each; null when `compare=none`. */
+            comparison: {
+                /** @enum {string} */
+                kind: "previous_period" | "previous_year";
+                from: string;
+                to: string;
+                totals: {
+                    gross_revenue: string;
+                    net_revenue: string;
+                    gross_profit: string;
+                    profit_after_delivery: string;
+                    profit_after_losses: string;
+                    net_profit: string;
+                };
+                deltas: {
+                    gross_revenue: string | null;
+                    net_revenue: string | null;
+                    gross_profit: string | null;
+                    profit_after_delivery: string | null;
+                    profit_after_losses: string | null;
+                    net_profit: string | null;
+                };
+            } | null;
+            /**
+             * @description Where the figures were read from.
+             * @enum {string}
+             */
+            source: "ledger" | "summaries" | "mixed";
         };
         /**
          * PreviewNotificationTemplateRequest
@@ -3873,6 +5624,328 @@ export interface components {
                 attribute_value_id: number;
             }[];
         };
+        /** ProfitabilityReport */
+        ProfitabilityReport: {
+            /** @enum {string} */
+            by: "product" | "category" | "source";
+            from: string;
+            to: string;
+            sort: string;
+            /**
+             * @description Sorted rows, at most 1,000 (`truncated` says when there were more). Product rows
+             *     carry product_id/sku/category; category rows category_id/parent_id/products;
+             *     source rows `source` (`none` = not from a recommendation) and products.
+             */
+            data: {
+                name: string;
+                name_bn?: string | null;
+                product_id?: number | null;
+                sku?: string | null;
+                category_id?: number | null;
+                category_name?: string | null;
+                category_name_bn?: string | null;
+                parent_id?: number | null;
+                source?: string;
+                products?: number;
+                orders: number;
+                units: number;
+                units_sold: number;
+                units_returned: number;
+                gross_revenue: string;
+                reversals: string;
+                net_revenue: string;
+                cogs: string;
+                gross_profit: string;
+                margin_percent: string | null;
+            }[];
+            /** @description Over every row, not only the returned ones. */
+            totals: {
+                orders: number;
+                rows: number;
+                units: number;
+                units_sold: number;
+                units_returned: number;
+                gross_revenue: string;
+                reversals: string;
+                net_revenue: string;
+                cogs: string;
+                gross_profit: string;
+                margin_percent: string | null;
+            };
+            truncated: boolean;
+        };
+        /** Purchase */
+        Purchase: {
+            id: number;
+            number: string;
+            /** @enum {string} */
+            status: "draft" | "ordered" | "partially_received" | "received" | "cancelled" | "closed_short";
+            supplier: {
+                id: number;
+                name: string;
+                payment_terms_days: number;
+                /** @enum {string} */
+                status: "active" | "archived";
+            };
+            location_id: number;
+            order_date: string;
+            expected_date: string | null;
+            /** Format: date-time */
+            ordered_at: string | null;
+            /** Format: date-time */
+            received_at: string | null;
+            /** Format: date-time */
+            cancelled_at: string | null;
+            /**
+             * Format: date-time
+             * @description When a partly received PO was closed short.
+             */
+            closed_at: string | null;
+            closed_by: number | null;
+            close_reason: string | null;
+            supplier_invoice_no: string | null;
+            note: string | null;
+            subtotal?: string;
+            discount?: string;
+            shipping_cost?: string;
+            customs_duty?: string;
+            other_cost?: string;
+            tax?: string;
+            total?: string;
+            received_value?: string;
+            paid_amount?: string;
+            due_amount?: string;
+            units_ordered: number;
+            units_received: number;
+            can: {
+                edit: boolean;
+                place: boolean;
+                cancel: boolean;
+                receive: boolean;
+                close: boolean;
+            };
+            items: components["schemas"]["PurchaseLine"][];
+            receipts: components["schemas"]["PurchaseReceipt"][];
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** PurchaseLine */
+        PurchaseLine: {
+            id: number;
+            variant_id: number;
+            product_id: number;
+            product_name: string;
+            product_name_bn: string | null;
+            variant_name: string | null;
+            variant_name_bn: string | null;
+            sku: string;
+            image_url: string | null;
+            quantity_ordered: number;
+            quantity_received: number;
+            quantity_outstanding: number;
+            /** @description Supplier price per unit, 4 dp. */
+            unit_cost?: string;
+            discount?: string;
+            line_total?: string;
+            /** @description Quantity-weighted landed cost over every receipt so far, 4 dp; null before the first. */
+            landed_unit_cost?: string | null;
+        };
+        /** PurchaseListItem */
+        PurchaseListItem: {
+            id: number;
+            /** @description PO-2026-0044. */
+            number: string;
+            /** @enum {string} */
+            status: "draft" | "ordered" | "partially_received" | "received" | "cancelled" | "closed_short";
+            supplier: {
+                id: number;
+                name: string;
+                payment_terms_days: number;
+            };
+            location_id: number;
+            /** @description Y-m-d. */
+            order_date: string;
+            expected_date: string | null;
+            lines_count: number;
+            total?: string;
+            due_amount?: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+        };
+        /** PurchaseReceipt */
+        PurchaseReceipt: {
+            id: number;
+            /** @description GRN-2026-0012. */
+            number: string;
+            purchase_id: number;
+            location_id: number;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            received_at: string;
+            /** @enum {string} */
+            apportion_method: "value" | "quantity" | "weight";
+            costs_paid_to_supplier: boolean;
+            /** @description Who charged the landed costs when not the supplier. */
+            costs_vendor: string | null;
+            costs_reference: string | null;
+            freight?: string;
+            customs_duty?: string;
+            other_cost?: string;
+            goods_value?: string;
+            payable_amount?: string;
+            note: string | null;
+            items: {
+                purchase_item_id: number;
+                variant_id: number;
+                quantity: number;
+                line_value?: string;
+                allocated_cost?: string;
+                landed_unit_cost?: string;
+                avg_cost_before?: string;
+                avg_cost_after?: string;
+            }[];
+        };
+        /** PurchaseReceiptQuote */
+        PurchaseReceiptQuote: {
+            location_id: number;
+            /** @enum {string} */
+            apportion_method: "value" | "quantity" | "weight";
+            units: number;
+            goods_value: string;
+            freight: string;
+            customs_duty: string;
+            other_cost: string;
+            landed_total: string;
+            /** @description What the supplier is owed for this delivery. */
+            payable_amount: string;
+            lines: {
+                purchase_item_id: number;
+                variant_id: number;
+                quantity: number;
+                quantity_outstanding_after: number;
+                unit_cost: string;
+                line_value: string;
+                allocated_cost: string;
+                landed_unit_cost: string;
+                on_hand: number;
+                avg_cost_before: string;
+                avg_cost_after: string;
+            }[];
+        };
+        /**
+         * ReceivePurchaseRequest
+         * @description `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per
+         *     PO line, where they go, and the landed costs to split across them. The quote takes
+         *     the same body and returns every figure the receipt would write; needs
+         *     purchasing.receive. Over-receipt and unknown lines are 422s from ReceiptCalculator.
+         */
+        ReceivePurchaseRequest: {
+            /** @description Where the goods are put away; the PO's location when omitted. */
+            location_id?: number | null;
+            lines: {
+                purchase_item_id: number;
+                /** @description Units arriving now; 0 skips the line. */
+                quantity: number;
+            }[];
+            /** @description Inbound freight for this delivery, in taka. */
+            freight?: string | null;
+            /** @description Customs and import duty for this delivery, in taka. */
+            customs_duty?: string | null;
+            /** @description Any other landed cost (labour, loading, insurance), in taka. */
+            other_cost?: string | null;
+            /** @description How the landed costs are split across lines; by value when omitted. */
+            apportion_method?: components["schemas"]["LandedCostMethod"];
+            /** @description Whether the supplier charged the landed costs on its invoice (they add to what we owe it). Default true. */
+            costs_paid_to_supplier?: boolean;
+            note?: string | null;
+            /** @description Who charged the landed costs when not the supplier (freight forwarder, C&F agent). Only with `costs_paid_to_supplier: false`. */
+            costs_vendor?: string | null;
+            /** @description Their bill or transaction reference. */
+            costs_reference?: string | null;
+            costs_payment_method?: components["schemas"]["ExpensePaymentMethod"] | null;
+        };
+        /**
+         * RecommendationPlacement
+         * @description Where a recommendation was shown (DATABASE-DESIGN §3.1 `recommendation_events.placement`). The placement that put a line in the cart travels on `cart_items.recommendation_source` and is stamped onto `order_items.recommendation_source` at checkout (rule 25d), so the P&L can attribute what each placement actually sold. There is deliberately no checkout placement (rule 25b).
+         * @enum {string}
+         */
+        RecommendationPlacement: "pdp_upsell" | "pdp_cross_sell" | "pdp_fbt" | "pdp_age_progression" | "cart_cross_sell" | "confirmation_cross_sell";
+        /**
+         * RecordCodReceiptRequest
+         * @description `POST /finance/orders/{order}/cod-receipts` — cash received from the courier for one
+         *     delivered COD order: `amount` (> 0, ≤ outstanding), `received_on` (a Dhaka date, not in
+         *     the future), optional `reference` (the courier's payment id) and `note`. Needs
+         *     finance.reconcile_cod and an `Idempotency-Key`.
+         */
+        RecordCodReceiptRequest: {
+            amount: string;
+            /** Format: date */
+            received_on: string;
+            reference?: string | null;
+            note?: string | null;
+        };
+        /** Refund */
+        Refund: {
+            id: number;
+            order_id: number;
+            amount: string;
+            shipping_amount: string;
+            /** @enum {string} */
+            type: "full" | "partial";
+            /** @enum {string} */
+            method: "cod" | "sslcommerz" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
+            /** @enum {string} */
+            status: "requested" | "approved" | "processing" | "completed" | "failed" | "rejected";
+            reason: string;
+            gateway_reference: string | null;
+            restock: boolean;
+            note: string | null;
+            needs_manager: boolean;
+            approval_threshold: string;
+            /** @enum {string} */
+            payout: "manual" | "gateway";
+            requested_by: number | null;
+            approved_by: number | null;
+            approved_at: string | null;
+            processed_at: string | null;
+            created_at: string | null;
+            items: {
+                order_item_id: number;
+                quantity: number;
+                amount: string;
+            }[];
+            can: {
+                approve: boolean;
+                pay: boolean;
+            };
+        };
+        /**
+         * RejectRefundRequest
+         * @description `POST /refunds/{refund}/reject` — same permission as approving it; a reason is required.
+         */
+        RejectRefundRequest: {
+            note: string;
+        };
+        /**
+         * RejectReturnRequest
+         * @description `POST /returns/{orderReturn}/reject` — needs returns.manage; a reason is required.
+         */
+        RejectReturnRequest: {
+            note: string;
+        };
+        /**
+         * RejectStockAdjustmentRequest
+         * @description `POST /inventory/adjustments/{adjustment}/reject` — needs inventory.approve_adjustments. Writes no movement; the reason is required.
+         */
+        RejectStockAdjustmentRequest: {
+            /** @description Why it was rejected (required). */
+            note: string;
+        };
         /**
          * RelationType
          * @description `product_relations.type` (DATABASE-DESIGN §3.1). `age_progression` is its own type, not a flavour of upsell: an upsell is a better version of the same toy; an age progression is the next toy, for a child who has outgrown this one.
@@ -3921,6 +5994,12 @@ export interface components {
             phone: string;
         };
         /**
+         * ReturnReason
+         * @description Why a customer sent goods back. Counted by cause, so a fixed list; `other` needs a note.
+         * @enum {string}
+         */
+        ReturnReason: "damaged_in_transit" | "defective" | "wrong_item" | "missing_parts" | "not_as_described" | "changed_mind" | "other";
+        /**
          * RobotsDirective
          * @description The robots meta values the admin may choose (SeoPanel "Advanced").
          * @enum {string}
@@ -3935,6 +6014,39 @@ export interface components {
             title?: string | null;
             description?: string | null;
         };
+        /**
+         * ShipOrderRequest
+         * @description `POST /orders/{order}/ship` — manual dispatch (P5, until Phase 6 courier booking).
+         *     Needs orders.update + shipments.book. Both courier fields are free text and optional:
+         *     a self-delivery has neither.
+         */
+        ShipOrderRequest: {
+            /** @description Courier the parcel was handed to, booked outside the system (e.g. "Pathao", "own rider"). */
+            courier_name?: string | null;
+            /** @description The courier's consignment or tracking reference, as printed on its receipt. */
+            tracking_reference?: string | null;
+            /** @description Shown on the order's activity timeline next to the change. */
+            note?: string | null;
+        };
+        /**
+         * SslcommerzNotificationRequest
+         * @description An SSLCommerz IPN, or the browser-return POST forwarded by the storefront (P4-PAY-03).
+         *
+         *     Validation here is shape only (bounded scalar strings) — it parses nothing into a domain
+         *     object and writes nothing. The signature is verified on the raw fields
+         *     ({@see raw()}) before anything else happens (rule 19); everything that moves money comes
+         *     from re-querying SSLCommerz, never from these fields.
+         */
+        SslcommerzNotificationRequest: {
+            tran_id?: string | null;
+            val_id?: string | null;
+            status?: string | null;
+            verify_sign?: string | null;
+            verify_key?: string | null;
+            amount?: string | null;
+            currency?: string | null;
+            bank_tran_id?: string | null;
+        };
         /** StaffResource */
         StaffResource: {
             id: number;
@@ -3945,10 +6057,10 @@ export interface components {
         };
         /**
          * StockAdjustmentReason
-         * @description `stock_adjustments.reason` (DATABASE-DESIGN §3.2), plus `gift_sample` — stock given away as a gift, giveaway or influencer sample, which is a real outflow but neither a loss nor a sale. Each reason fixes the direction it may move stock and the movement type it writes: damage → damage_out; loss, expiry, gift/sample → adjustment_out; found → adjustment_in; a recount or a correction may go either way.
+         * @description `stock_adjustments.reason` (DATABASE-DESIGN §3.2), plus `gift_sample` — stock given away as a gift, giveaway or influencer sample, which is a real outflow but neither a loss nor a sale — and `theft` (P5-INV), a loss kept apart from `loss` so shrinkage by theft is reportable on its own. Each reason fixes the direction it may move stock and the movement type it writes: damage → damage_out; loss, theft, expiry, gift/sample → adjustment_out; found → adjustment_in; a recount or a correction may go either way.  Damage, loss, theft and expiry are write-offs: the units are gone with no sale, so Finance books their weighted-average cost as an `inventory_write_off` expense (StockWrittenOff). A gift/sample is a marketing cost, not a write-off, and is left for the expense module.
          * @enum {string}
          */
-        StockAdjustmentReason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample";
+        StockAdjustmentReason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample" | "theft";
         /**
          * StoreAttributeRequest
          * @description `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)
@@ -4254,6 +6366,48 @@ export interface components {
             acknowledge_slug_redirect?: boolean;
         };
         /**
+         * StorePurchaseRequest
+         * @description `POST /purchases` — raises a draft PO; needs purchasing.create.
+         */
+        StorePurchaseRequest: {
+            supplier_id: number;
+            /** @description The stock location the goods are expected at; the default location when omitted. */
+            location_id?: number | null;
+            /**
+             * Format: date
+             * @description Y-m-d (Dhaka).
+             */
+            order_date: string;
+            /** Format: date */
+            expected_date?: string | null;
+            supplier_invoice_no?: string | null;
+            note?: string | null;
+            lines: {
+                variant_id: number;
+                quantity: number;
+                /** @description The supplier's price per unit, up to 4 decimals. */
+                unit_cost: string;
+                /** @description Discount on the whole line, in taka. */
+                discount?: string | null;
+            }[];
+        };
+        /**
+         * StoreReturnRequest
+         * @description `POST /orders/{order}/returns` — needs returns.manage. Quantities are checked against
+         *     what is still returnable on each line by RequestReturn, under the order's row lock.
+         */
+        StoreReturnRequest: {
+            items: {
+                order_item_id: number;
+                quantity: number;
+            }[];
+            reason: components["schemas"]["ReturnReason"];
+            /** @description Required when `reason` is `other`. */
+            reason_note?: string | null;
+            /** @description Also refund the delivery charge (at most once per order). */
+            refund_shipping?: boolean;
+        };
+        /**
          * StoreStockAdjustmentRequest
          * @description `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key`
          *     (a double-submitted adjustment would move the stock twice).
@@ -4275,6 +6429,64 @@ export interface components {
                 /** @description The on-hand quantity a stock count found. Omit when sending `quantity`. */
                 counted?: number | null;
             }[];
+        };
+        /**
+         * StoreStockTransferRequest
+         * @description `POST /inventory/transfers` — needs inventory.transfer and an `Idempotency-Key` (a
+         *     double-submitted transfer would move the stock twice). Each line names a variant and
+         *     the units to move (> 0). That the source has them AVAILABLE (on hand minus reserved)
+         *     is checked by TransferStock against the locked rows, never here.
+         */
+        StoreStockTransferRequest: {
+            /** @description Where the units leave from. */
+            from_location_id: number;
+            /** @description Where they arrive; must differ from the source. */
+            to_location_id: number;
+            note?: string | null;
+            lines: {
+                variant_id: number;
+                /** @description Units to move, > 0. */
+                quantity: number;
+            }[];
+        };
+        /**
+         * StoreSupplierPaymentRequest
+         * @description `POST /suppliers/{supplier}/payments` — needs finance.record_supplier_payments and an
+         *     `Idempotency-Key` (a double-submitted payment would pay twice on the books).
+         */
+        StoreSupplierPaymentRequest: {
+            /** @description Taka, more than zero. */
+            amount: string;
+            method: components["schemas"]["SupplierPaymentMethod"];
+            /** @description Bank/bKash transaction id, cheque number … */
+            reference?: string | null;
+            /**
+             * Format: date
+             * @description The Dhaka date the money left, Y-m-d; never in the future.
+             */
+            paid_at: string;
+            /** @description The PO this pays against, if any (must belong to this supplier). */
+            purchase_id?: number | null;
+            note?: string | null;
+        };
+        /**
+         * StoreSupplierRequest
+         * @description `POST /suppliers` — needs purchasing.manage_suppliers.
+         */
+        StoreSupplierRequest: {
+            name: string;
+            contact_person?: string | null;
+            phone?: string | null;
+            alt_phone?: string | null;
+            /** Format: email */
+            email?: string | null;
+            address?: string | null;
+            district_id?: number | null;
+            tin?: string | null;
+            payment_terms_days?: number;
+            /** @description What we already owed the supplier at go-live (negative = an advance they hold). */
+            opening_balance?: string;
+            note?: string | null;
         };
         /** StorefrontAccount */
         StorefrontAccount: {
@@ -4392,7 +6604,12 @@ export interface components {
              */
             stage: "placed" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
             placed_at: string | null;
-            /** @description `next_action` is null for cash on delivery. */
+            /**
+             * @description `next_action` is null for cash on delivery; for an online order whose live
+             *     gateway session is still open it is `{type: "redirect", url}`. `retry_allowed`:
+             *     the payment-failed page may offer `POST /orders/{number}/payment` again.
+             *     `expires_at`: when the unpaid online order's stock hold lapses (null for COD).
+             */
             payment: {
                 method: string | null;
                 status: string;
@@ -4400,6 +6617,9 @@ export interface components {
                     type: string;
                     url: string;
                 } | null;
+                online: boolean;
+                retry_allowed: boolean;
+                expires_at: string | null;
             };
             contact: {
                 name: string;
@@ -4461,7 +6681,8 @@ export interface components {
             };
             /** @description Customer-visible events, oldest first. */
             timeline: {
-                stage: string;
+                /** @enum {string} */
+                stage: "placed" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "returned";
                 at: string | null;
             }[];
         };
@@ -4703,6 +6924,63 @@ export interface components {
             order_item_id?: number | null;
             is_verified_purchase?: string;
         };
+        /** Supplier */
+        Supplier: {
+            id: number;
+            name: string;
+            contact_person: string | null;
+            /** @description E.164 (+8801…). */
+            phone: string | null;
+            alt_phone: string | null;
+            email: string | null;
+            address: string | null;
+            district_id: number | null;
+            tin: string | null;
+            payment_terms_days: number;
+            /** @enum {string} */
+            status: "active" | "archived";
+            note: string | null;
+            /** @description Payables, decimal strings: opening + received − paid = balance (negative = advance). finance.view only. */
+            balance: {
+                opening: string;
+                received: string;
+                paid: string;
+                balance: string;
+            } | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601, UTC.
+             */
+            created_at: string;
+        };
+        /** SupplierPayment */
+        SupplierPayment: {
+            id: number;
+            supplier_id: number;
+            purchase_id: number | null;
+            purchase_number: string | null;
+            amount: string;
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "cheque" | "bkash" | "nagad" | "other";
+            reference: string | null;
+            /** @description Dhaka date, Y-m-d. */
+            paid_at: string;
+            note: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        /**
+         * SupplierPaymentMethod
+         * @description `supplier_payments.method` — how the money left the business.
+         * @enum {string}
+         */
+        SupplierPaymentMethod: "cash" | "bank_transfer" | "cheque" | "bkash" | "nagad" | "other";
+        /**
+         * SupplierStatus
+         * @description `suppliers.status`. Archived, never deleted: purchases and payments reference it.
+         * @enum {string}
+         */
+        SupplierStatus: "active" | "archived";
         /**
          * TwitterCard
          * @enum {string}
@@ -4998,6 +7276,52 @@ export interface components {
             email?: string | null;
             /** @enum {string} */
             preferred_language?: "en" | "bn";
+        };
+        /**
+         * UpdatePurchaseRequest
+         * @description `PUT /purchases/{purchase}` — replaces a draft's header and lines (409 once ordered); needs purchasing.create.
+         */
+        UpdatePurchaseRequest: {
+            supplier_id: number;
+            /** @description The stock location the goods are expected at; the default location when omitted. */
+            location_id?: number | null;
+            /**
+             * Format: date
+             * @description Y-m-d (Dhaka).
+             */
+            order_date: string;
+            /** Format: date */
+            expected_date?: string | null;
+            supplier_invoice_no?: string | null;
+            note?: string | null;
+            lines: {
+                variant_id: number;
+                quantity: number;
+                /** @description The supplier's price per unit, up to 4 decimals. */
+                unit_cost: string;
+                /** @description Discount on the whole line, in taka. */
+                discount?: string | null;
+            }[];
+        };
+        /**
+         * UpdateSupplierRequest
+         * @description `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change.
+         *     `status: active` restores an archived supplier. Needs purchasing.manage_suppliers.
+         */
+        UpdateSupplierRequest: {
+            name?: string;
+            contact_person?: string | null;
+            phone?: string | null;
+            alt_phone?: string | null;
+            /** Format: email */
+            email?: string | null;
+            address?: string | null;
+            district_id?: number | null;
+            tin?: string | null;
+            payment_terms_days?: number;
+            opening_balance?: string;
+            note?: string | null;
+            status?: components["schemas"]["SupplierStatus"];
         };
         /**
          * VariantStatus
@@ -7536,6 +9860,8 @@ export interface operations {
                 "filter[location_id]"?: number;
                 /** @description Comma-separated movement types, e.g. `damage_out,adjustment_out`. */
                 "filter[type]"?: string;
+                /** @description Comma-separated adjustment reasons, e.g. `damage,theft` — only adjustment movements with one of them. */
+                "filter[reason]"?: string;
                 /** @description First Dhaka calendar day, YYYY-MM-DD (inclusive). */
                 "filter[from]"?: string;
                 /** @description Last Dhaka calendar day, YYYY-MM-DD (inclusive). */
@@ -7631,6 +9957,67 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "v1.admin.inventory.adjustments.index": {
+        parameters: {
+            query?: {
+                /** @description Comma-separated statuses: `applied`, `pending`, `approved`, `rejected`. */
+                "filter[status]"?: string;
+                /** @description Comma-separated reasons, e.g. `damage,theft`. */
+                "filter[reason]"?: string;
+                /** @description Only this location. */
+                "filter[location_id]"?: number;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InventoryAdjustment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryAdjustment"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                pending: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a `sort`, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
     "v1.admin.inventory.adjustments.store": {
         parameters: {
             query?: never;
@@ -7676,6 +10063,1054 @@ export interface operations {
                 };
             };
             /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inventory.adjustments.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The adjustment ID */
+                adjustment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InventoryAdjustment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAdjustment"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inventory.adjustments.approve": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The adjustment ID */
+                adjustment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveStockAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description `InventoryAdjustment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAdjustment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inventory.approve_adjustments (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not pending (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inventory.adjustments.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The adjustment ID */
+                adjustment: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectStockAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description `InventoryAdjustment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAdjustment"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inventory.approve_adjustments (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not pending (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.inventory.transfers.index": {
+        parameters: {
+            query?: {
+                /** @description Transfers out of or into this location. */
+                "filter[location_id]"?: number;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InventoryTransfer` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryTransfer"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a `sort`, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.transfers.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreStockTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description `InventoryTransfer` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryTransfer"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inventory.transfer (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inventory.alerts.index": {
+        parameters: {
+            query?: {
+                /** @description Comma-separated kinds: `low_stock`, `out_of_stock`, `ledger_drift`, `reserved_drift`. */
+                "filter[kind]"?: string;
+                /** @description Comma-separated statuses (`open` when omitted): `open`, `resolved`, `acknowledged`. */
+                "filter[status]"?: string;
+                /** @description Only this location. */
+                "filter[location_id]"?: number;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InventoryAlert` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryAlert"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: unknown[];
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a `sort`, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.alerts.acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The alert ID */
+                alert: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AcknowledgeInventoryAlertRequest"];
+            };
+        };
+        responses: {
+            /** @description `InventoryAlert` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryAlert"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inventory.approve_adjustments (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not open (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.suppliers.index": {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive "contains" on name, contact person or phone. */
+                "filter[search]"?: string;
+                /** @description Only active or only archived suppliers. */
+                "filter[status]"?: "active" | "archived";
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "name" | "-name" | "created_at" | "-created_at";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Supplier` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Supplier"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.suppliers.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSupplierRequest"];
+            };
+        };
+        responses: {
+            /** @description `Supplier` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.suppliers.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The supplier ID */
+                supplier: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Supplier` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.suppliers.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The supplier ID */
+                supplier: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.suppliers.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The supplier ID */
+                supplier: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSupplierRequest"];
+            };
+        };
+        responses: {
+            /** @description `Supplier` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.suppliers.payments.index": {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The supplier ID */
+                supplier: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `SupplierPayment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupplierPayment"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description An error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.suppliers.payments.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The supplier ID */
+                supplier: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSupplierPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description `SupplierPayment` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierPayment"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.record_supplier_payments (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.purchases.index": {
+        parameters: {
+            query?: {
+                /** @description One PO status. */
+                "filter[status]"?: "draft" | "ordered" | "partially_received" | "received" | "cancelled" | "closed_short";
+                /** @description Only this supplier's POs. */
+                "filter[supplier_id]"?: number;
+                /** @description PO number, supplier invoice number or supplier name contains. */
+                "filter[search]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "created_at" | "-created_at" | "expected_date" | "-expected_date";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `PurchaseListItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PurchaseListItem"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.purchases.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Purchase` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.purchases.counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        draft: number;
+                        ordered: number;
+                        partially_received: number;
+                        received: number;
+                        cancelled: number;
+                        closed_short: number;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.purchases.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Purchase` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.purchases.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Purchase` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a draft (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.purchases.order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Purchase` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a draft (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.purchases.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Purchase` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already received against, or already closed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.purchases.close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClosePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Purchase` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not partially received (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.purchases.receipts.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceivePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `PurchaseReceiptQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseReceiptQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not ordered / partially received (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.purchases.receipts.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The purchase ID */
+                purchase: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceivePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Purchase` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Purchase"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not ordered / partially received (`conflict`) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -8377,6 +11812,308 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.orders.payments.verify": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The order ID */
+                order: number;
+                /** @description The payment ID */
+                payment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"] | string;
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not an online payment (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.orders.bulk.ship": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkFulfilOrdersRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `OrderBulkResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderBulkResult"][];
+                        meta: {
+                            done: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.orders.bulk.deliver": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkFulfilOrdersRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `OrderBulkResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderBulkResult"][];
+                        meta: {
+                            done: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.orders.ship": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ShipOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"] | Record<string, never>;
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order cannot ship from its status (`conflict`), or stock no longer covers a line (`insufficient-stock`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.orders.deliver": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DeliverOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description `Order` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not shipped (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.admin.orders.compose.customer": {
         parameters: {
             query?: {
@@ -8673,6 +12410,409 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.returns.index": {
+        parameters: {
+            query?: {
+                /** @description requested|received|inspected|closed|rejected */
+                "filter[status]"?: string;
+                /** @description RMA or order number prefix. */
+                "filter[search]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `OrderReturn` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["OrderReturn"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                [key: string]: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.returns.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order return ID */
+                orderReturn: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `OrderReturn` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReturn"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.returns.receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order return ID */
+                orderReturn: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `OrderReturn` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReturn"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The return is not requested any more (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.returns.inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order return ID */
+                orderReturn: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderReturn` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReturn"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The return was already inspected or rejected (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.returns.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order return ID */
+                orderReturn: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderReturn` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReturn"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The return was already inspected (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.orders.returns.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `OrderRefundPanel` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderRefundPanel"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.orders.returns.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description `OrderReturn` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderReturn"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The order is not delivered or partially returned (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.refunds.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The refund ID */
+                refund: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Refund` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refund"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not requested any more, or more than is still refundable (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.refunds.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The refund ID */
+                refund: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRefundRequest"];
+            };
+        };
+        responses: {
+            /** @description `Refund` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refund"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already approved or decided (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.refunds.pay": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The refund ID */
+                refund: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PayRefundRequest"];
+            };
+        };
+        responses: {
+            /** @description `Refund` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Refund"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not approved, or more than was captured (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.notifications.templates.index": {
@@ -8979,6 +13119,1190 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.ledger.index": {
+        parameters: {
+            query?: {
+                /** @description Comma-separated ledger types, e.g. `sale_revenue,cogs`. */
+                "filter[type]"?: string;
+                /** @description `in` or `out`. */
+                "filter[direction]"?: "in" | "out";
+                /** @description e.g. `order`, `expense`, `manual_cod_receipt`. */
+                "filter[source_type]"?: string;
+                /** @description With source_type: one source row. */
+                "filter[source_id]"?: number;
+                /** @description Expense category. */
+                "filter[category_id]"?: number;
+                /** @description Only cash movements (true) or only non-cash (false). */
+                "filter[cash]"?: boolean;
+                /** @description Only P&L entries (true) or only non-P&L (false). */
+                "filter[recognised]"?: boolean;
+                /** @description First Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "occurred_on" | "-occurred_on" | "amount" | "-amount";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `FinanceLedgerEntry` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FinanceLedgerEntry"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.receivables": {
+        parameters: {
+            query?: {
+                /** @description A Dhaka date, YYYY-MM-DD. */
+                as_of?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FinanceReceivables` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceReceivables"];
+                };
+            };
+            /** @description as_of is not a date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.cod-receipts.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordCodReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description `ManualCodReceipt` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualCodReceipt"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a COD order, not delivered yet, or more than is outstanding (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.expense-categories.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ExpenseCategory` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ExpenseCategory"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.expense-categories.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description `ExpenseCategory` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategory"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expense-categories.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ExpenseCategory` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategory"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.finance.expense-categories.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The category ID */
+                category: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description `ExpenseCategory` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategory"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.index": {
+        parameters: {
+            query?: {
+                /** @description Comma-separated: pending, approved, rejected, void. */
+                "filter[status]"?: string;
+                /** @description A category (its subcategories included). */
+                "filter[category_id]"?: number;
+                /** @description First Dhaka expense date, YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka expense date, YYYY-MM-DD. */
+                "filter[to]"?: string;
+                /** @description Contains-match on vendor, reference or description. */
+                "filter[search]"?: string;
+                /** @description Only recurring templates (true) or only one-offs (false). */
+                "filter[recurring]"?: boolean;
+                /** @description Only paid (true) or only unpaid (false). */
+                "filter[paid]"?: boolean;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "expense_date" | "-expense_date" | "amount" | "-amount" | "created_at" | "-created_at";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Expense"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.expenses.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The category is inactive (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.summary": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka date, YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date, YYYY-MM-DD. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ExpenseSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+            /** @description Unlisted filter or a bad date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.expenses.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.finance.expenses.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is approved or void (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.expenses.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is approved or void (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExpenseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is not pending (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExpenseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is not pending (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExpenseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is not approved (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already paid, or rejected/void (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.expenses.receipt.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    "Transfer-Encoding": "chunked";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The expense has no receipt (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.expenses.receipt.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ExpenseReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is approved or void (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a PDF/JPEG/PNG/WebP by content, or over 10 MB (`validation-error` on `receipt`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.expenses.receipt.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The expense ID */
+                expense: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `Expense` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The expense is approved or void (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.pnl": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka day, YYYY-MM-DD (inclusive). Default: 6 days before today. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka day, YYYY-MM-DD (inclusive). Default: today. */
+                "filter[to]"?: string;
+                /** @description Comparison period for the deltas. */
+                compare?: "none" | "previous_period" | "previous_year";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PnlStatement` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PnlStatement"];
+                };
+            };
+            /** @description Unlisted parameter or filter, or an invalid date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.pnl.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /finance/reports/pnl. */
+                "filter[from]"?: string;
+                /** @description As on GET /finance/reports/pnl. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted parameter or filter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view or finance.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.pnl.series": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka day, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka day, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+                /** @description Bucket size. Default: day up to 62 days, month up to 366, else year. At most 400 buckets. */
+                group?: "day" | "week" | "month" | "year";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PnlSeries` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PnlSeries"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an invalid date, or too many buckets (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.pnl.series.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /finance/reports/pnl/series. */
+                "filter[from]"?: string;
+                /** @description As on GET /finance/reports/pnl/series. */
+                "filter[to]"?: string;
+                /** @description As on GET /finance/reports/pnl/series. */
+                group?: "day" | "week" | "month" | "year";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted parameter or filter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view or finance.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.profitability": {
+        parameters: {
+            query?: {
+                /** @description Grouping. */
+                by?: "product" | "category" | "source";
+                /** @description First Dhaka delivery day, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka delivery day, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+                /** @description Only products whose primary category is this one or below it. */
+                "filter[category_id]"?: number;
+                /** @description Contains-match on the line's product name, name_bn or SKU. */
+                "filter[search]"?: string;
+                /** @description Only lines with this recommendation_source; `none` = lines without one. */
+                "filter[source]"?: string;
+                /** @description net_revenue, gross_profit, margin_percent, units, cogs or name; prefix - for descending. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProfitabilityReport` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitabilityReport"];
+                };
+            };
+            /** @description Unlisted parameter, filter or sort, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view or catalog.view_cost (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.reports.profitability.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /finance/reports/profitability. */
+                by?: "product" | "category" | "source";
+                /** @description As on GET /finance/reports/profitability. */
+                "filter[from]"?: string;
+                /** @description As on GET /finance/reports/profitability. */
+                "filter[to]"?: string;
+                /** @description As on GET /finance/reports/profitability. */
+                "filter[category_id]"?: number;
+                /** @description As on GET /finance/reports/profitability. */
+                "filter[search]"?: string;
+                /** @description As on GET /finance/reports/profitability. */
+                "filter[source]"?: string;
+                /** @description As on GET /finance/reports/profitability. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted parameter, filter or sort (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing finance.view, catalog.view_cost or finance.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.inventory-valuation": {
+        parameters: {
+            query?: {
+                /** @description Value as at the end of this Dhaka day, YYYY-MM-DD (today or earlier). Default: now, from the live projection. */
+                "filter[as_at]"?: string;
+                /** @description Only this stock location. */
+                "filter[location_id]"?: number;
+                /** @description Only products whose primary category is this one or below it. */
+                "filter[category_id]"?: number;
+                /** @description Contains-match on product name, name_bn or SKU. */
+                "filter[search]"?: string;
+                /** @description value, on_hand, unit_cost or name; prefix - for descending. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InventoryValuation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryValuation"];
+                };
+            };
+            /** @description Unlisted parameter, filter or sort, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing catalog.view_cost, or both finance.view and inventory.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.reports.inventory-valuation.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /reports/inventory-valuation. */
+                "filter[as_at]"?: string;
+                /** @description As on GET /reports/inventory-valuation. */
+                "filter[location_id]"?: number;
+                /** @description As on GET /reports/inventory-valuation. */
+                "filter[category_id]"?: number;
+                /** @description As on GET /reports/inventory-valuation. */
+                "filter[search]"?: string;
+                /** @description As on GET /reports/inventory-valuation. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted parameter, filter or sort (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing the view permissions or finance.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.storefront.ping": {
@@ -10269,6 +15593,164 @@ export interface operations {
             };
         };
     };
+    "v1.storefront.payment-methods.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: [
+                            {
+                                method: string;
+                                online: boolean;
+                                default: boolean;
+                                sandbox: boolean;
+                            }
+                        ];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.orders.payment.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The token of the cart that placed the order. */
+                "X-Cart-Token": string;
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            order_number: string;
+                            payment: {
+                                /** @enum {string} */
+                                status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
+                                /** @enum {string} */
+                                method: "cod" | "sslcommerz" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
+                                expires_at: string | null;
+                            };
+                            /** @description `null` when no session could be opened — show the payment-failed page with retry. */
+                            next_action: {
+                                /** @constant */
+                                type: "redirect";
+                                url: unknown;
+                            } | null;
+                            resumed: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Unknown number or wrong token (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description `conflict` with `reason`: not_online | gateway_unavailable | already_paid | order_closed | under_review | too_many_attempts */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.payments.sslcommerz.return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SslcommerzNotificationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            order_number: string | null;
+                            payment_status: string | null;
+                            order_payment_status: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description The signature did not verify (`unauthenticated`) — nothing was written */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.auth.otp.request": {
         parameters: {
             query?: never;
@@ -10522,6 +16004,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unknown `group` or an unlisted query parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description No valid customer token (`unauthenticated`) */
             401: {
                 headers: {
@@ -10532,15 +16023,7 @@ export interface operations {
                 };
             };
             403: components["responses"]["AuthorizationException"];
-            /** @description Unknown `group` or an unlisted query parameter (`validation-error`) */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.storefront.account.orders.show": {
@@ -10995,6 +16478,51 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    "v1.webhooks.payments.sslcommerz.ipn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SslcommerzNotificationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        received: boolean;
+                        replayed: boolean;
+                    };
+                };
+            };
+            /** @description The signature did not verify — nothing was written */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The source IP is not on the configured allowlist */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
 }

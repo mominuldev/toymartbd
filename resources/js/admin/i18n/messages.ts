@@ -16,6 +16,11 @@ import { notificationsBn, notificationsEn } from './messages.notifications';
 import { orderComposeBn, orderComposeEn } from './messages.orderCompose';
 import { ordersBn, ordersEn } from './messages.orders';
 import { productsBn, productsEn } from './messages.products';
+import { returnsBn, returnsEn } from './messages.returns';
+import { purchasingBn, purchasingEn } from './messages.purchasing';
+import { reportsBn, reportsEn } from './messages.reports';
+import { financeBn, financeEn } from './messages.finance';
+import { fulfilmentBn, fulfilmentEn } from './messages.fulfilment';
 
 export const en = {
     ...productsEn,
@@ -23,10 +28,15 @@ export const en = {
     ...mediaLibraryEn,
     ...mediaPickerEn,
     ...inventoryEn,
+    ...purchasingEn,
     ...ordersEn,
     ...orderComposeEn,
     ...notificationsEn,
     ...catalogIoEn,
+    ...returnsEn,
+    ...reportsEn,
+    ...financeEn,
+    ...fulfilmentEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -288,10 +298,15 @@ export const bn: Messages = {
     ...mediaLibraryBn,
     ...mediaPickerBn,
     ...inventoryBn,
+    ...purchasingBn,
     ...ordersBn,
     ...orderComposeBn,
     ...notificationsBn,
     ...catalogIoBn,
+    ...returnsBn,
+    ...reportsBn,
+    ...financeBn,
+    ...fulfilmentBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

@@ -7,12 +7,14 @@ namespace App\Domain\Payment\Services;
 use App\Domain\Payment\DTOs\GatewayResult;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Enums\PaymentStatus;
+use App\Domain\Payment\Events\PaymentFlaggedForReview;
 use App\Domain\Payment\Events\PaymentStatusChanged;
 use App\Domain\Payment\Exceptions\InvalidPaymentTransition;
 use App\Domain\Payment\Exceptions\PaymentAmountMismatch;
 use App\Domain\Payment\Exceptions\PaymentViolation;
 use App\Domain\Payment\Models\Payment;
 use App\Support\Money;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,8 +24,11 @@ use Illuminate\Support\Facades\DB;
  */
 final readonly class PaymentTransitions
 {
-    /** Create the order's payment row, `pending` for every method (§4.1). */
-    public function open(int $orderId, PaymentMethod $method, Money $amount): Payment
+    /**
+     * Create the order's payment row, `pending` for every method (§4.1). An online attempt
+     * carries `expires_at` — when it stops holding the order's stock (P4-PAY-04).
+     */
+    public function open(int $orderId, PaymentMethod $method, Money $amount, ?CarbonInterface $expiresAt = null): Payment
     {
         self::guard();
 
@@ -33,7 +38,38 @@ final readonly class PaymentTransitions
             'gateway' => $method->value,
             'amount' => $amount,
             'status' => PaymentStatus::Pending,
+            'expires_at' => $expiresAt ?? ($method->isOnline() ? now()->addMinutes(self::expiryMinutes()) : null),
         ]);
+    }
+
+    /** PLACEHOLDER window (config payments.online.expiry_minutes). */
+    public static function expiryMinutes(): int
+    {
+        return max(1, (int) config('payments.online.expiry_minutes', 30));
+    }
+
+    /**
+     * The provider reported something we refuse to apply — an amount or currency that does
+     * not match, or `paid` for an attempt that is already closed. Nothing about the status
+     * or money changes (rule 19); the payment is marked for a human and
+     * PaymentFlaggedForReview tells Ordering to hold the order. Idempotent per reason.
+     */
+    public function flagForReview(Payment $payment, string $reason): Payment
+    {
+        self::guard();
+
+        /** @var Payment $locked */
+        $locked = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+        if ($locked->review_reason === $reason) {
+            return $locked;
+        }
+        $locked->review_reason = mb_substr($reason, 0, 64);
+        $locked->review_flagged_at = now();
+        $locked->save();
+
+        PaymentFlaggedForReview::dispatch($locked->id, $locked->order_id, $locked->method->value, $locked->review_reason);
+
+        return $locked;
     }
 
     /**

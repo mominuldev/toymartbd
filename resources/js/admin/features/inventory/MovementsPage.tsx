@@ -10,7 +10,7 @@ import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
-import { movementTypes, useMovements, useReconciliation, type Movement, type MovementFilters, type MovementType } from './api';
+import { adjustmentReasons, movementTypes, useMovements, useReconciliation, type AdjustmentReason, type Movement, type MovementFilters, type MovementType } from './api';
 import { MovementTypeChip, Taka, VariantCell, formatUnits, movementTypeLabel, signed } from './parts';
 
 const ranges = ['7', '30', '90', 'all'] as const;
@@ -54,6 +54,8 @@ export function MovementsPage() {
     const range: Range = ranges.includes(rangeParam as Range) ? (rangeParam as Range) : '7';
     const typeParam = params.get('type');
     const type: MovementType | '' = movementTypes.includes(typeParam as MovementType) ? (typeParam as MovementType) : '';
+    const reasonParam = params.get('reason');
+    const reason: AdjustmentReason | '' = adjustmentReasons.includes(reasonParam as AdjustmentReason) ? (reasonParam as AdjustmentReason) : '';
     const id = (key: string) => (/^\d+$/.test(params.get(key) ?? '') ? params.get(key)! : '');
     const today = dhakaDate(0);
 
@@ -63,6 +65,7 @@ export function MovementsPage() {
             product: id('product'),
             location: id('location'),
             type,
+            reason,
             from: range === 'all' ? '' : dhakaDate(Number(range) - 1),
             to: range === 'all' ? '' : today,
         }),
@@ -149,6 +152,17 @@ export function MovementsPage() {
                         {movementTypes.map((value) => (
                             <option key={value} value={value}>
                                 {t(movementTypeLabel(value))}
+                            </option>
+                        ))}
+                    </Select>
+                </label>
+                <label className="flex">
+                    <span className="sr-only">{t('movements.reason')}</span>
+                    <Select size="sm" value={reason} onChange={(e) => setParam('reason', e.target.value)} className="w-48">
+                        <option value="">{t('movements.reason.all')}</option>
+                        {adjustmentReasons.map((value) => (
+                            <option key={value} value={value}>
+                                {t(`adjust.reason.${value}` as MessageKey)}
                             </option>
                         ))}
                     </Select>

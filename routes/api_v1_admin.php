@@ -9,7 +9,9 @@ use App\Http\Controllers\Api\V1\Admin\BrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController;
 use App\Http\Controllers\Api\V1\Admin\CouponController;
 use App\Http\Controllers\Api\V1\Admin\InventoryAdjustmentController;
+use App\Http\Controllers\Api\V1\Admin\InventoryAlertController;
 use App\Http\Controllers\Api\V1\Admin\InventoryController;
+use App\Http\Controllers\Api\V1\Admin\InventoryTransferController;
 use App\Http\Controllers\Api\V1\Admin\MediaBulkController;
 use App\Http\Controllers\Api\V1\Admin\MediaController;
 use App\Http\Controllers\Api\V1\Admin\MediaFolderController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Api\V1\Admin\NotificationTemplateController;
 use App\Http\Controllers\Api\V1\Admin\OrderComposerController;
 use App\Http\Controllers\Api\V1\Admin\OrderController;
 use App\Http\Controllers\Api\V1\Admin\OrderEditController;
+use App\Http\Controllers\Api\V1\Admin\OrderFulfilmentController;
 use App\Http\Controllers\Api\V1\Admin\OrderInvoiceController;
 use App\Http\Controllers\Api\V1\Admin\OrderNoteController;
 use App\Http\Controllers\Api\V1\Admin\OrderPackingController;
@@ -30,8 +33,14 @@ use App\Http\Controllers\Api\V1\Admin\ProductImageController;
 use App\Http\Controllers\Api\V1\Admin\ProductImportController;
 use App\Http\Controllers\Api\V1\Admin\ProductPricingController;
 use App\Http\Controllers\Api\V1\Admin\ProductSeoController;
+use App\Http\Controllers\Api\V1\Admin\PurchaseController;
+use App\Http\Controllers\Api\V1\Admin\PurchaseReceiptController;
+use App\Http\Controllers\Api\V1\Admin\RefundController;
+use App\Http\Controllers\Api\V1\Admin\ReturnController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
+use App\Http\Controllers\Api\V1\Admin\SupplierController;
+use App\Http\Controllers\Api\V1\Admin\SupplierPaymentController;
 use App\Http\Middleware\EnsureActiveStaffSession;
 use Illuminate\Support\Facades\Route;
 
@@ -156,6 +165,35 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/inventory/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
     Route::get('/inventory/movements/reconciliation', [InventoryController::class, 'reconciliation'])->name('inventory.movements.reconciliation');
     Route::post('/inventory/adjustments', [InventoryAdjustmentController::class, 'store'])->middleware('idempotent')->name('inventory.adjustments.store');
+    // P5-INV: approval queue, transfers between locations, low-stock / drift alerts.
+    Route::get('/inventory/adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory.adjustments.index');
+    Route::get('/inventory/adjustments/{adjustment}', [InventoryAdjustmentController::class, 'show'])->whereNumber('adjustment')->name('inventory.adjustments.show');
+    Route::post('/inventory/adjustments/{adjustment}/approve', [InventoryAdjustmentController::class, 'approve'])->whereNumber('adjustment')->middleware('idempotent')->name('inventory.adjustments.approve');
+    Route::post('/inventory/adjustments/{adjustment}/reject', [InventoryAdjustmentController::class, 'reject'])->whereNumber('adjustment')->name('inventory.adjustments.reject');
+    Route::get('/inventory/transfers', [InventoryTransferController::class, 'index'])->name('inventory.transfers.index');
+    Route::post('/inventory/transfers', [InventoryTransferController::class, 'store'])->middleware('idempotent')->name('inventory.transfers.store');
+    Route::get('/inventory/alerts', [InventoryAlertController::class, 'index'])->name('inventory.alerts.index');
+    Route::post('/inventory/alerts/{alert}/acknowledge', [InventoryAlertController::class, 'acknowledge'])->whereNumber('alert')->name('inventory.alerts.acknowledge');
+
+    // Purchasing (P5): suppliers, purchase orders, receipts with landed cost, supplier payments.
+    // A receipt moves stock and a payment moves money, so both need an Idempotency-Key.
+    Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+    Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->whereNumber('supplier')->name('suppliers.show');
+    Route::patch('/suppliers/{supplier}', [SupplierController::class, 'update'])->whereNumber('supplier')->name('suppliers.update');
+    Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->whereNumber('supplier')->name('suppliers.destroy');
+    Route::get('/suppliers/{supplier}/payments', [SupplierPaymentController::class, 'index'])->whereNumber('supplier')->name('suppliers.payments.index');
+    Route::post('/suppliers/{supplier}/payments', [SupplierPaymentController::class, 'store'])->whereNumber('supplier')->middleware('idempotent')->name('suppliers.payments.store');
+    Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+    Route::get('/purchases/counts', [PurchaseController::class, 'counts'])->name('purchases.counts');
+    Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
+    Route::put('/purchases/{purchase}', [PurchaseController::class, 'update'])->whereNumber('purchase')->name('purchases.update');
+    Route::post('/purchases/{purchase}/order', [PurchaseController::class, 'place'])->whereNumber('purchase')->name('purchases.order');
+    Route::post('/purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->whereNumber('purchase')->name('purchases.cancel');
+    Route::post('/purchases/{purchase}/close', [PurchaseController::class, 'close'])->whereNumber('purchase')->name('purchases.close');
+    Route::post('/purchases/{purchase}/receipts/quote', [PurchaseReceiptController::class, 'quote'])->whereNumber('purchase')->name('purchases.receipts.quote');
+    Route::post('/purchases/{purchase}/receipts', [PurchaseReceiptController::class, 'store'])->whereNumber('purchase')->middleware('idempotent')->name('purchases.receipts.store');
 
     // Coupons (P4-CRT-04). DELETE deactivates; usages keep the per-customer limits.
     Route::get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
@@ -178,6 +216,15 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/orders/{order}/ready-to-ship', [OrderWorkflowController::class, 'readyToShip'])->name('orders.ready-to-ship');
     Route::post('/orders/{order}/cancel', [OrderWorkflowController::class, 'cancel'])->name('orders.cancel');
     Route::post('/orders/{order}/notes', [OrderNoteController::class, 'store'])->name('orders.notes.store');
+    // Re-query the gateway for an online payment (P4-PAY-03); needs orders.update.
+    Route::post('/orders/{order}/payments/{payment}/verify', [App\Http\Controllers\Api\V1\Admin\OrderPaymentController::class, 'verify'])->middleware('idempotent')->whereNumber('payment')->name('orders.payments.verify');
+
+    // Manual fulfilment (P5, until Phase 6 courier booking): ship consumes stock, deliver
+    // recognises revenue (Finance listens) and collects COD. A double submit must replay.
+    Route::post('/orders/bulk/ship', [OrderFulfilmentController::class, 'bulkShip'])->middleware('idempotent')->name('orders.bulk.ship');
+    Route::post('/orders/bulk/deliver', [OrderFulfilmentController::class, 'bulkDeliver'])->middleware('idempotent')->name('orders.bulk.deliver');
+    Route::post('/orders/{order}/ship', [OrderFulfilmentController::class, 'ship'])->middleware('idempotent')->name('orders.ship');
+    Route::post('/orders/{order}/deliver', [OrderFulfilmentController::class, 'deliver'])->middleware('idempotent')->name('orders.deliver');
 
     // Manual orders (P4-ORD-06): lookups, a live quote and the order itself, all through the
     // checkout pricing pipeline and PlaceOrder. Edit after placement (P4-ORD-07). Bulk pack
@@ -194,6 +241,19 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/orders/bulk/invoices', [OrderInvoiceController::class, 'bulk'])->name('orders.bulk.invoices');
     Route::get('/orders/{order}/invoice', [OrderInvoiceController::class, 'show'])->name('orders.invoice');
 
+    // Returns & refunds (DATABASE-DESIGN §4.7, PRD O-21, Figma 211:5121). Paying a refund out
+    // moves money, so a double submit must replay, not pay twice.
+    Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
+    Route::get('/returns/{orderReturn}', [ReturnController::class, 'show'])->name('returns.show');
+    Route::post('/returns/{orderReturn}/receive', [ReturnController::class, 'receive'])->name('returns.receive');
+    Route::post('/returns/{orderReturn}/inspect', [ReturnController::class, 'inspect'])->name('returns.inspect');
+    Route::post('/returns/{orderReturn}/reject', [ReturnController::class, 'reject'])->name('returns.reject');
+    Route::get('/orders/{order}/returns', [ReturnController::class, 'forOrder'])->name('orders.returns.index');
+    Route::post('/orders/{order}/returns', [ReturnController::class, 'store'])->name('orders.returns.store');
+    Route::post('/refunds/{refund}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
+    Route::post('/refunds/{refund}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
+    Route::post('/refunds/{refund}/pay', [RefundController::class, 'pay'])->middleware('idempotent')->name('refunds.pay');
+
     // Notifications (P4-NOT-01..03): templates (EN + BN, server-measured segments), the
     // message log with per-message cost and dead letters, and customer opt-outs.
     Route::get('/notifications/templates', [NotificationTemplateController::class, 'index'])->name('notifications.templates.index');
@@ -205,4 +265,38 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::post('/notifications/logs/{log}/retry', [NotificationLogController::class, 'retry'])->whereNumber('log')->name('notifications.logs.retry');
     Route::get('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'show'])->name('notifications.preferences.show');
     Route::put('/notifications/customers/{customer}/preferences', [NotificationPreferenceController::class, 'update'])->name('notifications.preferences.update');
+
+    // Finance ledger (P5): read-only browser, COD receivables, manual COD receipts (cash, not
+    // revenue), expense categories, expenses (receipt, approval, pay, void). Static paths first.
+    Route::get('/finance/ledger', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'index'])->name('finance.ledger.index');
+    Route::get('/finance/receivables', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'receivables'])->name('finance.receivables');
+    Route::post('/finance/orders/{order}/cod-receipts', [App\Http\Controllers\Api\V1\Admin\CodReceiptController::class, 'store'])->middleware('idempotent')->name('finance.cod-receipts.store');
+    Route::get('/finance/expense-categories', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'index'])->name('finance.expense-categories.index');
+    Route::post('/finance/expense-categories', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'store'])->name('finance.expense-categories.store');
+    Route::patch('/finance/expense-categories/{category}', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'update'])->whereNumber('category')->name('finance.expense-categories.update');
+    Route::delete('/finance/expense-categories/{category}', [App\Http\Controllers\Api\V1\Admin\ExpenseCategoryController::class, 'destroy'])->whereNumber('category')->name('finance.expense-categories.destroy');
+    Route::get('/finance/expenses', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'index'])->name('finance.expenses.index');
+    Route::get('/finance/expenses/summary', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'summary'])->name('finance.expenses.summary');
+    Route::post('/finance/expenses', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'store'])->name('finance.expenses.store');
+    Route::get('/finance/expenses/{expense}', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'show'])->whereNumber('expense')->name('finance.expenses.show');
+    Route::patch('/finance/expenses/{expense}', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'update'])->whereNumber('expense')->name('finance.expenses.update');
+    Route::delete('/finance/expenses/{expense}', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'destroy'])->whereNumber('expense')->name('finance.expenses.destroy');
+    Route::post('/finance/expenses/{expense}/approve', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'approve'])->whereNumber('expense')->name('finance.expenses.approve');
+    Route::post('/finance/expenses/{expense}/reject', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'reject'])->whereNumber('expense')->name('finance.expenses.reject');
+    Route::post('/finance/expenses/{expense}/void', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'void'])->whereNumber('expense')->name('finance.expenses.void');
+    Route::post('/finance/expenses/{expense}/pay', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'pay'])->whereNumber('expense')->name('finance.expenses.pay');
+    Route::get('/finance/expenses/{expense}/receipt', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'receipt'])->whereNumber('expense')->name('finance.expenses.receipt.show');
+    Route::post('/finance/expenses/{expense}/receipt', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'storeReceipt'])->whereNumber('expense')->name('finance.expenses.receipt.store');
+    Route::delete('/finance/expenses/{expense}/receipt', [App\Http\Controllers\Api\V1\Admin\ExpenseController::class, 'destroyReceipt'])->whereNumber('expense')->name('finance.expenses.receipt.destroy');
+
+    // Finance reports (P5): P&L statement + day/week/month/year series, profitability by
+    // product / category / recommendation source, inventory valuation. Read-only; CSV exports.
+    Route::get('/finance/reports/pnl', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'pnl'])->name('finance.reports.pnl');
+    Route::get('/finance/reports/pnl/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportPnl'])->name('finance.reports.pnl.export');
+    Route::get('/finance/reports/pnl/series', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'series'])->name('finance.reports.pnl.series');
+    Route::get('/finance/reports/pnl/series/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportSeries'])->name('finance.reports.pnl.series.export');
+    Route::get('/finance/reports/profitability', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'profitability'])->name('finance.reports.profitability');
+    Route::get('/finance/reports/profitability/export', [App\Http\Controllers\Api\V1\Admin\FinanceReportController::class, 'exportProfitability'])->name('finance.reports.profitability.export');
+    Route::get('/reports/inventory-valuation', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'index'])->name('reports.inventory-valuation');
+    Route::get('/reports/inventory-valuation/export', [App\Http\Controllers\Api\V1\Admin\InventoryValuationController::class, 'export'])->name('reports.inventory-valuation.export');
 });

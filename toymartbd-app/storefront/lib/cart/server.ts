@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { Schema } from '@toymart/api-types';
+
 import { ApiError, noStore, problemErrors, send } from '../api';
 import type { Locale } from '../i18n/config';
 import type { Cart, CartNotice } from './types';
@@ -79,8 +81,18 @@ async function write(target: string, token: string | null, call: (headers: Recor
     }
 }
 
-export function addItem(token: string | null, variantId: number, quantity: number, locale: Locale): Promise<CartWrite> {
-    return write('add', token, (headers) => send<Cart>('POST', 'storefront/cart/items', { locale, headers, body: { variant_id: variantId, quantity } }));
+/** Recommendation placements (rule 25d; the API's RecommendationPlacement). None on checkout (rule 25b). */
+export type RecommendationPlacement = Schema<'RecommendationPlacement'>;
+export const RECOMMENDATION_PLACEMENTS = ['pdp_upsell', 'pdp_cross_sell', 'pdp_fbt', 'pdp_age_progression', 'cart_cross_sell', 'confirmation_cross_sell'] as const satisfies readonly RecommendationPlacement[];
+
+/** A form field that names a known placement, else null (never forwarded as-is). */
+export function recommendationSource(value: unknown): RecommendationPlacement | null {
+    return typeof value === 'string' && (RECOMMENDATION_PLACEMENTS as readonly string[]).includes(value) ? (value as RecommendationPlacement) : null;
+}
+
+export function addItem(token: string | null, variantId: number, quantity: number, locale: Locale, source: RecommendationPlacement | null = null): Promise<CartWrite> {
+    const body = { variant_id: variantId, quantity, ...(source ? { recommendation_source: source } : {}) };
+    return write('add', token, (headers) => send<Cart>('POST', 'storefront/cart/items', { locale, headers, body }));
 }
 
 export function updateItem(token: string, itemId: number, quantity: number, locale: Locale): Promise<CartWrite> {

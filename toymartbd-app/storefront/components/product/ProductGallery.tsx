@@ -3,6 +3,7 @@ import { preload } from 'react-dom';
 import { Icon } from '@/components/icons/Icon';
 import { format, type Locale, type Messages } from '@/lib/i18n';
 import type { StorefrontProduct } from '@/lib/product/variants';
+import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
 import { GalleryEnhancer } from './GalleryEnhancer';
 
 interface Props {
@@ -75,14 +76,15 @@ export function ProductGallery({ product, name, locale, t, discountPercent }: Pr
                         {format(t.pdp.discount, { percent: String(discountPercent) })}
                     </span>
                 ) : null}
-                <button
-                    type="button"
-                    disabled
-                    aria-label={format(t.pdp.wishlist, { name })}
-                    className="absolute top-2.5 right-3 flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 before:absolute before:size-touch-min before:content-[''] lg:top-3.75 lg:right-4.25 lg:size-control-lg lg:border lg:border-line-default lg:shadow-none"
-                >
-                    <Icon name="heart" className="size-icon-sm lg:size-icon-lg" />
-                </button>
+                <WishlistHeart
+                    productId={product.id}
+                    label={format(t.pdp.wishlist, { name })}
+                    locale={locale}
+                    back={`/products/${product.slug}`}
+                    className="absolute top-2.5 right-3 lg:top-3.75 lg:right-4.25"
+                    buttonClassName="flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 before:absolute before:size-touch-min before:content-[''] lg:size-control-lg lg:border lg:border-line-default lg:shadow-none"
+                    iconClassName="size-icon-sm lg:size-icon-lg"
+                />
                 {total > 1 ? (
                     <>
                         <span data-gallery-counter aria-hidden="true" className="t-caption-strong absolute right-3 bottom-3 rounded-full bg-surface px-2.5 py-0.75 text-fg-secondary tabular-nums lg:hidden">

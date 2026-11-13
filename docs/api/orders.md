@@ -67,8 +67,15 @@ fulfilled → returned · returned terminal.
 |---|---|---|
 | confirm, hold, release, processing, ready_to_ship, completed | `TransitionOrder` | none |
 | cancel | `CancelOrder` | release reservation (Inventory `ReleaseStock`), cancel open payments |
+| shipped (manual, P5) | `MarkOrderShipped` / `BulkMarkOrdersShipped` — `POST /admin/orders/{order}/ship`, `/orders/bulk/ship` | consume reservation (Inventory `ConsumeReservedStock`: `sale_out`), `quantity_shipped`, fulfilment → fulfilled; courier name + tracking ref on the event `meta`; no ledger row |
+| delivered (manual, P5) | `MarkOrderDelivered` / `BulkMarkOrdersDelivered` — `POST /admin/orders/{order}/deliver`, `/orders/bulk/deliver` | pending COD payment → paid (`CollectCodPayment`), order payment_status re-derived; ledger via Finance's `OrderDelivered` listener (recognised, not cash) |
 | shipped | courier booking (Phase 6, §4.2) | consume stock (`sale_out`), ledger |
 | delivered / returned | Fulfilment (Phase 6, §4.3–4.4) | COD collection, ledger, restock |
+
+Manual fulfilment routes need orders.update + shipments.book and an `Idempotency-Key`; a move
+the state machine refuses is a 409 `conflict`, a line whose `on_hand` no longer covers it a 409
+`insufficient-stock`. Bulk variants answer 200 with one result per id (`done` / `conflict` /
+`not_found`). `available_actions` on the order includes `ship` / `deliver` when allowed.
 
 ## Cancel (P4-ORD-09)
 

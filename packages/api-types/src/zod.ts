@@ -10,8 +10,20 @@ export type CancellationReason = z.infer<typeof cancellationReasonSchema>;
 export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
 export type CouponType = z.infer<typeof couponTypeSchema>;
 
+export const expenseCategoryTypeSchema = z.enum(["cogs","operating","marketing","logistics","other"]);
+export type ExpenseCategoryType = z.infer<typeof expenseCategoryTypeSchema>;
+
+export const expensePaymentMethodSchema = z.enum(["cash","bank_transfer","bkash","nagad","card","cheque"]);
+export type ExpensePaymentMethod = z.infer<typeof expensePaymentMethodSchema>;
+
+export const expenseRecurrenceSchema = z.enum(["monthly","quarterly","yearly"]);
+export type ExpenseRecurrence = z.infer<typeof expenseRecurrenceSchema>;
+
 export const genderSchema = z.enum(["boys","girls","unisex"]);
 export type Gender = z.infer<typeof genderSchema>;
+
+export const landedCostMethodSchema = z.enum(["value","quantity","weight"]);
+export type LandedCostMethod = z.infer<typeof landedCostMethodSchema>;
 
 export const notificationChannelSchema = z.enum(["sms","whatsapp","email"]);
 export type NotificationChannel = z.infer<typeof notificationChannelSchema>;
@@ -25,14 +37,26 @@ export type ProductStatus = z.infer<typeof productStatusSchema>;
 export const productTypeSchema = z.enum(["simple","variable"]);
 export type ProductType = z.infer<typeof productTypeSchema>;
 
+export const recommendationPlacementSchema = z.enum(["pdp_upsell","pdp_cross_sell","pdp_fbt","pdp_age_progression","cart_cross_sell","confirmation_cross_sell"]);
+export type RecommendationPlacement = z.infer<typeof recommendationPlacementSchema>;
+
 export const relationTypeSchema = z.enum(["related","upsell","cross_sell","bundle","age_progression"]);
 export type RelationType = z.infer<typeof relationTypeSchema>;
+
+export const returnReasonSchema = z.enum(["damaged_in_transit","defective","wrong_item","missing_parts","not_as_described","changed_mind","other"]);
+export type ReturnReason = z.infer<typeof returnReasonSchema>;
 
 export const robotsDirectiveSchema = z.enum(["index,follow","noindex,follow","index,nofollow","noindex,nofollow"]);
 export type RobotsDirective = z.infer<typeof robotsDirectiveSchema>;
 
-export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample"]);
+export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample","theft"]);
 export type StockAdjustmentReason = z.infer<typeof stockAdjustmentReasonSchema>;
+
+export const supplierPaymentMethodSchema = z.enum(["cash","bank_transfer","cheque","bkash","nagad","other"]);
+export type SupplierPaymentMethod = z.infer<typeof supplierPaymentMethodSchema>;
+
+export const supplierStatusSchema = z.enum(["active","archived"]);
+export type SupplierStatus = z.infer<typeof supplierStatusSchema>;
 
 export const twitterCardSchema = z.enum(["summary_large_image","summary"]);
 export type TwitterCard = z.infer<typeof twitterCardSchema>;
@@ -40,10 +64,17 @@ export type TwitterCard = z.infer<typeof twitterCardSchema>;
 export const variantStatusSchema = z.enum(["active","archived"]);
 export type VariantStatus = z.infer<typeof variantStatusSchema>;
 
-/** `POST /cart/items` `{ variant_id, quantity }`. Without `X-Cart-Token` a new cart is */
+/** `POST /inventory/alerts/{alert}/acknowledge` — needs inventory.approve_adjustments. */
+export const acknowledgeInventoryAlertRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type AcknowledgeInventoryAlertRequestInput = z.input<typeof acknowledgeInventoryAlertRequestSchema>;
+
+/** `POST /cart/items` `{ variant_id, quantity, recommendation_source? }`. Without `X-Cart-Token` a new cart is */
 export const addCartItemRequestSchema = z.object({
     "variant_id": z.number().int(),
     "quantity": z.number().int().min(1).max(99),
+    "recommendation_source": recommendationPlacementSchema.nullable().optional(),
 });
 export type AddCartItemRequestInput = z.input<typeof addCartItemRequestSchema>;
 
@@ -68,11 +99,24 @@ export const applyCouponRequestSchema = z.object({
 });
 export type ApplyCouponRequestInput = z.input<typeof applyCouponRequestSchema>;
 
+/** `POST /inventory/adjustments/{adjustment}/approve` — needs inventory.approve_adjustments. Writes the adjustment's movements against the stock as it is now. */
+export const approveStockAdjustmentRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type ApproveStockAdjustmentRequestInput = z.input<typeof approveStockAdjustmentRequestSchema>;
+
 /** `POST /orders/bulk/confirm` — needs orders.confirm. Up to 100 ids (one board page is */
 export const bulkConfirmOrdersRequestSchema = z.object({
     "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
 });
 export type BulkConfirmOrdersRequestInput = z.input<typeof bulkConfirmOrdersRequestSchema>;
+
+/** `POST /orders/bulk/ship` and `POST /orders/bulk/deliver` — manual fulfilment of many */
+export const bulkFulfilOrdersRequestSchema = z.object({
+    "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
+    "courier_name": z.string().max(120).nullable().optional(),
+});
+export type BulkFulfilOrdersRequestInput = z.input<typeof bulkFulfilOrdersRequestSchema>;
 
 /** `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct */
 export const bulkMediaRequestSchema = z.object({
@@ -122,6 +166,12 @@ export const checkoutRequestSchema = z.object({
 });
 export type CheckoutRequestInput = z.input<typeof checkoutRequestSchema>;
 
+/** `POST /purchases/{purchase}/close` — close a partly received PO short; needs */
+export const closePurchaseRequestSchema = z.object({
+    "reason": z.string().min(3).max(500),
+});
+export type ClosePurchaseRequestInput = z.input<typeof closePurchaseRequestSchema>;
+
 /** `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`. */
 export const confirmOrderRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
@@ -137,11 +187,70 @@ export const cropProductImageRequestSchema = z.object({
 });
 export type CropProductImageRequestInput = z.input<typeof cropProductImageRequestSchema>;
 
+/** `POST /orders/{order}/deliver` — manual delivery confirmation (P5, until Phase 6 */
+export const deliverOrderRequestSchema = z.object({
+    "note": z.string().max(500).nullable().optional(),
+});
+export type DeliverOrderRequestInput = z.input<typeof deliverOrderRequestSchema>;
+
+/** An expense category, for `POST /finance/expense-categories` and `PATCH …/{category}`. */
+export const expenseCategoryRequestSchema = z.object({
+    "name": z.string().min(1).max(120),
+    "name_bn": z.string().max(120).nullable().optional(),
+    "type": expenseCategoryTypeSchema,
+    "ledger_type": z.enum(["cogs","packaging","marketing","salary","rent","utility","courier_charge","gateway_fee","inventory_write_off","other_expense"]).nullable().optional(),
+    "is_fixed": z.boolean().optional(),
+    "is_active": z.boolean().optional(),
+    "parent_id": z.number().int().nullable().optional(),
+});
+export type ExpenseCategoryRequestInput = z.input<typeof expenseCategoryRequestSchema>;
+
+/** `POST /finance/expenses/{expense}/approve|reject|void`. Reject and void need a `reason` */
+export const expenseDecisionRequestSchema = z.object({
+    "reason": z.string().optional(),
+});
+export type ExpenseDecisionRequestInput = z.input<typeof expenseDecisionRequestSchema>;
+
+/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content). */
+export const expenseReceiptRequestSchema = z.object({
+    "receipt": z.instanceof(Blob),
+});
+export type ExpenseReceiptRequestInput = z.input<typeof expenseReceiptRequestSchema>;
+
+/** The expense document, for `POST /finance/expenses` (JSON or `multipart/form-data` with an */
+export const expenseRequestSchema = z.object({
+    "category_id": z.number().int(),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "expense_date": z.string().min(1),
+    "payment_method": expensePaymentMethodSchema.nullable().optional(),
+    "paid_on": z.string().nullable().optional(),
+    "reference": z.string().max(120).nullable().optional(),
+    "vendor": z.string().max(160).nullable().optional(),
+    "description": z.string().max(1000).nullable().optional(),
+    "is_recurring": z.boolean().optional(),
+    "recurrence": expenseRecurrenceSchema.nullable().optional(),
+    "order_id": z.number().int().nullable().optional(),
+    "shipment_id": z.number().int().min(1).nullable().optional(),
+    "receipt": z.instanceof(Blob).nullable().optional(),
+});
+export type ExpenseRequestInput = z.input<typeof expenseRequestSchema>;
+
 /** `POST /orders/{order}/hold` — needs orders.update. A hold always says why (`reason`), */
 export const holdOrderRequestSchema = z.object({
     "reason": z.string().min(1).max(500),
 });
 export type HoldOrderRequestInput = z.input<typeof holdOrderRequestSchema>;
+
+/** `POST /returns/{orderReturn}/inspect` — needs returns.manage. One row per returned line: */
+export const inspectReturnRequestSchema = z.object({
+    "items": z.array(z.object({
+    "order_item_id": z.number().int().min(1),
+    "resellable": z.number().int().min(0).max(10000),
+    "damaged": z.number().int().min(0).max(10000),
+})).min(1).max(100),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type InspectReturnRequestInput = z.input<typeof inspectReturnRequestSchema>;
 
 /** `POST /api/v1/admin/auth/login` — `{ email, password, remember? }`. */
 export const loginRequestSchema = z.object({
@@ -207,12 +316,72 @@ export const orderWorkflowRequestSchema = z.object({
 });
 export type OrderWorkflowRequestInput = z.input<typeof orderWorkflowRequestSchema>;
 
+/** `POST /finance/expenses/{expense}/pay` — `payment_method` and `paid_on` (a Dhaka date, not in the future). */
+export const payExpenseRequestSchema = z.object({
+    "payment_method": expensePaymentMethodSchema,
+    "paid_on": z.string().min(1),
+});
+export type PayExpenseRequestInput = z.input<typeof payExpenseRequestSchema>;
+
+/** `POST /refunds/{refund}/pay` — refunds.create or refunds.approve; needs an */
+export const payRefundRequestSchema = z.object({
+    "method": z.enum(["bkash","nagad","cash","bank_transfer"]).nullable().optional(),
+    "reference": z.string().max(191).nullable().optional(),
+});
+export type PayRefundRequestInput = z.input<typeof payRefundRequestSchema>;
+
 /** `POST /notifications/templates/{template}/preview` — measure an unsaved body (the */
 export const previewNotificationTemplateRequestSchema = z.object({
     "body_en": z.string().min(1).max(2000),
     "body_bn": z.string().min(1).max(2000),
 });
 export type PreviewNotificationTemplateRequestInput = z.input<typeof previewNotificationTemplateRequestSchema>;
+
+/** `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per */
+export const receivePurchaseRequestSchema = z.object({
+    "location_id": z.number().int().nullable().optional(),
+    "lines": z.array(z.object({
+    "purchase_item_id": z.number().int(),
+    "quantity": z.number().int().min(0).max(1000000),
+})).min(1).max(200),
+    "freight": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "customs_duty": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "other_cost": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "apportion_method": landedCostMethodSchema.optional(),
+    "costs_paid_to_supplier": z.boolean().optional(),
+    "note": z.string().max(500).nullable().optional(),
+    "costs_vendor": z.string().max(160).nullable().optional(),
+    "costs_reference": z.string().max(120).nullable().optional(),
+    "costs_payment_method": expensePaymentMethodSchema.nullable().optional(),
+});
+export type ReceivePurchaseRequestInput = z.input<typeof receivePurchaseRequestSchema>;
+
+/** `POST /finance/orders/{order}/cod-receipts` — cash received from the courier for one */
+export const recordCodReceiptRequestSchema = z.object({
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "received_on": z.string().min(1),
+    "reference": z.string().max(120).nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type RecordCodReceiptRequestInput = z.input<typeof recordCodReceiptRequestSchema>;
+
+/** `POST /refunds/{refund}/reject` — same permission as approving it; a reason is required. */
+export const rejectRefundRequestSchema = z.object({
+    "note": z.string().min(3).max(500),
+});
+export type RejectRefundRequestInput = z.input<typeof rejectRefundRequestSchema>;
+
+/** `POST /returns/{orderReturn}/reject` — needs returns.manage; a reason is required. */
+export const rejectReturnRequestSchema = z.object({
+    "note": z.string().min(3).max(500),
+});
+export type RejectReturnRequestInput = z.input<typeof rejectReturnRequestSchema>;
+
+/** `POST /inventory/adjustments/{adjustment}/reject` — needs inventory.approve_adjustments. Writes no movement; the reason is required. */
+export const rejectStockAdjustmentRequestSchema = z.object({
+    "note": z.string().min(1).max(500),
+});
+export type RejectStockAdjustmentRequestInput = z.input<typeof rejectStockAdjustmentRequestSchema>;
 
 /** `POST /attributes/{attribute}/values/reorder` — `{ ids: [3, 1, 2] }`, every value */
 export const reorderAttributeValuesRequestSchema = z.object({
@@ -250,6 +419,27 @@ export const seoMeasureRequestSchema = z.object({
     "description": z.string().max(1000).nullable().optional(),
 });
 export type SeoMeasureRequestInput = z.input<typeof seoMeasureRequestSchema>;
+
+/** `POST /orders/{order}/ship` — manual dispatch (P5, until Phase 6 courier booking). */
+export const shipOrderRequestSchema = z.object({
+    "courier_name": z.string().max(120).nullable().optional(),
+    "tracking_reference": z.string().max(120).nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type ShipOrderRequestInput = z.input<typeof shipOrderRequestSchema>;
+
+/** An SSLCommerz IPN, or the browser-return POST forwarded by the storefront (P4-PAY-03). */
+export const sslcommerzNotificationRequestSchema = z.object({
+    "tran_id": z.string().max(128).nullable().optional(),
+    "val_id": z.string().max(128).nullable().optional(),
+    "status": z.string().max(32).nullable().optional(),
+    "verify_sign": z.string().max(128).nullable().optional(),
+    "verify_key": z.string().max(500).nullable().optional(),
+    "amount": z.string().max(32).nullable().optional(),
+    "currency": z.string().max(8).nullable().optional(),
+    "bank_tran_id": z.string().max(128).nullable().optional(),
+});
+export type SslcommerzNotificationRequestInput = z.input<typeof sslcommerzNotificationRequestSchema>;
 
 /** `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch) */
 export const storeAttributeRequestSchema = z.object({
@@ -472,6 +662,35 @@ export const storeProductRequestSchema = z.object({
 });
 export type StoreProductRequestInput = z.input<typeof storeProductRequestSchema>;
 
+/** `POST /purchases` — raises a draft PO; needs purchasing.create. */
+export const storePurchaseRequestSchema = z.object({
+    "supplier_id": z.number().int(),
+    "location_id": z.number().int().nullable().optional(),
+    "order_date": z.string().min(1),
+    "expected_date": z.string().nullable().optional(),
+    "supplier_invoice_no": z.string().max(64).nullable().optional(),
+    "note": z.string().max(1000).nullable().optional(),
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(1000000),
+    "unit_cost": z.string().min(1).regex(new RegExp("^\\d{1,10}(\\.\\d{1,4})?$")),
+    "discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+})).min(1).max(200),
+});
+export type StorePurchaseRequestInput = z.input<typeof storePurchaseRequestSchema>;
+
+/** `POST /orders/{order}/returns` — needs returns.manage. Quantities are checked against */
+export const storeReturnRequestSchema = z.object({
+    "items": z.array(z.object({
+    "order_item_id": z.number().int().min(1),
+    "quantity": z.number().int().min(1).max(10000),
+})).min(1).max(100),
+    "reason": returnReasonSchema,
+    "reason_note": z.string().max(500).nullable().optional(),
+    "refund_shipping": z.boolean().optional(),
+});
+export type StoreReturnRequestInput = z.input<typeof storeReturnRequestSchema>;
+
 /** `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key` */
 export const storeStockAdjustmentRequestSchema = z.object({
     "location_id": z.number().int().nullable().optional(),
@@ -484,6 +703,45 @@ export const storeStockAdjustmentRequestSchema = z.object({
 })).min(1).max(100),
 });
 export type StoreStockAdjustmentRequestInput = z.input<typeof storeStockAdjustmentRequestSchema>;
+
+/** `POST /inventory/transfers` — needs inventory.transfer and an `Idempotency-Key` (a */
+export const storeStockTransferRequestSchema = z.object({
+    "from_location_id": z.number().int(),
+    "to_location_id": z.number().int(),
+    "note": z.string().max(500).nullable().optional(),
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(100000),
+})).min(1).max(100),
+});
+export type StoreStockTransferRequestInput = z.input<typeof storeStockTransferRequestSchema>;
+
+/** `POST /suppliers/{supplier}/payments` — needs finance.record_supplier_payments and an */
+export const storeSupplierPaymentRequestSchema = z.object({
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "method": supplierPaymentMethodSchema,
+    "reference": z.string().max(120).nullable().optional(),
+    "paid_at": z.string().min(1),
+    "purchase_id": z.number().int().nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type StoreSupplierPaymentRequestInput = z.input<typeof storeSupplierPaymentRequestSchema>;
+
+/** `POST /suppliers` — needs purchasing.manage_suppliers. */
+export const storeSupplierRequestSchema = z.object({
+    "name": z.string().min(1).max(160),
+    "contact_person": z.string().max(120).nullable().optional(),
+    "phone": z.string().max(20).nullable().optional(),
+    "alt_phone": z.string().max(20).nullable().optional(),
+    "email": z.email().max(191).nullable().optional(),
+    "address": z.string().max(500).nullable().optional(),
+    "district_id": z.number().int().nullable().optional(),
+    "tin": z.string().max(32).nullable().optional(),
+    "payment_terms_days": z.number().int().min(0).max(365).optional(),
+    "opening_balance": z.string().regex(new RegExp("^-?\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "note": z.string().max(1000).nullable().optional(),
+});
+export type StoreSupplierRequestInput = z.input<typeof storeSupplierRequestSchema>;
 
 /** `POST /storefront/account/reviews` (P4-CAT-12) — the signed-in customer reviews a */
 export const submitReviewRequestSchema = z.object({
@@ -723,6 +981,40 @@ export const updateProfileRequestSchema = z.object({
     "preferred_language": z.enum(["en","bn"]).optional(),
 });
 export type UpdateProfileRequestInput = z.input<typeof updateProfileRequestSchema>;
+
+/** `PUT /purchases/{purchase}` — replaces a draft's header and lines (409 once ordered); needs purchasing.create. */
+export const updatePurchaseRequestSchema = z.object({
+    "supplier_id": z.number().int(),
+    "location_id": z.number().int().nullable().optional(),
+    "order_date": z.string().min(1),
+    "expected_date": z.string().nullable().optional(),
+    "supplier_invoice_no": z.string().max(64).nullable().optional(),
+    "note": z.string().max(1000).nullable().optional(),
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(1000000),
+    "unit_cost": z.string().min(1).regex(new RegExp("^\\d{1,10}(\\.\\d{1,4})?$")),
+    "discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+})).min(1).max(200),
+});
+export type UpdatePurchaseRequestInput = z.input<typeof updatePurchaseRequestSchema>;
+
+/** `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change. */
+export const updateSupplierRequestSchema = z.object({
+    "name": z.string().max(160).optional(),
+    "contact_person": z.string().max(120).nullable().optional(),
+    "phone": z.string().max(20).nullable().optional(),
+    "alt_phone": z.string().max(20).nullable().optional(),
+    "email": z.email().max(191).nullable().optional(),
+    "address": z.string().max(500).nullable().optional(),
+    "district_id": z.number().int().nullable().optional(),
+    "tin": z.string().max(32).nullable().optional(),
+    "payment_terms_days": z.number().int().min(0).max(365).optional(),
+    "opening_balance": z.string().regex(new RegExp("^-?\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "note": z.string().max(1000).nullable().optional(),
+    "status": supplierStatusSchema.optional(),
+});
+export type UpdateSupplierRequestInput = z.input<typeof updateSupplierRequestSchema>;
 
 /** `POST /storefront/auth/otp/verify` (P4-STO-11). An optional `X-Cart-Token` names the */
 export const verifyOtpRequestSchema = z.object({

@@ -50,7 +50,7 @@ export default async function CartPage({ params }: Props) {
     if (!isLocale(locale)) notFound();
     const t = getMessages(locale);
     const c = t.cart;
-    const [{ cart, dest, notice, images, failed }, reference] = await Promise.all([loadCartPage(locale), getDeliveryReference(locale)]);
+    const [{ cart, dest, notice, failed }, reference] = await Promise.all([loadCartPage(locale), getDeliveryReference(locale)]);
     const count = cart?.item_count ?? 0;
     const empty = !cart || cart.items.length === 0;
     const general = notice && (notice.target === 'cart' || notice.target === 'add') ? noticeText(notice, c.notices) : null;
@@ -103,7 +103,7 @@ export default async function CartPage({ params }: Props) {
                             </h2>
                             <ul className="overflow-hidden border-y border-line-default bg-surface md:rounded-sm md:border">
                                 {cart.items.map((line) => (
-                                    <CartLineItem key={line.id} line={line} image={images[line.product.slug] ?? null} locale={locale} t={t} notice={noticeFor(notice, String(line.id))} />
+                                    <CartLineItem key={line.id} line={line} locale={locale} t={t} notice={noticeFor(notice, String(line.id))} />
                                 ))}
                             </ul>
                         </section>

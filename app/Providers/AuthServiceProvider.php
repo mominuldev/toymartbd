@@ -112,6 +112,14 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Catalog\Import\Models\ProductImport::class => \App\Policies\ProductImportPolicy::class,
         \App\Domain\Catalog\Import\Models\ProductImportError::class => \App\Policies\ProductImportPolicy::class,
         \App\Domain\Catalog\Reviews\Models\Review::class => \App\Policies\ReviewPolicy::class,
+        // Finance reports have no model; FinanceReport is the policy subject (P5 reports).
+        \App\Domain\Finance\Reports\FinanceReport::class => \App\Policies\FinanceReportPolicy::class,
+        // Finance ledger, expenses, COD receipts, daily rollup (P5 finance).
+        \App\Domain\Finance\Models\FinancialTransaction::class => \App\Policies\FinancialTransactionPolicy::class,
+        \App\Domain\Finance\Models\Expense::class => \App\Policies\ExpensePolicy::class,
+        \App\Domain\Finance\Models\ExpenseCategory::class => \App\Policies\ExpenseCategoryPolicy::class,
+        \App\Domain\Finance\Models\ManualCodReceipt::class => \App\Policies\ManualCodReceiptPolicy::class,
+        \App\Domain\Finance\Models\DailyFinancialSummary::class => \App\Policies\DailyFinancialSummaryPolicy::class,
     ];
 
     /**

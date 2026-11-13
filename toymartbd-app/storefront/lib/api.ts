@@ -1,5 +1,8 @@
 import 'server-only';
 
+import { headers as incomingHeaders } from 'next/headers';
+
+import { clientIpFrom } from './client-ip';
 import type { Locale } from './i18n/config';
 import type { ProblemDetails } from './api-types';
 
@@ -86,8 +89,24 @@ export async function toApiError(response: Response): Promise<ApiError> {
     }
 }
 
+/**
+ * `X-Forwarded-For: <shopper IP>` for a per-request (uncached) call, so Laravel's per-IP rate limits
+ * see the shopper, not this server (lib/client-ip.ts; Laravel trusts it only from TRUSTED_PROXIES).
+ * Never on `cached()`: the header would split the ISR cache per shopper, and a cached answer is not
+ * the shopper's request anyway. Outside a request scope (build, revalidation) there is no shopper.
+ */
+async function forwardedFor(): Promise<Record<string, string>> {
+    try {
+        const ip = clientIpFrom(await incomingHeaders());
+        return ip ? { 'X-Forwarded-For': ip } : {};
+    } catch {
+        return {};
+    }
+}
+
 async function request<T>(path: string, init: RequestInit, options: RequestOptions): Promise<T> {
-    const response = await fetch(apiUrl(path), { ...init, method: 'GET', headers: { ...headers(options.locale), ...options.headers } });
+    const forwarded = init.cache === 'no-store' ? await forwardedFor() : {};
+    const response = await fetch(apiUrl(path), { ...init, method: 'GET', headers: { ...headers(options.locale), ...forwarded, ...options.headers } });
     if (!response.ok) throw await toApiError(response);
     return (await response.json()) as T;
 }
@@ -121,6 +140,7 @@ export async function send<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path:
         cache: 'no-store',
         headers: {
             ...headers(options.locale),
+            ...(await forwardedFor()),
             ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
             ...options.headers,
         },

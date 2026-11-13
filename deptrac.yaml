@@ -84,6 +84,12 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Tracking\\(?!Events\\)#'
+    # Purchasing (P5): suppliers, POs, receipts, supplier payments. Receives stock through
+    # Inventory's ReceivePurchasedStock inside its own transaction (§4.6), like Ordering does.
+    - name: Purchasing
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Purchasing\\(?!Events\\)#'
     # Notifications (P4-NOT-01..03). Contracts + DTOs are their own layer so any domain
     # (Customer OTP login) can send an SMS without depending on the rest of Notification.
     - name: NotificationContracts
@@ -101,10 +107,10 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Domain\\Search\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -117,13 +123,17 @@ deptrac:
     Payment: [Support, Models, DomainEvents, Catalog, Customer]
     Fulfilment: [Support, Models, DomainEvents, Catalog, Customer]
     Risk: [Support, Models, DomainEvents, Catalog, Customer]
-    Finance: [Support, Models, DomainEvents, Catalog, Customer]
+    # Finance reads orders (delivery revenue, COGS snapshots, receivables) and the receipt
+    # checks in Catalog; Ordering never depends back on Finance. It writes only its own tables
+    # plus the order_financials projection it owns (§3.4).
+    Finance: [Support, Models, DomainEvents, Catalog, Customer, Ordering]
     Customer: [Support, Models, DomainEvents, Catalog, NotificationContracts]
     # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
     Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
     Content: [Support, Models, DomainEvents, Catalog, Customer]
     Seo: [Support, Models, DomainEvents, Catalog, Customer]
     Tracking: [Support, Models, DomainEvents, Catalog, Customer]
+    Purchasing: [Support, Models, DomainEvents, Catalog, Customer, Inventory]
     Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]
     NotificationContracts: [Support]
     # Notification reads orders and customers to render messages; nothing depends back on it

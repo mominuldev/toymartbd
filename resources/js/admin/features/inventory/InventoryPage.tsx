@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ArrowsLeftRightIcon, ListChecksIcon, SlidersHorizontalIcon } from '@phosphor-icons/react';
+import { ArrowsLeftRightIcon, ClockCountdownIcon, ListChecksIcon, SlidersHorizontalIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
@@ -10,9 +10,10 @@ import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
 import { TabButton } from '@/components/ui/Tabs';
-import { stockStates, useInventorySummary, useStock, type AdjustmentReason, type StockRow, type StockState } from './api';
+import { stockStates, useAdjustments, useAlerts, useInventorySummary, useStock, type AdjustmentReason, type StockRow, type StockState } from './api';
 import { AdjustmentDialog } from './AdjustmentDialog';
-import { AvailableCell, LocationCards, PendingButton, StatCard, TAKA, Taka, VariantCell, formatMoney, formatUnits } from './parts';
+import { TransferDialog } from './TransferDialog';
+import { AvailableCell, LocationCards, StatCard, TAKA, Taka, VariantCell, formatMoney, formatUnits } from './parts';
 
 const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockState }[] = [
     { value: '', label: 'inventory.tab.all', count: 'all' },
@@ -23,6 +24,7 @@ const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockSta
 ];
 
 type Dialog = { reason: AdjustmentReason } | null;
+type Transfer = { fromId: number; toId: number | null; variantId: number | null; quantity: number | null } | null;
 
 /**
  * Inventory overview (Figma "B · 14 Inventory" 241:39494): ContentHeader with Transfer stock ·
@@ -31,10 +33,12 @@ type Dialog = { reason: AdjustmentReason } | null;
  * contextual row actions. Every figure is the server's; the location and tab live in the URL
  * (`?location=2&state=low`). Selecting a location scopes the stat cards, tabs and table.
  *
- * Not built yet, so shown disabled with the reason (never a fake action): stock transfers
- * (Transfer stock, Transfer N) and purchase orders (Create PO). Adjusting stock — the one
- * working stock change — is the header's New adjustment / Stock count, which search for the
- * variant. Each healthy row's Ledger opens the movements ledger for that variant.
+ * Transfer stock (header) and a short row's Transfer N open TransferDialog (P5-INV; the form
+ * itself is not drawn); Create PO opens the purchase order form.
+ * Each healthy row's Ledger opens the movements ledger for that variant. When adjustments wait
+ * for approval or the nightly reconciliation found drift, a notice strip (the ledger's
+ * reconciliation-strip pattern, bg/subtle) links to the queue and the alerts; it is absent
+ * in the drawn state, where neither exists.
  */
 export function InventoryPage() {
     const { t, locale } = useI18n();
@@ -47,8 +51,14 @@ export function InventoryPage() {
     const stock = useStock({ location, state, search: '' });
     const rows = useMemo(() => stock.data?.pages.flatMap((page) => page.data) ?? [], [stock.data]);
     const [dialog, setDialog] = useState<Dialog>(null);
+    const [transfer, setTransfer] = useState<Transfer>(null);
 
     const canAdjust = can(me, 'inventory.adjust');
+    const canTransfer = can(me, 'inventory.transfer');
+    const canView = can(me, 'inventory.view');
+    const pending = useAdjustments({ status: 'pending' }, canView).data?.pages[0]?.meta.counts.pending ?? 0;
+    const alertCounts = useAlerts({ kind: '' }, canView).data?.pages[0]?.meta.counts;
+    const drift = (alertCounts?.ledger_drift ?? 0) + (alertCounts?.reserved_drift ?? 0);
     const viewCost = can(me, 'catalog.view_cost');
     const data = summary.data;
     const locations = data?.locations ?? [];
@@ -69,11 +79,11 @@ export function InventoryPage() {
 
     const actions = (
         <>
-            {multi && (
-                <PendingButton reason={t('inventory.transferSoon')}>
+            {multi && canTransfer && data && (
+                <Button variant="outline" onClick={() => setTransfer({ fromId: data.location_id, toId: null, variantId: null, quantity: null })}>
                     <ArrowsLeftRightIcon size={16} aria-hidden />
                     {t('inventory.transferStock')}
-                </PendingButton>
+                </Button>
             )}
             {canAdjust && (
                 <>
@@ -102,6 +112,29 @@ export function InventoryPage() {
                 subtitle={data && (multi ? t('inventory.subtitle', { count: locations.length }) : t('inventory.subtitleOne', { location: hereName }))}
                 actions={actions}
             />
+
+            {(pending > 0 || drift > 0) && (
+                <div className="flex flex-col gap-2 rounded-md bg-subtle px-4 py-3" aria-live="polite">
+                    {pending > 0 && (
+                        <p className="flex flex-wrap items-center gap-2 t-admin-body text-fg-primary">
+                            <ClockCountdownIcon size={16} aria-hidden className="shrink-0 text-feedback-warning" />
+                            <span className="min-w-0 flex-1">{t('inventory.notice.pending', { count: formatUnits(pending) })}</span>
+                            <Link to="/inventory/adjustments" className={buttonClass('ghost', 'sm')}>
+                                {t('inventory.notice.review')}
+                            </Link>
+                        </p>
+                    )}
+                    {drift > 0 && (
+                        <p className="flex flex-wrap items-center gap-2 t-admin-body text-fg-primary">
+                            <WarningCircleIcon size={16} aria-hidden className="shrink-0 text-feedback-danger" />
+                            <span className="min-w-0 flex-1 t-admin-body-strong">{t('inventory.notice.drift', { count: formatUnits(drift) })}</span>
+                            <Link to="/inventory/alerts" className={buttonClass('ghost', 'sm')}>
+                                {t('inventory.notice.review')}
+                            </Link>
+                        </p>
+                    )}
+                </div>
+            )}
 
             {summary.isError ? (
                 <QueryError error={summary.error} onRetry={() => void summary.refetch()} />
@@ -230,7 +263,15 @@ export function InventoryPage() {
                                         </td>
                                     )}
                                     <td className={`${cell} max-lg:basis-full`}>
-                                        <RowActions row={row} location={location} />
+                                        <RowActions
+                                            row={row}
+                                            location={location}
+                                            onTransfer={
+                                                canTransfer && data
+                                                    ? (from) => setTransfer({ fromId: from.location_id, toId: data.location_id, variantId: row.variant_id, quantity: from.available })
+                                                    : undefined
+                                            }
+                                        />
                                     </td>
                                 </tr>
                             ))}
@@ -257,28 +298,45 @@ export function InventoryPage() {
                     locationId={data.location_id}
                 />
             )}
+            {data && multi && (
+                <TransferDialog
+                    open={transfer !== null}
+                    onClose={() => setTransfer(null)}
+                    locations={locations}
+                    fromId={transfer?.fromId ?? data.location_id}
+                    toId={transfer?.toId ?? null}
+                    variantId={transfer?.variantId ?? null}
+                    quantity={transfer?.quantity ?? null}
+                />
+            )}
         </section>
     );
 }
 
 /**
  * Contextual row actions (B · 14 rows 241:39599 / 241:39681): a short row (low or out) offers
- * Create PO and, when another branch has units available, Transfer N — both disabled until
- * purchase orders and transfers exist; every other row offers its Ledger.
+ * Create PO and, when another branch has units
+ * available, Transfer N — which opens the transfer dialog from that branch to this one (needs
+ * inventory.transfer); every other row offers its Ledger.
  */
-function RowActions({ row, location }: { row: StockRow; location: string }) {
+function RowActions({ row, location, onTransfer }: { row: StockRow; location: string; onTransfer?: (from: NonNullable<StockRow['transfer_from']>) => void }) {
     const { t } = useI18n();
+    const { data: me } = useMe();
+    // Create PO opens the purchase order form with this SKU searched (purchasing, P5).
+    const canCreatePo = can(me, 'purchasing.create');
     if (row.state === 'low' || row.state === 'out') {
         const from = row.transfer_from;
         return (
             <div className="flex items-center gap-2.5">
-                <PendingButton size="sm" reason={t('inventory.createPoSoon')}>
-                    {t('inventory.createPo')}
-                </PendingButton>
-                {from && (
-                    <PendingButton variant="ghost" size="sm" reason={t('inventory.transferFromSoon', { count: formatUnits(from.available), code: from.code.toUpperCase() })}>
+                {canCreatePo && (
+                    <Link to={`/purchasing/new?sku=${encodeURIComponent(row.sku)}`} className={buttonClass('outline', 'sm')}>
+                        {t('inventory.createPo')}
+                    </Link>
+                )}
+                {from && onTransfer && (
+                    <Button variant="ghost" size="sm" onClick={() => onTransfer(from)}>
                         {t('inventory.transferN', { count: formatUnits(from.available) })}
-                    </PendingButton>
+                    </Button>
                 )}
             </div>
         );

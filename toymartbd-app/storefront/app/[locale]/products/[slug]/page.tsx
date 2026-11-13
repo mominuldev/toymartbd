@@ -143,6 +143,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
                     <AgeBlock product={product} t={t} />
                     <VariantSelector product={product} selected={variant} locale={locale} t={t} path={localPath} />
                     <PurchasePanel
+                        productId={product.id}
+                        productPath={`/products/${product.slug}`}
                         variant={variant}
                         name={name.text}
                         t={t}
@@ -201,6 +203,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 summary={variantSummary(product, variant, locale) || name.text}
                 soldOut={variant.stock_state === 'out_of_stock'}
                 labels={{ region: t.pdp.orderBar, addToCart: t.pdp.addToCart, notifyMe: t.pdp.notifyMe, wishlist: format(t.pdp.wishlist, { name: name.text }) }}
+                wishlist={{ productId: product.id, locale, back: `/products/${product.slug}` }}
             />
         </PageShell>
     );

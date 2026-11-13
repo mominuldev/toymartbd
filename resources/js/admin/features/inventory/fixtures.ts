@@ -3,7 +3,7 @@
  */
 import { mockApi, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
-import type { Adjustment, InventorySummary, Movement, Reconciliation, StockRow } from './api';
+import type { Adjustment, InventoryAlert, InventorySummary, Movement, Reconciliation, StockRow, Transfer } from './api';
 
 export const inventoryStaff: Me = {
     ...viewer,
@@ -126,6 +126,7 @@ export const movement: Movement = {
     reference_type: 'stock_adjustment',
     reference_id: 12,
     reference_number: 'ADJ-2026-0012',
+    adjustment_reason: 'damage',
     user_name: 'Mominul',
     note: null,
 };
@@ -146,11 +147,86 @@ export const adjustment: Adjustment = {
     id: 12,
     number: 'ADJ-2026-0012',
     location_id: 1,
+    location_code: 'main',
     reason: 'damage',
     note: null,
     status: 'applied',
+    moved_stock: true,
+    requested_units: 2,
+    requested_value: '620.00',
+    requested_by: 'Rina',
+    approved_by: null,
+    approved_at: null,
+    rejected_by: null,
+    rejected_at: null,
+    decision_note: null,
     created_at: '2026-11-08T06:20:00Z',
-    items: [{ variant_id: 11, quantity_before: 8, quantity_after: 6, change: -2, unit_cost: '310.0000' }],
+    items: [
+        {
+            variant_id: 11,
+            sku: 'TMB-WAP-BN',
+            product_name: 'Wooden Alphabet Puzzle BN+EN',
+            product_name_bn: 'কাঠের বর্ণমালা পাজল',
+            variant_name: null,
+            image_url: null,
+            requested_change: -2,
+            counted: null,
+            quantity_before: 8,
+            quantity_after: 6,
+            change: -2,
+            unit_cost: '310.0000',
+        },
+    ],
+};
+
+export const pendingAdjustment: Adjustment = {
+    ...adjustment,
+    id: 13,
+    number: 'ADJ-2026-0013',
+    reason: 'theft',
+    status: 'pending',
+    moved_stock: false,
+    requested_units: 30,
+    requested_value: '9300.00',
+    items: [{ ...adjustment.items[0]!, requested_change: -30, quantity_after: -22, change: -30 }],
+};
+
+export const driftAlert: InventoryAlert = {
+    id: 7,
+    kind: 'ledger_drift',
+    status: 'open',
+    variant_id: 11,
+    product_id: 1,
+    sku: 'TMB-WAP-BN',
+    product_name: 'Wooden Alphabet Puzzle BN+EN',
+    product_name_bn: 'কাঠের বর্ণমালা পাজল',
+    variant_name: null,
+    image_url: null,
+    location_id: 1,
+    location_code: 'main',
+    expected: 12,
+    actual: 9,
+    difference: -3,
+    alert_date: '2026-11-13',
+    first_seen_at: '2026-11-12T21:30:00Z',
+    last_seen_at: '2026-11-12T21:30:00Z',
+    acknowledged_by: null,
+    acknowledged_at: null,
+    note: null,
+};
+
+export const transferDone: Transfer = {
+    id: 3,
+    number: 'TRF-2026-0003',
+    from_location_id: 2,
+    from_location_code: 'ctg',
+    to_location_id: 1,
+    to_location_code: 'main',
+    status: 'completed',
+    note: null,
+    user_name: 'Rina',
+    created_at: '2026-11-12T06:00:00Z',
+    items: [{ variant_id: 11, sku: 'TMB-WAP-BN', product_name: 'Wooden Alphabet Puzzle BN+EN', product_name_bn: null, variant_name: null, quantity: 4 }],
 };
 
 type Reply = { status: number; body?: unknown };
@@ -175,6 +251,13 @@ export function inventoryApi(me: Me, handler?: (url: string, init?: RequestInit)
         if (url.includes('/inventory/movements/reconciliation')) return { status: 200, body: cost ? reconciliation : costless(reconciliation, ['stock_value']) };
         if (url.includes('/inventory/movements')) return { status: 200, body: page([cost ? movement : costless(movement, ['unit_cost'])]) };
         if (url.endsWith('/inventory/adjustments') && init?.method === 'POST') return { status: 201, body: adjustment };
+        if (url.includes('/inventory/adjustments/') && url.endsWith('/approve')) return { status: 200, body: { ...pendingAdjustment, status: 'approved', moved_stock: true } };
+        if (url.includes('/inventory/adjustments/') && url.endsWith('/reject')) return { status: 200, body: { ...pendingAdjustment, status: 'rejected' } };
+        if (url.includes('/inventory/adjustments')) return { status: 200, body: { ...page([pendingAdjustment]), meta: { next_cursor: null, counts: { pending: 1 } } } };
+        if (url.endsWith('/inventory/transfers') && init?.method === 'POST') return { status: 201, body: transferDone };
+        if (url.includes('/acknowledge')) return { status: 200, body: { ...driftAlert, status: 'acknowledged' } };
+        if (url.includes('/inventory/alerts'))
+            return { status: 200, body: { ...page([driftAlert]), meta: { next_cursor: null, counts: { ledger_drift: 1, reserved_drift: 0, out_of_stock: 0, low_stock: 0 } } } };
         return { status: 404 };
     });
 }

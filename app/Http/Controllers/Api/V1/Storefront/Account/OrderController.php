@@ -25,7 +25,7 @@ final class OrderController extends ApiController
 
     /** `GET /account/orders` — newest first, cursor-paginated, optionally one `group`; plus the per-group counts. */
     #[OpenApiResponse(401, 'No valid customer token (`unauthenticated`)')]
-    #[OpenApiResponse(422, 'Unknown `group` or an unlisted query parameter (`validation-error`)')]
+    #[OpenApiResponse(400, 'Unknown `group` or an unlisted query parameter (`bad-request`)')]
     public function index(AccountOrdersRequest $request, CustomerOrders $orders): AnonymousResourceCollection
     {
         $customerId = $request->customer()->id;

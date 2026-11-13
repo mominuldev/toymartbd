@@ -28,11 +28,12 @@ import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { storeOrderNoteRequestSchema } from '@toymart/api-types/zod';
-import { useAddNote, useOrder, type Order, type RiskLevel } from './api';
+import { useAddNote, useOrder, useVerifyPayment, type Order, type RiskLevel } from './api';
 import { Taka, dhakaParts, initials, isZeroAmount, takaText } from './format';
 import { OrderActions, problemText } from './OrderActions';
 import { OrderStatusBadge, PaymentChip, methodLabel, paymentLabel, riskTint, sourceLabel, statusLabel } from './parts';
 import { OrderStepper } from './Stepper';
+import { OrderRefundPanel } from '@/features/returns';
 
 const card = 'flex flex-col gap-4 rounded-md border border-line-default bg-surface p-5 shadow-e1';
 
@@ -100,6 +101,7 @@ export function OrderDetailPage() {
                 <div className="flex min-w-0 flex-col gap-6">
                     <ItemsCard order={o} />
                     <PaymentsCard order={o} />
+                    <OrderRefundPanel orderId={o.id} />
                     <section className={card} aria-labelledby="order-shipment">
                         <h2 id="order-shipment" className="t-admin-section text-fg-primary">
                             {t('orders.shipment.title')}
@@ -219,8 +221,30 @@ function TotalRow({ label, amount, strong, negative, warn }: { label: string; am
     );
 }
 
+/** Online payment ids for reconciliation (P4-PAY-03): bank / validation ids, why it failed, review flag. */
+function GatewayLine({ payment }: { payment: Order['payments'][number] }) {
+    const { t } = useI18n();
+    const ids = [payment.gateway_reference, payment.val_id].filter((v): v is string => Boolean(v));
+    return (
+        <>
+            {ids.length > 0 && <p className="t-admin-mono-sm text-fg-tertiary">{ids.join(' · ')}</p>}
+            {payment.failure_reason && payment.status !== 'paid' && (
+                <p className="t-admin-caption text-fg-secondary">{t('orders.gateway.reason', { reason: payment.failure_reason })}</p>
+            )}
+            {payment.review_reason && (
+                <p className="flex items-center gap-1 t-admin-caption-strong text-feedback-danger">
+                    <WarningIcon size={14} aria-hidden />
+                    {t('orders.gateway.review', { reason: payment.review_reason })}
+                </p>
+            )}
+        </>
+    );
+}
+
 function PaymentsCard({ order }: { order: Order }) {
     const { t, locale } = useI18n();
+    const verify = useVerifyPayment(order.id);
+    const toast = useToast();
     return (
         <section className={card} aria-labelledby="order-payments">
             <CardHeader id="order-payments" title={t('orders.payments.title')} />
@@ -241,7 +265,19 @@ function PaymentsCard({ order }: { order: Order }) {
                                         {at && ` · ${at.day}, ${at.time}`}
                                     </p>
                                     {p.transaction_id && <p className="t-admin-mono-sm text-fg-tertiary">{p.transaction_id}</p>}
+                                    {p.gateway && <GatewayLine payment={p} />}
                                 </div>
+                                {p.gateway && (
+                                    <span className="inline-flex h-5.5 items-center gap-1 rounded-xs border border-line-default bg-surface px-2 whitespace-nowrap t-admin-caption-strong text-fg-secondary">
+                                        {t(p.gateway.verified ? 'orders.gateway.verified' : 'orders.gateway.unverified')}
+                                        {p.gateway.sandbox && ` · ${t('orders.gateway.sandbox')}`}
+                                    </span>
+                                )}
+                                {p.gateway && ['pending', 'initiated', 'authorised'].includes(p.status) && (
+                                    <Button variant="ghost" size="sm" disabled={verify.isPending} onClick={() => verify.mutate(p.id, { onError: (e) => toast.notify(problemText(e, t('error.title')), 'danger') })}>
+                                        {t('orders.gateway.recheck')}
+                                    </Button>
+                                )}
                                 <p className="t-admin-num tabular text-fg-primary">
                                     <Taka amount={p.amount} />
                                 </p>

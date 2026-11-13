@@ -24,9 +24,11 @@ final class OrderItemSnapshots
 {
     /**
      * @param  list<LineBreakdown>  $lines
+     * @param  array<int, string|null>  $sources  variant id → the recommendation placement that
+     *                                            added the cart line (rule 25d); missing = none
      * @return list<array<string, mixed>> order_items attributes (no order_id)
      */
-    public function build(array $lines, int $locationId): array
+    public function build(array $lines, int $locationId, array $sources = []): array
     {
         $ids = array_map(static fn (LineBreakdown $l): int => $l->variant->id, $lines);
         $variants = ProductVariant::query()
@@ -57,7 +59,7 @@ final class OrderItemSnapshots
                 'discount' => $line->discount(),
                 'line_total' => $line->total,
                 'cost_price_snapshot' => StockValuation::costBasis(is_scalar($avg) ? (string) $avg : null, $variant->cost_price->toDecimal()),
-                'recommendation_source' => null,
+                'recommendation_source' => $sources[$variant->id] ?? null,
             ];
         }
 

@@ -64,9 +64,12 @@ export function decodeOtp(value: string | undefined | null): OtpState | null {
     }
 }
 
-/** Only a local account / checkout / cart path; anything else (or a protocol-relative URL) goes home. */
+/**
+ * Only a local storefront path (account, checkout, cart, or a page a wishlist heart sits on: home,
+ * product, category, brand, age, search); anything else (or a protocol-relative URL) goes home.
+ */
 export function safeNext(value: string | null | undefined): string {
-    if (!value || !/^\/(account|checkout|cart|products)(\/[A-Za-z0-9\-_/]*)?$/.test(value)) return '/account';
+    if (!value || !/^\/(?:(account|checkout|cart|products|categories|brands|toys|search)(\/[A-Za-z0-9\-_/]*)?)?$/.test(value)) return '/account';
     return value;
 }
 

@@ -14,4 +14,10 @@ enum OrderEventType: string
     case Note = 'note';
     /** Lines, address or delivery changed after placement (P4-ORD-07); `meta` holds before/after. */
     case Edited = 'edited';
+    /** Return / refund milestones (§4.7); `meta` holds the RMA or refund id and amount. */
+    case ReturnRequested = 'return_requested';
+    case ReturnInspected = 'return_inspected';
+    case RefundApproved = 'refund_approved';
+    case RefundRejected = 'refund_rejected';
+    case RefundPaid = 'refund_paid';
 }

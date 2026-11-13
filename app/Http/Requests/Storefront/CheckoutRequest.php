@@ -10,6 +10,7 @@ use App\Domain\Fulfilment\Enums\DeliveryZone;
 use App\Domain\Fulfilment\Services\DeliveryChargeResolver;
 use App\Domain\Ordering\Checkout\CheckoutData;
 use App\Domain\Payment\Enums\PaymentMethod;
+use App\Domain\Payment\Services\OnlineGateways;
 use App\Http\Requests\Storefront\Cart\CartRequest;
 use App\Support\Money;
 use App\Support\PhoneNumber;
@@ -44,7 +45,8 @@ final class CheckoutRequest extends CartRequest
             'address_line' => ['required', 'string', 'min:5', 'max:500'],
             'landmark' => ['nullable', 'string', 'max:255'],
             'postcode' => ['nullable', 'string', 'regex:/^\d{4}$/'],
-            'payment_method' => ['required', 'string', Rule::in([PaymentMethod::Cod->value])],
+            /** `cod`, or an online method `GET /payment-methods` lists as enabled (P4-PAY-02). */
+            'payment_method' => ['required', 'string', Rule::in(self::acceptedMethods())],
             'customer_note' => ['nullable', 'string', 'max:500'],
             /** The grand total the customer was shown, e.g. "1930.00". */
             'expected_total' => ['required', 'string', 'regex:/^\d{1,12}(\.\d{1,2})?$/'],
@@ -119,6 +121,14 @@ final class CheckoutRequest extends CartRequest
             utm: ['source' => $nullable('utm_source'), 'medium' => $nullable('utm_medium'), 'campaign' => $nullable('utm_campaign')],
             locale: App::getLocale(),
         );
+    }
+
+    /** @return list<string> COD always; an online method only while its gateway is enabled (rule 33a spirit). */
+    private static function acceptedMethods(): array
+    {
+        $online = array_map(static fn (PaymentMethod $m): string => $m->value, app(OnlineGateways::class)->enabled());
+
+        return [PaymentMethod::Cod->value, ...$online];
     }
 
     /** Same rule as GET /districts' `city_option`: an empty upazila is the district's city. */

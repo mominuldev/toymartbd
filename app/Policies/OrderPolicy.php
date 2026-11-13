@@ -63,6 +63,22 @@ final class OrderPolicy extends Policy
     }
 
     /**
+     * Manual fulfilment (P5, until Phase 6 courier booking): mark shipped (consumes stock)
+     * and mark delivered (recognises revenue, collects COD). Moves stock and money, so it
+     * needs shipments.book on top of orders.update.
+     */
+    public function fulfil(User $user, Order $order): bool
+    {
+        return $this->fulfilMany($user);
+    }
+
+    /** Bulk mark shipped / delivered from the board: the same permissions as one order. */
+    public function fulfilMany(User $user): bool
+    {
+        return $this->allows($user, Permission::OrdersUpdate) && $this->allows($user, Permission::ShipmentsBook);
+    }
+
+    /**
      * Invoice / packing slip PDF (P4-ORD-08). The slip carries the full phone and street
      * address, so it needs customers.view_pii as well as orders.view (rule 20).
      */

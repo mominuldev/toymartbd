@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 
 import { Icon } from '@/components/icons/Icon';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
+import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
+import type { Locale } from '@/lib/i18n/config';
 import { CART_FORM_ID, INLINE_CTA_ID } from '@/lib/product/ids';
 
 interface Props {
@@ -11,6 +13,8 @@ interface Props {
     summary: string;
     soldOut: boolean;
     labels: { region: string; addToCart: string; notifyMe: string; wishlist: string };
+    /** The BarIcon WishlistHeart (spec §A22): product id, page locale, sign-in return path. */
+    wishlist: { productId: number; locale: Locale; back: string };
 }
 
 // AddToCartBar — Figma 119:1529 (instance 128:1688), storefront spec §A16. Mobile only (absent at
@@ -18,7 +22,7 @@ interface Props {
 // control as the inline one, via `form=`), so it works without JavaScript — where it simply stays
 // up. Once hydrated it slides away while the inline CTA is on screen, and the hidden one is inert.
 // The add itself is the cart form's (AddToCartEnhancer), whichever button submits it.
-export function AddToCartBar({ price, summary, soldOut, labels }: Props) {
+export function AddToCartBar({ price, summary, soldOut, labels, wishlist }: Props) {
     const bar = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -50,14 +54,15 @@ export function AddToCartBar({ price, summary, soldOut, labels }: Props) {
                 <span className="t-price-current-card text-fg-discount tabular-nums">{price}</span>
                 <span className={`t-caption truncate ${soldOut ? 'text-fg-tertiary' : 'text-fg-secondary'}`}>{summary}</span>
             </div>
-            <button
-                type="button"
-                disabled
-                aria-label={labels.wishlist}
-                className="flex size-control-md shrink-0 items-center justify-center rounded-full border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface text-fg-brand"
-            >
-                <Icon name="heart" className="size-icon-md" />
-            </button>
+            <WishlistHeart
+                productId={wishlist.productId}
+                label={labels.wishlist}
+                locale={wishlist.locale}
+                back={wishlist.back}
+                className="shrink-0"
+                buttonClassName="flex size-control-md items-center justify-center rounded-full border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface text-fg-brand"
+                iconClassName="size-icon-md"
+            />
             {soldOut ? (
                 <button type="submit" form={CART_FORM_ID} name="intent" value="notify" className={`${buttonClass('secondary')} min-w-0 grow`}>
                     {labels.notifyMe}

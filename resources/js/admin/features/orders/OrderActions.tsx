@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ApiError } from '@/lib/api';
 import { cancelReasons, useOrderMove, type CancelReason, type Order, type WorkflowMove } from './api';
 import { openInvoices } from './composeApi';
+import { FulfilmentActions } from './FulfilmentDialogs';
 
 /** A refused move (409) or any other API failure, as one sentence for a toast. */
 export function problemText(error: unknown, fallback: string): string {
@@ -89,6 +90,7 @@ export function OrderActions({ order }: { order: Order }) {
                     </Button>
                 );
             })}
+            <FulfilmentActions order={order} />
             <HoldDialog open={dialog === 'hold'} order={order} onClose={() => setDialog(null)} />
             <CancelDialog open={dialog === 'cancel'} order={order} onClose={() => setDialog(null)} />
         </>

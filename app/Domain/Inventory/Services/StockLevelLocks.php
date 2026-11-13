@@ -15,7 +15,11 @@ use Illuminate\Support\Facades\DB;
  * are never touched by the INSERT (its duplicate-key S lock would deadlock with a
  * concurrent FOR UPDATE on the same row).
  *
- * @internal for StockLedger, StockReservations, AdjustStock (which locks first to read on_hand and reserved before deciding) and SetReorderLevels
+ * A write that spans locations (TransferStock) locks through lockAcross(), which orders
+ * by (variant_id, location_id): the global order every lock in the system follows, since
+ * a single-location writer's ascending-variant pass is a subsequence of it.
+ *
+ * @internal for StockLedger, StockReservations, AdjustStock / ApproveStockAdjustment (which lock first to read on_hand and reserved before deciding), TransferStock and SetReorderLevels
  */
 final class StockLevelLocks
 {
@@ -61,6 +65,57 @@ final class StockLevelLocks
         }
 
         return $byVariant;
+    }
+
+    /**
+     * Lock the levels of several variants at several locations in ONE pass ordered by
+     * (variant_id, location_id) — a transfer must never lock all of one location and
+     * then all of the other, or a transfer the opposite way would deadlock against it.
+     *
+     * @param  list<int>  $variantIds
+     * @param  list<int>  $locationIds
+     * @return array<int, array<int, StockLevel>> location id → variant id → locked level
+     */
+    public function lockAcross(array $variantIds, array $locationIds): array
+    {
+        $ids = array_values(array_unique($variantIds));
+        sort($ids);
+        $locations = array_values(array_unique($locationIds));
+        sort($locations);
+
+        $existing = [];
+        DB::table('stock_levels')->whereIn('location_id', $locations)->whereIn('variant_id', $ids)
+            ->get(['variant_id', 'location_id'])
+            ->each(static function (object $row) use (&$existing): void {
+                $existing[(int) $row->location_id.':'.(int) $row->variant_id] = true;
+            });
+        $now = now();
+        $missing = [];
+        foreach ($ids as $variantId) {
+            foreach ($locations as $locationId) {
+                if (! isset($existing[$locationId.':'.$variantId])) {
+                    $missing[] = ['variant_id' => $variantId, 'location_id' => $locationId, 'created_at' => $now, 'updated_at' => $now];
+                }
+            }
+        }
+        if ($missing !== []) {
+            DB::table('stock_levels')->insertOrIgnore($missing);
+        }
+
+        $levels = StockLevel::query()
+            ->whereIn('location_id', $locations)
+            ->whereIn('variant_id', $ids)
+            ->orderBy('variant_id')
+            ->orderBy('location_id')
+            ->lockForUpdate()
+            ->get();
+
+        $byLocation = array_fill_keys($locations, []);
+        foreach ($levels as $level) {
+            $byLocation[$level->location_id][$level->variant_id] = $level;
+        }
+
+        return $byLocation;
     }
 
     /**

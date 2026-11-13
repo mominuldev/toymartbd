@@ -50,15 +50,13 @@ describe('inventory overview', () => {
         await waitFor(() => expect(urls(calls).some((u) => u.includes('filter%5Bstate%5D=overstock'))).toBe(true));
     });
 
-    it('shows contextual row actions: short rows get Create PO (disabled, with the reason), healthy rows their Ledger', async () => {
-        inventoryApi(inventoryStaff);
+    it('shows contextual row actions: short rows get Create PO (a link to the PO form with the SKU), healthy rows their Ledger', async () => {
+        inventoryApi({ ...inventoryStaff, permissions: [...inventoryStaff.permissions, 'purchasing.create'] });
         renderApp('/inventory');
         const table = await screen.findByRole('table');
 
-        const create = within(table).getByRole('button', { name: 'Create PO' }) as HTMLButtonElement;
-        expect(create.disabled).toBe(true);
-        expect(create.getAttribute('aria-describedby')).toBeTruthy();
-        expect(document.getElementById(create.getAttribute('aria-describedby')!)?.textContent).toBe('Purchase orders are coming soon.');
+        const create = within(table).getByRole('link', { name: 'Create PO' });
+        expect(create.getAttribute('href')).toBe('/purchasing/new?sku=TMB-WAP-BN');
         // No other branch holds stock: no Transfer N.
         expect(within(table).queryByRole('button', { name: /^Transfer/ })).toBeNull();
         expect(within(table).getAllByRole('link', { name: 'Ledger' })).toHaveLength(1);
@@ -81,9 +79,9 @@ describe('inventory overview', () => {
         // Available elsewhere, server figures: CTG holds 1 but it is all reserved.
         expect(within(table).getByText('CTG 4 · SYL 0')).toBeTruthy();
         expect(within(table).getByText('CTG 0 · SYL 0')).toBeTruthy();
-        const transfer = within(table).getByRole('button', { name: 'Transfer 4' }) as HTMLButtonElement;
-        expect(transfer.disabled).toBe(true);
-        expect((screen.getByRole('button', { name: /Transfer stock/ }) as HTMLButtonElement).disabled).toBe(true);
+        // Without inventory.transfer there is no transfer action at all (inventoryOps.test covers it with the permission).
+        expect(within(table).queryByRole('button', { name: 'Transfer 4' })).toBeNull();
+        expect(screen.queryByRole('button', { name: /Transfer stock/ })).toBeNull();
 
         fireEvent.click(screen.getByRole('button', { name: /Chattogram · Agrabad/ }));
         await waitFor(() => expect(urls(calls).some((u) => u.includes('/inventory/summary?filter%5Blocation_id%5D=2'))).toBe(true));
