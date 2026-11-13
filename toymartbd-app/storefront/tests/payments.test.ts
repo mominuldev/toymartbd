@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// The checkout handler also reads the public tracking config (K-02, its own cached fetch); these
+// tests script the API's checkout answers in order, so tracking is off here (see tracking-consent.test.ts).
+vi.mock('@/lib/tracking/fetch', async () => ({ getTrackingConfig: async () => (await import('@/lib/tracking/config')).DISABLED_CONFIG }));
+
 import { checkoutBody, readPaymentMethod } from '@/lib/checkout/form';
 
 // P4-PAY-02/03/04 — online payment in the storefront: the method choice (COD default), checkout

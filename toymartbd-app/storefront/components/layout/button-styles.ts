@@ -16,6 +16,10 @@ const sizes = {
 const variants = {
     primary: 'bg-(image:--tm-gradient-button-primary) text-fg-on-brand shadow-gloss-button',
     secondary: 'bg-brand-subtle text-fg-primary [&>svg]:text-fg-brand',
+    /** Size-matched to the others: the 2px border sits inside the same height (Figma Variant=Outline). */
+    outline: 'border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface text-fg-brand',
+    /** Text only (Figma Variant=Ghost). */
+    ghost: 'bg-transparent text-fg-brand',
 } as const;
 
 export function buttonClass(variant: keyof typeof variants = 'primary', size: keyof typeof sizes = 'lg'): string {

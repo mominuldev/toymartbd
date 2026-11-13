@@ -325,6 +325,18 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
         Route::post('/settings/messaging/test', [App\Http\Controllers\Api\V1\Admin\Settings\MessagingSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.messaging.test');
     });
 
+    // Integrations → Tracking & pixels (P7 server-side tracking, K-01..K-03). Settings and the
+    // test event → settings.manage_integrations (credentials screen); diagnostics (event log,
+    // one event, health summary) → settings.view, enforced by TrackingEventPolicy.
+    Route::middleware('can:'.App\Models\Enums\Permission::SettingsManageIntegrations->value)->group(function (): void {
+        Route::get('/settings/tracking', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingSettingsController::class, 'show'])->name('settings.tracking.show');
+        Route::put('/settings/tracking', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingSettingsController::class, 'update'])->name('settings.tracking.update');
+        Route::post('/settings/tracking/test', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingSettingsController::class, 'test'])->middleware('throttle:5,1')->name('settings.tracking.test');
+    });
+    Route::get('/tracking/events', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingEventsController::class, 'index'])->name('tracking.events.index');
+    Route::get('/tracking/events/{event}', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingEventsController::class, 'show'])->whereNumber('event')->name('tracking.events.show');
+    Route::get('/tracking/summary', [App\Http\Controllers\Api\V1\Admin\Settings\TrackingEventsController::class, 'summary'])->name('tracking.summary');
+
     // Courier settings & delivery charges (P6): rate cards / on-off / default / free-delivery
     // threshold → shipments.manage_rates; credentials (write-only) → settings.manage_integrations.
     Route::get('/settings/couriers', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'index'])->name('settings.couriers.index');

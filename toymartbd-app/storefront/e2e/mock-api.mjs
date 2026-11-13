@@ -25,10 +25,13 @@
 //        detail, two addresses (with landmarks) and a wishlist (docs/api/account.md, P4-STO-11)
 //   GET  /api/v1/storefront/flash-sales     → one running flash sale (P7) over the first two product
 //        fixtures, ending 3 days after the mock started, each card carrying its `flash_sale` offer
+//   GET  /api/v1/storefront/tracking/config → public tracking ids (GA4 + Meta Pixel, opt_in, policy
+//        "2026-11"); POST /api/v1/storefront/tracking/events → 202, recorded for /__control/tracking (K-01/K-02)
 //   POST /__control/price {variant_id, price} → change a price (drives the price-changed path)
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
 //   GET  /__control/hits                    → {path: count} of authorised API reads
+//   GET  /__control/tracking                → {events: [tracking event bodies], checkout: [checkout `tracking` objects]}
 // Every API read requires `Authorization: Bearer $EXPECTED_TOKEN`, so a page that renders proves
 // the server sent the token.
 import { readFileSync } from 'node:fs';
@@ -110,6 +113,19 @@ const raw = (res, status, body, type) => {
 };
 const problem = (res, status, title, detail) =>
     send(res, status, { type: `https://toymartbd.com/problems/${status === 404 ? 'not-found' : 'unauthenticated'}`, title, status, detail }, 'application/problem+json');
+
+/** K-01/K-02: the public tracking config the storefront reads, and what it forwarded. */
+const TRACKING_CONFIG = {
+    ga4_measurement_id: 'G-E2ETEST01',
+    meta_pixel_id: '1234567890',
+    gtm_container_id: null,
+    consent_mode: 'opt_in',
+    consent_policy_version: '2026-11',
+    purchase_trigger: 'order_placed',
+    enabled: { ga4: true, meta: true },
+};
+let trackingEvents = [];
+let checkoutTracking = [];
 
 const readJson = (req) =>
     new Promise((resolve) => {
@@ -540,6 +556,7 @@ async function cartRoutes(req, res, url) {
         }
         const short = priced.items.filter((i) => !i.in_stock).map((i) => ({ field: `items.${i.variant_id}`, message: stockError(variantInfo(i.variant_id), i.quantity, bn) }));
         if (short.length) return problemOf(res, 409, 'insufficient-stock', 'Insufficient stock', short[0].message, short);
+        if (body.tracking) checkoutTracking.push(body.tracking);
         const number = `TMB-26-${String(++orderSeq).padStart(5, '0')}`;
         const upazila = (UPAZILAS[district.id] ?? []).find((u) => u.id === body.upazila_id) ?? null;
         const masked = `${phone.slice(-11, -8)}****${phone.slice(-4)}`;
@@ -562,6 +579,8 @@ async function cartRoutes(req, res, url) {
             coupon_code: priced.coupon?.applied ? priced.coupon.code : null,
             totals: { ...priced.totals, paid_total: '0.00', due_total: priced.totals.grand_total },
             timeline: [{ stage: 'placed', at: placedAt }],
+            // K-01: the API's deterministic purchase id (a fixed UUID per order here).
+            tracking: { purchase_event_id: `00000000-0000-5000-8000-${String(orderSeq).padStart(12, '0')}`, fire_browser_purchase: true },
             _token: token, _phone: phone,
         };
         orders.set(number, order);
@@ -702,6 +721,7 @@ createServer(async (req, res) => {
 
     if (url.pathname.startsWith('/__control/')) {
         if (url.pathname === '/__control/hits') return send(res, 200, hits);
+        if (url.pathname === '/__control/tracking') return send(res, 200, { events: trackingEvents, checkout: checkoutTracking });
         if (url.pathname === '/__control/reset') {
             brands = structuredClone(fixtures);
             hits = {};
@@ -710,6 +730,8 @@ createServer(async (req, res) => {
             idempotency = new Map();
             priceOverrides = {};
             resetAccount();
+            trackingEvents = [];
+            checkoutTracking = [];
             return send(res, 200, { ok: true });
         }
         if (url.pathname === '/__control/price' && req.method === 'POST') {
@@ -744,6 +766,12 @@ createServer(async (req, res) => {
     }
     if (/^\/api\/v1\/storefront\/(districts|delivery-|cart|checkout|orders)/.test(url.pathname)) return cartRoutes(req, res, url);
     if (url.pathname === '/api/v1/storefront/flash-sales') return send(res, 200, flashSales());
+    if (url.pathname === '/api/v1/storefront/tracking/config') return send(res, 200, TRACKING_CONFIG);
+    if (url.pathname === '/api/v1/storefront/tracking/events' && req.method === 'POST') {
+        const body = await readJson(req);
+        trackingEvents.push(body);
+        return send(res, 202, { event_id: body.event_id });
+    }
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     if (url.pathname === '/api/v1/storefront/products') return listProducts(res, url.searchParams);

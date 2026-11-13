@@ -1,4 +1,5 @@
 import { LocaleToggle } from '@/components/LocaleToggle';
+import { CookieSettingsLink } from '@/components/tracking/CookieSettingsLink';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
@@ -177,7 +178,13 @@ export function SiteFooter({ locale, path, menu = null }: Props) {
                         {' · '}
                         {legal.tradeLicence && legal.bin ? format(t.footer.tradeLicence, { number: legal.tradeLicence, bin: legal.bin }) : t.footer.legalPending}
                     </p>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                        {/* Reopens the consent banner (falls back to the privacy policy without JS). */}
+                        <CookieSettingsLink
+                            href={localizedPath(locale, '/pages/privacy')}
+                            label={t.consent.settings}
+                            className="t-caption rounded-xs font-semibold text-fg-secondary underline underline-offset-4 hover:text-fg-primary"
+                        />
                         <p className="t-caption inline-flex items-center gap-1.5 rounded-full bg-success-subtle px-2.5 py-1 font-semibold text-feedback-success">
                             <span className="sr-only">{t.footer.paymentTitle}: </span>
                             <Icon name="moneyFill" className="size-3.5" />

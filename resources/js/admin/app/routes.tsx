@@ -31,6 +31,7 @@ import { MessageTemplatesPage } from '@/features/notifications/MessageTemplatesP
 import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
 import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
+import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -194,6 +195,9 @@ export const routes: RouteObject[] = [
                     // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
                     { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
+                    // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).
+                    { path: 'integrations/tracking', element: <TrackingSettingsPage /> },
+                    { path: 'integrations/tracking/diagnostics', element: <TrackingDiagnosticsPage /> },
                     // P6 couriers: settings & delivery charges (no frame; B · 37 / B · 07 parts) and the failed-booking retry queue.
                     { path: 'integrations/couriers', element: <CourierSettingsPage /> },
                     { path: 'shipments/failed', element: <FailedBookingsPage /> },

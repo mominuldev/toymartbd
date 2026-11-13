@@ -55,5 +55,6 @@ X-Revalidate-Signature: sha256=<hex>          (HMAC-SHA256 over "<timestamp>.<ra
 | `content:menus` | the published header/footer/mobile menus (`GET /menus`, read by every page's chrome); sent on every menu save and every static-page change (menu links resolve a page's slug and hide a page that is not live) |
 | `content:banners` | every banner fetch (`GET /banners?placement=…`: announcement bar, category-page banner, cart/checkout info strip, popup); sent on every banner save/delete and by `toymart:content:revalidate-scheduled` when a banner's start or end passes. The storefront also caps these fetches at 300 s |
 | `content:testimonials` | published testimonials (`GET /testimonials`, the homepage testimonials block); sent on every testimonial save, delete or reorder |
+| `tracking-config` | `GET /storefront/tracking/config` (public GA4/Meta/GTM ids, consent mode, purchase trigger). Sent by `UpdateTrackingSettings` on every admin Tracking save that changes something (`RevalidateTrackingConfig`) — docs/api/tracking.md §1.4 |
 
 New tags are added here first, then on both sides.

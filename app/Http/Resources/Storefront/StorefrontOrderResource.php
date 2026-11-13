@@ -20,6 +20,9 @@ use App\Domain\Ordering\Models\OrderItem;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Tracking\Enums\PurchaseTrigger;
+use App\Domain\Tracking\Services\TrackingSettings;
+use App\Domain\Tracking\Support\TrackingEventIds;
 use App\Http\Resources\ApiResource;
 use App\Support\PhoneNumber;
 use DateTimeImmutable;
@@ -135,6 +138,20 @@ final class StorefrontOrderResource extends ApiResource
              * @var array{courier: array{code: string, name: string, name_bn: string|null}, status: 'submitted'|'booked'|'picked_up'|'in_transit'|'out_for_delivery'|'on_hold'|'delivered'|'partially_delivered'|'returned'|'cancelled', consignment_id: string|null, tracking_url: string|null, milestones: list<array{milestone: 'booked'|'picked_up'|'in_transit'|'out_for_delivery'|'delivered'|'returned', at: string|null}>}|null
              */
             'shipment' => self::shipment($order),
+            /**
+             * Server-side tracking (P7, docs/api/tracking.md §2.3). `purchase_event_id` is the
+             * deterministic id the server's own `purchase` uses (UUIDv5 of `purchase:{number}`),
+             * so a browser Pixel `Purchase` with it is deduplicated by Meta.
+             * `fire_browser_purchase` is true only when the purchase trigger is `order_placed`;
+             * the browser then fires the Pixel only — never gtag (GA4 has no dedup; the server
+             * sends GA4's purchase). Null on public tracking (`POST /orders/track`).
+             *
+             * @var array{purchase_event_id: string, fire_browser_purchase: bool}|null
+             */
+            'tracking' => $this->public ? null : [
+                'purchase_event_id' => TrackingEventIds::purchase($order->number),
+                'fire_browser_purchase' => app(TrackingSettings::class)->purchaseTrigger() === PurchaseTrigger::OrderPlaced,
+            ],
         ];
     }
 

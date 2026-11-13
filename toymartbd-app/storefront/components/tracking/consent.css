@@ -1,0 +1,38 @@
+/* Consent banner entrance (components/tracking/ConsentBanner.tsx). Mobile: the bottom sheet's
+   slide-up (Drawer 78:1300 — "enter 240ms decelerate"; the shop's sheets use duration/slow).
+   ≥768: the Modal's lift + fade. Reduced motion: opacity only (Drawer/Modal notes). Transform and
+   opacity only — a fixed panel never shifts content (CLS). */
+.consent-banner {
+    animation: tm-consent-sheet var(--tm-duration-slow) var(--tm-ease-decelerate);
+}
+
+@keyframes tm-consent-sheet {
+    from {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes tm-consent-lift {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--spacing) * 4)) scale(0.96);
+    }
+}
+
+@keyframes tm-consent-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+@media (min-width: 48rem) {
+    .consent-banner {
+        animation-name: tm-consent-lift;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .consent-banner {
+        animation-name: tm-consent-fade;
+    }
+}

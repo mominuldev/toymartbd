@@ -130,6 +130,9 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Finance\Models\ExpenseCategory::class => \App\Policies\ExpenseCategoryPolicy::class,
         \App\Domain\Finance\Models\ManualCodReceipt::class => \App\Policies\ManualCodReceiptPolicy::class,
         \App\Domain\Finance\Models\DailyFinancialSummary::class => \App\Policies\DailyFinancialSummaryPolicy::class,
+        // Server-side tracking diagnostics (P7, K-03): read-only, settings.view.
+        \App\Domain\Tracking\Models\TrackingEvent::class => \App\Policies\TrackingEventPolicy::class,
+        \App\Domain\Tracking\Models\OrderTrackingContext::class => \App\Policies\TrackingEventPolicy::class,
     ];
 
     /**

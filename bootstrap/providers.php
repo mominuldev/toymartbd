@@ -32,4 +32,5 @@ return [
     SeoServiceProvider::class,
     App\Providers\BlogServiceProvider::class,
     App\Providers\StoreContentServiceProvider::class,
+    App\Providers\TrackingServiceProvider::class,
 ];

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// The checkout handler also reads the public tracking config (K-02, its own cached fetch); these
+// tests script the API's checkout answers in order, so tracking is off here (see tracking-consent.test.ts).
+vi.mock('@/lib/tracking/fetch', async () => ({ getTrackingConfig: async () => (await import('@/lib/tracking/config')).DISABLED_CONFIG }));
+
 import type { StorefrontOrder } from '@/lib/cart/types';
 import { checkoutBody, decodeDraft, decodeFlash, encodeDraft, encodeFlash, readDraft, splitErrors, validAmount, validKey } from '@/lib/checkout/form';
 import { getMessages } from '@/lib/i18n';
@@ -66,6 +70,7 @@ const order = (over: Partial<StorefrontOrder> = {}): StorefrontOrder => ({
     totals: { subtotal: '1.00', promotion_discount: '0.00', coupon_discount: '0.00', discount_total: '0.00', shipping_charge: '0.00', grand_total: '1.00', paid_total: '0.00', due_total: '1.00' },
     timeline: [{ stage: 'placed', at: '2026-11-12T05:02:00Z' }],
     shipment: null,
+    tracking: null,
     ...over,
 });
 

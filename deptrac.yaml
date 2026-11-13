@@ -140,7 +140,10 @@ deptrac:
     Content: [Support, Models, DomainEvents, Catalog, Customer, Seo, SeoContracts]
     # Seo writes a static page with its seo_meta/slug_history (SaveCmsPageWithSeo), as it does products.
     Seo: [Support, Models, DomainEvents, Catalog, Customer, Content, SeoContracts]
-    Tracking: [Support, Models, DomainEvents, Catalog, Customer]
+    # Tracking (P7 batch 2) reads orders to build purchase/refund conversions (never writes
+    # them) and queues Content's storefront revalidation job for `tracking-config`.
+    # Nothing depends back on Tracking except Http and Providers.
+    Tracking: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Content]
     Purchasing: [Support, Models, DomainEvents, Catalog, Customer, Inventory]
     Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]
     NotificationContracts: [Support]

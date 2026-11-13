@@ -41,6 +41,7 @@ const order = (over: Partial<StorefrontOrder> = {}): StorefrontOrder => ({
         { stage: 'shipped', at: '2026-11-10T08:14:00Z' },
     ],
     shipment: shipment(),
+    tracking: null,
     ...over,
 });
 
