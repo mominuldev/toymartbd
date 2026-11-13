@@ -43,8 +43,7 @@ export function TestimonialsPage() {
 
     return (
         <section className="flex flex-col gap-6">
-            <StoreHeader action={add} />
-            <p className="t-admin-body text-fg-secondary">{t('content.testimonials.subtitle')}</p>
+            <StoreHeader section="testimonials" action={add} />
 
             {query.isError ? (
                 <QueryError error={query.error} onRetry={() => void query.refetch()} />

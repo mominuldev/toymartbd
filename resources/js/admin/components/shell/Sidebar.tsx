@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router';
-import { ShoppingBagOpenIcon, SidebarSimpleIcon } from '@phosphor-icons/react';
+import { NavLink, useLocation } from 'react-router';
+import { CaretDownIcon, ShoppingBagOpenIcon, SidebarSimpleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { CountBadge } from '@/components/ui/CountBadge';
@@ -26,6 +26,9 @@ type SidebarProps = {
  * data-theme="admin-dark". Brand row 60 high with the gradient logo tile; nav items 38
  * high, radius/sm; overline group labels (dividers in the rail); a pinned user footer.
  * Active item: bg/brand-subtle + brand icon + semibold label (06-admin-feature-checklist §0).
+ * An item with children (Online store) shows a caret and, while the route is inside it, a
+ * submenu of SidebarSubItem links (321:59233): 32 high, label indented to the parent label.
+ * The open parent drops its active fill where the submenu shows; the rail keeps the fill.
  * The nav scrolls without a visible scrollbar (owner request).
  */
 /** Screen-reader wording for a nav item's count badge. */
@@ -33,6 +36,7 @@ const badgeLabels: Partial<Record<string, MessageKey>> = { '/inventory': 'nav.in
 
 export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user }: SidebarProps) {
     const { t } = useI18n();
+    const { pathname } = useLocation();
     const groups = visibleNavigation(permissions);
     const drawer = variant === 'drawer';
     // 'always' = drawer, 'never' = user-collapsed rail, 'wide' = rail below xl, expanded at xl.
@@ -42,6 +46,13 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
     const label = pick('', 'sr-only', 'sr-only xl:not-sr-only');
     const onlyExpanded = pick('flex', 'hidden', 'hidden xl:flex');
     const onlyRail = pick('hidden', '', 'xl:hidden');
+    // A parent whose submenu is showing reads as Default; in the rail it stays Active.
+    const openParent = pick(
+        't-admin-body hover:bg-subtle',
+        'bg-brand-subtle t-admin-body-strong',
+        'bg-brand-subtle t-admin-body-strong xl:bg-transparent xl:t-admin-body xl:hover:bg-subtle',
+    );
+    const openParentIcon = pick('text-fg-primary', 'text-fg-brand', 'text-fg-brand xl:text-fg-primary');
 
     return (
         <div className="flex h-full flex-col border-r border-line-default bg-surface">
@@ -72,7 +83,9 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                             </>
                         )}
                         <ul className="flex flex-col gap-px">
-                            {group.items.map((item) => (
+                            {group.items.map((item) => {
+                                const open = item.children !== undefined && (pathname === item.path || pathname.startsWith(`${item.path}/`));
+                                return (
                                 <li key={item.path}>
                                     <NavLink
                                         to={item.path}
@@ -83,17 +96,25 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                                             [
                                                 'flex items-center rounded-sm text-fg-primary transition-colors duration-150 ease-standard',
                                                 pick('h-9.5 gap-3 px-3', 'h-9 w-12 justify-center', 'h-9 w-12 justify-center xl:h-9.5 xl:w-auto xl:justify-start xl:gap-3 xl:px-3'),
-                                                isActive ? 'bg-brand-subtle t-admin-body-strong' : 't-admin-body hover:bg-subtle',
+                                                isActive ? (open ? openParent : 'bg-brand-subtle t-admin-body-strong') : 't-admin-body hover:bg-subtle',
                                             ].join(' ')
                                         }
                                     >
                                         {({ isActive }) => {
                                             const count = counts[item.path];
                                             const badgeLabel = badgeLabels[item.path];
+                                            const iconTone = isActive ? (open ? openParentIcon : 'text-fg-brand') : 'text-fg-primary';
                                             return (
                                                 <>
-                                                    <item.icon size={20} aria-hidden className={`shrink-0 ${isActive ? 'text-fg-brand' : 'text-fg-primary'}`} />
+                                                    <item.icon size={20} aria-hidden className={`shrink-0 ${iconTone}`} />
                                                     <span className={`min-w-0 flex-1 truncate ${label}`}>{t(item.key)}</span>
+                                                    {item.children && (
+                                                        <CaretDownIcon
+                                                            size={16}
+                                                            aria-hidden
+                                                            className={`shrink-0 text-fg-secondary transition-transform duration-150 ease-standard ${open ? '' : '-rotate-90'} ${onlyExpanded}`}
+                                                        />
+                                                    )}
                                                     {count !== undefined && count > 0 && (
                                                         <>
                                                             {/* Figma CountBadge 185:43: bg/subtle, on the active item bg/surface. Labels only where the item shows its label. */}
@@ -107,8 +128,29 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                                             );
                                         }}
                                     </NavLink>
+                                    {open && item.children && (
+                                        <ul aria-label={t(item.key)} className={`flex-col gap-px pt-px pb-1 ${onlyExpanded}`}>
+                                            {item.children.map((child) => (
+                                                <li key={child.path}>
+                                                    <NavLink
+                                                        to={child.path}
+                                                        onClick={onNavigate}
+                                                        className={({ isActive }) =>
+                                                            [
+                                                                'flex h-8 items-center rounded-sm ps-11 pe-3 transition-colors duration-150 ease-standard',
+                                                                isActive ? 'bg-brand-subtle t-admin-body-strong text-fg-primary' : 't-admin-body text-fg-secondary hover:bg-subtle',
+                                                            ].join(' ')
+                                                        }
+                                                    >
+                                                        <span className="min-w-0 truncate">{t(child.key)}</span>
+                                                    </NavLink>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </li>
-                            ))}
+                                );
+                            })}
                         </ul>
                     </div>
                 ))}
