@@ -17,6 +17,8 @@ import { checkoutBody, draftId, encodeDraft, encodeFlash, readDraft, readPayment
 import { getMessages, localizedPath } from '@/lib/i18n';
 import { isOnlineMethod, ONLINE_METHODS } from '@/lib/payments/methods';
 import { startPayment } from '@/lib/payments/start';
+import { checkoutTracking } from '@/lib/tracking/events';
+import { getTrackingConfig } from '@/lib/tracking/fetch';
 
 // POST /api/checkout — the checkout form (P4-STO-09, docs/api/checkout.md). One handler, four intents:
 //   place          → POST /storefront/checkout with the cart token, the page's Idempotency-Key and
@@ -101,11 +103,16 @@ export async function POST(request: Request): Promise<Response> {
     const expected = validAmount(String(req.form.get('expected_total') ?? ''));
     if (!key || !expected) return respond(req, request, draft, { next: '/checkout', keepDraft: true, flash: notice(t.checkout.priceChanged) });
 
+    // K-02: the optional `tracking` object — consent from the tm_consent cookie and the browser ids
+    // it covers (lib/tracking/events.ts). The API records it after PlaceOrder commits; absent when
+    // tracking is off. Read from cookies here, so it works with JavaScript disabled too.
+    const tracking = checkoutTracking(request.headers, await getTrackingConfig());
+
     try {
         const { data: order } = await send<StorefrontOrder>('POST', 'storefront/checkout', {
             locale: req.locale,
             headers: { 'X-Cart-Token': req.token, 'Idempotency-Key': key },
-            body: checkoutBody(draft, expected, method),
+            body: { ...checkoutBody(draft, expected, method), ...(tracking ? { tracking } : {}) },
         });
         const token = req.token;
         // Online (P4-PAY-02): the order is placed and its stock held; now open the gateway session

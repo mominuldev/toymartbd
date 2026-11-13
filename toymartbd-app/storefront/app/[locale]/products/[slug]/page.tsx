@@ -22,6 +22,8 @@ import { formatPrice } from '@/lib/listing/format';
 import { getDeliveryRates, getProduct } from '@/lib/product/fetch';
 import { beforeCutoff, cutoffLabel } from '@/lib/product/format';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { TrackEvent } from '@/components/tracking/TrackEvent';
+import { productItem, TRACKING_CURRENCY } from '@/lib/tracking/items';
 import { productJsonLd } from '@/lib/seo/jsonld';
 import { getReviews, validCursor } from '@/lib/reviews/fetch';
 import { reviewMessages } from '@/lib/reviews/messages';
@@ -101,6 +103,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
         .split(/\n+/)
         .map((line) => line.replace(/^[-•*]\s*/, '').trim())
         .filter(Boolean);
+    // K-01: view_item at the price on screen (the API's flash or regular price, never computed here).
+    const shownPrice = flash ? flash.salePrice : variant.price;
+    const trackingItem = productItem(product, variant, shownPrice);
     const crumbs = [
         { label: t.listing.home, href: localizedPath(locale, '/'), lang: undefined as 'en' | undefined },
         ...product.breadcrumbs.map((c) => ({
@@ -113,6 +118,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     return (
         <PageShell locale={locale} path={shellPath} top="crumb" bottomBar>
             <JsonLd data={productJsonLd(product, locale, { home: t.listing.home })} />
+            <TrackEvent name="view_item" dedupeKey={`${product.slug}:${variant.id}`} data={{ value: shownPrice, currency: TRACKING_CURRENCY, items: [trackingItem] }} />
             <nav aria-label={t.listing.breadcrumb} className="-mx-gutter-mobile overflow-x-auto overflow-y-hidden px-gutter-mobile md:mx-0 md:px-0">
                 <ol className="flex h-6 items-center gap-2 whitespace-nowrap">
                     {crumbs.map((crumb) => (
@@ -153,6 +159,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                         back={variantHref(basePath, variant.id)}
                         estimator={<DeliveryEstimator locale={locale} variantId={variant.id} quantity={1} />}
                         trust={<TrustStrip t={t} />}
+                        trackingItem={trackingItem}
                     />
                 </div>
             </div>

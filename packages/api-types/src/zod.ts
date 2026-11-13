@@ -61,6 +61,9 @@ export type ProductType = z.infer<typeof productTypeSchema>;
 export const promotionTypeSchema = z.enum(["discount","flash_sale","category_discount","tiered","buy_x_get_y","bundle","free_delivery"]);
 export type PromotionType = z.infer<typeof promotionTypeSchema>;
 
+export const purchaseTriggerSchema = z.enum(["order_placed","order_delivered"]);
+export type PurchaseTrigger = z.infer<typeof purchaseTriggerSchema>;
+
 export const recommendationPlacementSchema = z.enum(["pdp_upsell","pdp_cross_sell","pdp_fbt","pdp_age_progression","cart_cross_sell","confirmation_cross_sell"]);
 export type RecommendationPlacement = z.infer<typeof recommendationPlacementSchema>;
 
@@ -281,6 +284,23 @@ export const checkoutRequestSchema = z.object({
     "utm_source": z.string().max(128).nullable().optional(),
     "utm_medium": z.string().max(128).nullable().optional(),
     "utm_campaign": z.string().max(128).nullable().optional(),
+    "tracking": z.object({
+    "client": z.object({
+    "ip": z.string().nullable().optional(),
+    "user_agent": z.string().max(512).nullable().optional(),
+    "ga_client_id": z.string().max(100).regex(new RegExp("^[A-Za-z0-9._-]+$")).nullable().optional(),
+    "ga_session_id": z.string().max(100).regex(new RegExp("^[A-Za-z0-9._-]+$")).nullable().optional(),
+    "fbp": z.string().max(255).nullable().optional(),
+    "fbc": z.string().max(255).nullable().optional(),
+}).optional(),
+    "consent": z.object({
+    "analytics": z.boolean().optional(),
+    "ads": z.boolean().optional(),
+    "mode": z.enum(["opt_in","notice"]).optional(),
+    "policy_version": z.string().max(32).nullable().optional(),
+}).optional(),
+    "event_source_url": z.url().max(2048).nullable().optional(),
+}).optional(),
 });
 export type CheckoutRequestInput = z.input<typeof checkoutRequestSchema>;
 
@@ -733,6 +753,12 @@ export const sendTestSmsRequestSchema = z.object({
 });
 export type SendTestSmsRequestInput = z.input<typeof sendTestSmsRequestSchema>;
 
+/** `POST /settings/tracking/test` — validate one synthetic event against a destination with */
+export const sendTestTrackingEventRequestSchema = z.object({
+    "destination": z.enum(["ga4","meta"]),
+});
+export type SendTestTrackingEventRequestInput = z.input<typeof sendTestTrackingEventRequestSchema>;
+
 /** `POST /products/seo-measure` — the server's pixel measurement of an unsaved meta */
 export const seoMeasureRequestSchema = z.object({
     "title": z.string().max(500).nullable().optional(),
@@ -1179,6 +1205,40 @@ export const storeSupplierRequestSchema = z.object({
 });
 export type StoreSupplierRequestInput = z.input<typeof storeSupplierRequestSchema>;
 
+/** `POST /storefront/tracking/events` (docs/api/tracking.md §2.2): the server twin of a */
+export const storeTrackingEventRequestSchema = z.object({
+    "event_id": z.string().min(1),
+    "event_name": z.enum(["view_item","add_to_cart","begin_checkout"]),
+    "occurred_at": z.string().min(1),
+    "event_source_url": z.url().min(1).max(2048),
+    "value": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+    "currency": z.enum(["BDT"]).nullable().optional(),
+    "items": z.array(z.object({
+    "item_id": z.string().min(1).max(64),
+    "item_name": z.string().min(1).max(255),
+    "price": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "quantity": z.number().int().min(1).max(999),
+    "item_brand": z.string().max(255).nullable().optional(),
+    "item_category": z.string().max(255).nullable().optional(),
+    "item_variant": z.string().max(255).nullable().optional(),
+})).max(50).nullable().optional(),
+    "client": z.object({
+    "ip": z.string().nullable().optional(),
+    "user_agent": z.string().max(512).nullable().optional(),
+    "ga_client_id": z.string().max(100).regex(new RegExp("^[A-Za-z0-9._-]+$")).nullable().optional(),
+    "ga_session_id": z.string().max(100).regex(new RegExp("^[A-Za-z0-9._-]+$")).nullable().optional(),
+    "fbp": z.string().max(255).nullable().optional(),
+    "fbc": z.string().max(255).nullable().optional(),
+}),
+    "consent": z.object({
+    "analytics": z.boolean().optional(),
+    "ads": z.boolean().optional(),
+    "mode": z.enum(["opt_in","notice"]).optional(),
+    "policy_version": z.string().max(32).nullable().optional(),
+}),
+});
+export type StoreTrackingEventRequestInput = z.input<typeof storeTrackingEventRequestSchema>;
+
 /** `POST /storefront/account/reviews` (P4-CAT-12) — the signed-in customer reviews a */
 export const submitReviewRequestSchema = z.object({
     "product_id": z.number().int().min(1),
@@ -1606,6 +1666,25 @@ export const updateSupplierRequestSchema = z.object({
     "status": supplierStatusSchema.optional(),
 });
 export type UpdateSupplierRequestInput = z.input<typeof updateSupplierRequestSchema>;
+
+/** `PUT /settings/tracking` — Admin → Integrations → Tracking & pixels; needs */
+export const updateTrackingSettingsRequestSchema = z.object({
+    "server_side_enabled": z.boolean(),
+    "ga4_enabled": z.boolean(),
+    "ga4_measurement_id": z.string().max(24).regex(new RegExp("^G-[A-Z0-9]{4,20}$")).nullable().optional(),
+    "ga4_api_secret": z.string().max(255).nullable().optional(),
+    "clear_ga4_api_secret": z.boolean().optional(),
+    "meta_enabled": z.boolean(),
+    "meta_pixel_id": z.string().max(20).regex(new RegExp("^\\d{5,20}$")).nullable().optional(),
+    "meta_access_token": z.string().max(1024).nullable().optional(),
+    "clear_meta_access_token": z.boolean().optional(),
+    "meta_test_event_code": z.string().max(64).regex(new RegExp("^[A-Za-z0-9_-]+$")).nullable().optional(),
+    "gtm_container_id": z.string().max(16).regex(new RegExp("^GTM-[A-Z0-9]{4,12}$")).nullable().optional(),
+    "purchase_trigger": purchaseTriggerSchema,
+    "consent_mode": z.enum(["opt_in","notice"]),
+    "consent_policy_version": z.string().max(32).regex(new RegExp("^[A-Za-z0-9._-]+$")).nullable().optional(),
+});
+export type UpdateTrackingSettingsRequestInput = z.input<typeof updateTrackingSettingsRequestSchema>;
 
 /** `PUT /notifications/templates/{template}/whatsapp-status` (P7) — staff record where a */
 export const updateWhatsAppStatusRequestSchema = z.object({

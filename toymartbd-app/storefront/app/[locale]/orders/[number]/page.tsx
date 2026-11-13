@@ -12,6 +12,8 @@ import { ORDER_NUMBER } from '@/lib/checkout/form';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { getPlacedOrder } from '@/lib/order/fetch';
 import { privateMetadata } from '@/lib/seo/metadata';
+import { TrackPurchase } from '@/components/tracking/TrackEvent';
+import { orderItems, orderTracking, TRACKING_CURRENCY } from '@/lib/tracking/items';
 
 // /orders/{number} — the order confirmation (P4-STO-10). There is no Figma frame of its own: it is
 // assembled from the checkout and tracking parts (header card, OrderTimeline, delivery details,
@@ -57,8 +59,20 @@ export default async function OrderConfirmationPage({ params }: Props) {
         );
     }
 
+    // K-01: the browser Purchase fires only when the API says so (purchase_trigger = order_placed),
+    // with the API's deterministic event id so Meta dedups it against the server's (rule 1: the
+    // value is the API's grand total, not a sum made here).
+    const tracking = orderTracking(order);
+
     return (
         <PageShell locale={locale} path={path} top="tight">
+            {tracking?.fire_browser_purchase ? (
+                <TrackPurchase
+                    eventId={tracking.purchase_event_id}
+                    fireBrowserPurchase
+                    data={{ orderNumber: order.number, value: order.totals.grand_total, currency: TRACKING_CURRENCY, items: orderItems(order) }}
+                />
+            ) : null}
             <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
                 <header className="flex items-start gap-3 rounded-sm bg-success-subtle p-4 lg:p-6">
                     <Icon name="checkCircle" className="size-icon-lg shrink-0 text-status-in-stock lg:size-8" />

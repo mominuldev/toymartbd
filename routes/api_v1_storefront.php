@@ -74,6 +74,8 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     require __DIR__.'/api_v1_storefront_content.php';
     // CMS homepage blocks, published and draft preview (Phase 7) — routes/api_v1_storefront_cms_blocks.php.
     require __DIR__.'/api_v1_storefront_cms_blocks.php';
+    // Server-side tracking config + browser-event relay (Phase 7 batch 2) — routes/api_v1_storefront_tracking.php.
+    require __DIR__.'/api_v1_storefront_tracking.php';
 });
 
 // Cart (P4-CRT-01/02/04) — docs/api/cart.md. The cart is found by the opaque token the

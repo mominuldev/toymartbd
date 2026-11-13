@@ -13715,6 +13715,407 @@
                 }
             }
         },
+        "/admin/settings/tracking": {
+            "get": {
+                "operationId": "v1.admin.settings.tracking.show",
+                "summary": "`GET /settings/tracking` \u2014 effective values; secrets only as set/source/last-4 hint",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TrackingSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrackingSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.tracking.update",
+                "summary": "`PUT /settings/tracking` \u2014 blank secret = keep; `clear_*` = remove. Audited\n(`credential_changed`, scope `tracking`); a change revalidates the storefront's\n`tracking-config` cache tag after commit",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTrackingSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TrackingSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrackingSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/tracking/test": {
+            "post": {
+                "operationId": "v1.admin.settings.tracking.test",
+                "summary": "`POST /settings/tracking/test` \u2014 one synthetic purchase through the destination's\nvalidation path (GA4 validation server / Meta test_event_code) with the SAVED\nsettings; never counts as a conversion and writes no event row. Rate-limited; no\ntransaction around the provider call (rule 4)",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendTestTrackingEventRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TrackingTestResult`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrackingTestResult"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "429": {
+                        "description": "Too many test events (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tracking/events": {
+            "get": {
+                "operationId": "v1.admin.tracking.events.index",
+                "summary": "`GET /tracking/events` \u2014 newest first, cursor-paginated. Filters are an allowlist; an\nunlisted filter, a sort, or a bad value is a 400. Dates are Dhaka calendar dates\n(rule 11), inclusive",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[event_name]",
+                        "in": "query",
+                        "description": "One event.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "page_view",
+                                "view_item",
+                                "add_to_cart",
+                                "begin_checkout",
+                                "purchase",
+                                "refund"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[source]",
+                        "in": "query",
+                        "description": "Where the event originated.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "browser",
+                                "server"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[ga4_status]",
+                        "in": "query",
+                        "description": "GA4 dispatch status.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "sent",
+                                "failed",
+                                "skipped_consent",
+                                "skipped_disabled",
+                                "skipped_stale",
+                                "not_applicable"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[meta_status]",
+                        "in": "query",
+                        "description": "Meta dispatch status.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "sent",
+                                "failed",
+                                "skipped_consent",
+                                "skipped_disabled",
+                                "skipped_stale",
+                                "not_applicable"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[date_from]",
+                        "in": "query",
+                        "description": "First Dhaka date (Y-m-d), inclusive.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[date_to]",
+                        "in": "query",
+                        "description": "Last Dhaka date (Y-m-d), inclusive.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[order_number]",
+                        "in": "query",
+                        "description": "Exact order number, e.g. TMB-26-00042.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `TrackingEvent`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TrackingEvent"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/tracking/events/{event}": {
+            "get": {
+                "operationId": "v1.admin.tracking.events.show",
+                "summary": "`GET /tracking/events/{event}` \u2014 one event, its payload as sent and each destination's response",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "description": "The event ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TrackingEventDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrackingEventDetail"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/tracking/summary": {
+            "get": {
+                "operationId": "v1.admin.tracking.summary",
+                "summary": "`GET /tracking/summary` \u2014 per-destination health: 24 h / 7 d counts, consent-skip and pairing rates, last success / error",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TrackingSummary`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrackingSummary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/settings/couriers": {
             "get": {
                 "operationId": "v1.admin.settings.couriers.index",
@@ -23784,6 +24185,84 @@
                 }
             }
         },
+        "/storefront/tracking/config": {
+            "get": {
+                "operationId": "v1.storefront.tracking.config",
+                "summary": "`GET /storefront/tracking/config` \u2014 the public tracking ids, flags and consent mode.\nThe storefront caches it under the `tracking-config` tag; an admin save revalidates it",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontTrackingConfig`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontTrackingConfig"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/storefront/tracking/events": {
+            "post": {
+                "operationId": "v1.storefront.tracking.events.store",
+                "summary": "`POST /storefront/tracking/events` \u2014 record the server twin of a browser event and\nqueue its dispatch. Idempotent on `(event_id, event_name)`: a repeat is accepted and\nnot dispatched again. Always `202`: the dispatch outcome is in the admin diagnostics",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTrackingEventRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`StorefrontTrackingEventAccepted`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontTrackingEventAccepted"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Invalid field or an event name outside the allowlist (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many events for this shopper (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/cart": {
             "post": {
                 "operationId": "v1.storefront.cart.store",
@@ -29132,6 +29611,93 @@
                             "null"
                         ],
                         "maxLength": 128
+                    },
+                    "tracking": {
+                        "type": "object",
+                        "description": "Optional (P7 server-side tracking, docs/api/tracking.md \u00a72.3): the shopper's\nbrowser context and consent, for the server-side `purchase`. Same `client` +\n`consent` shape as `POST /tracking/events`.",
+                        "properties": {
+                            "client": {
+                                "type": "object",
+                                "properties": {
+                                    "ip": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "user_agent": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 512
+                                    },
+                                    "ga_client_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[A-Za-z0-9._-]+$",
+                                        "maxLength": 100
+                                    },
+                                    "ga_session_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "^[A-Za-z0-9._-]+$",
+                                        "maxLength": 100
+                                    },
+                                    "fbp": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "fbc": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                }
+                            },
+                            "consent": {
+                                "type": "object",
+                                "properties": {
+                                    "analytics": {
+                                        "type": "boolean"
+                                    },
+                                    "ads": {
+                                        "type": "boolean"
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "opt_in",
+                                            "notice"
+                                        ]
+                                    },
+                                    "policy_version": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 32
+                                    }
+                                }
+                            },
+                            "event_source_url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uri",
+                                "maxLength": 2048
+                            }
+                        }
                     }
                 },
                 "required": [
@@ -41803,6 +42369,15 @@
                 ],
                 "title": "PurchaseReceiptQuote"
             },
+            "PurchaseTrigger": {
+                "type": "string",
+                "description": "Which order event fires the `purchase` conversion (PRD K-02). Exactly one of them, never both: `order_placed` counts every order the moment it is placed (fast feedback for ad optimisation, includes COD orders that later fail); `order_delivered` counts only orders the customer accepted and paid for (truer in a COD market, but days late and server-only: the browser is gone by then).\n",
+                "enum": [
+                    "order_placed",
+                    "order_delivered"
+                ],
+                "title": "PurchaseTrigger"
+            },
             "ReceivePurchaseRequest": {
                 "type": "object",
                 "description": "`POST /purchases/{purchase}/receipts` and `\u2026/receipts/quote` \u2014 the units arriving per\nPO line, where they go, and the landed costs to split across them. The quote takes\nthe same body and returns every figure the receipt would write; needs\npurchasing.receive. Over-receipt and unknown lines are 422s from ReceiptCalculator.",
@@ -43157,6 +43732,23 @@
                     "locale"
                 ],
                 "title": "SendTestSmsRequest"
+            },
+            "SendTestTrackingEventRequest": {
+                "type": "object",
+                "description": "`POST /settings/tracking/test` \u2014 validate one synthetic event against a destination with\nthe SAVED settings (GA4's validation endpoint / Meta's test_event_code), and report what\nthe provider said; needs settings.manage_integrations.",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "enum": [
+                            "ga4",
+                            "meta"
+                        ]
+                    }
+                },
+                "required": [
+                    "destination"
+                ],
+                "title": "SendTestTrackingEventRequest"
             },
             "SeoDocument": {
                 "type": "object",
@@ -46522,6 +47114,191 @@
                 ],
                 "title": "StoreSupplierRequest"
             },
+            "StoreTrackingEventRequest": {
+                "type": "object",
+                "description": "`POST /storefront/tracking/events` (docs/api/tracking.md \u00a72.2): the server twin of a\nbrowser event. Only `view_item`, `add_to_cart` and `begin_checkout` are accepted \u2014\n`purchase` and `refund` are server-originated only, and `page_view` is the browser's alone.\nAn unlisted name is a 422 `validation-error`.",
+                "properties": {
+                    "event_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID generated in the browser and used for the Pixel event too (Meta dedup)."
+                    },
+                    "event_name": {
+                        "type": "string",
+                        "enum": [
+                            "view_item",
+                            "add_to_cart",
+                            "begin_checkout"
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601, when the browser saw it."
+                    },
+                    "event_source_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 2048
+                    },
+                    "value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Decimal string, e.g. \"1250.00\".",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "BDT",
+                            null
+                        ]
+                    },
+                    "items": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "item_id": {
+                                    "type": "string",
+                                    "maxLength": 64
+                                },
+                                "item_name": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "price": {
+                                    "type": "string",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 999
+                                },
+                                "item_brand": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "item_category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                },
+                                "item_variant": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "item_id",
+                                "item_name",
+                                "price",
+                                "quantity"
+                            ]
+                        },
+                        "maxItems": 50
+                    },
+                    "client": {
+                        "type": "object",
+                        "properties": {
+                            "ip": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "user_agent": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 512
+                            },
+                            "ga_client_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 100
+                            },
+                            "ga_session_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 100
+                            },
+                            "fbp": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 255
+                            },
+                            "fbc": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 255
+                            }
+                        }
+                    },
+                    "consent": {
+                        "type": "object",
+                        "properties": {
+                            "analytics": {
+                                "type": "boolean"
+                            },
+                            "ads": {
+                                "type": "boolean"
+                            },
+                            "mode": {
+                                "type": "string",
+                                "enum": [
+                                    "opt_in",
+                                    "notice"
+                                ]
+                            },
+                            "policy_version": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 32
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "event_id",
+                    "event_name",
+                    "occurred_at",
+                    "event_source_url",
+                    "client",
+                    "consent"
+                ],
+                "title": "StoreTrackingEventRequest"
+            },
             "StorefrontAccount": {
                 "type": "object",
                 "properties": {
@@ -48601,6 +49378,25 @@
                             "tracking_url",
                             "milestones"
                         ]
+                    },
+                    "tracking": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Server-side tracking (P7, docs/api/tracking.md \u00a72.3). `purchase_event_id` is the\ndeterministic id the server's own `purchase` uses (UUIDv5 of `purchase:{number}`),\nso a browser Pixel `Purchase` with it is deduplicated by Meta.\n`fire_browser_purchase` is true only when the purchase trigger is `order_placed`;\nthe browser then fires the Pixel only \u2014 never gtag (GA4 has no dedup; the server\nsends GA4's purchase). Null on public tracking (`POST /orders/track`).",
+                        "properties": {
+                            "purchase_event_id": {
+                                "type": "string"
+                            },
+                            "fire_browser_purchase": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "purchase_event_id",
+                            "fire_browser_purchase"
+                        ]
                     }
                 },
                 "required": [
@@ -48614,7 +49410,8 @@
                     "coupon_code",
                     "totals",
                     "timeline",
-                    "shipment"
+                    "shipment",
+                    "tracking"
                 ],
                 "title": "StorefrontOrder"
             },
@@ -50071,6 +50868,87 @@
                 ],
                 "title": "StorefrontTestimonial"
             },
+            "StorefrontTrackingConfig": {
+                "type": "object",
+                "properties": {
+                    "ga4_measurement_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "meta_pixel_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "gtm_container_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "consent_mode": {
+                        "type": "string",
+                        "enum": [
+                            "opt_in",
+                            "notice"
+                        ]
+                    },
+                    "consent_policy_version": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "purchase_trigger": {
+                        "type": "string",
+                        "enum": [
+                            "order_placed",
+                            "order_delivered"
+                        ]
+                    },
+                    "enabled": {
+                        "type": "object",
+                        "description": "Whether the browser should load gtag / the Pixel at all.",
+                        "properties": {
+                            "ga4": {
+                                "type": "boolean"
+                            },
+                            "meta": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "ga4",
+                            "meta"
+                        ]
+                    }
+                },
+                "required": [
+                    "ga4_measurement_id",
+                    "meta_pixel_id",
+                    "gtm_container_id",
+                    "consent_mode",
+                    "consent_policy_version",
+                    "purchase_trigger",
+                    "enabled"
+                ],
+                "title": "StorefrontTrackingConfig"
+            },
+            "StorefrontTrackingEventAccepted": {
+                "type": "object",
+                "properties": {
+                    "event_id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "event_id"
+                ],
+                "title": "StorefrontTrackingEventAccepted"
+            },
             "StorefrontUpazila": {
                 "type": "object",
                 "properties": {
@@ -50585,6 +51463,745 @@
                     "quote"
                 ],
                 "title": "TestimonialRequest"
+            },
+            "TrackingEvent": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "event_id": {
+                        "type": "string",
+                        "description": "UUID shared by the browser and server copies of the event."
+                    },
+                    "event_name": {
+                        "type": "string",
+                        "enum": [
+                            "page_view",
+                            "view_item",
+                            "add_to_cart",
+                            "begin_checkout",
+                            "purchase",
+                            "refund"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "browser",
+                            "server"
+                        ]
+                    },
+                    "order_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "order_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Decimal string, 2 dp."
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "consent": {
+                        "type": "object",
+                        "properties": {
+                            "analytics": {
+                                "type": [
+                                    "boolean",
+                                    "null"
+                                ]
+                            },
+                            "ads": {
+                                "type": [
+                                    "boolean",
+                                    "null"
+                                ]
+                            },
+                            "mode": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "analytics",
+                            "ads",
+                            "mode"
+                        ]
+                    },
+                    "ga4": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pending",
+                                    "sent",
+                                    "failed",
+                                    "skipped_consent",
+                                    "skipped_disabled",
+                                    "skipped_stale",
+                                    "not_applicable"
+                                ]
+                            },
+                            "attempts": {
+                                "type": "integer"
+                            },
+                            "error": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "status",
+                            "attempts",
+                            "error"
+                        ]
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pending",
+                                    "sent",
+                                    "failed",
+                                    "skipped_consent",
+                                    "skipped_disabled",
+                                    "skipped_stale",
+                                    "not_applicable"
+                                ]
+                            },
+                            "attempts": {
+                                "type": "integer"
+                            },
+                            "error": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "status",
+                            "attempts",
+                            "error"
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "dispatched_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "event_id",
+                    "event_name",
+                    "source",
+                    "order_id",
+                    "order_number",
+                    "value",
+                    "currency",
+                    "consent",
+                    "ga4",
+                    "meta",
+                    "occurred_at",
+                    "dispatched_at",
+                    "created_at"
+                ],
+                "title": "TrackingEvent"
+            },
+            "TrackingEventDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "event_id": {
+                        "type": "string",
+                        "description": "UUID shared by the browser and server copies of the event."
+                    },
+                    "event_name": {
+                        "type": "string",
+                        "enum": [
+                            "page_view",
+                            "view_item",
+                            "add_to_cart",
+                            "begin_checkout",
+                            "purchase",
+                            "refund"
+                        ]
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "browser",
+                            "server"
+                        ]
+                    },
+                    "order_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "order_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Decimal string, 2 dp."
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "consent": {
+                        "type": "object",
+                        "properties": {
+                            "analytics": {
+                                "type": [
+                                    "boolean",
+                                    "null"
+                                ]
+                            },
+                            "ads": {
+                                "type": [
+                                    "boolean",
+                                    "null"
+                                ]
+                            },
+                            "mode": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "analytics",
+                            "ads",
+                            "mode"
+                        ]
+                    },
+                    "ga4": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pending",
+                                    "sent",
+                                    "failed",
+                                    "skipped_consent",
+                                    "skipped_disabled",
+                                    "skipped_stale",
+                                    "not_applicable"
+                                ]
+                            },
+                            "attempts": {
+                                "type": "integer"
+                            },
+                            "error": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "status",
+                            "attempts",
+                            "error"
+                        ]
+                    },
+                    "meta": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pending",
+                                    "sent",
+                                    "failed",
+                                    "skipped_consent",
+                                    "skipped_disabled",
+                                    "skipped_stale",
+                                    "not_applicable"
+                                ]
+                            },
+                            "attempts": {
+                                "type": "integer"
+                            },
+                            "error": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "status",
+                            "attempts",
+                            "error"
+                        ]
+                    },
+                    "occurred_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "dispatched_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "session_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "consent_policy_version": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The consent policy version the visitor answered."
+                    },
+                    "payload": {
+                        "type": "object",
+                        "description": "The event as recorded and, under `sent`, as sent to each destination.",
+                        "additionalProperties": {}
+                    },
+                    "ga4_response": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "What GA4 answered (status, excerpt, validation messages).",
+                        "additionalProperties": {}
+                    },
+                    "meta_response": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "What Meta answered (status, excerpt, error).",
+                        "additionalProperties": {}
+                    }
+                },
+                "required": [
+                    "id",
+                    "event_id",
+                    "event_name",
+                    "source",
+                    "order_id",
+                    "order_number",
+                    "value",
+                    "currency",
+                    "consent",
+                    "ga4",
+                    "meta",
+                    "occurred_at",
+                    "dispatched_at",
+                    "created_at",
+                    "session_id",
+                    "consent_policy_version",
+                    "payload",
+                    "ga4_response",
+                    "meta_response"
+                ],
+                "title": "TrackingEventDetail"
+            },
+            "TrackingSettings": {
+                "type": "object",
+                "properties": {
+                    "server_side_enabled": {
+                        "type": "boolean",
+                        "description": "Master switch for every server-side send."
+                    },
+                    "ga4_enabled": {
+                        "type": "boolean"
+                    },
+                    "ga4_measurement_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ga4_api_secret_set": {
+                        "type": "boolean"
+                    },
+                    "ga4_api_secret_hint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"\u2022\u2022\u2022\u20221234\" at most."
+                    },
+                    "ga4_api_secret_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "meta_enabled": {
+                        "type": "boolean"
+                    },
+                    "meta_pixel_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "meta_access_token_set": {
+                        "type": "boolean"
+                    },
+                    "meta_access_token_hint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\"\u2022\u2022\u2022\u20221234\" at most."
+                    },
+                    "meta_access_token_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "meta_test_event_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "While set, Meta receives server events as Test events only."
+                    },
+                    "meta_graph_version": {
+                        "type": "string",
+                        "description": "Graph API version (config only, not editable here)."
+                    },
+                    "gtm_container_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "purchase_trigger": {
+                        "type": "string",
+                        "description": "Which order event fires `purchase`.",
+                        "enum": [
+                            "order_placed",
+                            "order_delivered"
+                        ]
+                    },
+                    "consent_mode": {
+                        "type": "string",
+                        "enum": [
+                            "opt_in",
+                            "notice"
+                        ]
+                    },
+                    "consent_policy_version": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sources": {
+                        "type": "object",
+                        "description": "Where each non-secret value comes from.",
+                        "additionalProperties": {
+                            "type": "string",
+                            "enum": [
+                                "settings",
+                                "env"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "server_side_enabled",
+                    "ga4_enabled",
+                    "ga4_measurement_id",
+                    "ga4_api_secret_set",
+                    "ga4_api_secret_hint",
+                    "ga4_api_secret_source",
+                    "meta_enabled",
+                    "meta_pixel_id",
+                    "meta_access_token_set",
+                    "meta_access_token_hint",
+                    "meta_access_token_source",
+                    "meta_test_event_code",
+                    "meta_graph_version",
+                    "gtm_container_id",
+                    "purchase_trigger",
+                    "consent_mode",
+                    "consent_policy_version",
+                    "sources"
+                ],
+                "title": "TrackingSettings"
+            },
+            "TrackingSummary": {
+                "type": "object",
+                "properties": {
+                    "generated_at": {
+                        "type": "string"
+                    },
+                    "destinations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "destination": {
+                                    "type": "string",
+                                    "enum": [
+                                        "ga4",
+                                        "meta"
+                                    ]
+                                },
+                                "last_success_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "last_error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "last_error_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "window_24h": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "integer"
+                                        },
+                                        "failed": {
+                                            "type": "integer"
+                                        },
+                                        "pending": {
+                                            "type": "integer"
+                                        },
+                                        "skipped_consent": {
+                                            "type": "integer"
+                                        },
+                                        "skipped_other": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "sent",
+                                        "failed",
+                                        "pending",
+                                        "skipped_consent",
+                                        "skipped_other",
+                                        "total"
+                                    ]
+                                },
+                                "window_7d": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "integer"
+                                        },
+                                        "failed": {
+                                            "type": "integer"
+                                        },
+                                        "pending": {
+                                            "type": "integer"
+                                        },
+                                        "skipped_consent": {
+                                            "type": "integer"
+                                        },
+                                        "skipped_other": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "sent",
+                                        "failed",
+                                        "pending",
+                                        "skipped_consent",
+                                        "skipped_other",
+                                        "total"
+                                    ]
+                                },
+                                "consent_skip_rate": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "pairing_rate": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "destination",
+                                "last_success_at",
+                                "last_error",
+                                "last_error_at",
+                                "window_24h",
+                                "window_7d",
+                                "consent_skip_rate",
+                                "pairing_rate"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "generated_at",
+                    "destinations"
+                ],
+                "title": "TrackingSummary"
+            },
+            "TrackingTestResult": {
+                "type": "object",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "enum": [
+                            "ga4",
+                            "meta"
+                        ]
+                    },
+                    "valid": {
+                        "type": "boolean",
+                        "description": "True when the provider accepted the event with no validation message."
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "sent",
+                            "failed",
+                            "skipped_consent",
+                            "skipped_disabled",
+                            "skipped_stale",
+                            "not_applicable"
+                        ]
+                    },
+                    "http_status": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A known, non-provider reason the admin shows in its own words (EN/BN); null = see `messages`.",
+                        "enum": [
+                            "not_configured",
+                            "meta_test_code_missing",
+                            "unreachable",
+                            null
+                        ]
+                    },
+                    "messages": {
+                        "type": "array",
+                        "description": "The provider's own words (not translated). Empty when `reason` explains it.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "response_excerpt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "At most 2 KB of the provider's response, secrets removed."
+                    }
+                },
+                "required": [
+                    "destination",
+                    "valid",
+                    "status",
+                    "http_status",
+                    "reason",
+                    "messages",
+                    "response_excerpt"
+                ],
+                "title": "TrackingTestResult"
             },
             "TwitterCard": {
                 "type": "string",
@@ -52456,6 +54073,107 @@
                     }
                 },
                 "title": "UpdateSupplierRequest"
+            },
+            "UpdateTrackingSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/tracking` \u2014 Admin \u2192 Integrations \u2192 Tracking & pixels; needs\nsettings.manage_integrations (super_admin and manager \u2014 owner decision 2026-11-13).\n\nNon-secret fields are the whole document. A blank or absent `ga4_api_secret` /\n`meta_access_token` KEEPS the saved secret (write-only, like Messaging); `clear_*`\nremoves it (env applies again, if set). Turning a destination ON needs its id and its\nsecret to be in place after the save, otherwise the switch would promise sends that the\ndispatcher silently skips.",
+                "properties": {
+                    "server_side_enabled": {
+                        "type": "boolean",
+                        "description": "Master switch for every server-side send (GA4 Measurement Protocol + Meta Conversions API)."
+                    },
+                    "ga4_enabled": {
+                        "type": "boolean"
+                    },
+                    "ga4_measurement_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "GA4 measurement id, `G-` + 4\u201320 capitals/digits.",
+                        "pattern": "^G-[A-Z0-9]{4,20}$",
+                        "maxLength": 24
+                    },
+                    "ga4_api_secret": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Write-only. Blank or absent keeps the saved secret.",
+                        "maxLength": 255
+                    },
+                    "clear_ga4_api_secret": {
+                        "type": "boolean"
+                    },
+                    "meta_enabled": {
+                        "type": "boolean"
+                    },
+                    "meta_pixel_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Meta pixel (dataset) id, digits only.",
+                        "pattern": "^\\d{5,20}$",
+                        "maxLength": 20
+                    },
+                    "meta_access_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Write-only. Blank or absent keeps the saved token.",
+                        "maxLength": 1024
+                    },
+                    "clear_meta_access_token": {
+                        "type": "boolean"
+                    },
+                    "meta_test_event_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Meta Events Manager \"Test events\" code. While set, server events go to Test events only.",
+                        "pattern": "^[A-Za-z0-9_-]+$",
+                        "maxLength": 64
+                    },
+                    "gtm_container_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "GTM web container id, `GTM-` + 4\u201312 capitals/digits.",
+                        "pattern": "^GTM-[A-Z0-9]{4,12}$",
+                        "maxLength": 16
+                    },
+                    "purchase_trigger": {
+                        "$ref": "#/components/schemas/PurchaseTrigger"
+                    },
+                    "consent_mode": {
+                        "type": "string",
+                        "enum": [
+                            "opt_in",
+                            "notice"
+                        ]
+                    },
+                    "consent_policy_version": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Bump when the cookie/tracking notice changes so visitors are asked again.",
+                        "pattern": "^[A-Za-z0-9._-]+$",
+                        "maxLength": 32
+                    }
+                },
+                "required": [
+                    "server_side_enabled",
+                    "ga4_enabled",
+                    "meta_enabled",
+                    "purchase_trigger",
+                    "consent_mode"
+                ],
+                "title": "UpdateTrackingSettingsRequest"
             },
             "UpdateWhatsAppStatusRequest": {
                 "type": "object",

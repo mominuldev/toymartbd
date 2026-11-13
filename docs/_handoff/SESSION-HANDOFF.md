@@ -1,6 +1,6 @@
 # Session handoff — continue on another machine / account
 
-**Written:** 2026-11-13 (lead session). **Branch:** `phase-7/batch-1` — batch complete, PR opened; merge after CI. Next: Phase 7 batch 2 (server-side tracking) or Phase 8.
+**Updated:** 2026-11-13. PR #17 (Phase 7 batch 1) and #18 merged. **Branch:** `phase-7/batch-2` — server-side tracking (4 agents, brief `docs/_handoff/briefs/brief-p7b2-common.md`) complete; PR open, merge after all 4 CI jobs. Progress: IMPLEMENTATION-PLAN "Phase 7 batch 2". Next: batch-1 follow-ups below, then Phase 8.
 The owner moves to a different PC and Claude account; nothing outside the git repo travels. Read this, then
 `CLAUDE.md`, then `docs/IMPLEMENTATION-PLAN.md` (progress sections are the source of truth for what is done).
 

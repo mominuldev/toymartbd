@@ -26,6 +26,8 @@ import { formatPrice } from '@/lib/listing/format';
 import { getPaymentMethods } from '@/lib/payments/methods';
 import { contact } from '@/lib/site-config';
 import { privateMetadata } from '@/lib/seo/metadata';
+import { TrackEvent } from '@/components/tracking/TrackEvent';
+import { cartItems, TRACKING_CURRENCY } from '@/lib/tracking/items';
 
 // /checkout — P4-STO-09, Figma Checkout 131:2601 (390) / 137:3670 (1440), storefront spec §B4.
 // One page, three sections (contact & address · delivery · payment & review), the API's totals in
@@ -198,6 +200,8 @@ export default async function CheckoutPage({ params }: Props) {
     return (
         <>
             <CheckoutHeader locale={locale} t={t} />
+            {/* K-01 begin_checkout, once per visit to this page (the in-place re-renders keep it mounted); value = the API's subtotal. */}
+            <TrackEvent name="begin_checkout" dedupeKey="checkout" data={{ value: cart.totals.subtotal, currency: TRACKING_CURRENCY, items: cartItems(cart) }} />
 
             {/* Mobile summary bar: "3 items · ৳6,825  Details" opens the lines (native <details>). */}
             <details className="group border-b border-line-default bg-subtle lg:hidden">

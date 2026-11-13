@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 import {
+    CONSENT_REJECTED_COOKIE,
     E2E_DIST_DIR,
     FAKE_REVALIDATE_SECRET,
     FAKE_TOKEN,
@@ -34,6 +35,11 @@ export default defineConfig({
     use: {
         baseURL: STOREFRONT_URL,
         trace: 'retain-on-failure',
+        // The mock API turns tracking on (K-01/K-02), so a first visit shows the consent banner — a
+        // fixed overlay that would sit over the elements other specs click. Every spec starts as a
+        // visitor who already answered "Reject" under the mock's policy version; tracking.spec.ts
+        // clears this to test the banner itself.
+        storageState: { cookies: [CONSENT_REJECTED_COOKIE], origins: [] },
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
     webServer: [

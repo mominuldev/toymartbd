@@ -2728,6 +2728,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/tracking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/tracking` — effective values; secrets only as set/source/last-4 hint */
+        get: operations["v1.admin.settings.tracking.show"];
+        /**
+         * `PUT /settings/tracking` — blank secret = keep; `clear_*` = remove. Audited
+         *     (`credential_changed`, scope `tracking`); a change revalidates the storefront's
+         *     `tracking-config` cache tag after commit
+         */
+        put: operations["v1.admin.settings.tracking.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/tracking/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/tracking/test` — one synthetic purchase through the destination's
+         *     validation path (GA4 validation server / Meta test_event_code) with the SAVED
+         *     settings; never counts as a conversion and writes no event row. Rate-limited; no
+         *     transaction around the provider call (rule 4)
+         */
+        post: operations["v1.admin.settings.tracking.test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/tracking/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /tracking/events` — newest first, cursor-paginated. Filters are an allowlist; an
+         *     unlisted filter, a sort, or a bad value is a 400. Dates are Dhaka calendar dates
+         *     (rule 11), inclusive
+         */
+        get: operations["v1.admin.tracking.events.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/tracking/events/{event}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /tracking/events/{event}` — one event, its payload as sent and each destination's response */
+        get: operations["v1.admin.tracking.events.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/tracking/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /tracking/summary` — per-destination health: 24 h / 7 d counts, consent-skip and pairing rates, last success / error */
+        get: operations["v1.admin.tracking.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/couriers": {
         parameters: {
             query?: never;
@@ -4849,6 +4948,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/tracking/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /storefront/tracking/config` — the public tracking ids, flags and consent mode.
+         *     The storefront caches it under the `tracking-config` tag; an admin save revalidates it
+         */
+        get: operations["v1.storefront.tracking.config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/tracking/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /storefront/tracking/events` — record the server twin of a browser event and
+         *     queue its dispatch. Idempotent on `(event_id, event_name)`: a repeat is accepted and
+         *     not dispatched again. Always `202`: the dispatch outcome is in the admin diagnostics
+         */
+        post: operations["v1.storefront.tracking.events.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/cart": {
         parameters: {
             query?: never;
@@ -6147,6 +6287,30 @@ export interface components {
             utm_source?: string | null;
             utm_medium?: string | null;
             utm_campaign?: string | null;
+            /**
+             * @description Optional (P7 server-side tracking, docs/api/tracking.md §2.3): the shopper's
+             *     browser context and consent, for the server-side `purchase`. Same `client` +
+             *     `consent` shape as `POST /tracking/events`.
+             */
+            tracking?: {
+                client?: {
+                    ip?: string | null;
+                    user_agent?: string | null;
+                    ga_client_id?: string | null;
+                    ga_session_id?: string | null;
+                    fbp?: string | null;
+                    fbc?: string | null;
+                };
+                consent?: {
+                    analytics?: boolean;
+                    ads?: boolean;
+                    /** @enum {string} */
+                    mode?: "opt_in" | "notice";
+                    policy_version?: string | null;
+                };
+                /** Format: uri */
+                event_source_url?: string | null;
+            };
         };
         /**
          * ClosePurchaseRequest
@@ -9351,6 +9515,12 @@ export interface components {
             }[];
         };
         /**
+         * PurchaseTrigger
+         * @description Which order event fires the `purchase` conversion (PRD K-02). Exactly one of them, never both: `order_placed` counts every order the moment it is placed (fast feedback for ad optimisation, includes COD orders that later fail); `order_delivered` counts only orders the customer accepted and paid for (truer in a COD market, but days late and server-only: the browser is gone by then).
+         * @enum {string}
+         */
+        PurchaseTrigger: "order_placed" | "order_delivered";
+        /**
          * ReceivePurchaseRequest
          * @description `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per
          *     PO line, where they go, and the landed costs to split across them. The quote takes
@@ -9758,6 +9928,16 @@ export interface components {
             phone: string;
             /** @enum {string} */
             locale: "en" | "bn";
+        };
+        /**
+         * SendTestTrackingEventRequest
+         * @description `POST /settings/tracking/test` — validate one synthetic event against a destination with
+         *     the SAVED settings (GA4's validation endpoint / Meta's test_event_code), and report what
+         *     the provider said; needs settings.manage_integrations.
+         */
+        SendTestTrackingEventRequest: {
+            /** @enum {string} */
+            destination: "ga4" | "meta";
         };
         /** SeoDocument */
         SeoDocument: {
@@ -10660,6 +10840,57 @@ export interface components {
             opening_balance?: string;
             note?: string | null;
         };
+        /**
+         * StoreTrackingEventRequest
+         * @description `POST /storefront/tracking/events` (docs/api/tracking.md §2.2): the server twin of a
+         *     browser event. Only `view_item`, `add_to_cart` and `begin_checkout` are accepted —
+         *     `purchase` and `refund` are server-originated only, and `page_view` is the browser's alone.
+         *     An unlisted name is a 422 `validation-error`.
+         */
+        StoreTrackingEventRequest: {
+            /**
+             * Format: uuid
+             * @description UUID generated in the browser and used for the Pixel event too (Meta dedup).
+             */
+            event_id: string;
+            /** @enum {string} */
+            event_name: "view_item" | "add_to_cart" | "begin_checkout";
+            /**
+             * Format: date-time
+             * @description ISO 8601, when the browser saw it.
+             */
+            occurred_at: string;
+            /** Format: uri */
+            event_source_url: string;
+            /** @description Decimal string, e.g. "1250.00". */
+            value?: string | null;
+            /** @enum {string|null} */
+            currency?: "BDT" | null;
+            items?: {
+                item_id: string;
+                item_name: string;
+                price: string;
+                quantity: number;
+                item_brand?: string | null;
+                item_category?: string | null;
+                item_variant?: string | null;
+            }[] | null;
+            client: {
+                ip?: string | null;
+                user_agent?: string | null;
+                ga_client_id?: string | null;
+                ga_session_id?: string | null;
+                fbp?: string | null;
+                fbc?: string | null;
+            };
+            consent: {
+                analytics?: boolean;
+                ads?: boolean;
+                /** @enum {string} */
+                mode?: "opt_in" | "notice";
+                policy_version?: string | null;
+            };
+        };
         /** StorefrontAccount */
         StorefrontAccount: {
             id: number;
@@ -11093,6 +11324,18 @@ export interface components {
                     at: string | null;
                 }[];
             } | null;
+            /**
+             * @description Server-side tracking (P7, docs/api/tracking.md §2.3). `purchase_event_id` is the
+             *     deterministic id the server's own `purchase` uses (UUIDv5 of `purchase:{number}`),
+             *     so a browser Pixel `Purchase` with it is deduplicated by Meta.
+             *     `fire_browser_purchase` is true only when the purchase trigger is `order_placed`;
+             *     the browser then fires the Pixel only — never gtag (GA4 has no dedup; the server
+             *     sends GA4's purchase). Null on public tracking (`POST /orders/track`).
+             */
+            tracking: {
+                purchase_event_id: string;
+                fire_browser_purchase: boolean;
+            } | null;
         };
         /** StorefrontOrderSummary */
         StorefrontOrderSummary: {
@@ -11423,6 +11666,26 @@ export interface components {
                 alt_bn: string | null;
             } | null;
         };
+        /** StorefrontTrackingConfig */
+        StorefrontTrackingConfig: {
+            ga4_measurement_id: string | null;
+            meta_pixel_id: string | null;
+            gtm_container_id: string | null;
+            /** @enum {string} */
+            consent_mode: "opt_in" | "notice";
+            consent_policy_version: string | null;
+            /** @enum {string} */
+            purchase_trigger: "order_placed" | "order_delivered";
+            /** @description Whether the browser should load gtag / the Pixel at all. */
+            enabled: {
+                ga4: boolean;
+                meta: boolean;
+            };
+        };
+        /** StorefrontTrackingEventAccepted */
+        StorefrontTrackingEventAccepted: {
+            event_id: string;
+        };
         /** StorefrontUpazila */
         StorefrontUpazila: {
             id: number;
@@ -11549,6 +11812,175 @@ export interface components {
             rating?: number | null;
             media_id?: number | null;
             is_published?: boolean;
+        };
+        /** TrackingEvent */
+        TrackingEvent: {
+            id: number;
+            /** @description UUID shared by the browser and server copies of the event. */
+            event_id: string;
+            /** @enum {string} */
+            event_name: "page_view" | "view_item" | "add_to_cart" | "begin_checkout" | "purchase" | "refund";
+            /** @enum {string} */
+            source: "browser" | "server";
+            order_id: number | null;
+            order_number: string | null;
+            /** @description Decimal string, 2 dp. */
+            value: string | null;
+            currency: string | null;
+            consent: {
+                analytics: boolean | null;
+                ads: boolean | null;
+                mode: string | null;
+            };
+            ga4: {
+                /** @enum {string} */
+                status: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                attempts: number;
+                error: string | null;
+            };
+            meta: {
+                /** @enum {string} */
+                status: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                attempts: number;
+                error: string | null;
+            };
+            occurred_at: string | null;
+            dispatched_at: string | null;
+            created_at: string | null;
+        };
+        /** TrackingEventDetail */
+        TrackingEventDetail: {
+            id: number;
+            /** @description UUID shared by the browser and server copies of the event. */
+            event_id: string;
+            /** @enum {string} */
+            event_name: "page_view" | "view_item" | "add_to_cart" | "begin_checkout" | "purchase" | "refund";
+            /** @enum {string} */
+            source: "browser" | "server";
+            order_id: number | null;
+            order_number: string | null;
+            /** @description Decimal string, 2 dp. */
+            value: string | null;
+            currency: string | null;
+            consent: {
+                analytics: boolean | null;
+                ads: boolean | null;
+                mode: string | null;
+            };
+            ga4: {
+                /** @enum {string} */
+                status: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                attempts: number;
+                error: string | null;
+            };
+            meta: {
+                /** @enum {string} */
+                status: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                attempts: number;
+                error: string | null;
+            };
+            occurred_at: string | null;
+            dispatched_at: string | null;
+            created_at: string | null;
+            session_id: string | null;
+            /** @description The consent policy version the visitor answered. */
+            consent_policy_version: string | null;
+            /** @description The event as recorded and, under `sent`, as sent to each destination. */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** @description What GA4 answered (status, excerpt, validation messages). */
+            ga4_response: {
+                [key: string]: unknown;
+            } | null;
+            /** @description What Meta answered (status, excerpt, error). */
+            meta_response: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TrackingSettings */
+        TrackingSettings: {
+            /** @description Master switch for every server-side send. */
+            server_side_enabled: boolean;
+            ga4_enabled: boolean;
+            ga4_measurement_id: string | null;
+            ga4_api_secret_set: boolean;
+            /** @description "••••1234" at most. */
+            ga4_api_secret_hint: string | null;
+            /** @enum {string|null} */
+            ga4_api_secret_source: "settings" | "env" | null;
+            meta_enabled: boolean;
+            meta_pixel_id: string | null;
+            meta_access_token_set: boolean;
+            /** @description "••••1234" at most. */
+            meta_access_token_hint: string | null;
+            /** @enum {string|null} */
+            meta_access_token_source: "settings" | "env" | null;
+            /** @description While set, Meta receives server events as Test events only. */
+            meta_test_event_code: string | null;
+            /** @description Graph API version (config only, not editable here). */
+            meta_graph_version: string;
+            gtm_container_id: string | null;
+            /**
+             * @description Which order event fires `purchase`.
+             * @enum {string}
+             */
+            purchase_trigger: "order_placed" | "order_delivered";
+            /** @enum {string} */
+            consent_mode: "opt_in" | "notice";
+            consent_policy_version: string | null;
+            /** @description Where each non-secret value comes from. */
+            sources: {
+                [key: string]: "settings" | "env";
+            };
+        };
+        /** TrackingSummary */
+        TrackingSummary: {
+            generated_at: string;
+            destinations: {
+                /** @enum {string} */
+                destination: "ga4" | "meta";
+                last_success_at: string | null;
+                last_error: string | null;
+                last_error_at: string | null;
+                window_24h: {
+                    sent: number;
+                    failed: number;
+                    pending: number;
+                    skipped_consent: number;
+                    skipped_other: number;
+                    total: number;
+                };
+                window_7d: {
+                    sent: number;
+                    failed: number;
+                    pending: number;
+                    skipped_consent: number;
+                    skipped_other: number;
+                    total: number;
+                };
+                consent_skip_rate: string | null;
+                pairing_rate: string | null;
+            }[];
+        };
+        /** TrackingTestResult */
+        TrackingTestResult: {
+            /** @enum {string} */
+            destination: "ga4" | "meta";
+            /** @description True when the provider accepted the event with no validation message. */
+            valid: boolean;
+            /** @enum {string} */
+            status: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+            http_status: number | null;
+            /**
+             * @description A known, non-provider reason the admin shows in its own words (EN/BN); null = see `messages`.
+             * @enum {string|null}
+             */
+            reason: "not_configured" | "meta_test_code_missing" | "unreachable" | null;
+            /** @description The provider's own words (not translated). Empty when `reason` explains it. */
+            messages: string[];
+            /** @description At most 2 KB of the provider's response, secrets removed. */
+            response_excerpt: string | null;
         };
         /**
          * TwitterCard
@@ -12092,6 +12524,42 @@ export interface components {
             opening_balance?: string;
             note?: string | null;
             status?: components["schemas"]["SupplierStatus"];
+        };
+        /**
+         * UpdateTrackingSettingsRequest
+         * @description `PUT /settings/tracking` — Admin → Integrations → Tracking & pixels; needs
+         *     settings.manage_integrations (super_admin and manager — owner decision 2026-11-13).
+         *
+         *     Non-secret fields are the whole document. A blank or absent `ga4_api_secret` /
+         *     `meta_access_token` KEEPS the saved secret (write-only, like Messaging); `clear_*`
+         *     removes it (env applies again, if set). Turning a destination ON needs its id and its
+         *     secret to be in place after the save, otherwise the switch would promise sends that the
+         *     dispatcher silently skips.
+         */
+        UpdateTrackingSettingsRequest: {
+            /** @description Master switch for every server-side send (GA4 Measurement Protocol + Meta Conversions API). */
+            server_side_enabled: boolean;
+            ga4_enabled: boolean;
+            /** @description GA4 measurement id, `G-` + 4–20 capitals/digits. */
+            ga4_measurement_id?: string | null;
+            /** @description Write-only. Blank or absent keeps the saved secret. */
+            ga4_api_secret?: string | null;
+            clear_ga4_api_secret?: boolean;
+            meta_enabled: boolean;
+            /** @description Meta pixel (dataset) id, digits only. */
+            meta_pixel_id?: string | null;
+            /** @description Write-only. Blank or absent keeps the saved token. */
+            meta_access_token?: string | null;
+            clear_meta_access_token?: boolean;
+            /** @description Meta Events Manager "Test events" code. While set, server events go to Test events only. */
+            meta_test_event_code?: string | null;
+            /** @description GTM web container id, `GTM-` + 4–12 capitals/digits. */
+            gtm_container_id?: string | null;
+            purchase_trigger: components["schemas"]["PurchaseTrigger"];
+            /** @enum {string} */
+            consent_mode: "opt_in" | "notice";
+            /** @description Bump when the cookie/tracking notice changes so visitors are asked again. */
+            consent_policy_version?: string | null;
         };
         /**
          * UpdateWhatsAppStatusRequest
@@ -19465,6 +19933,205 @@ export interface operations {
             };
         };
     };
+    "v1.admin.settings.tracking.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TrackingSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.tracking.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTrackingSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `TrackingSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.tracking.test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendTestTrackingEventRequest"];
+            };
+        };
+        responses: {
+            /** @description `TrackingTestResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingTestResult"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+            /** @description Too many test events (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.tracking.events.index": {
+        parameters: {
+            query?: {
+                /** @description One event. */
+                "filter[event_name]"?: "page_view" | "view_item" | "add_to_cart" | "begin_checkout" | "purchase" | "refund";
+                /** @description Where the event originated. */
+                "filter[source]"?: "browser" | "server";
+                /** @description GA4 dispatch status. */
+                "filter[ga4_status]"?: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                /** @description Meta dispatch status. */
+                "filter[meta_status]"?: "pending" | "sent" | "failed" | "skipped_consent" | "skipped_disabled" | "skipped_stale" | "not_applicable";
+                /** @description First Dhaka date (Y-m-d), inclusive. */
+                "filter[date_from]"?: string;
+                /** @description Last Dhaka date (Y-m-d), inclusive. */
+                "filter[date_to]"?: string;
+                /** @description Exact order number, e.g. TMB-26-00042. */
+                "filter[order_number]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `TrackingEvent` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TrackingEvent"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.tracking.events.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The event ID */
+                event: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TrackingEventDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingEventDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.tracking.summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TrackingSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingSummary"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
     "v1.admin.settings.couriers.index": {
         parameters: {
             query?: never;
@@ -24845,6 +25512,70 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             /** @description Missing, forged or expired preview token (`forbidden`) */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.tracking.config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontTrackingConfig` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontTrackingConfig"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.storefront.tracking.events.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreTrackingEventRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontTrackingEventAccepted` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontTrackingEventAccepted"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Invalid field or an event name outside the allowlist (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many events for this shopper (`too-many-requests`) */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { TrackingRoot } from '@/components/tracking/TrackingRoot';
 import { WishlistHearts } from '@/components/wishlist/WishlistHearts';
 import { fontVariables } from '@/lib/fonts';
-import { getMessages, htmlLang, isLocale } from '@/lib/i18n';
+import { getMessages, htmlLang, isLocale, localizedPath } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
+import { getTrackingConfig } from '@/lib/tracking/fetch';
 import '../globals.css';
 
 // Root layout. Every public page lives under app/[locale]; proxy.ts maps `/x` → `/en/x` (rewrite,
@@ -43,10 +45,15 @@ export default async function RootLayout({ children, params }: LayoutProps) {
     if (!isLocale(locale)) notFound();
 
     const t = getMessages(locale);
+    // Public ids + consent mode (tag `tracking-config`); never throws — an API failure means "off".
+    const tracking = await getTrackingConfig();
 
     return (
         <html lang={htmlLang[locale]} data-theme="light" className={fontVariables}>
             <body className={`flex min-h-dvh flex-col antialiased${locale === 'bn' ? ' lang-bn' : ''}`}>
+                {/* Consent banner + consent-gated tags (K-01/K-02). First in the DOM so the banner is
+                    first in the tab order; it is a fixed overlay, so it moves no content. */}
+                <TrackingRoot config={tracking} labels={t.consent} privacyHref={localizedPath(locale, '/pages/privacy')} bangla={locale === 'bn'} />
                 {children}
                 {/* Every wishlist heart on the page (cards, PDP): filled state + in-place toggle. */}
                 <WishlistHearts locale={locale} labels={t.wishlist} />

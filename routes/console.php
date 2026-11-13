@@ -105,3 +105,10 @@ Schedule::command('toymart:carts:recover')
     ->everyTenMinutes()
     ->withoutOverlapping(10)
     ->onOneServer();
+
+// P7 server-side tracking: retention of checkout IP / user agent / click ids
+// (docs/api/tracking.md §3.3) — blanked after tracking.context_retention_days (90).
+Schedule::command('toymart:tracking:prune-contexts')
+    ->dailyAt('03:40')
+    ->withoutOverlapping(30)
+    ->onOneServer();

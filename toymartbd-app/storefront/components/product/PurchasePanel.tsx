@@ -6,6 +6,7 @@ import { AddToCartEnhancer } from '@/components/cart/AddToCartEnhancer';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { CART_FORM_ID, INLINE_CTA_ID } from '@/lib/product/ids';
 import type { ProductVariant } from '@/lib/product/variants';
+import type { TrackingItem } from '@/lib/tracking/types';
 import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
 import { QuantityStepper } from './QuantityStepper';
 
@@ -23,6 +24,8 @@ interface Props {
     /** DeliveryEstimator slot (P4-STO-06, agent-owned component). */
     estimator: ReactNode;
     trust: ReactNode;
+    /** add_to_cart's item (K-01), quantity taken from the form at submit time. */
+    trackingItem: TrackingItem;
 }
 
 // Quantity + CTAs + delivery estimator + trust strip, in the two Figma orders:
@@ -33,7 +36,7 @@ interface Props {
 // The form POSTs to /api/cart/items (P4-STO-08): without JavaScript, Add → the cart page and Buy
 // now → checkout (303s); with it, AddToCartEnhancer sends Add in place and announces the result.
 // Cart lines need no Idempotency-Key (cart.md): a repeated add raises the quantity, as it should.
-export function PurchasePanel({ productId, productPath, variant, name, t, locale, back, estimator, trust }: Props) {
+export function PurchasePanel({ productId, productPath, variant, name, t, locale, back, estimator, trust, trackingItem }: Props) {
     const soldOut = variant.stock_state === 'out_of_stock';
 
     return (
@@ -89,6 +92,7 @@ export function PurchasePanel({ productId, productPath, variant, name, t, locale
             <AddToCartEnhancer
                 formId={CART_FORM_ID}
                 cartHref={localizedPath(locale, '/cart')}
+                trackingItem={trackingItem}
                 labels={{ added: t.cart.added, viewCart: t.cart.viewCart, failed: t.cart.notices.addFailed, notices: t.cart.notices }}
             />
         </div>

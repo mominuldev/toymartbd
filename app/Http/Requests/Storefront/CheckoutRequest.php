@@ -11,7 +11,10 @@ use App\Domain\Fulfilment\Services\DeliveryChargeResolver;
 use App\Domain\Ordering\Checkout\CheckoutData;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Services\OnlineGateways;
+use App\Domain\Tracking\DTOs\ConsentState;
+use App\Domain\Tracking\DTOs\TrackingClientContext;
 use App\Http\Requests\Storefront\Cart\CartRequest;
+use App\Http\Requests\Storefront\Tracking\TrackingContextRules;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 use Closure;
@@ -53,7 +56,35 @@ final class CheckoutRequest extends CartRequest
             'utm_source' => ['nullable', 'string', 'max:128'],
             'utm_medium' => ['nullable', 'string', 'max:128'],
             'utm_campaign' => ['nullable', 'string', 'max:128'],
+            /**
+             * Optional (P7 server-side tracking, docs/api/tracking.md §2.3): the shopper's
+             * browser context and consent, for the server-side `purchase`. Same `client` +
+             * `consent` shape as `POST /tracking/events`.
+             */
+            'tracking' => ['nullable', 'array:client,consent,event_source_url'],
+            'tracking.event_source_url' => ['nullable', 'string', 'max:2048', 'url:http,https'],
+            ...TrackingContextRules::rules('tracking.', false),
         ];
+    }
+
+    /** The optional `tracking` object, or null when the storefront sent none. */
+    public function trackingContext(): ?TrackingClientContext
+    {
+        $client = $this->input('tracking.client');
+
+        return is_array($client) && is_array($this->input('tracking.consent')) ? TrackingContextRules::client($client) : null;
+    }
+
+    public function trackingConsent(): ?ConsentState
+    {
+        $consent = $this->input('tracking.consent');
+
+        return is_array($consent) ? TrackingContextRules::consent($consent) : null;
+    }
+
+    public function trackingEventSourceUrl(): ?string
+    {
+        return $this->filled('tracking.event_source_url') ? $this->string('tracking.event_source_url')->toString() : null;
     }
 
     /** @return array<string, string> */
