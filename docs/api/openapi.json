@@ -383,14 +383,8 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "403": {
-                        "description": "Missing dashboard.view (`forbidden`)",
+                        "description": "Missing dashboard.view or reports.export (`forbidden`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -398,6 +392,12 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "400": {
                         "description": "Unknown parameter, unlisted preset, format or locale, or an invalid / missing date (`bad-request`)",

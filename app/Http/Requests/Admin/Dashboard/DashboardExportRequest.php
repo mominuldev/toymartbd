@@ -15,7 +15,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  *   locale  en | bn                      (default: the request's locale, else en)
  *
  * An unlisted format or locale is a 400 `bad-request`, like every other unlisted value.
- * Authorisation: dashboard.view — the export then carries only the blocks the JSON would.
+ * Authorisation: dashboard.view here, plus reports.export in the controller (DashboardPolicy::export);
+ * the export then carries only the blocks the JSON would.
  */
 final class DashboardExportRequest extends DashboardRequest
 {

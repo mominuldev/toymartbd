@@ -66,9 +66,10 @@ final class DashboardController extends ApiController
     #[QueryParameter('from', 'As on GET /dashboard.', type: 'string', format: 'date')]
     #[QueryParameter('to', 'As on GET /dashboard.', type: 'string', format: 'date')]
     #[OpenApiResponse(400, 'Unknown parameter, unlisted preset, format or locale, or an invalid / missing date (`bad-request`)')]
-    #[OpenApiResponse(403, 'Missing dashboard.view (`forbidden`)')]
+    #[OpenApiResponse(403, 'Missing dashboard.view or reports.export (`forbidden`)')]
     public function export(DashboardExportRequest $request, DashboardReport $report): StreamedResponse
     {
+        $this->authorize('export', DashboardReport::class);
         /** @var User $user */
         $user = $request->user();
         $range = $request->dateRange();

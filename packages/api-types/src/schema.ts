@@ -14534,7 +14534,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            /** @description Missing dashboard.view (`forbidden`) */
+            /** @description Missing dashboard.view or reports.export (`forbidden`) */
             403: {
                 headers: {
                     [name: string]: unknown;
