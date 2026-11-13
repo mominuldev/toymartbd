@@ -279,8 +279,6 @@ export const ordersEn = {
     'orders.gateway.review': 'Needs review: {reason} — not marked paid',
 
     'orders.shipment.title': 'Shipment',
-    'orders.shipment.empty': 'No shipment yet',
-    'orders.shipment.emptyBody': 'Courier booking arrives with the Pathao and Steadfast integration. Nothing has been booked for this order.',
 
     'orders.activity.title': 'Activity',
     'orders.activity.filter': 'Show',
@@ -588,8 +586,6 @@ export const ordersBn: Record<keyof typeof ordersEn, string> = {
     'orders.gateway.review': 'যাচাই দরকার: {reason} — পরিশোধিত ধরা হয়নি',
 
     'orders.shipment.title': 'চালান',
-    'orders.shipment.empty': 'এখনো কোনো চালান নেই',
-    'orders.shipment.emptyBody': 'Pathao ও Steadfast যুক্ত হলে কুরিয়ার বুকিং আসবে। এই অর্ডারের জন্য কিছু বুক করা হয়নি।',
 
     'orders.activity.title': 'কার্যকলাপ',
     'orders.activity.filter': 'দেখান',

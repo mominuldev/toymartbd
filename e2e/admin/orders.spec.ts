@@ -83,7 +83,7 @@ test('owner works the board: bulk confirm, hold with a reason, typed cancel, a n
     await expect(page.getByRole('heading', { level: 1, name: high! })).toBeVisible();
     await expect(page.getByText('High risk · 80 / 100')).toBeVisible();
     await expect(page.getByText('Provider not connected')).toBeVisible();
-    await expect(page.getByText('No shipment yet')).toBeVisible();
+    await expect(page.getByText('No courier booked yet')).toBeVisible();
 
     await page.getByRole('button', { name: 'Hold' }).click();
     const hold = page.getByRole('dialog', { name: `Hold ${high}?` });
