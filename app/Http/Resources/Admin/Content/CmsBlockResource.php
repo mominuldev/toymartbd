@@ -6,7 +6,9 @@ namespace App\Http\Resources\Admin\Content;
 
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Http\Resources\ApiResource;
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
 
@@ -51,6 +53,6 @@ final class CmsBlockResource extends ApiResource
 
     public static function iso(?DateTimeInterface $at): ?string
     {
-        return $at === null ? null : \DateTimeImmutable::createFromInterface($at)->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\\TH:i:s\\Z');
+        return $at === null ? null : DateTimeImmutable::createFromInterface($at)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\\TH:i:s\\Z');
     }
 }

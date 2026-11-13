@@ -20,6 +20,8 @@ type Props = {
     block: CmsBlock;
     content: Content;
     onChange: (next: Content) => void;
+    /** Block settings shown inside the Content tab where Figma puts them (rail: "Show on mobile"). */
+    onSettings: (patch: { show_mobile: boolean }) => void;
     ctx: FieldCtx;
     media: ReadonlyMap<number, MediaThumb>;
 };
@@ -35,7 +37,7 @@ function imageValue(content: Content, media: ReadonlyMap<number, MediaThumb>, pi
 /** Thumbnails of images picked in this session, before the draft reload knows them. */
 const pickedThisSession = new Map<number, PickedImage>();
 
-export function ContentForm({ block, content, onChange, ctx, media }: Props) {
+export function ContentForm({ block, content, onChange, onSettings, ctx, media }: Props) {
     const { t } = useI18n();
     const set = (key: string, value: unknown) => onChange({ ...content, [key]: value });
     const setRow = (listKey: string, index: number, key: string, value: unknown) => {
@@ -113,7 +115,7 @@ export function ContentForm({ block, content, onChange, ctx, media }: Props) {
                 </>
             );
         case 'product_rail':
-            return <RailContent content={content} set={set} ctx={ctx} />;
+            return <RailContent content={content} set={set} setMany={(patch) => onChange({ ...content, ...patch })} ctx={ctx} block={block} onSettings={onSettings} />;
         case 'brand_strip':
             return (
                 <>
@@ -198,26 +200,33 @@ export function ContentForm({ block, content, onChange, ctx, media }: Props) {
     }
 }
 
-function RailContent({ content, set, ctx }: { content: Content; set: (key: string, value: unknown) => void; ctx: FieldCtx }) {
+function RailContent({ content, set, setMany, ctx, block, onSettings }: { content: Content; set: (key: string, value: unknown) => void; setMany: (patch: Content) => void; ctx: FieldCtx; block: CmsBlock; onSettings: (patch: { show_mobile: boolean }) => void }) {
     const { t } = useI18n();
     const categories = useCategoryOptions();
     const brands = useBrandSelectOptions();
     const rule = str(content.rule) || 'best_sellers';
     const days = num(content.window_days, 30);
+    const limit = num(content.limit, 8);
+    // Figma folds the best-sellers window into the one "Products" select ("Automatic · best sellers, 30 days").
+    const source = rule === 'best_sellers' ? `best_sellers:${days}` : rule;
+    const sources = [
+        ...[7, 30, 90].map((d) => ({ value: `best_sellers:${d}`, label: t('homeBuilder.f.rule.best_sellers', { days: d }) })),
+        ...(['new', 'category', 'brand', 'manual'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.rule.${v}`) })),
+    ];
     return (
         <>
             <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
             <SelectField
                 label={t('homeBuilder.f.products')}
-                value={rule}
-                options={(['best_sellers', 'new', 'category', 'brand', 'manual'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.rule.${v}`, { days }) }))}
-                onChange={(v) => set('rule', v)}
+                value={source}
+                options={sources}
+                onChange={(v) => {
+                    const [next, window] = v.split(':');
+                    setMany(window ? { rule: next, window_days: Number(window) } : { rule: next });
+                }}
                 path="rule"
                 ctx={ctx}
             />
-            {rule === 'best_sellers' && (
-                <SelectField label={t('homeBuilder.f.window')} value={days} options={[7, 30, 90].map((d) => ({ value: d, label: t('homeBuilder.f.windowDays', { days: d }) }))} onChange={(v) => set('window_days', v)} path="window_days" ctx={ctx} />
-            )}
             {rule === 'category' && (
                 <SelectField label={t('homeBuilder.f.category')} value={typeof content.category_id === 'number' ? content.category_id : null} placeholder={t('homeBuilder.f.choose')} options={categories} onChange={(v) => set('category_id', v)} path="category_id" ctx={ctx} />
             )}
@@ -225,12 +234,22 @@ function RailContent({ content, set, ctx }: { content: Content; set: (key: strin
                 <SelectField label={t('homeBuilder.f.brand')} value={typeof content.brand_id === 'number' ? content.brand_id : null} placeholder={t('homeBuilder.f.choose')} options={brands} onChange={(v) => set('brand_id', v)} path="brand_id" ctx={ctx} />
             )}
             {rule === 'manual' && <ProductPicker picked={ids(content.product_ids)} onChange={(v) => set('product_ids', v)} ctx={ctx} path="product_ids" />}
+            <SelectField
+                label={t('homeBuilder.f.howMany')}
+                value={limit}
+                options={Array.from({ length: 11 }, (_, i) => ({ value: i + 2, label: t('homeBuilder.f.howManyRail', { count: i + 2 }) }))}
+                onChange={(v) => set('limit', v)}
+                path="limit"
+                ctx={ctx}
+            />
+            <SwitchRow label={t('homeBuilder.f.hideSoldOut')} checked={bool(content.hide_sold_out, true)} onChange={(v) => set('hide_sold_out', v)} disabled={ctx.disabled} />
+            <SwitchRow label={t('homeBuilder.v.showMobile')} checked={block.show_mobile} onChange={(v) => onSettings({ show_mobile: v })} disabled={ctx.disabled} />
         </>
     );
 }
 
 /** The Style tab: counts, layout switches. Types without style options say so. */
-export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'>) {
+export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media' | 'onSettings'>) {
     const { t } = useI18n();
     const set = (key: string, value: unknown) => onChange({ ...content, [key]: value });
     const howMany = (min: number, max: number, fallback: number, label: (n: number) => string) => (
@@ -254,7 +273,6 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
             const limit = num(content.limit, 8);
             return (
                 <>
-                    {howMany(2, 12, 8, (n) => t('homeBuilder.f.howManyRail', { count: n }))}
                     <SelectField
                         label={t('homeBuilder.f.minItems')}
                         value={Math.min(num(content.min_items, 1), limit)}
@@ -263,7 +281,6 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                         path="min_items"
                         ctx={ctx}
                     />
-                    <SwitchRow label={t('homeBuilder.f.hideSoldOut')} checked={bool(content.hide_sold_out, true)} onChange={(v) => set('hide_sold_out', v)} disabled={ctx.disabled} />
                     <SwitchRow label={t('homeBuilder.f.showSeeAll')} checked={bool(content.show_see_all, true)} onChange={(v) => set('show_see_all', v)} disabled={ctx.disabled} />
                 </>
             );

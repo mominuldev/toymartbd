@@ -83,7 +83,7 @@ export function HomeBuilderPage() {
     const token = usePreviewToken(previewLocale, draft.isSuccess);
     const blocks = draft.data?.blocks ?? [];
     const selected = blocks.find((b) => b.id === selectedId) ?? blocks[0] ?? null;
-    const media = useMemo(() => new Map<number, MediaThumb>((draft.data?.media ?? []).map((m) => [m.id, m])), [draft.data?.media]);
+    const media: ReadonlyMap<number, MediaThumb> = useMemo(() => new Map((draft.data?.media ?? []).map((m): [number, MediaThumb] => [m.id, m])), [draft.data?.media]);
     const refreshPreview = () => setRevision((r) => r + 1);
 
     const save = (block: CmsBlock, patch: BlockPatch, record: 'push' | 'none' = 'push') => {

@@ -48,7 +48,7 @@ final class UspBandSchema extends BlockSchema
             if (! is_array($item)) {
                 continue;
             }
-            $row = ['icon' => UspIcon::tryFrom(is_string($item['icon'] ?? null) ? $item['icon'] : '')?->value ?? UspIcon::Cod->value];
+            $row = ['icon' => UspIcon::tryFrom(is_string($item['icon'] ?? null) ? $item['icon'] : '')->value ?? UspIcon::Cod->value];
             self::copyText($item, $row, 'title', 'detail');
             $out['items'][] = $row;
         }

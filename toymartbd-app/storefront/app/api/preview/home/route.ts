@@ -33,7 +33,9 @@ export async function GET(request: Request): Promise<Response> {
 
     (await draftMode()).enable();
 
-    const response = NextResponse.redirect(new URL(localizedPath(locale, '/'), url), 307);
+    // A relative Location: behind a proxy (or `next dev` on 127.0.0.1) request.url can name another
+    // host, and the cookies below would then not travel with the redirect.
+    const response = new NextResponse(null, { status: 307, headers: { Location: localizedPath(locale, '/') } });
     // The builder shows the storefront in an iframe on the admin's origin: in production that is
     // a cross-site frame, where only SameSite=None cookies are sent.
     const production = process.env.NODE_ENV === 'production';

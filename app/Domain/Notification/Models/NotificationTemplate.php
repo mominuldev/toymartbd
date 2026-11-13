@@ -96,10 +96,10 @@ final class NotificationTemplate extends Model
         return TemplateCatalog::variables($this->key);
     }
 
-    /** Staff-made (marketing / manual). A missing `kind` (pre-library row) is a system row. */
+    /** Staff-made (marketing / manual). Every pre-library row defaulted to `system`. */
     public function isCustom(): bool
     {
-        return $this->kind instanceof TemplateKind && $this->kind->isCustom();
+        return $this->kind->isCustom();
     }
 
     /** Null for SMS and email; a WhatsApp row never recorded reads as draft. */

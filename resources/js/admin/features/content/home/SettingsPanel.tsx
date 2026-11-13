@@ -103,7 +103,7 @@ export function SettingsPanel({ block, tab, onTab, canManage, errors, media, onS
             </div>
 
             <div id="home-tabpanel" role="tabpanel" aria-labelledby={`home-tab-${tab}`} className="flex flex-col gap-4">
-                {tab === 'content' && <ContentForm block={block} content={content} onChange={changeContent} ctx={ctx} media={media} />}
+                {tab === 'content' && <ContentForm block={block} content={content} onChange={changeContent} onSettings={(patch) => queue(patch, true)} ctx={ctx} media={media} />}
                 {tab === 'style' && <StyleForm block={block} content={content} onChange={changeContent} ctx={ctx} />}
                 {tab === 'visibility' && (
                     <>

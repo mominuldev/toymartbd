@@ -88,6 +88,10 @@ human, never a guess. Source of truth in code: `SteadfastStatusMap::MAP`.
 | `cancelled_return_processing` / `_rider_assigned` / `_received` | Return leg of a cancellation | `returned` | |
 | `exceptional` | Lost, damaged or off the normal path (newer guide only) | `on_hold` | Handled defensively |
 
+**Owner decision (2026-11-13):** the owner approved this mapping. That covers Steadfast's
+`cancelled` → `returned`, and the `*_approval_pending` statuses not counting as delivered
+until Steadfast approves them.
+
 `status_by_trackingcode` may answer `in review` with a space; case, spaces and hyphens are
 normalised to underscores before lookup.
 

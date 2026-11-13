@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at')->nullable();
 
-            $table->unique(['notification_template_id', 'version']);
+            $table->unique(['notification_template_id', 'version'], 'ntv_template_version_unique');
         });
     }
 

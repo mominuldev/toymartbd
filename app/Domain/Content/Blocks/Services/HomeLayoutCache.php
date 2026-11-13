@@ -27,7 +27,7 @@ final class HomeLayoutCache
             return $version === null ? false : [
                 'version' => $version->version,
                 'published_at' => $version->published_at->utc()->format('Y-m-d\TH:i:s\Z'),
-                'blocks' => array_values($version->blocks),
+                'blocks' => $version->blocks,
             ];
         });
 

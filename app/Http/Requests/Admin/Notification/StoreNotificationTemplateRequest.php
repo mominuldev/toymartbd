@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Notification;
 
-use App\Domain\Notification\DTOs\CustomTemplateData;
+use App\Domain\Notification\Data\CustomTemplateData;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\TemplateKind;
 use App\Domain\Notification\Models\NotificationTemplate;

@@ -126,6 +126,7 @@ export function NewTemplatePage() {
                                 name="kind"
                                 render={({ field }) => (
                                     <SegmentedControl
+                                        className="self-start"
                                         label={t('notif.tpl.kind')}
                                         options={(['marketing', 'manual'] as const).map((value) => ({ value, label: t(`notif.lib.kind.${value}` as MessageKey) }))}
                                         value={field.value}

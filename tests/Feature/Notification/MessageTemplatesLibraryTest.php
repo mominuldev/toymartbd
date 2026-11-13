@@ -147,7 +147,8 @@ it('creates a custom template per channel under one ASCII key, measured server-s
         'channels' => ['sms', 'whatsapp', 'email'],
         'subject_en' => 'Eid Mubarak from {store_name}',
         'subject_bn' => '{store_name} থেকে ঈদ মোবারক',
-    ]))->assertCreated(); $rows = $rows->json("data");
+    ]))->assertCreated();
+    $rows = $rows->json('data');
 
     expect($rows)->toHaveCount(3)
         ->and(collect($rows)->pluck('key')->unique()->all())->toBe(['custom.eid_greeting'])
@@ -190,7 +191,8 @@ it('archives and restores a custom template, and never archives or deletes a sys
         ->and(collect($this->getJson('/api/v1/admin/notifications/templates?filter[archived]=1')->json('data'))->pluck('key')->unique()->all())->toBe(['custom.eid_greeting']);
 
     // Archived copy is frozen.
-    $r = $this->putJson("/api/v1/admin/notifications/templates/{$id}", ["body_en" => "x {name}", "body_bn" => "y", "is_active" => true]); $r->assertStatus(409);
+    $r = $this->putJson("/api/v1/admin/notifications/templates/{$id}", ['body_en' => 'x {name}', 'body_bn' => 'y', 'is_active' => true]);
+    $r->assertStatus(409);
 
     $this->postJson("/api/v1/admin/notifications/templates/{$id}/unarchive")->assertOk()->assertJsonPath('data.0.archived_at', null);
 
@@ -276,7 +278,7 @@ it('guards POST /notifications/templates with settings.update', function (): voi
 
 it('guards POST /notifications/templates/{template}/archive and /unarchive with settings.update', function (): void {
     (new RolesAndPermissionsSeeder)->run();
-    $id = app(App\Domain\Notification\Actions\CreateCustomTemplate::class)->handle(new App\Domain\Notification\DTOs\CustomTemplateData(
+    $id = app(App\Domain\Notification\Actions\CreateCustomTemplate::class)->handle(new App\Domain\Notification\Data\CustomTemplateData(
         'Matrix', 'ম্যাট্রিক্স', App\Domain\Notification\Enums\TemplateKind::Manual, [NotificationChannel::Sms], ['name'], 'Hi {name}', 'হাই {name}',
     ), null)[0]->id;
 

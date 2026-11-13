@@ -28,7 +28,7 @@ final class RevertLayout
         $version = DB::transaction(static function () use ($target, $placement, $userId, $publish): ?CmsLayoutVersion {
             CmsBlock::query()->where('placement', $placement->value)->lockForUpdate()->get()->each->delete();
 
-            foreach (array_values($target->blocks) as $position => $snapshot) {
+            foreach ($target->blocks as $position => $snapshot) {
                 $block = new CmsBlock([
                     'uuid' => (string) $snapshot['uuid'],
                     'placement' => $placement,

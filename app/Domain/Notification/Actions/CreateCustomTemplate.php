@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Actions;
 
-use App\Domain\Notification\DTOs\CustomTemplateData;
+use App\Domain\Notification\Data\CustomTemplateData;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\WhatsAppApprovalStatus;
 use App\Domain\Notification\Models\NotificationTemplate;

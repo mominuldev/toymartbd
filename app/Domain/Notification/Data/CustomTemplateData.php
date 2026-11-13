@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Notification\DTOs;
+namespace App\Domain\Notification\Data;
 
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\TemplateKind;

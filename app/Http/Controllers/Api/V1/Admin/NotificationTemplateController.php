@@ -91,13 +91,19 @@ final class NotificationTemplateController extends ApiController
             if (! in_array($value, self::ENUM_FILTERS[$name], true)) {
                 throw new BadRequestHttpException("filter[{$name}] must be one of: ".implode(', ', self::ENUM_FILTERS[$name]).'.');
             }
-            match ($name) {
-                'active' => $query->where('is_active', $value === '1'),
-                'archived' => $archived = $value === '1',
-                default => $query->where($name, $value),
-            };
+            if ($name === 'archived') {
+                $archived = $value === '1';
+            } elseif ($name === 'active') {
+                $query->where('is_active', $value === '1');
+            } else {
+                $query->where($name, $value);
+            }
         }
-        $archived ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
+        if ($archived) {
+            $query->whereNotNull('archived_at');
+        } else {
+            $query->whereNull('archived_at');
+        }
 
         return NotificationTemplateResource::collection($query->get());
     }

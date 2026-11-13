@@ -6,6 +6,7 @@ import { Field, inputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { Select } from '@/components/ui/Select';
 import { DescriptionEditor } from '@/features/catalog/products/DescriptionEditor';
+import { TAKA } from '@/features/catalog/products/parts';
 import { ageBands } from './api';
 import { emptySection, type PostForm, type SectionForm } from './form';
 import { ProductLinksField } from './ProductLinksField';
@@ -20,7 +21,7 @@ type Props = {
 const moneyInput = (props: { id: string; describedBy?: string; invalid: boolean; value: string; onChange: (v: string) => void; disabled: boolean }) => (
     <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
         <span aria-hidden className="flex items-center border-e border-line-default bg-subtle px-3 t-admin-currency-num text-fg-tertiary">
-            ৳
+            {TAKA}
         </span>
         <input
             id={props.id}

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Resources\Admin;
 
 use App\Domain\Notification\Enums\NotificationChannel;
-use App\Domain\Notification\Enums\TemplateKind;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Support\SmsTariff;
 use App\Domain\Notification\Support\TemplateCatalog;
@@ -49,7 +48,7 @@ final class NotificationTemplateResource extends ApiResource
             'provider_template' => $t->provider_template,
             'is_active' => $t->is_active,
             /** @var 'system'|'marketing'|'manual' */
-            'kind' => ($t->kind ?? TemplateKind::System)->value,
+            'kind' => $t->kind->value,
             'is_custom' => $t->isCustom(),
             'name_en' => $t->name_en,
             'name_bn' => $t->name_bn,

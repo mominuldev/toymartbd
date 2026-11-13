@@ -103,7 +103,7 @@ export function ProductPicker({ picked, onChange, ctx, path }: { picked: number[
     const [term, setTerm] = useState('');
     const results = useProductSearch(term.trim());
     const details = useQueries({
-        queries: picked.map((id) => ({ queryKey: ['products', 'one', id], queryFn: () => api<Product>(`/products/${id}`), staleTime: 5 * 60 * 1000 })),
+        queries: picked.map((id) => ({ queryKey: ['products', 'one', id], queryFn: (): Promise<Product> => api(`/products/${id}`), staleTime: 5 * 60 * 1000 })),
     });
     const nameOf = (p: { name: string; name_bn: string | null }) => (locale === 'bn' && p.name_bn) || p.name;
     const items = picked.map((id, i) => {

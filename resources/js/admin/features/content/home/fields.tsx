@@ -188,10 +188,11 @@ export function Repeater({
     const { t } = useI18n();
     return (
         <fieldset className="flex flex-col gap-3 rounded-sm border border-line-default p-3">
-            <legend className="flex w-full items-center gap-1 px-1 t-admin-body-strong text-fg-primary">
-                <span className="flex-1">{title}</span>
-            </legend>
-            <div className="-mt-2 flex justify-end gap-1">
+            <legend className="sr-only">{title}</legend>
+            <div className="flex items-center gap-1">
+                <span aria-hidden className="min-w-0 flex-1 t-admin-body-strong text-fg-primary">
+                    {title}
+                </span>
                 <IconButton size="sm" aria-label={t('homeBuilder.f.moveUp', { name: title })} disabled={disabled || index === 0} onClick={() => onMove(index, index - 1)}>
                     <ArrowUpIcon size={16} aria-hidden />
                 </IconButton>

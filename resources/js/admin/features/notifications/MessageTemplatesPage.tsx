@@ -31,6 +31,8 @@ import { Taka, Toggle, channelIcon, channelLabel, dhakaWhen, templateTitle } fro
 type Row = { key: string; group: LibraryGroup; templates: NotificationTemplate[] };
 
 const statuses: LibraryStatus[] = ['active', 'off', 'archived'];
+/** Order lifecycle first (as on Automations); any other key follows alphabetically. */
+const lifecycle = ['order.placed', 'order.confirmed', 'order.shipped', 'order.out_for_delivery', 'order.out_for_delivery.no_rider', 'order.delivered', 'order.cancelled', 'otp.login'];
 
 function rowsOf(templates: NotificationTemplate[]): Row[] {
     const map = new Map<string, Row>();
@@ -40,7 +42,8 @@ function rowsOf(templates: NotificationTemplate[]): Row[] {
         map.set(tpl.key, row);
     }
     for (const row of map.values()) row.templates.sort((a, b) => channels.indexOf(a.channel) - channels.indexOf(b.channel));
-    return [...map.values()];
+    const rank = (key: string) => (lifecycle.includes(key) ? lifecycle.indexOf(key) : lifecycle.length);
+    return [...map.values()].sort((a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key));
 }
 
 /**
@@ -173,7 +176,7 @@ export function MessageTemplatesPage() {
                                 <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
                                     <tr className="border-b border-line-strong">
                                         <th className={dataTable.th}>{t('notif.lib.col.template')}</th>
-                                        <th className={`${dataTable.th} w-56`}>{t('notif.lib.col.channels')}</th>
+                                        <th className={`${dataTable.th} w-64`}>{t('notif.lib.col.channels')}</th>
                                         <th className={`${dataTable.th} w-28`}>{t('notif.lib.col.languages')}</th>
                                         <th className={`${dataTable.th} w-44`}>{t('notif.lib.col.sms')}</th>
                                         <th className={`${dataTable.th} w-44`}>{t('notif.lib.col.edited')}</th>
@@ -226,31 +229,31 @@ function LibraryRow({ row }: { row: Row }) {
                 <ul aria-label={t('notif.lib.col.channels')} className="flex flex-wrap gap-1.5">
                     {row.templates.map((tpl) => {
                         const Glyph = channelIcon[tpl.channel];
+                        const waPending = tpl.whatsapp_status !== null && tpl.whatsapp_status !== 'approved';
                         return (
                             <li key={tpl.id}>
                                 <Link
                                     to={`/automations/templates/${tpl.id}`}
                                     onClick={(e) => e.stopPropagation()}
-                                    aria-label={`${t(channelLabel(tpl.channel))} · ${tpl.is_active ? t('notif.lib.status.active') : t('notif.lib.status.off')}`}
+                                    aria-label={`${t(channelLabel(tpl.channel))} · ${tpl.is_active ? t('notif.lib.status.active') : t('notif.lib.status.off')}${waPending ? ` · ${t('notif.lib.waPending')}` : ''}`}
+                                    title={waPending ? t('notif.lib.waPending') : undefined}
                                     className={`inline-flex h-6 items-center gap-1 rounded-full border px-2 t-admin-caption-strong whitespace-nowrap hover:bg-subtle ${
                                         tpl.is_active ? 'border-line-default bg-surface text-fg-primary' : 'border-dashed border-line-strong bg-subtle text-fg-tertiary'
                                     }`}
                                 >
                                     <Glyph size={12} aria-hidden />
                                     {t(channelLabel(tpl.channel))}
+                                    {waPending && <span aria-hidden className="size-1.5 rounded-full bg-feedback-warning" />}
                                 </Link>
                             </li>
                         );
                     })}
                 </ul>
-                {row.templates.some((tpl) => tpl.whatsapp_status && tpl.whatsapp_status !== 'approved') && (
-                    <p className="mt-1 t-admin-caption text-fg-tertiary">{t('notif.lib.waPending')}</p>
-                )}
             </td>
             <td className={cell}>
                 <span className="inline-flex items-center gap-2 t-admin-caption-strong">
-                    <LangMark label="EN" ok={filled('en')} />
-                    <LangMark label="BN" ok={filled('bn')} />
+                    <LangMark label={t('notif.lib.langEn')} ok={filled('en')} />
+                    <LangMark label={t('notif.lib.langBn')} ok={filled('bn')} />
                 </span>
             </td>
             <td className={`${cell} t-admin-caption tabular text-fg-secondary`}>
