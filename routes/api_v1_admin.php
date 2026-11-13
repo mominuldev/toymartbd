@@ -223,16 +223,16 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/coupons/{coupon}/report', [CouponController::class, 'report'])->name('coupons.report');
 
     // Promotions and flash sales (P7, docs/api/promotions.md). DELETE deactivates.
-    Route::get('/promotions', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'index'])->name('promotions.index');
-    Route::post('/promotions', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'store'])->name('promotions.store');
-    Route::get('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'show'])->whereNumber('promotion')->name('promotions.show');
-    Route::put('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'update'])->whereNumber('promotion')->name('promotions.update');
-    Route::delete('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'destroy'])->whereNumber('promotion')->name('promotions.destroy');
-    Route::get('/promotions/{promotion}/report', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'report'])->whereNumber('promotion')->name('promotions.report');
+    Route::get('/promotions', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'index'])->name('promotions.index');
+    Route::post('/promotions', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'store'])->name('promotions.store');
+    Route::get('/promotions/{promotion}', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'show'])->whereNumber('promotion')->name('promotions.show');
+    Route::put('/promotions/{promotion}', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'update'])->whereNumber('promotion')->name('promotions.update');
+    Route::delete('/promotions/{promotion}', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'destroy'])->whereNumber('promotion')->name('promotions.destroy');
+    Route::get('/promotions/{promotion}/report', [App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'report'])->whereNumber('promotion')->name('promotions.report');
 
     // Abandoned carts (P7, docs/api/cart-recovery.md): read-only report.
-    Route::get('/cart-recoveries', [\App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'index'])->name('cart-recoveries.index');
-    Route::get('/cart-recoveries/summary', [\App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'summary'])->name('cart-recoveries.summary');
+    Route::get('/cart-recoveries', [App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'index'])->name('cart-recoveries.index');
+    Route::get('/cart-recoveries/summary', [App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'summary'])->name('cart-recoveries.summary');
 
     // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');

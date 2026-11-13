@@ -136,6 +136,8 @@ export const en = {
         previewExit: 'Exit preview',
         slidesLabel: 'Featured',
         slideOf: 'Slide {n} of {total}',
+        slideRole: 'slide', // aria-roledescription of one slide
+        carouselRole: 'carousel', // aria-roledescription of the hero carousel
         ratingLabel: 'Rated {rating} out of 5',
         readingTime: '{minutes} min read',
     },

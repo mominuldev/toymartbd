@@ -36,7 +36,7 @@ function Slide({ slide, index, total, blockId, showAgePills, locale, t, priority
         <section
             id={`hero-${blockId}-${index}`}
             aria-labelledby={headingId}
-            aria-roledescription={total > 1 ? 'slide' : undefined}
+            aria-roledescription={total > 1 ? t.slideRole : undefined}
             aria-label={total > 1 ? format(t.slideOf, { n: String(index + 1), total: String(total) }) : undefined}
             className="flex flex-col gap-2 overflow-hidden rounded-md bg-(image:--tm-gradient-bloom-candy) p-5 lg:h-120 lg:flex-row lg:items-center lg:gap-12 lg:px-12 lg:py-0"
         >
@@ -89,7 +89,7 @@ export function HeroBlock({ id, slides, showAgePills, locale, t, priority }: Pro
     }
 
     return (
-        <div role="region" aria-roledescription="carousel" aria-label={t.slidesLabel} className="flex flex-col gap-3">
+        <div role="region" aria-roledescription={t.carouselRole} aria-label={t.slidesLabel} className="flex flex-col gap-3">
             <ul className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none]">
                 {slides.map((slide, i) => (
                     <li key={i} className="w-full shrink-0 snap-start">

@@ -135,6 +135,8 @@ export const bn: Messages = {
         previewExit: 'প্রিভিউ বন্ধ করুন',
         slidesLabel: 'বিশেষ আয়োজন',
         slideOf: '{total}টির মধ্যে {n} নম্বর স্লাইড',
+        slideRole: 'স্লাইড', // aria-roledescription of one slide
+        carouselRole: 'স্লাইডার', // aria-roledescription of the hero carousel
         ratingLabel: '5-এর মধ্যে {rating} রেটিং',
         readingTime: '{minutes} মিনিটে পড়া',
     },

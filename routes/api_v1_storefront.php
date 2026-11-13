@@ -59,7 +59,7 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/districts/{district}/upazilas', [DeliveryController::class, 'upazilas'])->whereNumber('district')->name('districts.upazilas');
     Route::get('/products/{slug}', [ProductDetailController::class, 'show'])->name('products.show');
     // Flash sales (P7): running sales with their products, and the next one.
-    Route::get('/flash-sales', [\App\Http\Controllers\Api\V1\Storefront\FlashSaleController::class, 'index'])->name('flash-sales.index');
+    Route::get('/flash-sales', [App\Http\Controllers\Api\V1\Storefront\FlashSaleController::class, 'index'])->name('flash-sales.index');
     // Approved reviews + rating summary for the product page (P4-CAT-12).
     Route::get('/products/{slug}/reviews', [ReviewController::class, 'index'])->name('products.reviews.index');
     // SEO (P7, docs/api/seo.md §3): head data, the redirect map, sitemaps and robots.txt.
@@ -89,8 +89,8 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
     Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.store');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.destroy');
     // Abandoned-cart recovery (P7, docs/api/cart-recovery.md): contact + consent, and the SMS link.
-    Route::put('/contact', [\App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'contact'])->name('contact.update');
-    Route::post('/restore', [\App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'restore'])->middleware('throttle:order-track')->name('restore');
+    Route::put('/contact', [App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'contact'])->name('contact.update');
+    Route::post('/restore', [App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'restore'])->middleware('throttle:order-track')->name('restore');
 });
 
 // Checkout, confirmation and tracking (P4-ORD-02, P4-STO-09/10) — docs/api/checkout.md.

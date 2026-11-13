@@ -40,6 +40,9 @@ npm run typecheck && npm run typecheck:storefront && npm run lint:i18n && npx vi
 ```
 Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR, merge after CI.
 
+## Integration state (latest)
+All 7 batch-1 agents finished. Full checks: 2889 PHP passed, PHPStan/deptrac clean, Pint fixed, typecheck clean, i18n clean, 389 storefront unit, admin 330/332 (2 product-form tests are a known load flake; pass alone). An integration-fix agent was started for: risk deadlock retry, global lock order PlaceOrder/EditOrder, page SEO cache tags, merging the two per-minute content revalidation commands, About page metadata, cart-recovery retry routing, storefront Playwright `/pages/privacy` mock. If that work is not on disk, do it, then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR and merge after CI.
+
 ## Follow-ups found by agent 5 (fix before merging the batch)
 - `2026_11_28_700100_create_notification_template_versions_table.php` (agent 7): auto unique-index name too long for MySQL (1059) — give it a short explicit name. Agent 7 was told.
 - deptrac: 2 violations in `app/Domain/Notification/DTOs/CustomTemplateData.php` (agent 7).
