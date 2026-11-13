@@ -31,6 +31,8 @@ it('sends HSTS only over HTTPS', function (): void {
 
 it('serves the admin shell with a nonce CSP, and nonces its one inline script', function (): void {
     config(['services.storefront.url' => 'https://shop.toymartbd.test/en']);
+    // CI's PHP job has no admin bundle (public/build); the CSP does not depend on it.
+    $this->withoutVite();
 
     $response = $this->get('/admin/orders')->assertOk();
 
