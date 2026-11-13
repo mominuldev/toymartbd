@@ -68,7 +68,9 @@ describe('pages', () => {
         expect(within(list).getByText('toymartbd.com/pages/about')).toBeTruthy();
         expect(within(list).getByText('Live · edited 08 Nov')).toBeTruthy();
         expect(within(list).getByText('Scheduled 15 Jun')).toBeTruthy();
-        expect(screen.getByRole('link', { name: /Pages/ }).textContent).toContain('2');
+        // Scoped to the tab row: the sidebar's Online store submenu also has a "Pages" link.
+        const tabs = screen.getByRole('navigation', { name: 'Online store sections' });
+        expect(within(tabs).getByRole('link', { name: /Pages/ }).textContent).toContain('2');
 
         fireEvent.click(screen.getByRole('button', { name: 'Drafts' }));
         expect(await screen.findByText('No pages match.')).toBeTruthy();

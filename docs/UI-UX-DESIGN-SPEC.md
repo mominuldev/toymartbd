@@ -362,6 +362,7 @@ CI runs `npm run check --workspace=@toymart/tokens`, which fails if any output i
 | SegmentedControl 185:110 · AdminTab 185:125 | `components/ui/SegmentedControl.tsx` · `Tabs.tsx` |
 | ConfirmDialog 203:1387 · AdminToast 203:2315 · AdminEmptyState 203:1531 · Kbd 185:26 · Avatar 52:483 | `components/ui/ConfirmDialog.tsx` · `Toast.tsx` · `EmptyState.tsx` · `Kbd.tsx` · `components/shell/Avatar.tsx` |
 | SidebarItem 187:91 · Sidebar 187:473 · Topbar 187:474 · Topbar/Tablet 228:1857 · ContentHeader 187:530 | `components/shell/SidebarItem.tsx` · `Sidebar.tsx` · `Topbar.tsx` · `ContentHeader.tsx` → composed in `app/Shell.tsx` |
+| SidebarSubItem 321:59233 (Sidebar `storeSubmenu`) · AdminTextarea 325:2488 | Submenu: `children` in `components/shell/nav.ts`, rendered by `Sidebar.tsx`. AdminTextarea has no React component yet; content forms use inline `<textarea>` |
 | DataTable 192:532 · OrderCard 228:1891 (≤768 row card) · BulkActionBar 193:740 · DateRangePicker 193:741 | `components/ui/DataTable.tsx` (shared table classes + footer) · `features/orders/components/OrderCard.tsx` · `components/data/BulkActionBar.tsx` · `components/data/DateRangePicker.tsx` |
 | StatCard 189:360 · ChartCards 189:361 / 406 / 437 / 483 | `features/dashboard/components/StatCard.tsx` · `ChartCard.tsx` |
 | OrderStatusBadge 190:384 · RiskPill 190:405 · PaymentChip 190:441 · OrderStatusStepper 194:683 | `features/orders/components/…` (same names) |
