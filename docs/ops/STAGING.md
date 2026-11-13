@@ -13,7 +13,7 @@
 | **OWNER** Domains | e.g. `staging-api.<domain>` and `staging.<domain>` | Both need HTTPS. The admin is served by the API host at `/admin`. |
 | **OWNER** Data | reference data only (default), or reference data plus the demo catalogue | §12 says "anonymised production clone"; there is no production yet. The Gate 4 UAT needs **real** products that the owner enters (see `UAT-GATE-4.md`), so the default is **no demo catalogue**. |
 | **OWNER** Backup bucket | any S3-compatible store (S3, R2, B2, Wasabi) | Required for the still-open P3-CI-03 restore rehearsal (`backup-and-restore.md`). |
-| **OWNER** SMS / WhatsApp provider | none chosen yet | Stays on the `log` drivers (§3.4). |
+| **OWNER** SMS / WhatsApp provider | SMS: REVE SMS via `https://smpp.ajuratech.com:7790` (owner, 2026-11-13). WhatsApp: none yet | SMS is real (`SMS_DRIVER=reve`); WhatsApp stays off so order updates go by SMS (§3.4). |
 | **OWNER** Payment gateway | SSLCommerz sandbox credentials, or none | Gateway stays **inactive** for Gate 4. COD only (§3.5). |
 
 We do not recommend a specific provider; `docs/_research/` has no hosting comparison. Pick on price and on Dhaka latency.
@@ -86,12 +86,12 @@ Start from `.env.example`. Every variable below is read by `config/*.php`. The l
 
 | Variable | Value | Effect |
 |---|---|---|
-| `SMS_DRIVER` | `log` | No provider is chosen. OTP and SMS fallback are written to the log, never sent. `SMS_NET_BD_*` stays empty. |
-| `WHATSAPP_DRIVER` | `log` | Order updates are written to the log, never sent. `WHATSAPP_ACCESS_TOKEN` stays empty. |
-| `WHATSAPP_ENABLED` | `true` (default) | Order messages are attempted on WhatsApp first, so they appear as **WhatsApp** rows in the message log. |
+| `SMS_DRIVER` | `reve` | Real SMS through REVE. Set `SMS_REVE_API_KEY`, `SMS_REVE_SECRET_KEY` and `SMS_REVE_SENDER_ID` from the provider panel (`SMS_REVE_BASE_URL` defaults to `https://smpp.ajuratech.com:7790`). Keep these in the server's env only, never in git. Before the UAT run `php artisan toymart:sms:test 017XXXXXXXX` and again with `--bn`, and confirm both arrive with correct Bangla. Set `SMS_COST_PER_SEGMENT` to the contracted rate (the default 0.64 is a placeholder). |
+| `WHATSAPP_DRIVER` | `log` | No WhatsApp Business account yet. `WHATSAPP_ACCESS_TOKEN` stays empty. |
+| `WHATSAPP_ENABLED` | `false` | **Required while there is no WhatsApp account.** With it on, order updates go to the WhatsApp log driver, which reports success, so the SMS fallback never fires and no customer gets an order SMS. |
 | `SMS_LOG_CHANNEL` | empty | The log line goes to the default channel |
 
-What a log driver writes: a `sms.log_driver` / `whatsapp.log_driver` line with the **masked** phone (`017****5678`) and the template name. **It does not log the message text.** One `notification_logs` row per message, status **Sent**, appears in **Admin → Automations → Message log** (`/admin/automations/log`). `UAT-GATE-4.md` §0 explains what the owner will and will not see.
+With `SMS_DRIVER=reve` each SMS is really sent; the server log gets a `sms.reve.accepted` / `sms.reve.rejected` line with the masked phone and the provider's status, never the message text or the keys. What a log driver writes: a `sms.log_driver` / `whatsapp.log_driver` line with the **masked** phone (`017****5678`) and the template name. **It does not log the message text.** One `notification_logs` row per message, status **Sent**, appears in **Admin → Automations → Message log** (`/admin/automations/log`). `UAT-GATE-4.md` §0 explains what the owner will and will not see.
 
 ### 3.5 Payments — gateway inactive, COD only
 
