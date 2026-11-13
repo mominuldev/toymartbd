@@ -177,7 +177,37 @@ it('purges the page, old slug and menu tags after a slug change', function (): v
 
     $this->putJson("/api/v1/admin/content/pages/{$id}", scPagePayload(['slug' => 'shipping', 'acknowledge_slug_redirect' => true]))->assertOk();
 
-    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['content:pages', 'content:page:shipping', 'content:page:delivery-policy', 'content:menus']);
+    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['content:pages', 'content:page:shipping', 'page:shipping', 'content:page:delivery-policy', 'page:delivery-policy', 'content:menus']);
+});
+
+it('purges the page body AND its SEO document fetch when a page is saved with SEO', function (): void {
+    $id = $this->postJson('/api/v1/admin/content/pages', scPagePayload())->json('id');
+    Queue::fake();
+
+    $this->putJson("/api/v1/admin/content/pages/{$id}", scPagePayload([
+        'seo' => ['title_bn' => 'ডেলিভারি | টয় মার্ট', 'description' => 'How we deliver.'],
+    ]))->assertOk();
+
+    // The storefront caches /pages/{slug} under content:page:{slug} and its SEO document
+    // (lib/seo/fetch.ts seoTags) under seo + page:{slug}: a page save must reach both.
+    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => in_array('content:page:delivery-policy', $job->tags, true)
+        && in_array('page:delivery-policy', $job->tags, true));
+});
+
+it('purges the page body AND its SEO document fetch when the SEO panel saves a page', function (): void {
+    $id = $this->postJson('/api/v1/admin/content/pages', scPagePayload())->json('id');
+    Queue::fake();
+
+    $this->putJson("/api/v1/admin/seo/meta/page/{$id}", [
+        'title' => 'Delivery policy | Toy Mart BD',
+        'title_bn' => 'ডেলিভারি নীতি | টয় মার্ট',
+        'description' => 'How we deliver across Bangladesh.',
+    ])->assertOk();
+
+    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => array_diff(
+        ['seo', 'page:delivery-policy', 'content:pages', 'content:page:delivery-policy'],
+        $job->tags,
+    ) === []);
 });
 
 it('purges a scheduled page when its publish time passes', function (): void {

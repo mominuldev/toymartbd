@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  * The CMS homepage for the Next.js server (Phase 7). The published version is cached in
  * Laravel until the next publish; the storefront caches the response under `content:home`
  * (plus `products`, `categories`, `brands`, `content:testimonials`, `content:blog`), purged on
- * publish and at every schedule boundary (`toymart:content:revalidate-schedule`).
+ * publish and at every schedule boundary (`toymart:content:revalidate-scheduled`).
  */
 final class HomeContentController extends ApiController
 {

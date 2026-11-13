@@ -67,7 +67,7 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 - The storefront caches `GET /content/home` under `content:home` plus `products`, `categories`,
   `brands`, `content:testimonials`, `content:blog`.
 - `content:home` is sent (queued, after commit) on every publish and revert
-  (`CmsLayoutPublished` → `RevalidateCmsLayout`), and by `toymart:content:revalidate-schedule`
+  (`CmsLayoutPublished` → `RevalidateCmsLayout`), and by `toymart:content:revalidate-scheduled`
   (every minute) when a `starts_at`/`ends_at` of the live version has passed since the last run.
 
 ## Preview

@@ -79,8 +79,9 @@ Schedule::command('toymart:couriers:poll')
     ->withoutOverlapping(15)
     ->onOneServer();
 
-// Scheduled content (P7): a banner's start/end or a page's publish time that just passed purges
-// the storefront cache tags (content:banners, content:page:{slug}). Every minute.
+// Scheduled content (P7) — ONE sweep: a homepage CMS block's start/end (content:home), a
+// banner's start/end (content:banners) or a page's publish time (content:page:{slug} +
+// page:{slug}) that just passed purges the storefront cache tags. Every minute.
 Schedule::command('toymart:content:revalidate-scheduled')
     ->everyMinute()
     ->withoutOverlapping(5)
@@ -91,13 +92,6 @@ Schedule::command('toymart:content:revalidate-scheduled')
 Schedule::job(new App\Domain\Seo\Jobs\GenerateSitemaps)
     ->dailyAt('03:00')
     ->timezone('Asia/Dhaka')
-    ->onOneServer();
-
-// CMS blocks (Phase 7): a scheduled homepage block that starts or ends must refresh the
-// storefront's cached home (`content:home`) on time, not at the ISR ceiling. Every minute.
-Schedule::command('toymart:content:revalidate-schedule')
-    ->everyMinute()
-    ->withoutOverlapping(5)
     ->onOneServer();
 
 // P7 marketing. Promotion start/end → storefront revalidation (ISR at the boundary), every

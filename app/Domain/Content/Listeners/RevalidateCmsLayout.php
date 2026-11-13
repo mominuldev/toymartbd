@@ -10,7 +10,7 @@ use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 /**
  * CmsLayoutPublished → drop the placement's storefront tag (`content:home`). The job is
  * queued after commit (rule 4). Schedule boundaries are covered by
- * `toymart:content:revalidate-schedule`, which sends the same tag.
+ * `toymart:content:revalidate-scheduled` (the one scheduled-content sweep), which sends the same tag.
  */
 final class RevalidateCmsLayout
 {

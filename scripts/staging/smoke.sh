@@ -108,13 +108,22 @@ fi
 list="$(artisan schedule:list)"
 for task in toymart:backup toymart:inventory:reconcile toymart:inventory:digest \
             toymart:finance:recurring-expenses toymart:finance:rollup toymart:finance:verify \
-            toymart:payments:expire toymart:couriers:poll; do
+            toymart:payments:expire toymart:couriers:poll \
+            toymart:content:revalidate-scheduled toymart:promotions:boundaries \
+            toymart:carts:recover toymart:blog:publish-due; do
     if [[ "$list" == *"$task"* ]]; then
         pass "schedule: $task registered"
     else
         fail "schedule: $task missing from schedule:list"
     fi
 done
+# Scheduled content is ONE sweep (blocks, banners, pages); the retired blocks-only command
+# must not come back as a second every-minute task.
+if grep -Eq 'toymart:content:revalidate-schedule([^d]|$)' <<<"$list"; then
+    fail "schedule: retired toymart:content:revalidate-schedule is still registered"
+else
+    pass "schedule: one scheduled-content sweep"
+fi
 # Evidence the cron actually fires: yesterday's (Dhaka) rollup row, written at 01:00 Dhaka.
 rolled="$(artisan tinker --execute '
     $d = Carbon\CarbonImmutable::now("Asia/Dhaka")->subDay()->toDateString();

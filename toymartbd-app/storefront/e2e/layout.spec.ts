@@ -126,7 +126,9 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
     }
 
     test('links to pages not built yet get the same styled 404', async ({ page }) => {
-        for (const path of ['/pages/privacy', '/bn/wishlist']) {
+        // `/pages/{slug}` is a real route now (Phase 7 CMS pages), so an unmatched URL under it
+        // has to be deeper than one segment.
+        for (const path of ['/pages/privacy/print', '/bn/wishlist']) {
             const res = await page.goto(path);
             expect(res?.status(), path).toBe(404);
             await expect(page.locator('h1'), path).toHaveText(path.startsWith('/bn') ? 'এই পাতাটি নেই' : "This page isn't here");
@@ -135,6 +137,28 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
 });
 
 test.describe('static pages', () => {
+    test('a CMS page renders server-side in both locales with canonical and hreflang', async ({ page }) => {
+        const res = await page.goto('/pages/privacy');
+        expect(res?.status()).toBe(200);
+        await expect(page.locator('h1')).toHaveText('Privacy policy');
+        await expect(page.locator('main h2').first()).toHaveText('What we collect');
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy`);
+        await page.goto('/bn/pages/privacy');
+        await expect(page.locator('h1')).toHaveText('গোপনীয়তা নীতি');
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy`);
+    });
+
+    test('a CMS page that is not live is a 404, noindex', async ({ page }) => {
+        // notFound() from a matched page: right status and robots, but Next's bare shell without
+        // JavaScript (README "Known limitations") — the styled check lives with unmatched URLs.
+        const res = await page.goto('/pages/terms');
+        expect(res?.status()).toBe(404);
+        await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+        expect((await page.goto('/bn/pages/terms'))?.status()).toBe(404);
+    });
+
     test('About renders on the template, marked as draft, with hreflang and a way back', async ({ page }) => {
         await page.goto('/pages/about');
         await expect(page.locator('h1')).toHaveText('About Toy Mart BD');

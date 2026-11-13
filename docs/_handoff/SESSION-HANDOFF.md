@@ -1,6 +1,6 @@
 # Session handoff — continue on another machine / account
 
-**Written:** 2026-11-13 (lead session). **Branch:** `phase-7/batch-1` (WORK IN PROGRESS — do not merge as is).
+**Written:** 2026-11-13 (lead session). **Branch:** `phase-7/batch-1` — batch complete, PR opened; merge after CI. Next: Phase 7 batch 2 (server-side tracking) or Phase 8.
 The owner moves to a different PC and Claude account; nothing outside the git repo travels. Read this, then
 `CLAUDE.md`, then `docs/IMPLEMENTATION-PLAN.md` (progress sections are the source of truth for what is done).
 

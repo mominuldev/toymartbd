@@ -251,3 +251,78 @@ it('guards the abandoned-cart report with marketing.view', function (): void {
     RoleMatrix::assert($this, Permission::MarketingView, fn () => $this->getJson('/api/v1/admin/cart-recoveries'));
     RoleMatrix::assert($this, Permission::MarketingView, fn () => $this->getJson('/api/v1/admin/cart-recoveries/summary'));
 });
+
+/*
+ * Admin "Retry" on a dead-lettered reminder: it goes back through the cart-recovery send job
+ * (never the order notification job, which has no order behind it and failed the row as
+ * `notifiable_missing`), and that job re-checks the cart and consent at send time.
+ */
+
+/** A reminder whose send was dead-lettered, as SendCartRecoveryMessage::failed() leaves it. */
+function deadLetteredReminder(Cart $cart): NotificationLog
+{
+    test()->travel(2)->hours();
+    app(DetectAbandonedCarts::class)->handle();
+    $log = NotificationLog::query()->where('notifiable_type', 'cart_recovery')->sole();
+    $log->forceFill(['status' => NotificationStatus::DeadLettered, 'error' => 'SMS rejected', 'failed_at' => now()])->save();
+
+    return $log;
+}
+
+function retryReminder(NotificationLog $log): void
+{
+    (new RolesAndPermissionsSeeder)->run();
+    test()->flushHeaders(); // drop the storefront bearer token the cart calls used
+    auth()->forgetGuards();
+    test()->actingAs(User::factory()->withRole(Role::SuperAdmin)->create()->refresh(), 'web');
+    test()->postJson("/api/v1/admin/notifications/logs/{$log->id}/retry")->assertOk()->assertJsonPath('status', 'queued');
+
+    Queue::assertNotPushed(App\Domain\Notification\Jobs\SendNotification::class, fn ($job): bool => $job->logId === $log->id);
+    $job = Queue::pushed(SendCartRecoveryMessage::class)->last();
+    expect($job->logId)->toBe($log->id);
+    $job->handle(app(App\Domain\Notification\Services\SmsDrivers::class), app(App\Domain\Notification\CartRecovery\RecoveryConsent::class));
+}
+
+it('retries a dead-lettered reminder through the cart-recovery job and sends it', function (): void {
+    Queue::fake([SendCartRecoveryMessage::class, App\Domain\Notification\Jobs\SendNotification::class]);
+    $sms = recoverySms();
+    $log = deadLetteredReminder(abandonedCart());
+
+    retryReminder($log);
+
+    expect($sms->sent)->toHaveCount(1)
+        ->and($sms->sent[0]['body'])->toContain('/bn/cart/restore/')
+        ->and($log->refresh()->status)->toBe(NotificationStatus::Sent)
+        ->and($log->error)->toBeNull();
+});
+
+it('skips a retried reminder when the cart has become an order since', function (): void {
+    Queue::fake([SendCartRecoveryMessage::class, App\Domain\Notification\Jobs\SendNotification::class]);
+    $sms = recoverySms();
+    $cart = abandonedCart();
+    $log = deadLetteredReminder($cart);
+    app(PlaceOrder::class)->handle(CheckoutKit::data($cart->token));
+    expect($cart->refresh()->converted_at)->not->toBeNull(); // PlaceOrder closes the cart after commit
+    retryReminder($log);
+
+    expect($sms->sent)->toBe([])
+        ->and($log->refresh()->status)->toBe(NotificationStatus::Skipped)
+        ->and($log->error)->toBe('converted')
+        ->and(CartRecovery::query()->sole()->skip_reason?->value)->toBe('converted');
+});
+
+it('skips a retried reminder when marketing consent was withdrawn since', function (): void {
+    Queue::fake([SendCartRecoveryMessage::class, App\Domain\Notification\Jobs\SendNotification::class]);
+    $sms = recoverySms();
+    $cart = abandonedCart();
+    $log = deadLetteredReminder($cart);
+    test()->withToken(CartTestKit::storefrontToken())->putJson('/api/v1/storefront/cart/contact', [
+        'phone' => '01712345678', 'marketing_consent' => false, 'locale' => 'bn',
+    ], [CartTestKit::HEADER => $cart->token])->assertNoContent();
+
+    retryReminder($log);
+
+    expect($sms->sent)->toBe([])
+        ->and($log->refresh()->status)->toBe(NotificationStatus::Skipped)
+        ->and($log->error)->toBe('no_consent');
+});

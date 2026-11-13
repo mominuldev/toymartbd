@@ -23,4 +23,17 @@ final class StoreContentTags
     {
         return 'content:page:'.$slug;
     }
+
+    /**
+     * Every tag one static page is cached under on the storefront: its content fetch
+     * (`content:page:{slug}`) and its SEO document fetch (`page:{slug}`, lib/seo/fetch.ts
+     * seoTags — the morph key `page`). A page save and a page SEO save both purge all of them,
+     * so neither the body nor the <head> can outlive the write.
+     *
+     * @return list<string>
+     */
+    public static function pageAll(string $slug): array
+    {
+        return [self::page($slug), 'page:'.$slug];
+    }
 }

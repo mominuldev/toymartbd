@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Seo\Actions;
 
+use App\Domain\Content\Models\CmsPage;
+use App\Domain\Content\Services\StoreContentTags;
 use App\Domain\Seo\Contracts\SeoSubject;
 use App\Domain\Seo\DTOs\SeoMetaData;
 use App\Domain\Seo\Events\SeoPagesStale;
@@ -45,6 +47,11 @@ final class SaveSeoMeta
             if ($subject->type === 'blog_post') {
                 $tags[] = 'post:'.$subject->slug; // the blog's own page tag
             }
+            if ($subject->type === CmsPage::MORPH) {
+                // The page payload carries its SEO defaults too (`page.seo`): purge the content fetch.
+                $tags = [...$tags, StoreContentTags::PAGES, ...StoreContentTags::pageAll($subject->slug)];
+            }
+            $tags = array_values(array_unique($tags));
             SeoPagesStale::dispatch($tags);
         }
 

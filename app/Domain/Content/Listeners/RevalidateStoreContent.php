@@ -13,7 +13,8 @@ use App\Domain\Content\Services\StoreContentTags;
 
 /**
  * Static pages, menus, banners and testimonials → purge their storefront tags. A page change
- * also purges the menus: menu links to a page resolve its current slug and hide a page that
+ * purges both the page's content tag and its SEO-document tag (StoreContentTags::pageAll), and
+ * also the menus: menu links to a page resolve its current slug and hide a page that
  * is no longer live.
  */
 final class RevalidateStoreContent
@@ -21,10 +22,10 @@ final class RevalidateStoreContent
     public function handle(CmsPageChanged|MenusChanged|BannersChanged|TestimonialsChanged $event): void
     {
         $tags = match (true) {
-            $event instanceof CmsPageChanged => array_values(array_filter([
+            $event instanceof CmsPageChanged => array_values(array_unique([
                 StoreContentTags::PAGES,
-                StoreContentTags::page($event->slug),
-                $event->previousSlug !== null ? StoreContentTags::page($event->previousSlug) : null,
+                ...StoreContentTags::pageAll($event->slug),
+                ...($event->previousSlug !== null ? StoreContentTags::pageAll($event->previousSlug) : []),
                 StoreContentTags::MENUS,
             ])),
             $event instanceof MenusChanged => [StoreContentTags::MENUS],

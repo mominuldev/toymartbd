@@ -201,11 +201,15 @@ Use one cron entry, as the deploy user, on **one** server: `* * * * * cd /path/t
 | `toymart:backup` | daily 02:00 | Encrypted backup to `BACKUP_DISK` |
 | `toymart:inventory:reconcile` | daily 03:30 | Invariant: stock movements = stock levels. Alerts and mails on drift; never corrects. |
 | `toymart:inventory:digest` | daily 09:00 (`inventory.alerts.digest_time`) | Low-stock digest to managers |
+| `toymart:content:revalidate-scheduled` | every minute | **The one scheduled-content sweep** (P7): a homepage CMS block's start/end (`content:home`), a banner's start/end (`content:banners`) or a static page's publish time (`content:page:{slug}` + `page:{slug}`) that passed since the last run purges those storefront cache tags. It replaced the blocks-only `toymart:content:revalidate-schedule`, which no longer exists |
+| `toymart:promotions:boundaries` | every minute | Promotion / flash-sale start or end → storefront revalidation (`products`, `flash-sale`, each sale product) |
+| `toymart:blog:publish-due` | every minute | Publishes scheduled blog posts and buying guides whose time has come (registered in `BlogServiceProvider`) |
+| `toymart:carts:recover` | every 10 minutes | Abandoned-cart reminders (consent and quiet hours enforced in the Action) |
+| `toymart:couriers:sync-locations pathao --queue` | daily 04:00 | Pathao city/zone/area mirror — only once Pathao credentials exist |
+| `GenerateSitemaps` (job) | daily 03:00 | XML sitemaps rebuilt on `index`, then the storefront's cached copies purged |
 
 These §7 tasks are **not scheduled yet**:
 
-- abandoned-cart detection
-- sitemap regeneration
 - stale-cart cleanup
 - the nightly search reindex
 - `toymart:search:lag-check`

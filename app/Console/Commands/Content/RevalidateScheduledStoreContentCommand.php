@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Content;
 
+use App\Domain\Content\Blocks\Services\ScheduleBoundarySweep;
 use App\Domain\Content\Enums\PageStatus;
 use App\Domain\Content\Events\BannersChanged;
 use App\Domain\Content\Events\CmsPageChanged;
@@ -14,10 +15,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Scheduled banners and static pages: a banner whose start or end, or a page whose publish time,
- * passed since the last run gets its storefront cache tags purged (content:banners,
- * content:page:{slug}) — otherwise a cached page would keep showing or hiding it until the ISR
- * ceiling. Runs every minute; the window is (last run, now], so a missed minute is caught up.
+ * The ONE scheduled-content sweep (every minute, routes/console.php). Whatever goes live or
+ * expires on a clock rather than on a save gets its storefront cache tags purged — otherwise a
+ * cached page would keep showing or hiding it until the ISR ceiling (an hour):
+ *
+ * - homepage CMS blocks: a `starts_at`/`ends_at` of the live version passed → `content:home`
+ *   (ScheduleBoundarySweep, which keeps its own per-placement window);
+ * - banners: a start or end passed → `content:banners`;
+ * - static pages: a publish time passed → the page's tags (CmsPageChanged → content:page:{slug}
+ *   + page:{slug}, content:pages, content:menus).
+ *
+ * The banner/page window is (last run, now], so a missed minute is caught up. This replaced
+ * two commands that both ran every minute (`toymart:content:revalidate-schedule` for blocks
+ * was folded in here; nothing referenced it, so no alias is kept).
  */
 final class RevalidateScheduledStoreContentCommand extends Command
 {
@@ -28,11 +38,14 @@ final class RevalidateScheduledStoreContentCommand extends Command
 
     protected $signature = 'toymart:content:revalidate-scheduled';
 
-    protected $description = 'Purge storefront caches for banners and static pages whose schedule boundary just passed';
+    protected $description = 'Purge storefront caches for homepage blocks, banners and static pages whose schedule boundary just passed';
 
-    public function handle(): int
+    public function handle(ScheduleBoundarySweep $blocks): int
     {
         $now = CarbonImmutable::now('UTC');
+
+        $blockTags = $blocks->run($now);
+
         $last = Cache::get(self::CACHE_KEY);
         $since = is_string($last) ? CarbonImmutable::parse($last) : $now->subMinutes(self::DEFAULT_LOOKBACK_MINUTES);
 
@@ -60,7 +73,12 @@ final class RevalidateScheduledStoreContentCommand extends Command
 
         Cache::forever(self::CACHE_KEY, $now->toIso8601String());
 
-        $this->line(sprintf('Banners changed: %s · pages published: %d', $banners ? 'yes' : 'no', $pages->count()));
+        $this->line(sprintf(
+            'Blocks revalidated: %s · banners changed: %s · pages published: %d',
+            $blockTags === [] ? 'none' : implode(', ', $blockTags),
+            $banners ? 'yes' : 'no',
+            $pages->count(),
+        ));
 
         return self::SUCCESS;
     }

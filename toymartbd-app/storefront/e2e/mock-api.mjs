@@ -80,6 +80,25 @@ const CMS_PAGE = {
     },
 };
 
+// The privacy policy the footer links to (`/pages/privacy`), live in the CMS on the default
+// template. Any other slug is not live → 404.
+const PRIVACY_PAGE = {
+    slug: 'privacy',
+    title: 'Privacy policy',
+    title_bn: 'গোপনীয়তা নীতি',
+    template: 'default',
+    content: '<h2>What we collect</h2><p>Your name, phone and delivery address, only to deliver your order.</p>',
+    content_bn: '<h2>আমরা কী সংগ্রহ করি</h2><p>শুধু অর্ডার পৌঁছে দিতে আপনার নাম, ফোন ও ঠিকানা।</p>',
+    faq_items: [],
+    published_at: '2026-11-01T00:00:00Z',
+    updated_at: '2026-11-05T00:00:00Z',
+    seo: {
+        title: 'Privacy policy', title_bn: 'গোপনীয়তা নীতি', description: 'How we use your data.', description_bn: 'আমরা আপনার তথ্য কীভাবে ব্যবহার করি।',
+        canonical_url: null, robots: 'index,follow', og_title: null, og_description: null, og_image: null, twitter_card: 'summary_large_image',
+    },
+};
+const CMS_PAGES = [CMS_PAGE, PRIVACY_PAGE];
+
 const send = (res, status, body, type = 'application/json') => {
     res.writeHead(status, { 'Content-Type': type });
     res.end(JSON.stringify(body));
@@ -793,14 +812,17 @@ createServer(async (req, res) => {
         return raw(res, 200, xml, 'application/xml; charset=utf-8');
     }
     // CMS content (Phase 7). Menus: no location published, so the chrome keeps its built-in menus;
-    // no live banners or testimonials. One live page (`delivery-policy`); `about` is not in the
-    // CMS, so /pages/about keeps its built-in copy.
+    // no live banners or testimonials. Two live pages (`delivery-policy`, `privacy`); `about` is
+    // not in the CMS, so /pages/about keeps its built-in copy.
     if (url.pathname === '/api/v1/storefront/menus') return send(res, 200, { header: null, footer: null, mobile: null });
     if (url.pathname === '/api/v1/storefront/banners') return send(res, 200, { data: [] });
     if (url.pathname === '/api/v1/storefront/testimonials') return send(res, 200, { data: [] });
-    if (url.pathname === '/api/v1/storefront/pages') return send(res, 200, { data: [{ slug: CMS_PAGE.slug, title: CMS_PAGE.title, title_bn: CMS_PAGE.title_bn, updated_at: CMS_PAGE.updated_at }] });
+    if (url.pathname === '/api/v1/storefront/pages') return send(res, 200, { data: CMS_PAGES.map(({ slug, title, title_bn, updated_at }) => ({ slug, title, title_bn, updated_at })) });
     const cmsPage = url.pathname.match(/^\/api\/v1\/storefront\/pages\/([^/]+)$/);
-    if (cmsPage) return decodeURIComponent(cmsPage[1]) === CMS_PAGE.slug ? send(res, 200, CMS_PAGE) : problem(res, 404, 'Not Found', `No page "${cmsPage[1]}".`);
+    if (cmsPage) {
+        const found = CMS_PAGES.find((p) => p.slug === decodeURIComponent(cmsPage[1]));
+        return found ? send(res, 200, found) : problem(res, 404, 'Not Found', `No page "${cmsPage[1]}".`);
+    }
     const match = url.pathname.match(/^\/api\/v1\/storefront\/brands\/([^/]+)$/);
     if (match) {
         const brand = brands.find((b) => b.slug === decodeURIComponent(match[1]));

@@ -506,6 +506,19 @@ Refunds above a configurable threshold require `approved_by` before processing.
 > 3. **Pay** — `Idempotency-Key`; a completed refund paid again is a no-op. Never more than Σ paid payments − Σ completed refunds. COD/cash orders: staff record the bKash / Nagad / cash / bank payout and reference through the COD driver; online: the gateway's `refund()` outside any transaction (claim → call → apply). Then `orders.payment_status` / `refunded_total` re-derived (`partially_refunded` / `refunded`). Finance (`RefundPaid`, source `refund_payout`): `refund` out, cash, not recognised.
 > Entries are written only for an order that reached delivery (§7.6). An approved refund cannot be rejected (it is already on the ledger); a reversing entry would be needed — not offered at MVP.
 
+### 4.8 Global lock order (as built, P7)
+
+Every transaction that writes an order takes its row locks in **one global sequence**, so two such transactions can only ever wait on each other, never deadlock in a cycle:
+
+1. the **order** row (`EditOrder`, cancel, returns) — or, at checkout, the **cart** row (`PlaceOrder`, `PlaceManualOrder`);
+2. **`stock_levels`** — every variant in one pass, ascending `variant_id` (rule 9);
+3. **`coupons`** — ascending id (an order carries at most one);
+4. **`promotions`** — ascending id, each promotion followed immediately by its **`flash_sale_items`** in ascending `variant_id`.
+
+`PlaceOrder` reserves stock (2) before writing coupon usage (3) and promotion usage (4). `EditOrder` adjusts the reservation (2) first — the deltas depend only on the old and new lines, never on the price — then gives back the order's coupon (3) and promotion usage (4) before re-pricing and records them again in the same order; a refusal after that rolls the whole edit back. `ReverseOrderMarketingUsage` (cancel) goes coupon → promotions. Re-locking a row the transaction already holds is harmless; within tier 4 an edit's record pass can lock a newly applied promotion with a lower id than one it released — the 3× deadlock retry on `PlaceOrder` / `EditOrder` covers that residue. `tests/Feature/Orders/LockOrderTest.php` captures the locking selects of both actions and asserts this order.
+
+The risk projection is outside this sequence: `RefreshRiskProfile` runs after commit, in its own transaction, locking one `customer_risk_profiles` row; a concurrent first insert of the same phone (unique violation, or a MySQL gap-lock deadlock) is retried up to 3× and recomputes, so it is idempotent.
+
 ---
 
 ## 5. Key Business Logic

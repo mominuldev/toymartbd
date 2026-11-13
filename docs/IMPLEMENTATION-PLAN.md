@@ -338,6 +338,22 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Phase 5 — Inventory & Operations (35d).** Stock levels and append-only ledger with locking · nightly reconciliation job with alerting · suppliers · purchase orders with partial receipt and landed-cost apportionment · weighted-average costing on receipt · stock adjustments with approval · damage and loss · low-stock alerts and reorder points · inventory valuation · stock-overview screens · financial ledger with the revenue/cash separation · expenses and categories · `order_financials` projection · product-, category- and order-wise profitability · P&L daily/weekly/monthly/yearly · supplier payments · returns and refunds with approval threshold, restocking, ledger reversal and gateway refund.
 
+### Progress — Phase 7 batch 1 (2026-11-13)
+
+**Done, with passing tests** (2901 PHP + 7 mysql-group; 332 admin Vitest; 394 storefront unit; 123 storefront Playwright; PHPStan, Pint, deptrac, i18n lint clean):
+- **CMS blocks + homepage builder** — 12 typed blocks with per-type schemas (hero, category/age tiles, product rail by rule, flash sale, brands, USP, promo split, testimonials, blog teaser, rich text, FAQ), EN+BN, per-locale/device visibility, Dhaka-time scheduling with a per-minute sweep, append-only published versions with revert, drag + keyboard reorder, live preview through the shared signed `App\Support\PreviewToken`; storefront falls back to the built-in home.
+- **Static pages, menus, banners, testimonials** — pages with three templates and slug-history 301s, header/footer/mobile menu builder (falls back to the category tree), banners (only a text info strip on cart/checkout, rule 25b), testimonials.
+- **Blog + buying guides** — posts/categories/tags/authors, scheduled publish, sanitised bodies, related posts, guide picks that hide when out of stock, Article/Breadcrumb JSON-LD.
+- **SEO** — per-entity SEO panel with server SERP preview, metadata builder with canonical + hreflang en/bn/x-default on every page, JSON-LD builders with an offline required-fields validator, slug-history + redirect manager (no chains, no loops), locale-partitioned sitemaps (daily 03:00 Dhaka), robots.txt editor.
+- **Promotions** — discount/free-delivery/bundle/tiered/BXGY with priority and stacking, explicit `allows_coupons` per promotion, per-phone and budget limits, coupon bulk generator + reports, flash sales with allotments claimed under locks (never oversold), countdown, abandoned-cart SMS (once per cart, consent + quiet hours) with restore link and recovery report.
+- **Message templates library** (`/automations/templates`) — EN/BN editor with server preview/segments/cost, version history, WhatsApp approval status, custom marketing/manual templates.
+- **Owner decisions applied:** risk thresholds and watch-list hold confirmed; verifying a held order confirms it; rider name/phone recorded on the shipment and named in the out-for-delivery SMS (no-rider variant otherwise, never the hotline); managers get Integrations; non-masking numeric REVE sender; ৳0.26 per SMS segment.
+- **Integration fixes:** risk-profile rebuild retries on deadlock/duplicate insert; one global lock order for PlaceOrder and EditOrder (DATABASE-DESIGN §4.8); page and page-SEO cache tags aligned; one per-minute content sweep; cart-recovery retry routed correctly.
+
+**Owner decisions open:** title separator (" | " vs " · "); static/policy page copy (seeded drafts are placeholders); `/store` landing page; per-page header colour; flash sales default `allows_coupons`; where guests consent to cart reminders (never checkout); `config/cart_recovery.php` values; Bangla no-rider SMS wording; managers editing credentials; template permissions and generic variable set; Meta approval for new WhatsApp templates.
+
+**Open:** server-side tracking (GA4 MP, Meta CAPI, consent, diagnostics) — next batch; Search Console metrics and site audit; SEO providers for blog categories/tags/authors; CMS block images not registered as media usages; rich text blocks edited as raw HTML; several new admin screens have no Figma frame (message templates, banners, testimonials, promotion builders, blog terms).
+
 ### Progress — Phase 6 batch 1 (2026-11-13)
 
 **Done, with passing tests** (2583 PHP; 258 admin Vitest; 270 storefront unit; PHPStan, Pint, deptrac, i18n lint clean):

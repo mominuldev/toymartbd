@@ -243,7 +243,7 @@ it('revalidates content:home when a schedule boundary of the live version passes
 
     // The command runs the same sweep.
     Cache::flush();
-    $this->artisan('toymart:content:revalidate-schedule')->assertSuccessful();
+    $this->artisan('toymart:content:revalidate-scheduled')->assertSuccessful();
     CarbonImmutable::setTestNow();
 });
 
