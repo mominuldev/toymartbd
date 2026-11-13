@@ -102,13 +102,16 @@ An order has at most **one open shipment** (anything but `failed` or `cancelled`
 | `GET /shipments/{shipment}` | `shipments.view` | `ShipmentResource`, with `order` (`id`, `number`, `status`). |
 | `POST /shipments/{shipment}/retry` | `orders.update` + `shipments.book` | **Idempotency-Key**. `failed → pending` and re-dispatches `BookShipment` for the same shipment (same number/reference); a `completion_failed` shipment is completed locally without a courier call. 409 otherwise. |
 | `POST /shipments/{shipment}/cancel` | `shipments.cancel` | **Idempotency-Key**. Only `pending` or `failed` (nothing left the warehouse, no courier holds it). A booked/submitted parcel is cancelled at the courier and comes back as a courier return — the driver contract has no cancel call yet. 409 otherwise. |
+| `PATCH /shipments/{shipment}/rider` | `shipments.book` | The delivery rider, typed in when the rider calls (owner decision 2026-11-13; neither courier's API returns it). `rider_name` (≤ 100) and `rider_phone` (013–019 only, rule 30; stored E.164), both nullable — both null clears. 409 on a `pending`, `failed` or `cancelled` shipment. Audited in `audit_sensitive` (`shipment_rider_recorded`, phone masked). Never sends or resends a message. |
 
 `ShipmentResource`: `id`, `number`, `order_id`, `order` (when loaded), `provider`
 (`{code, name}`), `status`, `provider_status_raw`, `consignment_id`, `tracking_code`,
 `tracking_url`, `weight_grams`, `item_count`, `cod_amount`, `declared_value`, `charge`,
 `cod_fee`, `return_charge`, `cod_collected`, `failure_code`, `error_message`,
 `booking_attempts`, `needs_attention`, `dispatched`, `booked_at`, `dispatched_at`,
-`picked_up_at`, `delivered_at`, `returned_at`, `cancelled_at`, `created_at`. Money as
+`picked_up_at`, `delivered_at`, `returned_at`, `cancelled_at`, `created_at`, and `rider`
+(`{name, phone, phone_masked, source, recorded_at}` or null — `phone` is E.164 only with
+`customers.view_pii`, else `017****5678`). Money as
 `"1234.00"` strings. The UI must show `submitted` as "submitted", never "booked" (rule 24d).
 
 ## Circuit breaker

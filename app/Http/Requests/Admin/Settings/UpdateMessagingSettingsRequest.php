@@ -21,10 +21,12 @@ use Illuminate\Validation\Validator;
 final class UpdateMessagingSettingsRequest extends ApiFormRequest
 {
     /**
-     * REVE's callerID: a masked alphanumeric sender of at most 11 characters (the GSM limit),
-     * or a numeric (non-masked) sender. NOT confirmed against a REVE account yet.
+     * REVE's callerID. The owner's sender is NON-MASKING (2026-11-13): a number, never a brand
+     * name — `880XXXXXXXXXX`, `01XXXXXXXXX` or a provider short code, 5–15 digits with an
+     * optional leading `+`. Letters are refused. Not checked against rule 30: a non-masking
+     * sender is often an 09-series number, not a 013–019 mobile.
      */
-    public const string SENDER_ID_PATTERN = '/^(?:[A-Za-z0-9][A-Za-z0-9 .\-]{0,10}|\+?\d{5,15})$/';
+    public const string SENDER_ID_PATTERN = '/^\+?\d{5,15}$/';
 
     public function authorize(): bool
     {
@@ -37,7 +39,8 @@ final class UpdateMessagingSettingsRequest extends ApiFormRequest
         return [
             'sms_driver' => ['required', 'string', Rule::in(MessagingSettings::SMS_DRIVERS)],
             'reve_base_url' => ['nullable', 'string', 'max:255', 'url:https'],
-            'reve_sender_id' => ['nullable', 'string', 'max:15', 'regex:'.self::SENDER_ID_PATTERN],
+            /** The REVE non-masking number: digits only (5–15), optional leading `+`. */
+            'reve_sender_id' => ['nullable', 'string', 'max:16', 'regex:'.self::SENDER_ID_PATTERN],
             // Decimal string, taka per segment, ≥ 0 (no sign allowed), 2 places at most.
             'sms_cost_per_segment' => ['required', 'string', 'regex:/^\d{1,4}(?:\.\d{1,2})?$/'],
             'whatsapp_enabled' => ['required', 'boolean'],
@@ -45,6 +48,15 @@ final class UpdateMessagingSettingsRequest extends ApiFormRequest
             'reve_secret_key' => ['nullable', 'string', 'max:255'],
             'clear_reve_api_key' => ['sometimes', 'boolean'],
             'clear_reve_secret_key' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'reve_sender_id.regex' => (string) __('notifications.sender_id_numeric'),
+            'reve_sender_id.max' => (string) __('notifications.sender_id_numeric'),
         ];
     }
 

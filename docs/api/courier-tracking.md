@@ -65,8 +65,14 @@ courier, out for delivery, delivered — with the courier line (name · consignm
 
 **Out-for-delivery message.** `ShipmentStatusChanged` with `to = out_for_delivery` queues the
 `order.out_for_delivery` template (Notification's `QueueOrderNotifications::onShipmentStatusChanged`),
-once per order. `{rider_phone}` is a **placeholder: our hotline** — neither provider's status API
-returns the rider's number.
+once per order. It names the **rider's** phone (owner decision 2026-11-13), never our hotline:
+`{rider_phone}` is the number staff recorded on the shipment (`PATCH /shipments/{id}/rider` —
+neither provider's API returns it), read through Ordering's `OrderRiderContact` (Notification
+never imports Fulfilment) and re-read at send time; `notification_logs.payload` keeps it masked.
+With no rider recorded, the `order.out_for_delivery.no_rider` variant goes instead — the same
+message without the rider line (SMS EN 86 chars / 1 segment, BN 66 / 1 segment; WhatsApp
+`order_out_for_delivery_no_rider`, which needs its own Meta approval). Either variant counts as the
+one message: recording the rider afterwards never resends it.
 
 ## Courier performance — `GET /api/v1/admin/reports/couriers` (+ `/export`, CSV)
 

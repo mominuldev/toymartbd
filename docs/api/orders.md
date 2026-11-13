@@ -200,9 +200,18 @@ Our own order history only (no courier data yet). Signal `first_order` (weight 1
 has no earlier order (as the customer's phone or as a shipping phone). Hold reasons:
 
 - `first_order_above_threshold` — first order with grand total ≥
-  `config('risk.first_order_hold_threshold')`, default ৳3,000 (**provisional — owner to set**;
-  env `RISK_FIRST_ORDER_HOLD_THRESHOLD`);
+  `config('risk.first_order_hold_threshold')`, default ৳3,000 (**owner confirmed 2026-11-13**, as
+  are the §5.2 weights and the 40 / 70 level thresholds; env `RISK_FIRST_ORDER_HOLD_THRESHOLD`);
 - `cod_advance_required` — the delivery quote asks for a COD advance, which staff arrange by phone;
-- `high_risk_score` — score ≥ 70 (unreachable with today's single signal; ready for more).
+- `high_risk_score` — score ≥ 70 (unreachable with today's single signal; ready for more);
+- `watchlist` / `blacklisted` — staff put the phone on a list: **every** order from it is held
+  (owner confirmed 2026-11-13 for the watch list).
 
 The customer still sees `stage: placed`; risk is never shown to them.
+
+**Verification queue (owner decision 2026-11-13).** `POST /risk/orders/{order}/verify` moves a held
+order **on_hold → confirmed** (not back to `pending`): the verification call is the confirmation
+call. It goes through the same `OrderTransitions` path as any confirm — `confirmed_at` stamped,
+timeline row, `OrderConfirmed` after commit, so the customer's "order confirmed" message is sent.
+Needs `risk.verify` **and** `orders.confirm`. A held order is never cancelled by the score (rules
+23, 24b); `POST /risk/orders/{order}/reject` is the person's cancel.

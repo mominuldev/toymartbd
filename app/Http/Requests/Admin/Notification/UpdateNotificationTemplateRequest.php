@@ -8,6 +8,7 @@ use App\Domain\Notification\DTOs\TemplateData;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Support\TemplateRenderer;
+use App\Domain\Notification\Support\TemplateVariableCheck;
 use App\Http\Requests\ApiFormRequest;
 use Illuminate\Validation\Validator;
 
@@ -40,6 +41,9 @@ final class UpdateNotificationTemplateRequest extends ApiFormRequest
             'subject_bn' => [$email ? 'required' : 'nullable', 'string', 'max:150'],
             'preheader_en' => ['nullable', 'string', 'max:200'],
             'preheader_bn' => ['nullable', 'string', 'max:200'],
+            // Custom (staff-made) templates only; ignored for a system template (P7).
+            'name_en' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'name_bn' => ['sometimes', 'nullable', 'string', 'max:120'],
         ];
     }
 
@@ -63,6 +67,15 @@ final class UpdateNotificationTemplateRequest extends ApiFormRequest
                     $validator->errors()->add($field, 'Unknown variable(s): {'.implode('}, {', $unknown).'}. Allowed: {'.implode('}, {', $allowed).'}.');
                 }
             }
+
+            // A WhatsApp system body must keep every parameter Meta approved (P7).
+            foreach (['body_en', 'body_bn'] as $field) {
+                $value = $this->input($field);
+                $missing = is_string($value) ? TemplateVariableCheck::missing($template, $value) : [];
+                if ($missing !== []) {
+                    $validator->errors()->add($field, 'Missing variable(s) the approved WhatsApp template needs: {'.implode('}, {', $missing).'}.');
+                }
+            }
         }];
     }
 
@@ -76,6 +89,8 @@ final class UpdateNotificationTemplateRequest extends ApiFormRequest
             subjectBn: $this->filled('subject_bn') ? $this->string('subject_bn')->toString() : null,
             preheaderEn: $this->filled('preheader_en') ? $this->string('preheader_en')->toString() : null,
             preheaderBn: $this->filled('preheader_bn') ? $this->string('preheader_bn')->toString() : null,
+            nameEn: $this->filled('name_en') ? $this->string('name_en')->toString() : null,
+            nameBn: $this->filled('name_bn') ? $this->string('name_bn')->toString() : null,
         );
     }
 

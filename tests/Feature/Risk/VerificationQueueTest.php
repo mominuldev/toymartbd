@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Ordering\Actions\PlaceOrder;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Enums\VerificationStatus;
 use App\Domain\Ordering\Events\OrderCancelled;
+use App\Domain\Ordering\Events\OrderConfirmed;
+use App\Domain\Ordering\Events\OrderReleasedFromHold;
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Ordering\Models\OrderEvent;
 use App\Domain\Risk\Models\CustomerRiskProfile;
 use App\Domain\Risk\Models\RiskVerificationCall;
 use App\Models\Enums\Role;
@@ -101,21 +105,37 @@ it('masks the phone for a role without customers.view_pii', function (): void {
     expect($response->json('phone'))->not->toBe(RiskKit::PHONE)->and($response->json('pii_masked'))->toBeTrue();
 });
 
-it('verifies a held order: hold released, who and when recorded', function (): void {
+it('verifies a held order and confirms it: who and when recorded (owner decision 2026-11-13)', function (): void {
     $user = FinanceKit::actingAs(Role::OrderOperator);
     $order = RiskKit::heldOrder();
+    Event::fake([OrderConfirmed::class, OrderReleasedFromHold::class]);
 
     $this->postJson("/api/v1/admin/risk/orders/{$order->id}/verify", ['note' => 'গ্রাহক নিশ্চিত করেছেন'])
-        ->assertOk()->assertJsonPath('status', 'pending')->assertJsonPath('verification_status', 'verified');
+        ->assertOk()->assertJsonPath('status', 'confirmed')->assertJsonPath('verification_status', 'verified');
 
     $order->refresh();
-    expect($order->status)->toBe(OrderStatus::Pending)
+    expect($order->status)->toBe(OrderStatus::Confirmed)
+        ->and($order->confirmed_at)->not->toBeNull()
         ->and($order->verification_status)->toBe(VerificationStatus::Verified)
         ->and($order->verified_by)->toBe($user->id)
         ->and($order->verified_at)->not->toBeNull();
 
+    // The same event a normal confirm emits (notifications listen to it) — not a release to pending.
+    Event::assertDispatched(OrderConfirmed::class, fn (OrderConfirmed $e): bool => $e->orderId === $order->id && $e->from === 'on_hold' && $e->userId === $user->id);
+    Event::assertNotDispatched(OrderReleasedFromHold::class);
+    expect(OrderEvent::query()->where('order_id', $order->id)->where('to_status', 'confirmed')->value('from_status'))->toBe('on_hold');
+
     // A second click (or a colleague) is a conflict, not a second move.
     $this->postJson("/api/v1/admin/risk/orders/{$order->id}/verify")->assertStatus(409);
+});
+
+it('queues the customer\'s "order confirmed" message when a held order is verified', function (): void {
+    FinanceKit::actingAs(Role::OrderOperator);
+    $order = RiskKit::heldOrder();
+
+    $this->postJson("/api/v1/admin/risk/orders/{$order->id}/verify")->assertOk();
+
+    expect(NotificationLog::query()->where('notifiable_id', $order->id)->where('template', 'order.confirmed')->exists())->toBeTrue();
 });
 
 it('logs a call without moving the order', function (): void {

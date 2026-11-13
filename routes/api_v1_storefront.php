@@ -58,8 +58,22 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/districts', [DeliveryController::class, 'districts'])->name('districts.index');
     Route::get('/districts/{district}/upazilas', [DeliveryController::class, 'upazilas'])->whereNumber('district')->name('districts.upazilas');
     Route::get('/products/{slug}', [ProductDetailController::class, 'show'])->name('products.show');
+    // Flash sales (P7): running sales with their products, and the next one.
+    Route::get('/flash-sales', [\App\Http\Controllers\Api\V1\Storefront\FlashSaleController::class, 'index'])->name('flash-sales.index');
     // Approved reviews + rating summary for the product page (P4-CAT-12).
     Route::get('/products/{slug}/reviews', [ReviewController::class, 'index'])->name('products.reviews.index');
+    // SEO (P7, docs/api/seo.md §3): head data, the redirect map, sitemaps and robots.txt.
+    Route::get('/seo/{type}/{slug}', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'show'])->where(['type' => '[a-z_]{1,64}', 'slug' => '[a-z0-9]+(?:-[a-z0-9]+)*'])->name('seo.show');
+    Route::get('/redirects', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'redirects'])->name('redirects.index');
+    Route::post('/redirects/{id}/hit', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'hit'])->whereNumber('id')->middleware('throttle:120,1')->name('redirects.hit');
+    Route::get('/sitemaps/{file}', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'sitemap'])->where('file', 'sitemap[a-z0-9-]*\.xml')->name('sitemaps.show');
+    Route::get('/robots', [App\Http\Controllers\Api\V1\Storefront\Seo\SeoController::class, 'robots'])->name('robots.show');
+    // Blog and buying guides (Phase 7) — routes/api_v1_storefront_blog.php.
+    require __DIR__.'/api_v1_storefront_blog.php';
+    // Static pages, menus, banners, testimonials (Phase 7) — routes/api_v1_storefront_content.php.
+    require __DIR__.'/api_v1_storefront_content.php';
+    // CMS homepage blocks, published and draft preview (Phase 7) — routes/api_v1_storefront_cms_blocks.php.
+    require __DIR__.'/api_v1_storefront_cms_blocks.php';
 });
 
 // Cart (P4-CRT-01/02/04) — docs/api/cart.md. The cart is found by the opaque token the
@@ -74,6 +88,9 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
     Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
     Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('coupon.store');
     Route::delete('/coupon', [CartController::class, 'removeCoupon'])->name('coupon.destroy');
+    // Abandoned-cart recovery (P7, docs/api/cart-recovery.md): contact + consent, and the SMS link.
+    Route::put('/contact', [\App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'contact'])->name('contact.update');
+    Route::post('/restore', [\App\Http\Controllers\Api\V1\Storefront\CartRecoveryController::class, 'restore'])->middleware('throttle:order-track')->name('restore');
 });
 
 // Checkout, confirmation and tracking (P4-ORD-02, P4-STO-09/10) — docs/api/checkout.md.

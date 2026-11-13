@@ -14,11 +14,14 @@ use Illuminate\Http\Request;
  * values: characters, encoding, SMS segments (UCS-2 Bangla 70/67, GSM-7 160/153) and the
  * cost of one send at the configured PLACEHOLDER rate. The editor shows this as is.
  *
- * @property array{en: array{rendered: string, chars: int, encoding: string, segments: int|null, per_segment_limit: int|null, cost: Money}, bn: array{rendered: string, chars: int, encoding: string, segments: int|null, per_segment_limit: int|null, cost: Money}, unknown_variables: list<string>} $resource
+ * @property array{en: array{rendered: string, chars: int, encoding: string, segments: int|null, per_segment_limit: int|null, cost: Money}, bn: array{rendered: string, chars: int, encoding: string, segments: int|null, per_segment_limit: int|null, cost: Money}, unknown_variables: list<string>, missing_variables?: list<string>} $resource
  */
 #[SchemaName('NotificationTemplatePreview')]
 final class NotificationTemplatePreviewResource extends ApiResource
 {
+    /** A Bangla SMS this long costs 3× a single segment — the editor warns (P7). */
+    public const int LONG_SMS_SEGMENTS = 3;
+
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
@@ -39,6 +42,13 @@ final class NotificationTemplatePreviewResource extends ApiResource
             'bn' => $side($this->resource['bn']),
             /** @var list<string> */
             'unknown_variables' => $this->resource['unknown_variables'],
+            /** @var list<string> Parameters a WhatsApp system body dropped (Meta-approved; refused on save). */
+            'missing_variables' => $this->resource['missing_variables'] ?? [],
+            /** @var list<'long_sms_en'|'long_sms_bn'> An SMS side that runs to 3+ segments. */
+            'warnings' => array_values(array_filter([
+                ($this->resource['en']['segments'] ?? 0) >= self::LONG_SMS_SEGMENTS ? 'long_sms_en' : null,
+                ($this->resource['bn']['segments'] ?? 0) >= self::LONG_SMS_SEGMENTS ? 'long_sms_bn' : null,
+            ])),
         ];
     }
 }

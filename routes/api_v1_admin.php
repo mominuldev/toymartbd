@@ -108,6 +108,23 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     // edits, and the BSTI certificate PDF (private; served only as a download).
     Route::post('/products/margin-preview', [ProductPricingController::class, 'marginPreview'])->name('products.margin-preview');
     Route::post('/products/seo-measure', [ProductSeoController::class, 'measure'])->name('products.seo-measure');
+
+    // SEO module (P7, docs/api/seo.md §2): per-entity panel, redirects, sitemap, robots.txt.
+    Route::prefix('seo')->name('seo.')->group(function (): void {
+        Route::get('/meta/{type}/{id}', [App\Http\Controllers\Api\V1\Admin\Seo\SeoMetaController::class, 'show'])->where('type', '[a-z_]{1,64}')->whereNumber('id')->name('meta.show');
+        Route::put('/meta/{type}/{id}', [App\Http\Controllers\Api\V1\Admin\Seo\SeoMetaController::class, 'update'])->where('type', '[a-z_]{1,64}')->whereNumber('id')->name('meta.update');
+        Route::post('/serp-preview', [App\Http\Controllers\Api\V1\Admin\Seo\SeoMetaController::class, 'preview'])->name('serp-preview');
+        Route::get('/redirects', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'index'])->name('redirects.index');
+        Route::post('/redirects', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'store'])->name('redirects.store');
+        Route::post('/redirects/import', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'import'])->name('redirects.import');
+        Route::patch('/redirects/{redirect}', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'update'])->whereNumber('redirect')->name('redirects.update');
+        Route::delete('/redirects/{redirect}', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'destroy'])->whereNumber('redirect')->name('redirects.destroy');
+        Route::get('/slug-history', [App\Http\Controllers\Api\V1\Admin\Seo\RedirectController::class, 'slugHistory'])->name('slug-history.index');
+        Route::get('/sitemap', [App\Http\Controllers\Api\V1\Admin\Seo\SitemapController::class, 'show'])->name('sitemap.show');
+        Route::post('/sitemap/regenerate', [App\Http\Controllers\Api\V1\Admin\Seo\SitemapController::class, 'regenerate'])->name('sitemap.regenerate');
+        Route::get('/robots', [App\Http\Controllers\Api\V1\Admin\Seo\SitemapController::class, 'robots'])->name('robots.show');
+        Route::put('/robots', [App\Http\Controllers\Api\V1\Admin\Seo\SitemapController::class, 'updateRobots'])->name('robots.update');
+    });
     Route::get('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'show'])->name('products.compliance.certificate.show');
     Route::post('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'store'])->name('products.compliance.certificate.store');
     Route::delete('/products/{product}/compliance/certificate', [ProductComplianceController::class, 'destroy'])->name('products.compliance.certificate.destroy');
@@ -201,6 +218,21 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/coupons/{coupon}', [CouponController::class, 'show'])->name('coupons.show');
     Route::put('/coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
     Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');
+    // Coupon builder (P7): bulk unique codes and the usage report.
+    Route::post('/coupons/generate', [CouponController::class, 'generate'])->name('coupons.generate');
+    Route::get('/coupons/{coupon}/report', [CouponController::class, 'report'])->name('coupons.report');
+
+    // Promotions and flash sales (P7, docs/api/promotions.md). DELETE deactivates.
+    Route::get('/promotions', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'index'])->name('promotions.index');
+    Route::post('/promotions', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'store'])->name('promotions.store');
+    Route::get('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'show'])->whereNumber('promotion')->name('promotions.show');
+    Route::put('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'update'])->whereNumber('promotion')->name('promotions.update');
+    Route::delete('/promotions/{promotion}', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'destroy'])->whereNumber('promotion')->name('promotions.destroy');
+    Route::get('/promotions/{promotion}/report', [\App\Http\Controllers\Api\V1\Admin\PromotionController::class, 'report'])->whereNumber('promotion')->name('promotions.report');
+
+    // Abandoned carts (P7, docs/api/cart-recovery.md): read-only report.
+    Route::get('/cart-recoveries', [\App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'index'])->name('cart-recoveries.index');
+    Route::get('/cart-recoveries/summary', [\App\Http\Controllers\Api\V1\Admin\CartRecoveryController::class, 'summary'])->name('cart-recoveries.summary');
 
     // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
@@ -235,6 +267,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/shipments/{shipment}', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'show'])->whereNumber('shipment')->name('shipments.show');
     Route::post('/shipments/{shipment}/retry', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'retry'])->whereNumber('shipment')->middleware('idempotent')->name('shipments.retry');
     Route::post('/shipments/{shipment}/cancel', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'cancel'])->whereNumber('shipment')->middleware('idempotent')->name('shipments.cancel');
+    Route::patch('/shipments/{shipment}/rider', [App\Http\Controllers\Api\V1\Admin\ShipmentController::class, 'rider'])->whereNumber('shipment')->name('shipments.rider');
 
     // Manual orders (P4-ORD-06): lookups, a live quote and the order itself, all through the
     // checkout pricing pipeline and PlaceOrder. Edit after placement (P4-ORD-07). Bulk pack
@@ -270,6 +303,13 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/notifications/templates/{template}', [NotificationTemplateController::class, 'show'])->name('notifications.templates.show');
     Route::put('/notifications/templates/{template}', [NotificationTemplateController::class, 'update'])->name('notifications.templates.update');
     Route::post('/notifications/templates/{template}/preview', [NotificationTemplateController::class, 'preview'])->name('notifications.templates.preview');
+    // Message templates library (P7): custom templates, archive, version history, WhatsApp approval state.
+    Route::post('/notifications/templates', [NotificationTemplateController::class, 'store'])->name('notifications.templates.store');
+    Route::post('/notifications/templates/{template}/archive', [NotificationTemplateController::class, 'archive'])->name('notifications.templates.archive');
+    Route::post('/notifications/templates/{template}/unarchive', [NotificationTemplateController::class, 'unarchive'])->name('notifications.templates.unarchive');
+    Route::get('/notifications/templates/{template}/versions', [NotificationTemplateController::class, 'versions'])->name('notifications.templates.versions');
+    Route::post('/notifications/templates/{template}/versions/{version}/restore', [NotificationTemplateController::class, 'restoreVersion'])->whereNumber('version')->name('notifications.templates.versions.restore');
+    Route::put('/notifications/templates/{template}/whatsapp-status', [NotificationTemplateController::class, 'whatsAppStatus'])->name('notifications.templates.whatsapp-status');
     Route::get('/notifications/logs', [NotificationLogController::class, 'index'])->name('notifications.logs.index');
     Route::get('/notifications/logs/summary', [NotificationLogController::class, 'summary'])->name('notifications.logs.summary');
     Route::post('/notifications/logs/{log}/retry', [NotificationLogController::class, 'retry'])->whereNumber('log')->name('notifications.logs.retry');
@@ -371,4 +411,13 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::put('/risk/phone-status', [App\Http\Controllers\Api\V1\Admin\RiskPhoneController::class, 'setStatus'])->name('risk.phone-status');
     Route::get('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'show'])->name('risk.rules.show');
     Route::put('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'update'])->name('risk.rules.update');
+
+    // Blog (Phase 7): posts, buying guides, categories, tags, authors — routes/api_v1_admin_blog.php.
+    require __DIR__.'/api_v1_admin_blog.php';
+
+    // Online-store content (Phase 7): pages, menus, banners, testimonials — routes/api_v1_admin_content.php.
+    require __DIR__.'/api_v1_admin_content.php';
+
+    // Homepage builder (Phase 7): CMS blocks, publish/versions/revert, preview token — routes/api_v1_admin_cms_blocks.php.
+    require __DIR__.'/api_v1_admin_cms_blocks.php';
 });

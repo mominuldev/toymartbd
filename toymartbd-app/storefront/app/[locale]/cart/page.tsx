@@ -8,7 +8,9 @@ import { DestinationForm } from '@/components/cart/DestinationForm';
 import { PlainTrust } from '@/components/cart/PlainTrust';
 import { Icon } from '@/components/icons/Icon';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
+import { InfoStrip } from '@/components/content/InfoStrip';
 import { PageShell } from '@/components/PageShell';
+import { getBanners } from '@/lib/content/api';
 import { itemsLabel, lineProblem, noticeFor, noticeText } from '@/lib/cart/format';
 import { loadCartPage } from '@/lib/cart/page';
 import type { Cart } from '@/lib/cart/types';
@@ -16,7 +18,7 @@ import { getDeliveryReference } from '@/lib/delivery/fetch';
 import { placeName } from '@/lib/delivery/format';
 import { format, getMessages, isLocale, localizedPath, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
-import { alternatesFor } from '@/lib/seo';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /cart — P4-STO-08, Figma Cart 130:2302 (390) / 137:3203 (1440), storefront spec §A17–A19, §B5.
 // Per visitor (reads the httpOnly cart cookie), so dynamic and noindex. Lines, coupon, the API's
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale).cart;
-    return { title: t.title, description: t.metaDescription, alternates: alternatesFor(locale, PATH), robots: { index: false, follow: true } };
+    return privateMetadata(locale, PATH, t.title, { description: t.metaDescription, follow: true });
 }
 
 /** Checkout is open when every line can be bought and the coupon (if any) applies; the address comes at checkout. */
@@ -60,6 +62,9 @@ export default async function CartPage({ params }: Props) {
     const ready = cart ? canCheckout(cart, c) : false;
     const checkoutHref = localizedPath(locale, '/checkout');
 
+    // The info strip is the only banner allowed on the cart (rule 25b); text plus a /pages link.
+    const infoStrips = await getBanners('info_strip', 'cart');
+
     return (
         <PageShell locale={locale} path={PATH} top="tight" cartCount={count} bottomBar={!empty}>
             <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
@@ -72,6 +77,8 @@ export default async function CartPage({ params }: Props) {
                         </p>
                     ) : null}
                 </header>
+
+                <InfoStrip locale={locale} banners={infoStrips} context="cart" />
 
                 {general ? (
                     <p role="alert" className="t-body-sm-strong flex items-center gap-2 rounded-xs bg-warning-subtle px-3 py-2 text-status-low-stock">

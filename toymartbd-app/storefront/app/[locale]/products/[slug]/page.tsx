@@ -9,7 +9,8 @@ import { AddToCartBar } from '@/components/product/AddToCartBar';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { ProductInfoPanel } from '@/components/product/ProductInfoPanel';
 import { ProductReviews, type ReviewOutcome } from '@/components/product/ProductReviews';
-import { AgeBlock, PriceBlock, ProductTitle, RatingRow, StockLine } from '@/components/product/ProductSummary';
+import { AgeBlock, FlashSaleStrip, PriceBlock, ProductTitle, RatingRow, StockLine } from '@/components/product/ProductSummary';
+import { variantFlash } from '@/lib/flash-sale/format';
 import { PurchasePanel } from '@/components/product/PurchasePanel';
 import { RecentlyViewed } from '@/components/product/RecentlyViewed';
 import { RelatedProducts } from '@/components/product/RelatedProducts';
@@ -20,11 +21,13 @@ import { format, getMessages, isLocale, localizedPath, type Locale } from '@/lib
 import { formatPrice } from '@/lib/listing/format';
 import { getDeliveryRates, getProduct } from '@/lib/product/fetch';
 import { beforeCutoff, cutoffLabel } from '@/lib/product/format';
-import { jsonLdScript, productJsonLd } from '@/lib/product/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { productJsonLd } from '@/lib/seo/jsonld';
 import { getReviews, validCursor } from '@/lib/reviews/fetch';
 import { reviewMessages } from '@/lib/reviews/messages';
 import { isExplicitVariant, resolveVariant, variantHref, variantSummary, VARIANT_PARAM, type StorefrontProduct } from '@/lib/product/variants';
-import { alternatesFor } from '@/lib/seo';
+import { getSeo } from '@/lib/seo/fetch';
+import { productMetadata } from '@/lib/seo/metadata';
 import '@/components/product/product.css';
 
 // Product detail page (P4-STO-05; Figma "Product detail" 135:1022 at 1440, 128:625 at 390, plus the
@@ -50,7 +53,7 @@ function productName(product: StorefrontProduct, locale: Locale): { text: string
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
-    const product = await loadProduct(slug, locale);
+    const [product, seo] = await Promise.all([loadProduct(slug, locale), getSeo('product', slug)]);
     if (!product) return {};
     const t = getMessages(locale);
     const name = productName(product, locale).text;
@@ -59,19 +62,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         (locale === 'bn' ? (product.short_description_bn ?? product.short_description) : product.short_description) ??
         format(t.pdp.metaDescription, { name, price: variant ? formatPrice(variant.price) : '' });
     const image = product.images[0];
-    return {
-        title: name,
+    // The canonical never carries ?variant=: every variant is one page for search (rule 37 slugs).
+    return productMetadata({
+        locale,
+        slug: product.slug,
+        name,
         description,
-        // The canonical never carries ?variant=: every variant is one page for search (rule 37 slugs).
-        alternates: alternatesFor(locale, `/products/${slug}`),
-        openGraph: {
-            type: 'website',
-            title: name,
-            description,
-            url: localizedPath(locale, `/products/${slug}`),
-            ...(image ? { images: [{ url: image.url, width: image.width ?? undefined, height: image.height ?? undefined, alt: (locale === 'bn' ? image.alt_bn : image.alt) ?? name }] } : {}),
-        },
-    };
+        image: image ? { url: image.url, width: image.width, height: image.height, alt: (locale === 'bn' ? image.alt_bn : image.alt) ?? name } : null,
+        seo,
+    });
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
@@ -90,6 +89,9 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
     const t = getMessages(locale);
     const name = productName(product, locale);
+    // P7: the selected variant's flash offer (API `flash_sale.variants`); the variant lives in the URL,
+    // so switching variant re-renders this server-side with that variant's own sale price.
+    const flash = variantFlash(product.flash_sale, variant.id);
     const basePath = `/products/${product.slug}`;
     const localPath = localizedPath(locale, basePath);
     const explicit = isExplicitVariant(product, query[VARIANT_PARAM]);
@@ -110,9 +112,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
     return (
         <PageShell locale={locale} path={shellPath} top="crumb" bottomBar>
-            {productJsonLd(product, locale, { home: t.listing.home }).map((data, i) => (
-                <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(data) }} />
-            ))}
+            <JsonLd data={productJsonLd(product, locale, { home: t.listing.home })} />
             <nav aria-label={t.listing.breadcrumb} className="-mx-gutter-mobile overflow-x-auto overflow-y-hidden px-gutter-mobile md:mx-0 md:px-0">
                 <ol className="flex h-6 items-center gap-2 whitespace-nowrap">
                     {crumbs.map((crumb) => (
@@ -133,12 +133,13 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
             <div className="mt-2 flex flex-col gap-4 lg:mt-12 lg:flex-row lg:items-start lg:gap-8">
                 <div className="lg:sticky lg:top-34 lg:w-152 lg:shrink-0">
-                    <ProductGallery product={product} name={name.text} locale={locale} t={t} discountPercent={variant.discount_percent} />
+                    <ProductGallery product={product} name={name.text} locale={locale} t={t} discountPercent={flash?.discountPercent ?? variant.discount_percent} />
                 </div>
                 <div className="flex min-w-0 flex-col gap-4 pt-2 lg:grow lg:gap-5 lg:pt-0">
                     <ProductTitle product={product} name={name.text} nameLang={name.lang} locale={locale} />
                     <RatingRow product={product} t={t} />
-                    <PriceBlock variant={variant} t={t} />
+                    <PriceBlock variant={variant} t={t} flash={flash} />
+                    {flash ? <FlashSaleStrip flash={flash} t={t} /> : null}
                     <StockLine variant={variant} t={t} cutoff={cutoff} />
                     <AgeBlock product={product} t={t} />
                     <VariantSelector product={product} selected={variant} locale={locale} t={t} path={localPath} />
@@ -199,7 +200,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             </div>
 
             <AddToCartBar
-                price={formatPrice(variant.price)}
+                price={formatPrice(flash ? flash.salePrice : variant.price)}
                 summary={variantSummary(product, variant, locale) || name.text}
                 soldOut={variant.stock_state === 'out_of_stock'}
                 labels={{ region: t.pdp.orderBar, addToCart: t.pdp.addToCart, notifyMe: t.pdp.notifyMe, wishlist: format(t.pdp.wishlist, { name: name.text }) }}

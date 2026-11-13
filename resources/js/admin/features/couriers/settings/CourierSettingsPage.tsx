@@ -38,7 +38,8 @@ const INTEGRATIONS = 'settings.manage_integrations';
  *
  * Credentials are write-only (rule 20): the API returns `set` and a last-4 hint, a blank
  * field keeps the saved value. Rate cards need shipments.manage_rates; credentials need
- * settings.manage_integrations — a manager sees the rate card but not the credential form.
+ * settings.manage_integrations — a role with only manage_rates sees the rate card but not the
+ * credential form (super_admin and, since 2026-11-13, manager hold both).
  */
 export function CourierSettingsPage() {
     const { t } = useI18n();

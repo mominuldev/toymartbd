@@ -79,7 +79,13 @@ deptrac:
     - name: Seo
       collectors:
         - type: classNameRegex
-          value: '#^App\\Domain\\Seo\\(?!Events\\)#'
+          value: '#^App\\Domain\\Seo\\(?!Events\\|Contracts\\)#'
+    # SEO subject contract (P7, docs/api/seo.md §1): Content's pages, posts and guides plug
+    # into the SEO module (panel, sitemap, redirects) without depending on Seo internals.
+    - name: SeoContracts
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Seo\\Contracts\\#'
     - name: Tracking
       collectors:
         - type: classNameRegex
@@ -107,10 +113,10 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Domain\\Search\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -130,12 +136,16 @@ deptrac:
     Customer: [Support, Models, DomainEvents, Catalog, NotificationContracts]
     # Marketing implements Fulfilment's FreeShippingPromotion seam (free-shipping coupons).
     Marketing: [Support, Models, DomainEvents, Catalog, Customer, Fulfilment]
-    Content: [Support, Models, DomainEvents, Catalog, Customer]
-    Seo: [Support, Models, DomainEvents, Catalog, Customer]
+    # Content writes its pages' seo_meta and slug_history rows (Seo depends only on Catalog: no cycle).
+    Content: [Support, Models, DomainEvents, Catalog, Customer, Seo, SeoContracts]
+    # Seo writes a static page with its seo_meta/slug_history (SaveCmsPageWithSeo), as it does products.
+    Seo: [Support, Models, DomainEvents, Catalog, Customer, Content, SeoContracts]
     Tracking: [Support, Models, DomainEvents, Catalog, Customer]
     Purchasing: [Support, Models, DomainEvents, Catalog, Customer, Inventory]
     Search: [Support, Models, DomainEvents, Catalog, Inventory, Customer]
     NotificationContracts: [Support]
+    SeoContracts: ~
     # Notification reads orders and customers to render messages; nothing depends back on it
-    # except through NotificationContracts. It writes only its own tables.
-    Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, NotificationContracts]
+    # except through NotificationContracts. It writes only its own tables. P7: it also reads
+    # carts for abandoned-cart recovery (cart_recoveries is Notification's table).
+    Notification: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Cart, NotificationContracts]

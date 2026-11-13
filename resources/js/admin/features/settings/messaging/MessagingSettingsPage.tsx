@@ -121,7 +121,10 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
         // Validate the payload the API will receive, against the API's own schema (rule 27).
         resolver: async (values, context, options) => {
             const result = await validateInput(toInput(values), context, options as never);
-            return Object.keys(result.errors).length > 0 ? { values: {}, errors: result.errors as never } : { values, errors: {} };
+            const errors = result.errors as Partial<Record<keyof FormValues, { message?: string }>>;
+            // The schema's regex message is generic; say what a non-masking sender looks like.
+            if (errors.reve_sender_id) errors.reve_sender_id = { ...errors.reve_sender_id, message: t('messaging.field.senderIdInvalid') };
+            return Object.keys(errors).length > 0 ? { values: {}, errors: errors as never } : { values, errors: {} };
         },
     });
     const { register, handleSubmit, setError, formState, reset, watch, setValue } = form;
@@ -203,7 +206,16 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
                                 </Field>
                                 <Field label={t('messaging.field.senderId')} hint={fromEnv('reve_sender_id') ?? t('messaging.field.senderIdHint')} error={errorOf('reve_sender_id')}>
                                     {({ id, describedBy, invalid }) => (
-                                        <input id={id} spellCheck={false} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('reve_sender_id')} />
+                                        <input
+                                            id={id}
+                                            inputMode="numeric"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                            aria-describedby={describedBy}
+                                            aria-invalid={invalid || undefined}
+                                            className={`h-10 ${monoInputClass}`}
+                                            {...register('reve_sender_id')}
+                                        />
                                     )}
                                 </Field>
                             </div>

@@ -96,6 +96,13 @@ final class StorefrontProductCardResource extends ApiResource
             'in_stock' => self::inStock($product),
             /** @var array{url: string, srcset_webp: string|null, srcset_avif: string|null, alt: string|null, alt_bn: string|null, width: int|null, height: int|null}|null */
             'image' => self::image($image),
+            /**
+             * P7: the cheapest running flash-sale offer on this product (badge + countdown to
+             * `ends_at`, server time UTC), or null. Display only; the cart prices it.
+             *
+             * @var array{promotion_id: int, name: string, name_bn: string|null, ends_at: string, variant_id: int, sale_price: string, regular_price: string, discount_percent: int, remaining: int}|null
+             */
+            'flash_sale' => FlashSalePayload::forVariants($variants),
         ];
     }
 

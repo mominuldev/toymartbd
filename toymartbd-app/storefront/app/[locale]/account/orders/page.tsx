@@ -9,6 +9,7 @@ import { accountMessages } from '@/lib/account/messages';
 import { getOrders, requireAccount } from '@/lib/account/server';
 import { ORDER_GROUPS, type OrderGroup } from '@/lib/account/types';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/orders — My orders, Figma 239:12108 (1440) / 237:9782 (390): Active · Delivered · Cancelled
 // · Returns tabs with counts (plain links, `?group=`), a 2-up grid of AccountOrderCards on desktop, one
@@ -26,7 +27,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.orders, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/orders', accountMessages(locale).meta.orders);
 }
 
 function isGroup(value: unknown): value is OrderGroup {

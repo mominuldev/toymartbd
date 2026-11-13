@@ -7,6 +7,7 @@ import type {
     UpdateCourierProviderRequestInput,
     UpdateCourierRatesRequestInput,
     UpdateDeliverySettingsRequestInput,
+    UpdateShipmentRiderRequestInput,
 } from '@toymart/api-types/zod';
 import { api, csrfToken, apiLocale } from '@/lib/api';
 
@@ -172,6 +173,21 @@ function useShipmentMove(move: 'retry' | 'cancel') {
 
 export const useRetryShipment = () => useShipmentMove('retry');
 export const useCancelShipment = () => useShipmentMove('cancel');
+
+/* ---------- Rider ---------- */
+
+/** The rider body — the generated request type (rule 27). Both null clears the rider. */
+export type RiderInput = UpdateShipmentRiderRequestInput;
+
+/** Record the delivery rider when they call (owner decision 2026-11-13). Never resends a message. */
+export function useRecordRider() {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: ({ shipmentId, input }: { shipmentId: number; input: RiderInput }) =>
+            api<Shipment>(`/shipments/${shipmentId}/rider`, { method: 'PATCH', body: JSON.stringify(input) }),
+        onSettled: () => invalidateShipments(client),
+    });
+}
 
 /* ---------- Labels ---------- */
 

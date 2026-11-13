@@ -29,8 +29,9 @@ it('guards POST /risk/lookup/rescore', function (Role $role, bool $allowed): voi
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->postJson('/api/v1/admin/risk/lookup/rescore', ['phone' => '01712345678']));
 })->with(RoleMatrix::dataset(Permission::RiskVerify));
 
-it('guards POST /risk/orders/{order}/verify', function (Role $role, bool $allowed): void {
+it('guards POST /risk/orders/{order}/verify (risk.verify + orders.confirm)', function (Role $role, bool $allowed): void {
     $order = RiskKit::heldOrder();
+    $allowed = RoleMatrix::allows($role, Permission::RiskVerify) && RoleMatrix::allows($role, Permission::OrdersConfirm);
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->postJson("/api/v1/admin/risk/orders/{$order->id}/verify"));
 })->with(RoleMatrix::dataset(Permission::RiskVerify));
 

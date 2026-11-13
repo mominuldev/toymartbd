@@ -15,4 +15,6 @@ enum AuditAction: string
     case RoleRevoked = 'role_revoked';
     case RolePermissionsChanged = 'role_permissions_changed';
     case CredentialChanged = 'credential_changed';
+    /** A delivery rider's name / phone recorded on a shipment (masked phone in the row, rule 20). */
+    case ShipmentRiderRecorded = 'shipment_rider_recorded';
 }

@@ -18,7 +18,7 @@ use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 /**
  * Admin → Integrations → Messaging (owner request 2026-11-13): SMS provider credentials
  * entered in the admin, stored encrypted in `settings`, env as the fallback. Every
- * endpoint needs settings.manage_integrations (super_admin only at launch) — even
+ * endpoint needs settings.manage_integrations (super_admin and manager — owner decision 2026-11-13) — even
  * reading, because the screen is about credentials. Secrets are never returned.
  */
 final class MessagingSettingsController extends ApiController

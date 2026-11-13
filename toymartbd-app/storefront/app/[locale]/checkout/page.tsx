@@ -10,6 +10,8 @@ import { PlainTrust } from '@/components/cart/PlainTrust';
 import { CheckoutFooter, CheckoutHeader, CheckoutStepper, DeliveryBox, RadioCard, type StepState } from '@/components/checkout/CheckoutParts';
 import { CharCount } from '@/components/checkout/CharCount';
 import { CHECKOUT_FORM_ID, CheckoutForm } from '@/components/checkout/CheckoutForm';
+import { InfoStrip } from '@/components/content/InfoStrip';
+import { getBanners } from '@/lib/content/api';
 import { Icon } from '@/components/icons/Icon';
 import { buttonClass } from '@/components/layout/button-styles';
 import { CHECKOUT_DRAFT_COOKIE, CHECKOUT_FLASH_COOKIE } from '@/lib/cart/cookies';
@@ -23,6 +25,7 @@ import { format, getMessages, isLocale, localizedPath, type Messages } from '@/l
 import { formatPrice } from '@/lib/listing/format';
 import { getPaymentMethods } from '@/lib/payments/methods';
 import { contact } from '@/lib/site-config';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /checkout — P4-STO-09, Figma Checkout 131:2601 (390) / 137:3670 (1440), storefront spec §B4.
 // One page, three sections (contact & address · delivery · payment & review), the API's totals in
@@ -45,7 +48,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: getMessages(locale).checkout.title, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/checkout', getMessages(locale).checkout.title);
 }
 
 function generalNotice(flash: CheckoutFlash | null, t: Messages): string | null {
@@ -234,6 +237,7 @@ export default async function CheckoutPage({ params }: Props) {
             <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-content grow flex-col gap-6 px-gutter-mobile pt-4 pb-28 focus:outline-none md:px-gutter-tablet lg:px-gutter-desktop lg:pt-8 lg:pb-20">
                 <h1 className="sr-only">{c.title}</h1>
                 <CheckoutStepper steps={steps} t={c} />
+                <InfoStrip locale={locale} banners={await getBanners('info_strip', 'checkout')} context="checkout" />
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
                     <div className="flex min-w-0 flex-col gap-5 lg:grow">

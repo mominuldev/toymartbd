@@ -21,6 +21,8 @@ enum CouponRejection: string
     case CustomerLimitReached = 'customer_limit_reached';
     case NotApplicable = 'not_applicable';
     case FirstOrderOnly = 'first_order_only';
+    /** Every eligible line was discounted by a promotion with `allows_coupons = false` (P7). */
+    case NotCombinable = 'not_combinable';
 
     public function message(?Money $minimum = null): string
     {

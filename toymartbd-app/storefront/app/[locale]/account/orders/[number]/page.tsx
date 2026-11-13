@@ -16,6 +16,7 @@ import { getOrder, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { orderDateTime, orderItemCount } from '@/lib/order/format';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/orders/[number] — Order detail, Figma 239:12698 (1440) / 237:10066 (390): title + placed
 // line, the stage, the OrderTimeline, then items + totals, the delivery address and help — the order
@@ -47,7 +48,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale, number } = await params;
     if (!isLocale(locale)) return {};
-    return { title: format(accountMessages(locale).meta.order, { number: number.slice(0, 32) }), robots: { index: false, follow: false } };
+    return privateMetadata(locale, `/account/orders/${encodeURIComponent(number)}`, format(accountMessages(locale).meta.order, { number: number.slice(0, 32) }));
 }
 
 export default async function AccountOrderPage({ params }: Props) {

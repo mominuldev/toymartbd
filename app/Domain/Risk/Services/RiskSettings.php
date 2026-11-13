@@ -14,7 +14,7 @@ use App\Support\Money;
  * document, `risk.rules` (group `risk`); every key nobody has saved falls back to
  * config/risk.php. Read once per instance.
  *
- * PROVISIONAL: the owner has not set any of these (UI-UX-DESIGN-SPEC §10); defaults are §5.2's.
+ * The defaults (§5.2, config/risk.php) were confirmed by the owner on 2026-11-13.
  */
 final class RiskSettings
 {

@@ -148,6 +148,30 @@ final class TemplateCatalog
                 ],
             ],
 
+            // The same message when no rider number is recorded on the shipment (owner decision
+            // 2026-11-13): the rider line is dropped — never our hotline in its place, never a
+            // literal {rider_phone}. Neither courier's API returns the rider's number, so this is
+            // what goes out unless staff record the rider before the courier marks the parcel out
+            // for delivery. The WhatsApp body is its own Meta template and needs its own approval.
+            'order.out_for_delivery.no_rider' => [
+                'category' => NotificationCategory::OrderUpdates,
+                'variables' => ['name', 'order_number', 'cod_amount'],
+                'whatsapp_parameters' => ['order_number', 'cod_amount'],
+                'channels' => [
+                    'sms' => [
+                        'body_en' => 'Toy Mart BD: order {order_number} is out for delivery today. Please keep BDT {cod_amount} ready.',
+                        // "অর্ডার" dropped so the Bangla fits ONE UCS-2 segment (66 of 70 with the
+                        // sample; 05-content-and-assets-spec A.17.1 `.short` does the same).
+                        'body_bn' => 'টয় মার্ট বিডি: {order_number} আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন।',
+                    ],
+                    'whatsapp' => [
+                        'provider_template' => 'order_out_for_delivery_no_rider',
+                        'body_en' => 'Order *{order_number}* is out for delivery today. Please keep BDT {cod_amount} ready. If nobody will be home, reply here and we will reschedule.',
+                        'body_bn' => 'অর্ডার *{order_number}* আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন। বাসায় কেউ না থাকলে এখানে উত্তর দিন, আমরা অন্যদিন পাঠাব।',
+                    ],
+                ],
+            ],
+
             'order.delivered' => [
                 'category' => NotificationCategory::OrderUpdates,
                 'variables' => ['name', 'order_number', 'date', 'hotline'],
@@ -194,6 +218,18 @@ final class TemplateCatalog
                         'preheader_bn' => 'কোনো টাকা দিতে হবে না। আপনি না করলে {hotline}-এ ফোন করুন।',
                         'body_en' => "Your order {order_number} has been cancelled. Nothing is owed. {refund_sentence}\nIf this was not you, call {hotline} today.",
                         'body_bn' => "আপনার অর্ডার {order_number} বাতিল করা হয়েছে। কোনো টাকা দিতে হবে না। {refund_sentence}\nআপনি না করলে আজই {hotline} নম্বরে ফোন করুন।",
+                    ],
+                ],
+            ],
+            // Abandoned-cart reminder (P7). Marketing: sent only with consent, at most once per
+            // cart, SMS only. The link restores the cart server-side and carries no PII.
+            'cart.recovery' => [
+                'category' => NotificationCategory::Marketing,
+                'variables' => ['name', 'item_count', 'restore_url', 'store_url'],
+                'channels' => [
+                    'sms' => [
+                        'body_en' => 'Toy Mart BD: your cart with {item_count} items is saved. Finish your order here: {restore_url}',
+                        'body_bn' => 'টয় মার্ট বিডি: আপনার কার্টে {item_count}টি পণ্য রাখা আছে। অর্ডার শেষ করুন: {restore_url}',
                     ],
                 ],
             ],
@@ -252,6 +288,8 @@ final class TemplateCatalog
             'rider_phone' => '01712345678',
             'date' => '14/11/2026',
             'refund_sentence' => '',
+            // A real restore link is 24 random characters under the storefront origin.
+            'restore_url' => rtrim((string) config('cart_recovery.storefront_url', 'https://toymartbd.com'), '/').($bn ? '/bn' : '').'/cart/restore/'.str_repeat('x', 24),
         ];
     }
 }

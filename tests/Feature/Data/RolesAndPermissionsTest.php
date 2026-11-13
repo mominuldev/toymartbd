@@ -52,7 +52,8 @@ it('pins the matrix shape so a change is deliberate', function (): void {
         // P4-CAT-12: + reviews.moderate (super_admin, manager, content_editor).
         // P5-INV: + inventory.approve_adjustments (super_admin, manager).
         'super_admin' => 67,
-        'manager' => 64,
+        // 2026-11-13 owner decision: + settings.manage_integrations (manager).
+        'manager' => 65,
         'order_operator' => 23,
         'inventory_staff' => 12,
         'accountant' => 20,
@@ -75,15 +76,20 @@ it('keeps PII to the roles that need it', function (): void {
         ->and($viewer->can('customers.view'))->toBeTrue();
 });
 
-it('reserves staff, role and credential management for super_admin', function (): void {
+it('reserves staff and role management for super_admin', function (): void {
     foreach (RoleName::cases() as $role) {
-        $holds = array_intersect(
-            ['staff.manage', 'roles.manage', 'settings.manage_integrations'],
-            $role->permissionNames(),
-        );
+        $holds = array_intersect(['staff.manage', 'roles.manage'], $role->permissionNames());
 
         expect($holds === [] || $role === RoleName::SuperAdmin)->toBeTrue($role->value);
     }
+});
+
+it('gives Integrations (credentials) to super_admin and manager only — owner decision 2026-11-13', function (): void {
+    $holders = collect(RoleName::cases())
+        ->filter(fn (RoleName $role): bool => in_array(PermissionName::SettingsManageIntegrations, $role->permissions(), true))
+        ->map->value->values()->all();
+
+    expect($holders)->toBe(['super_admin', 'manager']);
 });
 
 it('lets only super_admin bypass gates via Gate::before', function (): void {

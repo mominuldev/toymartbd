@@ -11,6 +11,7 @@ import { firstName, initials, monthYear, noticeText } from '@/lib/account/format
 import { accountMessages } from '@/lib/account/messages';
 import { getOrders, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account — Account home, Figma 239:11547 (1440) / 237:9503 (390): greeting, pastel quick tiles and
 // the order on its way. Rewards, "My kids" and "Picked for your kids" are in the design but have no
@@ -28,7 +29,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.home, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account', accountMessages(locale).meta.home);
 }
 
 export default async function AccountHomePage({ params }: Props) {

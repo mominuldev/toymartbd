@@ -2,6 +2,7 @@ import { LocaleToggle } from '@/components/LocaleToggle';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
+import type { FooterMenuColumn } from '@/lib/content/types';
 import { contact, footerColumns, legal, social, type FooterColumn } from '@/lib/site-config';
 import { buttonClass, buttonIconClass } from './button-styles';
 import { ContactDetail } from './ContactDetail';
@@ -10,6 +11,8 @@ import { FooterLogotype } from './FooterLogotype';
 interface Props {
     locale: Locale;
     path: string;
+    /** The published CMS footer menu (lib/content), or null/empty for the built-in columns. */
+    menu?: FooterMenuColumn[] | null;
 }
 
 // Per tile: pastel ground, corner-blob ink, icon-badge glyph and its ink (Figma Footer 124:3310).
@@ -18,6 +21,9 @@ const tiles: Record<FooterColumn['title'], { ground: string; blob: string; icon:
     help: { ground: 'bg-tile-mint', blob: 'bg-deco-blob-mint', icon: 'heart', ink: 'text-feedback-success' },
     about: { ground: 'bg-tile-sky', blob: 'bg-deco-blob-sky', icon: 'mapPin', ink: 'text-fg-link' },
 };
+
+/** CMS columns take the built-in tiles in order. */
+const tileOrder = ['shop', 'help', 'about'] as const;
 
 const socialIcon = { facebook: 'facebookLogo', instagram: 'instagramLogo', youtube: 'youtubeLogo', tiktok: 'tiktokLogo' } as const satisfies Record<string, IconName>;
 
@@ -33,7 +39,7 @@ function Blob({ tone }: { tone: string }) {
 // (pink Help · butter Shop · mint Help · sky About · lavender Say hi!), the giant multicolour
 // "toymart" logotype, and the legal bar. Contact values come only from lib/site-config.ts; a
 // placeholder is never a tel:/mailto:/wa.me link and carries data-placeholder.
-export function SiteFooter({ locale, path }: Props) {
+export function SiteFooter({ locale, path, menu = null }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
     const year = String(new Date().getFullYear());
@@ -78,29 +84,47 @@ export function SiteFooter({ locale, path }: Props) {
                     </section>
 
                     <div className="grid grid-cols-2 gap-3 lg:contents">
-                        {footerColumns.map((column) => {
-                            const tile = tiles[column.title];
+                        {(menu && menu.length > 0
+                            ? menu.slice(0, tileOrder.length).map((column, i) => ({
+                                  key: `cms-${i}`,
+                                  tile: tiles[tileOrder[i] ?? 'shop'],
+                                  wide: i === menu.slice(0, tileOrder.length).length - 1 && i % 2 === 0,
+                                  heading: column.heading,
+                                  links: column.links.map((link) => ({
+                                      key: link.path,
+                                      label: link.label,
+                                      lang: link.lang,
+                                      href: link.external ? link.path : localizedPath(locale, link.path),
+                                      ...(link.newTab ? { target: '_blank' as const, rel: 'noopener noreferrer' } : link.external ? { rel: 'noopener' } : {}),
+                                  })),
+                              }))
+                            : footerColumns.map((column) => ({
+                                  key: column.title,
+                                  tile: tiles[column.title],
+                                  wide: column.title === 'about',
+                                  heading: { text: t.footer.columns[column.title] } as { text: string; lang?: 'en' },
+                                  links: column.links.map((link) => ({ key: link.path, label: t.footer.links[link.label], lang: undefined, href: localizedPath(locale, link.path) })),
+                              }))
+                        ).map((column) => {
+                            const tile = column.tile;
                             return (
                                 <section
-                                    key={column.title}
-                                    aria-labelledby={`footer-${column.title}`}
-                                    className={`relative flex flex-col gap-3.5 overflow-hidden rounded-xl p-7 lg:min-w-0 lg:flex-1 ${tile.ground} ${column.title === 'about' ? 'col-span-2' : ''}`}
+                                    key={column.key}
+                                    aria-labelledby={`footer-${column.key}`}
+                                    className={`relative flex flex-col gap-3.5 overflow-hidden rounded-xl p-7 lg:min-w-0 lg:flex-1 ${tile.ground} ${column.wide ? 'col-span-2' : ''}`}
                                 >
                                     <Blob tone={tile.blob} />
-                                    <h2 id={`footer-${column.title}`} className="t-h3 relative flex items-center gap-2.5 text-fg-primary">
+                                    <h2 id={`footer-${column.key}`} lang={column.heading.lang} className="t-h3 relative flex items-center gap-2.5 text-fg-primary">
                                         <span aria-hidden="true" className={`inline-flex size-9 shrink-0 items-center justify-center rounded-sm-plus bg-surface ${tile.ink}`}>
                                             <Icon name={tile.icon} className="size-icon-md" />
                                         </span>
-                                        {t.footer.columns[column.title]}
+                                        {column.heading.text}
                                     </h2>
                                     <ul className="relative flex flex-col gap-2 lg:gap-2.5">
-                                        {column.links.map((link) => (
-                                            <li key={link.path}>
-                                                <a
-                                                    href={localizedPath(locale, link.path)}
-                                                    className="t-body inline-flex rounded-xs font-semibold text-fg-primary underline-offset-4 hover:underline"
-                                                >
-                                                    {t.footer.links[link.label]}
+                                        {column.links.map(({ key, label, lang, ...attrs }) => (
+                                            <li key={key}>
+                                                <a {...attrs} lang={lang} className="t-body inline-flex rounded-xs font-semibold text-fg-primary underline-offset-4 hover:underline">
+                                                    {label}
                                                 </a>
                                             </li>
                                         ))}

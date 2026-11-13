@@ -323,5 +323,5 @@ it('records the courier history and messages the customer once when the parcel g
 
     $history = CourierTrackingEvent::query()->where('shipment_id', $shipment->id)->orderBy('id')->pluck('normalised_status')->map->value->all();
     expect($history)->toBe(['booked', 'in_transit', 'out_for_delivery', 'in_transit', 'out_for_delivery'])
-        ->and(NotificationLog::query()->where('notifiable_id', $shipment->order_id)->where('template', 'order.out_for_delivery')->count())->toBe(1);
+        ->and(NotificationLog::query()->where('notifiable_id', $shipment->order_id)->where('template', 'order.out_for_delivery.no_rider')->count())->toBe(1);
 });

@@ -15,7 +15,9 @@ use App\Domain\Inventory\Exceptions\InsufficientStock;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\StockReservations;
 use App\Domain\Marketing\Exceptions\CouponRejected;
+use App\Domain\Marketing\Exceptions\PromotionRejected;
 use App\Domain\Marketing\Services\CouponUsages;
+use App\Domain\Marketing\Services\PromotionUsages;
 use App\Domain\Ordering\Checkout\CheckoutCustomers;
 use App\Domain\Ordering\Checkout\CheckoutData;
 use App\Domain\Ordering\Checkout\CheckoutNotReady;
@@ -55,6 +57,7 @@ use Illuminate\Support\Str;
  * @throws PriceChanged the re-priced total differs from the expected total
  * @throws InsufficientStock some line cannot be reserved — the whole order fails
  * @throws CouponRejected a coupon limit was reached since pricing (re-checked under lock)
+ * @throws PromotionRejected a promotion limit, budget or flash allotment ran out since pricing
  */
 final readonly class PlaceOrder
 {
@@ -77,6 +80,7 @@ final readonly class PlaceOrder
         private OrderRiskAssessor $risk,
         private OrderTransitions $transitions,
         private MarkCartConverted $markCartConverted,
+        private PromotionUsages $promotionUsages,
     ) {}
 
     public function handle(CheckoutData $data): Order
@@ -188,6 +192,9 @@ final readonly class PlaceOrder
             if ($coupon?->coupon !== null) {
                 $this->couponUsages->record($coupon->coupon, $order->id, $data->phone, $breakdown->couponDiscount, $customer->id);
             }
+
+            // 9b. Promotion usage (P7) — limits, budget and flash allotments re-checked under lock.
+            $this->promotionUsages->record($breakdown->promotions, $order->id, $data->phone, $customer->id);
 
             // 11. Timeline + OrderPlaced (after commit); then hold if risk says so (never cancel).
             $this->transitions->placed($order);

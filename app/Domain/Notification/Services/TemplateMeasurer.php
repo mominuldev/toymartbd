@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Notification\Services;
 
 use App\Domain\Notification\Enums\NotificationChannel;
+use App\Domain\Notification\Support\CustomTemplateVariables;
 use App\Domain\Notification\Support\SmsSegments;
 use App\Domain\Notification\Support\SmsTariff;
 use App\Domain\Notification\Support\TemplateCatalog;
@@ -14,19 +15,26 @@ use App\Support\Money;
 /**
  * Measures a template body rendered with the catalog's sample values (P4-I18N-03):
  * characters, encoding and — for SMS — segments and the per-send cost at the configured
- * (PLACEHOLDER) rate. The admin editor's live counter calls this through the API; the
- * client never counts segments or prices a message itself (rule 1).
+ * rate (Admin → Integrations → Messaging; default the owner's ৳0.26 a segment). The
+ * admin editor's live counter calls this through the API; the client never counts
+ * segments or prices a message itself (rule 1).
  */
 final class TemplateMeasurer
 {
     public function __construct(private readonly SmsTariff $tariff) {}
 
     /**
+     * `$allowed` overrides the catalog allowlist — a custom (staff-made) template keeps its
+     * own, a subset of {@see CustomTemplateVariables::ALL}.
+     *
+     * @param  list<string>|null  $allowed
      * @return array{rendered: string, chars: int, encoding: string, segments: int|null, per_segment_limit: int|null, cost: Money}
      */
-    public function measure(string $key, NotificationChannel $channel, string $locale, string $body): array
+    public function measure(string $key, NotificationChannel $channel, string $locale, string $body, ?array $allowed = null): array
     {
-        $rendered = TemplateRenderer::render($body, TemplateCatalog::sampleValues($locale), TemplateCatalog::variables($key));
+        $rendered = $allowed === null
+            ? TemplateRenderer::render($body, TemplateCatalog::sampleValues($locale), TemplateCatalog::variables($key))
+            : TemplateRenderer::render($body, CustomTemplateVariables::sampleValues($locale), $allowed);
         $chars = mb_strlen($rendered);
         $encoding = SmsSegments::encoding($rendered);
 

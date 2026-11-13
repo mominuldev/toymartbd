@@ -6,6 +6,19 @@ queued jobs on the `courier` queue after commit (rule 4). See also `docs/api/shi
 
 <!-- Pathao section: added by the Pathao driver work (agent 2). -->
 
+**Status meanings — owner confirmed 2026-11-13.** The mapping of every provider status onto our
+`ShipmentStatus` (the Steadfast table below; `PathaoStatusMap::MAP` for Pathao) is kept exactly as
+built, including the deliberate choices: `*_approval_pending` is not final (revenue waits for
+`delivered`, rule 10), Steadfast `cancelled` is a courier return, and anything unrecognised goes to
+`on_hold` for a human, never a guess.
+
+**Rider.** Neither provider's official API carries the delivery rider's name or phone: Steadfast's
+status responses and webhooks carry `delivery_status` only, and its `/trackings_by_invoice`
+timeline has a `deliveryman_id` (an internal id, `null` in every published example) but no name or
+number; Pathao's documented webhooks and `order/info` carry none either. Nothing is captured
+automatically — staff record the rider on the shipment (`PATCH /shipments/{id}/rider`, see
+`shipments.md`). Scraping the merchant portal for it is forbidden (rule 24a).
+
 ## Steadfast
 
 **Status: fixture-only.** No merchant account exists and Steadfast has **no sandbox** (rule 33a).

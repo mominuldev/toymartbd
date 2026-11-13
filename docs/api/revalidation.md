@@ -41,6 +41,18 @@ X-Revalidate-Signature: sha256=<hex>          (HMAC-SHA256 over "<timestamp>.<ra
 | `category:{slug}` | one category page. Sent for the changed category, its old slug after a slug change, and — after a move, rename or slug change — every descendant, whose breadcrumbs changed with it. Category slugs are ≤ 91 characters so the tag fits the 100-character limit |
 | `products` | any product list or grid (listings, home rails, search results); sent on every product create, edit, variant/price change or archive, and on every stock change (`StockLevelChanged`: cards carry `in_stock`, listings an availability facet) |
 | `product:{slug}` | one product page; after a slug change the old slug is sent too; also on every stock change of one of its variants. Product slugs are ≤ 92 characters so the tag fits the 100-character limit |
+| `flash-sale` | the `/flash-sale` page and any flash-sale rail (`GET /flash-sales`). Sent with `products` and each sale product's `product:{slug}` on every promotion save/deactivate and at each start/end boundary (`toymart:promotions:boundaries`, every minute) — P7 |
 | `delivery` | delivery reference data — `GET /delivery-rates`, `/districts`, `/districts/{id}/upazilas` (P4-STO-06). Nothing sends it yet: there is no admin editor for the rate card or `delivery.*` settings; the editor (Phase 6 courier settings) must send it on save |
+| `content:blog` | every blog/guide list: `/blog`, `/guides`, blog category/tag/author pages and the home-page blog teaser (`GET /blog/posts`, `/blog/teaser`, `/blog/categories…`). Sent on every post save/delete, every blog category/tag/author edit, and by the scheduled-publish sweep (`toymart:blog:publish-due`, every minute) when a scheduled post goes live |
+| `content:post:{id}` | one blog post or buying-guide page (`GET /blog/posts/{slug}`). Id-based, so a slug change needs no old-slug tag. Sent with `content:blog` for the saved post, every post of an edited or deleted term, and each post the sweep publishes. The preview route (`/blog/preview/{token}`) is never cached |
+| `seo` | any SEO document fetch (`GET /storefront/seo/{type}/{slug}`); sent on every SEO panel save, with the page's `{type}:{slug}` (`page:x`, `blog_post:x`, …) — docs/api/seo.md |
+| `redirects` | the redirect map the proxy loads; sent on every slug-history write and every manual redirect change |
+| `sitemaps` | the sitemap index and files; sent after every sitemap build |
+| `robots` | robots.txt; sent on every robots.txt save |
+| `content:pages` | every static-page fetch (`GET /pages` list and each `GET /pages/{slug}`); sent on every static-page save, archive or SEO save |
+| `content:page:{slug}` | one static page (`/pages/{slug}`, and `/pages/about` for the CMS `about` page); after a slug change the old slug is sent too; also sent by `toymart:content:revalidate-scheduled` (every minute) when a scheduled page's publish time passes. Page slugs are ≤ 94 characters so the tag fits |
+| `content:menus` | the published header/footer/mobile menus (`GET /menus`, read by every page's chrome); sent on every menu save and every static-page change (menu links resolve a page's slug and hide a page that is not live) |
+| `content:banners` | every banner fetch (`GET /banners?placement=…`: announcement bar, category-page banner, cart/checkout info strip, popup); sent on every banner save/delete and by `toymart:content:revalidate-scheduled` when a banner's start or end passes. The storefront also caps these fetches at 300 s |
+| `content:testimonials` | published testimonials (`GET /testimonials`, the homepage testimonials block); sent on every testimonial save, delete or reorder |
 
 New tags are added here first, then on both sides.

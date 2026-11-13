@@ -35,6 +35,7 @@ final readonly class CouponEvaluator
     /**
      * @param  list<PricingLine>  $lines
      * @param  array<int, Money>  $remaining  variant id → line amount after promotions
+     * @param  list<int>  $blockedVariantIds  lines a promotion with `allows_coupons = false` discounted (P7)
      */
     public function evaluate(
         string $code,
@@ -43,6 +44,7 @@ final readonly class CouponEvaluator
         DateTimeInterface $now,
         ?PhoneNumber $phone = null,
         ?int $customerId = null,
+        array $blockedVariantIds = [],
     ): CouponOutcome {
         $coupon = Coupon::findByCode($code);
         $code = Coupon::normaliseCode($code);
@@ -58,11 +60,17 @@ final readonly class CouponEvaluator
 
         $scope = ProductScope::make($coupon->applies_to, $coupon->scopeIds(), $coupon->excludes);
         $bases = [];
+        $blocked = false;
         foreach ($scope->filter($lines) as $line) {
+            if (in_array($line->variantId, $blockedVariantIds, true)) {
+                $blocked = true;
+
+                continue;
+            }
             $bases[$line->variantId] = $remaining[$line->variantId] ?? Money::zero();
         }
         if ($bases === []) {
-            return new CouponOutcome($coupon->code, $coupon, null, CouponRejection::NotApplicable);
+            return new CouponOutcome($coupon->code, $coupon, null, $blocked ? CouponRejection::NotCombinable : CouponRejection::NotApplicable);
         }
 
         if (Allocator::sum($remaining)->lessThan($coupon->min_order_amount)) {

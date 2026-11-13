@@ -18,7 +18,8 @@ base → promotions (priority, stacking) → coupon → delivery → total
    `starts_at`/`ends_at`) in **descending `priority`**, ties oldest first. Each works on the line amounts
    the previous ones left, so stacked discounts compound instead of double-counting. The first
    **non-stackable** promotion that actually takes money off stops the chain (one that matches nothing
-   does not). A non-stackable promotion does **not** block coupons — see open decisions.
+   does not). Whether a coupon may also discount a promotion's lines is the per-promotion
+   `allows_coupons` setting (default true) — see [promotions.md](promotions.md) (P7).
 3. **Coupon** (`Marketing\Services\CouponEvaluator`) on the post-promotion amounts of the lines in its
    scope.
 4. **Delivery** — `Fulfilment\Services\DeliveryChargeResolver::quote()`, the estimator's code path, with
@@ -49,7 +50,8 @@ exclude_category_ids, exclude_brand_ids}` (category ids cover the subtree; defau
 | `buy_x_get_y` | `buy`, `get`, `percent` (default 100) | per `buy + get` eligible units, the `get` cheapest are discounted by `percent` |
 | `bundle` | `product_ids` (≥ 2), `type`, `value` | once per complete set; fixed = `value` × sets, percent of the sets' value |
 
-No admin API for promotions yet; rows are created by seeders or tinker.
+P7 added `discount`, `free_delivery`, bundle `type: price`, flash-sale items, limits, budget and the admin
+API — see [promotions.md](promotions.md).
 
 ## Coupons
 
@@ -155,7 +157,7 @@ $breakdown = app(PricingPipeline::class)->price(new PricingInput(
 // order_items: $line->unitPrice, ->quantity, ->discount(), ->total; orders: subtotal, promotionDiscount,
 // couponDiscount, discountTotal(), shippingCharge, grandTotal; delivery quote: $breakdown->delivery
 app(CouponUsages::class)->record($breakdown->coupon->coupon, $order->id, $phone, $breakdown->couponDiscount, $customer?->id);
-// promotions.usage_count is not incremented by anything yet (no writer built)
+app(PromotionUsages::class)->record($breakdown->promotions, $order->id, $phone, $customer?->id); // P7: limits, budget, flash allotment under lock
 ```
 
 After commit: `MarkCartConverted::handle($cartId, $orderId)` (from the order-placed event). On cancel:

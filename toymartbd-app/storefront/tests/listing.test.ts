@@ -218,11 +218,19 @@ describe('canonical and robots', () => {
         });
     });
 
+    it('keeps a later page self-canonical and indexable (pagination SEO)', () => {
+        const page2 = parseListingState({ age: '24-48', cursor: 'abc' }, category);
+        expect(indexing(page2).indexable).toBe(true);
+        const meta = listingMetadata('bn', '/categories/blocks', page2);
+        expect(meta.robots).toBeUndefined();
+        expect(meta.alternates?.canonical).toBe('/bn/categories/blocks?age=24-48&cursor=abc');
+    });
+
     it.each([
         [{ age: '24-48', brand: 'lego' }],
         [{ brand: 'lego,hape' }],
         [{ sort: 'price_asc' }],
-        [{ cursor: 'abc' }],
+        [{ cursor: 'abc', age: '24-48', brand: 'lego' }],
     ])('noindex,follow with the canonical on the bare listing: %o', (params) => {
         const meta = listingMetadata('en', '/categories/blocks', parseListingState(params, category));
         expect(meta.robots).toEqual({ index: false, follow: true });

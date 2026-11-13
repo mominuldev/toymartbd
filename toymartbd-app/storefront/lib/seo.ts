@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
 
-import { htmlLang, localizedPath, locales, type Locale } from './i18n/config';
+import { localizedPath, type Locale } from './i18n/config';
+import { hreflangFor } from './seo/metadata';
 
-export function siteUrl(): URL {
-    return new URL(process.env.SITE_URL ?? 'http://localhost:3000');
-}
+export { siteUrl } from './seo/site';
 
 /**
  * Canonical + reciprocal hreflang alternates for a locale-independent `path` (rule 35).
- * Every page's generateMetadata spreads this in, so en ↔ bn and x-default (→ en) are always emitted.
+ * Kept for existing callers; new code uses the per-template builders in lib/seo/metadata.ts.
  */
 export function alternatesFor(locale: Locale, path: string): Metadata['alternates'] {
-    const languages: Record<string, string> = {};
-    for (const l of locales) languages[htmlLang[l]] = localizedPath(l, path);
-    languages['x-default'] = localizedPath('en', path);
-    return { canonical: localizedPath(locale, path), languages };
+    return { canonical: localizedPath(locale, path), languages: hreflangFor(path) };
 }

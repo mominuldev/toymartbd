@@ -60,7 +60,7 @@ it('guards rate card, on/off and threshold writes with shipments.manage_rates', 
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->putJson('/api/v1/admin/settings/delivery', ['free_shipping_threshold' => '2500.00']));
 })->with(RoleMatrix::dataset(Permission::ShipmentsManageRates));
 
-it('guards credential writes with settings.manage_integrations — a manager cannot', function (Role $role, bool $allowed): void {
+it('guards credential writes with settings.manage_integrations — manager included since 2026-11-13', function (Role $role, bool $allowed): void {
     $steadfast = courier('steadfast');
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->putJson("/api/v1/admin/settings/couriers/{$steadfast->id}/credentials", [
         'credentials' => ['api_key' => 'sf-key-0000111122223333'],
@@ -206,9 +206,9 @@ it('reports trust per provider and never lets this screen mark a provider verifi
     expect($steadfast->refresh()->verified)->toBeFalse();
 });
 
-it('tells a manager they may edit rates but not credentials', function (): void {
+it('tells a manager they may edit rates and credentials (owner decision 2026-11-13)', function (): void {
     $this->actingAs(courierAdmin(Role::Manager))->getJson('/api/v1/admin/settings/couriers')
         ->assertOk()
         ->assertJsonPath('data.0.can.update_rates', true)
-        ->assertJsonPath('data.0.can.update_credentials', false);
+        ->assertJsonPath('data.0.can.update_credentials', true);
 });

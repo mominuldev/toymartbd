@@ -1,0 +1,55 @@
+# Session handoff — continue on another machine / account
+
+**Written:** 2026-11-13 (lead session). **Branch:** `phase-7/batch-1` (WORK IN PROGRESS — do not merge as is).
+The owner moves to a different PC and Claude account; nothing outside the git repo travels. Read this, then
+`CLAUDE.md`, then `docs/IMPLEMENTATION-PLAN.md` (progress sections are the source of truth for what is done).
+
+## How the owner wants work run
+- Several parallel background agents per batch (5–7), each with a strict file scope and **no git**; the lead does all git.
+- One PR per batch with `gh`; the lead merges it **after all 4 CI jobs pass** (PHP, Frontend, Storefront, Admin E2E).
+- Owner requires Figma fidelity (file `PWZp5VzEgEEf5N2Y38lGIh`, admin Theme B section `241:29517`).
+- Owner decisions go into `docs/IMPLEMENTATION-PLAN.md` and the relevant config/docs when given.
+- Workflow notes and CI gotchas: `docs/_handoff/dev-workflow-notes.md`, `docs/_handoff/figma-fidelity-notes.md`.
+- Shared agent brief for this batch: `docs/_handoff/briefs/brief-p7-common.md`.
+
+## Merged so far (main)
+PR #1–#16: Phases 2–6 batch 1 (catalog, checkout, orders, inventory, finance, reports, returns, SSLCommerz (inactive),
+REVE SMS driver + Admin → Integrations → Messaging, couriers (Pathao sandbox-verified, Steadfast fixture-only),
+tracking, risk, COD settlement). See IMPLEMENTATION-PLAN progress sections.
+
+## In progress on this branch — Phase 7 batch 1 (agents were running when this was written)
+Each item below lists its scope; check the code on disk to see how far it got, then finish it.
+| # | Scope | State at handoff |
+|---|---|---|
+| 1 | CMS typed blocks + homepage builder + signed live preview + scheduling (app/Domain/Content, admin features/content/home, storefront components/content/blocks) | running |
+| 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | running |
+| 3 | Blog: posts/categories/tags/authors, buying guides with live product picks, related posts | running |
+| 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | running (had a helper subagent for the storefront half) |
+| 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | running |
+| 6 | Owner decisions 2026-11-13 (risk confirmed, verify→confirmed, rider phone on shipment + no-rider SMS variant, managers get integrations, non-masking numeric sender, ৳0.26/segment) | **done** |
+| 7 | Message templates library screen (`/automations/templates`): list, editor with EN/BN + server preview/segments, versions, custom marketing/manual templates | running |
+| — | Phase 7 server-side tracking (GA4 MP, Meta CAPI, dedup, consent, diagnostics) | not started — next batch |
+
+Known failing at handoff (other agents mid-edit): OpenApiSpecTest (NotificationTemplateController being edited),
+some catalog/storefront tests, PHPStan errors in Content/Marketing/CartRecovery files, admin typecheck in content/home and
+notifications tests. **Finish the batch, then run everything:**
+```
+php artisan test --parallel && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse && ./vendor/bin/deptrac
+composer openapi:export && npm run api-types:generate
+npm run typecheck && npm run typecheck:storefront && npm run lint:i18n && npx vitest run && npm run test:storefront
+```
+Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR, merge after CI.
+
+## Owner decisions still open
+- Managers can now change courier/SMS credentials (decision 6) — confirm the security impact is understood.
+- Bangla no-rider out-for-delivery SMS drops "অর্ডার" to stay 1 segment — keep or full copy (2 segments)?
+- Meta approval for WhatsApp `order_out_for_delivery_no_rider`; design sign-off for the shipment rider row (no Figma frame).
+- Earlier open lists: IMPLEMENTATION-PLAN "Owner decisions open" lines in every progress section.
+- Still owed by the owner: Gate 4 UAT on staging (`docs/ops/UAT-GATE-4.md`), ten real-order profit hand check
+  (`docs/ops/PROFIT-RECONCILIATION.md`), staging host, SSLCommerz merchant account, Steadfast merchant account,
+  REVE credentials entered at Admin → Integrations → Messaging (then `php artisan toymart:sms:test 01XXXXXXXXX` and `--bn`).
+
+## Deploy notes added this phase
+- After deploying roles changes: re-run `RolesAndPermissionsSeeder` (managers gain `settings.manage_integrations`).
+- `WHATSAPP_ENABLED` stays false until a WhatsApp account exists (else the SMS fallback never fires).
+- Courier verification is console-only: `php artisan toymart:couriers:provider {pathao|steadfast} --verify`.

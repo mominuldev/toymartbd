@@ -31,10 +31,11 @@ enum Role: string
         return match ($this) {
             self::SuperAdmin => P::cases(),
 
-            // Runs the business day to day; cannot manage staff, roles or credentials.
+            // Runs the business day to day; cannot manage staff or roles. Manages Integrations
+            // (messaging + courier credentials) since the owner's decision of 2026-11-13.
             self::Manager => array_values(array_filter(
                 P::cases(),
-                static fn (P $p): bool => ! in_array($p, [P::StaffManage, P::RolesManage, P::SettingsManageIntegrations], true),
+                static fn (P $p): bool => ! in_array($p, [P::StaffManage, P::RolesManage], true),
             )),
 
             // Confirms orders, calls customers (needs full phone), books couriers.

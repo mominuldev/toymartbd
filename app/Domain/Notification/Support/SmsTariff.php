@@ -9,10 +9,9 @@ use App\Support\Money;
 
 /**
  * Per-segment SMS cost from Admin → Integrations → Messaging, falling back to
- * config/notifications.php. The rate is a PLACEHOLDER until the
- * owner signs a provider contract (docs/_research/agent4 §4.2 has observed list prices
- * only). BD providers charge one rate regardless of language; Bangla costs more purely
- * through segment count.
+ * config/notifications.php (the owner's REVE rate, ৳0.26 a segment, 2026-11-13). BD
+ * providers charge one rate regardless of language; Bangla costs more purely through
+ * segment count.
  */
 final readonly class SmsTariff
 {

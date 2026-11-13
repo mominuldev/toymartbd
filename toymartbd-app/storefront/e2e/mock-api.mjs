@@ -23,6 +23,8 @@
 //   POST /auth/otp, /auth/otp/verify (code 123456) and /storefront/account/* with the customer's own
 //        bearer token → a signed-in customer with Bangla fixtures: orders in every group, an order
 //        detail, two addresses (with landmarks) and a wishlist (docs/api/account.md, P4-STO-11)
+//   GET  /api/v1/storefront/flash-sales     → one running flash sale (P7) over the first two product
+//        fixtures, ending 3 days after the mock started, each card carrying its `flash_sale` offer
 //   POST /__control/price {variant_id, price} → change a price (drives the price-changed path)
 //   POST /__control/rename {slug, name}     → mutate a brand (for the revalidation test)
 //   POST /__control/reset                   → restore fixtures
@@ -42,11 +44,50 @@ const productFixtures = JSON.parse(readFileSync(new URL('./fixtures/products.jso
 const productDetail = JSON.parse(readFileSync(new URL('./fixtures/product-detail.json', import.meta.url), 'utf8'));
 const reviewFixtures = JSON.parse(readFileSync(new URL('./fixtures/reviews.json', import.meta.url), 'utf8'));
 let brands = structuredClone(fixtures);
+
+/** P7: a flash sale that runs from the mock's start for three days (fixed per run, so ISR is stable). */
+const FLASH_ENDS_AT = new Date(Date.now() + 3 * 86_400_000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+function flashSales() {
+    const products = productFixtures.slice(0, 2).map((p, i) => ({
+        ...card(p),
+        flash_sale: {
+            promotion_id: 7, name: 'Weekend flash sale', name_bn: 'উইকেন্ড ফ্ল্যাশ সেল', ends_at: FLASH_ENDS_AT, variant_id: 9000 + i,
+            sale_price: i === 0 ? '3790.00' : '5990.00', regular_price: p.price, discount_percent: i === 0 ? 10 : 11, remaining: 5,
+        },
+    }));
+    return {
+        server_time: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        sales: [{ id: 7, name: 'Weekend flash sale', name_bn: 'উইকেন্ড ফ্ল্যাশ সেল', starts_at: null, ends_at: FLASH_ENDS_AT, products }],
+        next: null,
+    };
+}
 let hits = {};
+
+/** The one live CMS page the mock serves (GET /storefront/pages/delivery-policy). */
+const CMS_PAGE = {
+    slug: 'delivery-policy',
+    title: 'Delivery policy',
+    title_bn: 'ডেলিভারি নীতি',
+    template: 'sidebar',
+    content: '<h2>Inside Dhaka</h2><p>Delivered within 24 hours.</p><h2>Outside Dhaka</h2><p>Delivered in 2 to 3 days.</p>',
+    content_bn: '<h2>ঢাকার ভেতরে</h2><p>24 ঘণ্টার মধ্যে ডেলিভারি।</p><h2>ঢাকার বাইরে</h2><p>2 থেকে 3 দিনে ডেলিভারি।</p>',
+    faq_items: [],
+    published_at: '2026-11-01T00:00:00Z',
+    updated_at: '2026-11-01T00:00:00Z',
+    seo: {
+        title: 'Delivery policy', title_bn: 'ডেলিভারি নীতি', description: 'How and when we deliver.', description_bn: 'কীভাবে ও কখন ডেলিভারি দিই।',
+        canonical_url: null, robots: 'index,follow', og_title: null, og_description: null, og_image: null, twitter_card: 'summary_large_image',
+    },
+};
 
 const send = (res, status, body, type = 'application/json') => {
     res.writeHead(status, { 'Content-Type': type });
     res.end(JSON.stringify(body));
+};
+/** A non-JSON body (robots.txt, sitemap XML), sent as-is. */
+const raw = (res, status, body, type) => {
+    res.writeHead(status, { 'Content-Type': type });
+    res.end(body);
 };
 const problem = (res, status, title, detail) =>
     send(res, status, { type: `https://toymartbd.com/problems/${status === 404 ? 'not-found' : 'unauthenticated'}`, title, status, detail }, 'application/problem+json');
@@ -683,6 +724,7 @@ createServer(async (req, res) => {
         return send(res, 200, { data: [{ method: 'cod', online: false, default: true, sandbox: false }, { method: 'sslcommerz', online: true, default: false, sandbox: true }] });
     }
     if (/^\/api\/v1\/storefront\/(districts|delivery-|cart|checkout|orders)/.test(url.pathname)) return cartRoutes(req, res, url);
+    if (url.pathname === '/api/v1/storefront/flash-sales') return send(res, 200, flashSales());
     if (url.pathname === '/api/v1/storefront/brands') return send(res, 200, { data: brands });
     if (url.pathname === '/api/v1/storefront/categories/tree') return send(res, 200, categoryTree);
     if (url.pathname === '/api/v1/storefront/products') return listProducts(res, url.searchParams);
@@ -720,6 +762,45 @@ createServer(async (req, res) => {
             children: node.children,
         });
     }
+    // SEO plumbing (docs/api/seo.md §3): the product page's SEO document, the redirect map,
+    // sitemap files and robots.txt.
+    const seo = url.pathname.match(/^\/api\/v1\/storefront\/seo\/([a-z]+)\/([^/]+)$/);
+    if (seo) {
+        if (seo[1] !== 'product' || decodeURIComponent(seo[2]) !== productDetail.slug) return problem(res, 404, 'Not Found', 'No SEO document.');
+        return send(res, 200, {
+            type: 'product', slug: productDetail.slug, path: `/products/${productDetail.slug}`,
+            robots: { index: true, follow: true }, canonical_url: null, sitemap_exclude: false,
+            twitter_card: 'summary_large_image', og_image: null,
+            en: { title: 'LEGO Classic Creative Bricks — 484 pcs | Toy Mart BD', description: 'SEO description from the admin.', og_title: 'LEGO Classic bricks', og_description: 'OG description from the admin.' },
+            bn: { title: 'লেগো ক্লাসিক ক্রিয়েটিভ ব্রিকস | Toy Mart BD', description: 'অ্যাডমিনের এসইও বিবরণ।', og_title: 'লেগো ক্লাসিক ব্রিক', og_description: 'অ্যাডমিনের ওজি বিবরণ।' },
+            updated_at: '2026-11-28T10:00:00+06:00',
+        });
+    }
+    if (url.pathname === '/api/v1/storefront/redirects') {
+        return send(res, 200, { redirects: [
+            { id: null, from: '/products/lego-classic-bricks-old', to: `/products/${productDetail.slug}`, status: 301 },
+            { id: 5, from: '/old-blocks', to: '/categories/building-blocks', status: 302 },
+        ] });
+    }
+    if (/^\/api\/v1\/storefront\/redirects\/\d+\/hit$/.test(url.pathname) && req.method === 'POST') return raw(res, 204, '', 'text/plain');
+    if (url.pathname === '/api/v1/storefront/robots') return raw(res, 200, 'User-agent: *\nDisallow: /checkout\n', 'text/plain; charset=utf-8');
+    const sitemap = url.pathname.match(/^\/api\/v1\/storefront\/sitemaps\/(sitemap(?:-[a-z]+-(?:en|bn)-\d+)?\.xml)$/);
+    if (sitemap) {
+        const base = 'http://127.0.0.1';
+        const xml = sitemap[1] === 'sitemap.xml'
+            ? `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${base}/sitemaps/sitemap-products-en-1.xml</loc></sitemap><sitemap><loc>${base}/sitemaps/sitemap-products-bn-1.xml</loc></sitemap></sitemapindex>\n`
+            : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url><loc>${base}/products/${productDetail.slug}</loc></url></urlset>\n`;
+        return raw(res, 200, xml, 'application/xml; charset=utf-8');
+    }
+    // CMS content (Phase 7). Menus: no location published, so the chrome keeps its built-in menus;
+    // no live banners or testimonials. One live page (`delivery-policy`); `about` is not in the
+    // CMS, so /pages/about keeps its built-in copy.
+    if (url.pathname === '/api/v1/storefront/menus') return send(res, 200, { header: null, footer: null, mobile: null });
+    if (url.pathname === '/api/v1/storefront/banners') return send(res, 200, { data: [] });
+    if (url.pathname === '/api/v1/storefront/testimonials') return send(res, 200, { data: [] });
+    if (url.pathname === '/api/v1/storefront/pages') return send(res, 200, { data: [{ slug: CMS_PAGE.slug, title: CMS_PAGE.title, title_bn: CMS_PAGE.title_bn, updated_at: CMS_PAGE.updated_at }] });
+    const cmsPage = url.pathname.match(/^\/api\/v1\/storefront\/pages\/([^/]+)$/);
+    if (cmsPage) return decodeURIComponent(cmsPage[1]) === CMS_PAGE.slug ? send(res, 200, CMS_PAGE) : problem(res, 404, 'Not Found', `No page "${cmsPage[1]}".`);
     const match = url.pathname.match(/^\/api\/v1\/storefront\/brands\/([^/]+)$/);
     if (match) {
         const brand = brands.find((b) => b.slug === decodeURIComponent(match[1]));

@@ -90,6 +90,8 @@ const ICONS = {
     arrowSquareOut: 'ArrowSquareOut',
     thumbsUp: 'ThumbsUp',
     creditCard: 'CreditCard',
+    // P7 flash sales: the CountdownTimer's leading zap (spec §A15, Figma 119:1388).
+    lightningFill: 'Lightning:fill',
 };
 
 const require = createRequire(import.meta.url);

@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { useArchiveBrand, useBrand, useSaveBrand, type Brand, type BrandInput } from './api';
+import { SeoPanel } from '@/features/seo';
 
 type FormValues = {
     name: string;
@@ -194,6 +195,13 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
                     </div>
                 </div>
             </form>
+
+            {/* Search & social (P7 SEO module): its own form, saved separately. */}
+            {brand && (
+                <div className="mt-4 w-full min-w-0 max-w-3xl md:mt-10">
+                    <SeoPanel type="brand" id={brand.id} />
+                </div>
+            )}
 
             {brand && (
                 <ConfirmDialog

@@ -5,7 +5,7 @@ import type { HeldOrderDetail, PhoneRisk, QueueRow, RiskRules } from './api';
 export const operator: Me = {
     ...viewer,
     roles: ['order_operator'],
-    permissions: ['dashboard.view', 'orders.view', 'orders.cancel', 'risk.view', 'risk.verify', 'customers.view_pii'],
+    permissions: ['dashboard.view', 'orders.view', 'orders.cancel', 'orders.confirm', 'risk.view', 'risk.verify', 'customers.view_pii'],
 };
 export const manager: Me = {
     ...operator,

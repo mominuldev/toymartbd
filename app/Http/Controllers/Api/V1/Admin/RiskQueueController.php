@@ -36,7 +36,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * The verification queue (Figma B · 05 241:36206, checklist §2.4): orders the risk check put
- * ON HOLD, waiting for a person. Actions: verified (release), log a call, cancel with a reason
+ * ON HOLD, waiting for a person. Actions: verify & confirm, log a call, cancel with a reason
  * — and nothing else. Risk never moves an order by itself (rules 23, 24b); every move here is
  * a staff member's, through an Ordering Action.
  */
@@ -90,7 +90,11 @@ final class RiskQueueController extends ApiController
         return new HeldOrderDetailResource($row, $calls, RiskPhoneController::view($order->shipping_phone, $courier, $history, $scorer));
     }
 
-    /** `POST /risk/orders/{order}/verify` — verified by phone: hold released (on_hold → pending). Needs risk.verify. */
+    /**
+     * `POST /risk/orders/{order}/verify` — verified by phone and confirmed (on_hold → confirmed,
+     * owner decision 2026-11-13; `OrderConfirmed` fires as for any confirm). Needs risk.verify
+     * and orders.confirm.
+     */
     #[OpenApiResponse(409, 'The order is not waiting for verification (`conflict`)')]
     public function verify(VerifyHeldOrderRequest $request, Order $order, VerifyHeldOrder $verify): JsonResponse
     {

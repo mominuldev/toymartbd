@@ -19,7 +19,7 @@ import { channels, useLogs, useSaveTemplate, useSaveTemplates, useTemplatePrevie
 import { FlowLine, FlowStep, Panel, Taka, Toggle, channelIcon, channelLabel, dhakaWhen, eventLabel, whenLabel } from './parts';
 
 /** Lifecycle order for the list; any key the API adds later follows, alphabetically. */
-const keyOrder = ['order.placed', 'order.confirmed', 'order.shipped', 'order.out_for_delivery', 'order.delivered', 'order.cancelled', 'otp.login'];
+const keyOrder = ['order.placed', 'order.confirmed', 'order.shipped', 'order.out_for_delivery', 'order.out_for_delivery.no_rider', 'order.delivered', 'order.cancelled', 'otp.login'];
 
 type Group = { key: string; templates: Partial<Record<Channel, NotificationTemplate>> };
 

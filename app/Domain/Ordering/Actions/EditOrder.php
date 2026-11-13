@@ -11,6 +11,7 @@ use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\StockReservations;
 use App\Domain\Marketing\Exceptions\CouponRejected;
 use App\Domain\Marketing\Services\CouponUsages;
+use App\Domain\Marketing\Services\PromotionUsages;
 use App\Domain\Ordering\Checkout\CheckoutNotReady;
 use App\Domain\Ordering\Checkout\OrderItemSnapshots;
 use App\Domain\Ordering\Checkout\PriceChanged;
@@ -70,6 +71,7 @@ final readonly class EditOrder
         private StockReservations $reservations,
         private OrderItemSnapshots $snapshots,
         private CouponUsages $couponUsages,
+        private PromotionUsages $promotionUsages,
         private PaymentTransitions $payments,
     ) {}
 
@@ -97,6 +99,9 @@ final readonly class EditOrder
             }
 
             $newLines = self::normalise($data->lines);
+            // P7: give this order's promotion usage (flash units, limit counts) back first, so
+            // re-pricing sees what the order itself already held; recorded again below.
+            $this->promotionUsages->reverseForOrder($locked->id);
             $breakdown = $this->quotes->forEdit($locked, $newLines, $data->district, $data->upazila);
             $blockers = OrderQuotes::blockers($breakdown, $data->upazila, requireCoupon: $locked->coupon_code !== null);
             if ($blockers !== []) {
@@ -144,6 +149,9 @@ final readonly class EditOrder
                 $usagePhone = PhoneNumber::tryParse($locked->customer->phone) ?? $data->phone;
                 $this->couponUsages->record($coupon, $locked->id, $usagePhone, $breakdown->couponDiscount, $locked->customer_id);
             }
+
+            // Promotion usage (P7): re-claimed under lock for the edited figures (released before pricing).
+            $this->promotionUsages->record($breakdown->promotions, $locked->id, PhoneNumber::tryParse($locked->customer->phone) ?? $data->phone, $locked->customer_id);
 
             $locked->forceFill([
                 'subtotal' => $breakdown->subtotal,

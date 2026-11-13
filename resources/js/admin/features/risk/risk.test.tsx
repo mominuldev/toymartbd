@@ -43,7 +43,7 @@ describe('verification queue', () => {
         expect(within(ours).getByText('17 / 100')).toBeTruthy();
     });
 
-    it('verifies (releases the hold) and logs a call — never cancels by itself', async () => {
+    it('verifies and confirms, and logs a call — never cancels by itself', async () => {
         const calls = riskApi(operator);
         renderApp('/risk/queue');
         await screen.findByRole('heading', { name: /Call শাহরিয়ার কবির/ });
@@ -53,7 +53,7 @@ describe('verification queue', () => {
         await waitFor(() => expect(posts(calls).some((p) => p.url.endsWith('/risk/orders/126/calls'))).toBe(true));
         expect(posts(calls).find((p) => p.url.endsWith('/calls'))?.body).toEqual({ outcome: 'no_answer', note: null });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Verified — release hold' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Verify & confirm' }));
         await waitFor(() => expect(posts(calls).some((p) => p.url.endsWith('/risk/orders/126/verify'))).toBe(true));
         expect(posts(calls).some((p) => p.url.includes('/reject'))).toBe(false);
     });

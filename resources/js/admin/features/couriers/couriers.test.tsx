@@ -45,7 +45,8 @@ const owner: Me = {
     roles: ['super_admin'],
     permissions: ['dashboard.view', 'orders.view', 'orders.update', 'shipments.view', 'shipments.book', 'shipments.cancel', 'shipments.manage_rates', 'settings.manage_integrations', 'customers.view_pii', 'settings.view'],
 };
-const manager: Me = { ...owner, roles: ['manager'], permissions: owner.permissions.filter((p) => p !== 'settings.manage_integrations') };
+/** Rates without credentials. Since 2026-11-13 a manager holds both; this is a custom role's view. */
+const ratesOnly: Me = { ...owner, roles: ['rates_only'], permissions: owner.permissions.filter((p) => p !== 'settings.manage_integrations') };
 
 const rates = { base_charge_dhaka: '70.00', base_charge_suburb: '100.00', base_charge_outside: '130.00', included_weight_grams: 1000, per_kg_charge: '20.00', cod_fee_percent: '1.00', return_charge: '0.00' };
 
@@ -166,6 +167,7 @@ const shipment = (over: Partial<Shipment> = {}): Shipment => ({
     needs_attention: false,
     dispatched: true,
     note: null,
+    rider: null,
     dispatched_at: null,
     picked_up_at: null,
     delivered_at: null,
@@ -253,8 +255,8 @@ describe('courier settings', () => {
         await waitFor(() => expect(bodyOf(calls, '/settings/delivery', 'PUT')).toEqual({ free_shipping_threshold: null }));
     });
 
-    it('lets a manager edit rates but not see the credential form', async () => {
-        settingsApi(manager, [{ ...steadfast, can: { update_rates: true, update_credentials: false } }]);
+    it('lets a rates-only role edit rates but not see the credential form', async () => {
+        settingsApi(ratesOnly, [{ ...steadfast, can: { update_rates: true, update_credentials: false } }]);
         renderApp('/integrations/couriers');
         expect(await screen.findByText('Only the owner can see or change courier credentials.')).toBeTruthy();
         expect(screen.queryByLabelText('API key')).toBeNull();
@@ -386,6 +388,58 @@ describe('shipment card', () => {
         expect(screen.getByRole('link', { name: /Track on Steadfast/ }).getAttribute('href')).toBe('https://steadfast.com.bd/t/15BAEB8A');
         expect(screen.getByText('“পিকআপ সম্পন্ন”')).toBeTruthy();
         expect(screen.getByText('webhook')).toBeTruthy();
+    });
+});
+
+describe('shipment rider (owner decision 2026-11-13)', () => {
+    function riderApi(me: Me, initial: Shipment) {
+        let current = initial;
+        return mockApi((url, init) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: me };
+            if (url.endsWith('/shipments/40/rider') && init?.method === 'PATCH') {
+                const sent = JSON.parse(String(init.body)) as { rider_name: string | null; rider_phone: string | null };
+                if (sent.rider_phone === '01112345678') {
+                    return { status: 422, body: { type: 'https://toymartbd.com/problems/validation', title: 'Invalid', status: 422, errors: [{ field: 'rider_phone', message: 'invalid' }] } };
+                }
+                current = { ...current, rider: sent.rider_name || sent.rider_phone ? { name: sent.rider_name, phone: sent.rider_phone ? '+8801812345678' : null, phone_masked: false, source: 'manual', recorded_at: '2026-11-13T06:00:00Z' } : null };
+                return { status: 200, body: current };
+            }
+            if (url.includes('/shipments?filter[order_id]=126')) return { status: 200, body: { data: [current] } };
+            return { status: 404, body: {} };
+        });
+    }
+
+    it('records the rider’s name and phone, and shows the server’s answer', async () => {
+        const calls = riderApi(owner, shipment({ status: 'out_for_delivery' }));
+        mount(<ShipmentCard order={{ id: 126, number: 'TMB-26-00126', status: 'shipped' }} />);
+        expect(await screen.findByText('Not recorded')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Record rider' }));
+        fireEvent.change(screen.getByLabelText(/Rider’s name/), { target: { value: 'করিম' } });
+        fireEvent.change(screen.getByLabelText(/Rider’s phone/), { target: { value: '01812345678' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save rider' }));
+
+        await waitFor(() => expect(bodyOf(calls, '/shipments/40/rider', 'PATCH')).toEqual({ rider_name: 'করিম', rider_phone: '01812345678' }));
+        expect(await screen.findByText('+8801812345678')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Edit rider' })).toBeTruthy();
+    });
+
+    it('shows the server’s refusal of a non-013–019 number in words', async () => {
+        riderApi(owner, shipment({ status: 'out_for_delivery' }));
+        mount(<ShipmentCard order={{ id: 126, number: 'TMB-26-00126', status: 'shipped' }} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Record rider' }));
+        fireEvent.change(screen.getByLabelText(/Rider’s phone/), { target: { value: '01112345678' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save rider' }));
+
+        expect(await screen.findByText('Enter a Bangladeshi mobile number starting 013–019, e.g. 01712345678.')).toBeTruthy();
+    });
+
+    it('shows a masked rider phone read-only to staff who cannot book', async () => {
+        const viewerMe: Me = { ...owner, roles: ['viewer'], permissions: ['dashboard.view', 'orders.view', 'shipments.view'] };
+        riderApi(viewerMe, shipment({ rider: { name: 'Karim', phone: '018****5678', phone_masked: true, source: 'manual', recorded_at: '2026-11-13T06:00:00Z' } }));
+        mount(<ShipmentCard order={{ id: 126, number: 'TMB-26-00126', status: 'shipped' }} />);
+        expect(await screen.findByText('018****5678')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Edit rider' })).toBeNull();
     });
 });
 

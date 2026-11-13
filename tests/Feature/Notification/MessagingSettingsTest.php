@@ -70,7 +70,7 @@ function reveSettings(array $overrides = []): array
     return [
         'sms_driver' => 'reve',
         'reve_base_url' => 'https://smpp.example.test:7790',
-        'reve_sender_id' => 'ToyMartBD',
+        'reve_sender_id' => '8809612345678',
         'sms_cost_per_segment' => '0.55',
         'whatsapp_enabled' => false,
         'reve_api_key' => DB_KEY,
@@ -112,7 +112,7 @@ it('saves to settings, encrypts secrets at rest, and never returns them', functi
         ->assertJson([
             'sms_driver' => 'reve',
             'reve_base_url' => 'https://smpp.example.test:7790',
-            'reve_sender_id' => 'ToyMartBD',
+            'reve_sender_id' => '8809612345678',
             'sms_cost_per_segment' => '0.55',
             'reve_api_key_set' => true,
             'reve_api_key_hint' => '••••9876',
@@ -146,18 +146,18 @@ it('uses saved settings over env for the driver, the credentials and the tariff'
 
     expect($result->accepted)->toBeTrue()->and($result->cost->toDecimal())->toBe('0.55');
     Http::assertSent(fn (Request $r): bool => $r->url() === 'https://smpp.example.test:7790/sendtext'
-        && $r['apikey'] === DB_KEY && $r['secretkey'] === DB_SECRET && $r['callerID'] === 'ToyMartBD');
+        && $r['apikey'] === DB_KEY && $r['secretkey'] === DB_SECRET && $r['callerID'] === '8809612345678');
 });
 
 it('keeps a saved secret when the field is blank, and clearing falls back to env', function (): void {
     messagingAdmin();
     $this->putJson(MSG_URL, reveSettings())->assertOk();
 
-    $this->putJson(MSG_URL, reveSettings(['reve_api_key' => '', 'reve_secret_key' => null, 'reve_sender_id' => 'NewSender']))
+    $this->putJson(MSG_URL, reveSettings(['reve_api_key' => '', 'reve_secret_key' => null, 'reve_sender_id' => '01712345679']))
         ->assertOk()
         ->assertJsonPath('reve_api_key_source', 'settings')
         ->assertJsonPath('reve_api_key_hint', '••••9876')
-        ->assertJsonPath('reve_sender_id', 'NewSender');
+        ->assertJsonPath('reve_sender_id', '01712345679');
     expect(Setting::query()->find(MessagingSettings::REVE_API_KEY)?->value)->toBe(DB_KEY)
         ->and(Setting::query()->find(MessagingSettings::REVE_SECRET_KEY)?->value)->toBe(DB_SECRET);
 
@@ -235,13 +235,37 @@ it('validates the form', function (array $overrides, string $field): void {
 })->with([
     'http base url' => [['reve_base_url' => 'http://smpp.example.test:7790'], 'reve_base_url'],
     'not a url' => [['reve_base_url' => 'smpp'], 'reve_base_url'],
-    'sender id too long' => [['reve_sender_id' => 'ToyMartBangladesh'], 'reve_sender_id'],
-    'sender id punctuation' => [['reve_sender_id' => 'Toy<Mart>'], 'reve_sender_id'],
+    'sender id too long' => [['reve_sender_id' => '8809612345678901'], 'reve_sender_id'],
+    'sender id too short' => [['reve_sender_id' => '1234'], 'reve_sender_id'],
+    'sender id punctuation' => [['reve_sender_id' => '880-961-234'], 'reve_sender_id'],
+    'sender id masked name (letters)' => [['reve_sender_id' => 'ToyMartBD'], 'reve_sender_id'],
+    'sender id digits and letters' => [['reve_sender_id' => '8809612345ab'], 'reve_sender_id'],
     'negative cost' => [['sms_cost_per_segment' => '-0.10'], 'sms_cost_per_segment'],
     'unknown driver' => [['sms_driver' => 'twilio'], 'sms_driver'],
     'reve without sender' => [['reve_sender_id' => null], 'reve_sender_id'],
     'value and clear' => [['clear_reve_api_key' => true], 'reve_api_key'],
 ]);
+
+it('accepts a non-masking numeric sender in every documented form (owner decision 2026-11-13)', function (string $sender): void {
+    messagingAdmin();
+
+    $this->putJson(MSG_URL, reveSettings(['reve_sender_id' => $sender]))->assertOk()->assertJsonPath('reve_sender_id', $sender);
+})->with(['880 + 10 digits' => '8809612345678', '+880 form' => '+8809612345678', 'local 01 form' => '01712345678', 'short code' => '16263']);
+
+it('explains a refused (masked, lettered) sender ID in English and Bangla', function (): void {
+    messagingAdmin();
+
+    $en = $this->putJson(MSG_URL, reveSettings(['reve_sender_id' => 'ToyMartBD']), ['Accept-Language' => 'en'])->assertUnprocessable();
+    expect($en->json('errors.0.message'))->toContain('non-masking')->toContain('Letters are not allowed');
+
+    $bn = $this->putJson(MSG_URL, reveSettings(['reve_sender_id' => 'ToyMartBD']), ['Accept-Language' => 'bn'])->assertUnprocessable();
+    expect($bn->json('errors.0.message'))->toContain('নন-মাস্কিং');
+});
+
+it('defaults the SMS rate to the owner\'s REVE rate, ৳0.26 a segment (2026-11-13)', function (): void {
+    expect(getenv('SMS_COST_PER_SEGMENT'))->toBeFalse()
+        ->and((require config_path('notifications.php'))['sms']['cost_per_segment'])->toBe('0.26');
+});
 
 it('refuses REVE with no secret anywhere, but allows the log driver', function (): void {
     messagingAdmin();
@@ -363,8 +387,9 @@ it('guards POST /settings/messaging/test with settings.manage_integrations', fun
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->postJson(MSG_URL.'/test', ['phone' => '01712345678', 'locale' => 'en']));
 })->with(RoleMatrix::dataset(Permission::SettingsManageIntegrations));
 
-it('keeps the screen super_admin-only at launch (manager cannot manage credentials)', function (): void {
-    expect(RoleMatrix::allows(Role::Manager, Permission::SettingsManageIntegrations))->toBeFalse()
+it('opens the screen to super_admin and manager (owner decision 2026-11-13), nobody else', function (): void {
+    expect(RoleMatrix::allows(Role::Manager, Permission::SettingsManageIntegrations))->toBeTrue()
+        ->and(RoleMatrix::allows(Role::OrderOperator, Permission::SettingsManageIntegrations))->toBeFalse()
         ->and(RoleMatrix::allows(Role::SuperAdmin, Permission::SettingsManageIntegrations))->toBeTrue();
 });
 

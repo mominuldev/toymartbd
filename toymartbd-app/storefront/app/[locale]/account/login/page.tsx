@@ -12,6 +12,7 @@ import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { accountToken, readAccountFlash } from '@/lib/account/server';
 import { isLocale, localizedPath } from '@/lib/i18n';
+import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/login — Sign in, Figma 237:9273 (390). Phone → SMS code; guest checkout stays the default
 // way to buy. The phone is POSTed (never in a URL) to /api/account/otp, which works without JS.
@@ -29,7 +30,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    return { title: accountMessages(locale).meta.login, robots: { index: false, follow: false } };
+    return privateMetadata(locale, '/account/login', accountMessages(locale).meta.login);
 }
 
 export default async function LoginPage({ params, searchParams }: Props) {

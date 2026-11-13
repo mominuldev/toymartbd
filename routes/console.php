@@ -78,3 +78,36 @@ Schedule::command('toymart:couriers:poll')
     ->everyFifteenMinutes()
     ->withoutOverlapping(15)
     ->onOneServer();
+
+// Scheduled content (P7): a banner's start/end or a page's publish time that just passed purges
+// the storefront cache tags (content:banners, content:page:{slug}). Every minute.
+Schedule::command('toymart:content:revalidate-scheduled')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->onOneServer();
+
+// XML sitemaps (P7 SEO, docs/api/seo.md §5): rebuilt nightly at 03:00 Dhaka on `index`, then the
+// storefront's cached copies are purged. The admin can also rebuild on demand.
+Schedule::job(new App\Domain\Seo\Jobs\GenerateSitemaps)
+    ->dailyAt('03:00')
+    ->timezone('Asia/Dhaka')
+    ->onOneServer();
+
+// CMS blocks (Phase 7): a scheduled homepage block that starts or ends must refresh the
+// storefront's cached home (`content:home`) on time, not at the ISR ceiling. Every minute.
+Schedule::command('toymart:content:revalidate-schedule')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->onOneServer();
+
+// P7 marketing. Promotion start/end → storefront revalidation (ISR at the boundary), every
+// minute. Abandoned-cart reminders every 10 minutes (quiet hours and consent in the Action).
+Schedule::command('toymart:promotions:boundaries')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->onOneServer();
+
+Schedule::command('toymart:carts:recover')
+    ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->onOneServer();

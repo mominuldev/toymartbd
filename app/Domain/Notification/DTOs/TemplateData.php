@@ -15,5 +15,8 @@ final readonly class TemplateData
         public ?string $subjectBn = null,
         public ?string $preheaderEn = null,
         public ?string $preheaderBn = null,
+        // Display names — custom templates only; ignored for system ones (P7).
+        public ?string $nameEn = null,
+        public ?string $nameBn = null,
     ) {}
 }

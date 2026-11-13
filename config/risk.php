@@ -12,7 +12,9 @@ declare(strict_types=1);
 | The score is advisory: a risky order is put ON HOLD for a call, never cancelled.
 |
 | Launch scope (rule 33b): our own order history only — no courier fraud data yet.
-| PROVISIONAL values: the owner has not set the threshold (UI-UX-DESIGN-SPEC §10).
+| Owner confirmed 2026-11-13: these weights, the level thresholds and the ৳3,000
+| first-order hold stay as they are; a watch-listed phone holds every order; verifying
+| a held order confirms it (on_hold → confirmed).
 |
 */
 

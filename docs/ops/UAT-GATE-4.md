@@ -21,7 +21,7 @@ Every button name below is the English label on screen. The Bangla label is give
 2. Run `php artisan toymart:payments:gateway sslcommerz` and confirm it is **inactive**.
 3. Note the date and time. The profit check in §10 uses it.
 
-**What you will and won't see for messages.** SMS goes out for real through REVE SMS. You enter the REVE credentials yourself at **Admin → Integrations → Messaging** (`/admin/integrations/messaging`) — provider, API key, secret key, sender ID and the cost per segment; the keys are stored encrypted and only their last 4 characters are ever shown again. There is no WhatsApp account yet, so the **WhatsApp** switch on that screen stays off and every order update goes by SMS. Before you start, use **Send test SMS** on that screen once in English and once in Bangla (the developer's `php artisan toymart:sms:test <your number>` / `--bn` uses the same settings); both must arrive.
+**What you will and won't see for messages.** SMS goes out for real through REVE SMS. You (or a manager) enter the REVE credentials at **Admin → Integrations → Messaging** (`/admin/integrations/messaging`) — provider, API key, secret key, the sender ID (your **non-masking** REVE number, digits only) and the cost per segment (**৳0.26**, your REVE rate); the keys are stored encrypted and only their last 4 characters are ever shown again. There is no WhatsApp account yet, so the **WhatsApp** switch on that screen stays off and every order update goes by SMS. Before you start, use **Send test SMS** on that screen once in English and once in Bangla (the developer's `php artisan toymart:sms:test <your number>` / `--bn` uses the same settings); both must arrive.
 
 | You will see | You will NOT see |
 |---|---|
@@ -163,7 +163,7 @@ Then follow `PROFIT-RECONCILIATION.md` for A and B. Every row should read **OK**
 
 **Owner decisions to record here:**
 
-- SMS provider: REVE SMS (decided 2026-11-13) — contracted rate per segment: ____ ; sender ID: ____
+- SMS provider: REVE SMS (decided 2026-11-13) — rate ৳0.26 per segment, non-masking sender (owner, 2026-11-13); sender number: ____
 - WhatsApp Business provider
 - real delivery charges and free-delivery threshold
 - hotline number

@@ -14,6 +14,8 @@ return [
     'courier_fallback' => 'our courier',
     'consignment_pending' => 'pending',
     'refund_sentence' => 'The BDT :amount you paid will be refunded.',
+    // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
+    'sender_id_numeric' => 'The sender ID is your REVE non-masking number: digits only, 5 to 15 of them (e.g. 8809612345678, 01712345678 or a short code). Letters are not allowed.',
 
     'mail' => [
         'greeting' => 'Hello :name,',

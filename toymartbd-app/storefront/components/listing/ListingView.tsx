@@ -76,6 +76,9 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
 
     return (
         <div className="flex flex-col">
+            {/* Pagination SEO: rel=next for crawlers (React 19 hoists <link> into <head>). Cursor
+                pages have no "previous" cursor, so there is no rel=prev. Search is noindex. */}
+            {nextCursor && scope.kind !== 'search' ? <link rel="next" href={hrefFor(href, withCursor(state, nextCursor))} /> : null}
             {/* PageHead */}
             <nav aria-label={t.breadcrumb} className={`overflow-x-auto overflow-y-hidden ${head}`}>
                 <ol className="flex min-h-6 items-center gap-2 whitespace-nowrap">

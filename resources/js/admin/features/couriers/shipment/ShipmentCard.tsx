@@ -1,21 +1,25 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { ArrowClockwiseIcon, ArrowSquareOutIcon, CheckIcon, ClockClockwiseIcon, CopyIcon, PrinterIcon, TruckIcon, WarningIcon } from '@phosphor-icons/react';
+import { ArrowClockwiseIcon, ArrowSquareOutIcon, CheckIcon, ClockClockwiseIcon, CopyIcon, MotorcycleIcon, PrinterIcon, TruckIcon, WarningIcon } from '@phosphor-icons/react';
+import { updateShipmentRiderRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { IconButton } from '@/components/ui/IconButton';
 import { useToast } from '@/components/ui/Toast';
-import { labelUrl, useOrderShipments, useRetryShipment, type Shipment, type ShipmentStatus } from '../api';
+import { labelUrl, useOrderShipments, useRecordRider, useRetryShipment, type Shipment, type ShipmentStatus } from '../api';
 import { CourierBookingPanel } from '../booking/CourierBookingPanel';
 import { Taka, dhaka, elapsed, grams } from '../format';
 import { FAILED_BOOKINGS_PATH, ShipmentStateChip, failureKey, shipmentIcon, sourceKey } from '../parts';
 
 /** Order statuses a courier booking may start from (EloquentShippableOrders::SHIPPABLE). */
 const SHIPPABLE = new Set(['confirmed', 'processing', 'ready_to_ship']);
+/** Shipments no courier holds have no rider (RecordShipmentRider refuses them with a 409). */
+const NO_RIDER = new Set<ShipmentStatus>(['pending', 'failed', 'cancelled']);
 /** 04-admin-spec A16: a submitted parcel past 6 h is overdue — chase the courier. */
 const OVERDUE_MINUTES = 6 * 60;
 
@@ -70,7 +74,7 @@ export function ShipmentCard({ order }: { order: OrderLike }) {
                 />
             )}
 
-            {latest && <ShipmentBody shipment={latest} canPrint={can(me, 'customers.view_pii')} canRetry={canBook} />}
+            {latest && <ShipmentBody shipment={latest} canPrint={can(me, 'customers.view_pii')} canRetry={canBook} canRecordRider={can(me, 'shipments.book')} />}
 
             {latest && !open && bookable && (
                 <div>
@@ -95,7 +99,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-function ShipmentBody({ shipment: s, canPrint, canRetry }: { shipment: Shipment; canPrint: boolean; canRetry: boolean }) {
+function ShipmentBody({ shipment: s, canPrint, canRetry, canRecordRider }: { shipment: Shipment; canPrint: boolean; canRetry: boolean; canRecordRider: boolean }) {
     const { t, locale } = useI18n();
     const { notify } = useToast();
     const retry = useRetryShipment();
@@ -191,6 +195,8 @@ function ShipmentBody({ shipment: s, canPrint, canRetry }: { shipment: Shipment;
                 </Fact>
             </div>
 
+            <RiderRow shipment={s} canEdit={canRecordRider && !NO_RIDER.has(s.status)} />
+
             {since && (
                 <p className="flex items-center gap-1.5 t-admin-caption text-fg-primary">
                     {overdue ? <WarningIcon size={14} aria-hidden className="text-feedback-warning" /> : <ClockClockwiseIcon size={14} aria-hidden className="text-status-low-stock" />}
@@ -227,6 +233,133 @@ function ShipmentBody({ shipment: s, canPrint, canRetry }: { shipment: Shipment;
 
             <Timeline shipment={s} />
         </>
+    );
+}
+
+/**
+ * The delivery rider (owner decision 2026-11-13). Neither courier's API returns the rider's
+ * number, so staff record it when the rider calls; the "out for delivery" SMS then names the
+ * rider instead of dropping the line. No Figma frame exists for this row (reported); it reuses
+ * the card's Fact + AdminField patterns. The phone is masked without customers.view_pii.
+ */
+function RiderRow({ shipment: s, canEdit }: { shipment: Shipment; canEdit: boolean }) {
+    const { t } = useI18n();
+    const { notify } = useToast();
+    const record = useRecordRider();
+    const [editing, setEditing] = useState(false);
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [errors, setErrors] = useState<{ rider_name?: string; rider_phone?: string }>({});
+    const rider = s.rider;
+
+    const open = () => {
+        setName(rider?.name ?? '');
+        // A masked number cannot be edited back; start blank rather than resend the mask.
+        setPhone(rider && !rider.phone_masked ? (rider.phone ?? '') : '');
+        setErrors({});
+        setEditing(true);
+    };
+
+    const save = (clear: boolean) => {
+        const input = clear ? { rider_name: null, rider_phone: null } : { rider_name: name.trim() || null, rider_phone: phone.trim() || null };
+        const parsed = updateShipmentRiderRequestSchema.safeParse(input);
+        if (!parsed.success) {
+            // Length only here; the 013–019 rule (rule 30) is the server's 422.
+            const fields = new Set(parsed.error.issues.map((issue) => issue.path[0]));
+            setErrors({
+                rider_name: fields.has('rider_name') ? parsed.error.issues.find((issue) => issue.path[0] === 'rider_name')?.message : undefined,
+                rider_phone: fields.has('rider_phone') ? t('couriers.rider.phoneInvalid') : undefined,
+            });
+            return;
+        }
+        record.mutate(
+            { shipmentId: s.id, input },
+            {
+                onSuccess: () => {
+                    setEditing(false);
+                    notify(t(clear ? 'couriers.rider.cleared' : 'couriers.rider.saved', { number: s.number }));
+                },
+                onError: (e) => {
+                    if (e instanceof ApiError && e.status === 422) {
+                        setErrors({ rider_name: e.fieldError('rider_name') ?? undefined, rider_phone: e.fieldError('rider_phone') ? t('couriers.rider.phoneInvalid') : undefined });
+                    } else {
+                        notify(e instanceof ApiError ? (e.problem.detail ?? e.problem.title) : t('error.title'), 'danger');
+                    }
+                },
+            },
+        );
+    };
+
+    return (
+        <div className="flex flex-col gap-3 rounded-sm border border-line-default px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2">
+                    <MotorcycleIcon size={16} aria-hidden className="shrink-0 text-fg-tertiary" />
+                    <span className="t-admin-overline text-fg-tertiary uppercase">{t('couriers.rider.label')}</span>
+                    {rider ? (
+                        <span className="t-admin-body text-fg-primary">
+                            {rider.name}
+                            {rider.name && rider.phone && ' · '}
+                            {rider.phone && <span className="tabular">{rider.phone}</span>}
+                        </span>
+                    ) : (
+                        <span className="t-admin-body text-fg-tertiary">{t('couriers.rider.none')}</span>
+                    )}
+                </span>
+                {canEdit && !editing && (
+                    <Button variant="ghost" size="sm" onClick={open}>
+                        {t(rider ? 'couriers.rider.edit' : 'couriers.rider.record')}
+                    </Button>
+                )}
+            </div>
+            {editing && (
+                <form
+                    noValidate
+                    className="flex flex-col gap-3"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        save(false);
+                    }}
+                >
+                    <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <Field label={t('couriers.rider.name')} optional error={errors.rider_name}>
+                            {({ id, describedBy, invalid }) => (
+                                <input id={id} autoComplete="off" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} value={name} onChange={(e) => setName(e.target.value)} />
+                            )}
+                        </Field>
+                        <Field label={t('couriers.rider.phone')} hint={t('couriers.rider.phoneHint')} error={errors.rider_phone}>
+                            {({ id, describedBy, invalid }) => (
+                                <input
+                                    id={id}
+                                    type="tel"
+                                    inputMode="tel"
+                                    autoComplete="off"
+                                    aria-describedby={describedBy}
+                                    aria-invalid={invalid || undefined}
+                                    className={`h-10 ${monoInputClass}`}
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                />
+                            )}
+                        </Field>
+                    </div>
+                    <p className="t-admin-caption text-fg-secondary">{t('couriers.rider.hint')}</p>
+                    <div className="flex flex-wrap gap-2">
+                        <Button type="submit" size="sm" disabled={record.isPending}>
+                            {t('couriers.rider.save')}
+                        </Button>
+                        {rider && (
+                            <Button type="button" variant="outline" size="sm" disabled={record.isPending} onClick={() => save(true)}>
+                                {t('couriers.rider.clear')}
+                            </Button>
+                        )}
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                            {t('couriers.rider.cancel')}
+                        </Button>
+                    </div>
+                </form>
+            )}
+        </div>
     );
 }
 

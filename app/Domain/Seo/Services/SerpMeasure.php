@@ -112,4 +112,72 @@ final class SerpMeasure
 
         return 556;
     }
+
+    /**
+     * The text as Google's desktop result would show it: cut at the last whole word that
+     * fits `$maxPx` (with the ellipsis), or the whole text when it fits.
+     *
+     * @return array{display: string, truncated: bool, px: int}
+     */
+    public function truncate(string $text, int $fontPx, int $maxPx): array
+    {
+        $px = $this->width($text, $fontPx);
+
+        if ($px <= $maxPx) {
+            return ['display' => $text, 'truncated' => false, 'px' => $px];
+        }
+
+        $budget = $maxPx * 1000 / $fontPx - self::EXTRA['…'];
+        $units = 0;
+        $kept = '';
+
+        foreach (mb_str_split($text) as $char) {
+            $units += self::units($char);
+            if ($units > $budget) {
+                break;
+            }
+            $kept .= $char;
+        }
+
+        $space = mb_strrpos($kept, ' ');
+        if ($space !== false && $space > mb_strlen($kept) / 2) {
+            $kept = mb_substr($kept, 0, $space);
+        }
+
+        return ['display' => rtrim($kept, ' ,.;:|-–—').' …', 'truncated' => true, 'px' => $px];
+    }
+
+    /**
+     * A search-result preview for one locale (SeoPanel "SERP preview").
+     *
+     * @return array{title: string, title_display: string, title_px: int, title_max: int, title_truncated: bool, description: string, description_display: string, description_px: int, description_max: int, description_truncated: bool, url_display: string}
+     */
+    public function preview(string $title, string $description, string $url): array
+    {
+        $t = $this->truncate($title, self::TITLE_PX, self::TITLE_MAX);
+        $d = $this->truncate($description, self::DESCRIPTION_PX, self::DESCRIPTION_MAX);
+
+        return [
+            'title' => $title,
+            'title_display' => $t['display'],
+            'title_px' => $t['px'],
+            'title_max' => self::TITLE_MAX,
+            'title_truncated' => $t['truncated'],
+            'description' => $description,
+            'description_display' => $d['display'],
+            'description_px' => $d['px'],
+            'description_max' => self::DESCRIPTION_MAX,
+            'description_truncated' => $d['truncated'],
+            'url_display' => self::breadcrumbUrl($url),
+        ];
+    }
+
+    /** `https://toymartbd.com/bn/products/x` → `toymartbd.com › bn › products › x` (Google's display). */
+    public static function breadcrumbUrl(string $url): string
+    {
+        $host = (string) parse_url($url, PHP_URL_HOST);
+        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+
+        return $path === '' ? $host : $host.' › '.str_replace('/', ' › ', $path);
+    }
 }

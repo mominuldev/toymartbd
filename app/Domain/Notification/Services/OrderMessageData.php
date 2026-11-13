@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Notification\Services;
 
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Ordering\Queries\OrderRiderContact;
 use App\Support\Locale\Formatter;
 use App\Support\Money;
 
@@ -15,10 +16,14 @@ use App\Support\Money;
  * recipient is resolved separately, at send time.
  *
  * `courier`, `consignment`, `eta` and `date_range` fall back to PLACEHOLDER copy until
- * Fulfilment ships shipments and per-order ETAs (Phase 6).
+ * Fulfilment ships shipments and per-order ETAs (Phase 6). `rider_phone` is the delivery
+ * rider's number (a template variable by design: the customer needs to reach the rider),
+ * read through Ordering's {@see OrderRiderContact}.
  */
 final class OrderMessageData
 {
+    public function __construct(private readonly OrderRiderContact $riders) {}
+
     /** @return array<string, string> */
     public function variables(Order $order, string $locale): array
     {
@@ -32,9 +37,10 @@ final class OrderMessageData
             'cod_amount' => self::amount($order->due_total),
             'track_url' => config('notifications.short_link_base', 'tmbd.co').'/'.$order->number,
             'hotline' => (string) config('notifications.hotline'),
-            // PLACEHOLDER (P6): neither courier's status API returns the rider's number, so
-            // `order.out_for_delivery` names our hotline rather than send a literal {rider_phone}.
-            'rider_phone' => (string) config('notifications.hotline'),
+            // The RIDER's number from the shipment (owner decision 2026-11-13), `01XXXXXXXXX` as
+            // customers dial it — never our hotline. Empty when none is recorded; the listener
+            // then sends the `.no_rider` variant, which has no {rider_phone} to fill.
+            'rider_phone' => $this->riders->phoneFor($order->id)?->national() ?? '',
             'store_url' => (string) config('notifications.store_url'),
             'date_range' => (string) trans('notifications.delivery_window', [], $locale),
             'eta' => (string) trans('notifications.shipping_eta', [], $locale),
