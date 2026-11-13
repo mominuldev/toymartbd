@@ -21,7 +21,7 @@ tracking, risk, COD settlement). See IMPLEMENTATION-PLAN progress sections.
 Each item below lists its scope; check the code on disk to see how far it got, then finish it.
 | # | Scope | State at handoff |
 |---|---|---|
-| 1 | CMS typed blocks + homepage builder + signed live preview + scheduling (app/Domain/Content, admin features/content/home, storefront components/content/blocks) | running |
+| 1 | CMS typed blocks + homepage builder + signed live preview + scheduling (app/Domain/Content, admin features/content/home, storefront components/content/blocks) | **done** |
 | 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | **done** |
 | 3 | Blog: posts/categories/tags/authors, buying guides with live product picks, related posts | **done** (shared `App\Support\PreviewToken`; SEO type `blog_post`) |
 | 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | **done** — rows 4–7 except Search Console metrics/site audit (`docs/api/seo.md`) |
