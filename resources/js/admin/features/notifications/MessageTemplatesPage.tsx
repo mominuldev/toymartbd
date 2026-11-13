@@ -157,7 +157,7 @@ export function MessageTemplatesPage() {
                     {t('common.loading')}
                 </p>
             ) : grouped.length === 0 ? (
-                <EmptyState reason="noResults" title={t('notif.lib.empty')} body={t('notif.lib.emptyBody')} />
+                <EmptyState reason="noDataYet" title={t('notif.lib.empty')} body={t('notif.lib.emptyBody')} />
             ) : (
                 grouped.map(({ group, rows: groupRows }) => (
                     <section key={group} aria-labelledby={`tpl-group-${group}`} className="flex flex-col gap-3">
@@ -294,7 +294,7 @@ function LangMark({ label, ok }: { label: string; ok: boolean }) {
     const { t } = useI18n();
     const Glyph = ok ? CheckIcon : MinusIcon;
     return (
-        <span className={`inline-flex items-center gap-0.5 ${ok ? 'text-fg-primary' : 'text-fg-tertiary'}`} aria-label={`${label} · ${ok ? t('notif.lib.filled') : t('notif.lib.empty')}`}>
+        <span className={`inline-flex items-center gap-0.5 ${ok ? 'text-fg-primary' : 'text-fg-tertiary'}`} aria-label={`${label} · ${ok ? t('notif.lib.filled') : t('notif.lib.missing')}`}>
             <Glyph size={12} aria-hidden className={ok ? 'text-feedback-success' : ''} />
             {label}
         </span>

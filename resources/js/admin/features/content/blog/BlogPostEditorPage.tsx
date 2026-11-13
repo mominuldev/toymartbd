@@ -28,6 +28,14 @@ import { GuideSections } from './GuideSections';
 import { PostStatusChip, cardClass } from './parts';
 import { ProductLinksField } from './ProductLinksField';
 
+/** "2:20 pm" when saved today (Dhaka), else the Dhaka date and time — Figma "Draft · last saved 2:20 pm". */
+function savedTime(iso: string, locale: string): string {
+    const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka' }).format(d);
+    const at = new Date(iso);
+    if (day(at) !== day(new Date())) return formatDhakaDateTime(iso, locale);
+    return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', minute: '2-digit', hour12: true, numberingSystem: 'latn' }).format(at).toLowerCase();
+}
+
 /** Online store → Blog → New / Edit post (Figma B · 28 Blog editor, 241:46011). */
 export function BlogPostEditorPage() {
     const params = useParams();
@@ -127,7 +135,7 @@ function PostEditor({ id, post }: { id: number | null; post?: BlogPost }) {
 
     const title = id === null ? t('blog.editor.new') : t('blog.editor.edit');
     const statusLabel = (status: PostStatus): string => {
-        if (status === 'draft') return savedAt && post?.status === 'draft' ? t('blog.status.draftSaved', { time: formatDhakaDateTime(savedAt, locale) }) : t('blog.status.draft');
+        if (status === 'draft') return savedAt && post?.status === 'draft' ? t('blog.status.draftSaved', { time: savedTime(savedAt, locale) }) : t('blog.status.draft');
         if (status === 'scheduled' && post?.status === 'scheduled' && post.published_at) return t('blog.status.scheduledFor', { time: formatDhakaDateTime(post.published_at, locale) });
         if (status === 'published' && post?.status === 'published' && post.published_at) return t('blog.status.publishedOn', { time: formatDhakaDateTime(post.published_at, locale) });
         return t(`blog.status.${status}`);
@@ -193,27 +201,25 @@ function PostEditor({ id, post }: { id: number | null; post?: BlogPost }) {
                                     </div>
                                 )}
                             </div>
-                            <p className="t-admin-caption text-fg-secondary">{t('blog.editor.coverHint')}</p>
-
-                            <Field label={t('blog.editor.titleEn')} error={errorOf('title')} required>
-                                {({ id: fid, describedBy, invalid }) => (
-                                    <textarea
-                                        id={fid}
-                                        rows={2}
-                                        aria-describedby={describedBy}
-                                        aria-invalid={invalid || undefined}
-                                        placeholder={t('blog.editor.titlePlaceholder')}
-                                        className="w-full resize-none rounded-sm border border-transparent bg-transparent t-h2 text-fg-primary placeholder:text-fg-tertiary hover:border-line-default focus:border-line-focus focus:ring-1 focus:ring-inset focus:ring-line-focus aria-invalid:border-line-danger"
-                                        value={form.title}
-                                        onChange={(e) => set('title', e.target.value)}
-                                    />
-                                )}
-                            </Field>
-                            <Field label={t('blog.editor.titleBn')} error={errorOf('title_bn')} optional>
-                                {({ id: fid, describedBy, invalid }) => (
-                                    <input id={fid} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} value={form.title_bn} onChange={(e) => set('title_bn', e.target.value)} />
-                                )}
-                            </Field>
+                            <label htmlFor="blog-title" className="sr-only">
+                                {t('blog.editor.titleEn')}
+                            </label>
+                            <textarea
+                                id="blog-title"
+                                rows={2}
+                                aria-invalid={errorOf('title') ? true : undefined}
+                                aria-describedby={errorOf('title') ? 'blog-title-error' : undefined}
+                                placeholder={t('blog.editor.titlePlaceholder')}
+                                className="-my-1 w-full resize-none rounded-sm border border-transparent bg-transparent t-h2 text-fg-primary placeholder:text-fg-tertiary hover:border-line-default focus:border-line-focus focus:ring-1 focus:ring-inset focus:ring-line-focus aria-invalid:border-line-danger"
+                                value={form.title}
+                                onChange={(e) => set('title', e.target.value)}
+                            />
+                            {errorOf('title') && (
+                                <p id="blog-title-error" className="flex items-start gap-1 t-admin-caption text-fg-primary">
+                                    <WarningIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
+                                    {errorOf('title')}
+                                </p>
+                            )}
                             <p className="t-admin-caption text-fg-tertiary">
                                 {t('blog.editor.byline', {
                                     author: nameOf(author) ?? t('blog.editor.noAuthor'),
@@ -222,18 +228,24 @@ function PostEditor({ id, post }: { id: number | null; post?: BlogPost }) {
                                 })}
                             </p>
 
-                            <div className="flex flex-col gap-1.5">
-                                <span className="sr-only">{t('blog.editor.body')}</span>
-                                <DescriptionEditor
-                                    value={{ en: form.body, bn: form.body_bn }}
-                                    onChange={(language, value) => set(language === 'en' ? 'body' : 'body_bn', value)}
-                                    error={errorOf('body') ?? errorOf('body_bn')}
-                                    invalid={{ en: Boolean(errorOf('body')), bn: Boolean(errorOf('body_bn')) }}
-                                    disabled={disabled}
-                                    initialLanguage={locale === 'bn' ? 'bn' : 'en'}
-                                />
-                            </div>
+                            <DescriptionEditor
+                                value={{ en: form.body, bn: form.body_bn }}
+                                onChange={(language, value) => set(language === 'en' ? 'body' : 'body_bn', value)}
+                                error={errorOf('body') ?? errorOf('body_bn')}
+                                invalid={{ en: Boolean(errorOf('body')), bn: Boolean(errorOf('body_bn')) }}
+                                disabled={disabled}
+                                initialLanguage={locale === 'bn' ? 'bn' : 'en'}
+                                label={t('blog.editor.body')}
+                                hideLabel
+                            />
+                        </div>
 
+                        <FormSection title={t('blog.editor.textsTitle')} description={t('blog.editor.textsHint')}>
+                            <Field label={t('blog.editor.titleBn')} error={errorOf('title_bn')} optional>
+                                {({ id: fid, describedBy, invalid }) => (
+                                    <input id={fid} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} value={form.title_bn} onChange={(e) => set('title_bn', e.target.value)} />
+                                )}
+                            </Field>
                             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                                 <Field label={t('blog.editor.excerpt')} hint={t('blog.editor.excerptHint')} error={errorOf('excerpt')} optional>
                                     {({ id: fid, describedBy, invalid }) => (
@@ -246,7 +258,7 @@ function PostEditor({ id, post }: { id: number | null; post?: BlogPost }) {
                                     )}
                                 </Field>
                             </div>
-                        </div>
+                        </FormSection>
 
                         {form.type === 'buying_guide' && <GuideSections form={form} set={set} errorOf={errorOf} disabled={disabled} />}
 

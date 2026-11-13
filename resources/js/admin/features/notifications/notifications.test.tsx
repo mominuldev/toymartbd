@@ -35,14 +35,26 @@ const base: NotificationTemplate = {
     encoding_en: 'gsm7',
     encoding_bn: 'ucs2',
     updated_at: '2026-11-12T10:00:00Z',
+    kind: 'system',
+    is_custom: false,
+    name_en: null,
+    name_bn: null,
+    whatsapp_status: null,
+    required_variables: [],
+    cost_en: '0.26',
+    cost_bn: '0.52',
+    updated_by_name: null,
+    archived_at: null,
 };
-const whatsapp: NotificationTemplate = { ...base, id: 2, channel: 'whatsapp', provider_template: 'order_placed', segments_en: null, segments_bn: null, encoding_en: 'utf8', encoding_bn: 'utf8' };
+const whatsapp: NotificationTemplate = { ...base, id: 2, channel: 'whatsapp', provider_template: 'order_placed', segments_en: null, segments_bn: null, encoding_en: 'utf8', encoding_bn: 'utf8', whatsapp_status: 'draft', cost_en: null, cost_bn: null };
 const otp: NotificationTemplate = { ...base, id: 3, key: 'otp.login', category: 'security', can_opt_out: false, segments_bn: 1 };
 
 const preview: TemplatePreview = {
     en: { rendered: 'Toy Mart BD: order TMB-26-00482 received.', chars: 41, encoding: 'gsm7', segments: 1, per_segment_limit: 160, cost: '0.64' },
     bn: { rendered: 'টয় মার্ট বিডি: অর্ডার TMB-26-00482 পেয়েছি।', chars: 106, encoding: 'ucs2', segments: 2, per_segment_limit: 67, cost: '1.28' },
     unknown_variables: [],
+    missing_variables: [],
+    warnings: [],
 };
 
 const deadLetter: NotificationLog = {

@@ -77,7 +77,7 @@ it('returns cards in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe(['data', 'links', 'meta'])
         ->and(array_keys($response->json('data.0')))->toBe([
             'id', 'slug', 'name', 'name_bn', 'brand', 'price', 'compare_at_price', 'price_max', 'discount_percent', 'age_min_months',
-            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'in_stock', 'image',
+            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'in_stock', 'image', 'flash_sale',
         ])
         ->and($response->json('data.0'))->toMatchArray([
             'slug' => 'rainbow-stacker',

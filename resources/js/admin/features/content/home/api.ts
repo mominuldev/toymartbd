@@ -89,7 +89,7 @@ export function useReorderBlocks() {
             client.setQueryData<CmsHomeDraft>(keys.draft, (draft) => {
                 if (!draft) return draft;
                 const byId = new Map(draft.blocks.map((b) => [b.id, b]));
-                const blocks = input.ids.map((id, position) => byId.get(id)).filter((b): b is CmsBlock => b !== undefined).map((b, position) => ({ ...b, position }));
+                const blocks = input.ids.map((id) => byId.get(id)).filter((b): b is CmsBlock => b !== undefined).map((b, position) => ({ ...b, position }));
                 return { ...draft, blocks, has_unpublished_changes: true };
             });
         },

@@ -35325,7 +35325,7 @@
                         ]
                     },
                     "exists": {
-                        "type": "string"
+                        "type": "boolean"
                     },
                     "is_published": {
                         "type": "boolean"
@@ -43417,7 +43417,7 @@
                         ]
                     },
                     "in_sitemap": {
-                        "type": "string"
+                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -44419,17 +44419,7 @@
                         ]
                     },
                     "total_urls": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "integer",
-                                "enum": [
-                                    0
-                                ]
-                            }
-                        ]
+                        "type": "integer"
                     },
                     "duration_ms": {
                         "type": [

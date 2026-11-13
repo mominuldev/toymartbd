@@ -25,6 +25,7 @@ final class SitemapStatusResource extends ApiResource
             'sitemap_url' => $this->resource['sitemap_url'],
             /** @var string|null */
             'generated_at' => $manifest['generated_at'] ?? null,
+            /** @var int */
             'total_urls' => $manifest['total_urls'] ?? 0,
             /** @var int|null */
             'duration_ms' => $manifest['duration_ms'] ?? null,

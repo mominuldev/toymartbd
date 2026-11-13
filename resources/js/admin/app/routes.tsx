@@ -27,6 +27,9 @@ import { OrderEditPage } from '@/features/orders/OrderEditPage';
 import { MediaLibraryPage } from '@/features/media/MediaLibraryPage';
 import { AutomationsPage } from '@/features/notifications/AutomationsPage';
 import { NotificationLogPage } from '@/features/notifications/NotificationLogPage';
+import { MessageTemplatesPage } from '@/features/notifications/MessageTemplatesPage';
+import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
+import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
@@ -56,6 +59,7 @@ import { BannersPage } from '@/features/content/banners/BannersPage';
 import { BannerFormPage } from '@/features/content/banners/BannerFormPage';
 import { TestimonialsPage } from '@/features/content/testimonials/TestimonialsPage';
 import { TestimonialFormPage } from '@/features/content/testimonials/TestimonialFormPage';
+import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
@@ -67,6 +71,9 @@ export const routes: RouteObject[] = [
         element: <RequireAuth />,
         errorElement: <RouteError />,
         children: [
+            // Homepage builder (Figma B · 26 Page builder 241:44102): full height beside the sidebar
+            // rail, no topbar, so it sits outside the Shell. Static, so it wins over `store/*`.
+            { path: '/store/home', element: <HomeBuilderPage /> },
             {
                 path: '/',
                 element: <Shell />,
@@ -180,6 +187,10 @@ export const routes: RouteObject[] = [
                     // Settings → Automations (Figma 223:15784): notification templates; the message log is not drawn.
                     { path: 'automations', element: <AutomationsPage /> },
                     { path: 'automations/log', element: <NotificationLogPage /> },
+                    // P7 Message templates library (button on B · 36 241:49914; no frame of its own).
+                    { path: 'automations/templates', element: <MessageTemplatesPage /> },
+                    { path: 'automations/templates/new', element: <NewTemplatePage /> },
+                    { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
                     // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
                     { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },

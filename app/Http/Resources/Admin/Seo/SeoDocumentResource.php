@@ -76,6 +76,7 @@ final class SeoDocumentResource extends ApiResource
              * @var array{en: array{title: string, title_display: string, title_px: int, title_max: int, title_truncated: bool, description: string, description_display: string, description_px: int, description_max: int, description_truncated: bool, url_display: string}, bn: array{title: string, title_display: string, title_px: int, title_max: int, title_truncated: bool, description: string, description_display: string, description_px: int, description_max: int, description_truncated: bool, url_display: string}}
              */
             'serp' => $docs->serp($subject, $meta),
+            /** @var bool */
             'in_sitemap' => $docs->inSitemap($subject, $meta),
         ];
     }

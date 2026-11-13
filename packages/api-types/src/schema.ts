@@ -7715,7 +7715,7 @@ export interface components {
         Menu: {
             /** @enum {string} */
             location: "header" | "footer" | "mobile";
-            exists: string;
+            exists: boolean;
             is_published: boolean;
             published_at: string | null;
             updated_at: string | null;
@@ -9821,7 +9821,7 @@ export interface components {
                     url_display: string;
                 };
             };
-            in_sitemap: string;
+            in_sitemap: boolean;
         };
         /**
          * SeoMeasureRequest
@@ -10071,7 +10071,7 @@ export interface components {
         SitemapStatus: {
             sitemap_url: string;
             generated_at: string | null;
-            total_urls: string | 0;
+            total_urls: number;
             duration_ms: number | null;
             files: {
                 file: string;

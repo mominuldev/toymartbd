@@ -61,7 +61,8 @@ final class FlashSaleLookup
      */
     public function byVariant(?DateTimeInterface $now = null): array
     {
-        $key = ($now ?? now())->format('Y-m-d H:i');
+        // Memoised for one request (and one minute) only — never across requests.
+        $key = ($now ?? now())->format('Y-m-d H:i').'#'.spl_object_id(request());
         if ($this->byVariant !== null && $this->at === $key) {
             return $this->byVariant;
         }

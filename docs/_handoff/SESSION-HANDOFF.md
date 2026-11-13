@@ -25,7 +25,7 @@ Each item below lists its scope; check the code on disk to see how far it got, t
 | 2 | Static pages, menu builder (header/footer/mobile, falls back to category tree), banners, testimonials | running |
 | 3 | Blog: posts/categories/tags/authors, buying guides with live product picks, related posts | running |
 | 4 | SEO plumbing: per-entity seo_meta + SeoPanel, metadata builder with hreflang + x-default, JSON-LD builders + validator tests, slug-history 301s + redirect manager, locale-partitioned sitemaps, robots.txt editor | running (had a helper subagent for the storefront half) |
-| 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | running |
+| 5 | Promotions engine (priority/stacking), coupon builder UI, flash sales (allotment never oversold), abandoned-cart SMS recovery | **done** — see open items below |
 | 6 | Owner decisions 2026-11-13 (risk confirmed, verify→confirmed, rider phone on shipment + no-rider SMS variant, managers get integrations, non-masking numeric sender, ৳0.26/segment) | **done** |
 | 7 | Message templates library screen (`/automations/templates`): list, editor with EN/BN + server preview/segments, versions, custom marketing/manual templates | running |
 | — | Phase 7 server-side tracking (GA4 MP, Meta CAPI, dedup, consent, diagnostics) | not started — next batch |
@@ -40,10 +40,20 @@ npm run typecheck && npm run typecheck:storefront && npm run lint:i18n && npx vi
 ```
 Then write the Phase 7 batch 1 progress section in IMPLEMENTATION-PLAN, open the PR, merge after CI.
 
+## Follow-ups found by agent 5 (fix before merging the batch)
+- `2026_11_28_700100_create_notification_template_versions_table.php` (agent 7): auto unique-index name too long for MySQL (1059) — give it a short explicit name. Agent 7 was told.
+- deptrac: 2 violations in `app/Domain/Notification/DTOs/CustomTemplateData.php` (agent 7).
+- Risk `RefreshProfileOnOrderChange` (after-commit insert into `customer_risk_profiles`) can deadlock under concurrent checkouts and is not retried — add a retry / upsert.
+- EditOrder locks promotions before stock while PlaceOrder locks stock first — make the lock order consistent.
+- Cart-recovery log rows: admin "Retry" goes through the order notification job and fails (`notifiable_missing`).
+- Flash-item variant picker uses an endpoint needing `orders.create`; scope chips saved earlier show as `#id`.
+- Storefront `/pages/privacy` 404 Playwright check (agent 2's pages work).
+
 ## Owner decisions still open
 - Managers can now change courier/SMS credentials (decision 6) — confirm the security impact is understood.
 - Bangla no-rider out-for-delivery SMS drops "অর্ডার" to stay 1 segment — keep or full copy (2 segments)?
 - Meta approval for WhatsApp `order_out_for_delivery_no_rider`; design sign-off for the shipment rider row (no Figma frame).
+- Flash sales default `allows_coupons=false`? Where do guests give phone + consent for cart reminders (never on checkout)? All `config/cart_recovery.php` values are placeholders. Promotion budgets exclude delivery saved by free-delivery promotions.
 - Earlier open lists: IMPLEMENTATION-PLAN "Owner decisions open" lines in every progress section.
 - Still owed by the owner: Gate 4 UAT on staging (`docs/ops/UAT-GATE-4.md`), ten real-order profit hand check
   (`docs/ops/PROFIT-RECONCILIATION.md`), staging host, SSLCommerz merchant account, Steadfast merchant account,

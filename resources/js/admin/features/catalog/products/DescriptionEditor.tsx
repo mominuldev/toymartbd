@@ -36,6 +36,9 @@ type DescriptionEditorProps = {
     disabled?: boolean;
     /** Opens on this language (tests, deep links); the switch changes it. */
     initialLanguage?: DescriptionLanguage;
+    /** Accessible name; defaults to "Description". `hideLabel` keeps it for screen readers only (blog editor, Figma 241:46027). */
+    label?: string;
+    hideLabel?: boolean;
 };
 
 /** Links the API keeps (App\Domain\Catalog\Services\ProductDescription): http, https and mailto only. */
@@ -101,7 +104,7 @@ const contentClass = [
  * text and undo history. The HTML goes to the API as it is; the API sanitises it on save
  * against its allowlist, and the toolbar offers only what that allowlist keeps.
  */
-export function DescriptionEditor({ value, onChange, error, invalid = {}, disabled = false, initialLanguage = 'en' }: DescriptionEditorProps) {
+export function DescriptionEditor({ value, onChange, error, invalid = {}, disabled = false, initialLanguage = 'en', label, hideLabel = false }: DescriptionEditorProps) {
     const { t } = useI18n();
     const labelId = useId();
     const errorId = useId();
@@ -138,8 +141,8 @@ export function DescriptionEditor({ value, onChange, error, invalid = {}, disabl
 
     return (
         <div className="flex flex-col gap-1.5">
-            <span id={labelId} className="t-admin-body-strong text-fg-primary">
-                {t('products.field.description')}
+            <span id={labelId} className={hideLabel ? 'sr-only' : 't-admin-body-strong text-fg-primary'}>
+                {label ?? t('products.field.description')}
             </span>
             <RichTextToolbar editor={editor} language={language} onLanguage={setLanguage} onImage={() => setPicking(true)} disabled={disabled} />
             <div className="overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">

@@ -53,7 +53,8 @@ export function AutomationsPage() {
     const { t } = useI18n();
     const templates = useTemplates();
     const [params, setParams] = useSearchParams();
-    const groups = useMemo(() => groupTemplates(templates.data ?? []), [templates.data]);
+    // Event-bound (system) templates only: staff-made ones live in the Message templates library.
+    const groups = useMemo(() => groupTemplates((templates.data ?? []).filter((tpl) => !tpl.is_custom)), [templates.data]);
     const selected = groups.find((g) => g.key === params.get('template')) ?? groups[0];
     const available = channels.filter((c) => selected?.templates[c]);
     const channelParam = params.get('channel') as Channel | null;
@@ -78,10 +79,17 @@ export function AutomationsPage() {
                 title={t('notif.title')}
                 subtitle={t('notif.subtitle')}
                 actions={
-                    <Link to="/automations/log" className={`${buttonClass('outline', 'md')} h-9`}>
-                        <ListChecksIcon size={16} aria-hidden />
-                        {t('notif.messageLog')}
-                    </Link>
+                    <>
+                        {/* "Message templates" — Figma B · 36 AdminButton 241:49914 (outline, chat-text icon). */}
+                        <Link to="/automations/templates" className={`${buttonClass('outline', 'md')} h-9`}>
+                            <ChatTextIcon size={16} aria-hidden />
+                            {t('notif.lib.button')}
+                        </Link>
+                        <Link to="/automations/log" className={`${buttonClass('outline', 'md')} h-9`}>
+                            <ListChecksIcon size={16} aria-hidden />
+                            {t('notif.messageLog')}
+                        </Link>
+                    </>
                 }
             />
 

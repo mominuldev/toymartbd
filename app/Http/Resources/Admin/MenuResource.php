@@ -32,6 +32,7 @@ final class MenuResource extends ApiResource
         return [
             /** @var 'header'|'footer'|'mobile' */
             'location' => $location->value,
+            /** @var bool */
             'exists' => $menu->exists,
             'is_published' => $menu->is_published,
             /** @var string|null */

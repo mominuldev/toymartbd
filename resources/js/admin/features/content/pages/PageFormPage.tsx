@@ -141,8 +141,8 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                                 {text('title', 'content.pages.field.title')}
                                 {text('title_bn', 'content.pages.field.titleBn', { lang: 'bn', hint: t('content.pages.field.titleBnHint'), optional: true })}
                             </div>
+                            {/* DescriptionEditor carries its own label row and EN | বাং switch. */}
                             <div className="flex flex-col gap-1.5">
-                                <span className="t-admin-body-strong text-fg-primary">{t('content.pages.field.body')}</span>
                                 <DescriptionEditor
                                     value={{ en: form.content, bn: form.content_bn }}
                                     onChange={(language, value) => set(language === 'en' ? 'content' : 'content_bn', value)}

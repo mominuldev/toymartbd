@@ -1,4 +1,5 @@
-import { Navigate, useNavigate } from 'react-router';
+import type { ReactNode } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { Controller, useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { storeNotificationTemplateRequestSchema } from '@toymart/api-types/zod';
@@ -13,7 +14,6 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import { channels, customVariables, useCreateTemplate, type Channel, type NewTemplateInput } from './api';
 import { Panel, channelIcon, channelLabel, variableHint } from './parts';
-import { Link } from 'react-router';
 
 type Kind = NewTemplateInput['kind'];
 type Variable = (typeof customVariables)[number];
@@ -120,7 +120,7 @@ export function NewTemplatePage() {
                             </Field>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <p className="t-admin-label text-fg-primary">{t('notif.tpl.kind')}</p>
+                            <p className="t-admin-body-strong text-fg-primary">{t('notif.tpl.kind')}</p>
                             <Controller
                                 control={control}
                                 name="kind"
@@ -222,7 +222,7 @@ function CheckGroup<N extends CheckName>({
     error?: string;
     control: ReturnType<typeof useForm<FormValues>>['control'];
     name: N;
-    options: { value: FormValues[N][number]; label: React.ReactNode }[];
+    options: { value: FormValues[N][number]; label: ReactNode }[];
 }) {
     return (
         <Controller
@@ -232,7 +232,7 @@ function CheckGroup<N extends CheckName>({
                 const value = field.value as string[];
                 return (
                     <fieldset className="flex min-w-0 flex-col gap-1.5" aria-invalid={error ? true : undefined}>
-                        <legend className="mb-1.5 t-admin-label text-fg-primary">{legend}</legend>
+                        <legend className="mb-1.5 t-admin-body-strong text-fg-primary">{legend}</legend>
                         {hint && <p className="t-admin-caption text-fg-secondary">{hint}</p>}
                         <div className="flex flex-wrap gap-x-5 gap-y-2">
                             {options.map((option) => (

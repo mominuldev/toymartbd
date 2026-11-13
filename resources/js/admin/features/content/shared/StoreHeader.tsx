@@ -32,6 +32,7 @@ export function StoreHeader({ action, pageCount }: { action?: ReactNode; pageCou
                 }
             />
             <TabList label={t('content.sectionTabs')}>
+                <TabLink to="/store/home" end label={t('homeBuilder.title')} />
                 <TabLink to="/store/pages" end label={t('content.tab.pages')} count={pageCount} />
                 <TabLink to="/store/navigation/header" label={t('content.tab.header')} />
                 <TabLink to="/store/navigation/footer" label={t('content.tab.footer')} />
