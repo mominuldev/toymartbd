@@ -13,3 +13,5 @@ use Illuminate\Support\Facades\Route;
 | role-matrix test (tests/Support/role-matrix-routes.php) — rule 21.
 */
 
+Route::get('/audit', [App\Http\Controllers\Api\V1\Admin\AuditLogController::class, 'index'])->name('audit.index');
+Route::get('/audit/export', [App\Http\Controllers\Api\V1\Admin\AuditLogController::class, 'export'])->name('audit.export');

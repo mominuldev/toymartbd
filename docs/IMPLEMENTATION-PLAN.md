@@ -355,6 +355,43 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10 batch 2: activity log, integrations hub, store settings (2026-11-14, 4 parallel agents)
+
+**Done, with passing tests.** Full counts are in the PR.
+- **Activity log** (Figma B · 39, `/staff/activity`):
+  - `GET /audit` and `GET /audit/export` (CSV) need `audit.view`; the export also needs `reports.export`.
+  - Cursor-paginated feed over `audit_sensitive`. Filters are allowlisted: user, area, action, and Dhaka date range.
+  - Subject labels are loaded in batches, and before → after change chips are derived.
+  - The IP is masked server-side and the device is shown in short form.
+  - `AuditSensitive` now captures IP and User-Agent during HTTP requests.
+  - The "Audit log" button on Staff & roles opens it.
+  - Not built: the Source filter and non-sensitive rows (webhooks, PII reveals, POS drawers), because nothing records them yet.
+- **Integrations hub** (B · 37, `/integrations`):
+  - `GET /integrations` needs `settings.manage_integrations`.
+  - It reports each courier, payment, messaging and tracking service, with statuses derived only from stored state: credentials, verified/sandbox, circuit breaker, last failed send, and tracking diagnostics.
+  - Services with no driver show "Not available yet".
+  - Courier switches use the existing endpoint. Nothing is fabricated: no balances, no token expiries.
+- **Store settings** (B · 38, `/settings/*`):
+  - A shared layout with section nav.
+  - **Business:** `GET/PUT /settings/business` writes the same `invoice.company.*` rows that invoices use, plus a new `store.whatsapp`. The saved hotline now feeds order messages (`StoreHotline`) and the `business.hotline` launch check.
+  - **Branches & warehouses:** `/settings/locations`, CRUD without delete. An expand-only migration adds type, place ids, area, address line, landmark and notes to `stock_locations`. A location can't be switched off while it is the default or still holds stock. The demo seed fills in the three branches.
+  - **Checkout & delivery:** `GET /settings/checkout`, a read model. Only the free-delivery threshold is editable, through the existing `PUT /settings/delivery`. Guest checkout, COD and order notes are shown as always-on facts. A risk-based advance is "not available" until a gateway exists.
+  - **Taxes & invoices:** the old invoice-details page, fitted into the layout.
+
+**Owner decisions open:**
+- Customer delivery charge vs. courier cost: today they are one rate card.
+- Free delivery inside Dhaka only, or in every zone (as today)?
+- Advance payment for risky orders needs a gateway.
+- List or hide services with no driver?
+- Which AI and accounting providers, if any?
+- A stricter "connected" rule for SMS?
+- Export permission for the activity log.
+- An actor list for the Person filter for accountants, who lack `staff.view`.
+- Hard-deleting empty branches.
+- Branch dialog editing of the inventory-card description.
+- WhatsApp number on invoices and on the storefront.
+- The placeholder business values (UI-UX §10).
+
 ### Progress — Phase 10: staff two-factor and editable roles (2026-11-14, owner decisions)
 
 **Done, with passing tests** (see the PR for counts). Both answers to the PR #28 questions were "yes".

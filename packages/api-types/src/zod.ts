@@ -91,6 +91,9 @@ export type Role = z.infer<typeof roleSchema>;
 export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample","theft"]);
 export type StockAdjustmentReason = z.infer<typeof stockAdjustmentReasonSchema>;
 
+export const stockLocationTypeSchema = z.enum(["warehouse","retail","pickup"]);
+export type StockLocationType = z.infer<typeof stockLocationTypeSchema>;
+
 export const supplierPaymentMethodSchema = z.enum(["cash","bank_transfer","cheque","bkash","nagad","other"]);
 export type SupplierPaymentMethod = z.infer<typeof supplierPaymentMethodSchema>;
 
@@ -1237,6 +1240,22 @@ export const storeStockAdjustmentRequestSchema = z.object({
 });
 export type StoreStockAdjustmentRequestInput = z.input<typeof storeStockAdjustmentRequestSchema>;
 
+/** `POST /settings/locations` — add a branch, warehouse or pickup point; needs settings.update. */
+export const storeStockLocationRequestSchema = z.object({
+    "code": z.string().min(2).max(32).regex(new RegExp("^[a-z0-9-]+$")),
+    "name": z.string().min(1).max(120),
+    "name_bn": z.string().max(160).nullable().optional(),
+    "type": stockLocationTypeSchema,
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().max(160).nullable().optional(),
+    "address_line": z.string().min(3).max(500),
+    "landmark": z.string().max(255).nullable().optional(),
+    "notes": z.string().max(160).nullable().optional(),
+    "is_active": z.boolean(),
+});
+export type StoreStockLocationRequestInput = z.input<typeof storeStockLocationRequestSchema>;
+
 /** `POST /inventory/transfers` — needs inventory.transfer and an `Idempotency-Key` (a */
 export const storeStockTransferRequestSchema = z.object({
     "from_location_id": z.number().int(),
@@ -1397,6 +1416,17 @@ export const updateBrandRequestSchema = z.object({
     "is_active": z.boolean().optional(),
 });
 export type UpdateBrandRequestInput = z.input<typeof updateBrandRequestSchema>;
+
+/** `PUT /settings/business` — Store settings › Business; needs settings.update. The whole */
+export const updateBusinessDetailsRequestSchema = z.object({
+    "name_en": z.string().max(120).nullable().optional(),
+    "name_bn": z.string().max(120).nullable().optional(),
+    "trade_licence": z.string().max(64).nullable().optional(),
+    "bin": z.string().max(32).regex(new RegExp("^[0-9-]{5,32}$")).nullable().optional(),
+    "hotline": z.string().max(32).regex(new RegExp("^\\+?[0-9 ()-]{5,32}$")).nullable().optional(),
+    "whatsapp": z.string().max(32).nullable().optional(),
+});
+export type UpdateBusinessDetailsRequestInput = z.input<typeof updateBusinessDetailsRequestSchema>;
 
 /** `PATCH /cart/items/{item}` `{ quantity }` — 1…99; remove a line with DELETE. */
 export const updateCartItemRequestSchema = z.object({
@@ -1795,6 +1825,21 @@ export const updateStaffRequestSchema = z.object({
     "role": roleSchema.optional(),
 });
 export type UpdateStaffRequestInput = z.input<typeof updateStaffRequestSchema>;
+
+/** `PUT /settings/locations/{location}` — edit a branch / warehouse, or switch it off */
+export const updateStockLocationRequestSchema = z.object({
+    "name": z.string().min(1).max(120),
+    "name_bn": z.string().max(160).nullable().optional(),
+    "type": stockLocationTypeSchema,
+    "district_id": z.number().int(),
+    "upazila_id": z.number().int().nullable().optional(),
+    "area": z.string().max(160).nullable().optional(),
+    "address_line": z.string().min(3).max(500),
+    "landmark": z.string().max(255).nullable().optional(),
+    "notes": z.string().max(160).nullable().optional(),
+    "is_active": z.boolean(),
+});
+export type UpdateStockLocationRequestInput = z.input<typeof updateStockLocationRequestSchema>;
 
 /** `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change. */
 export const updateSupplierRequestSchema = z.object({

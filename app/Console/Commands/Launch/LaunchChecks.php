@@ -17,6 +17,7 @@ use App\Domain\Fulfilment\Services\BookingPreflight;
 use App\Domain\Fulfilment\Services\DeliverySettings;
 use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Domain\Notification\Services\MessagingSettings;
+use App\Domain\Notification\Support\StoreHotline;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Services\OnlineGateways;
 use App\Domain\Risk\Services\RiskSettings;
@@ -655,11 +656,11 @@ final class LaunchChecks
 
     private function hotline(): CheckResult
     {
-        $hotline = preg_replace('/\D+/', '', (string) config('notifications.hotline')) ?? '';
+        $hotline = preg_replace('/\D+/', '', StoreHotline::current()) ?? '';
         $domain = (string) config('notifications.store_url');
         $problems = [];
         if ($hotline === '' || in_array($hotline, self::PLACEHOLDER_HOTLINES, true)) {
-            $problems[] = 'STORE_HOTLINE is the placeholder 09600123456 (it is printed in SMS and emails)';
+            $problems[] = 'The hotline is the placeholder 09600123456 (it is printed in SMS and emails)';
         }
         if ($domain === '' || str_contains($domain, 'localhost') || str_ends_with($domain, '.test')) {
             $problems[] = "STORE_PUBLIC_DOMAIN is `{$domain}`";
@@ -667,7 +668,7 @@ final class LaunchChecks
 
         return $problems === []
             ? CheckResult::pass('business.hotline', 'Store hotline and domain in messages', 'F3', "Hotline set; domain {$domain}.")
-            : CheckResult::fail('business.hotline', 'Store hotline and domain in messages', 'F3', implode('; ', $problems).'.', 'Set STORE_HOTLINE and STORE_PUBLIC_DOMAIN in the host env, `php artisan config:cache`, then `php artisan toymart:notifications:sync-templates`.');
+            : CheckResult::fail('business.hotline', 'Store hotline and domain in messages', 'F3', implode('; ', $problems).'.', 'Set the hotline in Admin → Settings → Store → Business (or STORE_HOTLINE in the host env) and STORE_PUBLIC_DOMAIN, `php artisan config:cache`, then `php artisan toymart:notifications:sync-templates`.');
     }
 
     private function storefrontSiteConfig(): CheckResult

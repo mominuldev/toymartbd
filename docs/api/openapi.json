@@ -21425,6 +21425,593 @@
                 }
             }
         },
+        "/admin/audit": {
+            "get": {
+                "operationId": "v1.admin.audit.index",
+                "summary": "`GET /audit` \u2014 cursor-paginated `{ data, links, meta }`, newest first; needs audit.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "Changes made by one staff member.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[area]",
+                        "in": "query",
+                        "description": "One area of the admin.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "catalog",
+                                "refunds",
+                                "staff",
+                                "integrations",
+                                "fulfilment",
+                                "reports"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[action]",
+                        "in": "query",
+                        "description": "One audited action (App\\Models\\Enums\\AuditAction).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka calendar date, inclusive (YYYY-MM-DD).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka calendar date, inclusive (YYYY-MM-DD).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `AuditEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AuditEntryResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter, a sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/audit/export": {
+            "get": {
+                "operationId": "v1.admin.audit.export",
+                "summary": "`GET /audit/export` \u2014 the same rows and filters as CSV (masked IP, short device)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[user_id]",
+                        "in": "query",
+                        "description": "As on GET /audit.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[area]",
+                        "in": "query",
+                        "description": "As on GET /audit.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[action]",
+                        "in": "query",
+                        "description": "As on GET /audit.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "As on GET /audit.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "As on GET /audit.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/csv; charset=UTF-8": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "required": true,
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "attachment; filename=.csv"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing audit.view or reports.export (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter, a sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/integrations": {
+            "get": {
+                "operationId": "v1.admin.integrations.index",
+                "summary": "`GET /integrations` \u2014 `{ data: Integration[] }`, grouped by category in display order",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `Integration`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Integration"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/business": {
+            "get": {
+                "operationId": "v1.admin.settings.business.show",
+                "summary": "`GET /settings/business`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`BusinessDetails`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BusinessDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.business.update",
+                "summary": "`PUT /settings/business` \u2014 affects invoices issued from now on; issued ones keep their snapshot",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBusinessDetailsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`BusinessDetails`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BusinessDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/locations": {
+            "get": {
+                "operationId": "v1.admin.settings.locations.index",
+                "summary": "`GET /settings/locations` \u2014 every location, active and inactive, default first. Not paginated (a handful of rows)",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StoreLocation`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StoreLocation"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.settings.locations.store",
+                "summary": "`POST /settings/locations` \u2014 201 with the new location",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStockLocationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`StoreLocation`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreLocation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/locations/districts": {
+            "get": {
+                "operationId": "v1.admin.settings.locations.districts",
+                "summary": "`GET /settings/locations/districts` \u2014 the 64 districts with division and upazilas, for the address picker",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StoreLocationDistrict`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StoreLocationDistrict"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/locations/{location}": {
+            "put": {
+                "operationId": "v1.admin.settings.locations.update",
+                "summary": "`PUT /settings/locations/{location}` \u2014 edit, or switch off with `is_active: false`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "description": "The location ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStockLocationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StoreLocation`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreLocation"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Switching off the default location, or one that still holds stock (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/settings/checkout": {
+            "get": {
+                "operationId": "v1.admin.settings.checkout.show",
+                "summary": "`GET /settings/checkout`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CheckoutSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckoutSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/blog/posts": {
             "get": {
                 "operationId": "v1.admin.blog.posts.index",
@@ -31701,6 +32288,193 @@
                 ],
                 "title": "AttributeValue"
             },
+            "AuditEntryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "action": {
+                        "type": "string",
+                        "description": "`App\\Models\\Enums\\AuditAction`"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "price_changed",
+                            "cost_changed",
+                            "refund_created",
+                            "refund_approved",
+                            "staff_added",
+                            "staff_reactivated",
+                            "role_changed",
+                            "staff_deactivated",
+                            "permissions_changed",
+                            "rider_recorded",
+                            "report_resent",
+                            "password_reset",
+                            "two_factor_enabled",
+                            "two_factor_disabled",
+                            "two_factor_reset",
+                            "two_factor_recovery_used",
+                            "two_factor_codes_regenerated",
+                            "two_factor_changed",
+                            "messaging_settings",
+                            "tracking_settings",
+                            "courier_credentials",
+                            "credentials_changed"
+                        ]
+                    },
+                    "area": {
+                        "type": "string",
+                        "enum": [
+                            "catalog",
+                            "refunds",
+                            "staff",
+                            "integrations",
+                            "fulfilment",
+                            "reports"
+                        ]
+                    },
+                    "actor": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "subject": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "id": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "label": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "type",
+                            "id",
+                            "label"
+                        ]
+                    },
+                    "changes": {
+                        "anyOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "field": {
+                                            "type": "string"
+                                        },
+                                        "before": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "after": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "field",
+                                        "before",
+                                        "after"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "array",
+                                "prefixItems": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "field": {
+                                                "type": "string",
+                                                "const": "permissions"
+                                            },
+                                            "before": {
+                                                "type": "null"
+                                            },
+                                            "after": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "field",
+                                            "before",
+                                            "after"
+                                        ]
+                                    }
+                                ],
+                                "minItems": 1,
+                                "maxItems": 1
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "day": {
+                        "type": "string"
+                    },
+                    "ip": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "device": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "action",
+                    "kind",
+                    "area",
+                    "actor",
+                    "subject",
+                    "changes",
+                    "created_at",
+                    "day",
+                    "ip",
+                    "device"
+                ],
+                "title": "AuditEntryResource"
+            },
             "AuthUserResource": {
                 "type": "object",
                 "properties": {
@@ -32764,6 +33538,90 @@
                 ],
                 "title": "BulkRequestShipmentsRequest"
             },
+            "BusinessDetails": {
+                "type": "object",
+                "properties": {
+                    "name_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "trade_licence": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "bin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "hotline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "whatsapp": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "E.164, e.g. `+8801711000222`."
+                    },
+                    "default_names": {
+                        "type": "object",
+                        "description": "What invoices print while a name is unset (the brand name).",
+                        "properties": {
+                            "name_en": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name_en",
+                            "name_bn"
+                        ]
+                    },
+                    "hotline_default": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The hotline order messages use while none is saved here (env `STORE_HOTLINE`)."
+                    },
+                    "placeholders": {
+                        "type": "array",
+                        "description": "Fields of this section an invoice still prints as \"[placeholder]\".",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "name_en",
+                    "name_bn",
+                    "trade_licence",
+                    "bin",
+                    "hotline",
+                    "whatsapp",
+                    "default_names",
+                    "hotline_default",
+                    "placeholders"
+                ],
+                "title": "BusinessDetails"
+            },
             "CancelOrderRequest": {
                 "type": "object",
                 "description": "`POST /orders/{order}/cancel` \u2014 needs orders.cancel. `reason` is the fixed list\n(cancellations are counted by cause); `note` is required when the reason is `other`.",
@@ -33622,6 +34480,136 @@
                     "expected_total"
                 ],
                 "title": "CheckoutRequest"
+            },
+            "CheckoutSettings": {
+                "type": "object",
+                "properties": {
+                    "guest_checkout": {
+                        "type": "boolean",
+                        "description": "Always true: checkout finds or creates the customer by phone; no account needed. Not configurable."
+                    },
+                    "cash_on_delivery": {
+                        "type": "boolean",
+                        "description": "Always true: COD is accepted in every serviced zone (rule 33). Not configurable."
+                    },
+                    "online_methods": {
+                        "type": "array",
+                        "description": "Online payment methods checkout accepts right now, besides COD.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "order_notes": {
+                        "type": "boolean",
+                        "description": "Always true: the customer note is accepted and stored. Not configurable."
+                    },
+                    "order_note_max": {
+                        "type": "integer",
+                        "description": "Longest note checkout accepts."
+                    },
+                    "risk_advance": {
+                        "type": "object",
+                        "description": "Risk-based advance payment (bKash). `available` is false until it can be enforced;\n`blocker` is `no_bkash_gateway` or `no_partial_advance_flow`; `hold_score` is the\nscore at which an order is held for verification instead (never cancelled).",
+                        "properties": {
+                            "available": {
+                                "type": "boolean"
+                            },
+                            "blocker": {
+                                "type": "string"
+                            },
+                            "bkash_status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "hold_score": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "available",
+                            "blocker",
+                            "bkash_status",
+                            "hold_score"
+                        ]
+                    },
+                    "cod_advance": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The COD advance rule checkout applies (held until staff arrange it by phone);\nnull = no rule. Zones are `inside_dhaka_metro` | `dhaka_suburb` | `outside_dhaka`.",
+                        "properties": {
+                            "zones": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "threshold": {
+                                "type": "string"
+                            },
+                            "amount": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "zones",
+                            "threshold",
+                            "amount"
+                        ]
+                    },
+                    "free_shipping_threshold": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Subtotal at or above which delivery is free in every zone; null = off. Edited via PUT /settings/delivery."
+                    },
+                    "delivery_courier": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The default courier whose rate card prices the customer's delivery charge; null = none active."
+                    },
+                    "delivery_charges": {
+                        "type": "array",
+                        "description": "Base charge per zone the customer is quoted (before weight surcharge); null when no courier is active.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "zone": {
+                                    "type": "string"
+                                },
+                                "charge": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "zone",
+                                "charge"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "guest_checkout",
+                    "cash_on_delivery",
+                    "online_methods",
+                    "order_notes",
+                    "order_note_max",
+                    "risk_advance",
+                    "cod_advance",
+                    "free_shipping_threshold",
+                    "delivery_courier",
+                    "delivery_charges"
+                ],
+                "title": "CheckoutSettings"
             },
             "ClosePurchaseRequest": {
                 "type": "object",
@@ -40467,6 +41455,99 @@
                     "items"
                 ],
                 "title": "InspectReturnRequest"
+            },
+            "Integration": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Stable service key: pathao, steadfast, redx, cod, sslcommerz, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "English name; the admin translates by `key` where the name is not a brand."
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "couriers",
+                            "payments",
+                            "messaging",
+                            "marketing"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "`not_available` = no driver in the codebase yet.",
+                        "enum": [
+                            "connected_live",
+                            "test_mode",
+                            "needs_attention",
+                            "not_connected",
+                            "not_available"
+                        ]
+                    },
+                    "notes": {
+                        "type": "array",
+                        "description": "Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `unverified_booking_blocked`, `bookings`, `browser_only`.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "attention": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why it needs attention (a code), when `status` is `needs_attention`."
+                    },
+                    "bookings_count": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Shipments booked through this courier (with a consignment id)."
+                    },
+                    "enabled": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "description": "Switched on/off where the service has such a switch; null when it has none."
+                    },
+                    "courier_provider_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The courier row, for `PATCH /settings/couriers/{id}` (the only on/off this screen offers)."
+                    },
+                    "can_toggle": {
+                        "type": "boolean",
+                        "description": "This user may switch it on/off here (couriers only, shipments.manage_rates)."
+                    },
+                    "settings_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The admin screen that configures it; null when none exists."
+                    }
+                },
+                "required": [
+                    "key",
+                    "name",
+                    "category",
+                    "status",
+                    "notes",
+                    "attention",
+                    "bookings_count",
+                    "enabled",
+                    "courier_provider_id",
+                    "can_toggle",
+                    "settings_path"
+                ],
+                "title": "Integration"
             },
             "InventoryAdjustment": {
                 "type": "object",
@@ -54356,6 +55437,16 @@
                 ],
                 "title": "StockAdjustmentReason"
             },
+            "StockLocationType": {
+                "type": "string",
+                "description": "`stock_locations.type` \u2014 what a stock location is for (Store settings \u203a Branches & warehouses, Figma B \u00b7 38 241:50827). Null on a location nobody has classified yet. - warehouse \u2014 online fulfilment: packs and hands parcels to the courier;  - retail    \u2014 a shop: POS sales and click & collect;  - pickup    \u2014 a partner pickup point: customers collect orders, nothing is sold there.\n",
+                "enum": [
+                    "warehouse",
+                    "retail",
+                    "pickup"
+                ],
+                "title": "StockLocationType"
+            },
             "StoreAttributeRequest": {
                 "type": "object",
                 "description": "`POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)\nor `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).",
@@ -54748,6 +55839,235 @@
                     "body"
                 ],
                 "title": "StoreCustomerNoteRequest"
+            },
+            "StoreLocation": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "warehouse",
+                            "retail",
+                            "pickup",
+                            null
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The inventory card label, e.g. \"Retail branch \u00b7 POS + pickup\"."
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "division": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "district": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "area": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "address_line": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "description": "Sales, opening stock and the storefront read this one; it cannot be switched off."
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "holds_stock": {
+                        "type": "boolean",
+                        "description": "Holds, reserves or expects stock \u2014 it cannot be switched off until that is moved."
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "name_bn",
+                    "type",
+                    "description",
+                    "description_bn",
+                    "division",
+                    "district",
+                    "upazila",
+                    "area",
+                    "address_line",
+                    "landmark",
+                    "notes",
+                    "is_default",
+                    "is_active",
+                    "holds_stock"
+                ],
+                "title": "StoreLocation"
+            },
+            "StoreLocationDistrict": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": "string"
+                    },
+                    "division": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazilas": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "name_bn"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "division",
+                    "upazilas"
+                ],
+                "title": "StoreLocationDistrict"
             },
             "StoreMediaRequest": {
                 "type": "object",
@@ -56061,6 +57381,86 @@
                     "lines"
                 ],
                 "title": "StoreStockAdjustmentRequest"
+            },
+            "StoreStockLocationRequest": {
+                "type": "object",
+                "description": "`POST /settings/locations` \u2014 add a branch, warehouse or pickup point; needs settings.update.",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "Short label the inventory screens show (`ctg` \u2192 \"CTG 4\"); lower-case letters, digits and dashes; fixed once created.",
+                        "pattern": "^[a-z0-9-]+$",
+                        "minLength": 2,
+                        "maxLength": 32
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "e.g. `Chattogram \u00b7 Agrabad`.",
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "type": {
+                        "description": "warehouse = online fulfilment; retail = shop with POS and click & collect; pickup = partner pickup point.",
+                        "$ref": "#/components/schemas/StockLocationType"
+                    },
+                    "district_id": {
+                        "type": "integer"
+                    },
+                    "upazila_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Must belong to `district_id`; empty for a city address."
+                    },
+                    "area": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 500
+                    },
+                    "landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What a courier rider looks for (rule 31).",
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The facts line, e.g. `Pathao pickup 4\u20137 pm \u00b7 2 packers`.",
+                        "maxLength": 160
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "False switches the location off; refused (409) for the default one or one holding stock."
+                    }
+                },
+                "required": [
+                    "code",
+                    "name",
+                    "type",
+                    "district_id",
+                    "address_line",
+                    "is_active"
+                ],
+                "title": "StoreStockLocationRequest"
             },
             "StoreStockTransferRequest": {
                 "type": "object",
@@ -61705,6 +63105,60 @@
                 },
                 "title": "UpdateBrandRequest"
             },
+            "UpdateBusinessDetailsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/business` \u2014 Store settings \u203a Business; needs settings.update. The whole\nsection: a null or empty field removes the saved value. Name, trade licence, BIN and\nhotline are the same rows `PUT /settings/invoice` writes, so the rules match\nUpdateInvoiceSettingsRequest's for those fields.",
+                "properties": {
+                    "name_en": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "trade_licence": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 64
+                    },
+                    "bin": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Business Identification Number (NBR), 9 or 13 digits; not otherwise checked.",
+                        "pattern": "^[0-9-]{5,32}$",
+                        "maxLength": 32
+                    },
+                    "hotline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "As printed, e.g. `09610-123456` \u2014 a 09xxx hotline is not a mobile, so rule 30 does not apply.",
+                        "pattern": "^\\+?[0-9 ()-]{5,32}$",
+                        "maxLength": 32
+                    },
+                    "whatsapp": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A Bangladeshi mobile, 013\u2013019 only (rule 30); stored and returned as E.164.",
+                        "maxLength": 32
+                    }
+                },
+                "title": "UpdateBusinessDetailsRequest"
+            },
             "UpdateCartItemRequest": {
                 "type": "object",
                 "description": "`PATCH /cart/items/{item}` `{ quantity }` \u2014 1\u202699; remove a line with DELETE.",
@@ -63622,6 +65076,78 @@
                     }
                 },
                 "title": "UpdateStaffRequest"
+            },
+            "UpdateStockLocationRequest": {
+                "type": "object",
+                "description": "`PUT /settings/locations/{location}` \u2014 edit a branch / warehouse, or switch it off\n(`is_active: false`); needs settings.update. The whole record except `code`, which is\nfixed once created.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "e.g. `Chattogram \u00b7 Agrabad`.",
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "type": {
+                        "description": "warehouse = online fulfilment; retail = shop with POS and click & collect; pickup = partner pickup point.",
+                        "$ref": "#/components/schemas/StockLocationType"
+                    },
+                    "district_id": {
+                        "type": "integer"
+                    },
+                    "upazila_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Must belong to `district_id`; empty for a city address."
+                    },
+                    "area": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 500
+                    },
+                    "landmark": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What a courier rider looks for (rule 31).",
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The facts line, e.g. `Pathao pickup 4\u20137 pm \u00b7 2 packers`.",
+                        "maxLength": 160
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "False switches the location off; refused (409) for the default one or one holding stock."
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "district_id",
+                    "address_line",
+                    "is_active"
+                ],
+                "title": "UpdateStockLocationRequest"
             },
             "UpdateSupplierRequest": {
                 "type": "object",

@@ -41,6 +41,20 @@ final class CompanyDetails
         'footer_bn' => false,
     ];
 
+    /**
+     * The subset of FIELDS that Store settings › Business edits (Figma B · 38 241:50827).
+     * Same keys, same rows: Business and Invoice details are two views of one value, never
+     * two copies of it.
+     */
+    public const array BUSINESS_FIELDS = ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline'];
+
+    /**
+     * The customer-facing WhatsApp number (E.164), edited in Store settings › Business. A key of
+     * its own rather than one of FIELDS: the invoice-details save replaces every FIELDS key, and
+     * it does not carry this one.
+     */
+    public const string WHATSAPP_KEY = 'store.whatsapp';
+
     /** Shown when the owner has not set a name yet (the brand, not a placeholder). */
     public const array DEFAULT_NAMES = ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি'];
 
@@ -68,6 +82,14 @@ final class CompanyDetails
         }
 
         return $values;
+    }
+
+    /** The saved WhatsApp number (E.164), or null. */
+    public function whatsapp(): ?string
+    {
+        $raw = Setting::get(self::WHATSAPP_KEY);
+
+        return is_string($raw) && trim($raw) !== '' ? $raw : null;
     }
 
     /**

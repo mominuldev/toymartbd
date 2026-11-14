@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\IntegrationsController;
+use App\Models\Enums\Permission;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,3 +15,6 @@ use Illuminate\Support\Facades\Route;
 | role-matrix test (tests/Support/role-matrix-routes.php) — rule 21.
 */
 
+Route::middleware('can:'.Permission::SettingsManageIntegrations->value)->group(function (): void {
+    Route::get('/integrations', [IntegrationsController::class, 'index'])->name('integrations.index');
+});

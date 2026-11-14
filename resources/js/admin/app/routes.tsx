@@ -217,7 +217,6 @@ export const routes: RouteObject[] = [
                     { path: 'automations/templates', element: <MessageTemplatesPage /> },
                     { path: 'automations/templates/new', element: <NewTemplatePage /> },
                     { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
-                    // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
                     // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
                     { path: 'integrations', element: <IntegrationsHubPage /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },

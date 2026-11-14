@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router';
-import { UserPlusIcon } from '@phosphor-icons/react';
+import { Link, Outlet } from 'react-router';
+import { ClockCounterClockwiseIcon, UserPlusIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { TabLink, TabList } from '@/components/ui/Tabs';
 import { useStaff, useStaffRoles } from './api';
@@ -13,8 +13,8 @@ import { StaffDialog } from './StaffDialog';
  * Settings → Staff & roles (Figma B · 35 241:48916): ContentHeader with the primary "Invite
  * staff" (here "Add staff": there is no email invite, the owner hands over a temporary
  * password), then the People and Roles & permissions tabs. The frame's Sessions and Shifts
- * tabs, Branch and Two-factor columns and the Audit log button are not built: the system
- * has no per-staff branch, 2FA, session list, shifts or activity-log screen yet.
+ * tabs and Branch column are not built: the system has no per-staff branch, session list
+ * or shifts yet. "Audit log" opens the Activity log (B · 39) for audit.view holders.
  */
 export function StaffPage() {
     const { t } = useI18n();
@@ -43,11 +43,21 @@ export function StaffPage() {
                         : undefined
                 }
                 actions={
-                    can(me, 'staff.manage') && (
-                        <Button onClick={() => setAdding(true)}>
-                            <UserPlusIcon size={16} aria-hidden />
-                            {t('staff.add')}
-                        </Button>
+                    (can(me, 'audit.view') || can(me, 'staff.manage')) && (
+                        <>
+                            {can(me, 'audit.view') && (
+                                <Link to="/staff/activity" className={buttonClass('outline')}>
+                                    <ClockCounterClockwiseIcon size={16} aria-hidden />
+                                    {t('audit.openLog')}
+                                </Link>
+                            )}
+                            {can(me, 'staff.manage') && (
+                                <Button onClick={() => setAdding(true)}>
+                                    <UserPlusIcon size={16} aria-hidden />
+                                    {t('staff.add')}
+                                </Button>
+                            )}
+                        </>
                     )
                 }
             />
