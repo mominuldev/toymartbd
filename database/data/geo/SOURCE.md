@@ -90,6 +90,8 @@ What follows is a conservative rule:
   §5.1 resolver therefore needs a rule for a Dhaka-city address, for example district Dhaka with no upazila
   (`addresses.upazila_id` is NULLable). Alternatively, a city-corporation/thana level could be added. **Owner
   decision.**
+> **Superseded for pricing (owner decision 2026-11-15):** Dhaka (district 47) is in `delivery.metro_district_ids`, and a metro district now covers every address in it — so Savar, Dhamrai, Keraniganj, Nawabganj and Dohar quote as Inside Dhaka metro (৳70, 1–2 days), whatever their `is_dhaka_subcity` flag says. The flags still apply if district 47 is ever removed from the metro list (Admin → Settings → Store → Delivery areas & timing).
+
 - **`is_dhaka_subcity`: all five upazilas of Dhaka district** — Savar (365), Dhamrai (366), Keraniganj (367),
   Nawabganj (368), Dohar (369). Savar, Keraniganj, Dohar and Nawabganj are the design's `DhakaOuter` list
   (docs/_design/03-storefront-spec.md A12.4); Dhamrai is not named there but lies between Savar and Manikganj,

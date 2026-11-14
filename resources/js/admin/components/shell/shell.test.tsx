@@ -110,6 +110,51 @@ describe('app shell', () => {
     });
 });
 
+describe('inbox nav badge (owner decision 2026-11-15)', () => {
+    const inboxViewer: Me = { ...viewer, permissions: [...viewer.permissions, 'inbox.view'] };
+    const withInbox = (me: Me, count: number) =>
+        mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: me };
+            if (url.endsWith('/inbox/unread-count')) return { status: 200, body: { count } };
+            return { status: 404 };
+        });
+    const badgeCalls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.filter(([url]) => String(url).endsWith('/inbox/unread-count'));
+
+    it('shows the server count of conversations needing attention, with a screen-reader label', async () => {
+        withInbox(inboxViewer, 4);
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        await waitFor(() => expect(within(nav).getByRole('link', { name: /Inbox.*4 conversations need attention/ })).toBeTruthy());
+    });
+
+    it('shows no badge at zero', async () => {
+        const calls = withInbox(inboxViewer, 0);
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        await waitFor(() => expect(badgeCalls(calls)).not.toHaveLength(0));
+        expect(within(nav).getByRole('link', { name: 'Inbox' })).toBeTruthy();
+    });
+
+    it('never asks for the count without inbox.view', async () => {
+        const calls = withInbox(viewer, 9);
+        renderApp('/');
+
+        await screen.findAllByRole('navigation', { name: 'Main navigation' });
+        expect(badgeCalls(calls)).toHaveLength(0);
+    });
+
+    it('labels the badge in Bangla with Western digits', async () => {
+        withInbox(inboxViewer, 12);
+        renderApp('/');
+        fireEvent.click((await screen.findAllByRole('button', { name: 'বাং' }))[0]!);
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'প্রধান নেভিগেশন' }))[0]!;
+        await waitFor(() => expect(within(nav).getByRole('link', { name: /12টি কথোপকথনে মনোযোগ দরকার/ })).toBeTruthy());
+    });
+});
+
 describe('messages', () => {
     it('has the same placeholders in Bangla as in English', () => {
         const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();

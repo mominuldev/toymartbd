@@ -49,7 +49,8 @@ final class DeliveryAreasResource extends ApiResource
              */
             'eta_days' => $eta,
             /**
-             * Districts whose district-level address (no upazila) is inside Dhaka metro.
+             * Districts inside Dhaka metro as a whole — every address in them, with or without an
+             * upazila (owner decision 2026-11-15); not-serviced upazilas still win.
              *
              * @var list<int>
              */

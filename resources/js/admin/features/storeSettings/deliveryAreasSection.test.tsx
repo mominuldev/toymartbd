@@ -74,6 +74,8 @@ describe('store settings → delivery areas & timing', () => {
         expect((screen.getByLabelText('Outside Dhaka: slowest, in working days') as HTMLInputElement).value).toBe('4');
 
         expect(within(screen.getByRole('list', { name: 'Chosen: Inside Dhaka (city districts)' })).getByText('Dhaka')).toBeTruthy();
+        // Owner decision 2026-11-15: a metro district covers every address in it, upazila or not.
+        expect(screen.getByText('Every address in these districts, with or without an upazila, is charged as Inside Dhaka.')).toBeTruthy();
         expect(within(screen.getByRole('list', { name: 'Chosen: Dhaka suburbs (whole districts)' })).getByText('Gazipur')).toBeTruthy();
         expect(within(screen.getByRole('list', { name: 'Chosen: Not-serviced upazilas' })).getByText('Barkal')).toBeTruthy();
 

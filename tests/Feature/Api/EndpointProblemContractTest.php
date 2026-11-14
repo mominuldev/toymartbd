@@ -29,7 +29,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 const ENDPOINT_CONTRACT_PROBLEM_BASE = 'https://toymartbd.com/problems/';
 
 /** Routes whose required query parameters must be present for the unlisted one to be what fails. */
-const ENDPOINT_CONTRACT_BASELINE_QUERY = ['api/v1/storefront/search' => 'q=lego'];
+const ENDPOINT_CONTRACT_BASELINE_QUERY = [
+    'api/v1/storefront/search' => 'q=lego',
+    // The booking queue's shipment tabs need the tab (docs/api/booking-queue.md).
+    'api/v1/admin/shipments/booking-queue/shipments' => 'filter[tab]=submitted',
+];
 
 /** Path-parameter routes that deliberately do not 404 on an unknown id. */
 const ENDPOINT_CONTRACT_NOT_404 = [

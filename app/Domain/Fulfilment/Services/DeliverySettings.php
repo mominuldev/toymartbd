@@ -39,12 +39,12 @@ final class DeliverySettings
             'dhaka_suburb' => [2, 3],
             'outside_dhaka' => [3, 4],
         ],
-        // A district-level address (no upazila) in one of these districts is the city
-        // itself: Dhaka (47). Dhaka city is not an upazila in the geography dataset.
+        // Every address in one of these districts is inside Dhaka metro, with or without an
+        // upazila (owner decision 2026-11-15): Dhaka (47). Overrides the upazila flags below.
         'metro_district_ids' => [47],
         // Whole districts priced as Dhaka suburb: Gazipur 41, Narayanganj 43,
-        // Narsingdi 40, Munshiganj 48, Manikganj 46. Suburb upazilas inside Dhaka district
-        // are flagged on the upazila itself (upazilas.is_dhaka_subcity).
+        // Narsingdi 40, Munshiganj 48, Manikganj 46. A suburb upazila elsewhere is flagged on
+        // the upazila itself (upazilas.is_dhaka_subcity); in a metro district the flag is ignored.
         'suburb_district_ids' => [41, 43, 40, 48, 46],
         // Upazilas we do not deliver to (A12.5 seed set): Barkal 37, Belaichari 40,
         // Juraichari 41, Laxmichhari 91, Thanchi 103, Rangabali 241.

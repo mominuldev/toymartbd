@@ -18,6 +18,7 @@ No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" a
 | `POST /inbox/conversations/{id}/assign` | inbox.reply | `{user_id}` (active staff with inbox.reply) or `{user_id: null}`. System line. |
 | `POST /inbox/conversations/{id}/resolve` · `/reopen` | inbox.reply | System line. A new customer message reopens automatically. |
 | `GET /inbox/assignees` | inbox.reply | Active staff who hold inbox.reply. |
+| `GET /inbox/unread-count` | inbox.view | The sidebar Inbox badge (owner decision 2026-11-15): `{count}` = **open** conversations with unread inbound messages (`unread_count > 0`) **or** waiting on a staff reply (`needs_human`), each counted once. Resolved conversations never count; a new inbound message reopens one and brings it back. Same number for every staff member (not per assignee). One COUNT, uncached. The admin polls it every 60 s and on window focus, and every inbox action refreshes it (its query key sits under the inbox list key). `App\Domain\Inbox\Queries\ConversationsNeedingAttention`. |
 
 Phones are masked (`017****5678`) unless the viewer holds `customers.view_pii` (rule 20).
 
@@ -45,4 +46,21 @@ Assumed (could not be confirmed):
 
 ## Credentials
 
-Read from `settings` first (`inbox.whatsapp.{driver,phone_number_id,access_token,app_secret,verify_token}`, `inbox.messenger.{driver,page_id,page_access_token,app_secret,verify_token}`, group `notification`, secrets `is_encrypted`), falling back to `config/inbox.php` (env). No admin screen writes them yet.
+Read from `settings` first (`inbox.whatsapp.{driver,phone_number_id,access_token,app_secret,verify_token}`, `inbox.messenger.{driver,page_id,page_access_token,app_secret,verify_token}`, group `notification`, secrets `is_encrypted`), falling back to `config/inbox.php` (env). Not cached: a value saved in the admin applies to the next send and the next webhook without a worker restart.
+
+Entered at **Admin → Integrations → Messaging → Inbox channels** (`resources/js/admin/features/settings/messaging/InboxChannelsSection.tsx`):
+
+| Method & path | Permission | Notes |
+|---|---|---|
+| `GET /settings/inbox-channels` | settings.manage_integrations | `{whatsapp, messenger}`, each: `driver` (`log`\|`cloud`\|`messenger`) + `driver_source`, `account_id` (phone_number_id / page_id) + `account_id_source`, `send_token` / `app_secret` / `verify_token` as `{set, hint, source}` — the value is **never** returned, `hint` is `••••` + last 4 characters (only for 12+ characters, otherwise `••••`), `source` `settings`\|`env`\|null; `webhook_url` (absolute, from `APP_URL`: `/api/v1/webhooks/inbox/{channel}`); `webhook_ready`, `send_ready`, `verified` straight from `InboxChannels::summary()` (so the Integrations hub agrees). `verified` is always false. |
+| `PUT /settings/inbox-channels` | settings.manage_integrations | Flat body: `whatsapp_driver` (`log`\|`cloud`), `whatsapp_phone_number_id` (digits), `whatsapp_access_token`, `whatsapp_app_secret`, `whatsapp_verify_token`, `clear_whatsapp_*`; `messenger_driver` (`log`\|`messenger`), `messenger_page_id` (digits), `messenger_page_access_token`, `messenger_app_secret`, `messenger_verify_token`, `clear_messenger_*`. A blank/absent secret **keeps** the saved one; `clear_*` removes it (env applies again); a value and its clear together → 422. A blank id removes the saved id. Choosing `cloud` / `messenger` needs the id and the send token to exist after the save (saved, typed or env) → otherwise 422 on that field. Returns the GET shape. |
+
+Every change writes one `audit_sensitive` row per channel that changed: `credential_changed`, `before`/`after` with `scope: inbox_whatsapp|inbox_messenger`, driver and id before/after, and for a secret only `"changed"` / `"cleared"` — never a value or a hint. Nothing in this path logs. Saving never marks a channel verified (the drivers' `isVerified()` is false).
+
+What the owner copies from Meta (once a Meta app, a WhatsApp Business account and/or a Facebook Page exist):
+
+* **WhatsApp:** Phone number ID and an access token (a long-lived System User token, not the 24-hour temporary one) from the app's WhatsApp API setup; the App Secret from the app's basic settings. Invent a verify token (any long random string), save it here, then in the app's WhatsApp webhook configuration paste the callback URL shown on the card, enter the same verify token, and subscribe to `messages`.
+* **Messenger:** the Page ID, a Page access token for that Page, the same app's App Secret, and a verify token you invent. In the app's Messenger webhook settings paste the Messenger callback URL, enter the verify token, and subscribe the Page to `messages`, `message_deliveries`, `message_reads`.
+* Switch **Replies** to the Meta driver only once both ids and tokens are saved; until then replies are logged, not sent, while incoming messages still arrive as soon as the webhook is verified.
+
+The Meta-console menu names above are from Meta's docs, not from a live account — check them against the real dashboard on first connection.

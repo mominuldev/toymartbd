@@ -1643,6 +1643,27 @@ export const updateDeliverySettingsRequestSchema = z.object({
 });
 export type UpdateDeliverySettingsRequestInput = z.input<typeof updateDeliverySettingsRequestSchema>;
 
+/** `PUT /settings/inbox-channels` — the WhatsApp and Messenger inbox credentials on Admin → */
+export const updateInboxChannelSettingsRequestSchema = z.object({
+    "whatsapp_driver": z.enum(["log","cloud"]),
+    "whatsapp_phone_number_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
+    "whatsapp_access_token": z.string().max(2048).nullable().optional(),
+    "whatsapp_app_secret": z.string().max(255).nullable().optional(),
+    "whatsapp_verify_token": z.string().max(255).nullable().optional(),
+    "clear_whatsapp_access_token": z.boolean().optional(),
+    "clear_whatsapp_app_secret": z.boolean().optional(),
+    "clear_whatsapp_verify_token": z.boolean().optional(),
+    "messenger_driver": z.enum(["log","messenger"]),
+    "messenger_page_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
+    "messenger_page_access_token": z.string().max(2048).nullable().optional(),
+    "messenger_app_secret": z.string().max(255).nullable().optional(),
+    "messenger_verify_token": z.string().max(255).nullable().optional(),
+    "clear_messenger_page_access_token": z.boolean().optional(),
+    "clear_messenger_app_secret": z.boolean().optional(),
+    "clear_messenger_verify_token": z.boolean().optional(),
+});
+export type UpdateInboxChannelSettingsRequestInput = z.input<typeof updateInboxChannelSettingsRequestSchema>;
+
 /** `PUT /settings/invoice` — Admin → Settings → Invoice details; needs settings.update. The */
 export const updateInvoiceSettingsRequestSchema = z.object({
     "name_en": z.string().max(120).nullable().optional(),

@@ -355,6 +355,55 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10 batch 5: shipments board, booking queue, metro districts, inbox badge and keys (2026-11-15, 4 parallel agents)
+
+**Owner decisions of 2026-11-15 (accepted):**
+- A metro district covers the whole district.
+- The inbox gets an unread badge.
+- Admin a11y is a required check. Branch protection is now on for `main`: all 5 CI jobs are required, no review is required, and admins can override.
+- The screen-reader checklist is for a person to run.
+
+**Done, with passing tests.** Full counts are in the PR.
+- **Shipments & tracking** (Figma B · 08, `/shipments`, the last sidebar placeholder): `docs/api/shipments-board.md`.
+  - Board: allowlisted filters and tab counts mapped onto the shipment statuses.
+  - Stat tiles, all from real data:
+    - in transit with COD on the road;
+    - submitted with no ID, with its oldest age and a chase flag after 6 h;
+    - success % = delivered ÷ (delivered + returned) on Dhaka dates;
+    - average days to deliver, split by zone.
+  - Detail timeline with source chips, delivery issues for the last 30 days, and a success-by-courier chart.
+  - Not shown because nothing records them: Sync now (no endpoint), refusal reasons, who did a manual step, and batch ids.
+- **Courier booking queue** (B · 07, `/shipments/booking`): `docs/api/booking-queue.md`.
+  - Tabs: ready to ship (packed, no open shipment), submitted, booked today, failed, and unmapped areas.
+  - Courier cards show trust, bookings, webhook health, and a stored balance only when one exists.
+  - Per-row block reasons follow `BookingPreflight`.
+  - Bulk booking goes through `POST /shipments/bulk`, one Idempotency-Key per courier. Staff must acknowledge rule 24d before sending.
+- **Metro district = whole district:**
+  - In `zoneFor` the order is: not-serviced, then metro district, then upazila flags, then suburb district.
+  - The five Dhaka-district upazilas (Savar, Dhamrai, Keraniganj, Nawabganj, Dohar) move from suburb ৳100 to metro ৳70, 1–2 days.
+  - The address form still asks for the upazila.
+- **Inbox unread badge:**
+  - `GET /inbox/unread-count` counts open conversations that are unread or waiting on a staff reply.
+  - The sidebar badge polls every 60 s, refreshes on focus, and is refreshed by every inbox action.
+- **Inbox channel keys:**
+  - `GET/PUT /settings/inbox-channels` stores the WhatsApp Cloud and Messenger ids and secrets, encrypted, with last-4 hints. Changes are audited.
+  - The keys are used by the drivers and the webhook signature check.
+  - Callback URLs are ready to copy into Meta. Channels are never marked verified.
+
+**Owner decisions open:**
+- Shipments:
+  - a Sync now endpoint;
+  - the failed-attempt definition;
+  - the 6 h chase threshold;
+  - whether live tiles follow the date range.
+- Booking queue:
+  - whether confirmed and processing orders belong in Ready to ship;
+  - listing ambiguous areas under Unmapped;
+  - refusing 0 g parcels in `BookingPreflight` (recommended);
+  - reading courier balances.
+- Rural Dhaka upazilas at the metro price.
+- Badge definition: unread only, or also waiting on a reply.
+
 ### Progress — Phase 10 batch 4: POS, unified inbox, delivery areas, admin a11y in CI (2026-11-15, 4 parallel agents)
 
 Owner decisions of 2026-11-15:

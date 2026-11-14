@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, type FieldPath, type UseFormRegisterReturn } from 'react-hook-form';
+import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { sendTestSmsRequestSchema, updateMessagingSettingsRequestSchema } from '@toymart/api-types/zod';
@@ -15,6 +15,8 @@ import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { InboxChannelsSection } from './InboxChannelsSection';
+import { SecretField } from './SecretField';
 import {
     smsDrivers,
     useMessagingSettings,
@@ -275,58 +277,9 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
             </form>
 
             <TestSmsCard dirty={formState.isDirty} />
+
+            <InboxChannelsSection />
         </section>
-    );
-}
-
-type SecretFieldProps = {
-    label: string;
-    name: string;
-    isSet: boolean;
-    hint: string | null;
-    source: MessagingSettings['reve_api_key_source'];
-    clearing: boolean;
-    onClear: (value: boolean) => void;
-    error?: string;
-    register: UseFormRegisterReturn;
-};
-
-/** A write-only credential: a password field that starts blank; blank keeps the saved value. */
-function SecretField({ label, name, isSet, hint, source, clearing, onClear, error, register }: SecretFieldProps) {
-    const { t } = useI18n();
-    const status = !isSet
-        ? t('messaging.secret.none')
-        : source === 'settings'
-          ? t('messaging.secret.saved', { hint: hint ?? '••••' })
-          : t('messaging.secret.env', { hint: hint ?? '••••' });
-
-    return (
-        <div className="flex flex-col gap-1.5">
-            <Field label={label} hint={clearing ? t('messaging.secret.willRemove') : status} error={error}>
-                {({ id, describedBy, invalid }) => (
-                    <input
-                        id={id}
-                        type="password"
-                        autoComplete="new-password"
-                        spellCheck={false}
-                        data-secret={name}
-                        placeholder={isSet && !clearing ? (hint ?? '••••') : undefined}
-                        disabled={clearing}
-                        aria-describedby={describedBy}
-                        aria-invalid={invalid || undefined}
-                        className={`h-10 ${monoInputClass}`}
-                        {...register}
-                    />
-                )}
-            </Field>
-            {source === 'settings' && (
-                <div>
-                    <Button variant="ghost" size="sm" onClick={() => onClear(!clearing)}>
-                        {clearing ? t('messaging.secret.undo') : t('messaging.secret.remove')}
-                    </Button>
-                </div>
-            )}
-        </div>
     );
 }
 

@@ -135,6 +135,7 @@ it('lists 64 districts, Dhaka division first, with the upazila flags', function 
     expect($data)->toHaveCount(64)
         ->and(collect($data)->take(13)->pluck('division.name')->unique()->values()->all())->toBe(['Dhaka'])
         ->and($data[0]['name'])->toBe('Dhaka')
+        // A metro district still asks for the upazila (rule 31) and offers the city (2026-11-15).
         ->and($byId[47])->toMatchArray(['upazila_required' => true, 'city_option' => true])
         ->and($byId[4])->toMatchArray(['upazila_required' => true, 'city_option' => false])
         ->and($byId[41])->toMatchArray(['upazila_required' => false, 'city_option' => false])
