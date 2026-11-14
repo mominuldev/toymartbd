@@ -8368,15 +8368,14 @@ export interface components {
         };
         /** HealthReportResource */
         HealthReportResource: {
-            /** @enum {string} */
-            status: "ok" | "degraded";
-            checks: unknown[];
             /**
-             * @description Courier sync lands in Phase 6 (Fulfilment). Always null until then, and never
-             *     counted towards `status`.
+             * @description `ok`, `degraded` (200: something non-critical failed) or `down` (503).
+             * @enum {string}
              */
-            last_courier_sync: null;
+            status: "ok" | "degraded" | "down";
             checked_at: string;
+            /** @description Only with a valid `X-Health-Token`. */
+            checks?: unknown[];
         };
         /** HeldOrderDetailResource */
         HeldOrderDetailResource: {
@@ -30726,18 +30725,22 @@ export interface operations {
     "v1.health": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Monitoring token (MONITORING_HEALTH_TOKEN); adds per-check detail. */
+                "X-Health-Token"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            /** @description `HealthReportResource` */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": components["schemas"]["HealthReportResource"];
                 };
             };
         };

@@ -23,6 +23,16 @@
          JetBrains Mono (ids, SKUs), Anek Bangla (Bangla UI), Baloo Da 2 (Bangla titles). --}}
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=hanken-grotesk:400,500,600,700,800|fredoka:500,600|jetbrains-mono:500|anek-bangla:400,500,600|baloo-da-2:600&display=swap">
+    {{-- Sentry for the admin (P10): only when SENTRY_ADMIN_DSN is set; read by lib/sentry.ts. --}}
+    @if (filled(config('monitoring.sentry_admin.dsn')))
+        <meta name="tm-sentry" content="{{ json_encode([
+            'dsn' => (string) config('monitoring.sentry_admin.dsn'),
+            'release' => (string) config('sentry.release'),
+            'environment' => (string) (config('sentry.environment') ?: config('app.env')),
+            'sampleRate' => (string) config('monitoring.sentry_admin.sample_rate'),
+            'tracesSampleRate' => (string) config('monitoring.sentry_admin.traces_sample_rate'),
+        ]) }}">
+    @endif
     @viteReactRefresh
     @vite(['resources/css/admin.css', 'resources/js/admin/main.tsx'])
 </head>

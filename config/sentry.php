@@ -16,7 +16,7 @@ use App\Support\Logging\SentryEventScrubber;
 return [
 
     // @see https://docs.sentry.io/concepts/key-terms/dsn-explainer/
-    'dsn' => env('SENTRY_LARAVEL_DSN'),
+    'dsn' => env('SENTRY_LARAVEL_DSN') ?: null, // an empty value (as in .env.example) means off
 
     // @see https://spotlightjs.com/
     // 'spotlight' => env('SENTRY_SPOTLIGHT', false),

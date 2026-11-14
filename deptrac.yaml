@@ -133,11 +133,17 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Invoicing\\(?!Events\\)#'
+    # Monitoring (P10, SYSTEM-ARCHITECTURE §11): business alerts. Reads orders, shipments and
+    # notification logs; writes only `monitoring_alerts`; sends through NotificationContracts.
+    - name: Monitoring
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Monitoring\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -180,3 +186,5 @@ deptrac:
     Reporting: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Finance, Inventory, Fulfilment]
     # Credit notes (P8 batch 2) read the paid refund (Payment\Models\Refund) they credit.
     Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing, Payment]
+    # Monitoring reads the domains it watches (P10); nothing depends on it except Http and Providers.
+    Monitoring: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Fulfilment, Notification, NotificationContracts]

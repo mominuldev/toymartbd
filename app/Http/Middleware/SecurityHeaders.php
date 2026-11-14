@@ -76,7 +76,8 @@ final class SecurityHeaders
             'style-src' => ["'self'", "'unsafe-inline'", 'https://fonts.bunny.net', ...$hot['http']],
             'font-src' => ["'self'", 'data:', 'https://fonts.bunny.net', ...$hot['http']],
             'img-src' => ["'self'", 'data:', 'blob:', 'https:', ...($local ? ['http:'] : [])],
-            'connect-src' => ["'self'", ...$hot['http'], ...$hot['ws']],
+            // + the admin's Sentry ingest origin, only when SENTRY_ADMIN_DSN is set (P10).
+            'connect-src' => ["'self'", ...$hot['http'], ...$hot['ws'], ...(($sentry = self::origin(config('monitoring.sentry_admin.dsn'))) !== null ? [$sentry] : [])],
             'frame-src' => ["'self'", ...($storefront !== null ? [$storefront] : [])],
             'frame-ancestors' => ["'none'"],
             'base-uri' => ["'self'"],

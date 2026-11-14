@@ -12,9 +12,8 @@ import { noindexMetadata } from '@/lib/seo/metadata';
 // Maintenance page (Figma 169:10575 / 173:19641, storefront spec §B8): no site chrome — the shop
 // is offline — just the wordmark, the content-spec copy and the ways to reach a person. Served at /maintenance and
 // /bn/maintenance; noindex.
-// TODO(ops): nothing routes visitors here yet. Switching it on belongs with deployment: the
-// proxy (or the load balancer) should answer 503 + Retry-After with this HTML, not a 200 rewrite,
-// so crawlers keep the indexed pages.
+// Switched on by STOREFRONT_MAINTENANCE=1: proxy.ts then answers every page with this HTML as a
+// 503 + Retry-After (not a 200 rewrite), so crawlers keep the indexed pages.
 
 interface Props {
     params: Promise<{ locale: string }>;

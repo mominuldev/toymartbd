@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Fulfilment\Services;
 
+use App\Models\SystemHeartbeat;
 use Illuminate\Contracts\Cache\Repository as Cache;
 
 /**
@@ -50,6 +51,9 @@ final readonly class CourierCircuitBreaker
     {
         $this->cache->forget(self::failuresKey($code));
         $this->cache->forget(self::openKey($code));
+        // "Last successful courier sync" for the health endpoint and the courier_poll_silence
+        // alert (P10 monitoring). Never throws.
+        SystemHeartbeat::beat(SystemHeartbeat::COURIER_PREFIX.$code);
     }
 
     public function failures(string $code): int

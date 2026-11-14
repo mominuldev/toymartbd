@@ -1,0 +1,14 @@
+{
+    "name": "@toymart/observability",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Sentry PII scrubbing shared by the admin SPA and the storefront (CLAUDE.md rule 20). Plain ESM JavaScript + .d.ts so no consumer needs to transpile it.",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./src/index.d.ts",
+            "default": "./src/index.js"
+        }
+    }
+}

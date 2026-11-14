@@ -1,0 +1,18 @@
+# Toy Mart BD — log rotation (ops/provision). /etc/logrotate.d/toymartbd
+# horizon.log is rotated by Supervisor itself (stdout_logfile_maxbytes); nginx and MySQL keep
+# their packaged rules. copytruncate: PHP-FPM workers, Horizon and cron hold the files open.
+/var/log/toymartbd/laravel.json
+/var/log/toymartbd/scheduler.log
+/var/log/toymartbd/php-fpm-error.log
+/var/log/toymartbd/php-fpm-slow.log
+{{APP_ROOT}}/shared/storage/logs/*.log
+{
+    su {{DEPLOY_USER}} {{DEPLOY_USER}}
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}

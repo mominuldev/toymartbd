@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
+import { PHASE_PRODUCTION_BUILD, PHASE_PRODUCTION_SERVER } from 'next/constants';
 
-import { securityHeaders } from './lib/security-headers';
+import { assertProductionEnv } from './lib/env';
+import { withMonitoring } from './lib/sentry-build';
+import { baselineCsp, securityHeaders } from './lib/security-headers';
 
 const nextConfig: NextConfig = {
     // The E2E suite builds into its own directory with fake credentials so it never
@@ -8,9 +11,14 @@ const nextConfig: NextConfig = {
     distDir: process.env.NEXT_DIST_DIR ?? '.next',
     reactStrictMode: true,
     poweredByHeader: false,
-    // nosniff, referrer policy, HSTS and frame-ancestors (only the admin's live builder may frame us).
+    // nosniff, referrer policy, permissions policy and HSTS everywhere. Pages get their CSP (script
+    // policy + frame-ancestors) from proxy.ts; a CSP here would replace it, so only route handlers
+    // get the baseline one (lib/security-headers.ts).
     async headers() {
-        return [{ source: '/:path*', headers: securityHeaders({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL }) }];
+        return [
+            { source: '/:path*', headers: securityHeaders() },
+            { source: '/api/:path*', headers: [baselineCsp({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL })] },
+        ];
     },
     // Static art (Home hero = LCP, About collage) is served AVIF with a WebP fallback
     // (storefront spec §B1.0). Catalog photos come pre-encoded from the media pipeline.
@@ -39,4 +47,12 @@ const nextConfig: NextConfig = {
     // No `env` block and no NEXT_PUBLIC_* secrets: API credentials stay server-side (CLAUDE.md rule 28).
 };
 
-export default nextConfig;
+// `next build` and `next start` refuse an incomplete production environment (lib/env.ts); `next dev`,
+// and the unit tests do not check it. `next typegen` (npm run typecheck) loads the config in the
+// build phase too, but only generates route types, so it is recognised by its CLI command and skipped.
+export default function config(phase: string): NextConfig {
+    const typegen = process.argv.slice(2).includes('typegen');
+    if ((phase === PHASE_PRODUCTION_BUILD || phase === PHASE_PRODUCTION_SERVER) && !typegen) assertProductionEnv(process.env);
+    // Sentry (P10): wraps the config only when a DSN is configured — lib/sentry-build.ts.
+    return withMonitoring(nextConfig);
+}

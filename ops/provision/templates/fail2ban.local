@@ -1,0 +1,20 @@
+# Toy Mart BD — fail2ban (ops/provision). /etc/fail2ban/jail.d/toymartbd.local
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = {{SSH_PORT}}
+backend = systemd
+
+# Repeat offenders: banned 3 times in a day → a week.
+[recidive]
+enabled  = true
+logpath  = /var/log/fail2ban.log
+backend  = auto
+bantime  = 1w
+findtime = 1d
+maxretry = 3

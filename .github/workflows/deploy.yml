@@ -1,0 +1,248 @@
+name: Deploy
+
+# Production deploy (docs/ops/DEPLOYMENT.md). API + admin go to the VPS through a zero-downtime
+# release-directory swap (ops/deploy/deploy.sh); the storefront goes to Vercel AFTER the API,
+# so a storefront never goes live ahead of an API change it needs.
+#
+# Runs when CI finishes green on a push to main, or by hand (Actions → Deploy → Run workflow,
+# on main) to redeploy a commit or to roll back. With no deploy secrets configured every job
+# skips with a notice and succeeds — it never fails a merge for missing infrastructure.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: deploy, or roll the API back to the previous release
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+      sha:
+        description: "deploy: a commit on main (default: head of main). rollback: a release sha (default: the previous release)."
+        required: false
+        default: ''
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  api:
+    name: API + admin — build, ship, release
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    outputs:
+      released: ${{ steps.release.outcome == 'success' }}
+      sha: ${{ steps.sha.outputs.sha }}
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      APP_ROOT: ${{ vars.DEPLOY_APP_ROOT || '/var/www/toymartbd' }}
+      ACTION: ${{ inputs.action || 'deploy' }}
+    steps:
+      - name: Deploy secrets present?
+        id: gate
+        run: |
+          missing=()
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            [ -n "${!v}" ] || missing+=("$v")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::notice title=API deploy skipped::Not configured — missing secrets: ${missing[*]}. Nothing was deployed. See docs/ops/DEPLOYMENT.md §6."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve the commit
+        id: sha
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_run ]; then sha=$RUN_SHA; else sha=${INPUT_SHA:-$GITHUB_SHA}; fi
+          if [ "$ACTION" = rollback ]; then sha=$INPUT_SHA; fi
+          if [ -n "$sha" ] && ! [[ $sha =~ ^[0-9a-f]{7,40}$ ]]; then
+            echo "::error::not a commit sha: $sha"; exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        with:
+          ref: ${{ steps.sha.outputs.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Only a commit on main whose CI passed
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          full=$(git rev-parse "$SHA^{commit}")
+          echo "SHA=$full" >> "$GITHUB_ENV"
+          git merge-base --is-ancestor "$full" origin/main || { echo "::error::$full is not on main"; exit 1; }
+          green=$(gh run list --workflow ci.yml --commit "$full" --status success --json databaseId --jq length)
+          [ "$green" -gt 0 ] || { echo "::error::CI has not passed for $full"; exit 1; }
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Build the admin bundle (shipped in the artifact; the server never runs Node)
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        env:
+          SENTRY_RELEASE: ${{ env.SHA }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package the release artifact
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        run: ops/deploy/build-artifact.sh "$SHA" "$RUNNER_TEMP/$SHA.tar.gz"
+
+      - name: SSH to the server
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host target
+            HostName $DEPLOY_HOST
+            User $DEPLOY_USER
+            Port $DEPLOY_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            BatchMode yes
+            ServerAliveInterval 30
+          EOF
+          ssh target true
+
+      - name: Ship the artifact and the deploy script
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        run: |
+          scp -q "$RUNNER_TEMP/$SHA.tar.gz" "target:$APP_ROOT/artifacts/$SHA.tar.gz"
+          scp -q ops/deploy/deploy.sh "target:$APP_ROOT/bin/toymart-deploy.new"
+          # shellcheck disable=SC2029 # expanding on the runner is the point
+          ssh target "chmod 755 '$APP_ROOT/bin/toymart-deploy.new' && mv -f '$APP_ROOT/bin/toymart-deploy.new' '$APP_ROOT/bin/toymart-deploy'"
+
+      - name: Release (migrate, swap, health check; rolls itself back on failure)
+        id: release
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'deploy'
+        run: |
+          # shellcheck disable=SC2029 # expanding on the runner is the point
+          ssh target "APP_ROOT='$APP_ROOT' '$APP_ROOT/bin/toymart-deploy' release '$APP_ROOT/artifacts/$SHA.tar.gz' '$SHA'"
+
+      - name: Roll back
+        if: steps.gate.outputs.enabled == 'true' && env.ACTION == 'rollback'
+        env:
+          TARGET: ${{ steps.sha.outputs.sha }}
+        run: |
+          # shellcheck disable=SC2029 # expanding on the runner is the point
+          ssh target "APP_ROOT='$APP_ROOT' '$APP_ROOT/bin/toymart-deploy' rollback $TARGET"
+
+      - name: Remove the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+      # Sentry: a release per sha, plus a deploy marker. The SDKs already report SENTRY_RELEASE =
+      # sha (deploy.sh bakes it into the cached config). Skipped without the Sentry secrets; a
+      # Sentry outage never fails a deploy that is already live.
+      - name: Tag the Sentry release
+        if: steps.release.outcome == 'success'
+        continue-on-error: true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG || vars.SENTRY_ORG }}
+          SENTRY_PROJECTS: ${{ secrets.SENTRY_PROJECTS || vars.SENTRY_PROJECTS }}
+          SENTRY_URL: ${{ vars.SENTRY_URL || 'https://sentry.io' }}
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ] || [ -z "$SENTRY_ORG" ] || [ -z "$SENTRY_PROJECTS" ]; then
+            echo "::notice title=Sentry release skipped::SENTRY_AUTH_TOKEN, SENTRY_ORG or SENTRY_PROJECTS not set."
+            exit 0
+          fi
+          projects=$(jq -cn --arg p "$SENTRY_PROJECTS" '$p | split(",") | map(gsub("^\\s+|\\s+$"; ""))')
+          now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          # shellcheck disable=SC2153 # SENTRY_URL comes from the step env
+          api="${SENTRY_URL%/}/api/0/organizations/$SENTRY_ORG/releases"
+          curl -fsS -X POST "$api/" -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" -H 'Content-Type: application/json' \
+            -d "$(jq -cn --arg v "$SHA" --argjson p "$projects" --arg r "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$SHA" --arg t "$now" \
+                 '{version: $v, projects: $p, url: $r, dateReleased: $t}')" -o /dev/null
+          curl -fsS -X POST "$api/$SHA/deploys/" -H "Authorization: Bearer $SENTRY_AUTH_TOKEN" -H 'Content-Type: application/json' \
+            -d '{"environment":"production"}' -o /dev/null
+          echo "Sentry release $SHA tagged and marked deployed to production"
+
+  storefront:
+    name: Storefront — Vercel production
+    needs: api
+    if: needs.api.result == 'success' && (github.event_name == 'workflow_run' || inputs.action == 'deploy')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      SHA: ${{ needs.api.outputs.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Vercel secrets present?
+        id: gate
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice title=Storefront deploy skipped::VERCEL_TOKEN, VERCEL_ORG_ID or VERCEL_PROJECT_ID not set. See docs/ops/DEPLOYMENT.md §7."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: '24'
+
+      # The Vercel project's Root Directory is toymartbd-app/storefront; `vercel pull` brings the
+      # project settings and the PRODUCTION env vars (API_URL, STOREFRONT_API_TOKEN, …) which the
+      # build needs — they never live in this repo.
+      - name: Build and deploy with the Vercel CLI
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          npx --yes vercel@65.8.0 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          # lib/env.ts fails `next build` without these; say which are missing up front.
+          envfile=.vercel/.env.production.local
+          missing=()
+          for v in API_URL STOREFRONT_API_TOKEN STOREFRONT_REVALIDATE_SECRET SITE_URL ADMIN_URL; do
+            grep -Eq "^$v=\"?[^\"]+" "$envfile" 2>/dev/null || missing+=("$v")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error title=Vercel env incomplete::Set ${missing[*]} for Production in the Vercel project (docs/ops/DEPLOYMENT.md §7)."
+            exit 1
+          fi
+          npx --yes vercel@65.8.0 build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@65.8.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN" > "$RUNNER_TEMP/vercel-url.txt"
+          echo "Storefront deployed: $(cat "$RUNNER_TEMP/vercel-url.txt")"

@@ -71,3 +71,15 @@ it('redacts secrets embedded in free text', function (string $input, string $exp
     'bearer header' => ['Authorization: Bearer tmbd_abc.def', 'Authorization: Bearer [redacted]'],
     'nothing sensitive' => ['order TMB-0042 shipped', 'order TMB-0042 shipped'],
 ]);
+
+it('masks e-mail addresses anywhere in text, keeping the first letter and the domain (P10)', function (): void {
+    expect(RedactSensitiveData::scrubText('Mail to rahela.khatun+toys@example.com failed; cc a@b.co'))
+        ->toBe('Mail to r***@example.com failed; cc a***@b.co');
+});
+
+it('redacts one-time passcodes by key and in free text (P10)', function (): void {
+    $clean = RedactSensitiveData::redactArray(['otp' => '483920', 'login' => ['otp_code' => '111222', 'sms_otp' => '9'], 'order' => 'TMB-1']);
+
+    expect($clean)->toBe(['otp' => '[redacted]', 'login' => ['otp_code' => '[redacted]', 'sms_otp' => '[redacted]'], 'order' => 'TMB-1'])
+        ->and(RedactSensitiveData::scrubText('{"otp":"483920"} otp=483920'))->toBe('{"otp":"[redacted]"} otp=[redacted]');
+});
