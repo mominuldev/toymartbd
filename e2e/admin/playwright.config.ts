@@ -13,7 +13,9 @@ export default defineConfig({
         baseURL: 'http://localhost:8124',
         trace: 'retain-on-failure',
     },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    // Locally: the Google Chrome installed on this machine (owner rule 2026-11-14), never a
+    // separately downloaded browser. CI keeps the Chromium its workflow installs.
+    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], channel: process.env.CI ? undefined : 'chrome' } }],
     webServer: {
         command: 'sh ./serve.sh',
         url: 'http://localhost:8124/up',

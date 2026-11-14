@@ -44,6 +44,7 @@ const owner: Me = {
     locale: null,
     roles: ['super_admin'],
     permissions: ['dashboard.view', 'orders.view', 'orders.update', 'shipments.view', 'shipments.book', 'shipments.cancel', 'shipments.manage_rates', 'settings.manage_integrations', 'customers.view_pii', 'settings.view'],
+    two_factor: { enabled: true, required: true },
 };
 /** Rates without credentials. Since 2026-11-13 a manager holds both; this is a custom role's view. */
 const ratesOnly: Me = { ...owner, roles: ['rates_only'], permissions: owner.permissions.filter((p) => p !== 'settings.manage_integrations') };

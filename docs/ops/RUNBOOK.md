@@ -247,7 +247,25 @@ Use **Admin → Settings → Staff & roles** (`/admin/staff`). Only an owner (`s
 - Staff are never deleted: orders and the audit log keep their name. **Reactivate** brings the account back.
 - If they knew any shared key (§9), rotate it.
 
-**Change a role or reset a password:** open their row (**…**). A new temporary password signs their other devices out of the API.
+**Change a role or reset a password:** open their row (**…**). A new temporary password signs them out everywhere: their API tokens are revoked, and their open admin sessions end on the next click.
+
+**Change what a role can do:** Settings → Staff & roles → **Roles & permissions**. Tick or untick, **Save permissions**, confirm. It applies to everyone in that role on their next click and is recorded in the audit log. The arrow under a role's name restores its defaults. A yellow banner warns when a role can both do and approve the same thing (for example, issue and approve refunds). The owner column and the staff-management rows cannot be changed.
+
+### Two-factor sign-in
+
+Owners, and anyone whose role can see money (cost prices, finance, reports, refund approval — the rows with a coin mark in the matrix), must sign in with a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…). Until they set it up, the admin keeps them on the setup page. Anyone else may turn it on from the account menu → **Two-factor sign-in**.
+
+- **Setting it up:** scan the QR code, type the 6-digit code, then **save the 8 recovery codes** (copy or download) somewhere apart from the password. Each recovery code signs in once.
+- **Lost or replaced phone:** they use a recovery code, then make new codes from the account menu. If they have none left, an owner opens their row (**…**) → **Reset two-factor** — only after confirming who is asking, in person or by phone. They set it up again at their next sign-in.
+- **The owner's own phone is lost and there are no recovery codes:** another owner resets it. If there is no other owner, the developer clears it on the server (it is audited only if done through the screen, so note the date here):
+
+```bash
+php artisan tinker --execute '
+  $u = App\Models\User::where("email", "EMAIL")->firstOrFail();
+  $u->forceFill(["two_factor_secret" => null, "two_factor_recovery_codes" => null, "two_factor_confirmed_at" => null, "two_factor_last_used_step" => null])->save();'
+```
+
+- Two-factor cannot be switched off in production: `TWO_FACTOR_ENFORCE` is ignored there.
 
 **What the screen refuses, on purpose:** changing your own role, status or password, and anything that would leave the shop with no active owner. Make a second owner first. If the last owner is locked out, the developer can run, on the server:
 
@@ -257,7 +275,7 @@ php artisan tinker --execute '
   $u->forceFill(["is_active" => true, "password" => "A-LONG-TEMPORARY-PASSWORD"])->save(); $u->syncRoles(["super_admin"]);'
 ```
 
-Not built yet: two-factor sign-in, per-staff branches, a list of active sessions, shifts, a staff self-service "change my password", and editing what a role can do (roles are defined in code; a change goes through the developer).
+Not built yet: per-staff branches, a list of active sessions, shifts, custom roles beyond the seven, and a staff self-service "change my password".
 
 ---|---|
 | `manager` | Runs the day, everything except staff and roles |

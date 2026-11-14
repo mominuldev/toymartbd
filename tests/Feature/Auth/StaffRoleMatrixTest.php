@@ -57,7 +57,7 @@ it('lists staff as a cursor-paginated collection with no PII beyond name, email,
         ->assertJsonPath('meta.per_page', 25)
         ->assertJsonPath('data.0.roles', ['viewer']);
 
-    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'email', 'is_active', 'roles', 'last_login_at', 'created_at', 'is_self'])
+    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'email', 'is_active', 'roles', 'last_login_at', 'created_at', 'is_self', 'two_factor_enabled', 'two_factor_required'])
         ->and($response->json('meta.next_cursor'))->not->toBeNull();
 
     $next = $this->getJson('/api/v1/admin/staff?cursor='.$response->json('meta.next_cursor'))->assertOk();

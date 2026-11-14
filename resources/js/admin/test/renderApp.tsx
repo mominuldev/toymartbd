@@ -50,4 +50,5 @@ export const viewer: Me = {
     locale: null,
     roles: ['viewer'],
     permissions: ['dashboard.view', 'orders.view', 'catalog.view'],
+    two_factor: { enabled: false, required: false },
 };

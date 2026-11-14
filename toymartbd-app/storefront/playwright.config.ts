@@ -43,7 +43,9 @@ export default defineConfig({
         // clears this to test the banner itself.
         storageState: { cookies: [CONSENT_REJECTED_COOKIE], origins: [] },
     },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    // Locally: the Google Chrome installed on this machine (owner rule 2026-11-14), never a
+    // separately downloaded browser. CI keeps the Chromium its workflow installs.
+    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], channel: process.env.CI ? undefined : 'chrome' } }],
     webServer: [
         {
             command: 'node e2e/mock-api.mjs',

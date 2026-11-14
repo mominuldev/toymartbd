@@ -46,7 +46,7 @@ it('signs in, returns the /me body and stamps last_login_at', function (): void 
     $response = $this->postJson(ADMIN_LOGIN_URI, ['email' => 'rahim@toymartbd.test', 'password' => 'correct-horse-battery']);
 
     $response->assertOk()
-        ->assertExactJsonStructure(['id', 'name', 'email', 'locale', 'roles', 'permissions'])
+        ->assertExactJsonStructure(['id', 'name', 'email', 'locale', 'roles', 'permissions', 'two_factor' => ['enabled', 'required']])
         ->assertJsonPath('id', $user->id)
         ->assertJsonPath('email', 'rahim@toymartbd.test')
         ->assertJsonPath('locale', null)
@@ -150,5 +150,6 @@ it('keeps the admin routes behind auth:sanctum and the active-staff check', func
     $middleware = Illuminate\Support\Facades\Route::getRoutes()->getByName($name)?->gatherMiddleware() ?? [];
 
     expect($middleware)->toContain('auth:sanctum')
-        ->toContain(App\Http\Middleware\EnsureActiveStaffSession::class);
+        ->toContain(App\Http\Middleware\EnsureActiveStaffSession::class)
+        ->toContain(App\Http\Middleware\EnsureTwoFactorEnrolled::class);
 })->with(['api.v1.admin.auth.logout', 'api.v1.admin.auth.me', 'api.v1.admin.staff.index']);

@@ -202,12 +202,18 @@ it('lists every role with its permissions and active holder count, in enum order
 
     $response = $this->getJson(STAFF_URL.'/roles')->assertOk();
 
-    expect(array_column($response->json('data'), 'key'))->toBe(Role::values())
-        ->and($response->json('data.0'))->toMatchArray(['key' => 'super_admin', 'users_count' => 1, 'bypasses_all' => true])
-        ->and($response->json('data.2.key'))->toBe('order_operator')
-        ->and($response->json('data.2.users_count'))->toBe(2)
-        ->and($response->json('data.2.permissions'))->toBe(Role::OrderOperator->permissionNames())
-        ->and($response->json('data.6.users_count'))->toBe(0);
+    expect(array_column($response->json('roles'), 'key'))->toBe(Role::values())
+        ->and($response->json('roles.0'))->toMatchArray(['key' => 'super_admin', 'users_count' => 1, 'bypasses_all' => true, 'editable' => false])
+        ->and($response->json('roles.2.key'))->toBe('order_operator')
+        ->and($response->json('roles.2.users_count'))->toBe(2)
+        ->and($response->json('roles.2.permissions'))->toBe(Role::OrderOperator->permissionNames())
+        ->and($response->json('roles.2.default_permissions'))->toBe(Role::OrderOperator->permissionNames())
+        ->and($response->json('roles.2.warnings'))->toBe([])
+        ->and($response->json('roles.6.users_count'))->toBe(0)
+        ->and(array_column($response->json('permissions'), 'key'))->toBe(Permission::values())
+        ->and(collect($response->json('permissions'))->where('owner_only', true)->pluck('key')->all())->toBe(['staff.manage', 'roles.manage'])
+        ->and(collect($response->json('permissions'))->firstWhere('key', 'finance.view')['reveals_money'])->toBeTrue()
+        ->and(collect($response->json('permissions'))->firstWhere('key', 'orders.view')['reveals_money'])->toBeFalse();
 });
 
 it('404s an unknown staff id', function (): void {

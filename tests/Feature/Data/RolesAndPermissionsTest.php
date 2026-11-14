@@ -129,14 +129,14 @@ it('is idempotent', function (): void {
         ->and($first['role_has_permissions'])->toBe($expectedPivot);
 });
 
-it('removes stale permissions and restores drifted roles on reseed', function (): void {
+it('removes stale permissions on reseed but keeps the owner\'s role edits (roles editable since 2026-11-14)', function (): void {
     Permission::findOrCreate('legacy.thing', 'web');
     Role::findByName(RoleName::Viewer->value, 'web')->givePermissionTo('finance.view');
 
     $this->seed(RolesAndPermissionsSeeder::class);
 
     expect(Permission::query()->where('name', 'legacy.thing')->exists())->toBeFalse()
-        ->and(Role::findByName(RoleName::Viewer->value, 'web')->hasPermissionTo('finance.view'))->toBeFalse();
+        ->and(Role::findByName(RoleName::Viewer->value, 'web')->hasPermissionTo('finance.view'))->toBeTrue();
 });
 
 it('is called from DatabaseSeeder', function (): void {

@@ -67,6 +67,8 @@ These encode decisions already argued in the docs. Changing one requires updatin
 ### Security
 19. **Verify a webhook signature before parsing or writing anything.** Then re-query the provider for the authoritative amount and status. Never trust a webhook body about money.
 20. Gateway credentials use the `encrypted` cast. Never log a credential, a full phone number, or a full address.
+20a. **Staff who can see money sign in with two-factor** (owner decision, 2026-11-14): owners and anyone holding a `Permission::revealsMoney()` permission. Authenticator-app TOTP with single-use recovery codes — never SMS. Enforcement is forced on in production (`ProductionSafety`); only test suites switch it off.
+20b. **Roles are editable in the admin** (owner decision, 2026-11-14). At runtime `role_has_permissions` is authoritative; `Role::permissions()` is each role's default, which the seeder applies only to roles and permissions it creates. The owner role and the owner-only permissions (`staff.manage`, `roles.manage`) are never editable. Every change is audited.
 21. Every model has a Policy. Every admin endpoint has a role test asserting 403 for unauthorised roles.
 22. Order tracking requires order number **plus** phone digits — never order number alone.
 23. **Risk scoring never auto-cancels an order.** It flags for human verification. A false positive loses a real customer.
@@ -149,7 +151,11 @@ npm run api-types:generate      # regenerate types from the API's OpenAPI docume
 #   php artisan serve   → http://localhost:8000/admin
 #   npm run dev         → Vite HMR for the admin bundle
 
-# E2E — from the repo root (Playwright; Chromium via `npx playwright install chromium`)
+# E2E and UI checks — from the repo root, always through the Playwright CLI.
+# Locally Playwright drives the Google Chrome installed on this machine (channel 'chrome' in
+# every playwright.config.ts) — never a separately downloaded Chromium, never another browser
+# tool. CI alone uses `npx playwright install chromium`. Screenshots for a Figma check: run a
+# spec with SHOTS_DIR=<dir> (e2e/admin/staff.spec.ts shows the pattern).
 npm run build && npm run test:e2e:admin   # real Laravel app on a throwaway SQLite DB
 npm run test:e2e:storefront               # storefront against a mock API, JS disabled
 

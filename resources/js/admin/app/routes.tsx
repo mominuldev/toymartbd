@@ -6,6 +6,7 @@ import { ComingSoon } from './ComingSoon';
 import { RouteError } from './RouteError';
 import { BlogPostEditorPage, BlogPostsPage, BlogTermsPage } from '@/features/content/blog';
 import { RequireAuth } from '@/features/auth/RequireAuth';
+import { TwoFactorPage } from '@/features/auth/TwoFactorPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { sectionPaths } from '@/components/shell/nav';
 import { CatalogLayout } from '@/features/catalog/CatalogLayout';
@@ -82,6 +83,9 @@ export const routes: RouteObject[] = [
             // Homepage builder (Figma B · 26 Page builder 241:44102): full height beside the sidebar
             // rail, no topbar, so it sits outside the Shell. Static, so it wins over `store/*`.
             { path: '/store/home', element: <HomeBuilderPage /> },
+            // Two-factor sign-in (owner decision 2026-11-14; no frame — the sign-in frame B · 00).
+            // Outside the Shell: someone who must enrol is held here before using the admin.
+            { path: '/account/two-factor', element: <TwoFactorPage /> },
             {
                 path: '/',
                 element: <Shell />,

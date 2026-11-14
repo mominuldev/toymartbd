@@ -22,6 +22,7 @@ use App\Domain\Payment\Services\OnlineGateways;
 use App\Domain\Risk\Services\RiskSettings;
 use App\Domain\Seo\Services\RobotsTxt;
 use App\Domain\Seo\Services\SitemapBuilder;
+use App\Domain\Staff\Services\TwoFactor;
 use App\Models\Enums\Role;
 use App\Models\Setting;
 use App\Models\SystemHeartbeat;
@@ -127,6 +128,7 @@ final class LaunchChecks
             'content.legal_display' => fn (): CheckResult => CheckResult::manual('content.legal_display', 'Trade licence and contact details displayed as required', 'F7', 'Check the storefront footer legal bar and the contact page show the trade licence, BIN, address and hotline. Confirm with the owner\'s accountant/lawyer what must be displayed.'),
             'staff.super_admin' => $this->superAdmin(...),
             'staff.roles' => $this->staffRoles(...),
+            'staff.two_factor' => $this->staffTwoFactor(...),
             'data.no_demo' => $this->noDemoData(...),
             'staff.trained' => fn (): CheckResult => CheckResult::manual('staff.trained', 'Staff trained on their screens', 'G4', 'Each staff member completes one real task in their role (confirm an order, book a courier, receive stock) with the owner watching.'),
             'owner.runbook' => fn (): CheckResult => CheckResult::manual('owner.runbook', 'Owner has the runbook', 'G5', 'The owner has read docs/ops/RUNBOOK.md and has the password manager entries it names.'),
@@ -732,12 +734,34 @@ final class LaunchChecks
         $others = $staff->filter(static fn (User $u): bool => $u->roles->isNotEmpty() && ! $u->hasRole(Role::SuperAdmin->value))->count();
 
         if ($roleless > 0) {
-            return CheckResult::fail('staff.roles', 'Staff accounts have roles', 'G2', "{$roleless} active staff account(s) have no role (they can sign in and see nothing).", 'Give each a role or deactivate it (docs/ops/RUNBOOK.md "Add or remove a staff member" — there is no staff screen yet).');
+            return CheckResult::fail('staff.roles', 'Staff accounts have roles', 'G2', "{$roleless} active staff account(s) have no role (they can sign in and see nothing).", 'Give each a role or deactivate it (Admin → Settings → Staff & roles; docs/ops/RUNBOOK.md §10).');
         }
 
         return $others >= 1
             ? CheckResult::pass('staff.roles', 'Staff accounts have roles', 'G2', "{$others} staff account(s) besides the super admin(s), each with a role.")
             : CheckResult::warn('staff.roles', 'Staff accounts have roles', 'G2', 'Only super admin accounts exist: day-to-day staff would work with full rights.', 'Create staff accounts with the narrowest role that fits (docs/ops/RUNBOOK.md "Add or remove a staff member").');
+    }
+
+    /**
+     * Owner decision 2026-11-14: anyone who can see money signs in with two-factor. The API
+     * holds them at the setup screen until they do, so a missing enrolment is a WARN (the
+     * person is locked out of money screens, not exposed); enforcement off is a FAIL.
+     */
+    private function staffTwoFactor(): CheckResult
+    {
+        $title = 'Staff who can see money use two-factor sign-in';
+        if (config('auth.two_factor.enforce') !== true) {
+            return CheckResult::fail('staff.two_factor', $title, 'G2', 'Two-factor enforcement is off (TWO_FACTOR_ENFORCE=false).', 'Remove TWO_FACTOR_ENFORCE from the environment; it is forced on in production anyway.');
+        }
+
+        $twoFactor = app(TwoFactor::class);
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $staff */
+        $staff = $this->staff()->with(['roles.permissions', 'permissions'])->get();
+        $missing = $staff->filter(static fn (User $u): bool => ! $u->hasTwoFactor() && $twoFactor->seesMoney($u))->count();
+
+        return $missing === 0
+            ? CheckResult::pass('staff.two_factor', $title, 'G2', 'Every active staff member who can see money has two-factor on.')
+            : CheckResult::warn('staff.two_factor', $title, 'G2', "{$missing} active staff member(s) who can see money have not set up two-factor yet; they are held at the setup screen until they do.", 'Ask each to sign in and set it up (docs/ops/RUNBOOK.md §10), or narrow their role.');
     }
 
     private function noDemoData(): CheckResult

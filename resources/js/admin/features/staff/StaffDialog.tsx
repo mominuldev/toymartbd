@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
-import { roleKeys, roleOf, useAddStaff, useResetStaffPassword, useSetStaffActive, useUpdateStaff, type RoleKey, type StaffMember } from './api';
+import { roleKeys, roleOf, useAddStaff, useResetStaffPassword, useResetStaffTwoFactor, useSetStaffActive, useUpdateStaff, type RoleKey, type StaffMember } from './api';
+import { TwoFactorChip } from './PeopleTab';
 import { useDialog } from './parts';
 
 type FieldName = 'name' | 'email' | 'role' | 'password';
@@ -54,6 +55,7 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
     const update = useUpdateStaff();
     const reset = useResetStaffPassword();
     const setActive = useSetStaffActive();
+    const resetTwoFactor = useResetStaffTwoFactor();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -63,6 +65,7 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
     const [errors, setErrors] = useState<Errors>({});
     const [passwordError, setPasswordError] = useState<string | undefined>();
     const [confirming, setConfirming] = useState(false);
+    const [confirmingReset, setConfirmingReset] = useState(false);
 
     const ref = useDialog(open, () => {
         setName(member?.name ?? '');
@@ -73,6 +76,8 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
         setErrors({});
         setPasswordError(undefined);
         setConfirming(false);
+        setConfirmingReset(false);
+        resetTwoFactor.reset();
         add.reset();
         update.reset();
         reset.reset();
@@ -158,6 +163,21 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
                 },
             },
         );
+    }
+
+    function resetSecondFactor() {
+        if (member === null) return;
+        resetTwoFactor.mutate(member.id, {
+            onSuccess: (saved) => {
+                setConfirmingReset(false);
+                notify(t('staff.twoFactor.resetDone', { name: saved.name }));
+                onClose();
+            },
+            onError: (error) => {
+                setConfirmingReset(false);
+                failed(error);
+            },
+        });
     }
 
     const adding = member === null;
@@ -265,6 +285,23 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
                         <div className="flex flex-wrap items-center gap-3 border-t border-line-default px-6 py-4">
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <span className="flex items-center gap-2">
+                                    <h3 className="t-admin-body-strong text-fg-primary">{t('staff.twoFactor.section')}</h3>
+                                    <TwoFactorChip member={member} />
+                                </span>
+                                <p className="t-admin-caption text-fg-secondary">
+                                    {t(member.two_factor_enabled ? 'staff.twoFactor.resetBody' : member.two_factor_required ? 'staff.twoFactor.missing' : 'staff.twoFactor.optional')}
+                                </p>
+                            </div>
+                            {member.two_factor_enabled && (
+                                <Button variant="outline" onClick={() => setConfirmingReset(true)} disabled={resetTwoFactor.isPending}>
+                                    {t('staff.twoFactor.reset')}
+                                </Button>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 border-t border-line-default px-6 py-4">
+                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                <span className="flex items-center gap-2">
                                     <h3 className="t-admin-body-strong text-fg-primary">{t('staff.status.section')}</h3>
                                     <StatusChip label={t(member.is_active ? 'staff.status.active' : 'staff.status.inactive')} tone={member.is_active ? 'success' : 'neutral'} />
                                 </span>
@@ -302,6 +339,17 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
                     pending={setActive.isPending}
                     onConfirm={() => changeStatus(false)}
                     onClose={() => setConfirming(false)}
+                />
+            )}
+            {member && (
+                <ConfirmDialog
+                    open={confirmingReset}
+                    title={t('staff.twoFactor.resetTitle', { name: member.name })}
+                    body={t('staff.twoFactor.resetConfirm')}
+                    confirmLabel={t('staff.twoFactor.reset')}
+                    pending={resetTwoFactor.isPending}
+                    onConfirm={resetSecondFactor}
+                    onClose={() => setConfirmingReset(false)}
                 />
             )}
         </dialog>

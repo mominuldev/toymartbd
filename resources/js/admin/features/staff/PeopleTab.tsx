@@ -48,6 +48,7 @@ export function PeopleTab() {
                         <Th>{t('staff.col.person')}</Th>
                         <Th>{t('staff.col.role')}</Th>
                         <Th>{t('staff.col.status')}</Th>
+                        <Th>{t('staff.col.twoFactor')}</Th>
                         <Th>{t('staff.col.lastActive')}</Th>
                         {manage && (
                             <th scope="col" className={dataTable.th}>
@@ -80,6 +81,10 @@ export function PeopleTab() {
                                 <td className={cell}>
                                     <StatusChip label={t(member.is_active ? 'staff.status.active' : 'staff.status.inactive')} tone={member.is_active ? 'success' : 'neutral'} />
                                 </td>
+                                <td className={cell}>
+                                    <CellLabel text={t('staff.col.twoFactor')} />
+                                    <TwoFactorChip member={member} />
+                                </td>
                                 <td className={`${cell} t-admin-caption text-fg-secondary`}>
                                     <CellLabel text={t('staff.col.lastActive')} />
                                     {member.last_login_at ? <time dateTime={member.last_login_at}>{timeAgo(member.last_login_at, locale)}</time> : t('staff.never')}
@@ -105,5 +110,22 @@ export function PeopleTab() {
             )}
             <StaffDialog open={editing !== null} member={editing} onClose={() => setEditing(null)} />
         </div>
+    );
+}
+
+/**
+ * The B · 35 Two-factor column: On, or Off — flagged when their role can see money, because
+ * they will be held at the setup screen on their next sign-in.
+ */
+export function TwoFactorChip({ member }: { member: StaffMember }) {
+    const { t } = useI18n();
+    if (member.two_factor_enabled) return <StatusChip label={t('staff.twoFactor.on')} tone="success" />;
+    return member.two_factor_required ? (
+        <span title={t('staff.twoFactor.missing')}>
+            <StatusChip label={t('staff.twoFactor.off')} tone="anomaly" />
+            <span className="sr-only">{t('staff.twoFactor.missing')}</span>
+        </span>
+    ) : (
+        <StatusChip label={t('staff.twoFactor.off')} tone="neutral" />
     );
 }
