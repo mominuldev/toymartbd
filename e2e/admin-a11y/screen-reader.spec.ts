@@ -323,9 +323,11 @@ test('orders board → order detail: filters, table, the three tracks, and the h
     await expect(page.getByRole('button', { name: /^All \d+/ })).toHaveAttribute('aria-pressed', 'false');
     await settle(page);
 
+    // Read the number and its target in one step: the list may still re-render after the
+    // filter, and a separate read-then-click can land on a different row.
     const link = page.getByRole('table').getByRole('link', { name: /^TMB-/ }).first();
-    const number = (await link.innerText()).trim();
-    await link.click();
+    const [number, href] = await link.evaluate((a) => [(a.textContent ?? '').trim(), a.getAttribute('href') ?? '']);
+    await page.goto(href.startsWith('/admin') ? href : `/admin${href}`);
     await settle(page);
     await expectShell(page, number);
     await expectHeadingOutline(page);

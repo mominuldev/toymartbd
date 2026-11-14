@@ -212,3 +212,13 @@ No other WCAG A/AA violation on any Phase 10 screen, dialog or two-factor state,
 **Needs the owner**
 - Run `SCREEN-READER-CHECKLIST.md` with VoiceOver (Mac, Safari) and TalkBack (Android, Chrome), in both languages. SR-2 and SR-6 especially need a listening check.
 - Whether "Admin a11y" should be a **required** status check for merging to `main`, which is a branch-protection setting.
+
+### P10-10 (open, design) — the roles matrix save bar is ~420 Tab presses away
+
+Found by the CI "Admin a11y" job on PR #32 (2026-11-15): after the POS permissions, the editable
+roles matrix has ≈420 checkboxes before the sticky "Unsaved changes" bar in tab order. Save and
+Discard are reachable by keyboard but only after tabbing through every checkbox. Options for the
+owner/design: move the save bar before the matrix in DOM order (it stays sticky at the bottom
+visually — check WCAG 1.3.2 meaningful sequence), add a "Save permissions" shortcut, or make each
+role column a single tab stop with arrow-key navigation inside (grid pattern). The keyboard test
+now allows 900 presses so it measures reachability, not this design question.
