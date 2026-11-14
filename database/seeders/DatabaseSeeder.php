@@ -38,6 +38,8 @@ class DatabaseSeeder extends Seeder
             $this->call(BrandDemoSeeder::class);
             $this->call(DemoCatalogSeeder::class);
             $this->call(DemoInventorySeeder::class);
+            // Demo inbox conversations (local/testing only; the admin E2E thread tests use them).
+            $this->call(DemoInboxSeeder::class);
 
             if ((bool) config('demo.transactions')) {
                 $this->call(DemoDataSeeder::class);

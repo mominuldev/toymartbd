@@ -35,3 +35,14 @@ Route::post('/payments/sslcommerz/ipn', [SslcommerzWebhookController::class, 'ip
 Route::post('/couriers/{provider}', App\Http\Controllers\Api\V1\Webhooks\CourierWebhookController::class)
     ->where('provider', '[a-z0-9_\-]{1,24}')
     ->name('couriers');
+
+// Unified inbox (P10): Meta's GET subscription handshake (hub.challenge) and signed POST
+// events for WhatsApp Cloud API and Messenger. X-Hub-Signature-256 is verified on the raw
+// bytes before anything is parsed or written (401); processing is a queued job. UNVERIFIED
+// channels: no WhatsApp Business account or Facebook Page exists yet.
+Route::get('/inbox/{channel}', [App\Http\Controllers\Api\V1\Webhooks\InboxWebhookController::class, 'verify'])
+    ->where('channel', 'whatsapp|messenger')
+    ->name('inbox.verify');
+Route::post('/inbox/{channel}', [App\Http\Controllers\Api\V1\Webhooks\InboxWebhookController::class, 'receive'])
+    ->where('channel', 'whatsapp|messenger')
+    ->name('inbox.receive');

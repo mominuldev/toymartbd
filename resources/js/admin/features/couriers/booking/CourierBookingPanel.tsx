@@ -166,6 +166,7 @@ function SinglePanel({ orderId, titleId, onClose, onDone }: { orderId: number; t
     const [error, setError] = useState<string | null>(null);
     const [booked, setBooked] = useState<Shipment | null>(null);
     const book = useBookShipment(orderId);
+    const doneRef = useRef<HTMLParagraphElement>(null);
 
     const typed = /^\d+$/.test(weight.trim()) ? Number(weight.trim()) : null;
     const [variantWeight, setVariantWeight] = useState<number | null>(null);
@@ -213,99 +214,116 @@ function SinglePanel({ orderId, titleId, onClose, onDone }: { orderId: number; t
 
     const sub = order?.found ? [order.recipient_name, order.district ? (locale === 'bn' ? order.district.name_bn : order.district.name) : null, order.item_count !== undefined ? t('couriers.book.items', { count: order.item_count }) : null].filter(Boolean).join(' · ') : undefined;
 
+    // The submit button unmounts with the form: the result takes focus so it is not dropped on <body>.
+    useEffect(() => {
+        if (booked) doneRef.current?.focus();
+    }, [booked]);
+
+    // One live region that stays mounted across the form → result swap: a region that mounts
+    // together with its text is often not announced (VoiceOver, TalkBack).
+    const sentence = booked ? `${t('couriers.book.requested', { name: provider?.name ?? '' })} ${t('couriers.book.requestedBody', { number: booked.number })}` : '';
+    const status = (
+        <p role="status" className="sr-only">
+            {book.isPending ? t('couriers.book.sending', { name: provider?.name ?? '' }) : sentence}
+        </p>
+    );
+
     if (booked) {
         return (
-            <div className="flex h-full flex-col">
-                <Header titleId={titleId} title={t('couriers.book.title', { number: order?.number ?? '' })} sub={sub} onClose={onClose} />
-                <div className="flex flex-1 flex-col items-start gap-3 overflow-y-auto p-5" aria-live="polite">
-                    <CheckCircleIcon size={24} aria-hidden className="text-feedback-success" />
-                    <p className="t-admin-section text-fg-primary">{t('couriers.book.requested', { name: provider?.name ?? '' })}</p>
-                    <p className="t-admin-body text-fg-secondary">{t('couriers.book.requestedBody', { number: booked.number })}</p>
-                    <ShipmentStateChip status={booked.status} />
+            <>
+                {status}
+                <div className="flex h-full flex-col">
+                    <Header titleId={titleId} title={t('couriers.book.title', { number: order?.number ?? '' })} sub={sub} onClose={onClose} />
+                    <div className="flex flex-1 flex-col items-start gap-3 overflow-y-auto p-5">
+                        <CheckCircleIcon size={24} aria-hidden className="text-feedback-success" />
+                        <p ref={doneRef} tabIndex={-1} className="t-admin-section text-fg-primary outline-none">
+                            {t('couriers.book.requested', { name: provider?.name ?? '' })}
+                        </p>
+                        <p className="t-admin-body text-fg-secondary">{t('couriers.book.requestedBody', { number: booked.number })}</p>
+                        <ShipmentStateChip status={booked.status} />
+                    </div>
+                    <Footer>
+                        <span className="flex-1" />
+                        <Button onClick={onClose}>{t('couriers.close')}</Button>
+                    </Footer>
                 </div>
-                <Footer>
-                    <span className="flex-1" />
-                    <Button onClick={onClose}>{t('couriers.close')}</Button>
-                </Footer>
-            </div>
+            </>
         );
     }
 
     return (
-        <form onSubmit={submit} noValidate className="flex h-full flex-col" aria-busy={book.isPending || undefined}>
-            <Header titleId={titleId} title={t('couriers.book.title', { number: order?.number ?? '' })} sub={sub} onClose={onClose} />
-            <div className="flex-1 overflow-y-auto">
-                {quote.isError && <p className="m-5 t-admin-body text-fg-primary">{quote.error instanceof ApiError ? quote.error.problem.title : t('error.title')}</p>}
-                {!data && !quote.isError && <p className="m-5 t-admin-body text-fg-tertiary" aria-busy="true">{t('common.loading')}</p>}
-                {data && order && !order.found && <p className="m-5 t-admin-body text-fg-primary">{t('couriers.book.notFound')}</p>}
-                {data && order?.found && (
-                    <>
-                        {provider && provider.trust !== 'verified' && <UnverifiedBanner name={provider.name} />}
-                        <fieldset className="flex flex-col gap-2 px-5 pt-5 pb-2">
-                            <legend className="mb-2 t-admin-body-strong text-fg-primary">{t('couriers.book.courier')}</legend>
-                            {data.providers.map((p) => (
-                                <ProviderRadio key={p.id} name={radioName} provider={p} checked={p.id === provider?.id} disabled={!p.is_active || p.trust === 'not_connected'} onSelect={() => setProviderId(p.id)} />
-                            ))}
-                        </fieldset>
+        <>
+            {status}
+            <form onSubmit={submit} noValidate className="flex h-full flex-col" aria-busy={book.isPending || undefined}>
+                <Header titleId={titleId} title={t('couriers.book.title', { number: order?.number ?? '' })} sub={sub} onClose={onClose} />
+                <div className="flex-1 overflow-y-auto">
+                    {quote.isError && <p className="m-5 t-admin-body text-fg-primary">{quote.error instanceof ApiError ? quote.error.problem.title : t('error.title')}</p>}
+                    {!data && !quote.isError && <p className="m-5 t-admin-body text-fg-tertiary" aria-busy="true">{t('common.loading')}</p>}
+                    {data && order && !order.found && <p className="m-5 t-admin-body text-fg-primary">{t('couriers.book.notFound')}</p>}
+                    {data && order?.found && (
+                        <>
+                            {provider && provider.trust !== 'verified' && <UnverifiedBanner name={provider.name} />}
+                            <fieldset className="flex flex-col gap-2 px-5 pt-5 pb-2">
+                                <legend className="mb-2 t-admin-body-strong text-fg-primary">{t('couriers.book.courier')}</legend>
+                                {data.providers.map((p) => (
+                                    <ProviderRadio key={p.id} name={radioName} provider={p} checked={p.id === provider?.id} disabled={!p.is_active || p.trust === 'not_connected'} onSelect={() => setProviderId(p.id)} />
+                                ))}
+                            </fieldset>
 
-                        <div className="flex flex-col gap-4 px-5 pt-4 pb-2">
-                            <div className="grid grid-cols-2 gap-3">
-                                <Field label={t('couriers.book.weight')} hint={t('couriers.book.weightHint')}>
-                                    {({ id, describedBy }) => (
-                                        <div className="relative">
-                                            <input id={id} inputMode="numeric" aria-describedby={describedBy} value={weight} onChange={(e) => setWeight(e.target.value)} className={`h-10 pe-8 tabular ${inputClass}`} />
-                                            <span aria-hidden className="pointer-events-none absolute inset-y-0 end-3 flex items-center t-admin-caption text-fg-tertiary">{GRAM}</span>
-                                        </div>
-                                    )}
+                            <div className="flex flex-col gap-4 px-5 pt-4 pb-2">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field label={t('couriers.book.weight')} hint={t('couriers.book.weightHint')}>
+                                        {({ id, describedBy }) => (
+                                            <div className="relative">
+                                                <input id={id} inputMode="numeric" aria-describedby={describedBy} value={weight} onChange={(e) => setWeight(e.target.value)} className={`h-10 pe-8 tabular ${inputClass}`} />
+                                                <span aria-hidden className="pointer-events-none absolute inset-y-0 end-3 flex items-center t-admin-caption text-fg-tertiary">{GRAM}</span>
+                                            </div>
+                                        )}
+                                    </Field>
+                                    <ReadOnly label={t('couriers.book.items.label')} hint={t('couriers.book.itemsHint')} value={String(order.item_count ?? 0)} />
+                                    <ReadOnly label={t('couriers.book.declared')} hint={t('couriers.book.declaredHint')} value={<Taka amount={order.declared_value ?? '0'} />} />
+                                    <ReadOnly label={t('couriers.book.cod')} hint={t('couriers.book.codHint')} value={<Taka amount={order.cod_amount ?? '0'} />} />
+                                </div>
+
+                                {q && q.location_status !== 'not_required' && provider && (
+                                    <AreaBlock provider={provider} quote={q} locationId={locationId} onChange={setLocationId} />
+                                )}
+
+                                <Field label={t('couriers.book.note')} hint={t('couriers.book.noteHint')} optional>
+                                    {({ id, describedBy }) => <input id={id} maxLength={120} aria-describedby={describedBy} value={note} onChange={(e) => setNote(e.target.value)} className={`h-10 ${inputClass}`} />}
                                 </Field>
-                                <ReadOnly label={t('couriers.book.items.label')} hint={t('couriers.book.itemsHint')} value={String(order.item_count ?? 0)} />
-                                <ReadOnly label={t('couriers.book.declared')} hint={t('couriers.book.declaredHint')} value={<Taka amount={order.declared_value ?? '0'} />} />
-                                <ReadOnly label={t('couriers.book.cod')} hint={t('couriers.book.codHint')} value={<Taka amount={order.cod_amount ?? '0'} />} />
                             </div>
 
-                            {q && q.location_status !== 'not_required' && provider && (
-                                <AreaBlock provider={provider} quote={q} locationId={locationId} onChange={setLocationId} />
-                            )}
-
-                            <Field label={t('couriers.book.note')} hint={t('couriers.book.noteHint')} optional>
-                                {({ id, describedBy }) => <input id={id} maxLength={120} aria-describedby={describedBy} value={note} onChange={(e) => setNote(e.target.value)} className={`h-10 ${inputClass}`} />}
-                            </Field>
-                        </div>
-
-                        <div className="px-5 pt-2 pb-5">
-                            <ChargePreview estimate={estimate} provider={provider} codAmount={order.cod_amount ?? '0'} loading={loading} zone={order.zone ?? null} />
-                        </div>
-                    </>
-                )}
-            </div>
-            <Footer>
-                <Button variant="ghost" onClick={onClose}>
-                    {t('common.cancel')}
-                </Button>
-                <span className="flex-1" />
-                <div className="flex flex-col items-end gap-1">
-                    {(blocked || error) && (
-                        <p className="flex max-w-72 items-start gap-1 t-admin-caption text-fg-primary" role="alert">
-                            <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
-                            {error ?? t(blocked!)}
-                        </p>
+                            <div className="px-5 pt-2 pb-5">
+                                <ChargePreview estimate={estimate} provider={provider} codAmount={order.cod_amount ?? '0'} loading={loading} zone={order.zone ?? null} />
+                            </div>
+                        </>
                     )}
-                    <Button type="submit" size="lg" disabled={!data || Boolean(blocked) || book.isPending || loading}>
-                        <TruckIcon size={20} aria-hidden />
-                        {book.isPending
-                            ? t('couriers.book.booking')
-                            : estimate && provider
-                              ? t('couriers.book.submitWithCost', { name: provider.name, amount: takaText(estimate.total_if_delivered) })
-                              : t('couriers.book.submit', { name: provider?.name ?? '' })}
-                    </Button>
                 </div>
-            </Footer>
-            {book.isPending && (
-                <p className="sr-only" aria-live="polite">
-                    {t('couriers.book.sending', { name: provider?.name ?? '' })}
-                </p>
-            )}
-        </form>
+                <Footer>
+                    <Button variant="ghost" onClick={onClose}>
+                        {t('common.cancel')}
+                    </Button>
+                    <span className="flex-1" />
+                    <div className="flex flex-col items-end gap-1">
+                        {(blocked || error) && (
+                            <p className="flex max-w-72 items-start gap-1 t-admin-caption text-fg-primary" role="alert">
+                                <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
+                                {error ?? t(blocked!)}
+                            </p>
+                        )}
+                        <Button type="submit" size="lg" disabled={!data || Boolean(blocked) || book.isPending || loading}>
+                            <TruckIcon size={20} aria-hidden />
+                            {book.isPending
+                                ? t('couriers.book.booking')
+                                : estimate && provider
+                                  ? t('couriers.book.submitWithCost', { name: provider.name, amount: takaText(estimate.total_if_delivered) })
+                                  : t('couriers.book.submit', { name: provider?.name ?? '' })}
+                        </Button>
+                    </div>
+                </Footer>
+            </form>
+        </>
     );
 }
 

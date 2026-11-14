@@ -18,6 +18,7 @@ import {
     WarningCircleIcon,
     WhatsappLogoIcon,
     type IconProps,
+    ChatsCircleIcon,
 } from '@phosphor-icons/react';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -84,6 +85,7 @@ const attentionKeys: Record<string, MessageKey> = {
 const nameKeys: Record<string, MessageKey> = {
     cod: 'integrationsHub.name.cod',
     sms: 'integrationsHub.name.sms',
+    live_chat: 'integrationsHub.name.live_chat',
 };
 
 const icons: Record<string, ComponentType<IconProps>> = {
@@ -94,6 +96,7 @@ const icons: Record<string, ComponentType<IconProps>> = {
     sms: ChatTextIcon,
     whatsapp: WhatsappLogoIcon,
     messenger: MessengerLogoIcon,
+    live_chat: ChatsCircleIcon,
     meta_capi: TargetIcon,
     ga4: ChartLineUpIcon,
     gtm: TagIcon,

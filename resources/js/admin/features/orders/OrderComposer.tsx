@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import {
     CheckIcon,
     ClipboardTextIcon,
@@ -24,7 +25,7 @@ import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
-import { ApiError } from '@/lib/api';
+import { ApiError, api } from '@/lib/api';
 import type { Order } from './api';
 import {
     PHONE_PATTERN,
@@ -120,7 +121,27 @@ export function OrderComposer({ mode }: { mode: Mode }) {
     const navigate = useNavigate();
     const order = mode.kind === 'edit' ? mode.order : null;
 
-    const [form, setForm] = useState<Form>(() => (order ? formFromOrder(order) : emptyForm));
+    // "Create order from chat" (Inbox) opens /orders/new?source=whatsapp&customer_id=11: the
+    // source preselects, and the customer's phone fills in so the usual phone lookup prefills
+    // the rest. A masked phone (no customers.view_pii) is left for the staff member to type.
+    const [params] = useSearchParams();
+    const sourceParam = params.get('source');
+    const customerParam = Number(params.get('customer_id') ?? '');
+    const [form, setForm] = useState<Form>(() =>
+        order
+            ? formFromOrder(order)
+            : { ...emptyForm, source: staffSources.includes(sourceParam as StaffSource) ? (sourceParam as StaffSource) : emptyForm.source },
+    );
+    const fromChat = useQuery({
+        queryKey: ['orders', 'compose', 'customer', customerParam],
+        queryFn: (): Promise<{ phone: string | null }> => api(`/customers/${customerParam}`),
+        enabled: mode.kind === 'create' && Number.isInteger(customerParam) && customerParam > 0,
+        staleTime: Infinity,
+    });
+    useEffect(() => {
+        const local = fromChat.data?.phone?.replace(/^\+88/, '') ?? '';
+        if (/^01\d{9}$/.test(local)) setForm((f) => (f.phone === '' ? { ...f, phone: local } : f));
+    }, [fromChat.data]);
     const [lines, setLines] = useState<Line[]>(() =>
         order ? order.items.filter((i) => i.quantity > 0 && i.variant_id !== null).map((i) => ({ variant_id: i.variant_id as number, quantity: i.quantity })) : [],
     );
@@ -633,6 +654,7 @@ function ProductsSection({
     const search = useVariantSearch(debounced);
     const listId = useId();
     const results = term.trim().length >= 2 ? (search.data ?? []) : [];
+    const settled = term.trim().length >= 2 && debounced === term && search.isSuccess && !search.isFetching;
     const quoted = new Map((quote?.lines ?? []).map((l) => [l.variant_id, l]));
 
     return (
@@ -650,22 +672,27 @@ function ProductsSection({
             }
         >
             <div className="relative">
+                {/* A search field over a list of Add buttons that Tab reaches — not an ARIA combobox: its
+                    listbox must not hold buttons, and arrow keys never moved through it. The polite
+                    status says how many matched once the search settles. */}
                 <Input
+                    type="search"
                     aria-label={t('orders.compose.search')}
-                    aria-controls={listId}
-                    aria-expanded={results.length > 0}
-                    role="combobox"
+                    aria-controls={term.trim().length >= 2 ? listId : undefined}
                     placeholder={t('orders.compose.search')}
                     leading={<MagnifyingGlassIcon size={16} aria-hidden />}
                     value={term}
                     onChange={(e) => setTerm(e.target.value)}
                     className="bg-subtle"
                 />
+                <p role="status" className="sr-only">
+                    {settled ? (results.length > 0 ? t('orders.compose.searchCount', { count: results.length }) : t('orders.compose.searchEmpty', { term: term.trim() })) : ''}
+                </p>
                 {term.trim().length >= 2 && (
-                    <ul id={listId} role="listbox" className="absolute inset-x-0 top-full z-20 mt-1 max-h-80 overflow-auto rounded-md border border-line-default bg-surface-raised py-1 shadow-e3">
+                    <ul id={listId} aria-label={t('orders.compose.search')} className="absolute inset-x-0 top-full z-20 mt-1 max-h-80 overflow-auto rounded-md border border-line-default bg-surface-raised py-1 shadow-e3">
                         {results.length === 0 && !search.isFetching && <li className="px-3 py-2 t-admin-caption text-fg-secondary">{t('orders.compose.searchEmpty', { term: term.trim() })}</li>}
                         {results.map((v) => (
-                            <li key={v.variant_id} role="option" aria-selected={false}>
+                            <li key={v.variant_id}>
                                 <button
                                     type="button"
                                     aria-label={t('orders.compose.add', { name: v.product_name })}

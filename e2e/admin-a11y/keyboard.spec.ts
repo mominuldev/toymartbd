@@ -114,7 +114,9 @@ test('Phase 10: staff and branch dialogs, and the permission matrix, by keyboard
     expect(await first.isChecked()).toBe(!before);
     await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes to 1 role(s)' })).toHaveCount(1);
     const discard = page.getByRole('region', { name: 'Unsaved changes to 1 role(s)' }).getByRole('button', { name: 'Discard' });
-    await tabTo(page, discard, 400);
+    // The save bar follows the whole matrix in tab order: ~70 permissions × 6 editable roles
+    // (≈420 checkboxes since POS). Reachable, but long — see ACCESSIBILITY-AND-BILINGUAL.md P10-10.
+    await tabTo(page, discard, 900);
     await page.keyboard.press('Tab');
     const save = page.getByRole('button', { name: 'Save permissions' });
     await expect(save).toBeFocused();
@@ -141,8 +143,11 @@ test('Phase 10: staff and branch dialogs, and the permission matrix, by keyboard
     await expect(addBranch).toBeFocused();
     const edit = page.getByRole('button', { name: /^Edit / }).first();
     await tabTo(page, edit);
+    await expect(edit).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // Seen twice in ~8 local runs under heavy load: Enter on a focused Edit opened nothing (not reproduced
+    // in isolation). The message names what had focus, so a CI failure is diagnosable.
+    await expect(page.getByRole('dialog'), `Edit branch dialog did not open; focus on ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 120))}`).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(edit).toBeFocused();
 });

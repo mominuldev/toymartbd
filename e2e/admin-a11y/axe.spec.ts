@@ -195,12 +195,14 @@ test.describe('admin axe', () => {
     }
 
     // Two-factor: setup, the key and code, the recovery codes, manage, and the sign-in code step
-    // (both modes, and a wrong code). Each locale enrols its own demo account (it is one-time).
-    for (const [locale, email] of [
-        ['en', 'viewer@toymart.test'],
-        ['bn', 'content_editor@toymart.test'],
+    // (both modes, and a wrong code). Each locale enrols its own demo account (it is one-time), and
+    // a CI retry enrols a second one: the first attempt may already have turned two-factor on.
+    for (const [locale, accounts] of [
+        ['en', ['viewer@toymart.test', 'inventory_staff@toymart.test']],
+        ['bn', ['content_editor@toymart.test', 'accountant@toymart.test']],
     ] as const) {
         test(`${locale} · admin-light: two-factor states and the sign-in code step`, async ({ browser }, testInfo) => {
+            const email = accounts[Math.min(testInfo.retry, accounts.length - 1)]!;
             const label = (name: string) => `${locale}-2fa-${name}`;
             const fresh = async () => {
                 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
@@ -223,7 +225,7 @@ test.describe('admin axe', () => {
             await page.getByRole('button', { name: m(locale, 'twoFactor.confirm') }).click();
             await expect(code).toHaveAttribute('aria-invalid', 'true');
             await audit(page, testInfo, label('scan-error'));
-            await code.fill(totp(secret));
+            await code.fill(await freshTotp(secret));
             await page.getByRole('button', { name: m(locale, 'twoFactor.confirm') }).click();
             await expect(page.getByRole('list', { name: m(locale, 'twoFactor.codesTitle') })).toBeVisible();
             await audit(page, testInfo, label('codes'));
@@ -258,6 +260,13 @@ function base32(secret: string): Buffer {
     const bytes: number[] = [];
     for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
     return Buffer.from(bytes);
+}
+
+/** A code with at least 4 s of its 30 s step left, so it cannot roll over between typing and submitting. */
+async function freshTotp(secret: string): Promise<string> {
+    const left = 30_000 - (Date.now() % 30_000);
+    if (left < 4_000) await new Promise((resolve) => setTimeout(resolve, left + 250));
+    return totp(secret);
 }
 
 /** The 6-digit RFC 6238 code an authenticator app shows now (as in e2e/admin/two-factor.spec.ts). */

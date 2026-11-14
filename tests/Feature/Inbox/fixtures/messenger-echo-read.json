@@ -1,0 +1,23 @@
+{
+  "object": "page",
+  "entry": [
+    {
+      "id": "112233445566778",
+      "time": 1763190900000,
+      "messaging": [
+        {
+          "sender": { "id": "112233445566778" },
+          "recipient": { "id": "6612345678901234" },
+          "timestamp": 1763190800000,
+          "message": { "mid": "m_echo_0001", "is_echo": true, "text": "Sent from the Page inbox" }
+        },
+        {
+          "sender": { "id": "6612345678901234" },
+          "recipient": { "id": "112233445566778" },
+          "timestamp": 1763190900000,
+          "read": { "watermark": 4102444800000 }
+        }
+      ]
+    }
+  ]
+}

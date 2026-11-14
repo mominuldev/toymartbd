@@ -118,13 +118,14 @@ export function PeopleTab() {
  * The B · 35 Two-factor column: On, or Off — flagged when their role can see money, because
  * they will be held at the setup screen on their next sign-in.
  */
-export function TwoFactorChip({ member }: { member: StaffMember }) {
+export function TwoFactorChip({ member, explain = true }: { member: StaffMember; explain?: boolean }) {
     const { t } = useI18n();
     if (member.two_factor_enabled) return <StatusChip label={t('staff.twoFactor.on')} tone="success" />;
     return member.two_factor_required ? (
         <span title={t('staff.twoFactor.missing')}>
             <StatusChip label={t('staff.twoFactor.off')} tone="anomaly" />
-            <span className="sr-only">{t('staff.twoFactor.missing')}</span>
+            {/* `explain={false}` where the same sentence is already printed next to the chip. */}
+            {explain && <span className="sr-only">{t('staff.twoFactor.missing')}</span>}
         </span>
     ) : (
         <StatusChip label={t('staff.twoFactor.off')} tone="neutral" />

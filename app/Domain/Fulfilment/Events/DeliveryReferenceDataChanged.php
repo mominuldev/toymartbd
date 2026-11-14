@@ -15,7 +15,7 @@ use Illuminate\Foundation\Events\Dispatchable;
  *
  * Dispatched from inside the Action's transaction but held until it commits
  * (ShouldDispatchAfterCommit), so a rolled back write never purges anything.
- * `reason` is for logs and tests only (`rate_card`, `provider_status`, `free_shipping_threshold`).
+ * `reason` is for logs and tests only (`rate_card`, `provider_status`, `free_shipping_threshold`, `delivery_areas`).
  */
 final readonly class DeliveryReferenceDataChanged implements ShouldDispatchAfterCommit
 {

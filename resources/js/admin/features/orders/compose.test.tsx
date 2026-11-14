@@ -48,6 +48,8 @@ function composeApi() {
                 },
             };
         }
+        if (url.endsWith('/customers/3')) return { status: 200, body: { id: 3, name: 'Sumaiya Islam', phone: '+8801985164739' } };
+        if (url.endsWith('/customers/4')) return { status: 200, body: { id: 4, name: 'Masked', phone: '01985-***739' } };
         if (url.includes('/orders/compose/districts/47/upazilas')) return { status: 200, body: { data: [] } };
         if (url.includes('/orders/compose/districts')) return { status: 200, body: districts };
         if (url.includes('/orders/compose/variants')) {
@@ -85,7 +87,7 @@ describe('create order', () => {
         await waitFor(() => expect((screen.getByLabelText(/^Landmark/) as HTMLInputElement).value).toBe('Opposite Mirpur 10 metro station, gate 2'));
         expect((screen.getByLabelText(/^Customer name/) as HTMLInputElement).value).toBe('Sumaiya Islam');
 
-        fireEvent.change(screen.getByRole('combobox', { name: 'Search name, SKU or scan barcode' }), { target: { value: 'doll' } });
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search name, SKU or scan barcode' }), { target: { value: 'doll' } });
         fireEvent.click(await screen.findByRole('button', { name: 'Add Fashion Doll Deluxe Set' }));
 
         const summary = screen.getByRole('region', { name: 'Summary' });
@@ -102,6 +104,26 @@ describe('create order', () => {
         const post = calls.mock.calls.find(([url, init]) => String(url).endsWith('/api/v1/admin/orders') && init?.method === 'POST');
         expect(new Headers(post?.[1]?.headers).get('Idempotency-Key')).toBeTruthy();
         expect(await screen.findByText('Order TMB-26-00200 created.')).toBeTruthy();
+    });
+
+    it('opens from an inbox chat with the source and the customer prefilled', async () => {
+        composeApi();
+        renderApp('/orders/new?source=whatsapp&customer_id=3');
+
+        await waitFor(() => expect((screen.getByLabelText(/^Phone/) as HTMLInputElement).value).toBe('01985164739'));
+        expect((screen.getByLabelText(/^Order source/) as HTMLSelectElement).value).toBe('whatsapp');
+        // The usual phone lookup then fills in the customer.
+        expect(await screen.findByText('Sumaiya Islam · returning customer')).toBeTruthy();
+    });
+
+    it('ignores an unknown source and a masked phone from the chat link', async () => {
+        composeApi();
+        renderApp('/orders/new?source=telepathy&customer_id=4');
+
+        expect(await screen.findByRole('heading', { level: 1, name: 'New order' })).toBeTruthy();
+        expect((screen.getByLabelText(/^Order source/) as HTMLSelectElement).value).toBe('phone');
+        await new Promise((r) => setTimeout(r, 50));
+        expect((screen.getByLabelText(/^Phone/) as HTMLInputElement).value).toBe('');
     });
 
     it('shows online payment and drafts as not yet available', async () => {

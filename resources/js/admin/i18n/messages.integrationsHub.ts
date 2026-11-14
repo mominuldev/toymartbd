@@ -17,6 +17,7 @@ export const integrationsHubEn = {
 
     'integrationsHub.name.cod': 'Cash on delivery',
     'integrationsHub.name.sms': 'SMS gateway',
+    'integrationsHub.name.live_chat': 'Live chat',
 
     'integrationsHub.status.connected_live': 'Connected · live',
     'integrationsHub.status.test_mode': 'Test mode',
@@ -38,6 +39,9 @@ export const integrationsHubEn = {
     'integrationsHub.turnedOff': '{name} switched off',
 
     'integrationsHub.note.no_driver': 'Not built yet — no driver in the system',
+    'integrationsHub.note.inbox_not_configured': 'Inbox driver built · account keys not entered',
+    'integrationsHub.note.inbox_unverified': 'Keys entered · not verified with a real account yet',
+    'integrationsHub.note.inbox_channel': 'Receiving and sending in the inbox',
     'integrationsHub.note.no_credentials': 'No credentials saved',
     'integrationsHub.note.no_sandbox': 'No sandbox · tested on fixtures only',
     'integrationsHub.note.sandbox': 'Sandbox',
@@ -80,6 +84,7 @@ export const integrationsHubBn: Record<keyof typeof integrationsHubEn, string> =
 
     'integrationsHub.name.cod': 'ক্যাশ অন ডেলিভারি',
     'integrationsHub.name.sms': 'এসএমএস গেটওয়ে',
+    'integrationsHub.name.live_chat': 'লাইভ চ্যাট',
 
     'integrationsHub.status.connected_live': 'সংযুক্ত · লাইভ',
     'integrationsHub.status.test_mode': 'টেস্ট মোড',
@@ -101,6 +106,9 @@ export const integrationsHubBn: Record<keyof typeof integrationsHubEn, string> =
     'integrationsHub.turnedOff': '{name} বন্ধ হয়েছে',
 
     'integrationsHub.note.no_driver': 'এখনো তৈরি হয়নি — সিস্টেমে কোনো ড্রাইভার নেই',
+    'integrationsHub.note.inbox_not_configured': 'ইনবক্স ড্রাইভার তৈরি · অ্যাকাউন্টের কী দেওয়া হয়নি',
+    'integrationsHub.note.inbox_unverified': 'কী দেওয়া হয়েছে · আসল অ্যাকাউন্টে এখনো যাচাই হয়নি',
+    'integrationsHub.note.inbox_channel': 'ইনবক্সে মেসেজ আসছে ও যাচ্ছে',
     'integrationsHub.note.no_credentials': 'কোনো ক্রেডেনশিয়াল সেভ করা নেই',
     'integrationsHub.note.no_sandbox': 'স্যান্ডবক্স নেই · শুধু ফিক্সচারে পরীক্ষিত',
     'integrationsHub.note.sandbox': 'স্যান্ডবক্স',

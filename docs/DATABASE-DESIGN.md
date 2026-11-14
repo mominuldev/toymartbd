@@ -316,7 +316,7 @@ Index: `(shipment_id, occurred_at)`, UNIQUE `(shipment_id, provider_status, occu
 **`financial_transactions`** (append-only ledger) `id` · `type` · `direction` (`in`|`out`) · `amount` · `occurred_on` DATE (Dhaka date) · `source_type`/`source_id` polymorphic · `category_id` NULL · `description` · `is_cash_movement` BOOL · `is_recognised_revenue` BOOL · `created_at`
 Index: `(occurred_on, type)`, `(source_type, source_id)`, `(type, occurred_on)`
 
-`type` values: `sale_revenue` · `cogs` · `discount_given` · `shipping_revenue` · `courier_charge` · `courier_cod_fee` · `courier_return_charge` · `gateway_fee` · `packaging` · `marketing` · `salary` · `rent` · `utility` · `refund` · `inventory_write_off` · `supplier_payment` · `cod_received` · `other_income` · `other_expense`
+`type` values: `sale_revenue` · `cogs` · `discount_given` · `shipping_revenue` · `courier_charge` · `courier_cod_fee` · `courier_return_charge` · `gateway_fee` · `packaging` · `marketing` · `salary` · `rent` · `utility` · `refund` · `inventory_write_off` · `supplier_payment` · `cod_received` · `other_income` · `other_expense` · `pos_receipt` (POS counter takings: cash movement, never revenue — §11)
 
 > **Two booleans carry the whole revenue-versus-cash distinction.** `is_recognised_revenue` marks entries that belong in the P&L. `is_cash_movement` marks entries that moved actual money. A delivered COD order writes `sale_revenue` (recognised, not cash); the later courier remittance writes `cod_received` (cash, not revenue). Receivables = recognised minus received. This is why the P&L and the cash position can both be correct and different.
 
@@ -640,3 +640,35 @@ Divisions, districts (64) and upazilas with Bangla names, `is_inside_dhaka_metro
 ## 9. Deferred by Design
 
 `locations` is present with one seeded row, so multi-warehouse is a data change rather than a migration. Similarly deferred but schema-compatible: FIFO costing, multi-currency (`currency` columns already present), loyalty points, vendor/marketplace, serial-number tracking, variant-level age ranges. Each is left out of MVP deliberately; none requires a destructive migration to add.
+
+---
+
+## 10. Unified Inbox (P10, Figma B · 22)
+
+Domain `App\Domain\Inbox`; writes only these three tables. Reads `customers` (link by phone), `orders` (search, tracking link) and `products` (product card). API: `docs/api/inbox.md`.
+
+| Table | Purpose and invariants |
+|---|---|
+| `inbox_conversations` | One thread per (`channel`, `external_thread_id`) — UNIQUE. `channel` whatsapp \| messenger \| live_chat; the thread id is the provider's (WhatsApp `wa_id` or BSUID, Messenger PSID). `customer_id` is set when the channel gives a phone (WhatsApp) that matches a customer's E.164 number — never guessed. `contact_phone` E.164, masked without `customers.view_pii` (rule 20). `status` open \| resolved; never deleted. `last_inbound_at` drives Meta's 24-hour customer-service window. `needs_human` = the customer's latest message still awaits a staff reply (no AI provider is chosen). `unread_count`, `last_message_*` are a projection maintained by the Actions. |
+| `inbox_messages` | `direction` in \| out; `kind` text \| note \| system. Only `kind = text, direction = out` is ever handed to a channel driver; notes and system lines never leave the system. `delivery_status` queued → sent → delivered → read (or failed), forward only. UNIQUE (`channel`, `provider_message_id`) is the inbound idempotency key (WhatsApp `wamid`, Messenger `mid`): a replayed webhook adds nothing. |
+| `inbox_webhook_receipts` | A signature-verified webhook body, written only AFTER the `X-Hub-Signature-256` check (rule 19). UNIQUE (`channel`, `body_sha256`). Processed by a queued job; mass-prunable after 90 days. |
+
+**Transactions.** `IngestInboundMessage` locks the conversation row (`FOR UPDATE`) while appending a message. `SendReply` records the message as `queued` inside its transaction; the `SendInboxMessage` job is dispatched `afterCommit` and makes the provider call outside any transaction (rule 4). Assign / resolve / reopen lock the conversation and write a system line in the same transaction.
+
+## 11. POS register (P10, Figma B · 33)
+
+A counter sale is an **order** (`orders.source = pos`) placed, paid and handed over at a branch in one Action (`App\Domain\Pos\Actions\ChargeSale`). The POS tables only add what the counter knows; money, items, cost snapshots, payments and stock live where every other order keeps them.
+
+| Table | Purpose and rules |
+|---|---|
+| `pos_sessions` | A cash drawer on one register at one branch (`location_id` → `stock_locations`, never a pickup point). `opening_float`, then on close `expected_cash` (float + cash kept from this session's sales), `counted_cash`, `over_short` (= counted − expected; negative = short), `closed_by`, `closed_at`, `close_note` — all `DECIMAL(14,2)`. `open_key` ("location:register") and `cashier_open_key` (user id) are set only while open and are UNIQUE: one open drawer per register and per cashier, enforced by the database. A closed session is the drawer's audit record and the model refuses any further update or delete. |
+| `pos_sales` | One row per charged sale: `session_id`, `order_id` (UNIQUE), `cashier_id`, `grand_total`, `tendered_total`, `cash_tendered`, `change_due`, `idempotency_key`. UNIQUE (`session_id`, `idempotency_key`) backs the `Idempotency-Key` middleware: a retried Charge after the cache record expired still returns the first sale. Written once. |
+| `pos_held_sales` | A parked cart ("Hold sale"): `lines` JSON {variant_id: qty}, `coupon_code`, `customer_phone` (E.164). No prices, no stock reservation. `resumed_at` / `resumed_by` set once under a row lock. |
+
+**The order a sale writes.** Created in `shipped` / `fulfilled` (`placed_at` = `confirmed_at` = `packed_at` = `shipped_at` = now), then moved `shipped → delivered` through `OrderTransitions`, so `delivered_at` is stamped by the single status writer and `OrderDelivered` fires after commit. `shipping_charge = 0`; the shipping address columns hold the branch's address. `order_items.quantity_shipped = quantity`, `cost_price_snapshot` from the **branch's** cost basis (rule 7). The customer is found or created by phone (`customers.source = walk_in`); without a phone the sale belongs to one anonymous "Walk-in customer" row whose phone is `+8801000000000` — an 010 number rule 30 rejects, so it can never be a real person's and is never messaged.
+
+**Stock.** Inside the Charge transaction: `StockReservations::reserve(lines, branch)` (FOR UPDATE, ascending `variant_id`, all or nothing — refuses beyond the branch's available stock), then `ConsumeReservedStock` at the branch writes the `sale_out` movements referencing the order. Σ movements = on_hand and reserved = open-order quantity both hold.
+
+**Money (rule 10).** Revenue: Finance's existing `RecognizeRevenueOnDelivery` writes `sale_revenue` / `discount_given` / `cogs` on `OrderDelivered`, recognised and not cash, dated the Dhaka day of the sale. Cash: one `payments` row per tender (cash at the amount kept = tendered − change; bKash / Nagad / card as manual tenders with their reference), `pending → paid` through `PaymentTransitions`. After commit the `RecordPosTendersInLedger` job books each paid tender as `pos_receipt` (`is_cash_movement = 1`, `is_recognised_revenue = 0`, source `payment`) — **pending Finance adding `LedgerEntryType::PosReceipt`**; the `daily_financial_summaries.pos_receipt` column is already migrated. Until then no cash row is written for POS tenders (never `cod_received`, which would reduce COD receivables, nor `other_income`, a P&L type).
+
+**Transactions.** `OpenRegisterSession`, `CloseRegisterSession`, `ChargeSale`, `HoldSale`, `ResumeHeldSale` each own one `DB::transaction`. Charge and Close both lock the session row first, so a sale either commits before the close counts it or is refused as "drawer closed". No external call anywhere (rule 4): no counter gateway is live.

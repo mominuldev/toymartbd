@@ -355,6 +355,56 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10 batch 4: POS, unified inbox, delivery areas, admin a11y in CI (2026-11-15, 4 parallel agents)
+
+Owner decisions of 2026-11-15:
+- POS and Inbox are in v1; the Inbox has no AI until a provider is chosen.
+- Editors for the seed-only delivery settings.
+- Admin axe in CI.
+- A screen-reader pass.
+- The real hotline is not shown on 500 pages, and the footer gets no address or opening hours.
+- The switch's off-track contrast stays as is.
+
+**Done, with passing tests.** Full counts are in the PR.
+- **POS register** (Figma B · 33, `/pos`, new `App\Domain\Pos`): `docs/api/pos.md` and DATABASE-DESIGN §11.
+  - **Drawer sessions:** one open drawer per register and per cashier. Closing is a counted close, recording expected, counted and over/short.
+  - **Charging a sale:** one idempotent Action creates a `source = pos` order at the branch and moves it to delivered, so Finance recognises revenue and COGS. It deducts stock at that branch under ordered locks.
+  - **Tenders:** split, as manual drivers (cash, bKash, Nagad, card, each with a reference). Change is computed on the server.
+  - **Cash side:** each tender becomes a ledger `pos_receipt` row (new `LedgerEntryType::PosReceipt`): a cash movement, never revenue.
+  - **Also:** hold/resume, a printable receipt, and permissions `pos.use` (super_admin, manager, order_operator) and `pos.manage`.
+  - **Not built:** loyalty (no system exists). The WhatsApp receipt is disabled.
+- **Unified inbox** (B · 22, `/inbox`, new `App\Domain\Inbox`): `docs/api/inbox.md` and DATABASE-DESIGN §10.
+  - **Channels:** WhatsApp Cloud and Messenger drivers built against Meta's published APIs. Signatures are verified before parsing; the body is stored, then ingested by a queued job. Every channel is unverified with no account. Live chat has no inbound path yet.
+  - **Rules:** the 24-hour window is enforced in the API and the job. Notes are never sent. Phones are masked without `customers.view_pii`.
+  - **Screen:** assignment, resolve, and quick actions (product card, tracking link, create order from chat, which now prefills the composer).
+  - **Integrations hub:** shows the channels as not connected or test mode, and live chat as not available.
+  - **Demo data and cleanup:** demo conversations are seeded locally; webhook receipts are pruned daily after 90 days.
+  - **Not built:** the AI parts.
+- **Delivery areas & timing** (`/settings/delivery`):
+  - `GET/PUT /settings/delivery-areas` covers cut-off, ETA per zone, metro and suburb districts, not-serviced upazilas and the COD advance. Writing needs `settings.update` + `shipments.manage_rates`.
+  - Values are exactly what `DeliverySettings` / `zoneFor` / checkout read, with tests on quotes, zones and checkout holds.
+  - The storefront `delivery` tag is purged on a real change.
+- **Admin accessibility in CI:**
+  - A parallel "Admin a11y" job of about 13–16 min, hardened for CI.
+  - 7 screen-reader tests, and five issues they found fixed (create-order search, booking drawer announcements, sidebar, order stepper, staff dialog).
+  - `docs/audits/SCREEN-READER-CHECKLIST.md` for the owner's VoiceOver/TalkBack pass.
+
+**Owner decisions open:**
+- WhatsApp Business account and Meta app; Facebook Page; WhatsApp templates outside the 24-hour window.
+- An AI provider.
+- A storefront live-chat widget.
+- A payment gateway (bKash link, card terminal, bKash/Nagad merchant).
+- A receipt printer.
+- Whether a cash over/short goes to the ledger.
+- Discounts for a walk-in without a phone.
+- The cashier role (order_operator).
+- Whether POS orders send customer messages.
+- POS returns to the branch rather than the default location.
+- Real delivery cut-off, ETA, district and COD values, and whether "metro district" covers a whole district.
+- Making "Admin a11y" a required check.
+- Running the screen-reader checklist.
+- The inbox unread badge in the sidebar (needs an endpoint and a Shell change).
+
 ### Progress — Phase 10 batch 3: storefront store info, API maintenance, accessibility, revalidation (2026-11-15, 4 parallel agents)
 
 **Done, with passing tests.** Full counts are in the PR.

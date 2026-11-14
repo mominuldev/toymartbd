@@ -55,6 +55,8 @@ enum Role: string
                 P::InboxView, P::InboxReply,
                 P::CatalogView,
                 P::InventoryView,
+                // The counter: the closest of the 7 fixed roles to a cashier (P10 POS).
+                P::PosUse,
             ],
 
             // Receives stock, counts, adjusts. Enters landed cost on receipt, so sees cost.

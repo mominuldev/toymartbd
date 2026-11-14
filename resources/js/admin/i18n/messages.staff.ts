@@ -78,6 +78,7 @@ export const staffEn = {
     'perm.group.money': 'Money & reports',
     'perm.group.store': 'Marketing, content & SEO',
     'perm.group.admin': 'Settings & staff',
+    'perm.group.pos': 'POS counter',
 
     'perm.dashboard.view': 'View dashboard',
     'perm.orders.view': 'View orders',
@@ -146,6 +147,8 @@ export const staffEn = {
     'perm.staff.manage': 'Manage staff',
     'perm.roles.manage': 'Manage roles',
     'perm.audit.view': 'View audit log',
+    'perm.pos.use': 'Sell at the POS counter',
+    'perm.pos.manage': 'Manage every POS drawer',
 
     'staff.col.twoFactor': 'Two-factor',
     'staff.twoFactor.on': 'On',
@@ -288,6 +291,7 @@ export const staffBn: Record<keyof typeof staffEn, string> = {
     'perm.group.money': 'হিসাব ও রিপোর্ট',
     'perm.group.store': 'মার্কেটিং, কনটেন্ট ও SEO',
     'perm.group.admin': 'সেটিংস ও স্টাফ',
+    'perm.group.pos': 'POS কাউন্টার',
 
     'perm.dashboard.view': 'ড্যাশবোর্ড দেখা',
     'perm.orders.view': 'অর্ডার দেখা',
@@ -356,6 +360,8 @@ export const staffBn: Record<keyof typeof staffEn, string> = {
     'perm.staff.manage': 'স্টাফ পরিচালনা',
     'perm.roles.manage': 'ভূমিকা পরিচালনা',
     'perm.audit.view': 'অডিট লগ দেখা',
+    'perm.pos.use': 'POS কাউন্টারে বিক্রি',
+    'perm.pos.manage': 'সব POS ড্রয়ার পরিচালনা',
 
     'staff.col.twoFactor': 'টু-ফ্যাক্টর',
     'staff.twoFactor.on': 'চালু',

@@ -103,7 +103,9 @@ describe('app shell', () => {
 
     it('renders a placeholder for designed-but-unbuilt sections', async () => {
         signedInAs(viewer);
-        renderApp('/inbox');
+        // Shipments & tracking (Figma B · 08) is the last sidebar section without its own screen;
+        // only its failed-bookings and location-mapping sub-pages exist.
+        renderApp('/shipments');
 
         expect(await screen.findByText('This section is being built.')).toBeTruthy();
     });

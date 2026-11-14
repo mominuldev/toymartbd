@@ -12,4 +12,6 @@ enum OrderSource: string
     case Phone = 'phone';
     case Facebook = 'facebook';
     case Whatsapp = 'whatsapp';
+    /** A counter sale on the POS register (Figma B · 33): paid and handed over at a branch. */
+    case Pos = 'pos';
 }

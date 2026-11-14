@@ -42,6 +42,9 @@ import { auditBn, auditEn } from './messages.audit';
 import { integrationsHubBn, integrationsHubEn } from './messages.integrationsHub';
 import { storeSettingsBn, storeSettingsEn } from './messages.storeSettings';
 import { checkoutSettingsBn, checkoutSettingsEn } from './messages.checkoutSettings';
+import { posBn, posEn } from './messages.pos';
+import { inboxBn, inboxEn } from './messages.inbox';
+import { deliverySettingsBn, deliverySettingsEn } from './messages.deliverySettings';
 
 export const en = {
     ...productsEn,
@@ -75,6 +78,9 @@ export const en = {
     ...integrationsHubEn,
     ...storeSettingsEn,
     ...checkoutSettingsEn,
+    ...posEn,
+    ...inboxEn,
+    ...deliverySettingsEn,
     ...invoicesEn,
     ...customersEn,
     ...dashboardEn,
@@ -373,6 +379,9 @@ export const bn: Messages = {
     ...integrationsHubBn,
     ...storeSettingsBn,
     ...checkoutSettingsBn,
+    ...posBn,
+    ...inboxBn,
+    ...deliverySettingsBn,
     ...invoicesBn,
     ...customersBn,
     ...dashboardBn,
