@@ -4941,6 +4941,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/shipments/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /shipments/board` — the shipments handed to a courier in the range, newest first,
+         *     cursor-paginated. `meta.counts` holds one count per tab under the other filters;
+         *     `meta.providers` the courier filter's options
+         */
+        get: operations["v1.admin.shipments.board.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/board/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/board/stats` — the stat tiles. In transit / submitted are live; the rest are outcome-dated in the range */
+        get: operations["v1.admin.shipments.board.stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/board/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/board/issues` — delivery issues and success by courier × area, last 30 Dhaka days */
+        get: operations["v1.admin.shipments.board.issues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/{shipment}/tracking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/{shipment}/tracking` — the detail card: charges, attempts, the courier timeline, the partial outcome */
+        get: operations["v1.admin.shipments.tracking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/booking-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/booking-queue` — header facts, courier cards, tab counts */
+        get: operations["v1.admin.shipments.booking-queue.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/booking-queue/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /shipments/booking-queue/ready` — packed orders with no open shipment, oldest
+         *     first, cursor-paginated (50). Each row says, per courier, why it cannot be booked.
+         *     No filters or sorts: any `filter[…]` / `sort` is a 400
+         */
+        get: operations["v1.admin.shipments.booking-queue.ready"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/booking-queue/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /shipments/booking-queue/shipments?filter[tab]=submitted|booked_today|failed` —
+         *     newest first, cursor-paginated (50). `submitted` is pending + submitted (no consignment
+         *     id yet, rule 24d); `booked_today` is booked_at on today's Dhaka date (rule 11);
+         *     `failed` is the retry queue. A missing or unknown tab, or any other filter, is a 400
+         */
+        get: operations["v1.admin.shipments.booking-queue.shipments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/shipments/booking-queue/unmapped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /shipments/booking-queue/unmapped` — areas an active courier cannot reach until mapped (rule 32) */
+        get: operations["v1.admin.shipments.booking-queue.unmapped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inbox/unread-count` — open conversations that need attention: unread inbound
+         *     messages or waiting on a staff reply (`needs_human`), each counted once. One COUNT
+         */
+        get: operations["v1.admin.inbox.unread-count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/inbox-channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/inbox-channels` — driver, ids, secrets as set/source/last-4 hint, webhook URLs, readiness */
+        get: operations["v1.admin.settings.inbox-channels.show"];
+        /** `PUT /settings/inbox-channels` — blank secret = keep; `clear_*` = remove. Audited (`credential_changed`, scope `inbox_{channel}`) */
+        put: operations["v1.admin.settings.inbox-channels.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/blog/posts": {
         parameters: {
             query?: never;
@@ -7465,6 +7652,117 @@ export interface components {
             avatar_media_id?: number | null;
             user_id?: number | null;
         };
+        /** BookingQueueOrder */
+        BookingQueueOrder: {
+            order_id: number;
+            number: string;
+            /** @description When the order was packed (entered ready_to_ship). */
+            ready_since: string | null;
+            recipient_name: string;
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            /** @enum {string|null} */
+            zone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka" | null;
+            /** @description Sum of variant weights × quantity (what bulk booking sends). */
+            weight_grams: number;
+            /** @description A line has no variant weight: the parcel would be understated. */
+            weight_missing: boolean;
+            item_count: number;
+            /** @description What the courier collects: the order's due total, never negative. */
+            cod_amount: string;
+            couriers: {
+                provider_id: number;
+                /** @enum {string} */
+                location_status: "not_required" | "mapped" | "ambiguous" | "unmapped";
+                /** @enum {string|null} */
+                blocked_reason: "inactive" | "not_connected" | "unverified_in_production" | "missing_address" | "not_serviced" | "unmapped_location" | "ambiguous_location" | "missing_weight" | null;
+            }[];
+            suggested_provider_id: number | null;
+        };
+        /** BookingQueueShipment */
+        BookingQueueShipment: {
+            shipment: components["schemas"]["Shipment"];
+            /** @description When the booking was handed to the courier without an id (bulk / uncertain). */
+            submitted_at: string | null;
+            recipient_name: string | null;
+            district_name: string | null;
+            upazila_name: string | null;
+        };
+        /** BookingQueueSummary */
+        BookingQueueSummary: {
+            /** @description Production: an unverified courier cannot book (rule 33a). */
+            production: boolean;
+            /** @description Today's pickup cut-off, "HH:MM" Asia/Dhaka (Settings → Delivery areas). */
+            cutoff_time: string;
+            /** @description Today's Dhaka date (Y-m-d) — what "booked today" counts (rule 11). */
+            today: string;
+            couriers: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                is_active: boolean;
+                is_default: boolean;
+                requires_location_mapping: boolean;
+                supports_bulk: boolean;
+                /** @enum {string} */
+                trust: "verified" | "unverified" | "not_connected";
+                /** @enum {string|null} */
+                blocked_reason: "inactive" | "not_connected" | "unverified_in_production" | null;
+                bookings_count: number;
+                booked_today: number;
+                awaiting_id: number;
+                webhook: {
+                    supported: boolean;
+                    /** @enum {string} */
+                    health: "unsupported" | "none" | "healthy" | "failing";
+                    last_received_at: string | null;
+                };
+                balance: string | null;
+                balance_checked_at: string | null;
+            }[];
+            counts: {
+                ready: number;
+                submitted: number;
+                booked_today: number;
+                failed: number;
+                unmapped: number;
+            };
+        };
+        /** BookingQueueUnmappedArea */
+        BookingQueueUnmappedArea: {
+            provider: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            /** @description Null: a district-level address (e.g. Dhaka city). */
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            /** @description The name as written on the orders, when the geography row is missing. */
+            district_name: string | null;
+            upazila_name: string | null;
+            orders_count: number;
+            /** @description Up to five order numbers. */
+            order_numbers: string[];
+        };
         /** Brand */
         Brand: {
             id: number;
@@ -8980,7 +9278,10 @@ export interface components {
                     max: number;
                 };
             };
-            /** @description Districts whose district-level address (no upazila) is inside Dhaka metro. */
+            /**
+             * @description Districts inside Dhaka metro as a whole — every address in them, with or without an
+             *     upazila (owner decision 2026-11-15); not-serviced upazilas still win.
+             */
             metro_district_ids: number[];
             /** @description Whole districts priced as Dhaka suburb. */
             suburb_district_ids: number[];
@@ -9579,6 +9880,56 @@ export interface components {
                 net_amount?: string | null;
             }[];
         };
+        /** InboxChannelCredentials */
+        InboxChannelCredentials: {
+            /** @enum {string} */
+            channel: "whatsapp" | "messenger";
+            /**
+             * @description The configured send driver; `log` sends nothing.
+             * @enum {string}
+             */
+            driver: "log" | "cloud" | "messenger";
+            /** @enum {string} */
+            driver_source: "settings" | "env";
+            /** @description WhatsApp: the phone number id. Messenger: the Page id. */
+            account_id: string | null;
+            /** @enum {string|null} */
+            account_id_source: "settings" | "env" | null;
+            /** @description WhatsApp access token / Messenger Page access token. Hint "••••1234" at most. */
+            send_token: {
+                set: boolean;
+                hint: string | null;
+                /** @enum {string|null} */
+                source: "settings" | "env" | null;
+            };
+            /** @description Meta App Secret — keys the X-Hub-Signature-256 check. */
+            app_secret: {
+                set: boolean;
+                hint: string | null;
+                /** @enum {string|null} */
+                source: "settings" | "env" | null;
+            };
+            /** @description The verify token for Meta's subscription handshake. */
+            verify_token: {
+                set: boolean;
+                hint: string | null;
+                /** @enum {string|null} */
+                source: "settings" | "env" | null;
+            };
+            /** @description Absolute callback URL to give Meta (from APP_URL). */
+            webhook_url: string;
+            /** @description App secret and verify token are both set. */
+            webhook_ready: boolean;
+            /** @description Account id and send token are both set. */
+            send_ready: boolean;
+            /** @description Always false until a real account has been connected and watched. */
+            verified: boolean;
+        };
+        /** InboxChannelSettings */
+        InboxChannelSettings: {
+            whatsapp: components["schemas"]["InboxChannelCredentials"];
+            messenger: components["schemas"]["InboxChannelCredentials"];
+        };
         /** InboxConversation */
         InboxConversation: {
             id: number;
@@ -9691,6 +10042,11 @@ export interface components {
             /** @description When it was written (inbound: the provider's timestamp). */
             at: string | null;
             read_at: string | null;
+        };
+        /** InboxUnreadCount */
+        InboxUnreadCount: {
+            /** @description Open conversations with unread messages or waiting on a staff reply, each counted once. */
+            count: number;
         };
         /**
          * InspectReturnRequest
@@ -13377,6 +13733,106 @@ export interface components {
             last_attempt_at: string | null;
             created_at: string;
         };
+        /** ShipmentBoardIssues */
+        ShipmentBoardIssues: {
+            from: string;
+            to: string;
+            returned: {
+                count: number;
+                cost: string;
+                districts: string[];
+            };
+            failed_attempts: {
+                count: number;
+                latest_provider_status: string | null;
+            };
+            unmapped: {
+                count: number;
+                areas: string[];
+            };
+            by_courier: {
+                provider: {
+                    code: string;
+                    name: string;
+                    name_bn: string | null;
+                };
+                /** @enum {string} */
+                area: "dhaka" | "outside" | "unknown";
+                delivered: number;
+                returned: number;
+                rate: string;
+            }[];
+        };
+        /** ShipmentBoardRow */
+        ShipmentBoardRow: {
+            id: number;
+            number: string;
+            order: {
+                id: number;
+                number: string;
+                customer_name: string;
+                phone: string;
+                phone_masked: boolean;
+            } | null;
+            provider: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            consignment_id: string | null;
+            /** @enum {string} */
+            status: "pending" | "submitted" | "booked" | "picked_up" | "in_transit" | "out_for_delivery" | "delivered" | "partially_delivered" | "returned" | "cancelled" | "on_hold" | "failed";
+            provider_status_raw: string | null;
+            last_event: {
+                id: number;
+                status: string;
+                provider_status: string | null;
+                message: string | null;
+                location: string | null;
+                occurred_at: string;
+                received_at: string;
+                source: string;
+            } | null;
+            submitted_at: string | null;
+            cod_amount: string;
+            cost: {
+                amount: string | null;
+                /** @enum {string|null} */
+                basis: "settled" | "recorded" | "estimate" | null;
+            };
+            delivery_attempts: number;
+        };
+        /** ShipmentBoardStats */
+        ShipmentBoardStats: {
+            from: string;
+            to: string;
+            in_transit: {
+                count: number;
+                cod_on_road: string;
+            };
+            submitted: {
+                count: number;
+                oldest_at: string | null;
+                oldest_age_minutes: number | null;
+                chase_after_minutes: number;
+                overdue: boolean;
+            };
+            success: {
+                delivered: number;
+                returned: number;
+                rate: string | null;
+            };
+            days_to_deliver: {
+                average: string | null;
+                timed: number;
+                by_zone: {
+                    /** @enum {string} */
+                    zone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka";
+                    average: string;
+                    timed: number;
+                }[];
+            };
+        };
         /** ShipmentBulkResult */
         ShipmentBulkResult: {
             order_id: number;
@@ -13500,6 +13956,80 @@ export interface components {
                 /** @description Parcel weight in grams; absent = Σ variant weight × quantity. */
                 weight_grams?: number | null;
             }[];
+        };
+        /** ShipmentTracking */
+        ShipmentTracking: {
+            id: number;
+            number: string;
+            /** @enum {string} */
+            status: "pending" | "submitted" | "booked" | "picked_up" | "in_transit" | "out_for_delivery" | "delivered" | "partially_delivered" | "returned" | "cancelled" | "on_hold" | "failed";
+            provider_status_raw: string | null;
+            provider: {
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            consignment_id: string | null;
+            tracking_code: string | null;
+            /** @description The courier's own tracking page, when the driver returned one. */
+            tracking_url: string | null;
+            order: {
+                id: number;
+                number: string;
+                customer_name: string;
+                phone: string;
+                phone_masked: boolean;
+            } | null;
+            weight_grams: number;
+            item_count: number;
+            cod_amount: string;
+            cod_collected: string | null;
+            charges: {
+                charge: string | null;
+                cod_fee: string | null;
+                return_charge: string | null;
+                total_cost: string | null;
+            };
+            cost: {
+                amount: string | null;
+                /** @enum {string|null} */
+                basis: "settled" | "recorded" | "estimate" | null;
+            };
+            delivery_attempts: number;
+            submitted_at: string | null;
+            booked_at: string | null;
+            delivered_at: string | null;
+            returned_at: string | null;
+            /** @description The label route needs a consignment id and customers.view_pii. */
+            can_print_label: boolean;
+            events: {
+                id: number;
+                status: string;
+                from_status: string | null;
+                provider_status: string | null;
+                message: string | null;
+                location: string | null;
+                occurred_at: string;
+                received_at: string;
+                source: string;
+                payload_keys: string[];
+            }[];
+            outcome: {
+                recorded: boolean;
+                cod_collected: string | null;
+                delivered: {
+                    name: string;
+                    name_bn: string | null;
+                    quantity: number;
+                    amount: string;
+                }[];
+                came_back: {
+                    name: string;
+                    name_bn: string | null;
+                    quantity: number;
+                    amount: string;
+                }[];
+            } | null;
         };
         /** SitemapStatus */
         SitemapStatus: {
@@ -15718,7 +16248,7 @@ export interface components {
                     max: number;
                 };
             };
-            /** @description Districts where an address with no upazila is the city itself — inside Dhaka metro. Their upazilas keep their own zone. */
+            /** @description Districts that are inside Dhaka metro as a whole: every address in them, with or without an upazila (owner decision 2026-11-15). Not-serviced upazilas still win. */
             metro_district_ids: number[];
             /** @description Whole districts priced as Dhaka suburb. Must not also be a metro district. */
             suburb_district_ids: number[];
@@ -15743,6 +16273,42 @@ export interface components {
         UpdateDeliverySettingsRequest: {
             /** @description Subtotal at or above which delivery is free, e.g. "3000.00"; null = off. */
             free_shipping_threshold: string | null;
+        };
+        /**
+         * UpdateInboxChannelSettingsRequest
+         * @description `PUT /settings/inbox-channels` — the WhatsApp and Messenger inbox credentials on Admin →
+         *     Integrations → Messaging; needs settings.manage_integrations. Driver and account id are the
+         *     whole document (a blank id removes the saved one, so env applies again). A blank or absent
+         *     secret KEEPS the saved one; `clear_{field}` removes it. Choosing the Meta driver (`cloud` /
+         *     `messenger`) needs the account id and the send token to be in place after the save.
+         */
+        UpdateInboxChannelSettingsRequest: {
+            /**
+             * @description `log` sends nothing; `cloud` is the WhatsApp Cloud API driver (unverified).
+             * @enum {string}
+             */
+            whatsapp_driver: "log" | "cloud";
+            /** @description WhatsApp Manager → API setup → "Phone number ID". Digits only. */
+            whatsapp_phone_number_id?: string | null;
+            whatsapp_access_token?: string | null;
+            whatsapp_app_secret?: string | null;
+            whatsapp_verify_token?: string | null;
+            clear_whatsapp_access_token?: boolean;
+            clear_whatsapp_app_secret?: boolean;
+            clear_whatsapp_verify_token?: boolean;
+            /**
+             * @description `log` sends nothing; `messenger` is the Messenger Send API driver (unverified).
+             * @enum {string}
+             */
+            messenger_driver: "log" | "messenger";
+            /** @description The Facebook Page id. Digits only. */
+            messenger_page_id?: string | null;
+            messenger_page_access_token?: string | null;
+            messenger_app_secret?: string | null;
+            messenger_verify_token?: string | null;
+            clear_messenger_page_access_token?: boolean;
+            clear_messenger_app_secret?: boolean;
+            clear_messenger_verify_token?: boolean;
         };
         /**
          * UpdateInvoiceSettingsRequest
@@ -28999,6 +29565,414 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeliveryAreas"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.shipments.board.index": {
+        parameters: {
+            query?: {
+                /** @description all (default) | submitted | in_transit | delivered | returned | failed_attempts */
+                "filter[tab]"?: string;
+                /** @description Only this courier (`courier_providers.code`). */
+                "filter[provider]"?: string;
+                /** @description First Dhaka date handed to the courier (inclusive). Default: six days before today. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date (inclusive). Default: today. */
+                "filter[to]"?: string;
+                /** @description Shipment number, order number or consignment id (prefix). */
+                "filter[search]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `ShipmentBoardRow` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ShipmentBoardRow"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                [key: string]: number;
+                            };
+                            from: string;
+                            to: string;
+                            /** @description the courier filter's options */
+                            providers: {
+                                code: string;
+                                name: string;
+                                name_bn: string | null;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown tab or provider, or a malformed date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.board.stats": {
+        parameters: {
+            query?: {
+                /** @description First Dhaka date (inclusive). Default: six days before today. */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date (inclusive). Default: today. */
+                "filter[to]"?: string;
+                /** @description Only this courier (`courier_providers.code`). */
+                "filter[provider]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ShipmentBoardStats` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentBoardStats"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown provider or a malformed date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.board.issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ShipmentBoardIssues` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentBoardIssues"];
+                };
+            };
+            /** @description Any query parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.tracking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The shipment ID */
+                shipment: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ShipmentTracking` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentTracking"];
+                };
+            };
+            /** @description Any query parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.shipments.booking-queue.summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `BookingQueueSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingQueueSummary"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.booking-queue.ready": {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `BookingQueueOrder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BookingQueueOrder"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description A filter or sort was sent (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.booking-queue.shipments": {
+        parameters: {
+            query: {
+                /** @description Which tab. */
+                "filter[tab]": "submitted" | "booked_today" | "failed";
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `BookingQueueShipment` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BookingQueueShipment"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Missing, unknown or unlisted filter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.shipments.booking-queue.unmapped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `BookingQueueUnmappedArea` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BookingQueueUnmappedArea"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inbox.unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxUnreadCount` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxUnreadCount"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.settings.inbox-channels.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxChannelSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxChannelSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.inbox-channels.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInboxChannelSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxChannelSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxChannelSettings"];
                 };
             };
             401: components["responses"]["AuthenticationException"];

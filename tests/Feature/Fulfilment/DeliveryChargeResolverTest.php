@@ -20,8 +20,12 @@ use Database\Seeders\GeographySeeder;
 
 /*
  * DATABASE-DESIGN §5.1 — the one delivery-charge implementation (P4-CRT-03).
- * Geography ids: Dhaka district 47 (Savar 365, Dhamrai 366), Gazipur 41,
+ * Geography ids: Dhaka district 47 (Savar 365, Dhamrai 366, Keraniganj 367, Nawabganj 368,
+ * Dohar 369 — all flagged is_dhaka_subcity), Gazipur 41,
  * Chattogram 8, Rangamati 4 (Barkal 37, not serviced; Rangamati Sadar 33).
+ *
+ * Owner decision 2026-11-15: a district in `delivery.metro_district_ids` is inside Dhaka metro
+ * for EVERY address in it, whatever its upazila's own flag says.
  */
 
 beforeEach(function (): void {
@@ -56,8 +60,11 @@ it('prices every zone from the default courier rate card', function (int $distri
         ->and([$quote->eta?->minDays, $quote->eta?->maxDays])->toBe($days);
 })->with([
     'Dhaka city (district, no upazila)' => [47, null, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
-    'Savar (suburb upazila of Dhaka)' => [47, 365, DeliveryZone::DhakaSuburb, '100.00', [2, 3]],
-    'Dhamrai (suburb upazila of Dhaka)' => [47, 366, DeliveryZone::DhakaSuburb, '100.00', [2, 3]],
+    'Savar (metro district covers its upazilas)' => [47, 365, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
+    'Dhamrai (metro district)' => [47, 366, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
+    'Keraniganj (metro district)' => [47, 367, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
+    'Nawabganj (metro district)' => [47, 368, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
+    'Dohar (metro district)' => [47, 369, DeliveryZone::InsideDhakaMetro, '70.00', [1, 2]],
     'Gazipur (suburb district)' => [41, null, DeliveryZone::DhakaSuburb, '100.00', [2, 3]],
     'Chattogram (outside)' => [8, null, DeliveryZone::OutsideDhaka, '130.00', [3, 4]],
     'Rangamati Sadar (outside)' => [4, 33, DeliveryZone::OutsideDhaka, '130.00', [3, 4]],
@@ -76,10 +83,50 @@ it('reports a not-serviced upazila without a charge', function (): void {
 it('asks for the upazila only where it changes the answer', function (): void {
     $resolver = ($this->resolver)();
 
-    expect($resolver->requiresUpazila(District::query()->findOrFail(47)))->toBeTrue() // city vs suburb
+    expect($resolver->requiresUpazila(District::query()->findOrFail(47)))->toBeTrue() // metro: same price, but the address needs it (rule 31)
         ->and($resolver->requiresUpazila(District::query()->findOrFail(4)))->toBeTrue() // has not-serviced upazilas
         ->and($resolver->requiresUpazila(District::query()->findOrFail(41)))->toBeFalse() // all suburb
         ->and($resolver->requiresUpazila(District::query()->findOrFail(8)))->toBeFalse(); // all outside
+});
+
+it('makes every upazila of a metro district inside Dhaka metro, overriding its own flag', function (): void {
+    $resolver = ($this->resolver)();
+
+    foreach ([365, 366, 367, 368, 369] as $upazilaId) {
+        [$district, $upazila] = place(47, $upazilaId);
+        expect($upazila?->is_dhaka_subcity)->toBeTrue()
+            ->and($resolver->zoneFor($district, $upazila))->toBe(DeliveryZone::InsideDhakaMetro);
+    }
+});
+
+it('falls back to the upazila flags once a district is no longer metro', function (): void {
+    Setting::put('delivery.metro_district_ids', [], SettingGroup::Delivery);
+    $resolver = ($this->resolver)();
+
+    expect($resolver->zoneFor(...place(47, 365)))->toBe(DeliveryZone::DhakaSuburb) // is_dhaka_subcity again
+        ->and($resolver->zoneFor(...place(47)))->toBe(DeliveryZone::OutsideDhaka);
+});
+
+it('covers a whole district the owner adds as metro, upazila or not', function (): void {
+    Setting::put('delivery.metro_district_ids', [8, 47], SettingGroup::Delivery);
+
+    $quote = ($this->resolver)()->quote(...place(8, 66), parcel: parcelOf('500.00', 400), now: $this->monday); // Sitakunda
+
+    expect($quote->zone)->toBe(DeliveryZone::InsideDhakaMetro)
+        ->and($quote->charge?->toDecimal())->toBe('70.00')
+        ->and([$quote->eta?->minDays, $quote->eta?->maxDays])->toBe([1, 2])
+        ->and($quote->upazilaRequired)->toBeTrue() // the address form is unchanged; only the charge moves
+        ->and(($this->resolver)()->zoneFor(...place(8)))->toBe(DeliveryZone::InsideDhakaMetro);
+});
+
+it('keeps a not-serviced upazila unserviced inside a metro district', function (): void {
+    Setting::put('delivery.not_serviced_upazila_ids', [369], SettingGroup::Delivery); // Dohar
+    $resolver = ($this->resolver)();
+
+    expect($resolver->zoneFor(...place(47, 369)))->toBeNull()
+        ->and($resolver->zoneFor(...place(47, 365)))->toBe(DeliveryZone::InsideDhakaMetro)
+        ->and($resolver->zoneFor(...place(47)))->toBe(DeliveryZone::InsideDhakaMetro)
+        ->and($resolver->requiresUpazila(District::query()->findOrFail(47)))->toBeTrue();
 });
 
 it('applies free delivery at the threshold, not below it', function (string $price, bool $free, ?string $remaining): void {

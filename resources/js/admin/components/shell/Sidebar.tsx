@@ -32,7 +32,7 @@ type SidebarProps = {
  * The nav scrolls without a visible scrollbar (owner request).
  */
 /** Screen-reader wording for a nav item's count badge. */
-const badgeLabels: Partial<Record<string, MessageKey>> = { '/inventory': 'nav.inventoryBadge' };
+const badgeLabels: Partial<Record<string, MessageKey>> = { '/inventory': 'nav.inventoryBadge', '/inbox': 'nav.inboxBadge' };
 
 export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user }: SidebarProps) {
     const { t } = useI18n();

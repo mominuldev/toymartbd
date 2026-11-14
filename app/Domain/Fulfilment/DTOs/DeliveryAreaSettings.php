@@ -16,7 +16,7 @@ use App\Support\Money;
  *
  *  - cutoffTime            `delivery.cutoff_time`              "HH:MM", Asia/Dhaka
  *  - etaDays               `delivery.eta_days`                 zone → [min, max] working days
- *  - metroDistrictIds      `delivery.metro_district_ids`       district-level address = inside Dhaka metro
+ *  - metroDistrictIds      `delivery.metro_district_ids`       every address in the district = inside Dhaka metro
  *  - suburbDistrictIds     `delivery.suburb_district_ids`      whole district = Dhaka suburb
  *  - notServicedUpazilaIds `delivery.not_serviced_upazila_ids` no delivery at all
  *  - codAdvance            `delivery.cod_advance`              null = no advance rule

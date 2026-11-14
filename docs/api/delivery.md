@@ -13,9 +13,13 @@ No client computes a charge, date or free-delivery figure (CLAUDE.md rule 1).
    serviced**:
    - an upazila in `delivery.not_serviced_upazila_ids` → not serviced (no charge, no ETA; the storefront
      never blocks add-to-cart);
+   - a district in `delivery.metro_district_ids` → metro for **every** address in it, with or without an
+     upazila — the upazilas' own flags are not consulted (owner decision 2026-11-15; seeded: Dhaka 47, so
+     Savar, Dhamrai, Keraniganj, Nawabganj and Dohar price as metro, not suburb). The address form does
+     not change: a metro district still reports `upazila_required: true` and `city_option: true`, because
+     the address needs its upazila (CLAUDE.md rule 31) and the city itself is not an upazila;
    - `upazilas.is_inside_dhaka_metro` → metro; `upazilas.is_dhaka_subcity` → suburb;
    - a district in `delivery.suburb_district_ids` → suburb;
-   - a district in `delivery.metro_district_ids` **with no upazila** → metro (Dhaka city is not an upazila);
    - otherwise → outside.
 3. Base charge for the zone from the **default active courier provider's** rate card
    (`courier_providers.base_charge_dhaka|suburb|outside`).

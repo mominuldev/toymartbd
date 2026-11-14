@@ -45,6 +45,8 @@ import { CheckoutSection } from '@/features/storeSettings/CheckoutSection';
 import { DeliveryAreasSection } from '@/features/storeSettings/DeliveryAreasSection';
 import { PosPage } from '@/features/pos/PosPage';
 import { InboxPage } from '@/features/inbox/InboxPage';
+import { ShipmentsPage } from '@/features/shipments/ShipmentsPage';
+import { BookingQueuePage } from '@/features/shipments/BookingQueuePage';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -81,7 +83,7 @@ import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff', '/pos', '/inbox']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff', '/pos', '/inbox', '/shipments']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -260,6 +262,9 @@ export const routes: RouteObject[] = [
                     { path: 'integrations/tracking/diagnostics', element: <TrackingDiagnosticsPage /> },
                     // P6 couriers: settings & delivery charges (no frame; B · 37 / B · 07 parts) and the failed-booking retry queue.
                     { path: 'integrations/couriers', element: <CourierSettingsPage /> },
+                    // Shipments & tracking (Figma B · 08 241:34682) and the courier booking queue (B · 07 241:34046).
+                    { path: 'shipments', element: <ShipmentsPage /> },
+                    { path: 'shipments/booking', element: <BookingQueuePage /> },
                     { path: 'shipments/failed', element: <FailedBookingsPage /> },
                     // Courier location mapping (P6, no Figma frame; linked from Shipments B · 08 "map it").
                     { path: 'shipments/locations', element: <LocationMappingPage /> },

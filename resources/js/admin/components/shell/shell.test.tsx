@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import { bn, en } from '@/i18n/messages';
@@ -101,13 +101,57 @@ describe('app shell', () => {
         expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull();
     });
 
-    it('renders a placeholder for designed-but-unbuilt sections', async () => {
+    it('gives every sidebar section its own screen — no section falls back to the placeholder', async () => {
         signedInAs(viewer);
-        // Shipments & tracking (Figma B · 08) is the last sidebar section without its own screen;
-        // only its failed-bookings and location-mapping sub-pages exist.
+        // Shipments & tracking (Figma B · 08) was the last one (Phase 10 batch 5).
         renderApp('/shipments');
 
-        expect(await screen.findByText('This section is being built.')).toBeTruthy();
+        await waitFor(() => expect(screen.queryByText('This section is being built.')).toBeNull());
+    });
+});
+
+describe('inbox nav badge (owner decision 2026-11-15)', () => {
+    const inboxViewer: Me = { ...viewer, permissions: [...viewer.permissions, 'inbox.view'] };
+    const withInbox = (me: Me, count: number) =>
+        mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: me };
+            if (url.endsWith('/inbox/unread-count')) return { status: 200, body: { count } };
+            return { status: 404 };
+        });
+    const badgeCalls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.filter(([url]) => String(url).endsWith('/inbox/unread-count'));
+
+    it('shows the server count of conversations needing attention, with a screen-reader label', async () => {
+        withInbox(inboxViewer, 4);
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        await waitFor(() => expect(within(nav).getByRole('link', { name: /Inbox.*4 conversations need attention/ })).toBeTruthy());
+    });
+
+    it('shows no badge at zero', async () => {
+        const calls = withInbox(inboxViewer, 0);
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        await waitFor(() => expect(badgeCalls(calls)).not.toHaveLength(0));
+        expect(within(nav).getByRole('link', { name: 'Inbox' })).toBeTruthy();
+    });
+
+    it('never asks for the count without inbox.view', async () => {
+        const calls = withInbox(viewer, 9);
+        renderApp('/');
+
+        await screen.findAllByRole('navigation', { name: 'Main navigation' });
+        expect(badgeCalls(calls)).toHaveLength(0);
+    });
+
+    it('labels the badge in Bangla with Western digits', async () => {
+        withInbox(inboxViewer, 12);
+        renderApp('/');
+        fireEvent.click((await screen.findAllByRole('button', { name: 'বাং' }))[0]!);
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'প্রধান নেভিগেশন' }))[0]!;
+        await waitFor(() => expect(within(nav).getByRole('link', { name: /12টি কথোপকথনে মনোযোগ দরকার/ })).toBeTruthy());
     });
 });
 

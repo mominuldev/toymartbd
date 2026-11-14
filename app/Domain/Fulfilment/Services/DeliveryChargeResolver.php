@@ -96,13 +96,26 @@ final readonly class DeliveryChargeResolver
     /**
      * Our charge tier for an address; null = not serviced. An upazila must belong to the
      * district (the caller validates that).
+     *
+     * Precedence (owner decision 2026-11-15, "a metro district covers the whole district"):
+     *   1. an upazila in `not_serviced_upazila_ids` → not serviced
+     *   2. a district in `metro_district_ids` → inside Dhaka metro, whatever the upazila
+     *      (its upazilas' own flags are not consulted)
+     *   3. `upazilas.is_inside_dhaka_metro` → metro; `upazilas.is_dhaka_subcity` → suburb
+     *   4. a district in `suburb_district_ids` → suburb
+     *   5. otherwise → outside Dhaka
      */
     public function zoneFor(District $district, ?Upazila $upazila): ?DeliveryZone
     {
+        if ($upazila !== null && in_array($upazila->id, $this->settings->notServicedUpazilaIds(), true)) {
+            return null;
+        }
+
+        if (in_array($district->id, $this->settings->metroDistrictIds(), true)) {
+            return DeliveryZone::InsideDhakaMetro;
+        }
+
         if ($upazila !== null) {
-            if (in_array($upazila->id, $this->settings->notServicedUpazilaIds(), true)) {
-                return null;
-            }
             if ($upazila->is_inside_dhaka_metro) {
                 return DeliveryZone::InsideDhakaMetro;
             }
@@ -115,10 +128,6 @@ final readonly class DeliveryChargeResolver
             return DeliveryZone::DhakaSuburb;
         }
 
-        if ($upazila === null && in_array($district->id, $this->settings->metroDistrictIds(), true)) {
-            return DeliveryZone::InsideDhakaMetro;
-        }
-
         return DeliveryZone::OutsideDhaka;
     }
 
@@ -126,12 +135,22 @@ final readonly class DeliveryChargeResolver
      * Whether the district alone does not settle the charge — some upazila resolves to a
      * different tier or is not serviced — so the estimator must ask for the upazila
      * (A12.2 "second selector").
+     *
+     * A metro district with upazilas also answers true, although every upazila prices the
+     * same: the address still needs its upazila (rule 31; the courier maps it), and the
+     * district's city — Dhaka city is not an upazila — is offered as the `city_option`
+     * (zone metro with no upazila). Making a district metro changes the charge, never what
+     * the address form asks for.
      */
     public function requiresUpazila(District $district): bool
     {
         $districtZone = $this->zoneFor($district, null);
 
         $upazilas = $district->relationLoaded('upazilas') ? $district->upazilas : $district->upazilas()->get();
+
+        if (in_array($district->id, $this->settings->metroDistrictIds(), true)) {
+            return $upazilas->isNotEmpty();
+        }
 
         foreach ($upazilas as $upazila) {
             if ($this->zoneFor($district, $upazila) !== $districtZone) {

@@ -57,7 +57,7 @@ final class UpdateDeliveryAreasRequest extends ApiFormRequest
             'eta_days.outside_dhaka' => ['required', 'array:min,max'],
             'eta_days.outside_dhaka.min' => $day,
             'eta_days.outside_dhaka.max' => [...$day, 'gte:eta_days.outside_dhaka.min'],
-            /** Districts where an address with no upazila is the city itself — inside Dhaka metro. Their upazilas keep their own zone. */
+            /** Districts that are inside Dhaka metro as a whole: every address in them, with or without an upazila (owner decision 2026-11-15). Not-serviced upazilas still win. */
             'metro_district_ids' => ['present', 'array', 'max:64'],
             'metro_district_ids.*' => ['integer', 'distinct', Rule::exists(District::class, 'id')],
             /** Whole districts priced as Dhaka suburb. Must not also be a metro district. */

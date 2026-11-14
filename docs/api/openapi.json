@@ -23560,6 +23560,817 @@
                 }
             }
         },
+        "/admin/shipments/board": {
+            "get": {
+                "operationId": "v1.admin.shipments.board.index",
+                "summary": "`GET /shipments/board` \u2014 the shipments handed to a courier in the range, newest first,\ncursor-paginated. `meta.counts` holds one count per tab under the other filters;\n`meta.providers` the courier filter's options",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[tab]",
+                        "in": "query",
+                        "description": "all (default) | submitted | in_transit | delivered | returned | failed_attempts",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[provider]",
+                        "in": "query",
+                        "description": "Only this courier (`courier_providers.code`).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka date handed to the courier (inclusive). Default: six days before today.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka date (inclusive). Default: today.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "Shipment number, order number or consignment id (prefix).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `ShipmentBoardRow`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ShipmentBoardRow"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                },
+                                                "counts": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "from": {
+                                                    "type": "string"
+                                                },
+                                                "to": {
+                                                    "type": "string"
+                                                },
+                                                "providers": {
+                                                    "type": "array",
+                                                    "description": "the courier filter's options",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "name_bn": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "code",
+                                                            "name",
+                                                            "name_bn"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "counts",
+                                                "from",
+                                                "to",
+                                                "providers"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown tab or provider, or a malformed date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/board/stats": {
+            "get": {
+                "operationId": "v1.admin.shipments.board.stats",
+                "summary": "`GET /shipments/board/stats` \u2014 the stat tiles. In transit / submitted are live; the rest are outcome-dated in the range",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka date (inclusive). Default: six days before today.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka date (inclusive). Default: today.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[provider]",
+                        "in": "query",
+                        "description": "Only this courier (`courier_providers.code`).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ShipmentBoardStats`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShipmentBoardStats"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown provider or a malformed date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/board/issues": {
+            "get": {
+                "operationId": "v1.admin.shipments.board.issues",
+                "summary": "`GET /shipments/board/issues` \u2014 delivery issues and success by courier \u00d7 area, last 30 Dhaka days",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ShipmentBoardIssues`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShipmentBoardIssues"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Any query parameter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/{shipment}/tracking": {
+            "get": {
+                "operationId": "v1.admin.shipments.tracking",
+                "summary": "`GET /shipments/{shipment}/tracking` \u2014 the detail card: charges, attempts, the courier timeline, the partial outcome",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "shipment",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shipment ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ShipmentTracking`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShipmentTracking"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Any query parameter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/booking-queue": {
+            "get": {
+                "operationId": "v1.admin.shipments.booking-queue.summary",
+                "summary": "`GET /shipments/booking-queue` \u2014 header facts, courier cards, tab counts",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`BookingQueueSummary`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingQueueSummary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/booking-queue/ready": {
+            "get": {
+                "operationId": "v1.admin.shipments.booking-queue.ready",
+                "summary": "`GET /shipments/booking-queue/ready` \u2014 packed orders with no open shipment, oldest\nfirst, cursor-paginated (50). Each row says, per courier, why it cannot be booked.\nNo filters or sorts: any `filter[\u2026]` / `sort` is a 400",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `BookingQueueOrder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BookingQueueOrder"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "A filter or sort was sent (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/shipments/booking-queue/shipments": {
+            "get": {
+                "operationId": "v1.admin.shipments.booking-queue.shipments",
+                "summary": "`GET /shipments/booking-queue/shipments?filter[tab]=submitted|booked_today|failed` \u2014\nnewest first, cursor-paginated (50). `submitted` is pending + submitted (no consignment\nid yet, rule 24d); `booked_today` is booked_at on today's Dhaka date (rule 11);\n`failed` is the retry queue. A missing or unknown tab, or any other filter, is a 400",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[tab]",
+                        "in": "query",
+                        "required": true,
+                        "description": "Which tab.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "submitted",
+                                "booked_today",
+                                "failed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `BookingQueueShipment`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BookingQueueShipment"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing, unknown or unlisted filter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/shipments/booking-queue/unmapped": {
+            "get": {
+                "operationId": "v1.admin.shipments.booking-queue.unmapped",
+                "summary": "`GET /shipments/booking-queue/unmapped` \u2014 areas an active courier cannot reach until mapped (rule 32)",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `BookingQueueUnmappedArea`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BookingQueueUnmappedArea"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/unread-count": {
+            "get": {
+                "operationId": "v1.admin.inbox.unread-count",
+                "summary": "`GET /inbox/unread-count` \u2014 open conversations that need attention: unread inbound\nmessages or waiting on a staff reply (`needs_human`), each counted once. One COUNT",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxUnreadCount`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxUnreadCount"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/inbox-channels": {
+            "get": {
+                "operationId": "v1.admin.settings.inbox-channels.show",
+                "summary": "`GET /settings/inbox-channels` \u2014 driver, ids, secrets as set/source/last-4 hint, webhook URLs, readiness",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxChannelSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxChannelSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.inbox-channels.update",
+                "summary": "`PUT /settings/inbox-channels` \u2014 blank secret = keep; `clear_*` = remove. Audited (`credential_changed`, scope `inbox_{channel}`)",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateInboxChannelSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`InboxChannelSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxChannelSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/blog/posts": {
             "get": {
                 "operationId": "v1.admin.blog.posts.index",
@@ -35037,6 +35848,486 @@
                 ],
                 "title": "BlogTermRequest"
             },
+            "BookingQueueOrder": {
+                "type": "object",
+                "properties": {
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "ready_since": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When the order was packed (entered ready_to_ship)."
+                    },
+                    "recipient_name": {
+                        "type": "string"
+                    },
+                    "district": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "zone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "inside_dhaka_metro",
+                            "dhaka_suburb",
+                            "outside_dhaka",
+                            null
+                        ]
+                    },
+                    "weight_grams": {
+                        "type": "integer",
+                        "description": "Sum of variant weights \u00d7 quantity (what bulk booking sends)."
+                    },
+                    "weight_missing": {
+                        "type": "boolean",
+                        "description": "A line has no variant weight: the parcel would be understated."
+                    },
+                    "item_count": {
+                        "type": "integer"
+                    },
+                    "cod_amount": {
+                        "type": "string",
+                        "description": "What the courier collects: the order's due total, never negative."
+                    },
+                    "couriers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "provider_id": {
+                                    "type": "integer"
+                                },
+                                "location_status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "not_required",
+                                        "mapped",
+                                        "ambiguous",
+                                        "unmapped"
+                                    ]
+                                },
+                                "blocked_reason": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "enum": [
+                                        "inactive",
+                                        "not_connected",
+                                        "unverified_in_production",
+                                        "missing_address",
+                                        "not_serviced",
+                                        "unmapped_location",
+                                        "ambiguous_location",
+                                        "missing_weight",
+                                        null
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "provider_id",
+                                "location_status",
+                                "blocked_reason"
+                            ]
+                        }
+                    },
+                    "suggested_provider_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "order_id",
+                    "number",
+                    "ready_since",
+                    "recipient_name",
+                    "district",
+                    "upazila",
+                    "zone",
+                    "weight_grams",
+                    "weight_missing",
+                    "item_count",
+                    "cod_amount",
+                    "couriers",
+                    "suggested_provider_id"
+                ],
+                "title": "BookingQueueOrder"
+            },
+            "BookingQueueShipment": {
+                "type": "object",
+                "properties": {
+                    "shipment": {
+                        "$ref": "#/components/schemas/Shipment"
+                    },
+                    "submitted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When the booking was handed to the courier without an id (bulk / uncertain)."
+                    },
+                    "recipient_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "district_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "upazila_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "shipment",
+                    "submitted_at",
+                    "recipient_name",
+                    "district_name",
+                    "upazila_name"
+                ],
+                "title": "BookingQueueShipment"
+            },
+            "BookingQueueSummary": {
+                "type": "object",
+                "properties": {
+                    "production": {
+                        "type": "boolean",
+                        "description": "Production: an unverified courier cannot book (rule 33a)."
+                    },
+                    "cutoff_time": {
+                        "type": "string",
+                        "description": "Today's pickup cut-off, \"HH:MM\" Asia/Dhaka (Settings \u2192 Delivery areas)."
+                    },
+                    "today": {
+                        "type": "string",
+                        "description": "Today's Dhaka date (Y-m-d) \u2014 what \"booked today\" counts (rule 11)."
+                    },
+                    "couriers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "is_active": {
+                                    "type": "boolean"
+                                },
+                                "is_default": {
+                                    "type": "boolean"
+                                },
+                                "requires_location_mapping": {
+                                    "type": "boolean"
+                                },
+                                "supports_bulk": {
+                                    "type": "boolean"
+                                },
+                                "trust": {
+                                    "type": "string",
+                                    "enum": [
+                                        "verified",
+                                        "unverified",
+                                        "not_connected"
+                                    ]
+                                },
+                                "blocked_reason": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "enum": [
+                                        "inactive",
+                                        "not_connected",
+                                        "unverified_in_production",
+                                        null
+                                    ]
+                                },
+                                "bookings_count": {
+                                    "type": "integer"
+                                },
+                                "booked_today": {
+                                    "type": "integer"
+                                },
+                                "awaiting_id": {
+                                    "type": "integer"
+                                },
+                                "webhook": {
+                                    "type": "object",
+                                    "properties": {
+                                        "supported": {
+                                            "type": "boolean"
+                                        },
+                                        "health": {
+                                            "type": "string",
+                                            "enum": [
+                                                "unsupported",
+                                                "none",
+                                                "healthy",
+                                                "failing"
+                                            ]
+                                        },
+                                        "last_received_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "supported",
+                                        "health",
+                                        "last_received_at"
+                                    ]
+                                },
+                                "balance": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "balance_checked_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "code",
+                                "name",
+                                "name_bn",
+                                "is_active",
+                                "is_default",
+                                "requires_location_mapping",
+                                "supports_bulk",
+                                "trust",
+                                "blocked_reason",
+                                "bookings_count",
+                                "booked_today",
+                                "awaiting_id",
+                                "webhook",
+                                "balance",
+                                "balance_checked_at"
+                            ]
+                        }
+                    },
+                    "counts": {
+                        "type": "object",
+                        "properties": {
+                            "ready": {
+                                "type": "integer"
+                            },
+                            "submitted": {
+                                "type": "integer"
+                            },
+                            "booked_today": {
+                                "type": "integer"
+                            },
+                            "failed": {
+                                "type": "integer"
+                            },
+                            "unmapped": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "ready",
+                            "submitted",
+                            "booked_today",
+                            "failed",
+                            "unmapped"
+                        ]
+                    }
+                },
+                "required": [
+                    "production",
+                    "cutoff_time",
+                    "today",
+                    "couriers",
+                    "counts"
+                ],
+                "title": "BookingQueueSummary"
+            },
+            "BookingQueueUnmappedArea": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "district": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "upazila": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Null: a district-level address (e.g. Dhaka city).",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "district_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The name as written on the orders, when the geography row is missing."
+                    },
+                    "upazila_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "orders_count": {
+                        "type": "integer"
+                    },
+                    "order_numbers": {
+                        "type": "array",
+                        "description": "Up to five order numbers.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "provider",
+                    "district",
+                    "upazila",
+                    "district_name",
+                    "upazila_name",
+                    "orders_count",
+                    "order_numbers"
+                ],
+                "title": "BookingQueueUnmappedArea"
+            },
             "Brand": {
                 "type": "object",
                 "properties": {
@@ -41110,7 +42401,7 @@
                     },
                     "metro_district_ids": {
                         "type": "array",
-                        "description": "Districts whose district-level address (no upazila) is inside Dhaka metro.",
+                        "description": "Districts inside Dhaka metro as a whole \u2014 every address in them, with or without an\nupazila (owner decision 2026-11-15); not-serviced upazilas still win.",
                         "items": {
                             "type": "integer"
                         }
@@ -43439,6 +44730,192 @@
                 ],
                 "title": "ImportSettlementRequest"
             },
+            "InboxChannelCredentials": {
+                "type": "object",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "whatsapp",
+                            "messenger"
+                        ]
+                    },
+                    "driver": {
+                        "type": "string",
+                        "description": "The configured send driver; `log` sends nothing.",
+                        "enum": [
+                            "log",
+                            "cloud",
+                            "messenger"
+                        ]
+                    },
+                    "driver_source": {
+                        "type": "string",
+                        "enum": [
+                            "settings",
+                            "env"
+                        ]
+                    },
+                    "account_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp: the phone number id. Messenger: the Page id."
+                    },
+                    "account_id_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "send_token": {
+                        "type": "object",
+                        "description": "WhatsApp access token / Messenger Page access token. Hint \"\u2022\u2022\u2022\u20221234\" at most.",
+                        "properties": {
+                            "set": {
+                                "type": "boolean"
+                            },
+                            "hint": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "source": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "settings",
+                                    "env",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "set",
+                            "hint",
+                            "source"
+                        ]
+                    },
+                    "app_secret": {
+                        "type": "object",
+                        "description": "Meta App Secret \u2014 keys the X-Hub-Signature-256 check.",
+                        "properties": {
+                            "set": {
+                                "type": "boolean"
+                            },
+                            "hint": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "source": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "settings",
+                                    "env",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "set",
+                            "hint",
+                            "source"
+                        ]
+                    },
+                    "verify_token": {
+                        "type": "object",
+                        "description": "The verify token for Meta's subscription handshake.",
+                        "properties": {
+                            "set": {
+                                "type": "boolean"
+                            },
+                            "hint": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "source": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "settings",
+                                    "env",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "set",
+                            "hint",
+                            "source"
+                        ]
+                    },
+                    "webhook_url": {
+                        "type": "string",
+                        "description": "Absolute callback URL to give Meta (from APP_URL)."
+                    },
+                    "webhook_ready": {
+                        "type": "boolean",
+                        "description": "App secret and verify token are both set."
+                    },
+                    "send_ready": {
+                        "type": "boolean",
+                        "description": "Account id and send token are both set."
+                    },
+                    "verified": {
+                        "type": "boolean",
+                        "description": "Always false until a real account has been connected and watched."
+                    }
+                },
+                "required": [
+                    "channel",
+                    "driver",
+                    "driver_source",
+                    "account_id",
+                    "account_id_source",
+                    "send_token",
+                    "app_secret",
+                    "verify_token",
+                    "webhook_url",
+                    "webhook_ready",
+                    "send_ready",
+                    "verified"
+                ],
+                "title": "InboxChannelCredentials"
+            },
+            "InboxChannelSettings": {
+                "type": "object",
+                "properties": {
+                    "whatsapp": {
+                        "$ref": "#/components/schemas/InboxChannelCredentials"
+                    },
+                    "messenger": {
+                        "$ref": "#/components/schemas/InboxChannelCredentials"
+                    }
+                },
+                "required": [
+                    "whatsapp",
+                    "messenger"
+                ],
+                "title": "InboxChannelSettings"
+            },
             "InboxConversation": {
                 "type": "object",
                 "properties": {
@@ -43975,6 +45452,19 @@
                     "read_at"
                 ],
                 "title": "InboxMessage"
+            },
+            "InboxUnreadCount": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "description": "Open conversations with unread messages or waiting on a staff reply, each counted once."
+                    }
+                },
+                "required": [
+                    "count"
+                ],
+                "title": "InboxUnreadCount"
             },
             "InspectReturnRequest": {
                 "type": "object",
@@ -58227,6 +59717,471 @@
                 ],
                 "title": "Shipment"
             },
+            "ShipmentBoardIssues": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "returned": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "cost": {
+                                "type": "string"
+                            },
+                            "districts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "cost",
+                            "districts"
+                        ]
+                    },
+                    "failed_attempts": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "latest_provider_status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "latest_provider_status"
+                        ]
+                    },
+                    "unmapped": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "areas": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "areas"
+                        ]
+                    },
+                    "by_courier": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "provider": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "code",
+                                        "name",
+                                        "name_bn"
+                                    ]
+                                },
+                                "area": {
+                                    "type": "string",
+                                    "enum": [
+                                        "dhaka",
+                                        "outside",
+                                        "unknown"
+                                    ]
+                                },
+                                "delivered": {
+                                    "type": "integer"
+                                },
+                                "returned": {
+                                    "type": "integer"
+                                },
+                                "rate": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "provider",
+                                "area",
+                                "delivered",
+                                "returned",
+                                "rate"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "returned",
+                    "failed_attempts",
+                    "unmapped",
+                    "by_courier"
+                ],
+                "title": "ShipmentBoardIssues"
+            },
+            "ShipmentBoardRow": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "order": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "number": {
+                                "type": "string"
+                            },
+                            "customer_name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "phone_masked": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "number",
+                            "customer_name",
+                            "phone",
+                            "phone_masked"
+                        ]
+                    },
+                    "provider": {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "consignment_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "submitted",
+                            "booked",
+                            "picked_up",
+                            "in_transit",
+                            "out_for_delivery",
+                            "delivered",
+                            "partially_delivered",
+                            "returned",
+                            "cancelled",
+                            "on_hold",
+                            "failed"
+                        ]
+                    },
+                    "provider_status_raw": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_event": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "status": {
+                                "type": "string"
+                            },
+                            "provider_status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "message": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "location": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "occurred_at": {
+                                "type": "string"
+                            },
+                            "received_at": {
+                                "type": "string"
+                            },
+                            "source": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "status",
+                            "provider_status",
+                            "message",
+                            "location",
+                            "occurred_at",
+                            "received_at",
+                            "source"
+                        ]
+                    },
+                    "submitted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "cod_amount": {
+                        "type": "string"
+                    },
+                    "cost": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "basis": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "settled",
+                                    "recorded",
+                                    "estimate",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "basis"
+                        ]
+                    },
+                    "delivery_attempts": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "order",
+                    "provider",
+                    "consignment_id",
+                    "status",
+                    "provider_status_raw",
+                    "last_event",
+                    "submitted_at",
+                    "cod_amount",
+                    "cost",
+                    "delivery_attempts"
+                ],
+                "title": "ShipmentBoardRow"
+            },
+            "ShipmentBoardStats": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "in_transit": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "cod_on_road": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "cod_on_road"
+                        ]
+                    },
+                    "submitted": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "oldest_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "oldest_age_minutes": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "chase_after_minutes": {
+                                "type": "integer"
+                            },
+                            "overdue": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "oldest_at",
+                            "oldest_age_minutes",
+                            "chase_after_minutes",
+                            "overdue"
+                        ]
+                    },
+                    "success": {
+                        "type": "object",
+                        "properties": {
+                            "delivered": {
+                                "type": "integer"
+                            },
+                            "returned": {
+                                "type": "integer"
+                            },
+                            "rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "delivered",
+                            "returned",
+                            "rate"
+                        ]
+                    },
+                    "days_to_deliver": {
+                        "type": "object",
+                        "properties": {
+                            "average": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "timed": {
+                                "type": "integer"
+                            },
+                            "by_zone": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "zone": {
+                                            "type": "string",
+                                            "enum": [
+                                                "inside_dhaka_metro",
+                                                "dhaka_suburb",
+                                                "outside_dhaka"
+                                            ]
+                                        },
+                                        "average": {
+                                            "type": "string"
+                                        },
+                                        "timed": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "zone",
+                                        "average",
+                                        "timed"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "average",
+                            "timed",
+                            "by_zone"
+                        ]
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "in_transit",
+                    "submitted",
+                    "success",
+                    "days_to_deliver"
+                ],
+                "title": "ShipmentBoardStats"
+            },
             "ShipmentBulkResult": {
                 "type": "object",
                 "properties": {
@@ -58731,6 +60686,391 @@
                     "orders"
                 ],
                 "title": "ShipmentQuoteRequest"
+            },
+            "ShipmentTracking": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "submitted",
+                            "booked",
+                            "picked_up",
+                            "in_transit",
+                            "out_for_delivery",
+                            "delivered",
+                            "partially_delivered",
+                            "returned",
+                            "cancelled",
+                            "on_hold",
+                            "failed"
+                        ]
+                    },
+                    "provider_status_raw": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "provider": {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "consignment_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tracking_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tracking_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The courier's own tracking page, when the driver returned one."
+                    },
+                    "order": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "number": {
+                                "type": "string"
+                            },
+                            "customer_name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "phone_masked": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "number",
+                            "customer_name",
+                            "phone",
+                            "phone_masked"
+                        ]
+                    },
+                    "weight_grams": {
+                        "type": "integer"
+                    },
+                    "item_count": {
+                        "type": "integer"
+                    },
+                    "cod_amount": {
+                        "type": "string"
+                    },
+                    "cod_collected": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "charges": {
+                        "type": "object",
+                        "properties": {
+                            "charge": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cod_fee": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "return_charge": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "total_cost": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "charge",
+                            "cod_fee",
+                            "return_charge",
+                            "total_cost"
+                        ]
+                    },
+                    "cost": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "basis": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "settled",
+                                    "recorded",
+                                    "estimate",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "basis"
+                        ]
+                    },
+                    "delivery_attempts": {
+                        "type": "integer"
+                    },
+                    "submitted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "booked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "delivered_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "returned_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "can_print_label": {
+                        "type": "boolean",
+                        "description": "The label route needs a consignment id and customers.view_pii."
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "status": {
+                                    "type": "string"
+                                },
+                                "from_status": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "provider_status": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "message": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "location": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "occurred_at": {
+                                    "type": "string"
+                                },
+                                "received_at": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": "string"
+                                },
+                                "payload_keys": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "status",
+                                "from_status",
+                                "provider_status",
+                                "message",
+                                "location",
+                                "occurred_at",
+                                "received_at",
+                                "source",
+                                "payload_keys"
+                            ]
+                        }
+                    },
+                    "outcome": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "recorded": {
+                                "type": "boolean"
+                            },
+                            "cod_collected": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "delivered": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "quantity": {
+                                            "type": "integer"
+                                        },
+                                        "amount": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "name_bn",
+                                        "quantity",
+                                        "amount"
+                                    ]
+                                }
+                            },
+                            "came_back": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "quantity": {
+                                            "type": "integer"
+                                        },
+                                        "amount": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "name_bn",
+                                        "quantity",
+                                        "amount"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "recorded",
+                            "cod_collected",
+                            "delivered",
+                            "came_back"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "status",
+                    "provider_status_raw",
+                    "provider",
+                    "consignment_id",
+                    "tracking_code",
+                    "tracking_url",
+                    "order",
+                    "weight_grams",
+                    "item_count",
+                    "cod_amount",
+                    "cod_collected",
+                    "charges",
+                    "cost",
+                    "delivery_attempts",
+                    "submitted_at",
+                    "booked_at",
+                    "delivered_at",
+                    "returned_at",
+                    "can_print_label",
+                    "events",
+                    "outcome"
+                ],
+                "title": "ShipmentTracking"
             },
             "SitemapStatus": {
                 "type": "object",
@@ -67350,7 +69690,7 @@
                     },
                     "metro_district_ids": {
                         "type": "array",
-                        "description": "Districts where an address with no upazila is the city itself \u2014 inside Dhaka metro. Their upazilas keep their own zone.",
+                        "description": "Districts that are inside Dhaka metro as a whole: every address in them, with or without an upazila (owner decision 2026-11-15). Not-serviced upazilas still win.",
                         "items": {
                             "type": "integer"
                         },
@@ -67439,6 +69779,109 @@
                     "free_shipping_threshold"
                 ],
                 "title": "UpdateDeliverySettingsRequest"
+            },
+            "UpdateInboxChannelSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/inbox-channels` \u2014 the WhatsApp and Messenger inbox credentials on Admin \u2192\nIntegrations \u2192 Messaging; needs settings.manage_integrations. Driver and account id are the\nwhole document (a blank id removes the saved one, so env applies again). A blank or absent\nsecret KEEPS the saved one; `clear_{field}` removes it. Choosing the Meta driver (`cloud` /\n`messenger`) needs the account id and the send token to be in place after the save.",
+                "properties": {
+                    "whatsapp_driver": {
+                        "type": "string",
+                        "description": "`log` sends nothing; `cloud` is the WhatsApp Cloud API driver (unverified).",
+                        "enum": [
+                            "log",
+                            "cloud"
+                        ]
+                    },
+                    "whatsapp_phone_number_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp Manager \u2192 API setup \u2192 \"Phone number ID\". Digits only.",
+                        "pattern": "^\\d{1,32}$"
+                    },
+                    "whatsapp_access_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2048
+                    },
+                    "whatsapp_app_secret": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "whatsapp_verify_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "clear_whatsapp_access_token": {
+                        "type": "boolean"
+                    },
+                    "clear_whatsapp_app_secret": {
+                        "type": "boolean"
+                    },
+                    "clear_whatsapp_verify_token": {
+                        "type": "boolean"
+                    },
+                    "messenger_driver": {
+                        "type": "string",
+                        "description": "`log` sends nothing; `messenger` is the Messenger Send API driver (unverified).",
+                        "enum": [
+                            "log",
+                            "messenger"
+                        ]
+                    },
+                    "messenger_page_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Facebook Page id. Digits only.",
+                        "pattern": "^\\d{1,32}$"
+                    },
+                    "messenger_page_access_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2048
+                    },
+                    "messenger_app_secret": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "messenger_verify_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "clear_messenger_page_access_token": {
+                        "type": "boolean"
+                    },
+                    "clear_messenger_app_secret": {
+                        "type": "boolean"
+                    },
+                    "clear_messenger_verify_token": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "whatsapp_driver",
+                    "messenger_driver"
+                ],
+                "title": "UpdateInboxChannelSettingsRequest"
             },
             "UpdateInvoiceSettingsRequest": {
                 "type": "object",

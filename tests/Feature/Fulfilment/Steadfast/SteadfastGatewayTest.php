@@ -340,8 +340,14 @@ it('quotes from the stored rate card, stepping at 1 kg (rule 32a)', function (in
     'Dhaka 1.001 kg (Pathao would still be base)' => [1001, null, '90.00'],
     'Dhaka 2 kg' => [2000, null, '90.00'],
     'Dhaka 2.5 kg' => [2500, null, '110.00'],
-    'Savar suburb 0.5 kg' => [500, 365, '100.00'],
+    'Savar, inside metro district Dhaka, 0.5 kg' => [500, 365, '70.00'],
 ]);
+
+it('quotes the suburb rate for a suburb district', function (): void {
+    $quote = steadfast()->quote(steadfastRequest(['districtId' => 41, 'weightGrams' => 500, 'codAmount' => Money::of('1100.00')]));
+
+    expect($quote->charge->toDecimal())->toBe('100.00');
+});
 
 it('charges the COD fee on COD minus the delivery charge', function (): void {
     $quote = steadfast()->quote(steadfastRequest(['weightGrams' => 500, 'codAmount' => Money::of('1070.00')]));

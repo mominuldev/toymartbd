@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 're
 import { Outlet, useNavigate } from 'react-router';
 import { XIcon } from '@phosphor-icons/react';
 import { Sidebar } from '@/components/shell/Sidebar';
+import { useInboxBadge } from '@/components/shell/useInboxBadge';
 import { Topbar } from '@/components/shell/Topbar';
 import { can, useLogout, useMe } from '@/features/auth/api';
 import { useLowStockCount } from '@/features/inventory/api';
@@ -39,7 +40,8 @@ export function Shell() {
     const drawer = useRef<HTMLDivElement>(null);
     // Nav count badges (Figma CountBadge 185:43 on SidebarItem): each a cheap server count.
     const lowStock = useLowStockCount(can(me, 'inventory.view'));
-    const counts: Record<string, number | undefined> = { '/inventory': lowStock.data?.count };
+    const inbox = useInboxBadge(can(me, 'inbox.view'));
+    const counts: Record<string, number | undefined> = { '/inventory': lowStock.data?.count, '/inbox': inbox.data?.count };
 
     const toggleCollapsed = useCallback(() => {
         setCollapsed((value) => {
