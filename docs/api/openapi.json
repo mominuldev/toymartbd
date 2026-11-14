@@ -29527,13 +29527,23 @@
                 "tags": [
                     "System"
                 ],
+                "parameters": [
+                    {
+                        "name": "X-Health-Token",
+                        "in": "header",
+                        "description": "Monitoring token (MONITORING_HEALTH_TOKEN); adds per-check detail.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`HealthReportResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "$ref": "#/components/schemas/HealthReportResource"
                                 }
                             }
                         }
@@ -38853,27 +38863,24 @@
                 "properties": {
                     "status": {
                         "type": "string",
+                        "description": "`ok`, `degraded` (200: something non-critical failed) or `down` (503).",
                         "enum": [
                             "ok",
-                            "degraded"
+                            "degraded",
+                            "down"
                         ]
-                    },
-                    "checks": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "last_courier_sync": {
-                        "type": "null",
-                        "description": "Courier sync lands in Phase 6 (Fulfilment). Always null until then, and never\ncounted towards `status`."
                     },
                     "checked_at": {
                         "type": "string"
+                    },
+                    "checks": {
+                        "type": "array",
+                        "description": "Only with a valid `X-Health-Token`.",
+                        "items": {}
                     }
                 },
                 "required": [
                     "status",
-                    "checks",
-                    "last_courier_sync",
                     "checked_at"
                 ],
                 "title": "HealthReportResource"

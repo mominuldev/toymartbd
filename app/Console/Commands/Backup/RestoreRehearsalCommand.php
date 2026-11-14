@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Backup;
 
+use App\Models\SystemHeartbeat;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
@@ -184,12 +185,23 @@ final class RestoreRehearsalCommand extends Command
             $this->table(['Check', 'Expected', 'Restored', 'Result'], $this->rows);
         }
 
+        // The evidence `toymart:launch:check` and the monthly drill read (docs/ops/LAUNCH-CHECKLIST.md).
+        try {
+            (new RehearsalLog($disk))->record($name, ! $this->failed, $against, count($this->rows));
+        } catch (Throwable $e) {
+            $this->failed = true;
+            $this->components->error('Could not record the rehearsal result: '.$e->getMessage());
+        }
+
         if ($this->failed) {
+            SystemHeartbeat::failed(SystemHeartbeat::RESTORE_REHEARSAL, 'Rehearsal of '.$name.' failed.');
             $this->components->error('RESTORE REHEARSAL FAILED for '.$name.'.');
 
             return self::FAILURE;
         }
 
+        // For the restore_rehearsal_stale alert (P10 monitoring); RehearsalLog above is the evidence.
+        SystemHeartbeat::beat(SystemHeartbeat::RESTORE_REHEARSAL, ['backup' => $name, 'checks' => count($this->rows)]);
         $this->components->info('RESTORE REHEARSAL PASSED for '.$name.' ('.count($this->rows).' checks).');
 
         return self::SUCCESS;

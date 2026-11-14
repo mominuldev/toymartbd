@@ -44,6 +44,8 @@ jobs:
         run: php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress
       - name: deptrac
         run: vendor/bin/deptrac analyse --no-progress
+      - name: Shellcheck — deploy and provisioning scripts (docs/ops/DEPLOYMENT.md)
+        run: shellcheck -x ops/deploy/*.sh ops/provision/provision.sh
       - name: Pest (SQLite)
         env:
           # Every route a RoleMatrix assertion reaches is appended here (tests/Support/RoleMatrixCoverage.php).
@@ -120,6 +122,14 @@ jobs:
       - name: Unit tests (revalidation HMAC, API client, i18n)
         run: npm run test:storefront
       - name: Build
+        # A production build requires these (lib/env.ts). CI placeholders, not secrets: this build is
+        # only checked, never served.
+        env:
+          API_URL: http://127.0.0.1:4010
+          ADMIN_URL: http://127.0.0.1:4010
+          SITE_URL: http://127.0.0.1:3100
+          STOREFRONT_API_TOKEN: ci-placeholder-storefront-token
+          STOREFRONT_REVALIDATE_SECRET: ci-placeholder-revalidate-secret
         run: npm run build:storefront
       - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles, Bangla layout at 390/1440, golden path in both locales, axe + keyboard in both locales, performance budgets (UI-UX §8)
         env:

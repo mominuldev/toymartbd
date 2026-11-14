@@ -13,6 +13,7 @@ use Throwable;
  * Keeps credentials, full phone numbers and full addresses out of the logs and out
  * of Sentry (CLAUDE.md rule 20).
  *
+ *  - Any e-mail address is masked to `r***@example.com` (P10).
  *  - Any Bangladeshi mobile number anywhere in a string — the message, a context
  *    value, an extra value — is masked to `017****5678`, the same form as
  *    PhoneNumber::masked().
@@ -51,6 +52,11 @@ final class RedactSensitiveData implements ProcessorInterface
         'address_line_1',
         'address_line_2',
         'php_auth_pw',
+        // One-time passcodes (P10): a login OTP in a log is a live credential for minutes.
+        'otp',
+        'otp_code',
+        'one_time_password',
+        'verification_code',
     ];
 
     /** Substrings that make any key sensitive: `access_token`, `client_secret`, `x_xsrf_token`, `shipping_address`. */
@@ -64,6 +70,8 @@ final class RedactSensitiveData implements ProcessorInterface
         '_address',
         'authorization',
         'cookie',
+        '_otp',
+        'otp_',
     ];
 
     /**
@@ -71,13 +79,16 @@ final class RedactSensitiveData implements ProcessorInterface
      * form string (`token=…`), a bearer token. A request body or a serialised
      * Request in a stack frame arrives as one string, past the key-based redaction.
      */
-    private const string SECRET_WORDS = '[A-Za-z0-9_\-]*(?:password|token|secret|api[_\-]?key|authorization|cookie|credential|address_line)[A-Za-z0-9_\-]*';
+    private const string SECRET_WORDS = '[A-Za-z0-9_\-]*(?:password|token|secret|api[_\-]?key|authorization|cookie|credential|address_line|otp)[A-Za-z0-9_\-]*';
 
     /**
      * 013–019 mobile numbers with a +880 / 880 / 0 prefix, not glued to other digits.
      * Group 1 is the ten digits after the trunk prefix.
      */
     private const string PHONE_PATTERN = '/(?<!\d)(?:\+?880|0)(1[3-9]\d{8})(?!\d)/';
+
+    /** An e-mail address; the first character of the local part and the domain survive (P10). */
+    private const string EMAIL_PATTERN = '/(?<![A-Za-z0-9._%+\-])([A-Za-z0-9])[A-Za-z0-9._%+\-]*@([A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,})/';
 
     private const int MAX_DEPTH = 10;
 
@@ -100,10 +111,16 @@ final class RedactSensitiveData implements ProcessorInterface
         ) ?? $value;
     }
 
-    /** Phones masked, plus secrets inside JSON / query strings / bearer headers. */
+    /** `rahela.khatun@example.com` → `r***@example.com`, anywhere in the string. */
+    public static function maskEmails(string $value): string
+    {
+        return preg_replace(self::EMAIL_PATTERN, '$1***@$2', $value) ?? $value;
+    }
+
+    /** Phones and e-mails masked, plus secrets inside JSON / query strings / bearer headers. */
     public static function scrubText(string $value): string
     {
-        $value = self::maskPhones($value);
+        $value = self::maskEmails(self::maskPhones($value));
 
         $value = preg_replace(
             [

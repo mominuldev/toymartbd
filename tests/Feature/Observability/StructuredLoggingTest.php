@@ -90,3 +90,17 @@ it('redacts the default stack channel too', function (): void {
         ->not->toContain('1912345678')
         ->not->toContain('hunter2');
 });
+
+it('stamps every JSON line with app, environment and release for aggregation (P10)', function (): void {
+    config(['logging.channels.json.handler_with.stream' => $this->logFile, 'sentry.release' => 'abc1234', 'app.env' => 'production']);
+    Log::forgetChannel('json');
+    Context::add('request_id', 'req-service-1');
+
+    Log::channel('json')->info('Order confirmed for ops@example.com', ['otp' => '483920']);
+
+    $entry = json_decode(trim(observabilityLog($this->logFile)), true, flags: JSON_THROW_ON_ERROR);
+    expect($entry['extra']['service'])->toBe(['app' => 'toymartbd-api', 'env' => 'production', 'release' => 'abc1234'])
+        ->and($entry['extra']['request_id'])->toBe('req-service-1')
+        ->and($entry['message'])->toBe('Order confirmed for o***@example.com')
+        ->and($entry['context']['otp'])->toBe('[redacted]');
+});

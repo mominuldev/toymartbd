@@ -1,0 +1,5 @@
+# Toy Mart BD — Laravel scheduler (ops/provision). /etc/cron.d/toymartbd
+# ONE server only (every task is onOneServer anyway). Schedule: routes/console.php, STAGING.md §6.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * {{DEPLOY_USER}} cd {{APP_ROOT}}/current && php artisan schedule:run --no-interaction >> /var/log/toymartbd/scheduler.log 2>&1

@@ -1,0 +1,3 @@
+# Toy Mart BD — what the deploy user may run as root, and nothing else (ops/provision).
+# /etc/sudoers.d/toymartbd-deploy
+{{DEPLOY_USER}} ALL=(root) NOPASSWD: /usr/bin/systemctl reload php8.4-fpm, /usr/bin/supervisorctl status, /usr/bin/supervisorctl status toymartbd-horizon, /usr/bin/supervisorctl start toymartbd-horizon, /usr/bin/supervisorctl restart toymartbd-horizon

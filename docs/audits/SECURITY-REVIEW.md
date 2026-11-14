@@ -18,7 +18,7 @@ Severity: **high** means exploitable now for data or money. **Medium** means a r
 | S-8 | low | `APP_DEBUG=true` in production would put exception messages, which can hold SQL with PII, into 5xx problems | **fixed**: forced off at boot and logged as critical |
 | S-9 | low | CSV formula guard missed leading tab and CR (`CsvReport`, `ProductSpreadsheet`) | **fixed** |
 | S-10 | low | Laravel's signed `/storage/{path}` GET and PUT routes were registered for the private disk but never used | **fixed**: `serve => false` |
-| S-11 | low | The storefront has no script CSP. Only `frame-ancestors`, `base-uri` and `object-src` are set | open: follow-up (see below) |
+| S-11 | low | The storefront has no script CSP. Only `frame-ancestors`, `base-uri` and `object-src` are set | **fixed** (Phase 10 prep): nonce CSP on per-request pages, host-restricted CSP on prerendered pages; see below |
 | S-12 | low | Dev-only npm advisory (minimatch ReDoS through eslint) | documented, not shipped |
 | S-13 | low | The storefront server token never expires (Sanctum `expiration` is null) | needs owner: rotation policy |
 | S-14 | info | Horizon has no `viewHorizon` gate, so its dashboard is reachable in `local` only | needs owner, if wanted in production |
@@ -109,12 +109,34 @@ These now have matrix tests in `tests/Feature/Security/RoleMatrixGapsTest.php`:
   - `nosniff`, a referrer policy, a permissions policy and HSTS.
 
   `X-Frame-Options` is deliberately not sent, because it cannot allow the admin origin. `headers()` is evaluated at **build** time, so `ADMIN_URL` or `API_URL` must be set for `next build`.
+  *Phase 10 update:* the CSP part moved — pages get the full policy from `proxy.ts` (S-11) and `headers()` sends the baseline CSP to `/api` route handlers only.
 - **Tests:** `tests/Feature/Security/SecurityHeadersTest.php` (API, problem responses, HSTS only on HTTPS, admin nonce CSP and nonce on the inline script, no `unsafe-inline` for scripts, headers kept when already set, CORS, secure cookie, no `/storage` routes); `toymartbd-app/storefront/tests/security-headers.test.ts`.
 - **Risk to watch:** the admin CSP is verified by Pest only. The admin Playwright E2E, which runs in CI, loads the real built bundle under it. If a third-party script is ever added to the admin, it must be added to `script-src`.
 
-### S-11 — Storefront script CSP (open, low)
+### S-11 — Storefront script CSP (fixed, Phase 10 prep)
 
-A script CSP for Next needs a nonce minted in `proxy.ts` and threaded to `<Script nonce>`. That also makes every page dynamic, which is a performance trade-off with ISR (agent 3's area), and the consented GA4/Meta tags load third-party scripts. The sanitiser runs twice, so the current XSS exposure is low. This is recommended as its own task with a performance check.
+**What ships.** `toymartbd-app/storefront/lib/csp.ts`, set on every page response by `proxy.ts`. Two policies, chosen per route:
+
+| | Per-request pages | Prerendered (ISR) pages |
+|---|---|---|
+| Which | every `app/[locale]` page exporting `dynamic = 'force-dynamic'` (cart, checkout, account/*, orders/*, track, search, toys, blog index, guides index, delivery-charge, blog preview). `NONCE_ROUTES`; `tests/csp.test.ts` fails if the list and the source drift | everything else |
+| `script-src` | `'self' 'nonce-<fresh per request>' 'strict-dynamic'` + the tracking hosts (CSP2 fallback). No `unsafe-inline`, no `unsafe-eval` | `'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net` |
+| Both | `object-src 'none'; base-uri 'self'; form-action 'self' https://sandbox.sslcommerz.com https://securepay.sslcommerz.com; frame-ancestors 'self' <admin origin>; img-src 'self' data: blob: <API origin> <MEDIA_ORIGINS> + GA/Meta pixel hosts; connect-src 'self' + GA/Meta hosts`; `upgrade-insecure-requests` when `SITE_URL` is https | |
+
+- **Nonce plumbing.** The proxy mints 128 random bits, sets the policy on the **request** (Next reads `'nonce-…'` from it and stamps its framework scripts, route chunks and inline RSC/streaming scripts) and on the response. `next/script`'s consent-gated GA4/Meta tags are inserted by those trusted scripts, so `'strict-dynamic'` admits them. Any client-sent CSP request header is deleted first, so nobody can plant a nonce into a render.
+- **`form-action`** includes SSLCommerz: without JavaScript, `POST /api/checkout` answers 303 to the gateway's hosted page, and browsers apply `form-action` to that redirect. The hosts are SSLCommerz's sandbox/live bases from `config/payments.php`; a unit test keeps the two in step. UNVERIFIED: that the GatewayPageURL is always on those two hosts (no merchant account yet) — check on the first sandbox payment.
+- **Tracking hosts.** Google: "Google Analytics without Ads features" from Google's CSP guide (developers.google.com/tag-platform/security/guides/csp, read 2026-11-14); Ads / Signals features would need `*.g.doubleclick.net` and `google.<TLD>` hosts. Meta: `connect.facebook.net` (script + signals config) and `www.facebook.com` (`/tr`). **UNVERIFIED** — Meta publishes no CSP list; confirm with the real pixel. A GTM container's custom tags (none configured) would need their hosts added on prerendered pages.
+- **Bug found while wiring it.** A `next.config.ts` `headers()` entry with the same key **replaces** the proxy's response header. The P9 baseline CSP there silently erased the page policy (the first E2E run caught it: no nonce in the header, nonces in the HTML). `headers()` now sends no CSP on pages; route handlers under `/api` keep the baseline `frame-ancestors; base-uri; object-src` through their own rule. Side benefit: page `frame-ancestors` now uses the runtime `ADMIN_URL`, not the build-time one.
+
+**Why not nonces everywhere (the trade-off, measured).** A nonce must be fresh per response, so a nonce page cannot be served from the full-route cache. Probing the production build (`next start`, mock API) showed which pages actually use it: **home (both locales), `/brands`, `/categories`, `/flash-sale`, `/pages/about`, `/maintenance`** answer `x-nextjs-cache: HIT` with `Cache-Control: s-maxage=300, stale-while-revalidate`. Every other page — including PDP, category/brand detail, CMS `pages/[slug]` and blog articles — is **already rendered per request** (`Cache-Control: private, no-store`; only its API data is cached by tag), so a nonce would cost those nothing.
+- Cached vs forced render (`x-prerender-revalidate`, 40 requests each, localhost, warm data cache): home 3.6 → 9.4 ms median TTFB, `/brands` 2.3 → 22.1 ms. Against a real API the render also waits on any uncached fetch.
+- Making those pages dynamic would also drop the `s-maxage` header, so a CDN in front of the storefront (Vercel) could no longer serve home — the most-hit, LCP-critical page — from the edge. That is the cost avoided by the split.
+- **Inline-script hashes** are not an option for them: Next's inline RSC payload scripts change with every revalidation. **`experimental.sri`** hashes only external chunks, not the inline payload, and is experimental. **Report-only** first was not needed: the full Playwright suite runs under the enforced policy.
+- Performance budgets after the change (`e2e/performance-budgets.spec.ts`, same run): home LCP 936 ms EN / 1,032 ms BN, category 1,000, PDP 1,060, cart 968, checkout 928; CLS and JS unchanged against the P9 table (PERFORMANCE.md). No budget moved.
+
+**Residual risk (low).** On the six prerendered page types an injected *inline* script would still run; an injected external script, plugin, `<base>`, off-site form or beacon to an unlisted host would not. All CMS/description HTML is sanitised twice before render. Two ways to close it, both owner/performance calls: (a) declare the per-request [slug] pages `force-dynamic` and add them to `NONCE_ROUTES` (zero cost today — they are dynamic already — and covers PDP and category, the highest-traffic templates); (b) give the six prerendered templates nonces and accept per-request rendering of home.
+
+**Tests.** `tests/csp.test.ts` (9: both policies, directive set, MEDIA_ORIGINS, dev-only eval, nonce shape, route matcher, `NONCE_ROUTES` == force-dynamic pages, `form-action` == `config/payments.php`), `tests/security-headers.test.ts` (no CSP in `headers()` on pages), `e2e/csp.spec.ts` (11, production build: fresh nonce per request on every script, prerendered pages stay `HIT` with no nonce, a client CSP header cannot plant a nonce, every crawled page has a full policy and a nonce only where every script carries it, **no CSP violation** with consented GA4 + Meta on home, PDP, category, cart, checkout and `/bn/toys`, and a soft navigation static → per-request page).
 
 ## Webhooks (rules 19, 24c) — verified, no change
 
@@ -189,9 +211,11 @@ A script CSP for Next needs a nonce minted in `proxy.ts` and threaded to `<Scrip
 - **S-14:** if Horizon should be reachable in production, define a `viewHorizon` gate (e.g. settings.manage_integrations). Today it is local-only.
 - **S-15:** production `TRUSTED_PROXIES` must list the Next.js server(s). Otherwise every shopper shares one per-IP bucket for OTP, tracking, coupon and cart-contact limits.
 - Set `SESSION_SECURE_COOKIE` explicitly if production ever terminates TLS somewhere other than in front of Laravel. The default is now secure in production.
-- Set `ADMIN_URL` (or `API_URL`) for `next build`, so that the storefront's `frame-ancestors` allows the admin builder.
+- Set `ADMIN_URL` for the storefront. `next build` / `next start` now refuse to run in production without it (and without `API_URL`, `STOREFRONT_API_TOKEN`, `STOREFRONT_REVALIDATE_SECRET`, `SITE_URL`; `lib/env.ts`).
+- **S-11:** decide residual risk (a) or (b) above; confirm the Meta pixel and SSLCommerz gateway hosts against real accounts; set `MEDIA_ORIGINS` if product media is served from a CDN host other than the API's.
 
 ## For other areas
 
-- **Agent 3 (performance):** S-11, the storefront script CSP, interacts with ISR and static rendering. Raise it if nonce-based CSP is taken on.
+- **Performance / SEO:** S-11 found that PDP, category/brand detail, CMS and blog article pages are rendered per request (`private, no-store`); only home and five index pages are full-route cached. If that is not intended, it is a CDN-caching gap worth a look; if it is, those pages can take the nonce policy for free (S-11, residual risk (a)).
+- **Monitoring (browser Sentry):** a browser-side error reporter must add its ingest origin to the storefront `connect-src` (`lib/csp.ts`), or the browser blocks its reports.
 - **All agents:** a new admin route now needs a RoleMatrix test **and** its name in `tests/Support/role-matrix-routes.php`, or `tests/Arch/AdminRouteAuthorisationTest.php` fails.

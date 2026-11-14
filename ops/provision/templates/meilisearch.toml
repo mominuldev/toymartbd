@@ -1,0 +1,9 @@
+# Toy Mart BD — Meilisearch (ops/provision). /etc/meilisearch.toml
+# The master key is NOT here: it comes from /etc/meilisearch.env (root, 0600) via systemd.
+env = "production"
+http_addr = "127.0.0.1:7700"
+db_path = "/var/lib/meilisearch/data"
+dump_dir = "/var/lib/meilisearch/dumps"
+snapshot_dir = "/var/lib/meilisearch/snapshots"
+no_analytics = true
+max_indexing_memory = "{{MEILI_INDEXING_MEMORY}}"

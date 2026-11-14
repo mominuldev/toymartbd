@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Backup;
 
+use App\Models\SystemHeartbeat;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
@@ -125,6 +126,7 @@ final class BackupCommand extends Command
             });
         } catch (Throwable $e) {
             report($e); // log + Sentry
+            SystemHeartbeat::failed(SystemHeartbeat::BACKUP, $e::class);
             $this->components->error('Backup failed: '.$e->getMessage());
 
             return self::FAILURE;
@@ -141,6 +143,8 @@ final class BackupCommand extends Command
             CarbonImmutable::now('UTC')->diffInMilliseconds($startedAt, true) / 1000,
         ));
         Log::info('Backup written.', ['backup' => $name, 'disk' => $diskName, 'bytes' => $manifest['bytes']]);
+        // Backup age for the health endpoint and the backup_stale alert (P10 monitoring).
+        SystemHeartbeat::beat(SystemHeartbeat::BACKUP, ['backup' => $name, 'bytes' => (int) $manifest['bytes']]);
 
         if (! $this->option('no-prune')) {
             /** @var array{keep_all_for_days: int, keep_daily_for_days: int, keep_monthly_for_months: int} $policy */

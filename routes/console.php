@@ -147,10 +147,31 @@ Schedule::command('toymart:search:reindex')
     ->withoutOverlapping(60)
     ->onOneServer();
 
+// Scheduler heartbeat (P10): records `system_heartbeats.scheduler` every minute so a cron that
+// stopped firing is caught within minutes (health endpoint, `toymart:launch:check`), not after a
+// lost nightly backup. App\Console\Commands\Monitoring\SchedulerHeartbeatCommand.
+Schedule::command('toymart:scheduler:heartbeat')
+    ->everyMinute()
+    ->onOneServer();
+
 // Stale cart cleanup every ten minutes: carts expired over a week ago that never became an order
 // (abandoned-cart history kept). Carts hold no stock reservation — unpaid orders are released by
 // toymart:payments:expire above.
 Schedule::command('toymart:carts:prune')
     ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->onOneServer();
+
+// P10 business alerts (SYSTEM-ARCHITECTURE §11, docs/ops/observability.md): every five minutes,
+// idempotent and de-duplicated in `monitoring_alerts`; a no-op while MONITORING_ALERTS_ENABLED
+// is false. The synthetic add-to-cart check every 15 minutes, only once a token is configured.
+Schedule::command('toymart:alerts:run')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->onOneServer();
+
+Schedule::command('toymart:synthetic:cart')
+    ->everyFifteenMinutes()
+    ->when(static fn (): bool => is_string(config('monitoring.synthetic.token')) && config('monitoring.synthetic.token') !== '')
     ->withoutOverlapping(10)
     ->onOneServer();

@@ -24,6 +24,8 @@ final class ProductionSafety
         }
 
         $config->set('app.debug', false);
+        // Remembered so `toymart:launch:check` still reports the wrong environment value.
+        $config->set('app.debug_forced_off', true);
         $log->critical('APP_DEBUG was true in production; forced off. Set APP_DEBUG=false in the environment.');
     }
 }

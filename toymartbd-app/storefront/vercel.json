@@ -1,0 +1,13 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": "nextjs",
+    "installCommand": "cd ../.. && npm ci",
+    "buildCommand": "npm run build",
+    "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages ../../package.json ../../package-lock.json",
+    "regions": ["sin1"],
+    "git": {
+        "deploymentEnabled": {
+            "main": false
+        }
+    }
+}

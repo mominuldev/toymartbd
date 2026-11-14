@@ -28,7 +28,21 @@ Every variable is **server-only**. Never give one a `NEXT_PUBLIC_` prefix and ne
 | `API_URL` | Base URL of the Laravel API, with no trailing slash, e.g. `http://localhost:8000` |
 | `STOREFRONT_API_TOKEN` | Sanctum token with the `storefront:read` ability. Mint it with `php artisan toymart:storefront-token` |
 | `STOREFRONT_REVALIDATE_SECRET` | HMAC secret for `POST /api/revalidate`. Must equal the value in Laravel's `.env` |
-| `SITE_URL` | Public origin, used for canonical and `hreflang` URLs. Defaults to `http://localhost:3000` |
+| `SITE_URL` | Public origin, used for canonical and `hreflang` URLs. Defaults to `http://localhost:3000` in dev |
+| `ADMIN_URL` | Origin of the admin (the homepage builder frames the draft preview; `frame-ancestors`). Falls back to `API_URL`'s origin in dev |
+| `MEDIA_ORIGINS` | Optional, comma-separated: extra origins product media is served from (CDN / object store), added to the CSP `img-src`. The API origin is always allowed |
+
+**Production check.** `next build` and `next start` fail with a list of what is wrong when `API_URL`,
+`STOREFRONT_API_TOKEN`, `STOREFRONT_REVALIDATE_SECRET`, `SITE_URL` or `ADMIN_URL` is missing or malformed
+(URLs must be absolute http(s); secrets at least 16 characters), or when a `NEXT_PUBLIC_` variable would
+ship a server secret (`lib/env.ts`). `next dev` does not check. A local production build therefore needs
+all five in `.env.local`.
+
+**Content-Security-Policy** (`lib/csp.ts`, set by `proxy.ts`). Per-request pages (`force-dynamic`) get a
+fresh nonce with `'strict-dynamic'`; ISR pages get a host-restricted policy with `'unsafe-inline'` for
+inline scripts, because cached HTML cannot carry a per-request nonce. A new `force-dynamic` page must be
+added to `NONCE_ROUTES` (`tests/csp.test.ts` fails otherwise). A new third-party script, image or
+beacon host must be added to `TRACKING_SOURCES`, or the browser blocks it.
 
 ## How it fits together
 

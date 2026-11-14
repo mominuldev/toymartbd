@@ -1,16 +1,29 @@
 import { Link } from 'react-router';
+import { buttonClass } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useI18n } from '@/i18n/I18nProvider';
 
+/**
+ * An admin URL that matches no screen (inside the shell, so the sidebar still works). Figma has
+ * no frame for it; it follows AdminEmptyState 203:1531 — name the reason, then the next action.
+ */
 export function NotFound() {
     const { t } = useI18n();
 
     return (
-        <section className="space-y-3">
-            <h1 className="t-admin-page-title text-fg-primary">{t('error.notFound')}</h1>
-            <p className="t-admin-body text-fg-secondary">{t('error.notFoundBody')}</p>
-            <Link to="/" className="t-admin-body-strong text-fg-link underline">
-                {t('error.backHome')}
-            </Link>
+        <section className="flex justify-center pt-8 lg:pt-16">
+            <EmptyState
+                reason="notFound"
+                titleAs="h1"
+                className="w-full max-w-md"
+                title={t('error.notFound')}
+                body={t('error.notFoundBody')}
+                actions={
+                    <Link to="/" className={buttonClass('outline')}>
+                        {t('error.backHome')}
+                    </Link>
+                }
+            />
         </section>
     );
 }

@@ -76,7 +76,8 @@ return [
             'formatter_with' => [
                 'includeStacktraces' => true,
             ],
-            'processors' => [PsrLogMessageProcessor::class],
+            // P10 log aggregation: app / env / release on every line (docs/ops/observability.md).
+            'processors' => [PsrLogMessageProcessor::class, App\Support\Logging\AddServiceContext::class],
             'tap' => [RedactLogs::class],
         ],
 

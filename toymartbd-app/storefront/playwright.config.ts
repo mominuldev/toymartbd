@@ -21,6 +21,8 @@ const storefrontEnv = {
     STOREFRONT_API_TOKEN: FAKE_TOKEN,
     STOREFRONT_REVALIDATE_SECRET: FAKE_REVALIDATE_SECRET,
     SITE_URL: STOREFRONT_URL,
+    // Required by the production env check (lib/env.ts); the admin is served by the API's origin.
+    ADMIN_URL: MOCK_API_URL,
     NEXT_DIST_DIR: E2E_DIST_DIR,
     NEXT_TELEMETRY_DISABLED: '1',
 };
