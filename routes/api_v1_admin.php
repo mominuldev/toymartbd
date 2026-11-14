@@ -486,6 +486,12 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::get('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'show'])->name('risk.rules.show');
     Route::put('/risk/rules', [App\Http\Controllers\Api\V1\Admin\RiskRulesController::class, 'update'])->name('risk.rules.update');
 
+    // Phase 10 batch 2 — one file per screen, so parallel work never shares a file.
+    require __DIR__.'/api_v1_admin_audit.php';
+    require __DIR__.'/api_v1_admin_integrations.php';
+    require __DIR__.'/api_v1_admin_store_settings.php';
+    require __DIR__.'/api_v1_admin_checkout_settings.php';
+
     // Blog (Phase 7): posts, buying guides, categories, tags, authors — routes/api_v1_admin_blog.php.
     require __DIR__.'/api_v1_admin_blog.php';
 
