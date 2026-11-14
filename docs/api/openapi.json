@@ -22012,6 +22012,1554 @@
                 }
             }
         },
+        "/admin/pos/context": {
+            "get": {
+                "operationId": "v1.admin.pos.context",
+                "summary": "`GET /pos/context` \u2014 branches, tenders, category tabs, my open drawer, WhatsApp-receipt availability",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosContext`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosContext"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/customers": {
+            "get": {
+                "operationId": "v1.admin.pos.customers.show",
+                "summary": "`GET /pos/customers?phone=` \u2014 whose number this is (null for a new one)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "phone",
+                        "in": "query",
+                        "required": true,
+                        "description": "As typed: `01819 552 310`, `+8801819552310`\u2026 (rule 30).",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 32
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosCustomer`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosCustomer"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.store",
+                "summary": "`POST /pos/sessions` \u2014 open a drawer. 201",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OpenPosSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`PosSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSession"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The register already has an open drawer, you already have one open, or the location does not sell (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}": {
+            "get": {
+                "operationId": "v1.admin.pos.sessions.show",
+                "summary": "`GET /pos/sessions/{session}` \u2014 the drawer with its running totals",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSession"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/close": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.close",
+                "summary": "`POST /pos/sessions/{session}/close` \u2014 count and close: expected vs counted vs over/short",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ClosePosSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSession"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Already closed (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/catalog": {
+            "get": {
+                "operationId": "v1.admin.pos.sessions.catalog",
+                "summary": "`GET /pos/sessions/{session}/catalog` \u2014 the grid for this drawer's branch (\u2264 60 tiles; search narrows)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "A top-level category tab; includes its sub-categories.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Name (EN/BN) or SKU.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100
+                        }
+                    },
+                    {
+                        "name": "barcode",
+                        "in": "query",
+                        "description": "Exact barcode, as a scanner types it.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 64
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `PosCatalogItem`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PosCatalogItem"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/quote": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.quote",
+                "summary": "`POST /pos/sessions/{session}/quote` \u2014 price the cart and read the tenders. Writes nothing",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuotePosSaleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosQuote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosQuote"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/sales": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.sales.store",
+                "summary": "`POST /pos/sessions/{session}/sales` \u2014 Charge. Needs an `Idempotency-Key`; a replay\nreturns the first sale. 201 with the change to give",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChargePosSaleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosSale`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSale"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "A blocker: unsellable line, coupon, phone needed for a discount, tenders short or missing a reference (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Total changed (`price-changed`), branch stock short (`insufficient-stock`), drawer closed (`conflict`) or key in flight (`request-in-progress`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/holds": {
+            "get": {
+                "operationId": "v1.admin.pos.sessions.holds.index",
+                "summary": "`GET /pos/sessions/{session}/holds` \u2014 parked carts on this drawer, oldest first",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `PosHeldSale`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PosHeldSale"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.pos.sessions.holds.store",
+                "summary": "`POST /pos/sessions/{session}/holds` \u2014 \"Hold sale\". 201",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/HoldPosSaleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`PosHeldSale`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosHeldSale"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The drawer is closed (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/holds/{hold}/resume": {
+            "post": {
+                "operationId": "v1.admin.pos.holds.resume",
+                "summary": "`POST /pos/holds/{hold}/resume` \u2014 take a parked cart back (or discard it). Once only",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "hold",
+                        "in": "path",
+                        "required": true,
+                        "description": "The hold ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosHeldSale`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosHeldSale"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Already resumed, or the drawer is closed (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sales/{sale}/receipt": {
+            "get": {
+                "operationId": "v1.admin.pos.sales.receipt",
+                "summary": "`GET /pos/sales/{sale}/receipt` \u2014 the printable receipt",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "sale",
+                        "in": "path",
+                        "required": true,
+                        "description": "The sale ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosReceipt`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosReceipt"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations": {
+            "get": {
+                "operationId": "v1.admin.inbox.conversations.index",
+                "summary": "`GET /inbox/conversations` \u2014 newest activity first, cursor-paginated (`cursor`).\n`meta.counts` holds the tab counts (`all`, `mine`, `needs_human`) under every filter\nexcept `view`. Anything not listed is a 400 (rule 16). Phones are masked unless the\nviewer holds customers.view_pii (rule 20)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[view]",
+                        "in": "query",
+                        "description": "all|mine|needs_human (the tabs).",
+                        "schema": {
+                            "type": "string",
+                            "default": "all"
+                        }
+                    },
+                    {
+                        "name": "filter[channel]",
+                        "in": "query",
+                        "description": "whatsapp|messenger|live_chat",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[status]",
+                        "in": "query",
+                        "description": "open|resolved (both when absent).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter[search]",
+                        "in": "query",
+                        "description": "A name, 4+ phone digits, or an order number prefix.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "The `meta.next_cursor` of the previous page.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `InboxConversation`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InboxConversation"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                },
+                                                "counts": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "all": {
+                                                            "type": "integer"
+                                                        },
+                                                        "mine": {
+                                                            "type": "integer"
+                                                        },
+                                                        "needs_human": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "all",
+                                                        "mine",
+                                                        "needs_human"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "counts"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, or an invalid value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/assignees": {
+            "get": {
+                "operationId": "v1.admin.inbox.assignees",
+                "summary": "`GET /inbox/assignees` \u2014 active staff who can reply (inbox.reply), for \"Assign to\u2026\"",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}": {
+            "get": {
+                "operationId": "v1.admin.inbox.conversations.show",
+                "summary": "`GET /inbox/conversations/{conversation}` \u2014 the thread header and the customer panel:\norders, OUR risk score labelled `ours` (rule 24), lifetime value and the last order \u2014\nall computed server-side. The panel is null without customers.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxConversationDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxConversationDetail"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/read": {
+            "post": {
+                "operationId": "v1.admin.inbox.conversations.read",
+                "summary": "`POST /inbox/conversations/{conversation}/read` \u2014 clears the unread count; inbox.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxConversationDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxConversationDetail"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/assign": {
+            "post": {
+                "operationId": "v1.admin.inbox.conversations.assign",
+                "summary": "`POST /inbox/conversations/{conversation}/assign` \u2014 `{user_id}` or `{user_id: null}`; inbox.reply",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssignConversationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`InboxConversationDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxConversationDetail"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/resolve": {
+            "post": {
+                "operationId": "v1.admin.inbox.conversations.resolve",
+                "summary": "`POST /inbox/conversations/{conversation}/resolve` \u2014 inbox.reply",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxConversationDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxConversationDetail"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/reopen": {
+            "post": {
+                "operationId": "v1.admin.inbox.conversations.reopen",
+                "summary": "`POST /inbox/conversations/{conversation}/reopen` \u2014 inbox.reply",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxConversationDetail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxConversationDetail"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/messages": {
+            "get": {
+                "operationId": "v1.admin.inbox.messages.index",
+                "summary": "`GET /inbox/conversations/{conversation}/messages` \u2014 NEWEST first, 50 a page; follow\n`meta.next_cursor` for older messages. inbox.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "The `meta.next_cursor` of the previous page (older messages).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `InboxMessage`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InboxMessage"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.inbox.messages.store",
+                "summary": "`POST /inbox/conversations/{conversation}/messages` \u2014 a reply; 202, sent by a queued job",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInboxReplyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`InboxMessage`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxMessage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "The 24-hour customer-service window has closed (`conflict`) \u2014 nothing was queued",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/notes": {
+            "post": {
+                "operationId": "v1.admin.inbox.notes.store",
+                "summary": "`POST /inbox/conversations/{conversation}/notes` \u2014 an internal note; never sent. 201",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreInboxNoteRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`InboxMessage`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxMessage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/quick-replies": {
+            "post": {
+                "operationId": "v1.admin.inbox.quick-replies.store",
+                "summary": "`POST /inbox/conversations/{conversation}/quick-replies` \u2014 product card or tracking link; 202",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendQuickReplyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`InboxMessage`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxMessage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Outside the 24-hour window, or the product/order cannot be shared here (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/settings/delivery-areas": {
+            "get": {
+                "operationId": "v1.admin.settings.delivery-areas.show",
+                "summary": "`GET /settings/delivery-areas`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`DeliveryAreas`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryAreas"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.delivery-areas.update",
+                "summary": "`PUT /settings/delivery-areas` \u2014 the whole document; an unchanged save writes nothing and purges nothing",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateDeliveryAreasRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`DeliveryAreas`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryAreas"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/blog/posts": {
             "get": {
                 "operationId": "v1.admin.blog.posts.index",
@@ -30969,6 +32517,122 @@
                     }
                 }
             }
+        },
+        "/webhooks/inbox/{channel}": {
+            "get": {
+                "operationId": "v1.webhooks.inbox.verify",
+                "tags": [
+                    "Webhooks"
+                ],
+                "parameters": [
+                    {
+                        "name": "channel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Wrong mode or verify token (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "A channel that takes no webhooks (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.webhooks.inbox.receive",
+                "tags": [
+                    "Webhooks"
+                ],
+                "parameters": [
+                    {
+                        "name": "channel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "received": {
+                                            "type": "boolean"
+                                        },
+                                        "replayed": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "received",
+                                        "replayed"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "description": "The signature did not verify \u2014 nothing was written",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "A channel that takes no webhooks (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -32204,6 +33868,22 @@
                     }
                 },
                 "title": "ApproveStockAdjustmentRequest"
+            },
+            "AssignConversationRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/assign` \u2014 needs inbox.reply. `user_id` null\nunassigns; otherwise an ACTIVE staff member who holds inbox.reply (GET /inbox/assignees).",
+                "properties": {
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "user_id"
+                ],
+                "title": "AssignConversationRequest"
             },
             "Attribute": {
                 "type": "object",
@@ -34299,6 +35979,105 @@
                 ],
                 "title": "CategoryStatus"
             },
+            "ChargePosSaleRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/sales` \u2014 Charge. Requires an `Idempotency-Key` (rule 17).\n`expected_total` is the total the cashier saw; a different server total is `price-changed`.",
+                "properties": {
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 999
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`.",
+                        "maxLength": 64
+                    },
+                    "customer_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Bangladeshi mobile (013\u2013019, rule 30). Optional \u2014 an anonymous walk-in has none.",
+                        "maxLength": 32
+                    },
+                    "tenders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cash",
+                                        "bkash",
+                                        "nagad",
+                                        "card"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string",
+                                    "description": "What the customer handed over in this tender, e.g. `4000.00` cash for a \u09f33,455 total.",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender.",
+                                    "maxLength": 64
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "amount"
+                            ]
+                        },
+                        "maxItems": 8
+                    },
+                    "expected_total": {
+                        "type": "string",
+                        "description": "The quote's `grand_total`, e.g. `3455.00`.",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "customer_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Printed on the receipt for a new customer; an existing customer keeps their name.",
+                        "maxLength": 160
+                    }
+                },
+                "required": [
+                    "lines",
+                    "tenders",
+                    "expected_total"
+                ],
+                "title": "ChargePosSaleRequest"
+            },
             "CheckoutRequest": {
                 "type": "object",
                 "description": "`POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from\n`X-Cart-Token`; the body is what the customer typed plus `expected_total`, the grand\ntotal they were shown \u2014 compared, never used, by PlaceOrder.\n\nAddress: division \u2192 district \u2192 upazila \u2192 area + line + landmark (rule 31). The\nupazila is required unless the district offers its city as the empty option\n(`city_option` on GET /districts \u2014 Dhaka city is not an upazila).",
@@ -34634,6 +36413,29 @@
                     "delivery_charges"
                 ],
                 "title": "CheckoutSettings"
+            },
+            "ClosePosSessionRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/close` \u2014 close with the counted cash. Own drawer with pos.use; anyone's with pos.manage.",
+                "properties": {
+                    "counted_cash": {
+                        "type": "string",
+                        "description": "The cash counted in the drawer, float included.",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why the count is over or short, if it is.",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "counted_cash"
+                ],
+                "title": "ClosePosSessionRequest"
             },
             "ClosePurchaseRequest": {
                 "type": "object",
@@ -39239,6 +41041,143 @@
                 },
                 "title": "DeliverOrderRequest"
             },
+            "DeliveryAreas": {
+                "type": "object",
+                "properties": {
+                    "cutoff_time": {
+                        "type": "string",
+                        "description": "Dhaka wall-clock \"HH:MM\"; orders at or after it dispatch the next working day."
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "description": "Always \"Asia/Dhaka\"."
+                    },
+                    "eta_days": {
+                        "type": "object",
+                        "description": "Working days from dispatch to delivery, per zone.",
+                        "properties": {
+                            "inside_dhaka_metro": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer"
+                                    },
+                                    "max": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            },
+                            "dhaka_suburb": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer"
+                                    },
+                                    "max": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            },
+                            "outside_dhaka": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer"
+                                    },
+                                    "max": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "inside_dhaka_metro",
+                            "dhaka_suburb",
+                            "outside_dhaka"
+                        ]
+                    },
+                    "metro_district_ids": {
+                        "type": "array",
+                        "description": "Districts whose district-level address (no upazila) is inside Dhaka metro.",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "suburb_district_ids": {
+                        "type": "array",
+                        "description": "Whole districts priced as Dhaka suburb.",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "not_serviced_upazila_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "cod_advance": {
+                        "type": "object",
+                        "description": "COD orders above `threshold` in `zones` need `amount` paid in advance. Disabled =\nno rule (zones empty, money null). Money as decimal strings.",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "zones": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "inside_dhaka_metro",
+                                        "dhaka_suburb",
+                                        "outside_dhaka"
+                                    ]
+                                }
+                            },
+                            "threshold": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "amount": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "enabled",
+                            "zones",
+                            "threshold",
+                            "amount"
+                        ]
+                    }
+                },
+                "required": [
+                    "cutoff_time",
+                    "timezone",
+                    "eta_days",
+                    "metro_district_ids",
+                    "suburb_district_ids",
+                    "not_serviced_upazila_ids",
+                    "cod_advance"
+                ],
+                "title": "DeliveryAreas"
+            },
             "DeliveryQuote": {
                 "type": "object",
                 "properties": {
@@ -39575,6 +41514,16 @@
                     "free_shipping_threshold"
                 ],
                 "title": "DeliverySettings"
+            },
+            "DeliveryZone": {
+                "type": "string",
+                "description": "Our delivery-charge tier (DATABASE-DESIGN \u00a75.1). Says nothing about a courier's own zone ids, which live in courier_locations and are never guessed (rule 32).\n",
+                "enum": [
+                    "inside_dhaka_metro",
+                    "dhaka_suburb",
+                    "outside_dhaka"
+                ],
+                "title": "DeliveryZone"
             },
             "Expense": {
                 "type": "object",
@@ -41317,6 +43266,63 @@
                 ],
                 "title": "HoldOrderRequest"
             },
+            "HoldPosSaleRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/holds` \u2014 park the cart (\"Hold sale\").",
+                "properties": {
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 999
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "uniqueItems": true
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`.",
+                        "maxLength": 64
+                    },
+                    "customer_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Bangladeshi mobile (013\u2013019, rule 30). Optional \u2014 an anonymous walk-in has none.",
+                        "maxLength": 32
+                    },
+                    "label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Optional name to find it again, e.g. `Blue shirt, coming back`.",
+                        "maxLength": 80
+                    }
+                },
+                "required": [
+                    "lines"
+                ],
+                "title": "HoldPosSaleRequest"
+            },
             "ImportRedirectsRequest": {
                 "type": "object",
                 "description": "`POST /seo/redirects/import` \u2014 a CSV `from_path,to_path,status_code[,note]`, \u2264 1 MB.",
@@ -41432,6 +43438,543 @@
                     "received_at"
                 ],
                 "title": "ImportSettlementRequest"
+            },
+            "InboxConversation": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "whatsapp",
+                            "messenger",
+                            "live_chat"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "resolved"
+                        ]
+                    },
+                    "contact": {
+                        "type": "object",
+                        "description": "Full phone only with customers.view_pii.",
+                        "properties": {
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone_masked": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone_masked",
+                            "phone"
+                        ]
+                    },
+                    "customer_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "assignee": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "needs_human": {
+                        "type": "boolean"
+                    },
+                    "unread_count": {
+                        "type": "integer"
+                    },
+                    "last_message_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_message_preview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_message_direction": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "in",
+                            "out",
+                            null
+                        ]
+                    },
+                    "window": {
+                        "type": "object",
+                        "properties": {
+                            "applies": {
+                                "type": "boolean"
+                            },
+                            "open": {
+                                "type": "boolean"
+                            },
+                            "expires_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "applies",
+                            "open",
+                            "expires_at"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "channel",
+                    "status",
+                    "contact",
+                    "customer_id",
+                    "assignee",
+                    "needs_human",
+                    "unread_count",
+                    "last_message_at",
+                    "last_message_preview",
+                    "last_message_direction",
+                    "window"
+                ],
+                "title": "InboxConversation"
+            },
+            "InboxConversationDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "whatsapp",
+                            "messenger",
+                            "live_chat"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "resolved"
+                        ]
+                    },
+                    "contact": {
+                        "type": "object",
+                        "description": "Full phone only with customers.view_pii.",
+                        "properties": {
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone_masked": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone_masked",
+                            "phone"
+                        ]
+                    },
+                    "customer_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "assignee": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "needs_human": {
+                        "type": "boolean"
+                    },
+                    "unread_count": {
+                        "type": "integer"
+                    },
+                    "last_message_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_message_preview": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_message_direction": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "in",
+                            "out",
+                            null
+                        ]
+                    },
+                    "window": {
+                        "type": "object",
+                        "properties": {
+                            "applies": {
+                                "type": "boolean"
+                            },
+                            "open": {
+                                "type": "boolean"
+                            },
+                            "expires_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "applies",
+                            "open",
+                            "expires_at"
+                        ]
+                    },
+                    "customer": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "orders_count": {
+                                "type": "integer"
+                            },
+                            "delivered_orders_count": {
+                                "type": "integer"
+                            },
+                            "lifetime_value": {
+                                "type": "string"
+                            },
+                            "preferred_language": {
+                                "type": "string"
+                            },
+                            "risk": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "score": {
+                                        "type": "integer"
+                                    },
+                                    "level": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high"
+                                        ]
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "const": "ours"
+                                    },
+                                    "computed_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "score",
+                                    "level",
+                                    "source",
+                                    "computed_at"
+                                ]
+                            },
+                            "last_order": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "number": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    },
+                                    "grand_total": {
+                                        "type": "string"
+                                    },
+                                    "placed_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "items_summary": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "items_count": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "number",
+                                    "status",
+                                    "grand_total",
+                                    "placed_at",
+                                    "items_summary",
+                                    "items_count"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "orders_count",
+                            "delivered_orders_count",
+                            "lifetime_value",
+                            "preferred_language",
+                            "risk",
+                            "last_order"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "channel",
+                    "status",
+                    "contact",
+                    "customer_id",
+                    "assignee",
+                    "needs_human",
+                    "unread_count",
+                    "last_message_at",
+                    "last_message_preview",
+                    "last_message_direction",
+                    "window",
+                    "customer"
+                ],
+                "title": "InboxConversationDetail"
+            },
+            "InboxMessage": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": [
+                            "in",
+                            "out"
+                        ]
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "note",
+                            "system"
+                        ]
+                    },
+                    "body": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "system_event": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "assigned",
+                            "unassigned",
+                            "resolved",
+                            "reopened",
+                            null
+                        ]
+                    },
+                    "assignee_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Who was assigned (system line)."
+                    },
+                    "actor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Who did it: a staff name, or `customer` for an automatic reopen."
+                    },
+                    "unsupported_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sender": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "delivery_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "queued",
+                            "sent",
+                            "delivered",
+                            "read",
+                            "failed",
+                            null
+                        ]
+                    },
+                    "failure_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`outside_window`, `not_configured`, `transport`, `provider_error:{code}`"
+                    },
+                    "failure_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When it was written (inbound: the provider's timestamp)."
+                    },
+                    "read_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "direction",
+                    "kind",
+                    "body",
+                    "system_event",
+                    "assignee_name",
+                    "actor",
+                    "unsupported_type",
+                    "sender",
+                    "delivery_status",
+                    "failure_code",
+                    "failure_reason",
+                    "at",
+                    "read_at"
+                ],
+                "title": "InboxMessage"
             },
             "InspectReturnRequest": {
                 "type": "object",
@@ -45151,6 +47694,33 @@
                 ],
                 "title": "NotificationTemplateVersion"
             },
+            "OpenPosSessionRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions` \u2014 open a drawer at a branch with its float. Needs pos.use.",
+                "properties": {
+                    "location_id": {
+                        "type": "integer",
+                        "description": "The branch (stock location) the drawer sells from. Not a pickup point."
+                    },
+                    "register": {
+                        "type": "string",
+                        "description": "e.g. `Register 1`. One open drawer per register per branch.",
+                        "minLength": 1,
+                        "maxLength": 40
+                    },
+                    "opening_float": {
+                        "type": "string",
+                        "description": "Cash put in the drawer to give change from, e.g. `5000.00`.",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    }
+                },
+                "required": [
+                    "location_id",
+                    "register",
+                    "opening_float"
+                ],
+                "title": "OpenPosSessionRequest"
+            },
             "Order": {
                 "type": "object",
                 "properties": {
@@ -45204,7 +47774,8 @@
                             "admin",
                             "phone",
                             "facebook",
-                            "whatsapp"
+                            "whatsapp",
+                            "pos"
                         ]
                     },
                     "payment_method": {
@@ -46278,7 +48849,8 @@
                             "admin",
                             "phone",
                             "facebook",
-                            "whatsapp"
+                            "whatsapp",
+                            "pos"
                         ]
                     },
                     "customer_id": {
@@ -47249,7 +49821,9 @@
                             "staff.view",
                             "staff.manage",
                             "roles.manage",
-                            "audit.view"
+                            "audit.view",
+                            "pos.use",
+                            "pos.manage"
                         ]
                     },
                     "owner_only": {
@@ -48202,6 +50776,964 @@
                     "source"
                 ],
                 "title": "PnlStatement"
+            },
+            "PosCatalogItem": {
+                "type": "object",
+                "properties": {
+                    "variant_id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variant_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "barcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "price": {
+                        "type": "string"
+                    },
+                    "available": {
+                        "type": "integer",
+                        "description": "Available at this branch now (on hand \u2212 reserved)."
+                    },
+                    "image_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "variant_id",
+                    "product_id",
+                    "name",
+                    "name_bn",
+                    "variant_name",
+                    "sku",
+                    "barcode",
+                    "price",
+                    "available",
+                    "image_url"
+                ],
+                "title": "PosCatalogItem"
+            },
+            "PosContext": {
+                "type": "object",
+                "properties": {
+                    "locations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "type": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "code",
+                                "name",
+                                "name_bn",
+                                "type"
+                            ]
+                        }
+                    },
+                    "tenders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cash",
+                                        "bkash",
+                                        "nagad",
+                                        "card"
+                                    ]
+                                },
+                                "requires_reference": {
+                                    "type": "boolean"
+                                },
+                                "gives_change": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "requires_reference",
+                                "gives_change"
+                            ]
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "name_bn"
+                            ]
+                        }
+                    },
+                    "session": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PosSession"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "can_manage": {
+                        "type": "boolean"
+                    },
+                    "whatsapp_receipt": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "reason": {
+                                "type": "string",
+                                "const": "no_provider"
+                            }
+                        },
+                        "required": [
+                            "enabled",
+                            "reason"
+                        ]
+                    }
+                },
+                "required": [
+                    "locations",
+                    "tenders",
+                    "categories",
+                    "session",
+                    "can_manage",
+                    "whatsapp_receipt"
+                ],
+                "title": "PosContext"
+            },
+            "PosCustomer": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "description": "01XXXXXXXXX"
+                    },
+                    "customer": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "orders_count": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "orders_count"
+                        ]
+                    }
+                },
+                "required": [
+                    "phone",
+                    "customer"
+                ],
+                "title": "PosCustomer"
+            },
+            "PosHeldSale": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity"
+                            ]
+                        }
+                    },
+                    "item_count": {
+                        "type": "integer"
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "customer_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "01XXXXXXXXX."
+                    },
+                    "held_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "resumed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "label",
+                    "lines",
+                    "item_count",
+                    "coupon_code",
+                    "customer_phone",
+                    "held_at",
+                    "resumed_at"
+                ],
+                "title": "PosHeldSale"
+            },
+            "PosQuote": {
+                "type": "object",
+                "properties": {
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "subtotal": {
+                                    "type": "string"
+                                },
+                                "discount": {
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "type": "string"
+                                },
+                                "available": {
+                                    "type": "integer"
+                                },
+                                "image_url": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "name",
+                                "name_bn",
+                                "variant_name",
+                                "quantity",
+                                "unit_price",
+                                "subtotal",
+                                "discount",
+                                "total",
+                                "available",
+                                "image_url"
+                            ]
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "description": "Signed rows that sum to `grand_total` (no delivery at the counter, so free-delivery promotions are left out).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "subtotal",
+                                        "promotion",
+                                        "coupon",
+                                        "shipping"
+                                    ]
+                                },
+                                "label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "label_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "label",
+                                "label_bn",
+                                "amount"
+                            ]
+                        }
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "discount_total": {
+                        "type": "string"
+                    },
+                    "grand_total": {
+                        "type": "string"
+                    },
+                    "item_count": {
+                        "type": "integer"
+                    },
+                    "blockers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "field": {
+                                    "type": "string"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "field",
+                                "message"
+                            ]
+                        }
+                    },
+                    "chargeable": {
+                        "type": "boolean"
+                    },
+                    "tenders": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "tendered": {
+                                "type": "string"
+                            },
+                            "cash_tendered": {
+                                "type": "string"
+                            },
+                            "remaining": {
+                                "type": "string"
+                            },
+                            "change": {
+                                "type": "string"
+                            },
+                            "errors": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "field": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "field",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "tendered",
+                            "cash_tendered",
+                            "remaining",
+                            "change",
+                            "errors"
+                        ]
+                    }
+                },
+                "required": [
+                    "lines",
+                    "rows",
+                    "subtotal",
+                    "discount_total",
+                    "grand_total",
+                    "item_count",
+                    "blockers",
+                    "chargeable",
+                    "tenders"
+                ],
+                "title": "PosQuote"
+            },
+            "PosReceipt": {
+                "type": "object",
+                "properties": {
+                    "store": {
+                        "type": "object",
+                        "properties": {
+                            "name_en": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            },
+                            "address_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "hotline": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "bin": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "trade_licence": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "placeholders": {
+                                "type": "array",
+                                "description": "Required business fields the owner has not filled in yet.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "name_en",
+                            "name_bn",
+                            "address_en",
+                            "address_bn",
+                            "hotline",
+                            "bin",
+                            "trade_licence",
+                            "footer_en",
+                            "footer_bn",
+                            "placeholders"
+                        ]
+                    },
+                    "branch": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "address": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "name_bn",
+                            "address"
+                        ]
+                    },
+                    "register": {
+                        "type": "string"
+                    },
+                    "cashier": {
+                        "type": "string"
+                    },
+                    "order_number": {
+                        "type": "string"
+                    },
+                    "sold_at": {
+                        "type": "string",
+                        "description": "ISO 8601 instant; print it in Dhaka time."
+                    },
+                    "customer": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone_masked": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "017****5678. @var string|null"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone_masked"
+                        ]
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "unit_price": {
+                                    "type": "string"
+                                },
+                                "discount": {
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "name_bn",
+                                "variant_name",
+                                "quantity",
+                                "unit_price",
+                                "discount",
+                                "total"
+                            ]
+                        }
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "promotion_discount": {
+                        "type": "string"
+                    },
+                    "coupon_discount": {
+                        "type": "string"
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "grand_total": {
+                        "type": "string"
+                    },
+                    "payments": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string"
+                                },
+                                "amount": {
+                                    "type": "string"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "amount",
+                                "reference"
+                            ]
+                        }
+                    },
+                    "cash_tendered": {
+                        "type": "string"
+                    },
+                    "change_due": {
+                        "type": "string"
+                    },
+                    "whatsapp": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "reason": {
+                                "type": "string",
+                                "const": "no_provider"
+                            }
+                        },
+                        "required": [
+                            "enabled",
+                            "reason"
+                        ]
+                    }
+                },
+                "required": [
+                    "store",
+                    "branch",
+                    "register",
+                    "cashier",
+                    "order_number",
+                    "sold_at",
+                    "customer",
+                    "lines",
+                    "subtotal",
+                    "promotion_discount",
+                    "coupon_discount",
+                    "coupon_code",
+                    "grand_total",
+                    "payments",
+                    "cash_tendered",
+                    "change_due",
+                    "whatsapp"
+                ],
+                "title": "PosReceipt"
+            },
+            "PosSale": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "type": "integer"
+                    },
+                    "order_number": {
+                        "type": "string"
+                    },
+                    "grand_total": {
+                        "type": "string"
+                    },
+                    "tendered_total": {
+                        "type": "string"
+                    },
+                    "cash_tendered": {
+                        "type": "string"
+                    },
+                    "change_due": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "order_id",
+                    "order_number",
+                    "grand_total",
+                    "tendered_total",
+                    "cash_tendered",
+                    "change_due",
+                    "created_at"
+                ],
+                "title": "PosSale"
+            },
+            "PosSession": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "closed"
+                        ]
+                    },
+                    "location": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "code": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "code",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "register": {
+                        "type": "string"
+                    },
+                    "cashier": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "opened_at": {
+                        "type": "string",
+                        "description": "ISO 8601 instant."
+                    },
+                    "opening_float": {
+                        "type": "string"
+                    },
+                    "closed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "expected_cash": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "counted_cash": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "over_short": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "counted \u2212 expected; negative = short."
+                    },
+                    "close_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "totals": {
+                        "type": "object",
+                        "properties": {
+                            "sales_count": {
+                                "type": "integer"
+                            },
+                            "sales_total": {
+                                "type": "string"
+                            },
+                            "expected_cash": {
+                                "type": "string",
+                                "description": "Cash the drawer should hold now: float + cash kept."
+                            },
+                            "by_method": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "method": {
+                                            "type": "string"
+                                        },
+                                        "amount": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "method",
+                                        "amount"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "sales_count",
+                            "sales_total",
+                            "expected_cash",
+                            "by_method"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "status",
+                    "location",
+                    "register",
+                    "cashier",
+                    "opened_at",
+                    "opening_float",
+                    "closed_at",
+                    "expected_cash",
+                    "counted_cash",
+                    "over_short",
+                    "close_note",
+                    "totals"
+                ],
+                "title": "PosSession"
             },
             "PostStatus": {
                 "type": "string",
@@ -50745,6 +54277,93 @@
                     "order_delivered"
                 ],
                 "title": "PurchaseTrigger"
+            },
+            "QuotePosSaleRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/quote` \u2014 price the register cart and read the tenders.\nWrites nothing. Every figure on the register comes from here (rule 1).",
+                "properties": {
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 999
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity"
+                            ]
+                        },
+                        "minItems": 0,
+                        "maxItems": 100,
+                        "uniqueItems": true
+                    },
+                    "coupon_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`.",
+                        "maxLength": 64
+                    },
+                    "customer_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Bangladeshi mobile (013\u2013019, rule 30). Optional \u2014 an anonymous walk-in has none.",
+                        "maxLength": 32
+                    },
+                    "tenders": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cash",
+                                        "bkash",
+                                        "nagad",
+                                        "card"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string",
+                                    "description": "What the customer handed over in this tender, e.g. `4000.00` cash for a \u09f33,455 total.",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender.",
+                                    "maxLength": 64
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "amount"
+                            ]
+                        },
+                        "maxItems": 8
+                    }
+                },
+                "required": [
+                    "lines"
+                ],
+                "title": "QuotePosSaleRequest"
             },
             "ReceivePurchaseRequest": {
                 "type": "object",
@@ -53787,6 +57406,43 @@
                 },
                 "title": "SaveSeoMetaRequest"
             },
+            "SendInboxReplyRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/messages` \u2014 a reply to the customer, needs\ninbox.reply. Queued; sent after commit. 409 outside the 24-hour window.",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "description": "WhatsApp's text limit (4096). Messenger publishes no limit we could confirm.",
+                        "maxLength": 4096
+                    }
+                },
+                "required": [
+                    "body"
+                ],
+                "title": "SendInboxReplyRequest"
+            },
+            "SendQuickReplyRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/quick-replies` \u2014 needs inbox.reply. The server\ncomposes the text: `product_card` (target = product id) or `tracking_link` (target = an\norder of the conversation's customer).",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "product_card",
+                            "tracking_link"
+                        ]
+                    },
+                    "target_id": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                },
+                "required": [
+                    "kind",
+                    "target_id"
+                ],
+                "title": "SendQuickReplyRequest"
+            },
             "SendTestSmsRequest": {
                 "type": "object",
                 "description": "`POST /settings/messaging/test` \u2014 one test SMS to a Bangladeshi mobile (rule 30:\n013\u2013019 only), in English or Bangla; needs settings.manage_integrations.",
@@ -55863,6 +59519,20 @@
                     "body"
                 ],
                 "title": "StoreCustomerNoteRequest"
+            },
+            "StoreInboxNoteRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/notes` \u2014 an internal note (never sent), needs inbox.reply.",
+                "properties": {
+                    "body": {
+                        "type": "string",
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "body"
+                ],
+                "title": "StoreInboxNoteRequest"
             },
             "StoreInfoResource": {
                 "type": "object",
@@ -63600,6 +67270,158 @@
                 ],
                 "title": "UpdateCourierRatesRequest"
             },
+            "UpdateDeliveryAreasRequest": {
+                "type": "object",
+                "description": "`PUT /settings/delivery-areas` \u2014 Store settings \u203a Delivery areas & timing. The whole\ndocument every time. Needs settings.update AND shipments.manage_rates: these values change\nwhat every delivery quote charges and promises, like the free-delivery threshold.\nMoney is a decimal string (rule 6); the cut-off is a Dhaka wall-clock time (rule 11).",
+                "properties": {
+                    "cutoff_time": {
+                        "type": "string",
+                        "description": "Orders placed at or after this Dhaka time dispatch the next working day. 24-hour \"HH:MM\", e.g. \"17:00\"."
+                    },
+                    "eta_days": {
+                        "type": "object",
+                        "description": "Working days from dispatch to delivery, per zone.",
+                        "properties": {
+                            "inside_dhaka_metro": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer",
+                                        "description": "0\u201330.",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    },
+                                    "max": {
+                                        "type": "integer",
+                                        "description": "min\u201330.",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            },
+                            "dhaka_suburb": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    },
+                                    "max": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            },
+                            "outside_dhaka": {
+                                "type": "object",
+                                "properties": {
+                                    "min": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    },
+                                    "max": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 30
+                                    }
+                                },
+                                "required": [
+                                    "min",
+                                    "max"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "inside_dhaka_metro",
+                            "dhaka_suburb",
+                            "outside_dhaka"
+                        ]
+                    },
+                    "metro_district_ids": {
+                        "type": "array",
+                        "description": "Districts where an address with no upazila is the city itself \u2014 inside Dhaka metro. Their upazilas keep their own zone.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 64,
+                        "uniqueItems": true
+                    },
+                    "suburb_district_ids": {
+                        "type": "array",
+                        "description": "Whole districts priced as Dhaka suburb. Must not also be a metro district.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 64,
+                        "uniqueItems": true
+                    },
+                    "not_serviced_upazila_ids": {
+                        "type": "array",
+                        "description": "Upazilas we do not deliver to.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 600,
+                        "uniqueItems": true
+                    },
+                    "cod_advance": {
+                        "type": "object",
+                        "description": "COD orders whose subtotal is above `threshold` in `zones` need `amount` paid in advance.",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "false = no advance rule; the other fields are then ignored."
+                            },
+                            "zones": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/DeliveryZone"
+                                },
+                                "uniqueItems": true
+                            },
+                            "threshold": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Decimal string, e.g. \"5000.00\".",
+                                "pattern": "^\\d{1,7}(\\.\\d{1,2})?$"
+                            },
+                            "amount": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Decimal string, e.g. \"200.00\"; less than the threshold.",
+                                "pattern": "^\\d{1,7}(\\.\\d{1,2})?$"
+                            }
+                        },
+                        "required": [
+                            "enabled"
+                        ]
+                    }
+                },
+                "required": [
+                    "cutoff_time",
+                    "eta_days",
+                    "metro_district_ids",
+                    "suburb_district_ids",
+                    "not_serviced_upazila_ids",
+                    "cod_advance"
+                ],
+                "title": "UpdateDeliveryAreasRequest"
+            },
             "UpdateDeliverySettingsRequest": {
                 "type": "object",
                 "description": "`PUT /settings/delivery` \u2014 the store-level free-delivery threshold; needs\nshipments.manage_rates. null switches free delivery off. Decimal string (rule 6).",
@@ -65113,10 +68935,12 @@
                                 "settings.update",
                                 "settings.manage_integrations",
                                 "staff.view",
-                                "audit.view"
+                                "audit.view",
+                                "pos.use",
+                                "pos.manage"
                             ]
                         },
-                        "maxItems": 67,
+                        "maxItems": 69,
                         "uniqueItems": true
                     }
                 },

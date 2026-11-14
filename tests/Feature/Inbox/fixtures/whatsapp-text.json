@@ -1,0 +1,27 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": { "display_phone_number": "8801700000000", "phone_number_id": "106540352242922" },
+            "contacts": [ { "profile": { "name": "Nusrat Jahan" }, "wa_id": "8801841523907" } ],
+            "messages": [
+              {
+                "from": "8801841523907",
+                "id": "wamid.HBgNODgwMTg0MTUyMzkwNxUCABIYFjNFQjBDMEY0QTlBMkMxQjQ1MkQ1AA==",
+                "timestamp": "1763190480",
+                "type": "text",
+                "text": { "body": "আমার পার্সেল কোথায়? অর্ডার TMB-26-00121" }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

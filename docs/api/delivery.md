@@ -31,6 +31,23 @@ All numbers are data: the `delivery.*` settings (seeded by `DeliverySeeder` from
 `DeliverySettings::DEFAULTS`) and the `courier_providers` rate card. **PROVISIONAL** — the design's
 placeholder values (৳70 / ৳100 / ৳130, free over ৳3,000, zone membership) await the owner.
 
+## Admin editors
+
+| Endpoint | Read | Write | Settings |
+|---|---|---|---|
+| `GET/PUT /api/v1/admin/settings/delivery` | `shipments.manage_rates` or `settings.manage_integrations` | `shipments.manage_rates` | `delivery.free_shipping_threshold` |
+| `GET/PUT /api/v1/admin/settings/delivery-areas` (Store settings › Delivery areas & timing) | `settings.view` | `settings.update` **and** `shipments.manage_rates` | `delivery.cutoff_time`, `delivery.eta_days`, `delivery.metro_district_ids`, `delivery.suburb_district_ids`, `delivery.not_serviced_upazila_ids`, `delivery.cod_advance` |
+
+`PUT /settings/delivery-areas` takes the whole document (`DeliveryAreas` schema): `cutoff_time` "HH:MM"
+(Dhaka), `eta_days.{zone}.{min,max}` (0–30 working days, max ≥ min), the three id lists (ids must exist; a
+district cannot be both metro and suburb) and `cod_advance` `{enabled, zones, threshold, amount}` (decimal
+strings, advance < threshold; `enabled: false` stores `null` = no rule). `UpdateDeliveryAreaSettings` writes
+only the keys that changed, in one transaction, and dispatches `DeliveryReferenceDataChanged`
+(`delivery_areas`) only when something changed. It writes exactly what `DeliverySettings` reads, so the
+next quote, the checkout COD-advance hold and `GET /settings/checkout` follow the save. Not editable here
+yet: `delivery.non_working_weekdays`, `delivery.holidays`, and the per-upazila `is_inside_dhaka_metro` /
+`is_dhaka_subcity` flags (geography data).
+
 ## Endpoints (storefront token, `storefront:read`)
 
 | Endpoint | Cache | Returns |

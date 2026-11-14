@@ -127,7 +127,7 @@ No BN template uses Bengali digits in a variable, and no BN template contains st
 - **Storefront axe and keyboard are CI gates.** `accessibility.spec.ts` and `keyboard.spec.ts` live in the storefront E2E directory, so the existing **Storefront** job step (`npm run test:e2e:storefront`) runs them. The step name in `.github/workflows/ci.yml` now says so.
   - They add about **2.2 min**: 133 s summed locally under heavy load.
   - They are green: the full storefront suite ran locally against a production build, with 166 passed. The 2 failures are other agents' in-progress specs: `performance-budgets` (agent 3) and `seo-crawl`, which assumes port 3100 (agent 5).
-- **The admin axe is a script, not a CI gate.** It takes 6.3 min locally, which is over the 5-minute budget for a new gate, and it needs the full demo seed. Run `npm run build && npm run test:a11y:admin` (`e2e/admin-a11y/`, port 8344; `A11Y_ADMIN_REUSE=1` to reuse a running server). Run it before any admin UI PR merges. Wiring it into the Admin E2E job is a one-line step when the budget allows.
+- **The admin a11y suite is a CI gate** (Phase 10 batch 4, owner-approved): its own parallel job, **"Admin a11y"** (`admin-a11y` in `.github/workflows/ci.yml`), so it adds no time to the other jobs. See "Phase 10 batch 4" below. Locally: `npm run build && npm run test:a11y:admin` (`e2e/admin-a11y/`, port 8344; `A11Y_ADMIN_REUSE=1` to reuse a running server). *(Superseded: until batch 4 this was a script only, over the 5-minute budget for a step in an existing job.)*
 - New dev dependency: `@axe-core/playwright@4.14.0` in the root `package.json`, with `package-lock.json` updated.
 
 ## Phase 10 screens (batch 3, 2026-11-15)
@@ -164,3 +164,51 @@ No other WCAG A/AA violation on any Phase 10 screen, dialog or two-factor state,
 - Whether to put the admin axe suite in CI. It is now ~9.5 min; as a separate job it adds no time to the critical path, but it needs the full demo seed.
 - P10-8: the switch off-track contrast (design token).
 - Screen-reader pass (NVDA) on the matrix and two-factor flow, added to the checklist above.
+
+## Phase 10 batch 4 — admin a11y in CI and screen-reader readiness (2026-11-15)
+
+**CI.** The new **"Admin a11y"** job (`admin-a11y`) runs in parallel with PHP, Frontend, Storefront and Admin E2E. Its setup mirrors Admin E2E: PHP 8.4, Node 24, `npm ci`, `npx playwright install chromium`, `npm run build`. It then runs `npm run test:a11y:admin -- --trace off` with `CI=1`, under `timeout-minutes: 40`. The HTML report is uploaded only on failure, as `admin-a11y-playwright-report`, kept 7 days. Expected wall time is about 13–16 min: ~2 min of setup, a ~1 min demo seed, and the suite itself, which takes ~10.5 min locally and somewhat longer on a shared runner. Because the job runs in parallel, the critical path stays at the slowest existing job. `actionlint` is not part of CI or installed locally. The YAML was parse-checked, and the job copies the existing job's step shapes.
+
+**Making the suite CI-stable** (`e2e/admin-a11y/playwright.config.ts`, `axe.spec.ts`):
+- **Retries and timeouts:** one retry in CI (none locally). The per-test budget is 600 s in CI and 300 s locally, because the long sweeps audit 33 screens per test. In CI, `expect` waits 15 s, actions 30 s and navigation 60 s.
+- **Time zone:** `timezoneId: 'Asia/Dhaka'`, so dates and "41m ago" render the same on a UTC runner (rule 11).
+- **Two-factor retries:** the two-factor test enrols a demo account, and enrolment is one-time. A retry would have found two-factor already on and failed at the setup screen. Each attempt now uses its own account: EN `viewer@` then `inventory_staff@`, BN `content_editor@` then `accountant@`.
+- **TOTP timing:** the code is never typed in the last 4 s of its 30 s step, so it cannot roll over between typing and submitting.
+- **Already deterministic:** each run starts from `migrate:fresh` and the demo seeders, on a fresh temp SQLite file with the file cache cleared. The only writes are the keyboard spec's Start processing, which picks *a* confirmed order (there are 10), and the two-factor enrolments above. No spec depends on another's writes or on the order specs run in.
+
+**Screen-reader tree** — `e2e/admin-a11y/screen-reader.spec.ts` (new, 7 tests, ~45 s). These are partial `toMatchAriaSnapshot` and role assertions on the tree Chrome hands to assistive technology, for the key flows:
+- **Sign in:** form names, the alert tied to both fields, `aria-invalid`, and `lang` flipping to `bn` with the Bangla labels.
+- **Two-factor code step:** the heading, focus in the field, the recovery-mode switch moving focus, the error described on the field, and Start again returning to Email.
+- **Staff & roles:** the shell landmarks, `aria-current` on the section tab, table headers, row actions that name their person, and the manage dialog's name, structure and focus round-trip. On the roles matrix: the captioned table, cell-named checkboxes, the persistent empty `role=status` that then announces "Unsaved changes to 1 role(s)", and "(changed, not saved)" in the column header.
+- **Orders board → detail:** toggle filters with `aria-pressed`, the table structure, the three tracks as lists of "<step> — done/current", our score and the courier record as separate regions (rule 24), and the hold dialog's name and focus round-trip.
+- **Create order:** the numbered section headings, the landmark hint as the field's description (rule 31), the product search announcing its result count, results reachable by Tab, the named quantity buttons, and the payment radiogroup.
+- **Product edit:** the section nav, `lang="bn"` on the Bangla name, the toolbar plus a multi-line `textbox "Description"`, the tablist and tabpanel, variant-named grid cells, the polite save-state line, and an invalid field with its description.
+- **Courier booking:** the drawer as a named dialog with focus inside, the unverified-courier note, the courier radiogroup, the weight hint, the block reason as an alert, an empty status region mounted in advance, and Escape returning focus to Book courier.
+- **On every screen:** one `main`, one `h1`, no skipped heading levels.
+
+**Checklist for a human pass:** `docs/audits/SCREEN-READER-CHECKLIST.md`. It is a step-by-step script for VoiceOver + Safari (macOS) and TalkBack + Chrome (Android), with what to press, what should be heard in EN and BN, and a one-line failure report format.
+
+| # | Sev | Where | Finding (what a screen reader would do) | Fix | Test | Status |
+|---|---|---|---|---|---|---|
+| SR-1 | Medium | Create order › product search | It was `role=combobox` over a `role=listbox` whose options held buttons, which a listbox may not contain. Arrow keys did nothing, there was no active descendant, and the result count was never announced. VoiceOver reads it as an empty, unusable listbox. | Now a search box (`type=search`) over a labelled list of "Add …" buttons reached by Tab. A persistent `role=status` says "N matching products — press Tab to choose one" or "No sellable product matches …" (new key `orders.compose.searchCount`, EN + BN). `aria-controls` is set only while the list is rendered: the first suite run caught a dangling reference (`aria-valid-attr-value`, critical). | `screen-reader.spec.ts` (create order); `compose.test.tsx` updated to `searchbox` | **Fixed** |
+| SR-2 | Medium | Courier booking drawer | Both the "Sending to …" message and the success message were live regions mounted together with their text, which is commonly not announced. Booking also unmounted the focused submit button, dropping focus to `<body>` inside the dialog. | One `role=status` stays mounted across the form → result swap. The result sentence takes focus (`tabIndex=-1`). | `screen-reader.spec.ts` (empty status present before booking). Booking itself is not exercised: no verified courier (rule 33a). | **Fixed** (needs a real-reader check once a courier is connected) |
+| SR-3 | Low | Shell rail, expanded (≥ 1280) | The shop name was read twice ("Admin · Toy Mart BD Toy Mart BD"): a sr-only copy meant for the collapsed rail was also present when the caption shows. | sr-only copy now only where the rail is collapsed. | `expectShell` (every flow) | **Fixed** |
+| SR-4 | Low | Order detail › Where this order is | Each track read its developer column name aloud ("orders.status", "payment_status"). | Visible as in Figma, `aria-hidden`. | order detail test | **Fixed** |
+| SR-5 | Low | Staff › Manage dialog | "Their role can see money: they must set up two-factor…" was read twice: the chip's sr-only text plus the printed sentence under it. | `TwoFactorChip explain={false}` in the dialog. The table cell keeps it. | staff test | **Fixed** |
+| SR-6 | Low | Order detail stepper | Each step is an `<li aria-label="Pending — done">` containing a visible date. Some readers speak the label and skip the date. | Not changed: needs a real-reader check (checklist 3.6). | — | **Open — verify** |
+| SR-7 | Low | Order detail › Delivery address | The copy button's visible name is just "Copy". It sits inside the "Delivery address" region, so context is available, but out of context it is ambiguous. | Not changed: no new copy for a low-severity item. | — | Noted |
+| SR-8 | Low | Orders, Couriers | The status filters and the courier switcher are toggle buttons inside `navigation` landmarks. That is acceptable, but a reader lists them as landmarks. People and the roles table have no caption (the roles matrix does). | — | — | Noted |
+| SR-9 | Info | Order detail › Items | "Cost ৳592.3209 at order time": the cost snapshot renders with 4 decimals. This is not an a11y fault, but it is read digit by digit. | For the orders owner: format to 2 dp. | — | **Other area** |
+
+**Results.**
+- **Full `npm run test:a11y:admin`** (local, installed Chrome, machine under heavy load): **21/22 passed in 9.9 min.**
+  - All 192 axe audits pass, and so do the Bangla scans and the 7 new screen-reader tests.
+  - The first full run failed the 4 main-screens tests on SR-1's dangling `aria-controls`. That is fixed, and the second run was green.
+- **The one failure:** `keyboard.spec.ts` "Phase 10 … by keyboard". Pressing Enter on a focused branch **Edit** opened no dialog, at Store settings › Branches. It failed 2 times in about 8 runs, only under load, and was not reproduced in isolation (4/4 and 3/3 passed).
+  - `storeSettings` was being edited by another agent this batch, so it was not investigated in that code.
+  - The step now asserts focus first, and on failure names what had focus. CI's one retry covers it until the cause is known.
+- `screen-reader.spec.ts` alone: 7/7 in ~45 s. Vitest (orders, staff, couriers, shell): 72 passed, 1 failed — `shell.test.tsx` "renders a placeholder for designed-but-unbuilt sections" expects `/inbox` to be ComingSoon, but the inbox agent made `/inbox` a real route in this batch (theirs to update). `npm run typecheck` is clean. `npm run lint:i18n:admin` reports 0 violations, with every key in EN and BN.
+
+**Needs the owner**
+- Run `SCREEN-READER-CHECKLIST.md` with VoiceOver (Mac, Safari) and TalkBack (Android, Chrome), in both languages. SR-2 and SR-6 especially need a listening check.
+- Whether "Admin a11y" should be a **required** status check for merging to `main`, which is a branch-protection setting.

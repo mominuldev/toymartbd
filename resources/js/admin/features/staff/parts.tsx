@@ -43,6 +43,7 @@ export function useDialog(open: boolean, onOpen: () => void) {
 export const permissionGroups = [
     { key: 'general', prefixes: ['dashboard'] },
     { key: 'orders', prefixes: ['orders', 'returns', 'refunds'] },
+    { key: 'pos', prefixes: ['pos'] },
     { key: 'delivery', prefixes: ['shipments'] },
     { key: 'risk', prefixes: ['risk'] },
     { key: 'customers', prefixes: ['customers', 'inbox'] },

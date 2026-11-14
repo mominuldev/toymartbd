@@ -83,11 +83,15 @@ it('lists every service by category, with not-built services as not_available', 
     $response = $this->getJson(HUB_URL)->assertOk();
 
     $keys = collect($response->json('data'))->pluck('key')->all();
-    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'meta_capi', 'ga4', 'gtm', 'search_console']);
+    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console']);
     expect(collect($response->json('data'))->pluck('category')->unique()->values()->all())->toBe(['couriers', 'payments', 'messaging', 'marketing']);
 
-    foreach (['redx', 'bkash', 'nagad', 'whatsapp', 'messenger', 'search_console'] as $key) {
+    foreach (['redx', 'bkash', 'nagad', 'live_chat', 'search_console'] as $key) {
         expect(hubItem($response, $key))->toMatchArray(['status' => 'not_available', 'notes' => ['no_driver'], 'settings_path' => null, 'enabled' => null]);
+    }
+    // Inbox channels (P10): drivers exist, no account keys yet.
+    foreach (['whatsapp', 'messenger'] as $key) {
+        expect(hubItem($response, $key))->toMatchArray(['status' => 'not_connected', 'notes' => ['inbox_not_configured'], 'settings_path' => null]);
     }
     // COD is first-class and always on (rule 33).
     expect(hubItem($response, 'cod'))->toMatchArray(['status' => 'connected_live', 'notes' => ['cod_always_on']]);
@@ -270,3 +274,17 @@ it('never returns a courier credential', function (): void {
 it('guards GET /integrations', function (Role $role, bool $allowed): void {
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->getJson(HUB_URL));
 })->with(RoleMatrix::dataset(Permission::SettingsManageIntegrations));
+
+it('shows an inbox channel with keys entered as test mode, never live while unverified', function (): void {
+    hubOwner();
+    config([
+        'inbox.messenger.page_id' => '1234567890',
+        'inbox.messenger.page_access_token' => 'page-token-test',
+        'inbox.messenger.app_secret' => 'app-secret-test',
+        'inbox.messenger.verify_token' => 'verify-test',
+    ]);
+
+    expect(hubItem($this->getJson(HUB_URL), 'messenger'))->toMatchArray([
+        'status' => 'test_mode', 'notes' => ['inbox_unverified'], 'settings_path' => '/inbox',
+    ]);
+});

@@ -147,6 +147,10 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Invoicing\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
         // Credit notes (P8 batch 2): customer invoices only — orders.view (+ view_pii to print).
         \App\Domain\Invoicing\Models\CreditNote::class => \App\Policies\CreditNotePolicy::class,
+        // Unified inbox (P10, B · 22): inbox.view reads, inbox.reply writes.
+        \App\Domain\Inbox\Models\Conversation::class => \App\Policies\ConversationPolicy::class,
+        \App\Domain\Inbox\Models\ConversationMessage::class => \App\Policies\ConversationPolicy::class,
+        \App\Domain\Inbox\Models\InboxWebhookReceipt::class => \App\Policies\ConversationPolicy::class,
     ];
 
     /**

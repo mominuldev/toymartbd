@@ -286,7 +286,7 @@ export function StaffDialog({ open, member, onClose }: StaffDialogProps) {
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <span className="flex items-center gap-2">
                                     <h3 className="t-admin-body-strong text-fg-primary">{t('staff.twoFactor.section')}</h3>
-                                    <TwoFactorChip member={member} />
+                                    <TwoFactorChip member={member} explain={false} />
                                 </span>
                                 <p className="t-admin-caption text-fg-secondary">
                                     {t(member.two_factor_enabled ? 'staff.twoFactor.resetBody' : member.two_factor_required ? 'staff.twoFactor.missing' : 'staff.twoFactor.optional')}

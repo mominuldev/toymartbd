@@ -29,6 +29,12 @@ enum LedgerEntryType: string
     case CodReceived = 'cod_received';
     case OtherIncome = 'other_income';
     case OtherExpense = 'other_expense';
+    /**
+     * Money taken at a POS counter (cash into the drawer, or bKash / Nagad / card): a cash
+     * movement, never revenue (rule 10) — revenue is recognised on the sale's OrderDelivered.
+     * Not a P&L line (PnlLayout), so it cannot count cash as profit.
+     */
+    case PosReceipt = 'pos_receipt';
 
     /**
      * The direction an entry of this type normally takes. A per-type figure is reported
@@ -38,7 +44,7 @@ enum LedgerEntryType: string
     public function naturalDirection(): Direction
     {
         return match ($this) {
-            self::SaleRevenue, self::ShippingRevenue, self::CodReceived, self::OtherIncome => Direction::In,
+            self::SaleRevenue, self::ShippingRevenue, self::CodReceived, self::OtherIncome, self::PosReceipt => Direction::In,
             default => Direction::Out,
         };
     }

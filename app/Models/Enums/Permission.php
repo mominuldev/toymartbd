@@ -119,6 +119,12 @@ enum Permission: string
     case RolesManage = 'roles.manage';
     case AuditView = 'audit.view';
 
+    // POS register (Figma B · 33)
+    /** Open a drawer at a branch, sell, hold and resume carts, print receipts, close your own drawer. */
+    case PosUse = 'pos.use';
+    /** Close or look into another cashier's drawer (the over / short count). */
+    case PosManage = 'pos.manage';
+
     /**
      * Only an owner may hold these. Granting them to another role would let it hand itself
      * more rights, so the role editor refuses them and the seeder strips them (owner

@@ -141,8 +141,11 @@ test('Phase 10: staff and branch dialogs, and the permission matrix, by keyboard
     await expect(addBranch).toBeFocused();
     const edit = page.getByRole('button', { name: /^Edit / }).first();
     await tabTo(page, edit);
+    await expect(edit).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // Seen twice in ~8 local runs under heavy load: Enter on a focused Edit opened nothing (not reproduced
+    // in isolation). The message names what had focus, so a CI failure is diagnosable.
+    await expect(page.getByRole('dialog'), `Edit branch dialog did not open; focus on ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 120))}`).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(edit).toBeFocused();
 });

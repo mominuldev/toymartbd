@@ -38,7 +38,7 @@ final class OrderListItemResource extends ApiResource
             'fulfillment_status' => $order->fulfillment_status->value,
             /** @var string|null */
             'payment_method' => $order->payment_method,
-            /** @var 'web'|'admin'|'phone'|'facebook'|'whatsapp' */
+            /** @var 'web'|'admin'|'phone'|'facebook'|'whatsapp'|'pos' */
             'source' => $order->source->value,
             'customer_id' => $order->customer_id,
             'customer_name' => $order->shipping_name,

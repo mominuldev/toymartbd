@@ -196,7 +196,10 @@ export function OrderStepper({ order }: { order: Order }) {
                 <div key={track.id} className="flex flex-col gap-3">
                     <p className="flex items-center gap-2">
                         <span className="t-admin-overline text-fg-secondary">{t(`orders.step.track.${track.id}` as MessageKey)}</span>
-                        <span className="t-admin-mono-sm text-fg-tertiary">{track.source}</span>
+                        {/* The column name is for staff reading the screen; a screen reader would spell out "orders dot status". */}
+                        <span aria-hidden className="t-admin-mono-sm text-fg-tertiary">
+                            {track.source}
+                        </span>
                     </p>
                     <ol className="flex flex-col gap-0 lg:flex-row lg:items-start">
                         {track.nodes.map((node, i) => {

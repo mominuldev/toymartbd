@@ -13,3 +13,7 @@ use Illuminate\Support\Facades\Route;
 | role-matrix test (tests/Support/role-matrix-routes.php) — rule 21.
 */
 
+// Read: settings.view. Write: settings.update + shipments.manage_rates (UpdateDeliveryAreasRequest).
+// `/settings/delivery` (the free-delivery threshold) is a separate, older endpoint.
+Route::get('/settings/delivery-areas', [App\Http\Controllers\Api\V1\Admin\Settings\DeliveryAreasController::class, 'show'])->name('settings.delivery-areas.show');
+Route::put('/settings/delivery-areas', [App\Http\Controllers\Api\V1\Admin\Settings\DeliveryAreasController::class, 'update'])->name('settings.delivery-areas.update');

@@ -4549,6 +4549,398 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/pos/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/context` — branches, tenders, category tabs, my open drawer, WhatsApp-receipt availability */
+        get: operations["v1.admin.pos.context"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/customers?phone=` — whose number this is (null for a new one) */
+        get: operations["v1.admin.pos.customers.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /pos/sessions` — open a drawer. 201 */
+        post: operations["v1.admin.pos.sessions.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/sessions/{session}` — the drawer with its running totals */
+        get: operations["v1.admin.pos.sessions.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /pos/sessions/{session}/close` — count and close: expected vs counted vs over/short */
+        post: operations["v1.admin.pos.sessions.close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/sessions/{session}/catalog` — the grid for this drawer's branch (≤ 60 tiles; search narrows) */
+        get: operations["v1.admin.pos.sessions.catalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /pos/sessions/{session}/quote` — price the cart and read the tenders. Writes nothing */
+        post: operations["v1.admin.pos.sessions.quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /pos/sessions/{session}/sales` — Charge. Needs an `Idempotency-Key`; a replay
+         *     returns the first sale. 201 with the change to give
+         */
+        post: operations["v1.admin.pos.sessions.sales.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/holds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/sessions/{session}/holds` — parked carts on this drawer, oldest first */
+        get: operations["v1.admin.pos.sessions.holds.index"];
+        put?: never;
+        /** `POST /pos/sessions/{session}/holds` — "Hold sale". 201 */
+        post: operations["v1.admin.pos.sessions.holds.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/holds/{hold}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /pos/holds/{hold}/resume` — take a parked cart back (or discard it). Once only */
+        post: operations["v1.admin.pos.holds.resume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sales/{sale}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/sales/{sale}/receipt` — the printable receipt */
+        get: operations["v1.admin.pos.sales.receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inbox/conversations` — newest activity first, cursor-paginated (`cursor`).
+         *     `meta.counts` holds the tab counts (`all`, `mine`, `needs_human`) under every filter
+         *     except `view`. Anything not listed is a 400 (rule 16). Phones are masked unless the
+         *     viewer holds customers.view_pii (rule 20)
+         */
+        get: operations["v1.admin.inbox.conversations.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inbox/assignees` — active staff who can reply (inbox.reply), for "Assign to…" */
+        get: operations["v1.admin.inbox.assignees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inbox/conversations/{conversation}` — the thread header and the customer panel:
+         *     orders, OUR risk score labelled `ours` (rule 24), lifetime value and the last order —
+         *     all computed server-side. The panel is null without customers.view
+         */
+        get: operations["v1.admin.inbox.conversations.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/read` — clears the unread count; inbox.view */
+        post: operations["v1.admin.inbox.conversations.read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/assign` — `{user_id}` or `{user_id: null}`; inbox.reply */
+        post: operations["v1.admin.inbox.conversations.assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/resolve` — inbox.reply */
+        post: operations["v1.admin.inbox.conversations.resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/reopen` — inbox.reply */
+        post: operations["v1.admin.inbox.conversations.reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inbox/conversations/{conversation}/messages` — NEWEST first, 50 a page; follow
+         *     `meta.next_cursor` for older messages. inbox.view
+         */
+        get: operations["v1.admin.inbox.messages.index"];
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/messages` — a reply; 202, sent by a queued job */
+        post: operations["v1.admin.inbox.messages.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/notes` — an internal note; never sent. 201 */
+        post: operations["v1.admin.inbox.notes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/quick-replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/quick-replies` — product card or tracking link; 202 */
+        post: operations["v1.admin.inbox.quick-replies.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/delivery-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/delivery-areas` */
+        get: operations["v1.admin.settings.delivery-areas.show"];
+        /** `PUT /settings/delivery-areas` — the whole document; an unchanged save writes nothing and purges nothing */
+        put: operations["v1.admin.settings.delivery-areas.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/blog/posts": {
         parameters: {
             query?: never;
@@ -6474,6 +6866,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/inbox/{channel}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1.webhooks.inbox.verify"];
+        put?: never;
+        post: operations["v1.webhooks.inbox.receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6753,6 +7161,14 @@ export interface components {
         ApproveStockAdjustmentRequest: {
             /** @description Why it was approved (optional). */
             note?: string | null;
+        };
+        /**
+         * AssignConversationRequest
+         * @description `POST /inbox/conversations/{conversation}/assign` — needs inbox.reply. `user_id` null
+         *     unassigns; otherwise an ACTIVE staff member who holds inbox.reply (GET /inbox/assignees).
+         */
+        AssignConversationRequest: {
+            user_id: number | null;
         };
         /** Attribute */
         Attribute: {
@@ -7327,6 +7743,33 @@ export interface components {
          */
         CategoryStatus: "active" | "archived";
         /**
+         * ChargePosSaleRequest
+         * @description `POST /pos/sessions/{session}/sales` — Charge. Requires an `Idempotency-Key` (rule 17).
+         *     `expected_total` is the total the cashier saw; a different server total is `price-changed`.
+         */
+        ChargePosSaleRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            /** @description A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`. */
+            coupon_code?: string | null;
+            /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
+            customer_phone?: string | null;
+            tenders: {
+                /** @enum {string} */
+                method: "cash" | "bkash" | "nagad" | "card";
+                /** @description What the customer handed over in this tender, e.g. `4000.00` cash for a ৳3,455 total. */
+                amount: string;
+                /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
+                reference?: string | null;
+            }[];
+            /** @description The quote's `grand_total`, e.g. `3455.00`. */
+            expected_total: string;
+            /** @description Printed on the receipt for a new customer; an existing customer keeps their name. */
+            customer_name?: string | null;
+        };
+        /**
          * CheckoutRequest
          * @description `POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from
          *     `X-Cart-Token`; the body is what the customer typed plus `expected_total`, the grand
@@ -7426,6 +7869,16 @@ export interface components {
                 zone: string;
                 charge: string | null;
             }[];
+        };
+        /**
+         * ClosePosSessionRequest
+         * @description `POST /pos/sessions/{session}/close` — close with the counted cash. Own drawer with pos.use; anyone's with pos.manage.
+         */
+        ClosePosSessionRequest: {
+            /** @description The cash counted in the drawer, float included. */
+            counted_cash: string;
+            /** @description Why the count is over or short, if it is. */
+            note?: string | null;
         };
         /**
          * ClosePurchaseRequest
@@ -8506,6 +8959,43 @@ export interface components {
             /** @description Shown on the order's activity timeline next to the change. */
             note?: string | null;
         };
+        /** DeliveryAreas */
+        DeliveryAreas: {
+            /** @description Dhaka wall-clock "HH:MM"; orders at or after it dispatch the next working day. */
+            cutoff_time: string;
+            /** @description Always "Asia/Dhaka". */
+            timezone: string;
+            /** @description Working days from dispatch to delivery, per zone. */
+            eta_days: {
+                inside_dhaka_metro: {
+                    min: number;
+                    max: number;
+                };
+                dhaka_suburb: {
+                    min: number;
+                    max: number;
+                };
+                outside_dhaka: {
+                    min: number;
+                    max: number;
+                };
+            };
+            /** @description Districts whose district-level address (no upazila) is inside Dhaka metro. */
+            metro_district_ids: number[];
+            /** @description Whole districts priced as Dhaka suburb. */
+            suburb_district_ids: number[];
+            not_serviced_upazila_ids: number[];
+            /**
+             * @description COD orders above `threshold` in `zones` need `amount` paid in advance. Disabled =
+             *     no rule (zones empty, money null). Money as decimal strings.
+             */
+            cod_advance: {
+                enabled: boolean;
+                zones: ("inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka")[];
+                threshold: string | null;
+                amount: string | null;
+            };
+        };
         /** DeliveryQuote */
         DeliveryQuote: {
             serviceable: boolean;
@@ -8590,6 +9080,12 @@ export interface components {
             /** @description Subtotal at or above which delivery is free in every zone; null = off. */
             free_shipping_threshold: string | null;
         };
+        /**
+         * DeliveryZone
+         * @description Our delivery-charge tier (DATABASE-DESIGN §5.1). Says nothing about a courier's own zone ids, which live in courier_locations and are never guessed (rule 32).
+         * @enum {string}
+         */
+        DeliveryZone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka";
         /** Expense */
         Expense: {
             id: number;
@@ -9024,6 +9520,22 @@ export interface components {
             reason: string;
         };
         /**
+         * HoldPosSaleRequest
+         * @description `POST /pos/sessions/{session}/holds` — park the cart ("Hold sale").
+         */
+        HoldPosSaleRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            /** @description A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`. */
+            coupon_code?: string | null;
+            /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
+            customer_phone?: string | null;
+            /** @description Optional name to find it again, e.g. `Blue shirt, coming back`. */
+            label?: string | null;
+        };
+        /**
          * ImportRedirectsRequest
          * @description `POST /seo/redirects/import` — a CSV `from_path,to_path,status_code[,note]`, ≤ 1 MB.
          */
@@ -9066,6 +9578,119 @@ export interface components {
                 return_charge?: string | null;
                 net_amount?: string | null;
             }[];
+        };
+        /** InboxConversation */
+        InboxConversation: {
+            id: number;
+            /** @enum {string} */
+            channel: "whatsapp" | "messenger" | "live_chat";
+            /** @enum {string} */
+            status: "open" | "resolved";
+            /** @description Full phone only with customers.view_pii. */
+            contact: {
+                name: string | null;
+                phone_masked: string | null;
+                phone: string | null;
+            };
+            customer_id: number | null;
+            assignee: {
+                id: number;
+                name: string;
+            } | null;
+            needs_human: boolean;
+            unread_count: number;
+            last_message_at: string | null;
+            last_message_preview: string | null;
+            /** @enum {string|null} */
+            last_message_direction: "in" | "out" | null;
+            window: {
+                applies: boolean;
+                open: boolean;
+                expires_at: string | null;
+            };
+        };
+        /** InboxConversationDetail */
+        InboxConversationDetail: {
+            id: number;
+            /** @enum {string} */
+            channel: "whatsapp" | "messenger" | "live_chat";
+            /** @enum {string} */
+            status: "open" | "resolved";
+            /** @description Full phone only with customers.view_pii. */
+            contact: {
+                name: string | null;
+                phone_masked: string | null;
+                phone: string | null;
+            };
+            customer_id: number | null;
+            assignee: {
+                id: number;
+                name: string;
+            } | null;
+            needs_human: boolean;
+            unread_count: number;
+            last_message_at: string | null;
+            last_message_preview: string | null;
+            /** @enum {string|null} */
+            last_message_direction: "in" | "out" | null;
+            window: {
+                applies: boolean;
+                open: boolean;
+                expires_at: string | null;
+            };
+            customer: {
+                id: number;
+                name: string;
+                orders_count: number;
+                delivered_orders_count: number;
+                lifetime_value: string;
+                preferred_language: string;
+                risk: {
+                    score: number;
+                    /** @enum {string} */
+                    level: "low" | "medium" | "high";
+                    /** @constant */
+                    source: "ours";
+                    computed_at: string | null;
+                } | null;
+                last_order: {
+                    id: number;
+                    number: string;
+                    status: string;
+                    grand_total: string;
+                    placed_at: string | null;
+                    items_summary: string | null;
+                    items_count: number;
+                } | null;
+            } | null;
+        };
+        /** InboxMessage */
+        InboxMessage: {
+            id: number;
+            /** @enum {string} */
+            direction: "in" | "out";
+            /** @enum {string} */
+            kind: "text" | "note" | "system";
+            body: string | null;
+            /** @enum {string|null} */
+            system_event: "assigned" | "unassigned" | "resolved" | "reopened" | null;
+            /** @description Who was assigned (system line). */
+            assignee_name: string | null;
+            /** @description Who did it: a staff name, or `customer` for an automatic reopen. */
+            actor: string | null;
+            unsupported_type: string | null;
+            sender: {
+                id: number;
+                name: string;
+            } | null;
+            /** @enum {string|null} */
+            delivery_status: "queued" | "sent" | "delivered" | "read" | "failed" | null;
+            /** @description `outside_window`, `not_configured`, `transport`, `provider_error:{code}` */
+            failure_code: string | null;
+            failure_reason: string | null;
+            /** @description When it was written (inbound: the provider's timestamp). */
+            at: string | null;
+            read_at: string | null;
         };
         /**
          * InspectReturnRequest
@@ -10035,6 +10660,18 @@ export interface components {
             created_by_name: string | null;
             created_at: string | null;
         };
+        /**
+         * OpenPosSessionRequest
+         * @description `POST /pos/sessions` — open a drawer at a branch with its float. Needs pos.use.
+         */
+        OpenPosSessionRequest: {
+            /** @description The branch (stock location) the drawer sells from. Not a pickup point. */
+            location_id: number;
+            /** @description e.g. `Register 1`. One open drawer per register per branch. */
+            register: string;
+            /** @description Cash put in the drawer to give change from, e.g. `5000.00`. */
+            opening_float: string;
+        };
         /** Order */
         Order: {
             id: number;
@@ -10046,7 +10683,7 @@ export interface components {
             /** @enum {string} */
             fulfillment_status: "unfulfilled" | "partially_fulfilled" | "fulfilled" | "returned";
             /** @enum {string} */
-            source: "web" | "admin" | "phone" | "facebook" | "whatsapp";
+            source: "web" | "admin" | "phone" | "facebook" | "whatsapp" | "pos";
             payment_method: string | null;
             currency: string;
             pii_masked: boolean;
@@ -10271,7 +10908,7 @@ export interface components {
             fulfillment_status: "unfulfilled" | "partially_fulfilled" | "fulfilled" | "returned";
             payment_method: string | null;
             /** @enum {string} */
-            source: "web" | "admin" | "phone" | "facebook" | "whatsapp";
+            source: "web" | "admin" | "phone" | "facebook" | "whatsapp" | "pos";
             customer_id: number;
             customer_name: string;
             customer_phone_masked: string | "***";
@@ -10494,7 +11131,7 @@ export interface components {
         /** PermissionInfoResource */
         PermissionInfoResource: {
             /** @enum {string} */
-            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view";
+            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view" | "pos.use" | "pos.manage";
             owner_only: boolean;
             reveals_money: boolean;
         };
@@ -10741,6 +11378,220 @@ export interface components {
              * @enum {string}
              */
             source: "ledger" | "summaries" | "mixed";
+        };
+        /** PosCatalogItem */
+        PosCatalogItem: {
+            variant_id: number;
+            product_id: number;
+            name: string;
+            name_bn: string | null;
+            variant_name: string | null;
+            sku: string;
+            barcode: string | null;
+            price: string;
+            /** @description Available at this branch now (on hand − reserved). */
+            available: number;
+            image_url: string | null;
+        };
+        /** PosContext */
+        PosContext: {
+            locations: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+                type: string | null;
+            }[];
+            tenders: {
+                /** @enum {string} */
+                method: "cash" | "bkash" | "nagad" | "card";
+                requires_reference: boolean;
+                gives_change: boolean;
+            }[];
+            categories: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            }[];
+            session: components["schemas"]["PosSession"] | null;
+            can_manage: boolean;
+            whatsapp_receipt: {
+                enabled: boolean;
+                /** @constant */
+                reason: "no_provider";
+            };
+        };
+        /** PosCustomer */
+        PosCustomer: {
+            /** @description 01XXXXXXXXX */
+            phone: string;
+            customer: {
+                id: number;
+                name: string;
+                orders_count: number;
+            } | null;
+        };
+        /** PosHeldSale */
+        PosHeldSale: {
+            id: number;
+            label: string | null;
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            item_count: number;
+            coupon_code: string | null;
+            /** @description 01XXXXXXXXX. */
+            customer_phone: string | null;
+            held_at: string | null;
+            resumed_at: string | null;
+        };
+        /** PosQuote */
+        PosQuote: {
+            lines: {
+                variant_id: number;
+                name: string;
+                name_bn: string | null;
+                variant_name: string | null;
+                quantity: number;
+                unit_price: string;
+                subtotal: string;
+                discount: string;
+                total: string;
+                available: number;
+                image_url: string | null;
+            }[];
+            /** @description Signed rows that sum to `grand_total` (no delivery at the counter, so free-delivery promotions are left out). */
+            rows: {
+                /** @enum {string} */
+                type: "subtotal" | "promotion" | "coupon" | "shipping";
+                label: string | null;
+                label_bn: string | null;
+                amount: string;
+            }[];
+            subtotal: string;
+            discount_total: string;
+            grand_total: string;
+            item_count: number;
+            blockers: {
+                field: string;
+                message: string;
+            }[];
+            chargeable: boolean;
+            tenders: {
+                tendered: string;
+                cash_tendered: string;
+                remaining: string;
+                change: string;
+                errors: {
+                    field: string;
+                    message: string;
+                }[];
+            } | null;
+        };
+        /** PosReceipt */
+        PosReceipt: {
+            store: {
+                name_en: string;
+                name_bn: string;
+                address_en: string | null;
+                address_bn: string | null;
+                hotline: string | null;
+                bin: string | null;
+                trade_licence: string | null;
+                footer_en: string | null;
+                footer_bn: string | null;
+                /** @description Required business fields the owner has not filled in yet. */
+                placeholders: string[];
+            };
+            branch: {
+                name: string;
+                name_bn: string | null;
+                address: string | null;
+            };
+            register: string;
+            cashier: string;
+            order_number: string;
+            /** @description ISO 8601 instant; print it in Dhaka time. */
+            sold_at: string;
+            customer: {
+                name: string | null;
+                /** @description 017****5678. @var string|null */
+                phone_masked: string | null;
+            };
+            lines: {
+                name: string;
+                name_bn: string | null;
+                variant_name: string | null;
+                quantity: number;
+                unit_price: string;
+                discount: string;
+                total: string;
+            }[];
+            subtotal: string;
+            promotion_discount: string;
+            coupon_discount: string;
+            coupon_code: string | null;
+            grand_total: string;
+            payments: {
+                method: string;
+                amount: string;
+                reference: string | null;
+            }[];
+            cash_tendered: string;
+            change_due: string;
+            whatsapp: {
+                enabled: boolean;
+                /** @constant */
+                reason: "no_provider";
+            };
+        };
+        /** PosSale */
+        PosSale: {
+            id: number;
+            order_id: number;
+            order_number: string;
+            grand_total: string;
+            tendered_total: string;
+            cash_tendered: string;
+            change_due: string;
+            created_at: string | null;
+        };
+        /** PosSession */
+        PosSession: {
+            id: number;
+            /** @enum {string} */
+            status: "open" | "closed";
+            location: {
+                id: number;
+                code: string;
+                name: string;
+                name_bn: string | null;
+            };
+            register: string;
+            cashier: {
+                id: number;
+                name: string;
+            };
+            /** @description ISO 8601 instant. */
+            opened_at: string;
+            opening_float: string;
+            closed_at: string | null;
+            expected_cash: string | null;
+            counted_cash: string | null;
+            /** @description counted − expected; negative = short. */
+            over_short: string | null;
+            close_note: string | null;
+            totals: {
+                sales_count: number;
+                sales_total: string;
+                /** @description Cash the drawer should hold now: float + cash kept. */
+                expected_cash: string;
+                by_method: {
+                    method: string;
+                    amount: string;
+                }[];
+            };
         };
         /**
          * PostStatus
@@ -11461,6 +12312,29 @@ export interface components {
          * @enum {string}
          */
         PurchaseTrigger: "order_placed" | "order_delivered";
+        /**
+         * QuotePosSaleRequest
+         * @description `POST /pos/sessions/{session}/quote` — price the register cart and read the tenders.
+         *     Writes nothing. Every figure on the register comes from here (rule 1).
+         */
+        QuotePosSaleRequest: {
+            lines: {
+                variant_id: number;
+                quantity: number;
+            }[];
+            /** @description A storefront coupon; applied by the same rules as checkout. Needs `customer_phone`. */
+            coupon_code?: string | null;
+            /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
+            customer_phone?: string | null;
+            tenders?: {
+                /** @enum {string} */
+                method: "cash" | "bkash" | "nagad" | "card";
+                /** @description What the customer handed over in this tender, e.g. `4000.00` cash for a ৳3,455 total. */
+                amount: string;
+                /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
+                reference?: string | null;
+            }[] | null;
+        };
         /**
          * ReceivePurchaseRequest
          * @description `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per
@@ -12279,6 +13153,26 @@ export interface components {
             focus_keyword?: string | null;
         };
         /**
+         * SendInboxReplyRequest
+         * @description `POST /inbox/conversations/{conversation}/messages` — a reply to the customer, needs
+         *     inbox.reply. Queued; sent after commit. 409 outside the 24-hour window.
+         */
+        SendInboxReplyRequest: {
+            /** @description WhatsApp's text limit (4096). Messenger publishes no limit we could confirm. */
+            body: string;
+        };
+        /**
+         * SendQuickReplyRequest
+         * @description `POST /inbox/conversations/{conversation}/quick-replies` — needs inbox.reply. The server
+         *     composes the text: `product_card` (target = product id) or `tracking_link` (target = an
+         *     order of the conversation's customer).
+         */
+        SendQuickReplyRequest: {
+            /** @enum {string} */
+            kind: "product_card" | "tracking_link";
+            target_id: number;
+        };
+        /**
          * SendTestSmsRequest
          * @description `POST /settings/messaging/test` — one test SMS to a Bangladeshi mobile (rule 30:
          *     013–019 only), in English or Bangla; needs settings.manage_integrations.
@@ -12837,6 +13731,13 @@ export interface components {
             body: string;
             /** @description Pinned notes show on the profile's summary rail. */
             is_pinned?: boolean;
+        };
+        /**
+         * StoreInboxNoteRequest
+         * @description `POST /inbox/conversations/{conversation}/notes` — an internal note (never sent), needs inbox.reply.
+         */
+        StoreInboxNoteRequest: {
+            body: string;
         };
         /** StoreInfoResource */
         StoreInfoResource: {
@@ -14791,6 +15692,50 @@ export interface components {
             return_charge: string;
         };
         /**
+         * UpdateDeliveryAreasRequest
+         * @description `PUT /settings/delivery-areas` — Store settings › Delivery areas & timing. The whole
+         *     document every time. Needs settings.update AND shipments.manage_rates: these values change
+         *     what every delivery quote charges and promises, like the free-delivery threshold.
+         *     Money is a decimal string (rule 6); the cut-off is a Dhaka wall-clock time (rule 11).
+         */
+        UpdateDeliveryAreasRequest: {
+            /** @description Orders placed at or after this Dhaka time dispatch the next working day. 24-hour "HH:MM", e.g. "17:00". */
+            cutoff_time: string;
+            /** @description Working days from dispatch to delivery, per zone. */
+            eta_days: {
+                inside_dhaka_metro: {
+                    /** @description 0–30. */
+                    min: number;
+                    /** @description min–30. */
+                    max: number;
+                };
+                dhaka_suburb: {
+                    min: number;
+                    max: number;
+                };
+                outside_dhaka: {
+                    min: number;
+                    max: number;
+                };
+            };
+            /** @description Districts where an address with no upazila is the city itself — inside Dhaka metro. Their upazilas keep their own zone. */
+            metro_district_ids: number[];
+            /** @description Whole districts priced as Dhaka suburb. Must not also be a metro district. */
+            suburb_district_ids: number[];
+            /** @description Upazilas we do not deliver to. */
+            not_serviced_upazila_ids: number[];
+            /** @description COD orders whose subtotal is above `threshold` in `zones` need `amount` paid in advance. */
+            cod_advance: {
+                /** @description false = no advance rule; the other fields are then ignored. */
+                enabled: boolean;
+                zones?: components["schemas"]["DeliveryZone"][];
+                /** @description Decimal string, e.g. "5000.00". */
+                threshold?: string | null;
+                /** @description Decimal string, e.g. "200.00"; less than the threshold. */
+                amount?: string | null;
+            };
+        };
+        /**
          * UpdateDeliverySettingsRequest
          * @description `PUT /settings/delivery` — the store-level free-delivery threshold; needs
          *     shipments.manage_rates. null switches free delivery off. Decimal string (rule 6).
@@ -15192,7 +16137,7 @@ export interface components {
          *     the owner role itself is not editable (409 from the Action).
          */
         UpdateRolePermissionsRequest: {
-            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view")[];
+            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view" | "pos.use" | "pos.manage")[];
         };
         /**
          * UpdateShipmentRiderRequest
@@ -27149,6 +28094,918 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "v1.admin.pos.context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosContext` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosContext"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.pos.customers.show": {
+        parameters: {
+            query: {
+                /** @description As typed: `01819 552 310`, `+8801819552310`… (rule 30). */
+                phone: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosCustomer` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosCustomer"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenPosSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosSession` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The register already has an open drawer, you already have one open, or the location does not sell (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.pos.sessions.close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClosePosSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already closed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.catalog": {
+        parameters: {
+            query?: {
+                /** @description A top-level category tab; includes its sub-categories. */
+                category_id?: number;
+                /** @description Name (EN/BN) or SKU. */
+                q?: string;
+                /** @description Exact barcode, as a scanner types it. */
+                barcode?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `PosCatalogItem` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PosCatalogItem"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuotePosSaleRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.sales.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChargePosSaleRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosSale` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSale"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Total changed (`price-changed`), branch stock short (`insufficient-stock`), drawer closed (`conflict`) or key in flight (`request-in-progress`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A blocker: unsellable line, coupon, phone needed for a discount, tenders short or missing a reference (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.pos.sessions.holds.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `PosHeldSale` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PosHeldSale"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.pos.sessions.holds.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldPosSaleRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosHeldSale` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosHeldSale"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The drawer is closed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.holds.resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The hold ID */
+                hold: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosHeldSale` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosHeldSale"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already resumed, or the drawer is closed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.pos.sales.receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The sale ID */
+                sale: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosReceipt` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosReceipt"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.conversations.index": {
+        parameters: {
+            query?: {
+                /** @description all|mine|needs_human (the tabs). */
+                "filter[view]"?: string;
+                /** @description whatsapp|messenger|live_chat */
+                "filter[channel]"?: string;
+                /** @description open|resolved (both when absent). */
+                "filter[status]"?: string;
+                /** @description A name, 4+ phone digits, or an order number prefix. */
+                "filter[search]"?: string;
+                /** @description The `meta.next_cursor` of the previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InboxConversation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InboxConversation"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            counts: {
+                                all: number;
+                                mine: number;
+                                needs_human: number;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter or filter, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inbox.assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inbox.conversations.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxConversationDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxConversationDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.conversations.read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxConversationDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxConversationDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.conversations.assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignConversationRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxConversationDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxConversationDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.inbox.conversations.resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxConversationDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxConversationDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.conversations.reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxConversationDetail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxConversationDetail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.messages.index": {
+        parameters: {
+            query?: {
+                /** @description The `meta.next_cursor` of the previous page (older messages). */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `InboxMessage` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InboxMessage"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.messages.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendInboxReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxMessage` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxMessage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The 24-hour customer-service window has closed (`conflict`) — nothing was queued */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.inbox.notes.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreInboxNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxMessage` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxMessage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.inbox.quick-replies.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendQuickReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxMessage` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxMessage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Outside the 24-hour window, or the product/order cannot be shared here (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.delivery-areas.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `DeliveryAreas` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryAreas"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.delivery-areas.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDeliveryAreasRequest"];
+            };
+        };
+        responses: {
+            /** @description `DeliveryAreas` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryAreas"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.blog.posts.index": {
         parameters: {
             query?: {
@@ -32384,6 +34241,88 @@ export interface operations {
                 };
             };
             /** @description Unknown courier provider (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.webhooks.inbox.verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string | null;
+                };
+            };
+            /** @description Wrong mode or verify token (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A channel that takes no webhooks (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.webhooks.inbox.receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        received: boolean;
+                        replayed: boolean;
+                    };
+                };
+            };
+            /** @description The signature did not verify — nothing was written */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A channel that takes no webhooks (`not-found`) */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -19,6 +19,9 @@ export type CancellationReason = z.infer<typeof cancellationReasonSchema>;
 export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
 export type CouponType = z.infer<typeof couponTypeSchema>;
 
+export const deliveryZoneSchema = z.enum(["inside_dhaka_metro","dhaka_suburb","outside_dhaka"]);
+export type DeliveryZone = z.infer<typeof deliveryZoneSchema>;
+
 export const expenseCategoryTypeSchema = z.enum(["cogs","operating","marketing","logistics","other"]);
 export type ExpenseCategoryType = z.infer<typeof expenseCategoryTypeSchema>;
 
@@ -146,6 +149,12 @@ export const approveStockAdjustmentRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type ApproveStockAdjustmentRequestInput = z.input<typeof approveStockAdjustmentRequestSchema>;
+
+/** `POST /inbox/conversations/{conversation}/assign` — needs inbox.reply. `user_id` null */
+export const assignConversationRequestSchema = z.object({
+    "user_id": z.number().int().nullable(),
+});
+export type AssignConversationRequestInput = z.input<typeof assignConversationRequestSchema>;
 
 /** `POST /content/banners` and `PUT /content/banners/{banner}` — the whole banner. `starts_at` / */
 export const bannerRequestSchema = z.object({
@@ -280,6 +289,24 @@ export const cancelShipmentRequestSchema = z.object({
 });
 export type CancelShipmentRequestInput = z.input<typeof cancelShipmentRequestSchema>;
 
+/** `POST /pos/sessions/{session}/sales` — Charge. Requires an `Idempotency-Key` (rule 17). */
+export const chargePosSaleRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(999),
+})).min(1).max(100),
+    "coupon_code": z.string().max(64).nullable().optional(),
+    "customer_phone": z.string().max(32).nullable().optional(),
+    "tenders": z.array(z.object({
+    "method": z.enum(["cash","bkash","nagad","card"]),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "reference": z.string().max(64).nullable().optional(),
+})).max(8),
+    "expected_total": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "customer_name": z.string().max(160).nullable().optional(),
+});
+export type ChargePosSaleRequestInput = z.input<typeof chargePosSaleRequestSchema>;
+
 /** `POST /storefront/checkout` (P4-STO-09, docs/api/checkout.md). The cart comes from */
 export const checkoutRequestSchema = z.object({
     "name": z.string().min(2).max(160),
@@ -318,6 +345,13 @@ export const checkoutRequestSchema = z.object({
 }).optional(),
 });
 export type CheckoutRequestInput = z.input<typeof checkoutRequestSchema>;
+
+/** `POST /pos/sessions/{session}/close` — close with the counted cash. Own drawer with pos.use; anyone's with pos.manage. */
+export const closePosSessionRequestSchema = z.object({
+    "counted_cash": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type ClosePosSessionRequestInput = z.input<typeof closePosSessionRequestSchema>;
 
 /** `POST /purchases/{purchase}/close` — close a partly received PO short; needs */
 export const closePurchaseRequestSchema = z.object({
@@ -455,6 +489,18 @@ export const holdOrderRequestSchema = z.object({
 });
 export type HoldOrderRequestInput = z.input<typeof holdOrderRequestSchema>;
 
+/** `POST /pos/sessions/{session}/holds` — park the cart ("Hold sale"). */
+export const holdPosSaleRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(999),
+})).min(1).max(100),
+    "coupon_code": z.string().max(64).nullable().optional(),
+    "customer_phone": z.string().max(32).nullable().optional(),
+    "label": z.string().max(80).nullable().optional(),
+});
+export type HoldPosSaleRequestInput = z.input<typeof holdPosSaleRequestSchema>;
+
 /** `POST /seo/redirects/import` — a CSV `from_path,to_path,status_code[,note]`, ≤ 1 MB. */
 export const importRedirectsRequestSchema = z.object({
     "file": z.instanceof(Blob),
@@ -543,6 +589,14 @@ export const moveCategoryRequestSchema = z.object({
 });
 export type MoveCategoryRequestInput = z.input<typeof moveCategoryRequestSchema>;
 
+/** `POST /pos/sessions` — open a drawer at a branch with its float. Needs pos.use. */
+export const openPosSessionRequestSchema = z.object({
+    "location_id": z.number().int(),
+    "register": z.string().min(1).max(40),
+    "opening_float": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+});
+export type OpenPosSessionRequestInput = z.input<typeof openPosSessionRequestSchema>;
+
 /** `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice / */
 export const orderInvoicesRequestSchema = z.object({
     "order_ids": z.array(z.number().int().min(1)).min(1).max(100),
@@ -608,6 +662,22 @@ export const publishCmsLayoutRequestSchema = z.object({
     "note": z.string().max(191).nullable().optional(),
 });
 export type PublishCmsLayoutRequestInput = z.input<typeof publishCmsLayoutRequestSchema>;
+
+/** `POST /pos/sessions/{session}/quote` — price the register cart and read the tenders. */
+export const quotePosSaleRequestSchema = z.object({
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(999),
+})).min(0).max(100),
+    "coupon_code": z.string().max(64).nullable().optional(),
+    "customer_phone": z.string().max(32).nullable().optional(),
+    "tenders": z.array(z.object({
+    "method": z.enum(["cash","bkash","nagad","card"]),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "reference": z.string().max(64).nullable().optional(),
+})).max(8).nullable().optional(),
+});
+export type QuotePosSaleRequestInput = z.input<typeof quotePosSaleRequestSchema>;
 
 /** `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per */
 export const receivePurchaseRequestSchema = z.object({
@@ -804,6 +874,19 @@ export const saveSeoMetaRequestSchema = z.object({
 });
 export type SaveSeoMetaRequestInput = z.input<typeof saveSeoMetaRequestSchema>;
 
+/** `POST /inbox/conversations/{conversation}/messages` — a reply to the customer, needs */
+export const sendInboxReplyRequestSchema = z.object({
+    "body": z.string().min(1).max(4096),
+});
+export type SendInboxReplyRequestInput = z.input<typeof sendInboxReplyRequestSchema>;
+
+/** `POST /inbox/conversations/{conversation}/quick-replies` — needs inbox.reply. The server */
+export const sendQuickReplyRequestSchema = z.object({
+    "kind": z.enum(["product_card","tracking_link"]),
+    "target_id": z.number().int().min(1),
+});
+export type SendQuickReplyRequestInput = z.input<typeof sendQuickReplyRequestSchema>;
+
 /** `POST /settings/messaging/test` — one test SMS to a Bangladeshi mobile (rule 30: */
 export const sendTestSmsRequestSchema = z.object({
     "phone": z.string().min(1).regex(new RegExp("^(?:\\+?880|0)1[3-9]\\d{8}$")),
@@ -983,6 +1066,12 @@ export const storeCustomerNoteRequestSchema = z.object({
     "is_pinned": z.boolean().optional(),
 });
 export type StoreCustomerNoteRequestInput = z.input<typeof storeCustomerNoteRequestSchema>;
+
+/** `POST /inbox/conversations/{conversation}/notes` — an internal note (never sent), needs inbox.reply. */
+export const storeInboxNoteRequestSchema = z.object({
+    "body": z.string().min(1).max(2000),
+});
+export type StoreInboxNoteRequestInput = z.input<typeof storeInboxNoteRequestSchema>;
 
 /** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a */
 export const storeMediaRequestSchema = z.object({
@@ -1519,6 +1608,35 @@ export const updateCourierRatesRequestSchema = z.object({
 });
 export type UpdateCourierRatesRequestInput = z.input<typeof updateCourierRatesRequestSchema>;
 
+/** `PUT /settings/delivery-areas` — Store settings › Delivery areas & timing. The whole */
+export const updateDeliveryAreasRequestSchema = z.object({
+    "cutoff_time": z.string().min(1),
+    "eta_days": z.object({
+    "inside_dhaka_metro": z.object({
+    "min": z.number().int().min(0).max(30),
+    "max": z.number().int().min(0).max(30),
+}),
+    "dhaka_suburb": z.object({
+    "min": z.number().int().min(0).max(30),
+    "max": z.number().int().min(0).max(30),
+}),
+    "outside_dhaka": z.object({
+    "min": z.number().int().min(0).max(30),
+    "max": z.number().int().min(0).max(30),
+}),
+}),
+    "metro_district_ids": z.array(z.number().int()).max(64),
+    "suburb_district_ids": z.array(z.number().int()).max(64),
+    "not_serviced_upazila_ids": z.array(z.number().int()).max(600),
+    "cod_advance": z.object({
+    "enabled": z.boolean(),
+    "zones": z.array(deliveryZoneSchema).optional(),
+    "threshold": z.string().regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable().optional(),
+    "amount": z.string().regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable().optional(),
+}),
+});
+export type UpdateDeliveryAreasRequestInput = z.input<typeof updateDeliveryAreasRequestSchema>;
+
 /** `PUT /settings/delivery` — the store-level free-delivery threshold; needs */
 export const updateDeliverySettingsRequestSchema = z.object({
     "free_shipping_threshold": z.string().min(1).regex(new RegExp("^\\d{1,7}(\\.\\d{1,2})?$")).nullable(),
@@ -1808,7 +1926,7 @@ export type UpdateRobotsRequestInput = z.input<typeof updateRobotsRequestSchema>
 
 /** `PUT /staff/roles/{role}` — `{ permissions: string[] }`, the role's complete new list; */
 export const updateRolePermissionsRequestSchema = z.object({
-    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view"])).max(67),
+    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view","pos.use","pos.manage"])).max(69),
 });
 export type UpdateRolePermissionsRequestInput = z.input<typeof updateRolePermissionsRequestSchema>;
 

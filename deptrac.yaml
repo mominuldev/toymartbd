@@ -145,11 +145,27 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Staff\\(?!Events\\)#'
+    # Unified inbox (P10, B · 22): conversations over WhatsApp / Messenger / live chat. Reads
+    # customers (link by phone), orders (search, tracking link) and products (product card);
+    # writes only its own inbox_* tables. Nothing depends on it but Http and Providers.
+    - name: Inbox
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Inbox\\(?!Events\\)#'
+    # POS register (P10, B · 33): drawer sessions, counter sales, held carts. A sale is an order
+    # placed and handed over at a branch in one Action, so it prices through Cart, reserves and
+    # consumes branch stock through Inventory, writes the order through Ordering's own services
+    # and pays through Payment's PaymentTransitions; cash-in-drawer rows go to Finance's Ledger
+    # contract after commit. Nothing depends on it except Http and Providers.
+    - name: Pos
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Pos\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -195,3 +211,5 @@ deptrac:
     # Monitoring reads the domains it watches (P10); nothing depends on it except Http and Providers.
     Monitoring: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Fulfilment, Notification, NotificationContracts]
     Staff: [Support, Models]
+    Inbox: [Support, Models, DomainEvents, Catalog, Customer, Ordering]
+    Pos: [Support, Models, DomainEvents, Catalog, Customer, Cart, Inventory, Ordering, Payment, Marketing, Finance]

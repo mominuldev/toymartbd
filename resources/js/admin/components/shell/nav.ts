@@ -58,7 +58,7 @@ export const navigation: NavGroup[] = [
         items: [
             { key: 'nav.orders', path: '/orders', icon: ArticleIcon, permission: 'orders.view' },
             // No POS permission exists yet; selling at the till is creating an order.
-            { key: 'nav.pos', path: '/pos', icon: CashRegisterIcon, permission: 'orders.create' },
+            { key: 'nav.pos', path: '/pos', icon: CashRegisterIcon, permission: 'pos.use' },
             { key: 'nav.returns', path: '/returns', icon: ArrowUUpLeftIcon, permission: 'returns.view' },
             { key: 'nav.customers', path: '/customers', icon: UsersIcon, permission: 'customers.view' },
         ],

@@ -119,6 +119,13 @@ Schedule::command('toymart:automations:birthdays')
     ->withoutOverlapping(30)
     ->onOneServer();
 
+// Inbox (P10): verified webhook bodies are kept 90 days for replay/debugging, then pruned
+// (App\Domain\Inbox\Models\InboxWebhookReceipt::prunable).
+Schedule::command('model:prune', ['--model' => [App\Domain\Inbox\Models\InboxWebhookReceipt::class]])
+    ->dailyAt('03:50')
+    ->withoutOverlapping(30)
+    ->onOneServer();
+
 // P7 server-side tracking: retention of checkout IP / user agent / click ids
 // (docs/api/tracking.md §3.3) — blanked after tracking.context_retention_days (90).
 Schedule::command('toymart:tracking:prune-contexts')

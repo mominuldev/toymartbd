@@ -68,7 +68,8 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                         {t('app.admin')} · {t('app.name')}
                     </span>
                 </span>
-                <span className="sr-only">{t('app.name')}</span>
+                {/* The name for the rail only: where the caption above shows, it already says it. */}
+                <span className={`sr-only ${onlyRail}`}>{t('app.name')}</span>
             </div>
 
             <nav aria-label={t('nav.primary')} className={`scrollbar-none flex min-h-0 flex-1 flex-col gap-px overflow-y-auto pt-1 pb-3 ${pick('px-3', 'px-2', 'px-2 xl:px-3')}`}>

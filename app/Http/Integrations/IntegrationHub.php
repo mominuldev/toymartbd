@@ -9,6 +9,7 @@ use App\Domain\Fulfilment\Models\CourierProvider;
 use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Fulfilment\Services\CourierCircuitBreaker;
 use App\Domain\Fulfilment\Support\CourierCredentialFields;
+use App\Domain\Inbox\Services\InboxChannels;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\NotificationStatus;
 use App\Domain\Notification\Models\NotificationLog;
@@ -56,6 +57,7 @@ final readonly class IntegrationHub
         private MessagingSettings $messaging,
         private TrackingSettings $tracking,
         private TrackingDiagnostics $diagnostics,
+        private InboxChannels $inbox,
     ) {}
 
     /** @return list<Integration> */
@@ -209,15 +211,19 @@ final readonly class IntegrationHub
 
         $items = [$this->item('sms', 'SMS gateway', 'messaging', $status, $notes, $attention, path: $path)];
 
-        // No WhatsApp Business account or real driver exists (config notifications.whatsapp.driver
-        // is log | null). Switched on, the log driver swallows every message and the SMS
-        // fallback never fires — the customer gets nothing.
-        $whatsappOn = $this->messaging->whatsappEnabled();
-        $items[] = $whatsappOn
-            ? $this->item('whatsapp', 'WhatsApp Business', 'messaging', 'needs_attention', ['no_driver'], 'whatsapp_on_without_driver', enabled: true, path: $path)
-            : $this->notAvailable('whatsapp', 'WhatsApp Business', 'messaging');
-
-        $items[] = $this->notAvailable('messenger', 'Facebook Messenger', 'messaging');
+        // Order notifications: no WhatsApp provider sends them (notifications.whatsapp.driver is
+        // log | null). Switched on, the log driver swallows every message and the SMS fallback
+        // never fires — the customer gets nothing.
+        $inbox = collect($this->inbox->summary())->keyBy('channel');
+        if ($this->messaging->whatsappEnabled()) {
+            $items[] = $this->item('whatsapp', 'WhatsApp Business', 'messaging', 'needs_attention', ['no_driver'], 'whatsapp_on_without_driver', enabled: true, path: $path);
+        } else {
+            $items[] = $this->inboxChannel('whatsapp', 'WhatsApp Business', $inbox->get('whatsapp'));
+        }
+        // Inbox channels (P10): Meta drivers exist but no account does — never more than test mode.
+        $items[] = $this->inboxChannel('messenger', 'Facebook Messenger', $inbox->get('messenger'));
+        // The live-chat channel has no storefront widget and no inbound path yet.
+        $items[] = $this->notAvailable('live_chat', 'Live chat', 'messaging');
 
         return $items;
     }
@@ -321,6 +327,28 @@ final readonly class IntegrationHub
     private function notAvailable(string $key, string $name, string $category): array
     {
         return $this->item($key, $name, $category, 'not_available', ['no_driver']);
+    }
+
+    /**
+     * An inbox channel: credentials and webhook secrets entered → `test_mode` (built against
+     * Meta's published API, unverified until a real account is seen working); otherwise
+     * `not_connected`. Never `connected_live` while the driver reports unverified.
+     *
+     * @param  array{channel: string, driver: string, verified: bool, webhook_ready: bool, send_ready: bool}|null  $summary
+     * @return Integration
+     */
+    private function inboxChannel(string $key, string $name, ?array $summary): array
+    {
+        if ($summary === null) {
+            return $this->notAvailable($key, $name, 'messaging');
+        }
+        if ($summary['verified'] && $summary['send_ready'] && $summary['webhook_ready']) {
+            return $this->item($key, $name, 'messaging', 'connected_live', ['inbox_channel'], path: '/inbox');
+        }
+
+        return $summary['send_ready'] && $summary['webhook_ready']
+            ? $this->item($key, $name, 'messaging', 'test_mode', ['inbox_unverified'], path: '/inbox')
+            : $this->item($key, $name, 'messaging', 'not_connected', ['inbox_not_configured']);
     }
 
     /**

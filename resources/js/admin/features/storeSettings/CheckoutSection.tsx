@@ -212,6 +212,11 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
                         </Link>
                     )}
                 </p>
+                <p className="t-admin-caption text-fg-secondary">
+                    <Link to="/settings/delivery" className="text-fg-brand underline underline-offset-2">
+                        {t('deliverySettings.checkoutLink')}
+                    </Link>
+                </p>
             </FormSection>
         </form>
     );
