@@ -5194,6 +5194,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/store-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /storefront/store-info` */
+        get: operations["v1.storefront.store-info"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/brands": {
         parameters: {
             query?: never;
@@ -12820,6 +12837,24 @@ export interface components {
             body: string;
             /** @description Pinned notes show on the profile's summary rail. */
             is_pinned?: boolean;
+        };
+        /** StoreInfoResource */
+        StoreInfoResource: {
+            name_en: string;
+            name_bn: string;
+            /** @description As the owner typed it (e.g. "09610-123456"). Western digits. */
+            hotline: string;
+            /** @description `tel:` link target, `+880…` E.164 form; null when no hotline is set. */
+            hotline_tel: string | null;
+            /** @description E.164 (`+8801…`), for a wa.me link. */
+            whatsapp: string;
+            /** @description Local form for display, `01712-345678`. */
+            whatsapp_display: string | null;
+            email: string;
+            address_en: string;
+            address_bn: string;
+            trade_licence: string;
+            bin: string;
         };
         /** StoreLocation */
         StoreLocation: {
@@ -28992,6 +29027,27 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    "v1.storefront.store-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StoreInfoResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreInfoResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
     "v1.storefront.brands.index": {

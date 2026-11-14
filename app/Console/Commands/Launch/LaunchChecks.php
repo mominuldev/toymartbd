@@ -57,7 +57,7 @@ final class LaunchChecks
     public const array PLACEHOLDER_SECRETS = ['', 'null', 'secret', 'password', 'root', 'changeme', 'change-me', 'local-master-key-change-me'];
 
     /** The seeded hotline (config/notifications.php, .env.example) and the design's sample numbers. */
-    public const array PLACEHOLDER_HOTLINES = ['09600123456', '09610123456', '01712345678'];
+    public const array PLACEHOLDER_HOTLINES = StoreHotline::PLACEHOLDERS;
 
     /** Copy markers that must not appear on a published policy page (StaticPagesSeeder writes "PLACEHOLDER"). */
     public const array PLACEHOLDER_MARKERS = ['placeholder', 'lorem ipsum', 'todo:', 'tbd', '[owner'];
