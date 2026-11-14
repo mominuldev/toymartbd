@@ -25276,6 +25276,30 @@
                 }
             }
         },
+        "/storefront/store-info": {
+            "get": {
+                "operationId": "v1.storefront.store-info",
+                "summary": "`GET /storefront/store-info`",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StoreInfoResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreInfoResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/storefront/brands": {
             "get": {
                 "operationId": "v1.storefront.brands.index",
@@ -55839,6 +55863,68 @@
                     "body"
                 ],
                 "title": "StoreCustomerNoteRequest"
+            },
+            "StoreInfoResource": {
+                "type": "object",
+                "properties": {
+                    "name_en": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": "string"
+                    },
+                    "hotline": {
+                        "type": "string",
+                        "description": "As the owner typed it (e.g. \"09610-123456\"). Western digits."
+                    },
+                    "hotline_tel": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`tel:` link target, `+880\u2026` E.164 form; null when no hotline is set."
+                    },
+                    "whatsapp": {
+                        "type": "string",
+                        "description": "E.164 (`+8801\u2026`), for a wa.me link."
+                    },
+                    "whatsapp_display": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Local form for display, `01712-345678`."
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "address_en": {
+                        "type": "string"
+                    },
+                    "address_bn": {
+                        "type": "string"
+                    },
+                    "trade_licence": {
+                        "type": "string"
+                    },
+                    "bin": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name_en",
+                    "name_bn",
+                    "hotline",
+                    "hotline_tel",
+                    "whatsapp",
+                    "whatsapp_display",
+                    "email",
+                    "address_en",
+                    "address_bn",
+                    "trade_licence",
+                    "bin"
+                ],
+                "title": "StoreInfoResource"
             },
             "StoreLocation": {
                 "type": "object",

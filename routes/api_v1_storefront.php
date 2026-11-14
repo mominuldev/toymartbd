@@ -44,6 +44,8 @@ Route::get('/ping', fn () => ['ok' => true, 'audience' => 'storefront'])->name('
 // Catalog reads: the Next.js server's token, with the `storefront:read` ability.
 // No token → 401 `unauthenticated`; a token without the ability → 403 `forbidden`.
 Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
+    // Public contact and legal details (Admin → Settings → Store → Business); cache tag `store-info`.
+    Route::get('/store-info', [App\Http\Controllers\Api\V1\Storefront\StoreInfoController::class, 'show'])->name('store-info');
     Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
     Route::get('/brands/{slug}', [BrandController::class, 'show'])->name('brands.show');
     // `tree` before `{slug}`: "tree" is a reserved category slug.

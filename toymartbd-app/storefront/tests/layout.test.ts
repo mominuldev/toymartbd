@@ -15,7 +15,7 @@ import { getCategoryTree } from '@/lib/categories';
 import { splitLocalePath, switchLocalePath } from '@/lib/i18n';
 import { requestContext } from '@/lib/locale-route';
 import { activeTab, cartBadge } from '@/lib/navigation';
-import { contact } from '@/lib/site-config';
+import { sampleContact, sampleStoreInfo } from '@/lib/site-config';
 
 const fixture: unknown = JSON.parse(readFileSync(new URL('../e2e/fixtures/categories.json', import.meta.url), 'utf8'));
 
@@ -210,10 +210,12 @@ describe('mobile tab bar', () => {
 });
 
 describe('contact placeholders', () => {
-    it('every contact value is either confirmed or flagged as a placeholder, in Western digits', () => {
-        for (const [name, value] of Object.entries(contact)) {
-            expect(typeof value.placeholder, name).toBe('boolean');
+    it('every sample contact value is flagged as a placeholder, in Western digits', () => {
+        for (const [name, value] of Object.entries(sampleContact)) {
+            expect(value.placeholder, name).toBe(true);
             expect(/[০-৯]/.test(value.display), name).toBe(false);
         }
+        expect(sampleStoreInfo.contact).toBe(sampleContact);
+        expect(sampleStoreInfo.legal).toEqual({ tradeLicence: null, bin: null });
     });
 });

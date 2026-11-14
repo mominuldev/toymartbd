@@ -2,7 +2,7 @@ import { variantFlash } from '../flash-sale/format';
 import { getMessages } from '../i18n';
 import { localizedPath, type Locale } from '../i18n/config';
 import type { StorefrontProduct } from '../product/variants';
-import { contact, organization, social } from '../site-config';
+import { organization, social, type StoreContact } from '../site-config';
 import { siteUrl } from './site';
 
 // schema.org builders for every template (docs/api/seo.md §4). Pure and client-safe. Each output
@@ -94,10 +94,11 @@ export function breadcrumbJsonLd(locale: Locale, crumbs: ReadonlyArray<{ name: s
 // ── Organization + WebSite (home) ───────────────────────────────────────────────────────────────
 
 /**
- * The business. Contact values still marked `placeholder: true` in site-config are NOT emitted
- * (a made-up number in structured data is worse than none); socials only when confirmed.
+ * The business. `contact` is the store's (lib/store-info.ts); a value still marked
+ * `placeholder: true` (a site-config sample) is NOT emitted (a made-up number in structured data
+ * is worse than none); socials only when confirmed.
  */
-export function organizationJsonLd(locale: Locale): JsonLdNode {
+export function organizationJsonLd(locale: Locale, contact: StoreContact): JsonLdNode {
     const t = getMessages(locale);
     const sameAs = social.flatMap((s) => (s.href ? [s.href] : []));
     const contactPoint = [contact.hotline, contact.email].some((c) => !c.placeholder)

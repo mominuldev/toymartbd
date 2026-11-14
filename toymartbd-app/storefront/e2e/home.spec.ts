@@ -44,9 +44,9 @@ test.describe('desktop', () => {
         const fresh = page.locator('section[aria-labelledby="home-new"]');
         await expect(fresh.getByRole('link', { name: 'See all: New arrivals' })).toHaveAttribute('href', '/toys?sort=newest');
 
-        // The promise band uses the hotline from site config.
+        // The promise band uses the store hotline (GET /storefront/store-info).
         await expect(page.locator('section[aria-labelledby="home-usp"] li')).toHaveCount(4);
-        await expect(page.locator('section[aria-labelledby="home-usp"]')).toContainText('Call 09610-123456 or WhatsApp us');
+        await expect(page.locator('section[aria-labelledby="home-usp"]')).toContainText('Call 09666-700800 or WhatsApp us');
     });
 
     test('the hero photo is the LCP element: preloaded, eager, explicitly sized', async ({ page }) => {

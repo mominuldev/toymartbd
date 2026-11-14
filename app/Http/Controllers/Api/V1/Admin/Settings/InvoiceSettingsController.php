@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin\Settings;
 
 use App\Domain\Catalog\Media\Models\Media;
+use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Domain\Invoicing\Actions\UpdateInvoiceSettings;
 use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Http\Controllers\Api\V1\ApiController;
+use App\Http\Controllers\Api\V1\Storefront\StoreInfoController;
 use App\Http\Requests\Admin\Settings\UpdateInvoiceSettingsRequest;
 use App\Http\Resources\Admin\InvoiceSettingsResource;
 use App\Models\Enums\Permission;
@@ -32,6 +34,8 @@ final class InvoiceSettingsController extends ApiController
     {
         $userId = $request->user()?->getAuthIdentifier();
         $update->handle($request->toData(), is_int($userId) ? $userId : null);
+        // The storefront chrome shows these values (hotline, legal bar): purge its cache. Queued, after commit.
+        RevalidateStorefrontTags::dispatch([StoreInfoController::CACHE_TAG]);
 
         return self::view($company);
     }

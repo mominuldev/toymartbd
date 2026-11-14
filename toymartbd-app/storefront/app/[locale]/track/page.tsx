@@ -10,7 +10,7 @@ import { TRACK_COOKIE } from '@/lib/cart/cookies';
 import { format, getMessages, isLocale } from '@/lib/i18n';
 import { trackOrder, type TrackResult } from '@/lib/order/fetch';
 import { trackMetadata } from '@/lib/seo/metadata';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 // /track — public order tracking (P4-STO-10; Figma Order tracking 132:2899 at 390, 161:16502 at
 // 1440). Order number **plus** the last 4 phone digits (rule 22); a wrong pair gets one generic
@@ -50,6 +50,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const t = getMessages(locale);
+    const { contact } = await getStoreInfo();
     const k = t.track;
     const query = await searchParams;
     const lookup = readLookup((await cookies()).get(TRACK_COOKIE)?.value);
@@ -112,7 +113,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
                             </div>
                         ) : null}
                         <div className="order-4 lg:order-none">
-                            <OrderHelp t={t} />
+                            <OrderHelp locale={locale} t={t} />
                         </div>
                     </aside>
                 </div>

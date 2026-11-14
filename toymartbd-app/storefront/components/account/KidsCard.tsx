@@ -2,6 +2,7 @@ import { Icon } from '@/components/icons/Icon';
 import { Field, SelectBox, inputClass } from '@/components/cart/fields';
 import { smallButton } from '@/components/account/styles';
 import { noticeText } from '@/lib/account/format';
+import { getStoreInfo } from '@/lib/store-info';
 import type { AccountMessages } from '@/lib/account/messages';
 import type { AccountChild } from '@/lib/account/types';
 import { format, type Locale } from '@/lib/i18n';
@@ -36,10 +37,11 @@ export function childTitle(child: Pick<AccountChild, 'name' | 'age'>, k: Account
     return child.age === null ? name : format(k.nameAge, { name, age: String(child.age) });
 }
 
-export function KidsCard({ locale, m, items, draft, errors }: Props) {
+export async function KidsCard({ locale, m, items, draft, errors }: Props) {
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const k = m.profile.kids;
     const failedFor = draft.child_id ?? null;
-    const err = (key: string) => noticeText(errors[key], m);
+    const err = (key: string) => noticeText(errors[key], m, hotline);
     const formError = failedFor !== null ? (err('children') ?? err('birth_day') ?? err('birth_year') ?? err('birth_month') ?? err('name')) : null;
 
     return (

@@ -68,5 +68,9 @@ final class FulfilmentServiceProvider extends ServiceProvider
         Event::listen(ShipmentBooked::class, RecordCourierCharge::class);
         Event::listen(ShipmentDelivered::class, RecordCourierCodFee::class);
         Event::listen(ShipmentReturned::class, RecordCourierReturnInLedger::class);
+
+        // Storefront cache: rate card / on-off / default / free-delivery threshold → `delivery`
+        // tag, queued after commit (docs/api/revalidation.md).
+        Event::listen(\App\Domain\Fulfilment\Events\DeliveryReferenceDataChanged::class, \App\Domain\Content\Listeners\RevalidateDeliveryData::class);
     }
 }

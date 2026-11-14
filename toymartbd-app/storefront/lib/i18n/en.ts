@@ -1,6 +1,7 @@
 // English UI strings. Every user-facing string in a component comes from here or bn.ts (rule 35).
 // Copy source: docs/_design/05-content-and-assets-spec.md (keys noted where they map 1:1).
-// Phone numbers are never written into a string: they come from lib/site-config.ts via {phone}.
+// Phone numbers are never written into a string: they come from lib/store-info.ts (Admin → Settings →
+// Store → Business; marked samples from lib/site-config.ts until set) via {phone}.
 export const en = {
     site: {
         name: 'Toy Mart BD',

@@ -9,6 +9,7 @@ import { card } from '@/components/account/styles';
 import { Field, inputClass, SelectBox, textareaClass } from '@/components/cart/fields';
 import { buttonClass } from '@/components/layout/button-styles';
 import { nationalPhone } from '@/lib/account/flash';
+import { getStoreInfo } from '@/lib/store-info';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getAddresses, readAccountFlash, requireAccount } from '@/lib/account/server';
@@ -45,6 +46,7 @@ export default async function AddressesPage({ params, searchParams }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const a = m.addresses;
     const bn = locale === 'bn';
     const query = await searchParams;
@@ -65,9 +67,9 @@ export default async function AddressesPage({ params, searchParams }: Props) {
     const type = value('type', editing?.type ?? 'home') || 'home';
 
     const errors = flash?.kind === 'error' ? flash.errors : {};
-    const err = (key: string) => noticeText(errors[key], m);
+    const err = (key: string) => noticeText(errors[key], m, hotline);
     const invalid = (key: string) => (errors[key] ? { 'aria-invalid': true as const } : {});
-    const notice = noticeText(flash?.message, m) ?? (Object.keys(errors).length > 0 ? a.errorSummary : null);
+    const notice = noticeText(flash?.message, m, hotline) ?? (Object.keys(errors).length > 0 ? a.errorSummary : null);
 
     return (
         <AccountShell locale={locale} path={PATH} account={account} section="addresses" title={a.title} heading={{ sub: a.sub }}>

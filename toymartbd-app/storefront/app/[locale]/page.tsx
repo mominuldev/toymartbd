@@ -22,6 +22,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo/jsonld';
 import { getTitleSeparator } from '@/lib/seo/fetch';
 import { homeMetadata } from '@/lib/seo/metadata';
+import { getStoreInfo } from '@/lib/store-info';
 
 // Home — the CMS homepage (Phase 7): the published blocks from GET /storefront/content/home,
 // ISR-cached under `content:home` (+ the tags of the data they show), revalidated on publish and at
@@ -66,6 +67,7 @@ export default async function HomePage({ params }: Props) {
         home = token ? await fetchHomePreview(locale, token) : null;
     }
     home ??= await fetchHome(locale);
+    const { contact } = await getStoreInfo();
 
     return (
         <PageShell locale={locale} path="/" announcement mobileSearch top="tight" bleed>
@@ -75,8 +77,8 @@ export default async function HomePage({ params }: Props) {
                     <PreviewBridge adminOrigin={adminOrigin({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL })} />
                 </>
             ) : null}
-            <JsonLd data={[organizationJsonLd(locale), websiteJsonLd(locale)]} />
-            {home && home.blocks.length > 0 ? <HomeBlocks blocks={home.blocks} locale={locale} editable={home.preview === true} /> : <BuiltInHome locale={locale} />}
+            <JsonLd data={[organizationJsonLd(locale, contact), websiteJsonLd(locale)]} />
+            {home && home.blocks.length > 0 ? <HomeBlocks blocks={home.blocks} locale={locale} editable={home.preview === true} hotline={contact.hotline.display} /> : <BuiltInHome locale={locale} />}
         </PageShell>
     );
 }

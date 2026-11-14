@@ -75,9 +75,9 @@
 4. If it broke right after a deploy, **roll back** (`DEPLOYMENT.md`). Rolling back is always safe. Find the cause later.
 5. Check `/api/v1/health` again. Then place a test order, COD, to your own phone.
 
-**Planned downtime:** `php artisan down` shows the branded "Back in a few minutes" page (HTTP 503) on the API host. Bring the site back with `php artisan up`.
+**Planned downtime:** `php artisan down --retry=60` shows the branded "Back in a few minutes" page (HTTP 503) on the API host, and the **shop switches to its own maintenance page by itself**: once the storefront sees the API's `maintenance` 503, every shop page answers the maintenance page as a 503 with `Retry-After`, in the visitor's language (`DEPLOYMENT.md` §5). The first few visitors in the first minute may see the same maintenance message with an error status (a blank page if their browser has JavaScript off); nobody sees "Something broke on our side" for planned work. Bring the site back with `php artisan up`; the shop follows within a minute. For a longer closure, also set `STOREFRONT_MAINTENANCE=1` on Vercel (`DEPLOYMENT.md` §5).
 
-> **Not built yet:** a "maintenance" page for the **shop** during planned work. The page exists at `/maintenance` (`toymartbd-app/storefront/app/[locale]/maintenance/page.tsx`), but nothing routes visitors to it. Until it is wired in, the shop shows its 500 page while the API is down. Customers can still phone the hotline on that page.
+> If the shop shows "Something broke on our side" (the 500 page) while the API is in maintenance mode, the API is not answering with its `maintenance` problem — check `curl -si https://<api-domain>/api/v1/health` shows `"type":"https://toymartbd.com/problems/maintenance"` and a `Retry-After` header.
 
 ## 2. Checkout is failing
 

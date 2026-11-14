@@ -39,9 +39,17 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         for (const heading of ['Stuck choosing a toy? We love helping.', 'Shop', 'Help', 'About', 'Say hi!'])
             await expect(footer.getByRole('heading', { name: heading, exact: true })).toBeVisible();
         await expect(footer.getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/pages/about');
-        // Placeholder contact details are tagged, and never become a dialable link.
-        await expect(footer.locator('[data-placeholder="owner-to-confirm"]').first()).toBeVisible();
-        await expect(footer.locator('a[href^="tel:"]')).toHaveCount(0);
+        // Contact details come from GET /storefront/store-info (the mock sets hotline, WhatsApp,
+        // trade licence and BIN; email is unset). A set value is a link, an unset one is the
+        // tagged sample and never a link.
+        await expect(footer.locator('a[href="tel:+8809666700800"]')).toHaveText('09666-700800');
+        await expect(footer.getByRole('link', { name: 'Chat on WhatsApp' })).toHaveAttribute('href', 'https://wa.me/8801812345678');
+        await expect(footer.locator('span[data-placeholder="owner-to-confirm"]', { hasText: 'hello@toymartbd.com' })).toBeVisible();
+        await expect(footer.locator('a[href^="mailto:"]')).toHaveCount(0);
+        await expect(footer).not.toContainText('09610-123456');
+        await expect(footer).toContainText('Trade licence TRAD/DNCC/012345/2026 · BIN 004567891-0101');
+        // The header shows the same hotline.
+        await expect(page.locator('header a[href="tel:+8809666700800"]')).toHaveText('09666-700800');
 
         // The tab bar is display:none at this desktop width; it is still in the HTML.
         const tabs = page.locator('nav[aria-label="Shortcuts"]');
@@ -170,13 +178,14 @@ test.describe('static pages', () => {
         await expect(page.locator('h1')).toHaveText('টয় মার্ট বিডি সম্পর্কে');
     });
 
-    test('maintenance has no site chrome, is noindex, and offers the (sample) hotline', async ({ page }) => {
+    test('maintenance has no site chrome, is noindex, and offers the store hotline', async ({ page }) => {
         await page.goto('/bn/maintenance');
         await expect(page.locator('h1')).toHaveText('কিছুক্ষণের মধ্যেই ফিরছি');
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
         await expect(page.locator('header')).toHaveCount(0);
         await expect(page.locator('footer')).toHaveCount(0);
-        await expect(page.getByText('09610-123456').first()).toBeVisible();
+        await expect(page.getByText('09666-700800').first()).toBeVisible();
+        await expect(page.locator('a[href="tel:+8809666700800"]').first()).toBeVisible();
     });
 });
 

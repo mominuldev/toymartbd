@@ -490,13 +490,21 @@ it('rejects the placeholder hotline and a local store domain', function (): void
     expect(launchStatus('business.hotline'))->toBe('fail');
 });
 
-it('scans the storefront site config for placeholder contact and legal values', function (): void {
-    // The real file in the repo still carries the owner's placeholders.
-    expect(launchStatus('storefront.site_config'))->toBe('fail');
+it('checks the storefront contact and legal values in Business, and organization placeholders in site-config', function (): void {
+    config(['notifications.hotline' => '09600123456']);
+    // Nothing set in Business, and the real file still has the logo / legal-name placeholders.
+    expect(launchStatus('storefront.site_config'))->toBe('fail')
+        ->and(launchDetail('storefront.site_config'))->toContain('hotline, WhatsApp, email, trade licence, BIN');
+
+    foreach (['hotline' => '09612-000111', 'email' => 'hello@toymartbd.com', 'trade_licence' => 'TRAD/1', 'bin' => '0012'] as $field => $value) {
+        Setting::put(CompanyDetails::PREFIX.$field, $value, SettingGroup::Store, false, null);
+    }
+    Setting::put(CompanyDetails::WHATSAPP_KEY, '+8801711000222', SettingGroup::Store, false, null);
 
     $dir = sys_get_temp_dir().'/launch-sf-'.uniqid();
     mkdir($dir.'/toymartbd-app/storefront/lib', 0777, true);
-    file_put_contents($dir.'/'.LaunchChecks::STOREFRONT_SITE_CONFIG, "hotline: { display: '09612-000111', placeholder: false },\nexport const legal = { tradeLicence: 'TRAD/1', bin: '0012' };\nexport const addressIsPlaceholder = false;\n");
+    // Samples before cmsPaths may carry the flag; nothing after it does.
+    file_put_contents($dir.'/'.LaunchChecks::STOREFRONT_SITE_CONFIG, "export const sampleContact = { hotline: { placeholder: true } };\nexport const cmsPaths = {};\nexport const organization = { logo: { placeholder: false } };\n");
     $original = app()->basePath();
     app()->setBasePath($dir);
     try {

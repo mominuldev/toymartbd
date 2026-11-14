@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Fulfilment\Actions;
 
+use App\Domain\Fulfilment\Events\DeliveryReferenceDataChanged;
 use App\Domain\Fulfilment\Models\CourierProvider;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,14 @@ final readonly class UpdateCourierRateCard
         'included_weight_grams', 'per_kg_charge', 'cod_fee_percent', 'return_charge',
     ];
 
+    /**
+     * What DeliveryChargeResolver prices storefront quotes and the published rate table with.
+     * COD fee and return charge are what the courier bills us, never shown to a customer.
+     */
+    public const array STOREFRONT_FIELDS = [
+        'base_charge_dhaka', 'base_charge_suburb', 'base_charge_outside', 'included_weight_grams', 'per_kg_charge',
+    ];
+
     /** @param array<string, mixed> $rates */
     public function handle(CourierProvider $provider, array $rates): CourierProvider
     {
@@ -29,8 +38,13 @@ final readonly class UpdateCourierRateCard
             $locked = CourierProvider::query()->lockForUpdate()->findOrFail($provider->id);
             $locked->fill(array_intersect_key($rates, array_flip(self::FIELDS)));
             if ($locked->isDirty()) {
+                $storefrontChanged = $locked->isDirty(self::STOREFRONT_FIELDS);
                 $locked->rate_card_updated_at = now();
                 $locked->save();
+                // Storefront rate table (`delivery` tag), held until commit.
+                if ($storefrontChanged) {
+                    DeliveryReferenceDataChanged::dispatch('rate_card');
+                }
             }
 
             return $locked->refresh();

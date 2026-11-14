@@ -129,3 +129,38 @@ No BN template uses Bengali digits in a variable, and no BN template contains st
   - They are green: the full storefront suite ran locally against a production build, with 166 passed. The 2 failures are other agents' in-progress specs: `performance-budgets` (agent 3) and `seo-crawl`, which assumes port 3100 (agent 5).
 - **The admin axe is a script, not a CI gate.** It takes 6.3 min locally, which is over the 5-minute budget for a new gate, and it needs the full demo seed. Run `npm run build && npm run test:a11y:admin` (`e2e/admin-a11y/`, port 8344; `A11Y_ADMIN_REUSE=1` to reuse a running server). Run it before any admin UI PR merges. Wiring it into the Admin E2E job is a one-line step when the budget allows.
 - New dev dependency: `@axe-core/playwright@4.14.0` in the root `package.json`, with `package-lock.json` updated.
+
+## Phase 10 screens (batch 3, 2026-11-15)
+
+**Scope:** Staff & roles (`/staff` People, the manage and add dialogs, `/staff/roles` editable matrix and its confirm), two-factor (`/account/two-factor` setup → key and code → recovery codes → manage, and the sign-in code step on `/login` in both modes), Activity log (`/staff/activity`, custom range), Integrations hub (`/integrations`, a category tab), Store settings (`/settings/business`, `/settings/branches` with the add and edit dialog, `/settings/checkout` with the switch toggled, `/settings/invoice`). EN + BN, 1440 and 768.
+
+**Method**
+- `e2e/admin-a11y/axe.spec.ts`: the 8 new routes join `SCREENS` (so EN/BN × light/dark at 1440), plus three new tests per locale: the 8 routes at **768**, the **dialogs and in-page states** (add staff, add staff with errors, manage, roles edited, roles confirm, branch add, branch add with errors, branch edit, activity custom range, integrations tab, checkout toggled) and the **two-factor states** (login, setup, scan, scan with a wrong code, recovery codes, manage, manage code form, sign-in code step, recovery-code mode, wrong code). Each locale enrols its own demo account (`viewer@`, `content_editor@`) with a real RFC 6238 code. UI strings come from the message catalogue, so the same steps drive both languages.
+- `e2e/admin-a11y/keyboard.spec.ts`: new "Phase 10" path — Add staff, Manage, Add branch and Edit branch opened by keyboard (focus inside, Tab trapped, Escape closes, focus back on the trigger); every matrix checkbox named; Space ticks; the save bar's Discard and Save reached by Tab; the confirm dialog's Escape returns to Save.
+- `e2e/admin-a11y/bangla.spec.ts` (new): the 9 Phase 10 routes in Bangla at 768 and 1440 — no page scroll, no clipped text, Bangla line-height twin (rule 38), no Bengali digits (rule 36). `SHOTS_DIR=` saves screenshots for review.
+- `e2e/admin-a11y/serve.sh` now sets `TWO_FACTOR_ENFORCE=false` and the per-account sign-in limit like the admin E2E server, and clears the file cache. Without it the owner (who sees money) is held at two-factor setup in `APP_ENV=local`, and every audit would have run against the setup screen.
+
+| # | Sev | Where | Finding | Fix | Test | Status |
+|---|---|---|---|---|---|---|
+| P10-1 | Medium (serious in axe) | Settings › Checkout, "Edit charges" link inside the caption | `link-in-text-block` (1.4.1): told apart from the sentence by colour only (underline on hover). Every locale and theme, 1440 and 768. | Always underlined. | axe (`settings-checkout`, 5 audits) | **Fixed** |
+| P10-2 | Medium | Two-factor page | Pressing **Set up**, **Turn on**, **New recovery codes / Turn off** and **Cancel** each removed the pressed button, dropping focus on `<body>` (2.4.3). | The new card's title takes focus (`tabIndex=-1`); the code form focuses its field; Cancel returns focus to the button that opened it. Also removed a dangling `aria-describedby` on the manage form (the id was never rendered). | `twoFactor.test.tsx` (focus assertions) | **Fixed** |
+| P10-3 | Medium | Sign-in code step | "Use a recovery code" relabels the field but left focus on the toggle; "Start again" dropped focus on `<body>`; the error alert was not tied to the field. | Toggle moves focus into the field; Start again focuses Email; field `aria-describedby` → the alert (also on the password step's Email and Password). | `twoFactor.test.tsx` | **Fixed** |
+| P10-4 | Medium | Roles matrix | A changed role column was marked by tint alone (1.4.1), and ticking a box announced nothing: the save bar mounts with its text, which screen readers do not read. | Visually hidden "(changed, not saved)" in the column header (`roles.changed`, EN + BN); a persistent `role=status` carrying the unsaved count. | `staff.test.tsx`; keyboard spec | **Fixed** |
+| P10-5 | Low | Checkout free-delivery amount | The invalid-amount alert was not the field's description. | `aria-describedby` → the alert. | `checkoutSection.test.tsx` | **Fixed** |
+| P10-6 | Low | Branch dialog, Active checkbox | Why it is locked (default location / holds stock) and its error were not its description; the error had no icon. | `aria-describedby` to the hint and error; error icon like `Field`. | `storeSettings.test.tsx` | **Fixed** |
+| P10-7 | Low | People tab below lg (768) | The stacked row labelled Role, Two-factor and Last sign-in but not Status. | `CellLabel` for Status. | screenshot review | **Fixed** |
+| P10-8 | Low | Integrations hub and Checkout switches | The off track (`bg-line-strong` on `bg-surface`) is likely under 3:1 non-text contrast (1.4.11). axe does not test it; state is still conveyed by thumb position and `aria-checked`. Same token as the Figma toggle. | Not changed: a design-token decision. | — | **Open — design** |
+| P10-9 | Low | Avatar (shell) | Bilingual demo names produce mixed-script initials ("Fআ" for "Farhana Akter · ফারহানা আক্তার"). Decorative and `aria-hidden`; not an a11y failure. | — | — | Noted (shell, not this batch) |
+
+No other WCAG A/AA violation on any Phase 10 screen, dialog or two-factor state, in either locale or theme. Chips carry an icon and text (never colour only); dialogs are native `showModal()` (trap, Escape, focus return verified); toasts are `role=status` in a polite live region.
+
+**Results**
+- **Before:** 1 distinct violation (P10-1) on 5 audits; everything else clean. (The first run also hit ENOSPC on the machine's disk, which aborted three tests; the rerun was complete.)
+- **After:** full `npm run test:a11y:admin` → 13/15 passed: every axe and keyboard test green; the 2 Bangla-scan failures were only the scan's own heuristic flagging the decorative Avatar initials (P10-9), now excluded. A targeted rerun after the last fixes (`--grep "768px|clip|Phase 10"`: the 768, dialogs/states, Bangla and Phase 10 keyboard tests) → **7/7 passed**. The admin axe now runs **192 page audits** (33 screens × 4 + 390 × 2 + 768 × 16 + 11 states × 2 + 10 two-factor states × 2), up from 102; the full suite takes about 9.5 min.
+- **Bangla:** no page overflow, no clipped text, no Bengali digits, the line-height twin in force on all 9 routes at 768 and 1440. Screenshots reviewed (roles matrix scrolls inside its card at 768, as designed).
+- Vitest (auth, staff, audit, integrations, storeSettings): 59 passed. `npm run typecheck` clean. `npm run lint:i18n:admin`: 0 violations, every key in EN and BN.
+
+**Needs the owner**
+- Whether to put the admin axe suite in CI. It is now ~9.5 min; as a separate job it adds no time to the critical path, but it needs the full demo seed.
+- P10-8: the switch off-track contrast (design token).
+- Screen-reader pass (NVDA) on the matrix and two-factor flow, added to the checklist above.

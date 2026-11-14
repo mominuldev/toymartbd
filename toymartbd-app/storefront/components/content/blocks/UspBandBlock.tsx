@@ -4,12 +4,11 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import type { UspIconKey } from '@/lib/content/home-blocks';
 import type { Locale } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
 
 // "Why parents shop with us" (Figma USP band 134:960 / 127:444) with the editor's items — the same
 // markup as the built-in UspBand: Gradient/Bloom-sky ground, white cards with the Glow/Tile-* lift
 // and a tilted pastel icon tile. Tiles cycle pink → butter → mint → sky by position. `{phone}` in
-// an item's detail becomes the hotline from site config, never broken across lines.
+// an item's detail becomes the store hotline (`hotline`, from lib/store-info.ts via HomeBlocks), never broken across lines.
 
 const icons: Record<UspIconKey, IconName> = {
     cod: 'moneyFill',
@@ -34,9 +33,11 @@ interface Props {
     title: string;
     items: Array<{ icon: UspIconKey; title: string; detail: string | null }>;
     locale: Locale;
+    /** Display form of the store hotline. */
+    hotline: string;
 }
 
-export function UspBandBlock({ id, eyebrow, title, items, locale }: Props) {
+export function UspBandBlock({ id, eyebrow, title, items, locale, hotline }: Props) {
     const headingId = `cms-${id}-title`;
     return (
         <section aria-labelledby={headingId} className={`bg-(image:--tm-gradient-bloom-sky) px-gutter-mobile py-8 md:px-gutter-tablet lg:px-gutter-desktop lg:py-14 ${bnClass(locale)}`}>
@@ -56,7 +57,7 @@ export function UspBandBlock({ id, eyebrow, title, items, locale }: Props) {
                                     <Icon name={icons[item.icon]} className="size-icon-md lg:size-7" />
                                 </span>
                                 <span className="t-h4 text-fg-primary">{item.title}</span>
-                                {item.detail ? <span className="t-caption text-fg-secondary lg:t-body-sm">{formatNoBreak(item.detail, { phone: contact.hotline.display }, ['phone'])}</span> : null}
+                                {item.detail ? <span className="t-caption text-fg-secondary lg:t-body-sm">{formatNoBreak(item.detail, { phone: hotline }, ['phone'])}</span> : null}
                             </li>
                         );
                     })}

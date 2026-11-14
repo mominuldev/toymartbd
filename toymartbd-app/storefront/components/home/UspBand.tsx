@@ -2,13 +2,13 @@ import { formatNoBreak } from '@/components/FormatNoBreak';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { type Messages } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 // "Why parents shop with us" — Figma USP band 134:960 (1440) / 127:444 (390), Gradient/Bloom-sky,
 // with TrustStrip FeatureRow4 144:2062 (desktop) / Feature2x2 144:2033 (mobile): four white cards
 // with a soft brand-subtle rim and the matching Glow/Tile-* lift, a 4°-tilted pastel icon tile
 // (filled Phosphor glyphs in the tile's ink), a Fredoka title and one friendly line. Home only;
-// the PDP keeps the quiet TrustStrip. The hotline is the site-config placeholder until confirmed.
+// the PDP keeps the quiet TrustStrip. The hotline is the API's (lib/store-info.ts), a marked sample until set.
 
 const features = [
     { icon: 'moneyFill', tile: 'bg-tile-pink', ink: 'text-fg-brand', glow: 'shadow-glow-tile-pink', title: 'uspCod', detail: 'uspCodDetail' },
@@ -17,7 +17,8 @@ const features = [
     { icon: 'phoneFill', tile: 'bg-tile-sky', ink: 'text-fg-ink-sky', glow: 'shadow-glow-tile-sky', title: 'uspPeople', detail: 'uspPeopleDetail' },
 ] as const satisfies ReadonlyArray<{ icon: IconName; tile: string; ink: string; glow: string; title: keyof Messages['home']; detail: keyof Messages['home'] }>;
 
-export function UspBand({ t }: { t: Messages['home'] }) {
+export async function UspBand({ t }: { t: Messages['home'] }) {
+    const { contact } = await getStoreInfo();
     return (
         <section aria-labelledby="home-usp" className="bg-(image:--tm-gradient-bloom-sky) px-gutter-mobile py-8 md:px-gutter-tablet lg:px-gutter-desktop lg:py-14">
             <div className="mx-auto flex max-w-content flex-col gap-4 lg:items-center lg:gap-7">

@@ -5,7 +5,7 @@ import type { Cart } from '@/lib/cart/types';
 import { arrivalLine, quotePlace, workingDaysLine } from '@/lib/delivery/format';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
-import { contact, legal } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 // Pieces of the checkout page (Figma Checkout 131:2601 / 137:3670). Server components.
 
@@ -33,7 +33,8 @@ export function CheckoutHeader({ locale, t }: { locale: Locale; t: Messages }) {
     );
 }
 
-export function CheckoutFooter({ t }: { t: Messages }) {
+export async function CheckoutFooter({ t }: { t: Messages }) {
+    const { legal } = await getStoreInfo();
     const year = String(new Date().getUTCFullYear());
     return (
         <footer className="mt-auto hidden bg-surface lg:block">
@@ -87,7 +88,8 @@ export function CheckoutStepper({ steps, t }: { steps: Array<{ label: string; st
 }
 
 /** The DeliveryEstimator card in its Selected state, from the cart's quote (the API's charge and dates). */
-export function DeliveryBox({ cart, locale, t, changeHref }: { cart: Cart; locale: Locale; t: Messages; changeHref: string }) {
+export async function DeliveryBox({ cart, locale, t, changeHref }: { cart: Cart; locale: Locale; t: Messages; changeHref: string }) {
+    const { contact } = await getStoreInfo();
     const quote = cart.delivery;
     const d = t.delivery;
     const bn = locale === 'bn';

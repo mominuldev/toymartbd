@@ -1,29 +1,78 @@
-// Business contact details and footer navigation — the ONE place the storefront reads them from
-// (storefront spec C2.6: one value per field, rendered everywhere from that field).
+// Business contact details and footer navigation (storefront spec C2.6: one value per field,
+// rendered everywhere from that field).
 //
-// PLACEHOLDERS: the owner has not supplied the hotline, WhatsApp number, email, address,
-// trade licence or BIN yet (UI-UX-DESIGN-SPEC §10, PRD §7 item 6). Every value below marked
-// `placeholder: true` is a sample from the design files, is rendered with a visible
-// "sample" marker, and is never turned into a tel:/mailto:/wa.me link, so nobody can dial a
-// made-up number from the live site. Replace the value and set `placeholder: false` once the
-// owner confirms it. Note the designs disagree on the hotline (content spec 09600-123456,
-// built footer 09610-123456); the footer's value is used until the owner confirms.
+// The live values come from the API: Admin → Settings → Store → Business, served by
+// `GET /storefront/store-info` and read server-side by lib/store-info.ts (`getStoreInfo()`,
+// cache tag `store-info`, launch item F4). This file keeps only the SAMPLES that stand in for a
+// value the owner has not set yet, plus the static navigation.
 //
-// Client-safe: no secrets here.
+// SAMPLES: every value below is from the design files (UI-UX-DESIGN-SPEC §10, PRD §7 item 6),
+// carries `placeholder: true`, is rendered with `data-placeholder="owner-to-confirm"`, and is
+// never turned into a tel:/mailto:/wa.me link, so nobody can dial a made-up number from the live
+// site. Note the designs disagree on the hotline (content spec 09600-123456, built footer
+// 09610-123456); the footer's value is the sample.
+//
+// Client-safe: no secrets here. Components never import the samples directly for display: a
+// Server Component calls `getStoreInfo()`, a client component gets the values as props, and only
+// a client error boundary that cannot reach the API falls back to `sampleStoreInfo`.
 
 export interface ContactValue {
     /** As shown, Western digits in both locales (rule 36). */
     display: string;
-    /** Link target once confirmed (tel:, mailto:, https://wa.me/…). */
+    /** Link target once confirmed (tel:, mailto:, https://wa.me/…). Never used while `placeholder`. */
     href: string;
     placeholder: boolean;
 }
 
-export const contact = {
+export interface StoreContact {
+    hotline: ContactValue;
+    whatsapp: ContactValue;
+    email: ContactValue;
+}
+
+export interface StoreLegal {
+    /** Trade licence and BIN for the legal bar; null until the owner supplies them. */
+    tradeLicence: string | null;
+    bin: string | null;
+}
+
+/** What the storefront chrome shows about the business (lib/store-info.ts builds it from the API). */
+export interface StoreInfo {
+    name: { en: string; bn: string };
+    contact: StoreContact;
+    legal: StoreLegal;
+    /**
+     * Street address per locale, or null while the owner has not set it: a renderer then uses the
+     * catalog copy `footer.contact.address` (also a sample). Nothing renders an address today.
+     */
+    address: { en: string | null; bn: string | null };
+}
+
+/** The design-file samples, each marked `placeholder: true`. */
+export const sampleContact = {
     hotline: { display: '09610-123456', href: 'tel:+8809610123456', placeholder: true },
     whatsapp: { display: '01712-345678', href: 'https://wa.me/8801712345678', placeholder: true },
     email: { display: 'hello@toymartbd.com', href: 'mailto:hello@toymartbd.com', placeholder: true },
-} satisfies Record<string, ContactValue>;
+} as const satisfies StoreContact;
+
+/** Trade licence and BIN have no sample: the legal bar shows `footer.legalPending` instead. */
+export const pendingLegal: StoreLegal = { tradeLicence: null, bin: null };
+
+/** Everything unset: the fallback when the API cannot be reached, and for client error boundaries. */
+export const sampleStoreInfo: StoreInfo = {
+    name: { en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' },
+    contact: sampleContact,
+    legal: pendingLegal,
+    address: { en: null, bn: null },
+};
+
+/**
+ * Where a WhatsApp button points: the confirmed wa.me link, or — while the number is a sample —
+ * `fallback` (the contact page), so no visitor messages a made-up number.
+ */
+export function whatsappHref(whatsapp: ContactValue, fallback: string): string {
+    return whatsapp.placeholder ? fallback : whatsapp.href;
+}
 
 /**
  * CMS pages the layout links to directly (consent banner, footer legal bar, contact fallbacks).
@@ -34,15 +83,6 @@ export const cmsPaths = {
     privacy: '/pages/privacy-policy',
     contact: '/pages/contact',
 } as const;
-
-/** Trade licence and BIN for the legal bar. `null` until the owner supplies them. */
-export const legal: { tradeLicence: string | null; bin: string | null } = {
-    tradeLicence: null,
-    bin: null,
-};
-
-/** Street address and support hours are copy (they differ per locale) — see `footer.contact` in the catalogs, also placeholders. */
-export const addressIsPlaceholder = true;
 
 /**
  * Footer link tiles (Figma Footer 124:3310: Shop · Help · About) — the FALLBACK when the admin

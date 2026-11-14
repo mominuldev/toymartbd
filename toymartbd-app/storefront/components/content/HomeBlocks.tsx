@@ -21,7 +21,7 @@ import { getMessages, type Locale } from '@/lib/i18n';
 // class at the 1024 breakpoint (the page is cached, so it cannot know the device). The first hero
 // carries the LCP image. Full-bleed bands (USP) skip the gutters; everything else sits in a Band.
 
-function render(block: HomeBlock, locale: Locale, firstHero: boolean): ReactNode {
+function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: string): ReactNode {
     const t = getMessages(locale);
     switch (block.type) {
         case 'hero':
@@ -37,7 +37,7 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean): ReactNode
         case 'brand_strip':
             return <BrandStripBlock id={block.id} title={block.content.title} brands={block.brands} locale={locale} t={t.brands} />;
         case 'usp_band':
-            return <UspBandBlock id={block.id} eyebrow={block.content.eyebrow} title={block.content.title} items={block.content.items} locale={locale} />;
+            return <UspBandBlock id={block.id} eyebrow={block.content.eyebrow} title={block.content.title} items={block.content.items} locale={locale} hotline={hotline} />;
         case 'promo_split':
             return <PromoSplitBlock id={block.id} content={block.content} locale={locale} />;
         case 'testimonials':
@@ -54,13 +54,14 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean): ReactNode
 /**
  * `editable` (the draft preview only) stamps each section with its block id, which the builder's
  * live editor (PreviewBridge) uses to outline and select it. The live page carries no ids.
+ * `hotline` is the store hotline for `{phone}` in USP items (lib/store-info.ts, display form).
  */
-export function HomeBlocks({ blocks, locale, editable = false }: { blocks: HomeBlock[]; locale: Locale; editable?: boolean }) {
+export function HomeBlocks({ blocks, locale, editable = false, hotline }: { blocks: HomeBlock[]; locale: Locale; editable?: boolean; hotline: string }) {
     const firstHero = blocks.findIndex((b) => b.type === 'hero');
     return (
         <div className="flex flex-col gap-12 lg:gap-20">
             {blocks.map((block, i) => {
-                const node = render(block, locale, i === firstHero);
+                const node = render(block, locale, i === firstHero, hotline);
                 const device = deviceClass(block);
                 const blockId = editable && block.id ? block.id : undefined;
                 return block.type === 'usp_band' ? (

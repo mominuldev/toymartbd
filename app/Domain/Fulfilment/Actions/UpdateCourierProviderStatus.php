@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Fulfilment\Actions;
 
+use App\Domain\Fulfilment\Events\DeliveryReferenceDataChanged;
 use App\Domain\Fulfilment\Models\CourierProvider;
 use Illuminate\Support\Facades\DB;
 
@@ -27,17 +28,25 @@ final readonly class UpdateCourierProviderStatus
             if ($active !== null) {
                 $locked->is_active = $active;
             }
+            $changed = false;
             if ($makeDefault) {
                 $locked->is_active = true;
                 foreach ($all as $other) {
                     if ($other->id !== $locked->id && $other->is_default) {
                         $other->is_default = false;
                         $other->save();
+                        $changed = true;
                     }
                 }
                 $locked->is_default = true;
             }
+            $changed = $changed || $locked->isDirty(['is_active', 'is_default']);
             $locked->save();
+
+            // Which courier prices storefront quotes may have moved (`delivery` tag), held until commit.
+            if ($changed) {
+                DeliveryReferenceDataChanged::dispatch('provider_status');
+            }
 
             return $locked->refresh();
         });

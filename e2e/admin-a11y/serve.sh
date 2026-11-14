@@ -16,7 +16,14 @@ export SANCTUM_STATEFUL_DOMAINS="localhost:$PORT" SESSION_DOMAIN=
 export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
 export DEMO_SEED_IMAGES=false AUTH_LOGIN_PER_MINUTE=60
+# Every audit signs the owner in again; the per-account limit (10 / 15 min) would throttle it.
+export AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN=200
+# Staff two-factor is not enforced here, so the owner reaches every screen without a code; the
+# Phase 10 two-factor audit enrols its own accounts and signs in with a real code.
+export TWO_FACTOR_ENFORCE=false
 
 "$PHP_BIN" artisan migrate:fresh --seed --force >/dev/null
 "$PHP_BIN" artisan db:seed --class=DemoDataSeeder --force >/dev/null
+# The file cache outlives migrate:fresh: drop the last run's sign-in counters.
+"$PHP_BIN" artisan cache:clear >/dev/null
 exec "$PHP_BIN" artisan serve --host=localhost --port="$PORT" --no-reload

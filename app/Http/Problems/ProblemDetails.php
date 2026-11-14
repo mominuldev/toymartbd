@@ -77,7 +77,12 @@ final readonly class ProblemDetails implements Responsable
     private static function fromHttpException(HttpExceptionInterface $e): self
     {
         $status = $e->getStatusCode();
-        $type = ProblemType::fromStatus($status);
+        // Laravel's maintenance middleware throws a plain 503 HttpException (with `Retry-After` from
+        // `artisan down --retry`, kept below); only the maintenance flag tells it apart from a
+        // feature-level 503 such as DeliveryQuoteUnavailable.
+        $type = $status === 503 && app()->isDownForMaintenance()
+            ? ProblemType::Maintenance
+            : ProblemType::fromStatus($status);
 
         /** @var array<string, string> $headers */
         $headers = $e->getHeaders();

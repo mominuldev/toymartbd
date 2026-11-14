@@ -57,7 +57,7 @@ final class LaunchChecks
     public const array PLACEHOLDER_SECRETS = ['', 'null', 'secret', 'password', 'root', 'changeme', 'change-me', 'local-master-key-change-me'];
 
     /** The seeded hotline (config/notifications.php, .env.example) and the design's sample numbers. */
-    public const array PLACEHOLDER_HOTLINES = ['09600123456', '09610123456', '01712345678'];
+    public const array PLACEHOLDER_HOTLINES = StoreHotline::PLACEHOLDERS;
 
     /** Copy markers that must not appear on a published policy page (StaticPagesSeeder writes "PLACEHOLDER"). */
     public const array PLACEHOLDER_MARKERS = ['placeholder', 'lorem ipsum', 'todo:', 'tbd', '[owner'];
@@ -671,28 +671,47 @@ final class LaunchChecks
             : CheckResult::fail('business.hotline', 'Store hotline and domain in messages', 'F3', implode('; ', $problems).'.', 'Set the hotline in Admin → Settings → Store → Business (or STORE_HOTLINE in the host env) and STORE_PUBLIC_DOMAIN, `php artisan config:cache`, then `php artisan toymart:notifications:sync-templates`.');
     }
 
+    /**
+     * F4. Since Phase 10 batch 3 the storefront reads hotline, WhatsApp, email, trade licence
+     * and BIN from `GET /storefront/store-info` (Admin → Settings → Store → Business); the
+     * site-config file keeps only marked samples for unset values, plus the organization logo,
+     * legal name and social links, which are still file values.
+     */
     private function storefrontSiteConfig(): CheckResult
     {
+        $title = 'Storefront contact and legal details are real';
+        $company = app(CompanyDetails::class);
+        $saved = $company->saved();
+        $missing = [];
+        if (StoreHotline::confirmed() === null) {
+            $missing[] = 'hotline';
+        }
+        if ($company->whatsapp() === null) {
+            $missing[] = 'WhatsApp';
+        }
+        foreach (['email' => 'email', 'trade_licence' => 'trade licence', 'bin' => 'BIN'] as $field => $label) {
+            if (! is_string($saved[$field] ?? null) || trim((string) $saved[$field]) === '') {
+                $missing[] = $label;
+            }
+        }
+        $problems = $missing === [] ? [] : ['not set in Settings → Store → Business (the shop shows marked samples): '.implode(', ', $missing)];
+
         $path = $this->app->basePath(self::STOREFRONT_SITE_CONFIG);
-        if (! is_file($path)) {
-            return CheckResult::manual('storefront.site_config', 'Storefront contact and legal details are real', 'F4', 'The storefront source is not on this host. On the storefront build, confirm toymartbd-app/storefront/lib/site-config.ts has no `placeholder: true`, and tradeLicence/bin are set.');
-        }
-        $source = (string) file_get_contents($path);
-        $flags = preg_match_all('/placeholder:\s*true/', $source);
-        $problems = [];
-        if ($flags > 0) {
-            $problems[] = "{$flags} value(s) still marked `placeholder: true` (hotline, WhatsApp, email, social, logo, legal name)";
-        }
-        if (preg_match('/tradeLicence:\s*null/', $source) === 1 || preg_match('/\bbin:\s*null/', $source) === 1) {
-            $problems[] = 'trade licence / BIN not set for the footer legal bar';
-        }
-        if (preg_match('/addressIsPlaceholder\s*=\s*true/', $source) === 1) {
-            $problems[] = 'street address is a placeholder';
+        if (is_file($path)) {
+            $source = (string) file_get_contents($path);
+            // The sample block is meant to carry placeholder flags; only what follows it counts.
+            $tail = ($at = strpos($source, 'export const cmsPaths')) !== false ? substr($source, $at) : $source;
+            $flags = preg_match_all('/placeholder:\s*true/', $tail);
+            if ($flags > 0) {
+                $problems[] = "{$flags} organization value(s) still marked `placeholder: true` in site-config.ts (logo, legal name)";
+            }
+        } elseif ($problems === []) {
+            return CheckResult::manual('storefront.site_config', $title, 'F4', 'Business values are set. The storefront source is not on this host: on the storefront build, confirm toymartbd-app/storefront/lib/site-config.ts has no `placeholder: true` after `cmsPaths` (organization logo, legal name).');
         }
 
         return $problems === []
-            ? CheckResult::pass('storefront.site_config', 'Storefront contact and legal details are real', 'F4', 'No placeholder contact or legal values in the storefront config.')
-            : CheckResult::fail('storefront.site_config', 'Storefront contact and legal details are real', 'F4', implode('; ', $problems).'.', 'Replace the values in toymartbd-app/storefront/lib/site-config.ts (and the footer copy in both message catalogues) with the owner\'s, set `placeholder: false`, redeploy the storefront.');
+            ? CheckResult::pass('storefront.site_config', $title, 'F4', 'Hotline, WhatsApp, email, trade licence and BIN are set in Business; no organization placeholders in the storefront config.')
+            : CheckResult::fail('storefront.site_config', $title, 'F4', implode('; ', $problems).'.', 'Enter the values in Admin → Settings → Store → Business (the storefront refreshes on save); for logo and legal name edit toymartbd-app/storefront/lib/site-config.ts and redeploy the storefront.');
     }
 
     private function placeholderValues(): CheckResult

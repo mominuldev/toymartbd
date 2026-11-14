@@ -18,6 +18,9 @@ final class StoreHotline
 {
     public const string SETTING_KEY = 'invoice.company.hotline';
 
+    /** Sample numbers from the designs and .env.example — never shown or dialled as real. */
+    public const array PLACEHOLDERS = ['09600123456', '09610123456', '01712345678'];
+
     public static function current(): string
     {
         $saved = Setting::get(self::SETTING_KEY);
@@ -26,5 +29,14 @@ final class StoreHotline
         }
 
         return (string) config('notifications.hotline');
+    }
+
+    /** The current hotline unless it is empty or a design sample; null means "not set yet". */
+    public static function confirmed(): ?string
+    {
+        $hotline = self::current();
+        $digits = preg_replace('/\D+/', '', $hotline) ?? '';
+
+        return $digits === '' || in_array($digits, self::PLACEHOLDERS, true) ? null : $hotline;
     }
 }

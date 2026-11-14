@@ -10,6 +10,7 @@ use App\Domain\Catalog\Actions\ReorderAttributeValues;
 use App\Domain\Catalog\Actions\UpdateAttributeValue;
 use App\Domain\Catalog\Models\ProductAttribute;
 use App\Domain\Catalog\Models\ProductAttributeValue;
+use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Attribute\ReorderAttributeValuesRequest;
 use App\Http\Requests\Admin\Attribute\StoreAttributeValueRequest;
@@ -23,6 +24,10 @@ use Illuminate\Http\Response;
 /**
  * Values of one attribute, nested under it (`/attributes/{attribute}/values`).
  * A value is deleted only while no variant uses it (409 otherwise).
+ *
+ * A rename or reorder changes product pages' variant options, so it
+ * purges `products` after the Action commits (see {@see AttributeController}). Create and
+ * delete touch no variant and purge nothing.
  */
 final class AttributeValueController extends ApiController
 {
@@ -37,7 +42,10 @@ final class AttributeValueController extends ApiController
     /** `PATCH /attributes/{attribute}/values/{value}` — needs catalog.update. */
     public function update(UpdateAttributeValueRequest $request, ProductAttribute $attribute, ProductAttributeValue $value, UpdateAttributeValue $updateValue): AttributeValueResource
     {
-        return new AttributeValueResource($updateValue->handle($value, $request->changes()));
+        $updated = $updateValue->handle($value, $request->changes());
+        RevalidateStorefrontTags::dispatch([AttributeController::STOREFRONT_TAG]);
+
+        return new AttributeValueResource($updated);
     }
 
     /**
@@ -46,7 +54,10 @@ final class AttributeValueController extends ApiController
      */
     public function reorder(ReorderAttributeValuesRequest $request, ProductAttribute $attribute, ReorderAttributeValues $reorder): AttributeResource
     {
-        return new AttributeResource($reorder->handle($attribute, $request->ids())->load('values'));
+        $reordered = $reorder->handle($attribute, $request->ids());
+        RevalidateStorefrontTags::dispatch([AttributeController::STOREFRONT_TAG]);
+
+        return new AttributeResource($reordered->load('values'));
     }
 
     /** `DELETE /attributes/{attribute}/values/{value}` — needs catalog.archive. */

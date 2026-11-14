@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useLogin, useMe, useTwoFactorChallenge } from './api';
 import { ApiError } from '@/lib/api';
@@ -25,6 +25,8 @@ export function LoginPage() {
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(false);
     const [step, setStep] = useState<'password' | 'two-factor'>('password');
+    // "Start again" from the code step unmounts the button that was pressed: focus goes to Email.
+    const [restarted, setRestarted] = useState(false);
     const ids = { error: useId() };
 
     if (me.data) return <Navigate to={from} replace />;
@@ -58,6 +60,7 @@ export function LoginPage() {
                     onRestart={() => {
                         setPassword('');
                         login.reset();
+                        setRestarted(true);
                         setStep('password');
                     }}
                 />
@@ -91,10 +94,12 @@ export function LoginPage() {
                                 id={id}
                                 type="email"
                                 autoComplete="username"
+                                autoFocus={restarted}
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 aria-invalid={error ? true : undefined}
+                                aria-describedby={message ? ids.error : undefined}
                                 leading={<EnvelopeSimpleIcon size={16} aria-hidden />}
                             />
                         )}
@@ -110,6 +115,7 @@ export function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 aria-invalid={error ? true : undefined}
+                                aria-describedby={message ? ids.error : undefined}
                                 leading={<LockSimpleIcon size={16} aria-hidden />}
                             />
                         )}
@@ -138,6 +144,13 @@ function TwoFactorStep({ onDone, onRestart }: { onDone: () => void; onRestart: (
     const [recovery, setRecovery] = useState(false);
     const [value, setValue] = useState('');
     const errorId = useId();
+    const input = useRef<HTMLInputElement>(null);
+    const toggled = useRef(false);
+
+    // Switching between the app code and a recovery code relabels the one field: put focus in it.
+    useEffect(() => {
+        if (toggled.current) input.current?.focus();
+    }, [recovery]);
 
     const error = challenge.error;
     const message =
@@ -181,6 +194,7 @@ function TwoFactorStep({ onDone, onRestart }: { onDone: () => void; onRestart: (
             <Field label={t(recovery ? 'twoFactor.recoveryCode' : 'twoFactor.code')}>
                 {({ id }) => (
                     <Input
+                        ref={input}
                         id={id}
                         autoFocus
                         inputMode={recovery ? 'text' : 'numeric'}
@@ -190,6 +204,7 @@ function TwoFactorStep({ onDone, onRestart }: { onDone: () => void; onRestart: (
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
                         aria-invalid={error ? true : undefined}
+                        aria-describedby={message ? errorId : undefined}
                     />
                 )}
             </Field>
@@ -203,6 +218,7 @@ function TwoFactorStep({ onDone, onRestart }: { onDone: () => void; onRestart: (
                     variant="ghost"
                     size="sm"
                     onClick={() => {
+                        toggled.current = true;
                         setRecovery(!recovery);
                         setValue('');
                         challenge.reset();

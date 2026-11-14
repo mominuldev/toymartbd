@@ -112,7 +112,8 @@ describe('store settings layout', () => {
             ['Checkout & delivery', '/settings/checkout'],
             ['Taxes & invoices', '/settings/invoice'],
         ]);
-        expect(within(nav).getByRole('link', { name: 'Business' }).getAttribute('aria-current')).toBe('page');
+        // The index <Navigate> may land a tick after the layout's heading (seen under load).
+        await waitFor(() => expect(within(nav).getByRole('link', { name: 'Business' }).getAttribute('aria-current')).toBe('page'));
         // No backend yet: not offered.
         expect(within(nav).queryByText('Danger zone')).toBeNull();
         expect(await screen.findByLabelText('Store name')).toBeTruthy();
@@ -261,6 +262,8 @@ describe('branches & warehouses', () => {
         expect(within(dialog).queryByLabelText(/^Short code/)).toBeNull();
         expect((within(dialog).getByLabelText('Active') as HTMLInputElement).disabled).toBe(true);
         expect(within(dialog).getByText(/default location is always active/)).toBeTruthy();
+        // Why it is locked is the checkbox's description, not a stray line after it.
+        expect(within(dialog).getByLabelText('Active').getAttribute('aria-describedby')).toBe(within(dialog).getByText(/default location is always active/).id);
         await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Sylhet', hidden: true })).toBeTruthy());
         fireEvent.change(within(dialog).getByLabelText(/^Facts line/), { target: { value: 'Pathao pickup 3–6 pm' } });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Save branch', hidden: true }));

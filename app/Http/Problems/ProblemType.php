@@ -22,6 +22,12 @@ enum ProblemType: string
     case ValidationError = 'validation-error';
     case TooManyRequests = 'too-many-requests';
     case ServiceUnavailable = 'service-unavailable';
+    /**
+     * `php artisan down` (planned downtime, docs/ops/DEPLOYMENT.md): every route answers this 503 with
+     * `Retry-After`. Distinct from `service-unavailable` (a 503 for one feature, e.g. no courier rate
+     * card): the storefront shows its maintenance page for this type only (Gate 5).
+     */
+    case Maintenance = 'maintenance';
     /** Idempotency-Key (P3-API-03), statuses per draft-ietf-httpapi-idempotency-key-header. */
     case IdempotencyKeyMissing = 'idempotency-key-missing';
     case IdempotencyKeyInvalid = 'idempotency-key-invalid';
@@ -58,7 +64,7 @@ enum ProblemType: string
             self::CsrfTokenMismatch => 419,
             self::ValidationError => 422,
             self::TooManyRequests => 429,
-            self::ServiceUnavailable => 503,
+            self::ServiceUnavailable, self::Maintenance => 503,
             self::IdempotencyKeyMissing, self::IdempotencyKeyInvalid => 400,
             self::IdempotencyKeyReused => 422,
             self::RequestInProgress => 409,
@@ -80,6 +86,7 @@ enum ProblemType: string
             self::ValidationError => 'Validation failed',
             self::TooManyRequests => 'Too many requests',
             self::ServiceUnavailable => 'Service unavailable',
+            self::Maintenance => 'Down for maintenance',
             self::IdempotencyKeyMissing => 'Idempotency-Key required',
             self::IdempotencyKeyInvalid => 'Idempotency-Key invalid',
             self::IdempotencyKeyReused => 'Idempotency-Key reused',
@@ -107,6 +114,7 @@ enum ProblemType: string
             self::ValidationError => 'The given data was invalid.',
             self::TooManyRequests => 'Too many requests. Please wait before trying again.',
             self::ServiceUnavailable => 'The service is temporarily unavailable.',
+            self::Maintenance => 'The shop is being updated. Please try again in a few minutes.',
             self::IdempotencyKeyMissing => 'This endpoint requires an Idempotency-Key header.',
             self::IdempotencyKeyInvalid => 'The Idempotency-Key must be 8 to 255 printable ASCII characters without spaces.',
             self::IdempotencyKeyReused => 'This Idempotency-Key was already used with a different request.',
@@ -123,7 +131,7 @@ enum ProblemType: string
     public static function fromStatus(int $status): self
     {
         foreach (self::cases() as $case) {
-            if ($case !== self::HttpError && $case !== self::ServerError && $case->status() === $status) {
+            if ($case !== self::HttpError && $case !== self::ServerError && $case !== self::Maintenance && $case->status() === $status) {
                 return $case;
             }
         }

@@ -151,7 +151,7 @@ One repository, because the API and both frontends share a contract and must cha
 - **P3-DAT-04** — `DemoCatalogSeeder`: 13 products with Bangla names, 3 with variants (local/testing only).
 - Verified on the real app: product and category APIs, the mega menu rendering seeded categories in both locales, and a category rename revalidating the storefront.
 
-**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details in `toymartbd-app/storefront/lib/site-config.ts` are placeholders (the hotline differs between the content spec and the footer design: 09600- vs 09610-123456).
+**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details were placeholders in `toymartbd-app/storefront/lib/site-config.ts`; since Phase 10 batch 3 they come from Admin → Settings → Store → Business via `GET /storefront/store-info` (samples remain for unset values).
 
 ### Progress — Phase 4 batch 2 (PR #6, 2026-11-12)
 
@@ -354,6 +354,42 @@ Expanded to task level at each phase start. Each feature below carries its own t
 **Owner decisions open:** dashboard best sellers on placed orders vs donut on recognised revenue — same basis?; activity feed reads `order_events` until something writes `activity_log`; title separator " | " vs " · " and Bangla site name in server titles; review requests as marketing (opt-in) vs order update; invoice issued on first print (edits after issue need credit notes); company details/BIN/licence for invoices; LTV bucket edges; cart-prune grace (7 days) and reindex time.
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
+
+### Progress — Phase 10 batch 3: storefront store info, API maintenance, accessibility, revalidation (2026-11-15, 4 parallel agents)
+
+**Done, with passing tests.** Full counts are in the PR.
+- **Store info (F4):**
+  - `GET /storefront/store-info` serves the hotline, WhatsApp, email, address, trade licence and BIN. It reads them from Settings → Store → Business.
+  - The cache tag `store-info` is purged by every Business or invoice-details save.
+  - The storefront reads it through `lib/store-info.ts` (`getStoreInfo`). Every header, footer, checkout, order, account and maintenance consumer has been migrated.
+  - An unset value shows the marked sample from `lib/site-config.ts`, never as a link.
+  - Error boundaries (client components) keep the samples.
+  - The `storefront.site_config` launch check now reads the Business values. It also scans the file for organization placeholders.
+- **API maintenance:**
+  - When a server-side fetch gets Laravel's 503 `service-unavailable`, it arms a downtime signal. The proxy then answers every page with the maintenance page: 503, `Retry-After` and `no-store`.
+  - Checkout POSTs show a maintenance notice.
+  - Nothing from the window is cached. The shop recovers within 60 s of `php artisan up`.
+  - Caveats in `DEPLOYMENT.md` §5: the very first no-JS request gets a blank 500, and the signal on Vercel's runtime must still be checked on staging.
+- **Accessibility (Phase 10 admin screens):** see `docs/audits/ACCESSIBILITY-AND-BILINGUAL.md` "Phase 10 screens".
+  - axe `link-in-text-block` fixed on checkout settings.
+  - Focus management fixed on two-factor setup, manage and the sign-in code step.
+  - In the role matrix, changed columns are announced and an unsaved-count live region is added.
+  - Field descriptions in branch and checkout settings fixed.
+  - The axe suite went from 102 to 192 audits, plus a keyboard test and a Bangla scan.
+  - The admin-a11y server now disables 2FA enforcement. Without it, every audit had been hitting the setup screen.
+- **Revalidation:**
+  - `delivery` is now sent on rate-card, courier status/default and free-delivery saves, through `DeliveryReferenceDataChanged` → `RevalidateDeliveryData`.
+  - `products` is sent on attribute and value edits and reorders.
+  - Each change sends only when a field the storefront shows actually changed.
+
+**Owner decisions open:**
+- The real hotline on 500 pages (needs a public route).
+- Footer address and hours.
+- Admin editors for the other `delivery.*` settings.
+- Admin axe in CI (~9.5 min, can run as a parallel job).
+- Switch off-track contrast (P10-8).
+- A screen-reader pass.
+- POS and Inbox are not in the v1 PRD.
 
 ### Progress — Phase 10 batch 2: activity log, integrations hub, store settings (2026-11-14, 4 parallel agents)
 

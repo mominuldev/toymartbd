@@ -45,7 +45,7 @@ function body(locale: 'en' | 'bn') {
     };
 }
 
-const render = (locale: 'en' | 'bn') => renderToStaticMarkup(createElement(HomeBlocks, { blocks: normalizeHome(body(locale)).blocks, locale }));
+const render = (locale: 'en' | 'bn') => renderToStaticMarkup(createElement(HomeBlocks, { blocks: normalizeHome(body(locale)).blocks, locale, hotline: '09666-700800' }));
 
 describe('normalizeHome', () => {
     it('keeps every well-formed block type, in order', () => {
@@ -113,7 +113,7 @@ describe('HomeBlocks', () => {
         expect(html).toContain('href="/products/wooden-train"');
         expect(html).toContain('href="/toys?sort=newest"');
         expect(html).toContain('href="/brands/lego"');
-        expect(html).toContain('09610-123456');
+        expect(html).toContain('09666-700800'); // {phone} is the store hotline prop
         expect(html).toContain('href="https://example.com/x" rel="noopener"');
         expect(html).toContain('lg:flex-row-reverse');
         expect(html).toContain('Rated 5 out of 5');
@@ -142,7 +142,7 @@ describe('HomeBlocks', () => {
 
     it('hides a block per device with a class, never by leaving it out', () => {
         const blocks = normalizeHome({ blocks: [{ id: 'f', type: 'faq', show_mobile: false, content: { title: 'FAQ', items: [{ question: 'Q', answer: 'A' }] } }] }).blocks;
-        expect(renderToStaticMarkup(createElement(HomeBlocks, { blocks, locale: 'en' }))).toContain('max-lg:hidden');
+        expect(renderToStaticMarkup(createElement(HomeBlocks, { blocks, locale: 'en', hotline: '09666-700800' }))).toContain('max-lg:hidden');
     });
 
     it('has every new home string in both catalogues', () => {

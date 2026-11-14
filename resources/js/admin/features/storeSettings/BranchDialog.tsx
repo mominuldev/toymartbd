@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from 'react';
-import { BuildingsIcon } from '@phosphor-icons/react';
+import { BuildingsIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeStockLocationRequestSchema, updateStockLocationRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -229,17 +229,30 @@ export function BranchDialog({ open, location, onClose }: BranchDialogProps) {
                     {text('notes', { hint: t('storeSettings.branches.field.notesHint') })}
                     <div className="flex flex-col gap-1 sm:col-span-2">
                         <label className="flex items-center gap-2 t-admin-body-strong text-fg-primary">
-                            <input type="checkbox" className="size-4 accent-brand" checked={values.is_active} disabled={lockActive} onChange={(e) => set('is_active', e.target.checked)} />
+                            <input
+                                type="checkbox"
+                                className="size-4 accent-brand"
+                                checked={values.is_active}
+                                disabled={lockActive}
+                                aria-describedby={`${titleId}-active-hint${errors.is_active ? ` ${titleId}-active-error` : ''}`}
+                                aria-invalid={errors.is_active ? true : undefined}
+                                onChange={(e) => set('is_active', e.target.checked)}
+                            />
                             {t('storeSettings.branches.field.active')}
                         </label>
-                        <p className="t-admin-caption text-fg-secondary">
+                        <p id={`${titleId}-active-hint`} className="t-admin-caption text-fg-secondary">
                             {location?.is_default
                                 ? t('storeSettings.branches.field.defaultActive')
                                 : lockActive
                                   ? t('storeSettings.branches.field.holdsStock')
                                   : t('storeSettings.branches.field.activeHint')}
                         </p>
-                        {errors.is_active && <p className="t-admin-caption text-fg-primary">{errors.is_active}</p>}
+                        {errors.is_active && (
+                            <p id={`${titleId}-active-error`} className="flex items-start gap-1 t-admin-caption text-fg-primary">
+                                <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
+                                {errors.is_active}
+                            </p>
+                        )}
                     </div>
                 </fieldset>
 
