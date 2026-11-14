@@ -45,7 +45,7 @@ it('lets super_admin through via Gate::before even with no permissions attached'
     $this->actingAs($user, 'web')->getJson('/api/v1/admin/staff')->assertOk();
 });
 
-it('lists staff as a cursor-paginated collection with no PII beyond name, email and roles', function (): void {
+it('lists staff as a cursor-paginated collection with no PII beyond name, email, roles and sign-in times', function (): void {
     $this->seed(RolesAndPermissionsSeeder::class);
     User::factory()->count(30)->withRole(Role::Viewer)->create();
     $manager = User::factory()->withRole(Role::Manager)->create()->refresh();
@@ -57,7 +57,7 @@ it('lists staff as a cursor-paginated collection with no PII beyond name, email 
         ->assertJsonPath('meta.per_page', 25)
         ->assertJsonPath('data.0.roles', ['viewer']);
 
-    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'email', 'is_active', 'roles'])
+    expect(array_keys($response->json('data.0')))->toBe(['id', 'name', 'email', 'is_active', 'roles', 'last_login_at', 'created_at', 'is_self'])
         ->and($response->json('meta.next_cursor'))->not->toBeNull();
 
     $next = $this->getJson('/api/v1/admin/staff?cursor='.$response->json('meta.next_cursor'))->assertOk();

@@ -225,12 +225,41 @@ After any rotation, run `php artisan toymart:launch:check`. It must not show new
 
 ## 10. Add or remove a staff member
 
-> **There is no Staff & roles screen yet.** The Figma frame B · 35 is not built; only a read-only staff list exists. Until it is, the developer runs these commands. Tell them the name, the email and the role.
+Use **Admin → Settings → Staff & roles** (`/admin/staff`). Only an owner (`super_admin`) can add or change staff; a manager can see the list but not change it. Every role change, deactivation and password reset is recorded in the audit log.
 
-**Roles, narrowest that fits:**
+**Roles, narrowest that fits** (the **Roles & permissions** tab shows exactly what each one can do):
 
 | Role | Who |
 |---|---|
+| `manager` | Runs the day, everything except staff and roles |
+| `order_operator` | Confirms orders, calls customers, books couriers |
+| `inventory_staff` | Receives stock, counts, adjusts |
+| `accountant` | Finance and reports |
+| `content_editor` | Products, pages, blog |
+| `viewer` | Looks, changes nothing |
+| `super_admin` | The owner only |
+
+**Add.** Press **Add staff**, enter the name, email, role and a temporary password (at least 12 characters). Give the password in person or by phone, never in the same message as the email. Ask them to change it after their first sign-in.
+
+**Remove** (someone leaves). Do it the same day: open their row (**…**) → **Deactivate** → confirm.
+
+- An inactive account cannot sign in. Its current admin session is refused on the next request, and its API tokens are revoked.
+- Staff are never deleted: orders and the audit log keep their name. **Reactivate** brings the account back.
+- If they knew any shared key (§9), rotate it.
+
+**Change a role or reset a password:** open their row (**…**). A new temporary password signs their other devices out of the API.
+
+**What the screen refuses, on purpose:** changing your own role, status or password, and anything that would leave the shop with no active owner. Make a second owner first. If the last owner is locked out, the developer can run, on the server:
+
+```bash
+php artisan tinker --execute '
+  $u = App\Models\User::where("email", "EMAIL")->firstOrFail();
+  $u->forceFill(["is_active" => true, "password" => "A-LONG-TEMPORARY-PASSWORD"])->save(); $u->syncRoles(["super_admin"]);'
+```
+
+Not built yet: two-factor sign-in, per-staff branches, a list of active sessions, shifts, a staff self-service "change my password", and editing what a role can do (roles are defined in code; a change goes through the developer).
+
+---|---|
 | `manager` | Runs the day, everything except staff and roles |
 | `order_operator` | Confirms orders, calls customers, books couriers |
 | `inventory_staff` | Receives stock, counts, adjusts |

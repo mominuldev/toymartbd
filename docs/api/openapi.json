@@ -256,6 +256,310 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
+            },
+            "post": {
+                "operationId": "v1.admin.staff.store",
+                "summary": "`POST /staff` \u2014 add a staff account with one role and a temporary password",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStaffRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StaffResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/staff/roles": {
+            "get": {
+                "operationId": "v1.admin.staff.roles",
+                "summary": "`GET /staff/roles` \u2014 every role, its permissions and how many active staff hold it,\nin Role enum order; needs staff.view. Read-only: roles are defined in code",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `StaffRoleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StaffRoleResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/staff/{user}": {
+            "patch": {
+                "operationId": "v1.admin.staff.update",
+                "summary": "`PATCH /staff/{user}` \u2014 rename and/or change the role",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStaffRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StaffResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Your own role, or the last active owner (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/staff/{user}/deactivate": {
+            "post": {
+                "operationId": "v1.admin.staff.deactivate",
+                "summary": "`POST /staff/{user}/deactivate` \u2014 they cannot sign in; history keeps their name",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StaffResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Yourself, or the last active owner (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/staff/{user}/reactivate": {
+            "post": {
+                "operationId": "v1.admin.staff.reactivate",
+                "summary": "`POST /staff/{user}/reactivate`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StaffResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StaffResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Yourself (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/staff/{user}/password": {
+            "post": {
+                "operationId": "v1.admin.staff.password",
+                "summary": "`POST /staff/{user}/password` \u2014 a new temporary password for someone else. 204",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetStaffPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Your own password (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/dashboard": {
@@ -50059,6 +50363,21 @@
                 },
                 "title": "ResendReportRunRequest"
             },
+            "ResetStaffPasswordRequest": {
+                "type": "object",
+                "description": "`POST /staff/{user}/password` \u2014 `{ password }`, a new temporary password; needs staff.manage.",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "password"
+                ],
+                "title": "ResetStaffPasswordRequest"
+            },
             "RestoreCartRequest": {
                 "type": "object",
                 "description": "`POST /cart/restore` `{token}` \u2014 the token from a recovery SMS link (P7).",
@@ -50604,6 +50923,20 @@
                     "served"
                 ],
                 "title": "RobotsTxt"
+            },
+            "Role": {
+                "type": "string",
+                "description": "The 7 launch roles (DATABASE-DESIGN \u00a73.10, PRD P-01) and the single source of truth for the role \u2192 permission matrix. The seeder and the tests both read {@see self::permissions()}. super_admin is seeded with every permission AND bypasses all gates via Gate::before (App\\Providers\\AuthServiceProvider); it is the only role that bypasses.\n",
+                "enum": [
+                    "super_admin",
+                    "manager",
+                    "order_operator",
+                    "inventory_staff",
+                    "accountant",
+                    "content_editor",
+                    "viewer"
+                ],
+                "title": "Role"
             },
             "SalesAnalytics": {
                 "type": "object",
@@ -53432,6 +53765,21 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "last_login_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_self": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -53439,9 +53787,40 @@
                     "name",
                     "email",
                     "is_active",
-                    "roles"
+                    "roles",
+                    "last_login_at",
+                    "created_at",
+                    "is_self"
                 ],
                 "title": "StaffResource"
+            },
+            "StaffRoleResource": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "users_count": {
+                        "type": "integer"
+                    },
+                    "bypasses_all": {
+                        "type": "boolean",
+                        "description": "super_admin passes every check (Gate::before), whatever is listed."
+                    }
+                },
+                "required": [
+                    "key",
+                    "permissions",
+                    "users_count",
+                    "bypasses_all"
+                ],
+                "title": "StaffRoleResource"
             },
             "StockAdjustmentReason": {
                 "type": "string",
@@ -55069,6 +55448,37 @@
                     "reason"
                 ],
                 "title": "StoreReturnRequest"
+            },
+            "StoreStaffRequest": {
+                "type": "object",
+                "description": "`POST /staff` \u2014 `{ name, email, role, password }`; needs staff.manage. The password is\na temporary one the owner gives the new person in person or by phone, never in the\nsame message as the email (RUNBOOK \u00a710). Email is stored lower-case.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 120
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "name",
+                    "email",
+                    "role",
+                    "password"
+                ],
+                "title": "StoreStaffRequest"
             },
             "StoreStockAdjustmentRequest": {
                 "type": "object",
@@ -62499,6 +62909,21 @@
                     }
                 },
                 "title": "UpdateShipmentRiderRequest"
+            },
+            "UpdateStaffRequest": {
+                "type": "object",
+                "description": "`PATCH /staff/{user}` \u2014 `{ name?, role? }`; needs staff.manage. Email is not editable:\nit is the sign-in name and appears in the audit trail. Add a new account instead.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 120
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    }
+                },
+                "title": "UpdateStaffRequest"
             },
             "UpdateSupplierRequest": {
                 "type": "object",

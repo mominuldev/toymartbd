@@ -355,6 +355,15 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10: Staff & roles screen (2026-11-14)
+
+**Done, with passing tests** (see the PR for counts). Closes the Gate 5 gap "Staff & roles screen (B · 35) not built".
+- **API** (`App\Domain\Staff`, new deptrac layer → Support, Models): `GET /staff/roles` (each role's permissions from `Role::permissions()` and its active-holder count), `POST /staff`, `PATCH /staff/{user}` (name, role), `POST /staff/{user}/deactivate|reactivate|password`. Writes need `staff.manage`; every role change, status change and password reset writes `audit_sensitive` (never the password). 409 `conflict` for changing yourself, or for demoting/deactivating the last active owner (owners read `FOR UPDATE`). Deactivation and password reset revoke API tokens. `StaffResource` adds `last_login_at`, `created_at`, `is_self`.
+- **Admin** (`features/staff`, Figma B · 35 `241:48916`): People tab (avatar, name, email, role, status, last sign-in, "…" → manage dialog: rename, role, new temporary password, deactivate with confirm / reactivate) and Roles & permissions — the PermissionMatrix as a **read-only** grid grouped by area, owner column locked. EN + BN. Playwright `e2e/admin/staff.spec.ts`: add → the new person signs in with only their role's access → role change → deactivate → their session and sign-in are refused.
+- **Not built (no backend):** the frame's Two-factor and Branch columns, Sessions and Shifts tabs, Audit log button (Activity log B · 39 unbuilt), email invites, editable roles, staff self-service password change.
+
+**Owner decisions open:** two-factor for staff who see money (the frame's subtitle); whether roles must become editable in the admin (today they are code + seeder, which keeps the role test matrix exact).
+
 ### Progress — Phase 10 preparation (2026-11-14)
 
 **Done, with passing tests** (3714 PHP, 13 skipped; 409 admin Vitest; 485 storefront unit; storefront Playwright 179 incl. CSP specs; deploy/rollback rehearsal 17/17; shellcheck + actionlint clean; PHPStan, Pint, deptrac, typecheck, i18n lint clean). No real infrastructure exists, so everything is provider-agnostic, off until configured, and proven locally.

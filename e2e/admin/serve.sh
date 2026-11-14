@@ -20,6 +20,10 @@ export DEMO_SEED_IMAGES=false
 export DEMO_SEED_TRANSACTIONS=false
 # Every spec signs in; the production limit (5/min) would throttle the sixth.
 export AUTH_LOGIN_PER_MINUTE=60
+# …and the per-account limit (10 / 15 min): every spec signs the same owner in.
+export AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN=200
 
 "$PHP_BIN" artisan migrate:fresh --seed --force >/dev/null
+# The file cache outlives migrate:fresh: drop last run's sign-in counters.
+"$PHP_BIN" artisan cache:clear >/dev/null
 exec "$PHP_BIN" artisan serve --host=localhost --port=8124 --no-reload

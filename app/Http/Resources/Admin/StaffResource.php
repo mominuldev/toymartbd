@@ -9,15 +9,16 @@ use App\Models\User;
 use Illuminate\Http\Request;
 
 /**
- * A staff account in the staff list. Deliberately minimal: no password hash,
- * remember token, timestamps or anything beyond name, email, roles and status.
+ * A staff account in the staff list. Deliberately minimal: no password hash, remember
+ * token or anything beyond name, email, roles, status and when they last signed in.
+ * `is_self` lets the screen hide actions the API would refuse on yourself.
  *
  * @property User $resource
  */
 final class StaffResource extends ApiResource
 {
     /**
-     * @return array{id: int, name: string, email: string, is_active: bool, roles: list<string>}
+     * @return array{id: int, name: string, email: string, is_active: bool, roles: list<string>, last_login_at: string|null, created_at: string|null, is_self: bool}
      */
     public function toArray(Request $request): array
     {
@@ -33,6 +34,9 @@ final class StaffResource extends ApiResource
             'is_active' => $user->is_active,
             /** @var list<string> */
             'roles' => $roles,
+            'last_login_at' => $user->last_login_at?->toIso8601String(),
+            'created_at' => $user->created_at?->toIso8601String(),
+            'is_self' => $request->user()?->getAuthIdentifier() === $user->getKey(),
         ];
     }
 }

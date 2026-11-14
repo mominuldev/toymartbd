@@ -139,11 +139,17 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Monitoring\\(?!Events\\)#'
+    # Staff (P10, B · 35): staff accounts and role assignment. Writes only `users` and the
+    # role pivot, audits to `audit_sensitive`; nothing else depends on it but Http.
+    - name: Staff
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Staff\\(?!Events\\)#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -188,3 +194,4 @@ deptrac:
     Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing, Payment]
     # Monitoring reads the domains it watches (P10); nothing depends on it except Http and Providers.
     Monitoring: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Fulfilment, Notification, NotificationContracts]
+    Staff: [Support, Models]

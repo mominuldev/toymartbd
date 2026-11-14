@@ -83,7 +83,96 @@ export interface paths {
         /** `GET /staff` — cursor-paginated `{ data, links, meta }`, needs staff.view */
         get: operations["v1.admin.staff.index"];
         put?: never;
+        /** `POST /staff` — add a staff account with one role and a temporary password */
+        post: operations["v1.admin.staff.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /staff/roles` — every role, its permissions and how many active staff hold it,
+         *     in Role enum order; needs staff.view. Read-only: roles are defined in code
+         */
+        get: operations["v1.admin.staff.roles"];
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** `PATCH /staff/{user}` — rename and/or change the role */
+        patch: operations["v1.admin.staff.update"];
+        trace?: never;
+    };
+    "/admin/staff/{user}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /staff/{user}/deactivate` — they cannot sign in; history keeps their name */
+        post: operations["v1.admin.staff.deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/{user}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /staff/{user}/reactivate` */
+        post: operations["v1.admin.staff.reactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/{user}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /staff/{user}/password` — a new temporary password for someone else. 204 */
+        post: operations["v1.admin.staff.password"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11317,6 +11406,13 @@ export interface components {
             user_id?: number | null;
         };
         /**
+         * ResetStaffPasswordRequest
+         * @description `POST /staff/{user}/password` — `{ password }`, a new temporary password; needs staff.manage.
+         */
+        ResetStaffPasswordRequest: {
+            password: string;
+        };
+        /**
          * RestoreCartRequest
          * @description `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7).
          */
@@ -11467,6 +11563,12 @@ export interface components {
             sitemap_url: string;
             served: string;
         };
+        /**
+         * Role
+         * @description The 7 launch roles (DATABASE-DESIGN §3.10, PRD P-01) and the single source of truth for the role → permission matrix. The seeder and the tests both read {@see self::permissions()}. super_admin is seeded with every permission AND bypasses all gates via Gate::before (App\Providers\AuthServiceProvider); it is the only role that bypasses.
+         * @enum {string}
+         */
+        Role: "super_admin" | "manager" | "order_operator" | "inventory_staff" | "accountant" | "content_editor" | "viewer";
         /** SalesAnalytics */
         SalesAnalytics: {
             range: {
@@ -12157,6 +12259,17 @@ export interface components {
             email: string;
             is_active: boolean;
             roles: string[];
+            last_login_at: string | null;
+            created_at: string | null;
+            is_self: boolean;
+        };
+        /** StaffRoleResource */
+        StaffRoleResource: {
+            key: string;
+            permissions: string[];
+            users_count: number;
+            /** @description super_admin passes every check (Gate::before), whatever is listed. */
+            bypasses_all: boolean;
         };
         /**
          * StockAdjustmentReason
@@ -12609,6 +12722,19 @@ export interface components {
             reason_note?: string | null;
             /** @description Also refund the delivery charge (at most once per order). */
             refund_shipping?: boolean;
+        };
+        /**
+         * StoreStaffRequest
+         * @description `POST /staff` — `{ name, email, role, password }`; needs staff.manage. The password is
+         *     a temporary one the owner gives the new person in person or by phone, never in the
+         *     same message as the email (RUNBOOK §10). Email is stored lower-case.
+         */
+        StoreStaffRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            role: components["schemas"]["Role"];
+            password: string;
         };
         /**
          * StoreStockAdjustmentRequest
@@ -14491,6 +14617,15 @@ export interface components {
             rider_phone?: string | null;
         };
         /**
+         * UpdateStaffRequest
+         * @description `PATCH /staff/{user}` — `{ name?, role? }`; needs staff.manage. Email is not editable:
+         *     it is the sign-in name and appears in the audit trail. Add a new account instead.
+         */
+        UpdateStaffRequest: {
+            name?: string;
+            role?: components["schemas"]["Role"];
+        };
+        /**
          * UpdateSupplierRequest
          * @description `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change.
          *     `status: active` restores an archived supplier. Needs purchasing.manage_suppliers.
@@ -14779,6 +14914,207 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.staff.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreStaffRequest"];
+            };
+        };
+        responses: {
+            /** @description `StaffResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StaffRoleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StaffRoleResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.staff.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateStaffRequest"];
+            };
+        };
+        responses: {
+            /** @description `StaffResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Your own role, or the last active owner (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StaffResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Yourself, or the last active owner (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StaffResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Yourself (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetStaffPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Your own password (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.dashboard": {
