@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { InfoIcon } from '@phosphor-icons/react';
+import { ImageIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { updateInvoiceSettingsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -11,8 +11,11 @@ import { Button } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
+import { IconButton } from '@/components/ui/IconButton';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
+import type { Media } from '@/features/media';
+import { MediaPickerModal, type InsertFailure } from '@/features/media/picker';
 import { useInvoiceSettings, useSaveInvoiceSettings, type InvoiceSettings, type InvoiceSettingsInput } from './api';
 
 const FORM_ID = 'invoice-settings';
@@ -20,6 +23,7 @@ const FORM_ID = 'invoice-settings';
 const textFields = ['name_en', 'name_bn', 'address_en', 'address_bn', 'trade_licence', 'bin', 'hotline', 'email', 'website', 'footer_en', 'footer_bn'] as const;
 type TextField = (typeof textFields)[number];
 type FormValues = Record<TextField, string>;
+type Logo = { id: number; url: string | null } | null;
 
 const validateInput = zodResolver(updateInvoiceSettingsRequestSchema);
 
@@ -27,7 +31,11 @@ function toForm(s: InvoiceSettings): FormValues {
     return Object.fromEntries(textFields.map((f) => [f, s[f] ?? ''])) as FormValues;
 }
 
-/** The logo is kept as it is (chosen in the media library, not on this form). */
+function toLogo(s: InvoiceSettings): Logo {
+    return s.logo_media_id === null ? null : { id: s.logo_media_id, url: s.logo_url };
+}
+
+/** The logo is a media library image, chosen with the picker (P9) and saved with the form. */
 function toInput(v: FormValues, logo: number | null): InvoiceSettingsInput {
     const out: Record<string, string | number | null> = { logo_media_id: logo };
     for (const f of textFields) out[f] = v[f].trim() === '' ? null : v[f].trim();
@@ -36,9 +44,9 @@ function toInput(v: FormValues, logo: number | null): InvoiceSettingsInput {
 
 /**
  * Settings → Invoice details (P8, PRD N-13): the business identity printed on invoices — name,
- * address (EN + BN), trade licence, BIN, hotline. Follows the "Business" card of Store settings
- * (B · 38 241:50827): ContentHeader with "Save changes", a FormSection with two-column fields.
- * A save affects invoices issued from now on; every issued invoice keeps its own snapshot.
+ * address (EN + BN), trade licence, BIN, hotline, logo (P9). Follows the "Business" card of Store
+ * settings (B · 38 241:50827): ContentHeader with "Save changes", a FormSection with two-column
+ * fields. A save affects invoices issued from now on; every issued invoice keeps its own snapshot.
  */
 export function InvoiceSettingsPage() {
     const { t } = useI18n();
@@ -57,18 +65,23 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
     const { t } = useI18n();
     const { notify } = useToast();
     const save = useSaveInvoiceSettings();
+    const [logo, setLogo] = useState<Logo>(toLogo(settings));
+    const [logoError, setLogoError] = useState<string | null>(null);
     const { register, handleSubmit, setError, formState, reset } = useForm<FormValues>({
         defaultValues: toForm(settings),
         // Validate the payload the API will receive, against the API's own schema (rule 27).
         resolver: async (values, context, options) => {
-            const result = await validateInput(toInput(values, settings.logo_media_id), context, options as never);
+            const result = await validateInput(toInput(values, logo?.id ?? null), context, options as never);
             return Object.keys(result.errors).length > 0 ? { values: {}, errors: result.errors as never } : { values, errors: {} };
         },
     });
-    useEffect(() => reset(toForm(settings)), [settings, reset]);
+    useEffect(() => {
+        reset(toForm(settings));
+        setLogo(toLogo(settings));
+    }, [settings, reset]);
 
     const submit = handleSubmit((values) =>
-        save.mutate(toInput(values, settings.logo_media_id), {
+        save.mutate(toInput(values, logo?.id ?? null), {
             onSuccess: () => notify(t('invoiceSettings.saved')),
             onError: (error) => {
                 if (error instanceof ApiError && error.status === 422) {
@@ -76,6 +89,7 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
                         const message = error.fieldError(field);
                         if (message) setError(field as FieldPath<FormValues>, { message });
                     }
+                    setLogoError(error.fieldError('logo_media_id') ?? null);
                 } else {
                     notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger');
                 }
@@ -135,6 +149,17 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
                             {text('website')}
                         </div>
                     </FormSection>
+                    <FormSection title={t('invoiceSettings.logo')} description={t('invoiceSettings.logoHint')}>
+                        <LogoField
+                            value={logo}
+                            disabled={!editable || save.isPending}
+                            error={logoError}
+                            onChange={(next) => {
+                                setLogo(next);
+                                setLogoError(null);
+                            }}
+                        />
+                    </FormSection>
                     <FormSection title={t('invoiceSettings.footer')} description={t('invoiceSettings.footerHint')}>
                         <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                             {text('footer_en')}
@@ -144,5 +169,55 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
                 </fieldset>
             </form>
         </section>
+    );
+}
+
+/**
+ * The invoice logo (P9): one ready library image, chosen with the media picker (Figma
+ * MediaPickerModal 294:2661) and previewed on a subtle tile. Saved with the rest of the form;
+ * invoices issued afterwards print it, issued ones keep theirs.
+ */
+function LogoField({ value, onChange, disabled, error }: { value: Logo; onChange: (next: Logo) => void; disabled: boolean; error: string | null }) {
+    const { t } = useI18n();
+    const [picking, setPicking] = useState(false);
+
+    const insert = async (picked: Media[]): Promise<InsertFailure[]> => {
+        const media = picked[0];
+        if (!media) return [];
+        if (media.processing_status !== 'ready') return [{ media, reason: t('invoiceSettings.logoNotReady') }];
+        onChange({ id: media.id, url: media.urls.thumb ?? media.urls.medium });
+        setPicking(false);
+        return [];
+    };
+
+    return (
+        <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-3">
+                <span className="grid h-16 w-40 shrink-0 place-items-center overflow-hidden rounded-sm border border-line-default bg-subtle">
+                    {value?.url ? <img src={value.url} alt="" className="size-full object-contain" /> : <ImageIcon size={24} aria-hidden className="text-fg-tertiary" />}
+                </span>
+                <Button variant="outline" size="sm" disabled={disabled} onClick={() => setPicking(true)}>
+                    {value ? t('invoiceSettings.logoReplace') : t('invoiceSettings.logoChoose')}
+                </Button>
+                {value && (
+                    <IconButton aria-label={t('invoiceSettings.logoRemove')} disabled={disabled} onClick={() => onChange(null)}>
+                        <TrashIcon size={16} aria-hidden />
+                    </IconButton>
+                )}
+            </div>
+            {!value && <p className="t-admin-caption text-fg-secondary">{t('invoiceSettings.logoNone')}</p>}
+            {error && (
+                <p className="t-admin-caption text-feedback-danger" role="alert">
+                    {error}
+                </p>
+            )}
+            {picking && (
+                <MediaPickerModal
+                    context={{ title: t('invoiceSettings.logoPicker'), multiple: false, max: 1, kinds: ['image'], defaultFolder: 'pages', ratio: null }}
+                    onInsert={insert}
+                    onClose={() => setPicking(false)}
+                />
+            )}
+        </div>
     );
 }

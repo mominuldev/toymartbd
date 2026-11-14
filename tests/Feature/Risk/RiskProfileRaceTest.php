@@ -20,18 +20,19 @@ use Tests\Feature\Risk\RiskKit;
  * never duplicated, never double counted.
  */
 
-/** Simulates the other worker committing its insert between our SELECT … FOR UPDATE and INSERT. */
+/**
+ * Simulates the other worker committing its insert between our plain existence check and our
+ * INSERT (P9: the row is now inserted before it is locked — LOAD-AND-CONCURRENCY F-6).
+ */
 function raceAnotherWorkerOnFirstInsert(string $phone): object
 {
     $state = new class
     {
-        public int $creates = 0;
+        public int $raced = 0;
     };
-    CustomerRiskProfile::creating(function (CustomerRiskProfile $p) use ($phone, $state): void {
-        if ($p->phone !== $phone) {
-            return; // the order's customer phone gets its own profile
-        }
-        if (++$state->creates === 1) {
+    DB::listen(function (Illuminate\Database\Events\QueryExecuted $q) use ($phone, $state): void {
+        if ($state->raced === 0 && str_contains($q->sql, 'exists') && str_contains($q->sql, 'customer_risk_profiles') && in_array($phone, $q->bindings, true)) {
+            $state->raced++;
             DB::table('customer_risk_profiles')->insert([
                 'phone' => $phone, 'total_orders' => 99, 'status' => 'normal',
                 'created_at' => now(), 'updated_at' => now(),
@@ -42,17 +43,16 @@ function raceAnotherWorkerOnFirstInsert(string $phone): object
     return $state;
 }
 
-it('retries a rebuild that lost the duplicate-insert race, then updates the winner row', function (): void {
+it('absorbs a rebuild that lost the first-insert race, then updates the winner row', function (): void {
     $order = Order::factory()->create(['shipping_phone' => RiskKit::PHONE, 'shipping_name' => 'রাহেলা খাতুন']);
     $state = raceAnotherWorkerOnFirstInsert(RiskKit::PHONE);
 
     app(RefreshProfileOnOrderChange::class)->handle(new OrderPlaced($order->id, $order->customer_id));
 
     $profile = CustomerRiskProfile::query()->where('phone', RiskKit::PHONE)->sole();
-    // On one SQLite connection the racer's insert rolls back with our savepoint, so the
-    // retry inserts again; on MySQL (test below) the retry finds and locks the winner's row.
-    expect($state->creates)->toBe(2)                 // the unique violation was retried
-        ->and($profile->total_orders)->toBe(1)       // recomputed from orders
+    // The INSERT IGNORE skips the racer's row; the lock finds it and the rebuild recomputes it.
+    expect($state->raced)->toBe(1)
+        ->and($profile->total_orders)->toBe(1)       // recomputed from orders, not the racer's 99
         ->and($profile->score_computed_at)->not->toBeNull();
 });
 

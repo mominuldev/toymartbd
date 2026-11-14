@@ -116,6 +116,7 @@ const settings: InvoiceSettings = {
     trade_licence: null,
     bin: null,
     logo_media_id: 12,
+    logo_url: 'http://localhost/storage/media/logo/320.webp',
     footer_en: null,
     footer_bn: null,
     placeholders: ['name_bn', 'address_en', 'address_bn', 'trade_licence', 'bin'],
@@ -230,6 +231,23 @@ describe('invoices', () => {
         const call = calls.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')!;
         expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({ name_en: 'Toy Mart BD', bin: '000111222-0101', name_bn: null, logo_media_id: 12 });
         expect(await screen.findByText('Invoice details saved. New invoices will use them.')).toBeTruthy();
+    });
+
+    it('shows the chosen logo and removes it with the next save (P9)', async () => {
+        const calls = invoicesApi(manager);
+        renderApp('/settings/invoice');
+
+        await screen.findByLabelText(/BIN/);
+        expect(document.querySelector('img[src="http://localhost/storage/media/logo/320.webp"]')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Replace logo' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
+        expect(screen.getByText('No logo — invoices print the business name only')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Choose logo' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toBe(true));
+        const call = calls.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')!;
+        expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({ logo_media_id: null });
     });
 
     it('shows the details read-only without settings.update', async () => {

@@ -45,7 +45,12 @@ jobs:
       - name: deptrac
         run: vendor/bin/deptrac analyse --no-progress
       - name: Pest (SQLite)
+        env:
+          # Every route a RoleMatrix assertion reaches is appended here (tests/Support/RoleMatrixCoverage.php).
+          ROLE_MATRIX_COVERAGE_FILE: ${{ runner.temp }}/role-matrix-coverage.log
         run: php artisan test --parallel
+      - name: Role matrix coverage (rule 21)
+        run: php scripts/role-matrix-coverage.php verify "${{ runner.temp }}/role-matrix-coverage.log"
       - name: Pest (MySQL 8.4 group — collation, locking)
         env:
           DB_CONNECTION: mysql
@@ -54,6 +59,19 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: secret
         run: vendor/bin/pest --group=mysql
+      - name: Load harness (MySQL — checkout, flash burst, bulk booking at 10x)
+        # tests/Load/README.md. Its own throwaway database; asserts no oversell, unique gap-free
+        # numbers, flash allotment never exceeded, each bulk booking submitted exactly once, 0 errors.
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: toymartbd_load
+          DB_USERNAME: root
+          DB_PASSWORD: secret
+        run: |
+          mysql -h 127.0.0.1 -uroot -psecret -e "CREATE DATABASE IF NOT EXISTS toymartbd_load CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
+          # p95 is loose here: a shared 4-vCPU runner proves correctness, not latency (staging run = owner).
+          php tests/Load/run.php --port=8341 --workers=16 --queue-workers=4 --p95-ms=15000 --report="${{ runner.temp }}/load-report.json"
 
   frontend:
     name: Frontend — tokens, typecheck, admin build
@@ -103,7 +121,7 @@ jobs:
         run: npm run test:storefront
       - name: Build
         run: npm run build:storefront
-      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles, Bangla layout at 390/1440, golden path in both locales
+      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles, Bangla layout at 390/1440, golden path in both locales, axe + keyboard in both locales, performance budgets (UI-UX §8)
         env:
           CI: '1'
         run: npm run test:e2e:storefront

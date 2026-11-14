@@ -9,6 +9,12 @@ import { blogMessages } from '@/lib/blog/messages';
 // Blog index (Phase 7): every live post and guide, newest first, numbered pages, category chips.
 // ISR by tag `content:blog` (lib/blog/fetch.ts). No Figma frame for this page yet.
 
+// Per-request: the root layout's empty generateStaticParams would otherwise make this an ISR
+// route, and reading searchParams (`?page=`) there fails the render with a 500
+// (DYNAMIC_SERVER_USAGE) — found by the Phase 9 accessibility sweep. The API reads stay cached
+// under `content:blog` (lib/blog/fetch.ts).
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ locale: string }>;
     searchParams: Promise<{ page?: string | string[] }>;

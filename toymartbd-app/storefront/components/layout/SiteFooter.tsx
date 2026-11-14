@@ -4,7 +4,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
 import type { FooterMenuColumn } from '@/lib/content/types';
-import { contact, footerColumns, legal, social, type FooterColumn } from '@/lib/site-config';
+import { cmsPaths, contact, footerColumns, legal, social, type FooterColumn } from '@/lib/site-config';
 import { buttonClass, buttonIconClass } from './button-styles';
 import { ContactDetail } from './ContactDetail';
 import { FooterLogotype } from './FooterLogotype';
@@ -44,7 +44,7 @@ export function SiteFooter({ locale, path, menu = null }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
     const year = String(new Date().getFullYear());
-    const whatsappHref = contact.whatsapp.placeholder ? localizedPath(locale, '/pages/contact') : contact.whatsapp.href;
+    const whatsappHref = contact.whatsapp.placeholder ? localizedPath(locale, cmsPaths.contact) : contact.whatsapp.href;
 
     return (
         <footer className="mt-section-mobile rounded-t-xl-plus bg-surface shadow-up-footer px-gutter-mobile pt-5.5 pb-[calc(--spacing(22)+env(safe-area-inset-bottom))] lg:mt-section-desktop lg:rounded-t-3xl lg:px-gutter-desktop lg:py-7">
@@ -181,7 +181,7 @@ export function SiteFooter({ locale, path, menu = null }: Props) {
                     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
                         {/* Reopens the consent banner (falls back to the privacy policy without JS). */}
                         <CookieSettingsLink
-                            href={localizedPath(locale, '/pages/privacy')}
+                            href={localizedPath(locale, cmsPaths.privacy)}
                             label={t.consent.settings}
                             className="t-caption rounded-xs font-semibold text-fg-secondary underline underline-offset-4 hover:text-fg-primary"
                         />

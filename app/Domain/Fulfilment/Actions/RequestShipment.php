@@ -26,10 +26,17 @@ use Illuminate\Support\Facades\DB;
  *
  * COMMIT, then (unless the caller batches them) BookShipment is queued on `courier` — the
  * courier is never called while a lock is held (rule 4).
+ *
+ * Lock order: order row → shipment counter row. The counter row is created before the
+ * transaction, and a deadlock or lock-wait victim is retried (P9, LOAD-AND-CONCURRENCY F-2):
+ * two staff bulk-requesting at once used to deadlock on the counter, and an exception
+ * mid-way through RequestShipments lost the outcomes of the orders already requested.
  */
 final readonly class RequestShipment
 {
     public const int NOTE_MAX = 500;
+
+    private const int ATTEMPTS = 3;
 
     public function __construct(
         private ShippableOrders $orders,
@@ -56,6 +63,8 @@ final readonly class RequestShipment
         }
         $note = $note !== null && trim($note) !== '' ? mb_substr(trim($note), 0, self::NOTE_MAX) : null;
 
+        $this->numbers->prepare();
+
         $shipment = DB::transaction(function () use ($orderId, $provider, $courierLocationId, $weightGrams, $note, $userId): Shipment {
             $order = $this->orders->lockForShipment($orderId) ?? throw ShipmentNotRequestable::orderMissing($orderId);
             if (! $order->canShip) {
@@ -80,7 +89,7 @@ final readonly class RequestShipment
                 'note' => $note,
                 'requested_by' => $userId,
             ]);
-        });
+        }, self::ATTEMPTS);
 
         if ($dispatch) {
             BookShipment::dispatch($shipment->id, $userId);

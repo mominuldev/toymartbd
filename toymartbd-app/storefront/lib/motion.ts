@@ -32,3 +32,33 @@ export function space(step: string): number {
 export function prefersReducedMotion(): boolean {
     return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+/**
+ * Opacity/transform keyframes through the browser's own Web Animations API (Phase 9 performance:
+ * this replaced the `motion` package, ~21 KB of gzipped JS on the listing and product pages, for the
+ * two effects the storefront uses). Durations and easing still come from the motion tokens.
+ */
+export function play(el: HTMLElement, keyframes: Keyframe[], length: MotionDuration, curve: MotionEase): void {
+    if (typeof el.animate !== 'function') return;
+    el.animate(keyframes, { duration: duration(length) * 1000, easing: `cubic-bezier(${ease(curve).join(',')})`, fill: 'none' });
+}
+
+/** Calls `onEnter` once, when at least `amount` of `el` is in the viewport. Returns a stop function. */
+export function onceInView(el: Element, onEnter: () => void, amount = 0.15): () => void {
+    if (typeof IntersectionObserver === 'undefined') {
+        onEnter();
+        return () => {};
+    }
+    const observer = new IntersectionObserver(
+        (entries) => {
+            if (entries.some((e) => e.isIntersecting)) {
+                observer.disconnect();
+                onEnter();
+            }
+        },
+        { threshold: amount },
+    );
+    observer.observe(el);
+
+    return () => observer.disconnect();
+}

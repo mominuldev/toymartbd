@@ -26,6 +26,9 @@ export function Wordmark({ locale, size = 'responsive' }: Props) {
                 <span className="text-fg-brand">{w.first}</span>
                 {w.second}
             </span>
+            {/* A space the flex layout drops: the text reads "ToyMart BD", which the link's accessible
+                name (nav.logoAria) starts with — WCAG 2.5.3 label in name. */}
+            {' '}
             <span className={`${pick('t-wordmark-tag-sm', 't-wordmark-tag-md', 't-wordmark-tag-sm lg:t-wordmark-tag-md')} rounded-full bg-accent px-1.5 text-fg-on-accent`}>{w.tag}</span>
         </span>
     );

@@ -147,6 +147,11 @@ Pages that are not wired yet carry a `// SEO: agent 4` marker.
   alternates for `en`, `bn` and `x-default`. Excluded: not live, `robots` noindex,
   `sitemap_exclude`, a `canonical_url` override (the page canonicalises elsewhere), products not in
   the online store channel.
+  The `static` partition lists `/`, the listing roots (`/toys`, `/categories`, `/brands`, plus
+  `/blog` and `/guides` when they have posts) and the storefront's own indexable routes
+  (`SitemapBuilder::STATIC_PAGES`: `/delivery-charge`, `/flash-sale`, `/track`, and `/pages/about`
+  while no live CMS `about` page lists it in `pages`). **A URL the served robots.txt blocks is never
+  listed** (`RobotsTxt::allows()`, Google's longest-match rules, checked per locale path).
 - The storefront serves `/sitemap.xml`, `/sitemaps/{file}` and `/robots.txt` from these
   endpoints (cached, tags `sitemaps` / `robots`). `robots.txt` always ends with
   `Sitemap: {STOREFRONT_URL}/sitemap.xml`; the admin editor accepts only `User-agent`, `Allow`,

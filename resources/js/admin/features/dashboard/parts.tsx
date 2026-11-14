@@ -175,10 +175,10 @@ export function StatusStrip({ counts }: { counts: NonNullable<Dashboard['status'
                         <li key={key} className="shrink-0">
                             <Link
                                 to={`/orders?tab=${key}`}
-                                aria-label={t('dash.status.link', { status: label, count: formatCount(counts[key]) })}
                                 className={`flex h-8 items-center gap-1 rounded-sm border px-2.5 t-admin-caption-strong text-fg-primary ${key === 'pending' ? 'border-line-brand bg-brand-subtle' : 'border-line-default bg-surface'}`}
                             >
                                 {label} <span className="tabular">{formatCount(counts[key])}</span>
+                                {' '}<span className="sr-only">— {t('dash.status.link')}</span>
                             </Link>
                         </li>
                     );
@@ -191,7 +191,7 @@ export function StatusStrip({ counts }: { counts: NonNullable<Dashboard['status'
                     const body = (
                         <>
                             <CellIcon size={14} aria-hidden className="text-fg-primary" />
-                            <span className={`t-admin-num-lg tabular ${count === 0 ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{formatCount(count)}</span>
+                            <span className={`t-admin-num-lg tabular ${count === 0 ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{formatCount(count)}</span>{' '}
                             <span className="t-admin-caption text-fg-secondary text-center">{label}</span>
                         </>
                     );
@@ -199,8 +199,9 @@ export function StatusStrip({ counts }: { counts: NonNullable<Dashboard['status'
                     return (
                         <li key={key} className="border-l border-line-default first:border-l-0 [&:nth-child(7)]:border-l-0 xl:[&:nth-child(7)]:border-l lg:[&:nth-child(n+7)]:border-t xl:[&:nth-child(n+7)]:border-t-0">
                             {count > 0 ? (
-                                <Link to={`/orders?tab=${key}`} aria-label={t('dash.status.link', { status: label, count: formatCount(count) })} className={`${cell} hover:bg-subtle`}>
+                                <Link to={`/orders?tab=${key}`} className={`${cell} hover:bg-subtle`}>
                                     {body}
+                                    {' '}<span className="sr-only">— {t('dash.status.link')}</span>
                                 </Link>
                             ) : (
                                 <div className={cell}>{body}</div>

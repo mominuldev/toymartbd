@@ -25,6 +25,7 @@ final readonly class CompleteMediaRenditions
     public function handle(int $mediaId, string $base, array $result): void
     {
         DB::transaction(function () use ($mediaId, $base, $result): void {
+            $this->mirror->lockLinkedImages($mediaId);
             $media = Media::query()->lockForUpdate()->find($mediaId);
 
             if ($media === null || $media->base_path !== $base) {
@@ -39,12 +40,13 @@ final readonly class CompleteMediaRenditions
             ])->save();
 
             $this->mirror->sync($media);
-        });
+        }, ProductImageMediaMirror::ATTEMPTS);
     }
 
     public function fail(int $mediaId): void
     {
         DB::transaction(function () use ($mediaId): void {
+            $this->mirror->lockLinkedImages($mediaId);
             $media = Media::query()->lockForUpdate()->find($mediaId);
 
             if ($media === null || $media->processing_status !== ImageProcessingStatus::Processing) {
@@ -55,6 +57,6 @@ final readonly class CompleteMediaRenditions
             $media->save();
 
             $this->mirror->sync($media, revalidate: false);
-        });
+        }, ProductImageMediaMirror::ATTEMPTS);
     }
 }

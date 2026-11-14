@@ -112,13 +112,16 @@ function robotsOf(value: string | null | undefined): Robots {
 /** A post's metadata: its seo_meta overrides per locale, else title and excerpt; OG article dates. */
 export function postMetadata(post: BlogPost, locale: Locale, options: { preview?: boolean } = {}): Metadata {
     const title = postTitle(post, locale).text;
-    const seoTitle = pickOptional(locale, post.seo.title, post.seo.title_bn);
+    const seoTitle = pickOptional(locale, post.seo.title, post.seo.title_bn)?.trim() || null;
     const description = pickOptional(locale, post.seo.description, post.seo.description_bn) ?? pickOptional(locale, post.excerpt, post.excerpt_bn);
     const image = post.seo.og_image ? { url: post.seo.og_image } : post.cover ? { url: post.cover.url, width: post.cover.width, height: post.cover.height, alt: pickOptional(locale, post.cover.alt, post.cover.alt_bn) } : null;
     return buildMetadata({
         locale,
         path: postPath(post),
+        // A stored SEO title is the complete <title> (the admin's SERP preview shows it as-is, and
+        // GET /storefront/seo/{type}/{slug} serves it unchanged): never append the site name again.
         title: seoTitle ?? title,
+        absoluteTitle: seoTitle !== null,
         description,
         image,
         ogType: 'article',

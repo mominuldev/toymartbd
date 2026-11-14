@@ -41,11 +41,15 @@ it('guards categories, tags and authors', function (string $path): void {
 
         return $this->postJson("/api/v1/admin/blog/{$path}", ['name' => 'Term '.$n]);
     }, 201);
-    $id = $this->postJson("/api/v1/admin/blog/{$path}", ['name' => 'Target'])->json('id');
-    if ($id !== null) {
-        RoleMatrix::assert($this, Permission::ContentView, fn () => $this->getJson("/api/v1/admin/blog/{$path}/{$id}"));
-        RoleMatrix::assert($this, Permission::ContentManage, fn () => $this->patchJson("/api/v1/admin/blog/{$path}/{$id}", ['name' => 'Renamed']));
-    }
+    // Made directly: the last matrix role (a viewer) cannot create one, and a silent `if ($id)`
+    // here once skipped these two matrices entirely (P9 security review).
+    $id = match ($path) {
+        'categories' => BlogKit::category('target-'.uniqid())->id,
+        'tags' => BlogKit::tag('target-'.uniqid())->id,
+        default => BlogKit::author('target-'.uniqid())->id,
+    };
+    RoleMatrix::assert($this, Permission::ContentView, fn () => $this->getJson("/api/v1/admin/blog/{$path}/{$id}"));
+    RoleMatrix::assert($this, Permission::ContentManage, fn () => $this->patchJson("/api/v1/admin/blog/{$path}/{$id}", ['name' => 'Renamed']));
 })->with(['categories', 'tags', 'authors']);
 
 it('guards deleting terms with content.manage', function (string $path): void {

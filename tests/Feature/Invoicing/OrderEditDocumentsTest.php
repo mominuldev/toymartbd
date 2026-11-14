@@ -559,3 +559,27 @@ it('prints the supplementary invoice and the new credit notes in English and Ban
     $this->getJson('/api/v1/admin/credit-notes?filter[reason]=courier_return')->assertOk()->assertJsonPath('data.0.reason', 'courier_return');
     $this->getJson('/api/v1/admin/credit-notes?filter[reason]=order_edited')->assertOk()->assertJsonPath('data.0.id', $edited->id);
 });
+
+it('gives a supplementary invoice and an edit credit note Bangla words and the logo (P9)', function (): void {
+    Tests\Support\InvoiceLogoKit::fakeDisk();
+    Tests\Support\InvoiceLogoKit::choose(Tests\Support\InvoiceLogoKit::media());
+    [$a, $b, $c] = oedVariants();
+    $order = oedPlace([$a->id => 1, $b->id => 1]);
+    app(IssueSalesInvoice::class)->handle($order);
+
+    oedEdit($order, [$a->id => 1, $c->id => 4]);
+
+    $supplementary = Invoice::query()->where('kind', InvoiceKind::Supplementary->value)->sole();
+    $note = CreditNote::query()->sole();
+    expect($supplementary->amount_in_words_bn)->toBe(App\Domain\Invoicing\Services\AmountInWords::bangla($supplementary->total))
+        ->and($note->amount_in_words_bn)->toBe(App\Domain\Invoicing\Services\AmountInWords::bangla($note->total))
+        ->and($supplementary->issued_by['logo'])->not->toBeNull();
+
+    foreach (['en', 'bn'] as $locale) {
+        $pdf = (string) $this->get("/api/v1/admin/invoices/{$supplementary->id}/pdf?locale={$locale}")->assertOk()->getContent();
+        expect(Tests\Support\InvoiceLogoKit::imageCount($pdf))->toBeGreaterThan(0);
+        if ($locale === 'bn') {
+            expect(PdfText::banglaLetters(PdfText::extract($pdf)))->toContain(PdfText::banglaLetters('কথায়'));
+        }
+    }
+});

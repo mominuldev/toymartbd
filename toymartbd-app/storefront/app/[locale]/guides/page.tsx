@@ -8,6 +8,12 @@ import { blogMessages } from '@/lib/blog/messages';
 
 // Buying guides (Phase 7): live posts of type `buying_guide`, newest first, numbered pages.
 
+// Per-request: the root layout's empty generateStaticParams would otherwise make this an ISR
+// route, and reading searchParams (`?page=`) there fails the render with a 500
+// (DYNAMIC_SERVER_USAGE) — found by the Phase 9 accessibility sweep. The API reads stay cached
+// under `content:blog` (lib/blog/fetch.ts).
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ locale: string }>;
     searchParams: Promise<{ page?: string | string[] }>;

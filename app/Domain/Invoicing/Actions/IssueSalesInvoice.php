@@ -110,6 +110,7 @@ final readonly class IssueSalesInvoice
                 'due' => $fresh->due_total,
                 'payment_method' => $fresh->payment_method,
                 'amount_in_words' => AmountInWords::english($fresh->grand_total),
+                'amount_in_words_bn' => AmountInWords::bangla($fresh->grand_total),
                 'issued_at' => now(),
                 'template' => Invoice::TEMPLATE_STANDARD,
                 'created_by' => $userId,

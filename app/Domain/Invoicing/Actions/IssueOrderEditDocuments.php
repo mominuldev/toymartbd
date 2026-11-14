@@ -189,6 +189,7 @@ final readonly class IssueOrderEditDocuments
             'due' => $total,
             'payment_method' => $order->payment_method,
             'amount_in_words' => AmountInWords::english($total),
+            'amount_in_words_bn' => AmountInWords::bangla($total),
             'issued_at' => now(),
             'template' => Invoice::TEMPLATE_STANDARD,
             'created_by' => $edit->user_id,

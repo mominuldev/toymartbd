@@ -1,11 +1,10 @@
 'use client';
 
-import { animate, inView } from 'motion';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-import { duration, ease, prefersReducedMotion, space } from '@/lib/motion';
+import { onceInView, play, prefersReducedMotion, space } from '@/lib/motion';
 
-// Scroll reveal (motion.dev `inView` + `animate`). Progressive and CLS-free: the server renders
+// Scroll reveal (IntersectionObserver + the Web Animations API, lib/motion). Progressive and CLS-free: the server renders
 // the content fully visible, so it works with JavaScript off and nothing above the fold ever
 // animates (no LCP delay). After hydration only elements still below the viewport are faded down,
 // then revealed — opacity and transform only, never layout — when they scroll in. Honours
@@ -21,13 +20,12 @@ export function Reveal({ children, className, as: Tag = 'div' }: { children: Rea
 
         el.style.opacity = '0';
         el.style.transform = `translateY(${space('3')}px)`;
-        const stop = inView(
-            el,
-            () => {
-                animate(el, { opacity: 1, transform: 'translateY(0px)' }, { duration: duration('slow'), ease: ease('decelerate') });
-            },
-            { amount: 0.15 },
-        );
+        const stop = onceInView(el, () => {
+            // The inline start state is cleared and the animation runs from it, so the end state is plain CSS.
+            el.style.opacity = '';
+            el.style.transform = '';
+            play(el, [{ opacity: 0, transform: `translateY(${space('3')}px)` }, { opacity: 1, transform: 'translateY(0px)' }], 'slow', 'decelerate');
+        });
         return () => {
             stop();
             el.style.opacity = '';

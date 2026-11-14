@@ -20,7 +20,7 @@ export const bn: Messages = {
         primary: 'প্রধান',
         home: 'হোম',
         brands: 'ব্র্যান্ড',
-        logoAria: 'টয় মার্ট বিডি — হোম',
+        logoAria: 'ToyMart BD — হোম',
         categoriesMenu: 'ক্যাটাগরি অনুযায়ী কিনুন',
         allCategories: 'সব ক্যাটাগরি',
         more: 'আরও',
@@ -28,7 +28,8 @@ export const bn: Messages = {
         wishlist: 'পছন্দের তালিকা',
         account: 'অ্যাকাউন্ট',
         cartEmpty: 'কার্ট, খালি',
-        cartCount: 'কার্ট, {count}টি পণ্য',
+        // The count is its own word: the badge's visible "3" must appear in the link's name (WCAG 2.5.3).
+        cartCount: 'কার্টে পণ্য: {count}',
         menu: 'মেনু',
         search: 'খুঁজুন',
         hotline: 'হটলাইন',

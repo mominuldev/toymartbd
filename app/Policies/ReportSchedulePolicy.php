@@ -12,7 +12,8 @@ use App\Models\User;
  * Scheduled report emails (P8). A schedule sends report data out of the admin by email,
  * so it needs the export permission, not just the view one:
  *
- *   viewAny / view / create / update / delete ... reports.view + reports.export
+ *   viewAny / view / create / update / delete /
+ *   resend (P9: a failed run, again) ............ reports.view + reports.export
  *                                                 (super_admin, manager, accountant)
  *
  * The FormRequest additionally refuses a report type the actor could not open themselves
@@ -41,6 +42,12 @@ final class ReportSchedulePolicy extends Policy
     }
 
     public function delete(User $user, ReportSchedule $schedule): bool
+    {
+        return $this->viewAny($user);
+    }
+
+    /** Resend a failed run of this schedule for the same period (P9). */
+    public function resend(User $user, ReportSchedule $schedule): bool
     {
         return $this->viewAny($user);
     }

@@ -7,8 +7,9 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Admin · {{ config('app.name') }}</title>
     {{-- Set the theme before first paint so a dark-mode user never sees a light flash.
-         The stored value is a UI preference only, never a credential. --}}
-    <script>
+         The stored value is a UI preference only, never a credential. The nonce is the
+         admin CSP's (App\Http\Middleware\SecurityHeaders): no other inline script runs. --}}
+    <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         (function () {
             var t = null;
             try { t = localStorage.getItem('tm-admin-theme'); } catch (e) {}

@@ -288,7 +288,7 @@ function TrendCard({ data, range, onGroup }: { data: SalesAnalytics; range: stri
             </div>
             <div className="h-64" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <ComposedChart accessibilityLayer={false} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                         <CartesianGrid vertical={false} stroke="var(--color-line-default)" />
                         <XAxis dataKey="short" axisLine={false} tickLine={false} tick={<Tick anchor="middle" />} minTickGap={12} />
                         <YAxis axisLine={false} tickLine={false} width={56} tick={<Tick anchor="end" money={metric === 'value'} />} />
@@ -365,7 +365,7 @@ function OutcomeCard({ data, range }: { data: SalesAnalytics; range: string }) {
             </ul>
             <div className="h-56" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <BarChart accessibilityLayer={false} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                         <CartesianGrid vertical={false} stroke="var(--color-line-default)" />
                         <XAxis dataKey="short" axisLine={false} tickLine={false} tick={<Tick anchor="middle" />} minTickGap={12} />
                         <YAxis axisLine={false} tickLine={false} width={32} allowDecimals={false} tick={<Tick anchor="end" />} />

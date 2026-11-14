@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { reportScheduleRequestSchema } from '@toymart/api-types/zod';
-import { CheckCircleIcon, ClockIcon, EnvelopeSimpleIcon, PlusIcon, UsersIcon, WarningIcon } from '@phosphor-icons/react';
+import { ArrowClockwiseIcon, CheckCircleIcon, ClockIcon, EnvelopeSimpleIcon, PlusIcon, UsersIcon, WarningIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
@@ -17,7 +17,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { AnalyticsTabs } from '@/features/analytics/AnalyticsTabs';
-import { formats, frequencies, reportTypes, sendTimes, toInput, useDeleteSchedule, useRecipients, useRuns, useSaveSchedule, useSchedules, type ReportSchedule, type ReportType, type ScheduleInput } from './api';
+import { formats, frequencies, reportTypes, sendTimes, toInput, useDeleteSchedule, useRecipients, useResendRun, useRuns, useSaveSchedule, useSchedules, type ReportSchedule, type ReportScheduleRun, type ReportType, type RunCopy, type ScheduleInput } from './api';
 
 /** "Sat 7 Nov, 9:15 am" in Dhaka time, Western digits (rules 11, 36). */
 function dhakaWhen(iso: string, locale: string): string {
@@ -151,7 +151,7 @@ function ScheduleCard({ schedule, selected, onSelect }: { schedule: ReportSchedu
                 {t('schedules.card.then', { report: t(`schedules.type.${schedule.report_type}` as MessageKey), format: schedule.format.toUpperCase(), count: schedule.recipients.length })}
             </p>
             <p className="t-admin-caption tabular text-fg-tertiary">
-                {run ? t(`schedules.card.last.${run.status}` as MessageKey, { period: run.period_from === run.period_to ? run.period_from : `${run.period_from} – ${run.period_to}` }) : t('schedules.card.never')}
+                {run ? t(`schedules.card.last.${run.status}` as MessageKey, { period: periodText(run) }) : t('schedules.card.never')}
                 {schedule.next_send_at && ` · ${t('schedules.card.next', { when: dhakaWhen(schedule.next_send_at, locale) })}`}
             </p>
         </div>
@@ -365,11 +365,51 @@ function Editor({ schedule, onSaved, onDeleted }: { schedule: ReportSchedule | n
     );
 }
 
-/** Recent runs (Automations 223:16163): the sent-log, newest period first. */
+/** "2026-11-03" or "2026-10-31 – 2026-11-06" (Dhaka dates, Western digits). */
+function periodText(run: Pick<ReportScheduleRun, 'period_from' | 'period_to'>): string {
+    return run.period_from === run.period_to ? run.period_from : `${run.period_from} – ${run.period_to}`;
+}
+
+type ResendTarget = { run: ReportScheduleRun; userId?: number; name?: string };
+
+/**
+ * Recent runs (Automations 223:16163): the sent-log, newest period first. A failed run lists
+ * each recipient's copy (P9) and can be resent — every failed copy, or one person's — after a
+ * confirmation; the server re-checks permissions and never mails a copy twice.
+ */
 function RecentRuns({ schedule }: { schedule: ReportSchedule }) {
     const { t, locale } = useI18n();
+    const { notify } = useToast();
     const runs = useRuns(schedule.id);
+    const resend = useResendRun(schedule.id);
+    const [target, setTarget] = useState<ResendTarget | null>(null);
     const rows = runs.data ?? [];
+
+    const confirm = () => {
+        if (!target) return;
+        resend.mutate(
+            { runId: target.run.id, userId: target.userId },
+            {
+                onSuccess: () => {
+                    setTarget(null);
+                    notify(t('schedules.runs.resent'));
+                },
+                onError: (error) => {
+                    setTarget(null);
+                    // Server prose is not shown (it is English); the status says what happened.
+                    const message = !(error instanceof ApiError)
+                        ? t('error.title')
+                        : error.status === 409
+                          ? t('schedules.runs.conflict')
+                          : error.status === 422
+                            ? t('schedules.runs.notAllowed')
+                            : error.problem.title;
+                    notify(message, 'danger');
+                },
+            },
+        );
+    };
+
     return (
         <Panel title={t('schedules.runs.title')}>
             {rows.length === 0 ? (
@@ -378,22 +418,78 @@ function RecentRuns({ schedule }: { schedule: ReportSchedule }) {
                 <ul className="-mt-1.5 flex flex-col">
                     {rows.map((run) => {
                         const ok = run.status === 'sent' || run.status === 'queued' || run.status === 'sending';
+                        const failed = run.status === 'failed';
                         return (
-                            <li key={run.id} className="flex items-center gap-2.5 border-b border-line-default py-2">
-                                {ok ? <CheckCircleIcon size={14} aria-hidden className="shrink-0 text-feedback-success" /> : <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />}
-                                <span className="t-admin-caption tabular whitespace-nowrap text-fg-tertiary">{run.sent_at ? dhakaWhen(run.sent_at, locale) : run.due_at ? dhakaWhen(run.due_at, locale) : ''}</span>
-                                <span className="t-admin-mono-sm whitespace-nowrap text-fg-primary">{run.period_from === run.period_to ? run.period_from : `${run.period_from} – ${run.period_to}`}</span>
-                                <span className="min-w-0 flex-1 t-admin-caption text-fg-secondary">
-                                    {t(`schedules.status.${run.status}` as MessageKey)}
-                                    {run.status === 'sent' && ` · ${t('schedules.runs.sent', { count: run.recipients_sent })}`}
-                                    {run.recipients_skipped > 0 && ` · ${t('schedules.runs.skipped', { count: run.recipients_skipped })}`}
-                                    {run.error && ` · ${run.error}`}
-                                </span>
+                            <li key={run.id} className="flex flex-col gap-2 border-b border-line-default py-2">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    {ok ? <CheckCircleIcon size={14} aria-hidden className="shrink-0 text-feedback-success" /> : <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />}
+                                    <span className="t-admin-caption tabular whitespace-nowrap text-fg-tertiary">{run.sent_at ? dhakaWhen(run.sent_at, locale) : run.due_at ? dhakaWhen(run.due_at, locale) : ''}</span>
+                                    <span className="t-admin-mono-sm whitespace-nowrap text-fg-primary">{periodText(run)}</span>
+                                    <span className="min-w-0 flex-1 t-admin-caption text-fg-secondary">
+                                        {t(`schedules.status.${run.status}` as MessageKey)}
+                                        {run.status === 'sent' && ` · ${t('schedules.runs.sent', { count: run.recipients_sent })}`}
+                                        {run.recipients_skipped > 0 && ` · ${t('schedules.runs.skipped', { count: run.recipients_skipped })}`}
+                                        {run.error && ` · ${run.error}`}
+                                    </span>
+                                    {failed && (run.deliveries.length > 0 || run.recipients_sent === 0) && (
+                                        <Button variant="outline" size="sm" onClick={() => setTarget({ run })}>
+                                            <ArrowClockwiseIcon size={16} aria-hidden />
+                                            {t('schedules.runs.resend')}
+                                        </Button>
+                                    )}
+                                </div>
+                                {run.resend_count > 0 && run.last_resent_by && (
+                                    <p className="ps-6 t-admin-caption text-fg-tertiary">{t('schedules.runs.resentBy', { count: run.resend_count, name: run.last_resent_by.name })}</p>
+                                )}
+                                {failed && <RunCopies run={run} schedule={schedule} onResend={(userId, name) => setTarget({ run, userId, name })} />}
                             </li>
                         );
                     })}
                 </ul>
             )}
+            {target && (
+                <ConfirmDialog
+                    open
+                    title={target.name ? t('schedules.runs.resendOneTitle', { name: target.name }) : t('schedules.runs.resendTitle', { period: periodText(target.run) })}
+                    body={target.name ? t('schedules.runs.resendOneBody', { name: target.name, period: periodText(target.run) }) : t('schedules.runs.resendBody')}
+                    confirmLabel={t('schedules.runs.resendConfirm')}
+                    pending={resend.isPending}
+                    onClose={() => setTarget(null)}
+                    onConfirm={confirm}
+                />
+            )}
         </Panel>
+    );
+}
+
+type CopyRow = { user_id: number; name: string; status: RunCopy['status'] | 'unknown' };
+
+/**
+ * A failed run's recipients and their copies. A run from before per-recipient records lists
+ * the schedule's current recipients as "not recorded", each resendable one at a time.
+ */
+function RunCopies({ run, schedule, onResend }: { run: ReportScheduleRun; schedule: ReportSchedule; onResend: (userId: number, name: string) => void }) {
+    const { t } = useI18n();
+    const legacy = run.deliveries.length === 0;
+    const copies: CopyRow[] = legacy ? schedule.recipients.map((r) => ({ user_id: r.id, name: r.name, status: 'unknown' })) : run.deliveries;
+    if (copies.length === 0) return null;
+    return (
+        <div className="ms-6 flex flex-col gap-1.5 rounded-sm bg-subtle px-3 py-2">
+            <p className="t-admin-overline text-fg-secondary">{t('schedules.runs.copies')}</p>
+            {legacy && run.recipients_sent > 0 && <p className="t-admin-caption text-fg-secondary">{t('schedules.runs.legacy')}</p>}
+            <ul className="flex flex-col gap-1" aria-label={t('schedules.runs.copiesFor', { period: periodText(run) })}>
+                {copies.map((copy) => (
+                    <li key={copy.user_id} className="flex flex-wrap items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate t-admin-body text-fg-primary">{copy.name}</span>
+                        <span className={`t-admin-caption ${copy.status === 'failed' ? 'text-feedback-danger' : 'text-fg-secondary'}`}>{t(`schedules.copy.${copy.status}` as MessageKey)}</span>
+                        {(copy.status === 'failed' || copy.status === 'unknown') && (
+                            <Button variant="ghost" size="sm" onClick={() => onResend(copy.user_id, copy.name)}>
+                                {t('schedules.runs.resendOne', { name: copy.name })}
+                            </Button>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }

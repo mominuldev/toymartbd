@@ -63,6 +63,8 @@ final class WishlistController extends ApiController
         $products = Product::query()->published()->with(ProductListing::RELATIONS)
             ->whereKey($items->pluck('product_id')->unique()->values()->all())
             ->get()->keyBy('id');
+        // One stock query for the whole list, not one per card (Phase 9 P-10).
+        \App\Http\Resources\Storefront\StorefrontProductCardResource::primeStock($products);
 
         return $items->each(static fn (WishlistItem $item) => $item->setRelation('product', $products->get($item->product_id)));
     }

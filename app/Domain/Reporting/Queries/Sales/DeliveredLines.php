@@ -48,7 +48,7 @@ final readonly class DeliveredLines
                 'name' => (string) ($line->category_name ?? ''),
                 'name_bn' => $line->category_name_bn,
             ], 'figures' => self::empty()];
-            $categories[$categoryKey]['figures'] = self::add($categories[$categoryKey]['figures'], $figures, $orderId);
+            self::add($categories[$categoryKey]['figures'], $figures, $orderId);
 
             $brandKey = 'b'.($line->brand_id ?? 0);
             $brands[$brandKey] ??= ['head' => [
@@ -56,13 +56,13 @@ final readonly class DeliveredLines
                 'name' => $line->brand_id === null ? null : (string) $line->brand_name,
                 'name_bn' => $line->brand_name_bn,
             ], 'figures' => self::empty()];
-            $brands[$brandKey]['figures'] = self::add($brands[$brandKey]['figures'], $figures, $orderId);
+            self::add($brands[$brandKey]['figures'], $figures, $orderId);
 
             $source = is_string($line->recommendation_source) && $line->recommendation_source !== '' ? $line->recommendation_source : SalesAnalytics::NO_SOURCE;
             $sources[$source] ??= self::empty();
-            $sources[$source] = self::add($sources[$source], $figures, $orderId);
+            self::add($sources[$source], $figures, $orderId);
 
-            $all = self::add($all, $figures, $orderId);
+            self::add($all, $figures, $orderId);
         }
 
         $present = static fn (array $groups): array => self::sortByRevenue(array_values(array_map(
@@ -120,10 +120,12 @@ final readonly class DeliveredLines
     /**
      * @param  array{units: int, units_returned: int, units_sold: int, net_revenue: Money, cogs: Money, gross_profit: Money, orders: array<int, true>}  $a
      * @param  array{units: int, units_returned: int, units_sold: int, net_revenue: Money, cogs: Money, gross_profit: Money}  $line
-     * @return array{units: int, units_returned: int, units_sold: int, net_revenue: Money, cogs: Money, gross_profit: Money, orders: array<int, true>}
      */
-    private static function add(array $a, array $line, int $orderId): array
+    private static function add(array &$a, array $line, int $orderId): void
     {
+        // By reference (Phase 9, docs/audits/PERFORMANCE.md P-05): by value, writing the `orders`
+        // set copied it — up to one entry per order in the range — on every line, O(n²): 40 s
+        // of a year's sales analytics at 90k lines.
         $a['units'] += $line['units'];
         $a['units_returned'] += $line['units_returned'];
         $a['units_sold'] += $line['units_sold'];
@@ -131,8 +133,6 @@ final readonly class DeliveredLines
         $a['cogs'] = $a['cogs']->plus($line['cogs']);
         $a['gross_profit'] = $a['gross_profit']->plus($line['gross_profit']);
         $a['orders'][$orderId] = true;
-
-        return $a;
     }
 
     /**

@@ -29,6 +29,7 @@ use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Events\PaymentStatusChanged;
 use App\Domain\Payment\Gateways\CashOnDeliveryGateway;
 use App\Domain\Payment\Services\PaymentGatewayRegistry;
+use App\Support\ProductionSafety;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -63,6 +64,8 @@ class AppServiceProvider extends ServiceProvider
         // Media usage resolver (docs/api/media-library.md): every place a media row can be
         // referenced is a tagged provider. Blog covers, pages and banners add a line here.
         $this->app->tag([ProductImageMediaUsages::class], MediaUsageProvider::TAG);
+        // P9: the invoice logo chosen in Settings → Invoice details cannot be deleted while chosen.
+        $this->app->tag([\App\Domain\Invoicing\Services\InvoiceLogoMediaUsages::class], MediaUsageProvider::TAG);
         $this->app->bind(MediaUsages::class, static fn ($app): MediaUsages => new MediaUsages($app->tagged(MediaUsageProvider::TAG)));
 
         // Payment drivers (rule 5): a new gateway is a driver class plus one line here.
@@ -82,6 +85,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // APP_DEBUG can never be on in production (P9 security review).
+        ProductionSafety::enforce($this->app->isProduction(), $this->app->make('config'), $this->app->make('log'));
+
         // Domain event → listener wiring. Listeners outside app/Listeners are not
         // auto-discovered, so each is registered here.
         Event::listen(BrandChanged::class, RevalidateBrandPages::class);

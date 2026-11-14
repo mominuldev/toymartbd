@@ -79,7 +79,7 @@ export function TrendCard({ trend, range }: { trend: Trend; range: Dashboard['ra
             </ul>
             <div className="h-48 lg:h-64" aria-hidden>
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <ComposedChart accessibilityLayer={false} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                         <CartesianGrid vertical={false} stroke="var(--color-line-default)" />
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={<Tick anchor="middle" />} minTickGap={12} />
                         <YAxis axisLine={false} tickLine={false} width={56} tick={<Tick anchor="end" money={mode === 'value'} />} allowDecimals={mode === 'value'} />
@@ -131,7 +131,7 @@ export function CategoryDonut({ categories }: { categories: NonNullable<Dashboar
                     <div className="flex flex-col items-center gap-4 sm:flex-row">
                         <div className="relative size-38 shrink-0">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
+                                <PieChart accessibilityLayer={false}>
                                     <Pie data={categories.slices.map((s) => ({ value: Number(s.amount) }))} dataKey="value" innerRadius="70%" outerRadius="100%" startAngle={90} endAngle={-270} stroke="var(--color-surface)" strokeWidth={2} isAnimationActive={false}>
                                         {categories.slices.map((s, i) => (
                                             <Cell key={s.category_id ?? 'other'} fill={SLICE_COLOURS[i % SLICE_COLOURS.length]} />

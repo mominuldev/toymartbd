@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Marketing\Contracts;
 
+use DateTimeInterface;
+
 /**
  * Mint a single-use coupon that only one customer can redeem (P8 batch 3: the offer in a
  * child's birthday reminder). The seam another domain calls instead of writing `coupons`
@@ -16,5 +18,6 @@ namespace App\Domain\Marketing\Contracts;
  */
 interface PersonalCouponIssuer
 {
-    public function issue(int $customerId, PersonalCouponTerms $terms): IssuedCoupon;
+    /** @param  DateTimeInterface|null  $at  the issuing moment (the send time); validity counts in Dhaka days from it. Default: now. */
+    public function issue(int $customerId, PersonalCouponTerms $terms, ?DateTimeInterface $at = null): IssuedCoupon;
 }

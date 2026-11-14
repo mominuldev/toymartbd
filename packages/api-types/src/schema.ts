@@ -3972,6 +3972,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reports/schedules/{schedule}/runs/{run}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) — resend a FAILED run for the
+         *     same period: every copy that failed, or one recipient's (`user_id`). Queued on `reports`;
+         *     a copy already sent is never mailed again. Idempotent: a run already queued or sending
+         *     queues nothing more and answers 202 with its state
+         */
+        post: operations["v1.admin.reports.schedules.runs.resend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/reports/schedules": {
         parameters: {
             query?: never;
@@ -7228,6 +7250,7 @@ export interface components {
                 zone_id: string | null;
                 area_id: string | null;
             } | null;
+            /** @description One query per relation for the whole list, not two per candidate (Phase 9 N+1 guard). */
             candidates: components["schemas"]["CourierLocation"][];
         };
         /** CourierPerformance */
@@ -7474,6 +7497,7 @@ export interface components {
             /** @description Signed: what the parts above do not explain (e.g. a refund capped below its lines). */
             adjustment: string;
             amount_in_words: string | null;
+            amount_in_words_bn: string | null;
             /** @description The company details as at the credit note's issue. */
             issued_by: {
                 name_en: string | null;
@@ -8977,6 +9001,8 @@ export interface components {
             shipping: string;
             tax: string;
             amount_in_words: string | null;
+            /** @description Bangla words (P9); null on an invoice issued before them. */
+            amount_in_words_bn: string | null;
             due_at: string | null;
             /** @description The company details as issued. */
             issued_by: {
@@ -9085,6 +9111,8 @@ export interface components {
             trade_licence: string | null;
             bin: string | null;
             logo_media_id: number | null;
+            /** @description Admin preview of the chosen logo (a 320px rendition); null when none or not ready. */
+            logo_url: string | null;
             footer_en: string | null;
             footer_bn: string | null;
             /** @description Required fields not set yet. */
@@ -11158,13 +11186,31 @@ export interface components {
                 id: number;
                 period_from: string;
                 period_to: string;
-                status: string;
+                /** @enum {string} */
+                status: "queued" | "sending" | "sent" | "skipped" | "failed";
                 recipients_sent: number;
                 recipients_skipped: number;
                 error: string | null;
                 due_at: string | null;
                 sent_at: string | null;
                 created_at: string | null;
+                resend_count: number;
+                last_resent_at: string | null;
+                last_resent_by: {
+                    id: number;
+                    name: string;
+                } | null;
+                deliveries: {
+                    user_id: number;
+                    name: string;
+                    /** @enum {string} */
+                    status: "queued" | "sent" | "skipped" | "failed";
+                    attempts: number;
+                    error: string | null;
+                    sent_at: string | null;
+                    resent_at: string | null;
+                    resent_by: string | null;
+                }[];
             } | null;
             created_at: string | null;
             updated_at: string | null;
@@ -11203,6 +11249,29 @@ export interface components {
             due_at: string | null;
             sent_at: string | null;
             created_at: string | null;
+            /** @description How many times staff resent this run (P9). */
+            resend_count: number;
+            last_resent_at: string | null;
+            /** @description The staff member who last resent it — name only. */
+            last_resent_by: {
+                id: number;
+                name: string;
+            } | null;
+            /**
+             * @description Each recipient's copy (P9; empty on runs from before per-recipient records, or when
+             *     not loaded). Staff names only, never an email address.
+             */
+            deliveries: {
+                user_id: number;
+                name: string;
+                /** @enum {string} */
+                status: "queued" | "sent" | "skipped" | "failed";
+                attempts: number;
+                error: string | null;
+                sent_at: string | null;
+                resent_at: string | null;
+                resent_by: string | null;
+            }[];
         };
         /**
          * ReportType
@@ -11233,6 +11302,20 @@ export interface components {
             weight_grams?: number | null;
             /** @description Note for the courier (delivery instructions). */
             note?: string | null;
+        };
+        /**
+         * ResendReportRunRequest
+         * @description `POST /reports/schedules/{schedule}/runs/{run}/resend` (P9) — resend a failed run for the
+         *     same period. Needs reports.view + reports.export (ReportSchedulePolicy::resend), and the
+         *     actor must be able to open the report type themselves.
+         *
+         *     - no body (or `user_id: null`): every copy that failed or never went out;
+         *     - `user_id`: that one recipient's copy — a current recipient of the schedule, still active
+         *       and still holding the report's permissions (re-checked now, and again at send time).
+         */
+        ResendReportRunRequest: {
+            /** @description One recipient's copy only; omit for every failed copy. */
+            user_id?: number | null;
         };
         /**
          * RestoreCartRequest
@@ -14029,7 +14112,10 @@ export interface components {
             trade_licence?: string | null;
             /** @description Business Identification Number (NBR), 9 or 13 digits; not otherwise checked. */
             bin?: string | null;
-            /** @description A media library image; stored on the invoice snapshot (not yet drawn on the PDF). */
+            /**
+             * @description A media library image whose renditions are ready. Drawn on invoices, supplementary
+             *     invoices and credit notes issued from now on; each keeps the logo file it was issued with.
+             */
             logo_media_id?: number | null;
             footer_en?: string | null;
             footer_bn?: string | null;
@@ -24995,6 +25081,64 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.reports.schedules.runs.resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The schedule ID */
+                schedule: number;
+                /** @description The run ID */
+                run: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResendReportRunRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportScheduleRun` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleRun"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The run did not fail, the copy was already sent, nothing is left to resend, or an older run must be resent one recipient at a time (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The recipient is not on the schedule, inactive, or no longer allowed to see the report (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.reports.schedules.index": {

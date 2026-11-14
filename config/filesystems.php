@@ -35,7 +35,10 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Not served (P9 security review): private originals, certificates and expense
+            // receipts leave only through authorised controllers. Laravel's signed /storage/{path}
+            // GET + PUT routes would be unused attack surface.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

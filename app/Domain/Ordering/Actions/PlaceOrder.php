@@ -85,6 +85,10 @@ final readonly class PlaceOrder
 
     public function handle(CheckoutData $data): Order
     {
+        // The order-number counter row exists before the transaction locks it (P9 F-1): an
+        // INSERT IGNORE on it inside the transaction deadlocks two concurrent checkouts.
+        $this->numbers->prepare();
+
         $order = DB::transaction(function () use ($data): Order {
             // 1. The cart, locked: a second checkout of the same cart waits here, then
             //    finds it already ordered.

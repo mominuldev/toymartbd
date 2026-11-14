@@ -171,7 +171,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // P9 security review: secure by default in production, so a missing env var can never
+    // send the admin session cookie over plain HTTP. Set SESSION_SECURE_COOKIE to override.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 'use client';
 
-import { animate } from 'motion';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { Icon } from '@/components/icons/Icon';
@@ -9,7 +8,7 @@ import { arrivalLine, placeName, publishedLine, quotePlace, workingDaysLine } fr
 import type { DeliveryQuote, DeliveryReference, DeliverySelection } from '@/lib/delivery/types';
 import { format, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
-import { duration, ease, prefersReducedMotion, space } from '@/lib/motion';
+import { play, prefersReducedMotion, space } from '@/lib/motion';
 import { contact } from '@/lib/site-config';
 
 // The interactive DeliveryEstimator (see DeliveryEstimator.tsx for the contract). States follow
@@ -66,7 +65,7 @@ export function DeliveryEstimatorClient({ locale, t, reference, variantId, quant
     const userAction = useRef(false);
     const firstPhase = useRef(true);
 
-    // Smooth state transition (motion.dev): the new body fades and settles in — opacity and
+    // Smooth state transition (Web Animations API, lib/motion): the new body fades and settles in — opacity and
     // transform only, so nothing around the estimator moves (min-height is reserved). A result the
     // visitor asked for is scrolled into view smoothly when it ends below the fold. Reduced motion:
     // no animation, instant scroll.
@@ -78,7 +77,7 @@ export function DeliveryEstimatorClient({ locale, t, reference, variantId, quant
         const el = body.current;
         const reduced = prefersReducedMotion();
         if (el && !reduced) {
-            animate(el, { opacity: [0, 1], transform: [`translateY(${space('2')}px)`, 'translateY(0px)'] }, { duration: duration('base'), ease: ease('standard') });
+            play(el, [{ opacity: 0, transform: `translateY(${space('2')}px)` }, { opacity: 1, transform: 'translateY(0px)' }], 'base', 'standard');
         }
         if (userAction.current && phase === 'quote' && section.current) {
             userAction.current = false;

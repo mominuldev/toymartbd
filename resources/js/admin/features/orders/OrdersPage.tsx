@@ -508,7 +508,7 @@ function OrderCardView({ row, selectable, selected, onToggle }: { row: OrderRow;
     const { t } = useI18n();
     const verify = row.verification_status === 'pending';
     return (
-        <li className={`flex flex-col gap-2 rounded-md border border-line-default p-4 ${selected ? 'bg-brand-subtle' : 'bg-surface'}`} aria-selected={selectable ? selected : undefined}>
+        <li className={`flex flex-col gap-2 rounded-md border border-line-default p-4 ${selected ? 'bg-brand-subtle' : 'bg-surface'}`}>
             <div className="flex items-center gap-2.5">
                 {selectable && (
                     <label className="-my-3 -ms-1 grid size-11 shrink-0 place-items-center">

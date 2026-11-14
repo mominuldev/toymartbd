@@ -443,6 +443,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/analytics/sales/export', [App\Http\Controllers\Api\V1\Admin\SalesAnalyticsController::class, 'export'])->name('analytics.sales.export');
     Route::get('/reports/schedules/recipients', [App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class, 'recipients'])->name('reports.schedules.recipients');
     Route::get('/reports/schedules/{schedule}/runs', [App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class, 'runs'])->whereNumber('schedule')->name('reports.schedules.runs');
+    // P9: resend a failed run for the same period (every failed copy, or one recipient's).
+    Route::post('/reports/schedules/{schedule}/runs/{run}/resend', [App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class, 'resend'])
+        ->whereNumber(['schedule', 'run'])->scopeBindings()->name('reports.schedules.runs.resend');
     Route::apiResource('/reports/schedules', App\Http\Controllers\Api\V1\Admin\ReportScheduleController::class)
         ->parameters(['schedules' => 'schedule'])->where(['schedule' => '[0-9]+'])->names('reports.schedules');
 

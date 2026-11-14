@@ -1,11 +1,17 @@
 import type { NextConfig } from 'next';
 
+import { securityHeaders } from './lib/security-headers';
+
 const nextConfig: NextConfig = {
     // The E2E suite builds into its own directory with fake credentials so it never
     // clobbers a developer's `.next` (see playwright.config.ts).
     distDir: process.env.NEXT_DIST_DIR ?? '.next',
     reactStrictMode: true,
     poweredByHeader: false,
+    // nosniff, referrer policy, HSTS and frame-ancestors (only the admin's live builder may frame us).
+    async headers() {
+        return [{ source: '/:path*', headers: securityHeaders({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL }) }];
+    },
     // Static art (Home hero = LCP, About collage) is served AVIF with a WebP fallback
     // (storefront spec §B1.0). Catalog photos come pre-encoded from the media pipeline.
     images: { formats: ['image/avif', 'image/webp'] },

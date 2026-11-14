@@ -83,10 +83,10 @@ const CMS_PAGE = {
     },
 };
 
-// The privacy policy the footer links to (`/pages/privacy`), live in the CMS on the default
+// The privacy policy the footer links to (`/pages/privacy-policy`, the slug StaticPagesSeeder creates), live in the CMS on the default
 // template. Any other slug is not live → 404.
 const PRIVACY_PAGE = {
-    slug: 'privacy',
+    slug: 'privacy-policy',
     title: 'Privacy policy',
     title_bn: 'গোপনীয়তা নীতি',
     template: 'default',
@@ -258,7 +258,8 @@ function listProducts(res, query, search = null) {
             path: '/api/v1/storefront/products',
             per_page: MOCK_PER_PAGE,
             next_cursor: next,
-            prev_cursor: null,
+            // Like Laravel's cursor paginator: null on the first page, a cursor back on later ones.
+            prev_cursor: offset > 0 ? Buffer.from(JSON.stringify({ offset: Math.max(0, offset - MOCK_PER_PAGE) })).toString('base64url') : null,
             total: results.length,
             sort,
             facets,
@@ -354,7 +355,7 @@ function variantInfo(variantId) {
     if (v) return { product: productDetail, variant: v, price: priceOverrides[variantId] ?? v.price, available: v.available };
     const p = productFixtures.find((x) => 9000 + x.id === variantId);
     if (p) return { product: p, variant: { sku: `TMB-${p.id}`, name: null, name_bn: null }, price: priceOverrides[variantId] ?? p.price, available: p.in_stock === false ? 0 : 5 };
-    return problemOf(res, 404, 'not-found', 'Not Found', p);
+    return null; // unknown variant: callers answer 422 (was problemOf with no `res` in scope, which killed the mock)
 }
 
 // Cart line display data, as CartResource builds it: attribute labels in attribute order, one photo.
@@ -607,7 +608,7 @@ async function cartRoutes(req, res, url) {
         const { _token, _phone, ...out } = order;
         return send(res, 200, storefrontOrder(out, false));
     }
-    return problemOf(res, 404, 'not-found', 'Not Found', p);
+    return null; // unknown variant: callers answer 422 (was problemOf with no `res` in scope, which killed the mock)
 }
 
 // ---- Customer account (P4-STO-11) ----------------------------------------------------------------
@@ -752,7 +753,7 @@ async function accountRoutes(req, res, url) {
         wishlist = wishlist.filter((id) => id !== Number(saved[1]));
         return res.writeHead(204).end();
     }
-    return problemOf(res, 404, 'not-found', 'Not Found', p);
+    return null; // unknown variant: callers answer 422 (was problemOf with no `res` in scope, which killed the mock)
 }
 
 createServer(async (req, res) => {
@@ -872,16 +873,21 @@ createServer(async (req, res) => {
     if (url.pathname === '/api/v1/storefront/robots') return raw(res, 200, 'User-agent: *\nDisallow: /checkout\n', 'text/plain; charset=utf-8');
     const sitemap = url.pathname.match(/^\/api\/v1\/storefront\/sitemaps\/(sitemap(?:-[a-z]+-(?:en|bn)-\d+)?\.xml)$/);
     if (sitemap) {
-        const base = 'http://127.0.0.1';
+        // Like Laravel (SiteUrl): absolute storefront URLs, one file per locale (the Bangla file lists /bn URLs).
+        const base = process.env.STOREFRONT_URL ?? 'http://127.0.0.1:3100';
+        const prefix = sitemap[1].includes('-bn-') ? '/bn' : '';
         const xml = sitemap[1] === 'sitemap.xml'
             ? `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${base}/sitemaps/sitemap-products-en-1.xml</loc></sitemap><sitemap><loc>${base}/sitemaps/sitemap-products-bn-1.xml</loc></sitemap></sitemapindex>\n`
-            : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url><loc>${base}/products/${productDetail.slug}</loc></url></urlset>\n`;
+            : `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url><loc>${base}${prefix}/products/${productDetail.slug}</loc></url></urlset>\n`;
         return raw(res, 200, xml, 'application/xml; charset=utf-8');
     }
     // CMS content (Phase 7). Menus: no location published, so the chrome keeps its built-in menus;
-    // no live banners or testimonials. Two live pages (`delivery-policy`, `privacy`); `about` is
+    // no live banners or testimonials. Two live pages (`delivery-policy`, `privacy-policy`); `about` is
     // not in the CMS, so /pages/about keeps its built-in copy.
     if (url.pathname === '/api/v1/storefront/menus') return send(res, 200, { header: null, footer: null, mobile: null });
+    // Blog (Phase 7): no posts yet, so /blog and /guides render their empty state (not an error).
+    if (url.pathname === '/api/v1/storefront/blog/posts') return send(res, 200, { data: [], meta: { current_page: 1, last_page: 1, total: 0 } });
+    if (url.pathname === '/api/v1/storefront/blog/categories') return send(res, 200, { data: [] });
     if (url.pathname === '/api/v1/storefront/banners') return send(res, 200, { data: [] });
     if (url.pathname === '/api/v1/storefront/testimonials') return send(res, 200, { data: [] });
     if (url.pathname === '/api/v1/storefront/pages') return send(res, 200, { data: CMS_PAGES.map(({ slug, title, title_bn, updated_at }) => ({ slug, title, title_bn, updated_at })) });

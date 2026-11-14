@@ -9,6 +9,7 @@ use App\Domain\Customer\Enums\CustomerSource;
 use App\Domain\Customer\Models\Address;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Ordering\Exceptions\OrderViolation;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -32,15 +33,29 @@ final class CheckoutCustomers
     {
         self::guard();
 
-        $customer = Customer::query()->withTrashed()->where('phone', $data->phone->e164())->lockForUpdate()->first()
-            // createOrFirst runs the INSERT in a savepoint: a concurrent first order on the
-            // same phone loses the unique-key race and reads the winner's row instead.
-            ?? Customer::query()->withTrashed()->createOrFirst(['phone' => $data->phone->e164()], [
-                'name' => $data->name,
-                'email' => $data->email,
-                'preferred_language' => $data->locale === 'en' ? 'en' : 'bn',
-                'source' => CustomerSource::tryFrom($data->source->value) ?? CustomerSource::Web,
-            ]);
+        $phone = $data->phone->e164();
+
+        // Never lock a phone that has no row yet (P9, LOAD-AND-CONCURRENCY F-6): a locking
+        // read of a missing key takes a GAP lock on customers_phone_unique, and two first
+        // orders from DIFFERENT new phones in the same gap then deadlock on their inserts —
+        // every pair of new customers in a launch-day burst (found by the MySQL load run).
+        // So: a plain read; a missing phone is inserted (insert-intention locks do not
+        // conflict with each other; createOrFirst's savepoint absorbs a same-phone race);
+        // only then is the now-existing row locked, which takes a record lock, not a gap.
+        if (! Customer::query()->withTrashed()->where('phone', $phone)->exists()) {
+            try {
+                Customer::query()->withTrashed()->createOrFirst(['phone' => $phone], [
+                    'name' => $data->name,
+                    'email' => $data->email,
+                    'preferred_language' => $data->locale === 'en' ? 'en' : 'bn',
+                    'source' => CustomerSource::tryFrom($data->source->value) ?? CustomerSource::Web,
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                // Committed by a concurrent checkout after this transaction's snapshot: the
+                // locking read below sees it.
+            }
+        }
+        $customer = Customer::query()->withTrashed()->where('phone', $phone)->lockForUpdate()->firstOrFail();
 
         if ($customer->trashed()) {
             // A deleted customer ordering again is a returning customer.

@@ -42,9 +42,33 @@ class ApiServiceProvider extends ServiceProvider
 {
     public const int STOREFRONT_PER_MINUTE = 120;
 
+    /**
+     * The Next.js server's own cached (ISR) reads, which carry no shopper IP: every cache miss on
+     * the site shares this one bucket, so it is sized for the whole shop (40/s), still bounded.
+     */
+    public const int STOREFRONT_SERVER_PER_MINUTE = 2400;
+
     public const int ADMIN_PER_MINUTE = 300;
 
     public const int LOGIN_PER_MINUTE = 5;
+
+    /**
+     * Admin sign-in attempts per account (email) per 15 minutes, from any IP (P9 security
+     * review): the per-IP limit alone lets a botnet spread guesses at one staff account.
+     */
+    public const int LOGIN_PER_ACCOUNT_PER_FIFTEEN_MINUTES = 10;
+
+    /** POST /storefront/cart/coupon: tries per cart per 10 minutes (coupon-code guessing, P9). */
+    public const int COUPON_PER_CART_PER_TEN_MINUTES = 10;
+
+    /** …and per shopper IP per 10 minutes, generous for carrier-grade NAT. */
+    public const int COUPON_PER_IP_PER_TEN_MINUTES = 60;
+
+    /**
+     * PUT /storefront/cart/contact per shopper IP per hour (P9): each contact can later receive a
+     * cart-recovery SMS, so an unthrottled endpoint is an SMS-pumping lever. Generous for CGNAT.
+     */
+    public const int CART_CONTACT_PER_IP_PER_HOUR = 60;
 
     public const int OTP_PER_TEN_MINUTES = 3;
 
@@ -82,8 +106,20 @@ class ApiServiceProvider extends ServiceProvider
     {
         // Attached to the whole storefront group. Behind the Next.js server, $request->ip() is
         // the shopper's IP only because that server is in TRUSTED_PROXIES (config/trustedproxy.php).
-        RateLimiter::for('storefront', fn (Request $request): Limit => Limit::perMinute(self::STOREFRONT_PER_MINUTE)
-            ->by('ip:'.$request->ip()));
+        // The server's own ISR reads (lib/api.ts `cached()`) carry NO shopper IP, by design (one
+        // cache entry for everyone): from a trusted proxy without X-Forwarded-For they get the
+        // server budget, not one shopper's 120/min — otherwise a crawler walking listing URLs (or a
+        // revalidation burst) 429s every cache miss and the whole shop serves 500s (P9 SEO audit).
+        RateLimiter::for('storefront', function (Request $request): Limit {
+            // GET/HEAD only (P9 security review): an ISR read is always a GET, so a shopper write
+            // that reaches us without a forwarded IP (Next could not determine one) stays on the
+            // 120/min path instead of borrowing the whole-shop budget.
+            if ($request->isMethodSafe() && $request->isFromTrustedProxy() && ! $request->headers->has('X-Forwarded-For')) {
+                return Limit::perMinute(self::STOREFRONT_SERVER_PER_MINUTE)->by('storefront-server:'.$request->server->getString('REMOTE_ADDR'));
+            }
+
+            return Limit::perMinute(self::STOREFRONT_PER_MINUTE)->by('ip:'.$request->ip());
+        });
 
         // Attached to the whole admin group; per signed-in user, per IP before login.
         RateLimiter::for('admin', function (Request $request): Limit {
@@ -94,8 +130,25 @@ class ApiServiceProvider extends ServiceProvider
         });
 
         // Route-level limiters, attached by the endpoints that need them (Phase 3 auth, Phase 4 checkout).
-        RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute((int) config('auth.login_per_minute', self::LOGIN_PER_MINUTE))
-            ->by('ip:'.$request->ip().'|phone:'.self::phoneKey($request)));
+        RateLimiter::for('login', function (Request $request): array {
+            $limits = [Limit::perMinute((int) config('auth.login_per_minute', self::LOGIN_PER_MINUTE))
+                ->by('ip:'.$request->ip().'|phone:'.self::phoneKey($request))];
+
+            $email = mb_strtolower(trim($request->string('email')->toString()));
+            if ($email !== '') {
+                $limits[] = Limit::perMinutes(15, self::LOGIN_PER_ACCOUNT_PER_FIFTEEN_MINUTES)->by('login-account:'.hash('sha256', $email));
+            }
+
+            return $limits;
+        });
+
+        RateLimiter::for('coupon', fn (Request $request): array => [
+            Limit::perMinutes(10, self::COUPON_PER_CART_PER_TEN_MINUTES)->by('coupon-cart:'.self::cartKey($request)),
+            Limit::perMinutes(10, self::COUPON_PER_IP_PER_TEN_MINUTES)->by('coupon-ip:'.$request->ip()),
+        ]);
+
+        RateLimiter::for('cart-contact', fn (Request $request): Limit => Limit::perHour(self::CART_CONTACT_PER_IP_PER_HOUR)
+            ->by('cart-contact-ip:'.$request->ip()));
 
         RateLimiter::for('otp', fn (Request $request): Limit => Limit::perMinutes(10, self::OTP_PER_TEN_MINUTES)
             ->by(($phone = self::phoneKey($request)) !== '' ? 'phone:'.$phone : 'ip:'.$request->ip()));

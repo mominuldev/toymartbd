@@ -352,12 +352,12 @@ function Tiles({ meta, active, onPick }: { meta: CustomerListMeta; active: (key:
                     key={key}
                     type="button"
                     aria-pressed={active(key)}
-                    aria-label={`${t(`customers.tile.${key}` as MessageKey)}: ${count(meta.counts[key] ?? 0)} · ${hint(key)}`}
                     onClick={() => onPick(key)}
                     className={`flex min-w-0 flex-col items-start gap-1 rounded-md px-4 py-3.5 text-start ${tone} ${active(key) ? 'ring-2 ring-line-focus ring-inset' : ''}`}
                 >
-                    <span className="t-admin-caption-strong text-fg-primary">{t(`customers.tile.${key}` as MessageKey)}</span>
-                    <span className="t-admin-num-lg text-fg-primary tabular">{count(meta.counts[key] ?? 0)}</span>
+                    {/* Named by its visible text (WCAG 2.5.3): label, count, rule. */}
+                    <span className="t-admin-caption-strong text-fg-primary">{t(`customers.tile.${key}` as MessageKey)}</span>{' '}
+                    <span className="t-admin-num-lg text-fg-primary tabular">{count(meta.counts[key] ?? 0)}</span>{' '}
                     <span className="t-admin-caption text-fg-secondary">{hint(key)}</span>
                 </button>
             ))}

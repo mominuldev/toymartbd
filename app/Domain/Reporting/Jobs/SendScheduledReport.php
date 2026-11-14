@@ -12,8 +12,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Sends one claimed scheduled-report run on the `reports` queue. One attempt only: a retry
- * could mail the recipients who already got it; a failed run is visible in the admin instead.
+ * Sends one claimed scheduled-report run on the `reports` queue — or, after a staff resend
+ * (P9), the run's failed copies, or one recipient's (`userId`). One attempt only: a failed
+ * copy is visible in the admin and resent from there, never retried automatically.
  */
 final class SendScheduledReport implements ShouldQueue
 {
@@ -26,13 +27,13 @@ final class SendScheduledReport implements ShouldQueue
 
     public int $timeout = 300;
 
-    public function __construct(public readonly int $runId)
+    public function __construct(public readonly int $runId, public readonly ?int $userId = null)
     {
         $this->onQueue('reports');
     }
 
     public function handle(SendReportRun $send): void
     {
-        $send->handle($this->runId);
+        $send->handle($this->runId, $this->userId);
     }
 }

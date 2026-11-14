@@ -32,6 +32,8 @@ export interface Listing {
     products: ProductCard[];
     total: number;
     nextCursor: string | null;
+    /** The API's `meta.prev_cursor`: null on the first page — including when a cursor it could not decode was sent. */
+    prevCursor: string | null;
     facets: Facets;
 }
 
@@ -72,6 +74,7 @@ export function normalizeListing(body: unknown): Listing {
         products,
         total: typeof meta.total === 'number' ? meta.total : products.length,
         nextCursor: str(meta.next_cursor),
+        prevCursor: str(meta.prev_cursor),
         facets: {
             category: options(facets.category),
             brand: options(facets.brand),

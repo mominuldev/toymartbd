@@ -13,9 +13,15 @@ use Illuminate\Support\Facades\DB;
  * its coupon usage (`used_count--`) and its promotion usages — usage counts, budget spent
  * and flash-sale units, so the allotment can be sold again. Idempotent: a second run
  * finds no usage rows. Coupon first, then promotions (ascending id), as at placement.
+ *
+ * Runs synchronously after the cancel commits, against EditOrder's documented tier-4
+ * residue (DATABASE-DESIGN §4.8): a deadlock victim is retried here rather than surfacing
+ * as a 500 on a cancel that already committed (P9, LOAD-AND-CONCURRENCY F-4).
  */
 final readonly class ReverseOrderMarketingUsage
 {
+    private const int ATTEMPTS = 3;
+
     public function __construct(
         private CouponUsages $coupons,
         private PromotionUsages $promotions,
@@ -26,6 +32,6 @@ final readonly class ReverseOrderMarketingUsage
         DB::transaction(function () use ($orderId): void {
             $this->coupons->reverseForOrder($orderId);
             $this->promotions->reverseForOrder($orderId);
-        });
+        }, self::ATTEMPTS);
     }
 }

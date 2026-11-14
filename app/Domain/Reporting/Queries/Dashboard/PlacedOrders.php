@@ -58,7 +58,9 @@ final class PlacedOrders
             ->where('placed_at', '<', $end)
             ->select(['id', 'customer_id', 'placed_at', 'grand_total'])
             ->selectSub($units, 'units')
-            ->lazyById(1000, 'id');
+            // One streamed query, not lazyById (Phase 9 P-03: per-chunk re-runs of the range scan).
+            ->orderBy('id')
+            ->cursor();
 
         foreach ($rows as $row) {
             $day = DhakaDate::dayOf(CarbonImmutable::parse((string) $row->placed_at, 'UTC'));
@@ -155,7 +157,9 @@ final class PlacedOrders
                 'order_items.id', 'order_items.product_id', 'order_items.product_name', 'order_items.product_name_bn', 'order_items.sku',
                 'order_items.image_path', 'order_items.quantity', 'order_items.line_total', 'products.name as current_name', 'products.name_bn as current_name_bn',
             ])
-            ->lazyById(1000, 'order_items.id', 'id');
+            // One streamed query, not lazyById (Phase 9 P-03: the join re-ran per 1,000-row chunk).
+            ->orderBy('order_items.id')
+            ->cursor();
 
         $groups = [];
         $units = 0;

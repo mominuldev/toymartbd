@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Reporting\Models\ReportSchedule;
+use App\Domain\Reporting\Models\ReportScheduleRun;
 use App\Models\Enums\Permission as P;
 use App\Models\Enums\Role;
 use Tests\Support\RoleMatrix;
@@ -31,9 +32,10 @@ it('guards each reporting read for every role', function (string $uri, array $al
     }
 })->with('reporting reads');
 
-it('guards a schedule\'s show, runs, update and delete for every role', function (): void {
+it('guards a schedule\'s show, runs, resend, update and delete for every role', function (): void {
     $schedule = ReportSchedule::query()->create(['name' => 'Daily', 'report_type' => 'sales', 'frequency' => 'daily', 'send_time' => '08:00', 'locale' => 'en', 'format' => 'csv', 'is_active' => true]);
     $allowed = fn (Role $role): bool => reportingAllowed($role, [P::ReportsView, P::ReportsExport]);
+    $run = ReportScheduleRun::query()->create(['report_schedule_id' => $schedule->id, 'period_from' => '2026-11-01', 'period_to' => '2026-11-01', 'status' => 'sent', 'recipients_sent' => 1]);
 
     foreach (Role::cases() as $role) {
         RoleMatrix::assertFor($this, $role, $allowed($role), fn () => $this->getJson("/api/v1/admin/reports/schedules/{$schedule->id}"));
@@ -41,6 +43,8 @@ it('guards a schedule\'s show, runs, update and delete for every role', function
         // An empty PUT is a 422 for an allowed role (authorised, then invalid) and 403 otherwise.
         RoleMatrix::assertFor($this, $role, $allowed($role), fn () => $this->putJson("/api/v1/admin/reports/schedules/{$schedule->id}", []), 422);
         RoleMatrix::assertFor($this, $role, $allowed($role), fn () => $this->postJson('/api/v1/admin/reports/schedules', []), 422);
+        // P9 resend: a run that did not fail is a 409 for an allowed role (authorised, then refused).
+        RoleMatrix::assertFor($this, $role, $allowed($role), fn () => $this->postJson("/api/v1/admin/reports/schedules/{$schedule->id}/runs/{$run->id}/resend"), 409);
     }
     // Delete last: only super_admin, manager and accountant may, and the first success removes it.
     $roles = array_values(array_filter(Role::cases(), $allowed));

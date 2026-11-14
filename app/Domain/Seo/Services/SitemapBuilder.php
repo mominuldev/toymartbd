@@ -37,6 +37,13 @@ final class SitemapBuilder
 
     public const array LOCALES = ['en', 'bn'];
 
+    /**
+     * Indexable storefront routes that are not content entities (each renders `index,follow`
+     * with a self canonical — toymartbd-app/storefront/app/[locale]/…). `/pages/about` is listed
+     * here only while no live CMS `about` page puts it in the `pages` partition.
+     */
+    public const array STATIC_PAGES = ['/delivery-charge', '/flash-sale', '/track', '/pages/about'];
+
     /** Google's limit per sitemap file. */
     public int $chunk = 50000;
 
@@ -98,6 +105,12 @@ final class SitemapBuilder
         foreach (['blog', 'guides'] as $listing) {
             if (isset($partitions[$listing])) {
                 $static[] = ['/'.$listing, $latest[$listing] ?? null];
+            }
+        }
+        $listed = array_column($partitions['pages'] ?? [], 0);
+        foreach (self::STATIC_PAGES as $path) {
+            if (! in_array($path, $listed, true)) {
+                $static[] = [$path, null];
             }
         }
         $files = [...$this->writePartition($disk, $scratch, 'static', $static), ...$files];
@@ -175,9 +188,14 @@ final class SitemapBuilder
         };
 
         $parts = array_fill_keys(self::LOCALES, 0);
+        $robots = RobotsTxt::served();
 
         foreach ($entries as [$path, $lastmod]) {
             foreach (self::LOCALES as $locale) {
+                // Never submit a URL robots.txt blocks (Search Console: "Submitted URL blocked by robots.txt").
+                if (! RobotsTxt::allows(self::localPath($path, $locale), $robots)) {
+                    continue;
+                }
                 if (! isset($open[$locale]) || $open[$locale]['urls'] >= $this->chunk) {
                     if (isset($open[$locale])) {
                         $close($open[$locale]);
@@ -212,6 +230,16 @@ final class SitemapBuilder
     private function info(string $partition, string $locale, int $part, int $urls): array
     {
         return ['file' => "sitemap-{$partition}-{$locale}-{$part}.xml", 'partition' => $partition, 'locale' => $locale, 'part' => $part, 'urls' => $urls];
+    }
+
+    /** `/track` → `/track` (en) or `/bn/track` (bn); `/` → `/` or `/bn`. */
+    private static function localPath(string $path, string $locale): string
+    {
+        if ($locale !== 'bn') {
+            return $path;
+        }
+
+        return $path === '/' ? '/bn' : '/bn'.$path;
     }
 
     private static function url(string $path, string $locale, ?CarbonImmutable $lastmod): string

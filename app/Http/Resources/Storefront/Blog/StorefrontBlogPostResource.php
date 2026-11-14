@@ -40,6 +40,7 @@ final class StorefrontBlogPostResource extends ApiResource
 
         $productIds = $post->productLinks()->pluck('product_id')->map(intval(...))->all();
         $visible = app(BlogProductPicks::class)->visible($productIds);
+        StorefrontProductCardResource::primeStock($visible);
         $seo = SeoMeta::query()->where('seoable_type', BlogPost::SEO_TYPE)->where('seoable_id', $post->id)->first();
 
         $cards = static function (iterable $links) use ($request, $visible): array {

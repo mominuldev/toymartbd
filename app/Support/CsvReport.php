@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  *
  * UTF-8 with a BOM, so Excel opens Bangla names as UTF-8 instead of the ANSI code page.
  * Formula injection: every cell is a string cell, and a text value starting with
- * = + - @ is prefixed with an apostrophe — except a plain number such as `-1280.00`,
+ * = + - @, a tab or a carriage return is prefixed with an apostrophe — except a plain number such as `-1280.00`,
  * which is data we wrote ourselves and must stay a number in the spreadsheet.
  */
 final class CsvReport
@@ -46,7 +46,7 @@ final class CsvReport
     {
         return new Row(array_map(static function (string|int|null $value): StringCell {
             $text = (string) $value;
-            if (preg_match('/^-?\d+(\.\d+)?$/', $text) !== 1 && preg_match('/^[=+\-@]/', $text) === 1) {
+            if (preg_match('/^-?\d+(\.\d+)?$/', $text) !== 1 && preg_match('/^[=+\-@\t\r]/', $text) === 1) {
                 $text = "'".$text;
             }
 

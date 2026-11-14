@@ -194,10 +194,13 @@ describe('blog metadata and schema', () => {
 
     it('builds per-locale metadata with the seo override, canonical and hreflang', () => {
         const bn = postMetadata(post, 'bn');
-        expect(bn.title).toBe('সেরা খেলনা');
+        // The stored SEO title is complete: the layout template must not append the site name (P9 SEO audit).
+        expect(bn.title).toEqual({ absolute: 'সেরা খেলনা' });
         expect(bn.alternates?.canonical).toBe('/bn/guides/best-toys-3-5');
         expect(bn.alternates?.languages).toMatchObject({ en: '/guides/best-toys-3-5', bn: '/bn/guides/best-toys-3-5', 'x-default': '/guides/best-toys-3-5' });
         expect(postMetadata(post, 'en').title).toBe('Best toys for 3–5 year olds');
+        const suffixed = { ...post, seo: { ...post.seo, title: 'Best toys by age | Toy Mart BD' } } as BlogPost;
+        expect(postMetadata(suffixed, 'en').title).toEqual({ absolute: 'Best toys by age | Toy Mart BD' });
         expect(postMetadata(post, 'en', { preview: true }).robots).toEqual({ index: false, follow: false });
     });
 

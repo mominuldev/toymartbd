@@ -46,8 +46,14 @@ export function CartLink({ href, initial, labels, current = false, className, ba
 
     const badge = cartBadge(count);
     return (
-        <a href={href} aria-current={current ? 'page' : undefined} aria-label={badge ? labels.count.replace('{count}', badge) : labels.empty} className={className}>
-            {children}
+        // Named by a visually hidden label rather than aria-label: the mobile tab's visible "Cart" +
+        // badge would not match an aria-label word for word (WCAG 2.5.3, Phase 9 audit A-6). The
+        // visible label is hidden from assistive tech instead, since the hidden one repeats it.
+        <a href={href} aria-current={current ? 'page' : undefined} className={className}>
+            <span className="sr-only">{badge ? labels.count.replace('{count}', badge) : labels.empty}</span>
+            <span aria-hidden="true" className="contents">
+                {children}
+            </span>
             {badge ? (
                 <span aria-hidden="true" className={badgeClassName}>
                     {badge}

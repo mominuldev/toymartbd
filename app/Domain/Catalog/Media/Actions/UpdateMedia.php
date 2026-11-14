@@ -23,6 +23,7 @@ final readonly class UpdateMedia
     public function handle(Media $media, array $changes): Media
     {
         return DB::transaction(function () use ($media, $changes): Media {
+            $this->mirror->lockLinkedImages($media->id);
             $media = Media::query()->lockForUpdate()->findOrFail($media->id);
 
             foreach (['alt_text', 'alt_text_bn', 'caption'] as $key) {
@@ -51,6 +52,6 @@ final readonly class UpdateMedia
             }
 
             return $media;
-        });
+        }, ProductImageMediaMirror::ATTEMPTS);
     }
 }

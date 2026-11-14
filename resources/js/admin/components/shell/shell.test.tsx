@@ -58,6 +58,20 @@ describe('app shell', () => {
         expect(document.activeElement).toBe(menu);
     });
 
+    it('names the account menu by its content and returns focus to it on Escape (Phase 9 a11y)', async () => {
+        signedInAs(viewer);
+        renderApp('/');
+
+        const button = await screen.findByRole('button', { name: new RegExp(`Account menu for ${viewer.name}`) });
+        expect(button.getAttribute('aria-label')).toBeNull(); // WCAG 2.5.3: no aria-label hiding the visible name
+        fireEvent.click(button);
+        expect(await screen.findByRole('menu')).toBeTruthy();
+        fireEvent.keyDown(document, { key: 'Escape' });
+
+        expect(screen.queryByRole('menu')).toBeNull();
+        expect(document.activeElement).toBe(button);
+    });
+
     it('opens the Online store submenu inside the store and marks the current sub-page', async () => {
         signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
         renderApp('/store/banners');

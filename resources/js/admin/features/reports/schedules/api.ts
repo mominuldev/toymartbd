@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 
 export type ReportSchedule = Schema<'ReportSchedule'>;
 export type ReportScheduleRun = Schema<'ReportScheduleRun'>;
+export type RunCopy = ReportScheduleRun['deliveries'][number];
 export type ScheduleInput = ReportScheduleRequestInput;
 export type Recipient = { id: number; name: string; roles: string[] };
 
@@ -45,6 +46,19 @@ export function useSaveSchedule(id: number | null) {
             id === null
                 ? api<ReportSchedule>('/reports/schedules', { method: 'POST', body: JSON.stringify(input) })
                 : api<ReportSchedule>(`/reports/schedules/${id}`, { method: 'PUT', body: JSON.stringify(input) }),
+        onSuccess: () => client.invalidateQueries({ queryKey: key }),
+    });
+}
+
+/**
+ * Resend a failed run for the same period (P9): every failed copy, or one recipient's
+ * (`userId`). The server re-checks permissions and never mails a copy twice.
+ */
+export function useResendRun(scheduleId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: ({ runId, userId }: { runId: number; userId?: number }) =>
+            api<ReportScheduleRun>(`/reports/schedules/${scheduleId}/runs/${runId}/resend`, { method: 'POST', body: JSON.stringify(userId === undefined ? {} : { user_id: userId }) }),
         onSuccess: () => client.invalidateQueries({ queryKey: key }),
     });
 }

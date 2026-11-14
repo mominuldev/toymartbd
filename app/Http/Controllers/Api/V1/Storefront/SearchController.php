@@ -62,6 +62,10 @@ final class SearchController extends ApiController
             'query' => $request->query(),
         ]);
 
+        // One stock query for every card on the page (Phase 9 P-10).
+        StorefrontProductCardResource::primeStock($outcome->products);
+        StorefrontProductCardResource::primeStock($outcome->bestSellers);
+
         return StorefrontProductCardResource::collection($page)->additional([
             'meta' => [
                 'query' => $query->query,

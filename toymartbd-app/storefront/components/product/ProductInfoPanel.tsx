@@ -92,20 +92,24 @@ export function ProductInfoPanel({ product, variant, locale, t, rates, reviewsTa
     return (
         <section id="pdp-details" aria-label={t.pdp.details} className="scroll-mt-36">
             <div id="pdp-tabs" className="pdp-tabs hidden lg:block">
-                <div role="tablist" aria-label={t.pdp.details} className="flex gap-2 border-b border-line-default">
-                    {sections.map((s, i) => (
-                        <a
-                            key={s.id}
-                            href={`#pdp-tab-${s.id}`}
-                            role="tab"
-                            aria-selected={i === 0}
-                            aria-controls={`pdp-tab-${s.id}`}
-                            className="pdp-tab t-body-strong relative flex h-11 min-w-18 items-center justify-center px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle"
-                        >
-                            {s.tab}
-                            <span aria-hidden="true" className="pdp-tab-bar absolute inset-x-0 bottom-0 hidden h-0.5 rounded-full bg-brand" />
-                        </a>
-                    ))}
+                {/* The reviews jump link sits beside the tablist, not in it: a tablist owns tabs only (axe
+                    aria-required-children), and Reviews is a link to another section, not a panel. */}
+                <div className="flex gap-2 border-b border-line-default">
+                    <div role="tablist" aria-label={t.pdp.details} className="flex gap-2">
+                        {sections.map((s, i) => (
+                            <a
+                                key={s.id}
+                                href={`#pdp-tab-${s.id}`}
+                                role="tab"
+                                aria-selected={i === 0}
+                                aria-controls={`pdp-tab-${s.id}`}
+                                className="pdp-tab t-body-strong relative flex h-11 min-w-18 items-center justify-center px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle"
+                            >
+                                {s.tab}
+                                <span aria-hidden="true" className="pdp-tab-bar absolute inset-x-0 bottom-0 hidden h-0.5 rounded-full bg-brand" />
+                            </a>
+                        ))}
+                    </div>
                     {reviewsTab ? (
                         <a href="#reviews" className="t-body-strong relative flex h-11 min-w-18 items-center justify-center px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle">
                             {reviewsTab}

@@ -104,7 +104,7 @@ it('runs one live flash sale within stock, and has a finished one', function ():
         ->and($running->first()?->flashItems)->toHaveCount(4)
         ->and(Promotion::query()->where('type', 'flash_sale')->get()->filter(fn (Promotion $p): bool => $p->statusAt(now()) === 'ended'))->toHaveCount(1);
 
-    foreach ($running->first()->flashItems as $item) {
+    foreach ($running->first()->flashItems->load('variant') as $item) { // eager: the suite forbids lazy loads (Phase 9)
         $available = (int) StockLevel::query()->where('variant_id', $item->variant_id)->sum(DB::raw('on_hand - reserved'));
         expect($item->allotment)->toBeGreaterThan(0)->toBeLessThanOrEqual($available)
             ->and($item->sale_price->lessThan($item->variant->price))->toBeTrue();

@@ -191,8 +191,10 @@ export function HomeBuilderPage() {
                         <p className="t-admin-caption text-fg-tertiary">
                             <span aria-live="polite">{status}</span>
                             {' · '}
-                            <button type="button" onClick={() => setHistoryOpen(true)} className="underline-offset-2 hover:text-fg-primary hover:underline" aria-label={t('homeBuilder.history')}>
+                            <button type="button" onClick={() => setHistoryOpen(true)} className="underline-offset-2 hover:text-fg-primary hover:underline">
                                 {liveLine}
+                                {/* Visually hidden, not aria-label: the visible line stays part of the name (WCAG 2.5.3). */}
+                                <span className="sr-only"> — {t('homeBuilder.history')}</span>
                             </button>
                         </p>
                     </div>

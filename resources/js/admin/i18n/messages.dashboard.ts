@@ -51,7 +51,7 @@ export const dashboardEn = {
     'dash.kpi.revenueInfo': 'Revenue is recognised when an order is delivered, not when it is placed. {amount} of placed orders are still open.',
 
     'dash.status.label': 'Orders by status, right now',
-    'dash.status.link': '{status}: {count} — open the order board',
+    'dash.status.link': 'open the order board', // visually hidden after the visible count + status (WCAG 2.5.3)
 
     'dash.trend.title.day': 'Order value placed per day',
     'dash.trend.title.week': 'Order value placed per week',
@@ -175,7 +175,7 @@ export const dashboardBn: Record<keyof typeof dashboardEn, string> = {
     'dash.kpi.revenueInfo': 'অর্ডার ডেলিভারি হলে আয় ধরা হয়, অর্ডার দেওয়ার সময় নয়। দেওয়া অর্ডারের {amount} এখনো খোলা আছে।',
 
     'dash.status.label': 'এই মুহূর্তে অবস্থা অনুযায়ী অর্ডার',
-    'dash.status.link': '{status}: {count} — অর্ডার বোর্ড খুলুন',
+    'dash.status.link': 'অর্ডার বোর্ড খুলুন',
 
     'dash.trend.title.day': 'প্রতিদিন দেওয়া অর্ডারের মূল্য',
     'dash.trend.title.week': 'প্রতি সপ্তাহে দেওয়া অর্ডারের মূল্য',

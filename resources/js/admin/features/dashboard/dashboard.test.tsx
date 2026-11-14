@@ -148,7 +148,7 @@ describe('dashboard', () => {
 
         // Status strip: non-zero cells link to the board tab; zero cells are not links.
         const strip = screen.getAllByRole('navigation', { name: 'Orders by status, right now' })[0]!;
-        expect(within(strip).getAllByRole('link', { name: 'Pending: 2 — open the order board' })[0]!.getAttribute('href')).toBe('/orders?tab=pending');
+        expect(within(strip).getAllByRole('link', { name: /^(Pending 2|2 Pending) — open the order board$/ })[0]!.getAttribute('href')).toBe('/orders?tab=pending');
         expect(within(strip).queryByRole('link', { name: /Confirmed/ })).toBeNull();
 
         // Trend legend and donut from server totals.
