@@ -37,6 +37,7 @@ import { invoicesBn, invoicesEn } from './messages.invoices';
 import { customersBn, customersEn } from './messages.customers';
 import { dashboardBn, dashboardEn } from './messages.dashboard';
 import { analyticsBn, analyticsEn } from './messages.analytics';
+import { staffBn, staffEn } from './messages.staff';
 
 export const en = {
     ...productsEn,
@@ -65,6 +66,7 @@ export const en = {
     ...contentHomeEn,
     ...blogEn,
     ...trackingEn,
+    ...staffEn,
     ...invoicesEn,
     ...customersEn,
     ...dashboardEn,
@@ -358,6 +360,7 @@ export const bn: Messages = {
     ...contentHomeBn,
     ...blogBn,
     ...trackingBn,
+    ...staffBn,
     ...invoicesBn,
     ...customersBn,
     ...dashboardBn,

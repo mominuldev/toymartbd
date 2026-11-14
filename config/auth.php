@@ -138,4 +138,11 @@ return [
 
     'login_per_minute' => (int) env('AUTH_LOGIN_PER_MINUTE', 5),
 
+    /*
+    | Sign-in attempts per account (email) per 15 minutes, from any IP (audit S-3). Keep the
+    | production default; only the admin E2E server raises it, because every spec signs the
+    | same owner in and the suite passed 10 sign-ins when the staff spec was added.
+    */
+    'login_per_account_per_fifteen_minutes' => (int) env('AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN', 10),
+
 ];

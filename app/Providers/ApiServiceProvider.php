@@ -136,7 +136,7 @@ class ApiServiceProvider extends ServiceProvider
 
             $email = mb_strtolower(trim($request->string('email')->toString()));
             if ($email !== '') {
-                $limits[] = Limit::perMinutes(15, self::LOGIN_PER_ACCOUNT_PER_FIFTEEN_MINUTES)->by('login-account:'.hash('sha256', $email));
+                $limits[] = Limit::perMinutes(15, (int) config('auth.login_per_account_per_fifteen_minutes', self::LOGIN_PER_ACCOUNT_PER_FIFTEEN_MINUTES))->by('login-account:'.hash('sha256', $email));
             }
 
             return $limits;

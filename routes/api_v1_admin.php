@@ -72,6 +72,13 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(func
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+    // Staff & roles (B · 35). Writes need staff.manage; staff are deactivated, never deleted.
+    Route::get('/staff/roles', [StaffController::class, 'roles'])->name('staff.roles');
+    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{user}', [StaffController::class, 'update'])->whereNumber('user')->name('staff.update');
+    Route::post('/staff/{user}/deactivate', [StaffController::class, 'deactivate'])->whereNumber('user')->name('staff.deactivate');
+    Route::post('/staff/{user}/reactivate', [StaffController::class, 'reactivate'])->whereNumber('user')->name('staff.reactivate');
+    Route::post('/staff/{user}/password', [StaffController::class, 'resetPassword'])->whereNumber('user')->middleware('throttle:10,1')->name('staff.password');
 
     // Dashboard (P8): KPIs, status strip, trend, best sellers, low stock, needs attention. Read-only.
     Route::get('/dashboard', [App\Http\Controllers\Api\V1\Admin\DashboardController::class, 'show'])->name('dashboard');

@@ -85,6 +85,9 @@ export type ReturnReason = z.infer<typeof returnReasonSchema>;
 export const robotsDirectiveSchema = z.enum(["index,follow","noindex,follow","index,nofollow","noindex,nofollow"]);
 export type RobotsDirective = z.infer<typeof robotsDirectiveSchema>;
 
+export const roleSchema = z.enum(["super_admin","manager","order_operator","inventory_staff","accountant","content_editor","viewer"]);
+export type Role = z.infer<typeof roleSchema>;
+
 export const stockAdjustmentReasonSchema = z.enum(["damage","loss","found","recount","expiry","correction","gift_sample","theft"]);
 export type StockAdjustmentReason = z.infer<typeof stockAdjustmentReasonSchema>;
 
@@ -726,6 +729,12 @@ export const resendReportRunRequestSchema = z.object({
 });
 export type ResendReportRunRequestInput = z.input<typeof resendReportRunRequestSchema>;
 
+/** `POST /staff/{user}/password` — `{ password }`, a new temporary password; needs staff.manage. */
+export const resetStaffPasswordRequestSchema = z.object({
+    "password": z.string().min(12).max(128),
+});
+export type ResetStaffPasswordRequestInput = z.input<typeof resetStaffPasswordRequestSchema>;
+
 /** `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7). */
 export const restoreCartRequestSchema = z.object({
     "token": z.string().min(16).max(64).regex(new RegExp("^[A-Za-z0-9]+$")),
@@ -1205,6 +1214,15 @@ export const storeReturnRequestSchema = z.object({
     "refund_shipping": z.boolean().optional(),
 });
 export type StoreReturnRequestInput = z.input<typeof storeReturnRequestSchema>;
+
+/** `POST /staff` — `{ name, email, role, password }`; needs staff.manage. The password is */
+export const storeStaffRequestSchema = z.object({
+    "name": z.string().min(2).max(120),
+    "email": z.email().min(1).max(255),
+    "role": roleSchema,
+    "password": z.string().min(12).max(128),
+});
+export type StoreStaffRequestInput = z.input<typeof storeStaffRequestSchema>;
 
 /** `POST /inventory/adjustments` — needs inventory.adjust and an `Idempotency-Key` */
 export const storeStockAdjustmentRequestSchema = z.object({
@@ -1751,6 +1769,13 @@ export const updateShipmentRiderRequestSchema = z.object({
     "rider_phone": z.string().max(32).nullable().optional(),
 });
 export type UpdateShipmentRiderRequestInput = z.input<typeof updateShipmentRiderRequestSchema>;
+
+/** `PATCH /staff/{user}` — `{ name?, role? }`; needs staff.manage. Email is not editable: */
+export const updateStaffRequestSchema = z.object({
+    "name": z.string().min(2).max(120).optional(),
+    "role": roleSchema.optional(),
+});
+export type UpdateStaffRequestInput = z.input<typeof updateStaffRequestSchema>;
 
 /** `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change. */
 export const updateSupplierRequestSchema = z.object({

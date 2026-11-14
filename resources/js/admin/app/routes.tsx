@@ -34,6 +34,7 @@ import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSe
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
 import { InvoiceSettingsPage } from '@/features/invoices/InvoiceSettingsPage';
 import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
+import { PeopleTab, RolesTab, StaffPage } from '@/features/staff';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -70,7 +71,7 @@ import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -212,6 +213,15 @@ export const routes: RouteObject[] = [
                     // P8 invoicing: the list (no frame; Purchase orders B · 16 DataTable pattern) and
                     // Settings → Invoice details (Store settings B · 38 241:50827 "Business" card).
                     { path: 'invoices', element: <InvoicesPage /> },
+                    // Settings → Staff & roles (Figma B · 35 241:48916): People and a read-only role matrix.
+                    {
+                        path: 'staff',
+                        element: <StaffPage />,
+                        children: [
+                            { index: true, element: <PeopleTab /> },
+                            { path: 'roles', element: <RolesTab /> },
+                        ],
+                    },
                     { path: 'settings', element: <Navigate to="/settings/invoice" replace /> },
                     { path: 'settings/invoice', element: <InvoiceSettingsPage /> },
                     // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).

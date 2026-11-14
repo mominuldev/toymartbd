@@ -115,16 +115,8 @@ export function dhakaWhen(iso: string, locale: string): { day: string; time: str
     };
 }
 
-/** "12 sec ago" — Western digits in both locales (rule 36). */
-export function timeAgo(iso: string, locale: string, now: number = Date.now()): string {
-    const seconds = Math.round((new Date(iso).getTime() - now) / 1000);
-    const format = new Intl.RelativeTimeFormat(`${tag(locale)}-u-nu-latn`, { numeric: 'auto', style: 'short' });
-    const abs = Math.abs(seconds);
-    if (abs < 60) return format.format(seconds, 'second');
-    if (abs < 3600) return format.format(Math.round(seconds / 60), 'minute');
-    if (abs < 86400) return format.format(Math.round(seconds / 3600), 'hour');
-    return format.format(Math.round(seconds / 86400), 'day');
-}
+/** "12 sec ago" — moved to the shared format helpers; re-exported for this feature's callers. */
+export { timeAgo } from '@/lib/format';
 
 /** Today's Dhaka calendar date, Y-m-d (rule 11). */
 export function dhakaToday(): string {

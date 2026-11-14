@@ -141,7 +141,7 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 - [S] Payment methods: COD (advance rules for high-risk/outside Dhaka), bKash (tokenized checkout), Nagad, Rocket, SSLCommerz (cards), bank transfer; per-method fees, test/live mode, webhook status, settlement schedule
 
 ### 2.16 Staff, automation, integrations, settings
-- [S] Staff & roles: users list + PermissionMatrix
+- [S] Staff & roles: users list + PermissionMatrix — **built 2026-11-14** (`features/staff`): People + read-only matrix; 2FA, branch, sessions, shifts and editable roles not built
 - [S] Automations & notifications: workflow list (order confirmed → WhatsApp utility message; high risk → hold + alert; low stock → email; abandoned cart → reminder), template editor, channel costs
 - [S] Integrations hub: couriers, payments, messaging, marketing/tracking, AI, accounting, with status
 - [S] Store settings: business info, trade licence/BIN, branches & warehouses, invoice, checkout rules, languages
