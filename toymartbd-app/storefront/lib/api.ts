@@ -5,6 +5,7 @@ import { headers as incomingHeaders } from 'next/headers';
 import { clientIpFrom } from './client-ip';
 import type { Locale } from './i18n/config';
 import type { ProblemDetails } from './api-types';
+import { clearApiMaintenance, isMaintenanceProblem, maintenanceDigest, noteApiMaintenance, retryAfterSeconds } from './maintenance';
 
 // Server-only client for the Laravel API (CLAUDE.md rule 28). `server-only` makes the build fail if
 // a Client Component ever imports this module, so the bearer token cannot be bundled for the browser.
@@ -15,16 +16,32 @@ export const DEFAULT_REVALIDATE_SECONDS = 3600;
 export class ApiError extends Error {
     readonly status: number;
     readonly problem: ProblemDetails;
+    /** Seconds from the API's `Retry-After`, read for a maintenance answer only. */
+    readonly retryAfter: number | null;
+    /**
+     * Set for a maintenance answer only (`TOYMART_MAINTENANCE;<seconds>`). Next keeps an error's own
+     * digest, and the digest is the one property that reaches a client error boundary in
+     * production, so app/[locale]/error.tsx can show the maintenance page instead of the 500 page.
+     */
+    readonly digest?: string;
 
-    constructor(problem: ProblemDetails) {
+    constructor(problem: ProblemDetails, retryAfter: number | null = null) {
         super(`${problem.status} ${problem.title}${problem.detail ? `: ${problem.detail}` : ''}`);
         this.name = 'ApiError';
         this.status = problem.status;
         this.problem = problem;
+        const maintenance = isMaintenanceProblem(problem.status, problem.type);
+        this.retryAfter = maintenance ? (retryAfter ?? retryAfterSeconds(null)) : null;
+        if (maintenance) this.digest = maintenanceDigest(this.retryAfter ?? retryAfterSeconds(null));
     }
 
     get isNotFound(): boolean {
         return this.status === 404;
+    }
+
+    /** Laravel's `php artisan down` (503 `maintenance`), not a feature-level 503. */
+    get isMaintenance(): boolean {
+        return isMaintenanceProblem(this.status, this.problem.type);
     }
 }
 
@@ -77,13 +94,16 @@ export async function toApiError(response: Response): Promise<ApiError> {
     try {
         const body = (await response.json()) as Partial<ProblemDetails> | null;
         if (!body || typeof body !== 'object') return new ApiError(fallback);
-        return new ApiError({
-            ...body,
-            type: typeof body.type === 'string' ? body.type : fallback.type,
-            title: typeof body.title === 'string' ? body.title : fallback.title,
-            status: typeof body.status === 'number' ? body.status : response.status,
-            ...(typeof body.detail === 'string' ? { detail: body.detail } : {}),
-        });
+        return new ApiError(
+            {
+                ...body,
+                type: typeof body.type === 'string' ? body.type : fallback.type,
+                title: typeof body.title === 'string' ? body.title : fallback.title,
+                status: typeof body.status === 'number' ? body.status : response.status,
+                ...(typeof body.detail === 'string' ? { detail: body.detail } : {}),
+            },
+            retryAfterSeconds(response.headers.get('retry-after')),
+        );
     } catch {
         return new ApiError(fallback);
     }
@@ -104,10 +124,23 @@ async function forwardedFor(): Promise<Record<string, string>> {
     }
 }
 
+/**
+ * Planned downtime (lib/maintenance.ts): a maintenance answer arms the signal proxy.ts reads, so the
+ * next page request gets the maintenance page as a 503 without calling the API at all; a fresh 2xx
+ * clears it. A cached() 2xx may be Next's data cache rather than the API, so it never clears.
+ */
+async function failed(response: Response): Promise<ApiError> {
+    const error = await toApiError(response);
+    if (error.isMaintenance) noteApiMaintenance(error.retryAfter ?? retryAfterSeconds(null));
+    return error;
+}
+
 async function request<T>(path: string, init: RequestInit, options: RequestOptions): Promise<T> {
-    const forwarded = init.cache === 'no-store' ? await forwardedFor() : {};
+    const fresh = init.cache === 'no-store';
+    const forwarded = fresh ? await forwardedFor() : {};
     const response = await fetch(apiUrl(path), { ...init, method: 'GET', headers: { ...headers(options.locale), ...forwarded, ...options.headers } });
-    if (!response.ok) throw await toApiError(response);
+    if (!response.ok) throw await failed(response);
+    if (fresh) clearApiMaintenance();
     return (await response.json()) as T;
 }
 
@@ -147,7 +180,8 @@ export async function send<T>(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', path:
         ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     };
     const response = await fetch(apiUrl(path), init);
-    if (!response.ok) throw await toApiError(response);
+    if (!response.ok) throw await failed(response);
+    clearApiMaintenance();
     const text = response.status === 204 ? '' : await response.text();
     return { status: response.status, data: (text ? JSON.parse(text) : null) as T, headers: response.headers };
 }

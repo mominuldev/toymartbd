@@ -9,7 +9,7 @@ import type { DeliveryQuote, DeliveryReference, DeliverySelection } from '@/lib/
 import { format, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { play, prefersReducedMotion, space } from '@/lib/motion';
-import { contact } from '@/lib/site-config';
+import type { ContactValue } from '@/lib/site-config';
 
 // The interactive DeliveryEstimator (see DeliveryEstimator.tsx for the contract). States follow
 // Figma 119:1329: Empty · Loading · Selected (SelectedFree when free delivery applies) ·
@@ -26,6 +26,8 @@ interface Props {
     /** GET target without JavaScript: the /delivery-charge page. */
     action: string;
     initial: { selection: DeliverySelection; quote: DeliveryQuote | null } | null;
+    /** The store WhatsApp from the server parent (lib/store-info.ts); a marked sample is never a link. */
+    whatsapp: ContactValue;
 }
 
 /** The visitor's last district choice, so the next product page shows its charge (per-browser convenience only). */
@@ -51,7 +53,7 @@ function store(selection: DeliverySelection): void {
     }
 }
 
-export function DeliveryEstimatorClient({ locale, t, reference, variantId, quantity, action, initial }: Props) {
+export function DeliveryEstimatorClient({ locale, t, reference, variantId, quantity, action, initial, whatsapp }: Props) {
     const bn = locale === 'bn';
     const id = useId();
     const [phase, setPhase] = useState<Phase>(initial?.quote ? 'quote' : initial ? 'error' : 'empty');
@@ -232,7 +234,7 @@ export function DeliveryEstimatorClient({ locale, t, reference, variantId, quant
                             {published ? <p className="t-caption text-fg-tertiary">{published}</p> : null}
                         </>
                     ) : null}
-                    {phase === 'quote' && quote ? (quote.serviceable ? <Selected quote={quote} bn={bn} t={t} /> : <NotServiced quote={quote} bn={bn} t={t} />) : null}
+                    {phase === 'quote' && quote ? (quote.serviceable ? <Selected quote={quote} bn={bn} t={t} /> : <NotServiced quote={quote} bn={bn} t={t} whatsapp={whatsapp} />) : null}
                 </div>
             )}
             </div>
@@ -334,9 +336,8 @@ function Selected({ quote, bn, t }: { quote: DeliveryQuote; bn: boolean; t: Mess
     );
 }
 
-function NotServiced({ quote, bn, t }: { quote: DeliveryQuote; bn: boolean; t: Messages['delivery'] }) {
+function NotServiced({ quote, bn, t, whatsapp }: { quote: DeliveryQuote; bn: boolean; t: Messages['delivery']; whatsapp: ContactValue }) {
     const place = quotePlace(quote, bn);
-    const whatsapp = contact.whatsapp;
     return (
         <>
             <ResultBlock>

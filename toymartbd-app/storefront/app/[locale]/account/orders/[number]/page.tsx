@@ -9,11 +9,12 @@ import { OrderAddressCard } from '@/components/account/OrderAddressCard';
 import { OrderItems, OrderTimeline } from '@/components/order/OrderParts';
 import { isZero, itemsLabel } from '@/lib/cart/format';
 import type { OrderStage } from '@/lib/cart/types';
-import { contact } from '@/lib/site-config';
+import { cmsPaths, whatsappHref } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { paymentLabel } from '@/components/account/OrderCard';
 import { accountMessages } from '@/lib/account/messages';
 import { getOrder, requireAccount } from '@/lib/account/server';
-import { format, getMessages, isLocale } from '@/lib/i18n';
+import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { orderDateTime, orderItemCount } from '@/lib/order/format';
 import { privateMetadata } from '@/lib/seo/metadata';
@@ -56,6 +57,7 @@ export default async function AccountOrderPage({ params }: Props) {
     if (!isLocale(locale) || !NUMBER.test(number)) notFound();
     const m = accountMessages(locale);
     const t = getMessages(locale);
+    const { contact } = await getStoreInfo();
     const path = `/account/orders/${number}`;
     const { token, account } = await requireAccount(locale, path);
     const order = await getOrder(token, number, locale);
@@ -97,7 +99,7 @@ export default async function AccountOrderPage({ params }: Props) {
                     <OrderAddressCard order={order} locale={locale} t={t} m={m} />
                     {/* "Need help? WhatsApp us" — Button Secondary Size=lg, full width (237:10066). Invoice PDF and
                         return / exchange in the design have no backend yet. */}
-                    <a href={contact.whatsapp.href} className={`${buttonClass('secondary')} w-full`}>
+                    <a href={whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact))} className={`${buttonClass('secondary')} w-full`}>
                         <Icon name="whatsappLogo" className={buttonIconClass.lg} />
                         {m.orders.needHelp}
                     </a>

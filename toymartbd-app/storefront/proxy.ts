@@ -3,11 +3,15 @@ import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server
 import { ACCOUNT_FLASH_COOKIE } from './lib/account/cookies';
 import { CHECKOUT_FLASH_COOKIE, FLASH_COOKIE, TRACK_COOKIE } from './lib/cart/cookies';
 import { contentSecurityPolicy, isNonceRoute, newNonce } from './lib/csp';
-import { MAINTENANCE_RETRY_AFTER_SECONDS, maintenanceOn } from './lib/maintenance';
+import { apiMaintenance, MAINTENANCE_RETRY_AFTER_SECONDS, maintenanceOn, observingFetch } from './lib/maintenance';
 import { splitLocalePath } from './lib/i18n/config';
 import { LOCALE_HEADER, LOCALE_REWRITE_HEADER, PATH_HEADER, resolveLocaleRoute } from './lib/locale-route';
 import { recordHit, redirectIndex } from './lib/seo/redirect-map';
 import { resolveRedirect } from './lib/seo/redirects';
+
+// The redirect-map refresh doubles as the proxy's view of the API (lib/maintenance.ts): a
+// `maintenance` 503 there arms the downtime signal, a 200 clears it. No extra request.
+const observedFetch = observingFetch();
 
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
     // Next 16 runs the proxy again for the rewritten `/en/...` path. The marker header lets that
@@ -19,7 +23,7 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
     // Slug history + manual redirects (docs/api/seo.md): old URLs 301 to the current one in both
     // locales, before any page renders. Laravel never lists a live URL, so a page always wins.
     if (request.method === 'GET' || request.method === 'HEAD') {
-        const decision = resolveRedirect(await redirectIndex(), pathname, request.nextUrl.search);
+        const decision = resolveRedirect(await redirectIndex(Date.now(), observedFetch), pathname, request.nextUrl.search);
         if (decision) {
             if (decision.id !== null) event.waitUntil(recordHit(decision.id));
             if (!decision.location.startsWith('/')) return NextResponse.redirect(new URL(decision.location), decision.status);
@@ -33,10 +37,12 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
 
     const route = resolveLocaleRoute(pathname);
 
-    // Maintenance switch (docs/ops/DEPLOYMENT.md §5): with STOREFRONT_MAINTENANCE=1 every page
-    // answers 503 + Retry-After with the maintenance page, so crawlers keep the indexed pages
-    // and shoppers never reach a half-working cart or checkout during a destructive migration.
-    if (maintenanceOn(process.env) && route.action !== 'redirect') {
+    // Maintenance (docs/ops/DEPLOYMENT.md §5): with STOREFRONT_MAINTENANCE=1, or while the API is
+    // known to be down for maintenance (`php artisan down`, lib/maintenance.ts), every page answers
+    // 503 + Retry-After with the maintenance page, so crawlers keep the indexed pages and shoppers
+    // never reach a half-working cart or checkout during a destructive migration. Never cached.
+    const apiDown = apiMaintenance();
+    if ((maintenanceOn(process.env) || apiDown) && route.action !== 'redirect') {
         // A rewrite cannot carry a 503 (Next keeps the page's 200), so render the maintenance page
         // with an internal request — the rewrite marker sends it straight through this proxy — and
         // answer its HTML ourselves with the status crawlers need.
@@ -50,7 +56,7 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
             status: 503,
             headers: {
                 'Content-Type': page?.ok ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8',
-                'Retry-After': String(MAINTENANCE_RETRY_AFTER_SECONDS),
+                'Retry-After': String(apiDown?.retryAfter ?? MAINTENANCE_RETRY_AFTER_SECONDS),
                 'Cache-Control': 'no-store',
                 'Content-Security-Policy': contentSecurityPolicy(process.env, null),
             },

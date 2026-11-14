@@ -7,6 +7,7 @@ import { KidsCard } from '@/components/account/KidsCard';
 import { Field, inputClass } from '@/components/cart/fields';
 import { buttonClass } from '@/components/layout/button-styles';
 import { displayPhone } from '@/lib/account/flash';
+import { getStoreInfo } from '@/lib/store-info';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getChildren, getConsents, readAccountFlash, requireAccount } from '@/lib/account/server';
@@ -43,6 +44,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const p = m.profile;
     const n = p.notifications;
     const query = await searchParams;
@@ -52,9 +54,9 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     const flash = await readAccountFlash();
     const draft = flash?.kind === 'error' ? flash.draft : {};
     const errors = flash?.kind === 'error' ? flash.errors : {};
-    const err = (key: string) => noticeText(errors[key], m);
+    const err = (key: string) => noticeText(errors[key], m, hotline);
     const welcome = query.welcome === '1' && !account.name;
-    const notice = noticeText(flash?.message, m) ?? (welcome ? p.welcome : null);
+    const notice = noticeText(flash?.message, m, hotline) ?? (welcome ? p.welcome : null);
     // Switched on only when the customer opted in (or just switched it on before an error) — never by default.
     const optedIn = draft.birthday_reminders !== undefined ? draft.birthday_reminders === '1' : birthday.consented;
     const state = birthday.consented ? n.on : birthday.withdrawn_at ? format(n.withdrawn, { date: orderDate(birthday.withdrawn_at, getMessages(locale)) }) : null;

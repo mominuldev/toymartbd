@@ -88,9 +88,11 @@ describe('flash and OTP cookies', () => {
 describe('display helpers', () => {
     it('translates notice keys and passes API sentences through', () => {
         const m = accountMessages('bn');
-        expect(noticeText('signedIn', m)).toBe(m.notices.signedIn);
-        expect(noticeText('কোডটি সঠিক নয়', m)).toBe('কোডটি সঠিক নয়');
-        expect(noticeText(null, m)).toBeNull();
+        expect(noticeText('signedIn', m, '09666-700800')).toBe(m.notices.signedIn);
+        expect(noticeText('কোডটি সঠিক নয়', m, '09666-700800')).toBe('কোডটি সঠিক নয়');
+        expect(noticeText(null, m, '09666-700800')).toBeNull();
+        // {phone} is the store hotline handed in (lib/store-info.ts), never a hard-coded sample.
+        expect(noticeText('failed', m, '09666-700800')).toContain('09666-700800');
     });
 
     it('builds initials and first names, Bangla included', () => {

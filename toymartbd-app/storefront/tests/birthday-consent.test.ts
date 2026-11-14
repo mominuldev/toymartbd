@@ -56,7 +56,7 @@ describe('child form', () => {
         const s = readChildForm(form({ intent: 'save', child_name: 'Mehrin', birth_day: '', birth_month: '8' }));
         expect(s.errors).toEqual({ birth_day: 'childDateMissing' });
         expect(s.draft).toMatchObject({ child_name: 'Mehrin', birth_month: '8' });
-        expect(noticeText(s.errors.birth_day, accountEn)).toBe(accountEn.notices.childDateMissing);
+        expect(noticeText(s.errors.birth_day, accountEn, '09610-123456')).toBe(accountEn.notices.childDateMissing);
         expect(readChildForm(form({ intent: 'save', birth_day: '32', birth_month: '1' })).errors).toEqual({ birth_day: 'childDateMissing' });
     });
 });

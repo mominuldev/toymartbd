@@ -4,12 +4,13 @@ import { formatNoBreak } from '@/components/FormatNoBreak';
 import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { type Messages } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 // TrustStrip — Figma 117:2678: Layout=Grid2x2 at 390 (128:1028, two columns, icon beside the text)
 // and Row4 at 1440 (135:1515, four columns, icon above). Brand-subtle panel, white icon bubbles,
-// coral icons. The hotline is the one site-config value (a placeholder until the owner confirms).
-export function TrustStrip({ t }: { t: Messages }) {
+// coral icons. The hotline is the API's (lib/store-info.ts; a marked sample until the owner sets it).
+export async function TrustStrip({ t }: { t: Messages }) {
+    const { contact } = await getStoreInfo();
     const items: Array<{ icon: IconName; label: ReactNode; detail: string }> = [
         { icon: 'money', label: t.pdp.trustCod, detail: t.pdp.trustCodDetail },
         { icon: 'arrowCounterClockwise', label: t.pdp.trustReturn, detail: t.pdp.trustReturnDetail },

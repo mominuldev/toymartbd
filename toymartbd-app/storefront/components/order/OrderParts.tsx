@@ -5,7 +5,8 @@ import { placeName } from '@/lib/delivery/format';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { courierLabel, orderDate, orderDateTime, orderItemCount, orderItemName, timelineSteps, type Shipment } from '@/lib/order/format';
-import { contact } from '@/lib/site-config';
+import { cmsPaths, whatsappHref } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 // The order views shared by the confirmation page and public tracking (P4-STO-10; Figma Order
 // tracking 132:2899 / 161:16502, OrderStep 121:1557, OrderTimeline 121:1558). Server components;
@@ -232,10 +233,14 @@ export function OrderItems({ order, locale, t, totals = false }: { order: Storef
     );
 }
 
-/** The pink WhatsApp help card ("Questions about this order?"). */
-export function OrderHelp({ t }: { t: Messages }) {
+/**
+ * The pink WhatsApp help card ("Questions about this order?"). While the WhatsApp number is a
+ * sample it opens the contact page instead of a wa.me link to a made-up number.
+ */
+export async function OrderHelp({ locale, t }: { locale: Locale; t: Messages }) {
+    const { contact } = await getStoreInfo();
     return (
-        <a href={contact.whatsapp.href} className="flex items-center gap-3 rounded-sm bg-tile-pink p-4 hover:shadow-e1">
+        <a href={whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact))} className="flex items-center gap-3 rounded-sm bg-tile-pink p-4 hover:shadow-e1">
             <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-status-in-stock text-fg-inverse">
                 <Icon name="whatsappLogo" className="size-icon-md" />
             </span>

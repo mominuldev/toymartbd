@@ -8,6 +8,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { displayPhone } from '@/lib/account/flash';
 import { firstName, initials, monthYear, noticeText } from '@/lib/account/format';
+import { getStoreInfo } from '@/lib/store-info';
 import { accountMessages } from '@/lib/account/messages';
 import { getOrders, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
@@ -36,6 +37,7 @@ export default async function AccountHomePage({ params }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const t = getMessages(locale);
     const { token, account } = await requireAccount(locale, PATH);
     const [active, flash] = await Promise.all([getOrders(token, locale, 'active', null), readAccountFlash()]);
@@ -67,7 +69,7 @@ export default async function AccountHomePage({ params }: Props) {
                 </span>
             </header>
 
-            <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m)} />
+            <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m, hotline)} />
 
             {!account.name ? (
                 <p className="t-body-sm rounded-sm bg-tile-butter px-4 py-3 text-fg-primary">

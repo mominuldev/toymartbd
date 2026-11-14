@@ -79,6 +79,7 @@ export function PeopleTab() {
                                     {role ? t(`role.${role}` as MessageKey) : t('staff.noRole')}
                                 </td>
                                 <td className={cell}>
+                                    <CellLabel text={t('staff.col.status')} />
                                     <StatusChip label={t(member.is_active ? 'staff.status.active' : 'staff.status.inactive')} tone={member.is_active ? 'success' : 'neutral'} />
                                 </td>
                                 <td className={cell}>

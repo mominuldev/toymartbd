@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { cached } from '../api';
+import { apiMaintenance } from '../maintenance';
 import { DEFAULT_TITLE_SEPARATOR, titleSeparatorOf } from './metadata';
 import { SEO_TYPES, type SeoDocument, type SeoType } from './types';
 
@@ -39,6 +40,10 @@ export const SEO_SETTINGS_TAG = 'seo-settings';
  * throws: an unreachable API falls back to the API's own default separator.
  */
 export async function getTitleSeparator(): Promise<string> {
+    // While the API is known to be down (lib/maintenance.ts) the only pages rendering are the
+    // maintenance page the proxy serves; it must not call the API once per visitor (a 503 is never
+    // cached, so every render would re-ask).
+    if (apiMaintenance()) return DEFAULT_TITLE_SEPARATOR;
     try {
         const body = await cached<unknown>('storefront/seo/settings', ['seo', SEO_SETTINGS_TAG]);
         return titleSeparatorOf(body);

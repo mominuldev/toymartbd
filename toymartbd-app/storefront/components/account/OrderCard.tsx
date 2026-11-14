@@ -5,7 +5,8 @@ import type { OrderSummary } from '@/lib/account/types';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { orderDate } from '@/lib/order/format';
-import { contact } from '@/lib/site-config';
+import { cmsPaths, whatsappHref } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { StagePill } from './StagePill';
 import { card, smallButton } from './styles';
 
@@ -21,7 +22,8 @@ export function paymentLabel(order: Pick<OrderSummary, 'payment'>, m: AccountMes
     return order.payment.status === 'paid' ? m.orders.paid : (order.payment.method ?? '');
 }
 
-export function OrderCard({ order, locale, t, m }: { order: OrderSummary; locale: Locale; t: Messages; m: AccountMessages }) {
+export async function OrderCard({ order, locale, t, m }: { order: OrderSummary; locale: Locale; t: Messages; m: AccountMessages }) {
+    const { contact } = await getStoreInfo();
     const href = localizedPath(locale, `/account/orders/${order.number}`);
     const moving = MOVING.has(order.stage);
     return (
@@ -63,8 +65,8 @@ export function OrderCard({ order, locale, t, m }: { order: OrderSummary; locale
                             <Icon name="truck" className="size-4" />
                             {m.orders.track}
                         </a>
-                        {/* Same help channel as the order pages' OrderHelp card (placeholder number until the owner confirms it). */}
-                        <a href={contact.whatsapp.href} className={`${smallButton.outline} grow basis-0`}>
+                        {/* Same help channel as the order pages' OrderHelp card (the contact page while the number is a sample). */}
+                        <a href={whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact))} className={`${smallButton.outline} grow basis-0`}>
                             <Icon name="shoppingBagOpenFill" className="size-4" />
                             {m.orders.help}
                         </a>

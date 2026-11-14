@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Fulfilment\Actions;
 
+use App\Domain\Fulfilment\Events\DeliveryReferenceDataChanged;
 use App\Domain\Fulfilment\Services\DeliverySettings;
 use App\Models\Enums\SettingGroup;
 use App\Models\Setting;
@@ -24,6 +25,8 @@ final readonly class UpdateFreeDeliveryThreshold
     {
         DB::transaction(static function () use ($threshold, $userId): void {
             Setting::put(DeliverySettings::PREFIX.'free_shipping_threshold', $threshold?->toDecimal(), SettingGroup::Delivery, updatedBy: $userId);
+            // The storefront's rate table shows the threshold (`delivery` tag), held until commit.
+            DeliveryReferenceDataChanged::dispatch('free_shipping_threshold');
         });
         $this->settings->refresh();
     }

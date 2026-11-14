@@ -66,12 +66,20 @@ describe('two-factor sign-in', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
         fireEvent.click(await screen.findByRole('button', { name: 'Use a recovery code' }));
+        // The toggle relabels the one field; focus moves into it (not left on the toggle).
+        await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Recovery code')));
         fireEvent.change(screen.getByLabelText('Recovery code'), { target: { value: 'abcde-fghij' } });
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
         await waitFor(() => expect(calls.mock.calls.some(([url, init]) => String(url).endsWith('/two-factor-challenge') && JSON.stringify(body(init as RequestInit)) === '{"recovery_code":"abcde-fghij"}')).toBe(true));
+        // The wrong code is announced and tied to the field.
+        const alert = await screen.findByRole('alert');
+        expect(alert.textContent).toContain('Used.');
+        expect(screen.getByLabelText('Recovery code').getAttribute('aria-describedby')).toBe(alert.id);
 
         fireEvent.click(screen.getByRole('button', { name: 'Start again' }));
         expect(await screen.findByRole('heading', { name: 'Sign in to Admin' })).toBeTruthy();
+        // The pressed button is gone: focus lands on Email, not the page.
+        expect(document.activeElement).toBe(screen.getByLabelText('Email'));
     });
 });
 
@@ -109,12 +117,15 @@ describe('two-factor setup', () => {
 
         fireEvent.click(await screen.findByRole('button', { name: 'Set up' }));
         expect(await screen.findByRole('img', { name: 'QR code to add Toy Mart BD Admin to an authenticator app' })).toBeTruthy();
+        // "Set up" is replaced by the key-and-code card: focus moves to its title.
+        expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Scan this with your authenticator app' }));
         expect(screen.getByText('JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP')).toBeTruthy();
 
         fireEvent.change(screen.getByLabelText(/Code from the app/), { target: { value: '654 321' } });
         fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
 
         const list = await screen.findByRole('list', { name: 'Save your recovery codes' });
+        expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Save your recovery codes' }));
         expect(within(list).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['aaaaa-bbbbb', 'ccccc-ddddd']);
         expect(screen.getByRole('link', { name: 'Download' }).getAttribute('download')).toBe('toymart-recovery-codes.txt');
         const confirm = calls.mock.calls.find(([url]) => String(url).endsWith('/auth/two-factor/confirm'))!;
@@ -138,7 +149,12 @@ describe('two-factor setup', () => {
         const calls = setupApi({ ...viewer, two_factor: { enabled: true, required: false } }, { enabled: true, required: false, confirmed_at: null, recovery_codes_left: 8 });
         renderApp('/account/two-factor');
 
+        // Cancel returns focus to the button that opened the code form; the form takes focus into its field.
         fireEvent.click(await screen.findByRole('button', { name: 'Turn off' }));
+        await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText('Code from the app')));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Turn off' })));
+        fireEvent.click(screen.getByRole('button', { name: 'Turn off' }));
         fireEvent.change(screen.getByLabelText('Code from the app'), { target: { value: '111222' } });
         fireEvent.click(screen.getAllByRole('button', { name: 'Turn off' }).at(-1)!);
 

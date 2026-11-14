@@ -103,7 +103,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
                                 {o.continue}
                             </a>
                         </div>
-                        <OrderHelp t={t} />
+                        <OrderHelp locale={locale} t={t} />
                     </aside>
                 </div>
             </div>

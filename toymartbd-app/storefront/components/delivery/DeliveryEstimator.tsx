@@ -1,6 +1,7 @@
 import { getDeliveryReference } from '@/lib/delivery/fetch';
 import type { DeliveryQuote, DeliverySelection } from '@/lib/delivery/types';
 import { getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { getStoreInfo } from '@/lib/store-info';
 
 import { DeliveryEstimatorClient } from './DeliveryEstimatorClient';
 
@@ -28,7 +29,7 @@ export interface DeliveryEstimatorProps {
 }
 
 export async function DeliveryEstimator({ locale, variantId, quantity = 1, initial }: DeliveryEstimatorProps) {
-    const reference = await getDeliveryReference(locale);
+    const [reference, store] = await Promise.all([getDeliveryReference(locale), getStoreInfo()]);
 
     return (
         <DeliveryEstimatorClient
@@ -39,6 +40,7 @@ export async function DeliveryEstimator({ locale, variantId, quantity = 1, initi
             quantity={quantity}
             action={localizedPath(locale, '/delivery-charge')}
             initial={initial ?? null}
+            whatsapp={store.contact.whatsapp}
         />
     );
 }

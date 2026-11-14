@@ -132,6 +132,8 @@ function Matrix({ matrix, editable }: { matrix: RoleMatrix; editable: boolean })
                                             <span className="inline-flex items-center gap-1 t-admin-body-strong text-fg-primary">
                                                 {role.bypasses_all && <LockSimpleIcon size={14} aria-hidden />}
                                                 {t(`role.${role.key}` as MessageKey)}
+                                                {/* The column tint is colour alone (WCAG 1.4.1): say it in words too. */}
+                                                {draft[role.key] && <span className="sr-only">{t('roles.changed')}</span>}
                                             </span>
                                             <span className="t-admin-caption font-normal text-fg-tertiary">{t('roles.users', { count: String(role.users_count) })}</span>
                                             {editable && role.editable && !sameSet(held(role), role.default_permissions) && (
@@ -161,6 +163,12 @@ function Matrix({ matrix, editable }: { matrix: RoleMatrix; editable: boolean })
                     </table>
                 </div>
             </div>
+
+            {/* Announces each tick's effect: the save bar below appears with the first change, and a
+                region that mounts with its text is not read out. */}
+            <p role="status" className="sr-only">
+                {changed.length > 0 ? t('roles.unsaved', { count: String(changed.length) }) : ''}
+            </p>
 
             {changed.length > 0 && (
                 <div role="region" aria-label={t('roles.unsaved', { count: String(changed.length) })} className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-md border border-line-default bg-surface px-4 py-3 shadow-e3">

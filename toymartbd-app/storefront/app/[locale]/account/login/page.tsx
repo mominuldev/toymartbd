@@ -8,6 +8,7 @@ import { Icon } from '@/components/icons/Icon';
 import { buttonClass } from '@/components/layout/button-styles';
 import { PageShell } from '@/components/PageShell';
 import { safeNext } from '@/lib/account/flash';
+import { getStoreInfo } from '@/lib/store-info';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { accountToken, readAccountFlash } from '@/lib/account/server';
@@ -37,13 +38,14 @@ export default async function LoginPage({ params, searchParams }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const query = await searchParams;
     const flash = await readAccountFlash();
     const next = safeNext(flash?.draft.next ?? (typeof query.next === 'string' ? query.next : null));
     if (await accountToken()) redirect(localizedPath(locale, next));
 
-    const phoneError = noticeText(flash?.errors.phone, m);
-    const notice = noticeText(flash?.message, m);
+    const phoneError = noticeText(flash?.errors.phone, m, hotline);
+    const notice = noticeText(flash?.message, m, hotline);
 
     return (
         <PageShell locale={locale} path={PATH} top="tight">

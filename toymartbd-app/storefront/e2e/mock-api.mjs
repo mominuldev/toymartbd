@@ -759,6 +759,20 @@ async function accountRoutes(req, res, url) {
 createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
 
+    // Planned downtime (e2e/api-maintenance.spec.ts): POST /__control/maintenance {on, retry_after}
+    // makes every /api/v1 route answer like `php artisan down --retry=N` — a 503 problem of type
+    // `maintenance` with Retry-After — until it is turned off again.
+    if (url.pathname === '/__control/maintenance' && req.method === 'POST') {
+        const { on, retry_after } = await readJson(req);
+        globalThis.mockApiMaintenance = on ? { retryAfter: Number(retry_after) || 60 } : null;
+        return send(res, 200, { ok: true });
+    }
+    if (globalThis.mockApiMaintenance && url.pathname.startsWith('/api/v1/')) {
+        hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
+        res.writeHead(503, { 'Content-Type': 'application/problem+json', 'Retry-After': String(globalThis.mockApiMaintenance.retryAfter) });
+        return res.end(JSON.stringify({ type: 'https://toymartbd.com/problems/maintenance', title: 'Down for maintenance', status: 503, detail: 'The shop is being updated. Please try again in a few minutes.' }));
+    }
+
     if (url.pathname.startsWith('/__control/')) {
         if (url.pathname === '/__control/hits') return send(res, 200, hits);
         if (url.pathname === '/__control/tracking') return send(res, 200, { events: trackingEvents, checkout: checkoutTracking });
@@ -870,6 +884,17 @@ createServer(async (req, res) => {
         ] });
     }
     if (/^\/api\/v1\/storefront\/redirects\/\d+\/hit$/.test(url.pathname) && req.method === 'POST') return raw(res, 204, '', 'text/plain');
+    // Launch item F4: the owner has set hotline, WhatsApp, trade licence and BIN; email and
+    // address are still unset (null), so their marked samples stay in the e2e paths too.
+    if (url.pathname === '/api/v1/storefront/store-info') {
+        return send(res, 200, {
+            name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি',
+            hotline: '09666-700800', hotline_tel: 'tel:+8809666700800',
+            whatsapp: '+8801812345678', whatsapp_display: '01812-345678',
+            email: null, address_en: null, address_bn: null,
+            trade_licence: 'TRAD/DNCC/012345/2026', bin: '004567891-0101',
+        });
+    }
     if (url.pathname === '/api/v1/storefront/robots') return raw(res, 200, 'User-agent: *\nDisallow: /checkout\n', 'text/plain; charset=utf-8');
     const sitemap = url.pathname.match(/^\/api\/v1\/storefront\/sitemaps\/(sitemap(?:-[a-z]+-(?:en|bn)-\d+)?\.xml)$/);
     if (sitemap) {

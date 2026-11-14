@@ -4,7 +4,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
 import type { FooterMenuColumn } from '@/lib/content/types';
-import { cmsPaths, contact, footerColumns, legal, social, type FooterColumn } from '@/lib/site-config';
+import { cmsPaths, footerColumns, social, whatsappHref, type FooterColumn, type StoreInfo } from '@/lib/site-config';
 import { buttonClass, buttonIconClass } from './button-styles';
 import { ContactDetail } from './ContactDetail';
 import { FooterLogotype } from './FooterLogotype';
@@ -14,6 +14,8 @@ interface Props {
     path: string;
     /** The published CMS footer menu (lib/content), or null/empty for the built-in columns. */
     menu?: FooterMenuColumn[] | null;
+    /** Contact and legal details (lib/store-info.ts on the server; the samples in a client error boundary). */
+    store: Pick<StoreInfo, 'contact' | 'legal'>;
 }
 
 // Per tile: pastel ground, corner-blob ink, icon-badge glyph and its ink (Figma Footer 124:3310).
@@ -38,13 +40,14 @@ function Blob({ tone }: { tone: string }) {
 // Footer — Figma Footer 124:3310 / storefront spec §B1.9 (owner redesign 2026-11-11): a raised
 // surface panel with rounded top corners, a six-colour rainbow strip, a bento row of pastel tiles
 // (pink Help · butter Shop · mint Help · sky About · lavender Say hi!), the giant multicolour
-// "toymart" logotype, and the legal bar. Contact values come only from lib/site-config.ts; a
-// placeholder is never a tel:/mailto:/wa.me link and carries data-placeholder.
-export function SiteFooter({ locale, path, menu = null }: Props) {
+// "toymart" logotype, and the legal bar. Contact values come only from the `store` prop (the API,
+// lib/store-info.ts, or its marked samples); a placeholder is never a tel:/mailto:/wa.me link and carries data-placeholder.
+export function SiteFooter({ locale, path, menu = null, store }: Props) {
+    const { contact, legal } = store;
     const t = getMessages(locale);
     const target = otherLocale(locale);
     const year = String(new Date().getFullYear());
-    const whatsappHref = contact.whatsapp.placeholder ? localizedPath(locale, cmsPaths.contact) : contact.whatsapp.href;
+    const whatsapp = whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact));
 
     return (
         <footer className="mt-section-mobile rounded-t-xl-plus bg-surface shadow-up-footer px-gutter-mobile pt-5.5 pb-[calc(--spacing(22)+env(safe-area-inset-bottom))] lg:mt-section-desktop lg:rounded-t-3xl lg:px-gutter-desktop lg:py-7">
@@ -72,7 +75,7 @@ export function SiteFooter({ locale, path, menu = null }: Props) {
                             <p className="t-body text-fg-secondary">{t.footer.helpTile.body}</p>
                         </div>
                         <div className="relative flex flex-wrap items-center gap-3">
-                            <a href={whatsappHref} className={buttonClass('primary', 'md')}>
+                            <a href={whatsapp} className={buttonClass('primary', 'md')}>
                                 <Icon name="whatsappLogo" className={buttonIconClass.md} />
                                 {t.footer.helpTile.whatsapp}
                             </a>

@@ -17,7 +17,9 @@ vi.mock('@/lib/categories', () => ({
 
 const { ServerErrorContent } = await import('@/components/status/ServerErrorContent');
 const { NotFoundContent } = await import('@/components/status/NotFoundContent');
-const { contact } = await import('@/lib/site-config');
+const { sampleContact } = await import('@/lib/site-config');
+const hotline = sampleContact.hotline;
+const confirmed = { display: '09666-700800', href: 'tel:+8809666700800', placeholder: false };
 
 const source = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -26,29 +28,33 @@ describe('500 body', () => {
         ['en', 'Something broke on our side', 'Try again'],
         ['bn', 'আমাদের দিকে কিছু সমস্যা হয়েছে', 'আবার চেষ্টা করুন'],
     ] as const)('renders the %s copy with a retry and the hotline', (locale, title, retry) => {
-        const html = renderToStaticMarkup(createElement(ServerErrorContent, { locale, onRetry: () => undefined }));
+        const html = renderToStaticMarkup(createElement(ServerErrorContent, { locale, onRetry: () => undefined, hotline }));
 
         expect(html).toContain('<h1');
         expect(html).toContain(title);
         expect(html).toContain(retry);
-        expect(html).toContain(contact.hotline.display);
+        expect(html).toContain(hotline.display);
         expect(html).not.toMatch(/[০-৯]/); // Western numerals in both locales (rule 36)
     });
 
     it('never makes a placeholder hotline dialable', () => {
-        const html = renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'en' }));
+        const html = renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'en', hotline }));
 
-        if (contact.hotline.placeholder) {
-            expect(html).toContain('data-placeholder="owner-to-confirm"');
-            expect(html).not.toContain(`href="${contact.hotline.href}"`);
-        } else {
-            expect(html).toContain(`href="${contact.hotline.href}"`);
-        }
+        expect(html).toContain('data-placeholder="owner-to-confirm"');
+        expect(html).not.toContain('href="tel:');
+    });
+
+    it('links a confirmed hotline', () => {
+        const html = renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'en', hotline: confirmed }));
+
+        expect(html).toContain('href="tel:+8809666700800"');
+        expect(html).toContain('09666-700800');
+        expect(html).not.toContain('data-placeholder');
     });
 
     it('links home in the right locale when there is nothing to retry (global-error)', () => {
-        expect(renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'bn' }))).toContain('href="/bn"');
-        expect(renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'en' }))).toContain('href="/"');
+        expect(renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'bn', hotline }))).toContain('href="/bn"');
+        expect(renderToStaticMarkup(createElement(ServerErrorContent, { locale: 'en', hotline }))).toContain('href="/"');
     });
 });
 

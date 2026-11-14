@@ -7,6 +7,7 @@ import { smallButton } from '@/components/account/styles';
 import { Icon } from '@/components/icons/Icon';
 import { ProductCard } from '@/components/listing/ProductCard';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
+import { getStoreInfo } from '@/lib/store-info';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { getWishlist, readAccountFlash, requireAccount } from '@/lib/account/server';
@@ -39,6 +40,7 @@ export default async function WishlistPage({ params }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const hotline = (await getStoreInfo()).contact.hotline.display; // {phone} in notices
     const t = getMessages(locale);
     const { token, account } = await requireAccount(locale, PATH);
     const [items, flash] = await Promise.all([getWishlist(token, locale), readAccountFlash()]);
@@ -54,7 +56,7 @@ export default async function WishlistPage({ params }: Props) {
     return (
         <AccountShell locale={locale} path={PATH} account={account} section="wishlist" title={m.wishlist.title} heading={{ sub: format(m.wishlist.sub, { count: String(items.length) }) }}>
 
-            <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m)} />
+            <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m, hotline)} />
 
             {items.length === 0 ? (
                 <section className="flex flex-col items-center gap-3 rounded-sm border border-line-default bg-surface px-6 py-10 text-center">

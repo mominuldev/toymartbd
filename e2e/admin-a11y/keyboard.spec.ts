@@ -57,3 +57,92 @@ test('sign in, skip to content, and process an order with the keyboard only', as
     await page.keyboard.press('Enter');
     await expect(page.getByText(`${order.number} is processing`)).toBeVisible();
 });
+
+/** Tab a dozen times inside an open modal <dialog>: focus never reaches the page behind it. */
+async function assertTrapped(page: Page, dialog: Locator): Promise<void> {
+    for (let i = 0; i < 12; i++) {
+        await page.keyboard.press('Tab');
+        expect(await dialog.evaluate((d) => d.contains(document.activeElement) || document.activeElement === document.body), `Tab ${i + 1} left the dialog`).toBe(true);
+    }
+}
+
+async function signInOwner(page: Page): Promise<void> {
+    await page.goto('/admin/login');
+    await page.locator('input[type="email"]').fill('owner@toymart.test');
+    await page.locator('input[type="password"]').fill('password');
+    await page.locator('button[type="submit"]').click();
+    await expect(page).not.toHaveURL(/\/login/);
+}
+
+// Phase 10 batch 3: Staff & roles and Store settings dialogs, and the editable permission matrix,
+// by keyboard alone — open from the trigger, focus inside, trapped, Escape, focus back on the trigger.
+test('Phase 10: staff and branch dialogs, and the permission matrix, by keyboard', async ({ page }) => {
+    await signInOwner(page);
+
+    await page.goto('/admin/staff');
+    const add = page.getByRole('button', { name: 'Add staff', exact: true });
+    await tabTo(page, add);
+    await page.keyboard.press('Enter');
+    const addDialog = page.getByRole('dialog', { name: 'Add staff' });
+    await expect(addDialog).toBeVisible();
+    await expect(addDialog.getByLabel('Full name')).toBeFocused();
+    await assertTrapped(page, addDialog);
+    await page.keyboard.press('Escape');
+    await expect(addDialog).toBeHidden();
+    await expect(add).toBeFocused();
+
+    const manage = page.getByRole('button', { name: /^Manage Farhana/ });
+    await tabTo(page, manage);
+    await page.keyboard.press('Enter');
+    const manageDialog = page.getByRole('dialog', { name: /Farhana/ });
+    await expect(manageDialog).toBeVisible();
+    await assertTrapped(page, manageDialog);
+    await page.keyboard.press('Escape');
+    await expect(manageDialog).toBeHidden();
+    await expect(manage).toBeFocused();
+
+    // The matrix: every editable cell is a named checkbox; Space ticks it; the save bar is reachable.
+    await page.goto('/admin/staff/roles');
+    const boxes = page.locator('table input[type="checkbox"]');
+    await expect(boxes.first()).toBeVisible();
+    const unnamed = await boxes.evaluateAll((els) => els.filter((el) => !(el.getAttribute('aria-label') ?? '').trim()).length);
+    expect(unnamed, 'permission checkboxes without a name').toBe(0);
+    const first = boxes.first();
+    await tabTo(page, first, 200);
+    const before = await first.isChecked();
+    await page.keyboard.press('Space');
+    expect(await first.isChecked()).toBe(!before);
+    await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes to 1 role(s)' })).toHaveCount(1);
+    const discard = page.getByRole('region', { name: 'Unsaved changes to 1 role(s)' }).getByRole('button', { name: 'Discard' });
+    await tabTo(page, discard, 400);
+    await page.keyboard.press('Tab');
+    const save = page.getByRole('button', { name: 'Save permissions' });
+    await expect(save).toBeFocused();
+    await page.keyboard.press('Enter');
+    const confirm = page.getByRole('dialog');
+    await expect(confirm).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(confirm).toBeHidden();
+    await expect(save).toBeFocused();
+    await discard.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('region', { name: /Unsaved changes/ })).toHaveCount(0);
+
+    // Store settings › Branches: Add branch and a row's Edit.
+    await page.goto('/admin/settings/branches');
+    const addBranch = page.getByRole('button', { name: 'Add branch' });
+    await tabTo(page, addBranch);
+    await page.keyboard.press('Enter');
+    const branch = page.getByRole('dialog', { name: 'Add branch' });
+    await expect(branch).toBeVisible();
+    await assertTrapped(page, branch);
+    await page.keyboard.press('Escape');
+    await expect(branch).toBeHidden();
+    await expect(addBranch).toBeFocused();
+    const edit = page.getByRole('button', { name: /^Edit / }).first();
+    await tabTo(page, edit);
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(edit).toBeFocused();
+});

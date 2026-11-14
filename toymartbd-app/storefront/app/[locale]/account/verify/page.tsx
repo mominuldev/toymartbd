@@ -15,7 +15,7 @@ import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
 import { readAccountFlash } from '@/lib/account/server';
 import { format, isLocale, localizedPath } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { privateMetadata } from '@/lib/seo/metadata';
 
 // /account/verify — Enter the code, Figma 237:9412 (390). Six boxes (plain inputs: the form posts
@@ -42,12 +42,13 @@ export default async function VerifyPage({ params }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const m = accountMessages(locale);
+    const { contact } = await getStoreInfo();
     const otp = decodeOtp((await cookies()).get(OTP_COOKIE)?.value);
     if (!otp) redirect(localizedPath(locale, '/account/login'));
 
     const flash = await readAccountFlash();
-    const codeError = noticeText(flash?.errors.code, m);
-    const notice = noticeText(flash?.message, m);
+    const codeError = noticeText(flash?.errors.code, m, contact.hotline.display);
+    const notice = noticeText(flash?.message, m, contact.hotline.display);
     const phone = displayPhone(otp.phone);
 
     return (

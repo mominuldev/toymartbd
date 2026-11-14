@@ -6,7 +6,7 @@ import { buttonClass, buttonIconClass } from '@/components/layout/button-styles'
 import { ContactDetail } from '@/components/layout/ContactDetail';
 import { Wordmark } from '@/components/layout/Wordmark';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { noindexMetadata } from '@/lib/seo/metadata';
 
 // Maintenance page (Figma 169:10575 / 173:19641, storefront spec §B8): no site chrome — the shop
@@ -29,10 +29,11 @@ export default async function MaintenancePage({ params }: Props) {
     const { locale } = await params;
     if (!isLocale(locale)) notFound();
     const t = getMessages(locale);
+    const { contact } = await getStoreInfo();
     const [before, after] = t.maintenance.body.split('{phone}');
     const callLabel = format(t.maintenance.call, { phone: contact.hotline.display });
     const action = 'w-full lg:w-auto';
-    // Placeholder contact values keep the design's buttons but are not links (lib/site-config.ts).
+    // Placeholder contact values keep the design's buttons but are not links (lib/store-info.ts falls back to the lib/site-config.ts samples).
     const Cta = ({ href, placeholder, variant, icon, label }: { href: string; placeholder: boolean; variant: 'primary' | 'secondary'; icon: 'phoneFill' | 'whatsappLogo'; label: string }) => {
         const body = (
             <>

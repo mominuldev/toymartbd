@@ -5,6 +5,7 @@ import { getCategoryTree } from '@/lib/categories';
 import { getBanners, getMenus } from '@/lib/content/api';
 import { footerMenu, headerMenu, linkAttrs, localisedOptional } from '@/lib/content/types';
 import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { getStoreInfo } from '@/lib/store-info';
 import { LocaleSuggestion } from './LocaleSuggestion';
 import { BannerPopup } from './content/BannerPopup';
 import { DisclosureKeyboard } from './layout/DisclosureKeyboard';
@@ -59,6 +60,8 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
     const menus = await getMenus(); // never throws
     const menu = menus.header ? headerMenu(menus.header, locale, categoryMenu, (category) => format(t.nav.viewAll, { category })) : categoryMenu;
     const footer = menus.footer ? footerMenu(menus.footer, locale) : null;
+    // Hotline, WhatsApp, email and legal bar (tag store-info); never throws, falls back to samples.
+    const store = await getStoreInfo();
 
     // Banners (tag content:banners). Never on cart or checkout except the info strip, which those
     // pages render themselves (rule 25b).
@@ -100,7 +103,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
                     <AnnouncementBar message={t.announcement.cod} />
                 )
             ) : null}
-            <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} />
+            <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} hotline={store.contact.hotline} />
             {/* Gutters outside, content capped at 1280 inside: at 1440 that is the design's 80px margin. */}
             <main
                 id="main"
@@ -109,7 +112,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
             >
                 {bleed ? children : <div className="mx-auto max-w-content">{children}</div>}
             </main>
-            <SiteFooter locale={locale} path={path} menu={footer} />
+            <SiteFooter locale={locale} path={path} menu={footer} store={store} />
             {popup && (popupTitle || popupBody) ? (
                 <BannerPopup
                     id={popup.id}

@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { CheckCircleIcon, CopyIcon, DownloadSimpleIcon, ShieldCheckIcon, ShieldWarningIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { ApiError } from '@/lib/api';
@@ -54,13 +54,24 @@ export function TwoFactorPage() {
     );
 }
 
-function Header({ icon: Icon = ShieldCheckIcon, title, body }: { icon?: typeof ShieldCheckIcon; title: string; body: string }) {
+/**
+ * The card's icon, title and body. `focus` moves focus to the title when the card replaces
+ * another one (Set up → key and code → recovery codes): the button that was pressed is gone,
+ * and focus would otherwise fall back to the page, leaving a keyboard or screen-reader user lost.
+ */
+function Header({ icon: Icon = ShieldCheckIcon, title, body, focus = false }: { icon?: typeof ShieldCheckIcon; title: string; body: string; focus?: boolean }) {
+    const ref = useRef<HTMLHeadingElement>(null);
+    useEffect(() => {
+        if (focus) ref.current?.focus();
+    }, [focus]);
     return (
         <div className="flex flex-col gap-3">
             <span aria-hidden className="grid size-11 place-items-center rounded-sm bg-brand-subtle text-fg-brand">
                 <Icon size={22} />
             </span>
-            <h1 className="t-admin-page-title text-fg-primary">{title}</h1>
+            <h1 ref={ref} tabIndex={focus ? -1 : undefined} className="t-admin-page-title text-fg-primary focus:outline-none">
+                {title}
+            </h1>
             <p className="t-admin-body text-fg-secondary">{body}</p>
         </div>
     );
@@ -106,7 +117,7 @@ function SetupCard({ required, onEnabled }: { required: boolean; onEnabled: (cod
 
     return (
         <form noValidate onSubmit={submit} className={card}>
-            <Header title={t('twoFactor.scanTitle')} body={t('twoFactor.scanBody')} />
+            <Header title={t('twoFactor.scanTitle')} body={t('twoFactor.scanBody')} focus />
             <img
                 src={`data:image/svg+xml;utf8,${encodeURIComponent(setup.qr_svg)}`}
                 alt={t('twoFactor.qrAlt')}
@@ -148,7 +159,7 @@ function RecoveryCodesCard({ codes, onDone }: { codes: string[]; onDone: () => v
 
     return (
         <div className={card}>
-            <Header icon={CheckCircleIcon} title={t('twoFactor.codesTitle')} body={t('twoFactor.codesBody')} />
+            <Header icon={CheckCircleIcon} title={t('twoFactor.codesTitle')} body={t('twoFactor.codesBody')} focus />
             <ul aria-label={t('twoFactor.codesTitle')} className="grid grid-cols-2 gap-2 rounded-sm bg-subtle p-4">
                 {codes.map((code) => (
                     <li key={code} className="t-admin-mono-sm text-fg-primary">
@@ -195,9 +206,28 @@ function ManageCard({ confirmedAt, left, required, onCodes }: { confirmedAt: str
     const disable = useDisableTwoFactor();
     const [action, setAction] = useState<'codes' | 'off' | null>(null);
     const [code, setCode] = useState('');
-    const errorId = useId();
+    const codeRef = useRef<HTMLInputElement>(null);
     const pending = regenerate.isPending || disable.isPending;
     const error = codeError(action === 'off' ? disable.error : regenerate.error, t('twoFactor.invalid'));
+
+    // Opening the code form replaces the buttons: focus goes to its field; Cancel returns it to
+    // the button that opened the form (WCAG 2.4.3 focus order).
+    useEffect(() => {
+        if (action !== null) codeRef.current?.focus();
+    }, [action]);
+
+    function cancel() {
+        const which = action;
+        setAction(null);
+        setCode('');
+        regenerate.reset();
+        disable.reset();
+        // The buttons are back on the next render.
+        requestAnimationFrame(() => {
+            const button = document.querySelector(`[data-two-factor-action="${which}"]`);
+            if (button instanceof HTMLButtonElement) button.focus();
+        });
+    }
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -239,11 +269,11 @@ function ManageCard({ confirmedAt, left, required, onCodes }: { confirmedAt: str
 
             {action === null ? (
                 <div className="flex flex-wrap gap-3">
-                    <Button variant="outline" onClick={() => setAction('codes')}>
+                    <Button variant="outline" data-two-factor-action="codes" onClick={() => setAction('codes')}>
                         {t('twoFactor.newCodes')}
                     </Button>
                     {!required && (
-                        <Button variant="danger" onClick={() => setAction('off')}>
+                        <Button variant="danger" data-two-factor-action="off" onClick={() => setAction('off')}>
                             {t('twoFactor.turnOff')}
                         </Button>
                     )}
@@ -252,11 +282,12 @@ function ManageCard({ confirmedAt, left, required, onCodes }: { confirmedAt: str
                     </Link>
                 </div>
             ) : (
-                <form noValidate onSubmit={submit} aria-describedby={error ? errorId : undefined} className="flex flex-col gap-3 border-t border-line-default pt-4">
+                <form noValidate onSubmit={submit} className="flex flex-col gap-3 border-t border-line-default pt-4">
                     <p className="t-admin-body text-fg-secondary">{t(action === 'off' ? 'twoFactor.turnOffBody' : 'twoFactor.newCodesBody')}</p>
                     <Field label={t('twoFactor.code')} error={error}>
                         {({ id, describedBy, invalid }) => (
                             <Input
+                                ref={codeRef}
                                 id={id}
                                 inputMode="numeric"
                                 autoComplete="one-time-code"
@@ -270,15 +301,7 @@ function ManageCard({ confirmedAt, left, required, onCodes }: { confirmedAt: str
                         )}
                     </Field>
                     <div className="flex justify-end gap-3">
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                setAction(null);
-                                setCode('');
-                                regenerate.reset();
-                                disable.reset();
-                            }}
-                        >
+                        <Button variant="ghost" onClick={cancel}>
                             {t('common.cancel')}
                         </Button>
                         <Button type="submit" variant={action === 'off' ? 'danger' : 'primary'} disabled={pending}>

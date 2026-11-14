@@ -16,7 +16,7 @@ import { format, getMessages, isLocale, localizedPath, type Messages } from '@/l
 import { formatPrice } from '@/lib/listing/format';
 import { PAYMENT_FLASH_COOKIE } from '@/lib/payments/cookies';
 import { getPlacedOrder } from '@/lib/order/fetch';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { privateMetadata } from '@/lib/seo/metadata';
 
 // /orders/{number}/payment — where the customer lands after SSLCommerz (success, fail or cancel)
@@ -55,10 +55,10 @@ const tone: Record<View, { box: string; icon: 'checkCircle' | 'clock' | 'warning
     review: { box: 'bg-warning-subtle', icon: 'info' },
 };
 
-function reasonText(reason: string | undefined, t: Messages): string | null {
+function reasonText(reason: string | undefined, t: Messages, phone: string): string | null {
     if (!reason) return null;
     const reasons = t.payment.reasons as Record<string, string>;
-    return format(reasons[reason] ?? t.payment.reasons.failed, { phone: contact.hotline.display });
+    return format(reasons[reason] ?? t.payment.reasons.failed, { phone });
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -76,7 +76,7 @@ export default async function OrderPaymentPage({ params }: Props) {
     const jar = await cookies();
     const token = validToken(jar.get(ORDER_COOKIE)?.value);
     const order = token && ORDER_NUMBER.test(number) ? await getPlacedOrder(number, token, locale).catch(() => null) : null;
-    const flash = reasonText(jar.get(PAYMENT_FLASH_COOKIE)?.value, t);
+    const flash = reasonText(jar.get(PAYMENT_FLASH_COOKIE)?.value, t, (await getStoreInfo()).contact.hotline.display);
     const path = `/orders/${number}/payment`;
 
     if (!order) {
@@ -148,7 +148,7 @@ export default async function OrderPaymentPage({ params }: Props) {
                             {view === 'expired' ? p.shopAgain : p.viewOrder}
                         </a>
                         <OrderItems order={order} locale={locale} t={t} totals />
-                        <OrderHelp t={t} />
+                        <OrderHelp locale={locale} t={t} />
                     </aside>
                 </div>
             </div>

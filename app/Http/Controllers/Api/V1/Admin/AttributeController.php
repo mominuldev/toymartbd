@@ -8,6 +8,7 @@ use App\Domain\Catalog\Actions\CreateAttribute;
 use App\Domain\Catalog\Actions\DeleteAttribute;
 use App\Domain\Catalog\Actions\UpdateAttribute;
 use App\Domain\Catalog\Models\ProductAttribute;
+use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Attribute\StoreAttributeRequest;
 use App\Http\Requests\Admin\Attribute\UpdateAttributeRequest;
@@ -21,10 +22,18 @@ use Illuminate\Http\Response;
  * Product attributes (P4-CAT-09) with their values. Attributes are few (Color,
  * Size, …), so the list is unpaginated, in display order, values included.
  * `DELETE` removes an attribute no variant uses; otherwise it is a 409.
+ *
+ * Storefront cache: product pages list the variant axes by attribute name and position, so
+ * an edit purges `products`, which every product page carries (docs/api/revalidation.md),
+ * queued after the Action commits. Create and delete need no
+ * purge: a new attribute and a deletable one are used by no variant.
  */
 final class AttributeController extends ApiController
 {
     public const int MAX_ATTRIBUTES = 200;
+
+    /** Product pages carry `products` too, so this one tag reaches every page that shows an attribute. */
+    public const string STOREFRONT_TAG = 'products';
 
     /** `GET /attributes` — every attribute with its values, by position; needs catalog.view. */
     public function index(): AnonymousResourceCollection
@@ -60,7 +69,10 @@ final class AttributeController extends ApiController
     /** `PATCH /attributes/{attribute}` — needs catalog.update. */
     public function update(UpdateAttributeRequest $request, ProductAttribute $attribute, UpdateAttribute $updateAttribute): AttributeResource
     {
-        return new AttributeResource($updateAttribute->handle($attribute, $request->changes())->load('values'));
+        $updated = $updateAttribute->handle($attribute, $request->changes());
+        RevalidateStorefrontTags::dispatch([self::STOREFRONT_TAG]);
+
+        return new AttributeResource($updated->load('values'));
     }
 
     /** `DELETE /attributes/{attribute}` — deletes it and its values, needs catalog.archive. */

@@ -27,6 +27,7 @@ import { redirectIndex, recordHit, resetRedirectCache } from '@/lib/seo/redirect
 import { indexRedirects, resolveRedirect } from '@/lib/seo/redirects';
 import { defaultRobots, SITEMAP_FILE, withSitemapLine } from '@/lib/seo/robots';
 import type { SeoDocument } from '@/lib/seo/types';
+import { sampleContact } from '@/lib/site-config';
 import { validateAll, validateJsonLd } from '@/lib/seo/validate';
 
 const SITE = 'https://toymartbd.com';
@@ -232,7 +233,7 @@ describe('JSON-LD per template validates against the Rich Results requirements',
     });
 
     it.each(locales)('home Organization + WebSite with SearchAction (%s)', (locale) => {
-        const org = organizationJsonLd(locale);
+        const org = organizationJsonLd(locale, sampleContact);
         const site = websiteJsonLd(locale);
         expect(clean([org, site])).toEqual([]);
         // Placeholders (hotline, email, logo) are never published.
@@ -240,6 +241,18 @@ describe('JSON-LD per template validates against the Rich Results requirements',
         expect(org).not.toHaveProperty('logo');
         const target = ((site.potentialAction as Record<string, unknown>).target as Record<string, string>).urlTemplate;
         expect(target).toBe(locale === 'bn' ? `${SITE}/bn/search?q={search_term_string}` : `${SITE}/search?q={search_term_string}`);
+    });
+
+    it('publishes the store hotline and email once the owner has set them', () => {
+        const contact = {
+            ...sampleContact,
+            hotline: { display: '09666-700800', href: 'tel:+8809666700800', placeholder: false },
+            email: { display: 'care@example.com', href: 'mailto:care@example.com', placeholder: false },
+        };
+        const org = organizationJsonLd('en', contact);
+        expect(clean([org])).toEqual([]);
+        expect(org.contactPoint).toEqual([expect.objectContaining({ telephone: '+8809666700800', email: 'care@example.com' })]);
+        expect(JSON.stringify(org)).not.toContain('01712'); // the WhatsApp sample is never published
     });
 
     it.each(locales)('category / brand BreadcrumbList (%s)', (locale) => {

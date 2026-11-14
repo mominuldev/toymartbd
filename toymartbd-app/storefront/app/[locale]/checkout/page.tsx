@@ -24,7 +24,7 @@ import { placeName } from '@/lib/delivery/format';
 import { format, getMessages, isLocale, localizedPath, type Messages } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { getPaymentMethods } from '@/lib/payments/methods';
-import { contact } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { privateMetadata } from '@/lib/seo/metadata';
 import { TrackEvent } from '@/components/tracking/TrackEvent';
 import { cartItems, TRACKING_CURRENCY } from '@/lib/tracking/items';
@@ -53,10 +53,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return privateMetadata(locale, '/checkout', getMessages(locale).checkout.title);
 }
 
-function generalNotice(flash: CheckoutFlash | null, t: Messages): string | null {
+function generalNotice(flash: CheckoutFlash | null, t: Messages, phone: string): string | null {
     if (!flash?.notice) return null;
     const c = t.checkout;
-    const phone = contact.hotline.display;
     switch (flash.notice) {
         case 'summary':
             return c.errors.summary;
@@ -79,6 +78,7 @@ export default async function CheckoutPage({ params }: Props) {
     const t = getMessages(locale);
     const c = t.checkout;
     const bn = locale === 'bn';
+    const { contact } = await getStoreInfo();
     const jar = await cookies();
     const [{ cart, dest, notice, failed }, reference, methods] = await Promise.all([loadCartPage(locale), getDeliveryReference(locale), getPaymentMethods(locale)]);
     const online = methods.filter((m) => m.online);
@@ -87,7 +87,7 @@ export default async function CheckoutPage({ params }: Props) {
     const draft = decodeDraft(jar.get(CHECKOUT_DRAFT_COOKIE)?.value);
     const flash = decodeFlash(jar.get(CHECKOUT_FLASH_COOKIE)?.value);
     const errors = flash?.errors ?? {};
-    const general = generalNotice(flash, t) ?? (notice ? noticeText(notice, t.cart.notices) : null);
+    const general = generalNotice(flash, t, contact.hotline.display) ?? (notice ? noticeText(notice, t.cart.notices) : null);
 
     const districtId = draftId(draft.district_id) ?? dest?.districtId ?? null;
     const upazilaId = draftId(draft.upazila_id) ?? (dest && dest.districtId === districtId ? dest.upazilaId : null);

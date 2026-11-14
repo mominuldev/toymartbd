@@ -160,6 +160,7 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
                         }
                         caption={t('checkoutSettings.free.caption')}
                         error={error}
+                        errorId={`${amountId}-error`}
                     >
                         {freeOn && (
                             <div className="w-28">
@@ -174,6 +175,7 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
                                     value={amount}
                                     disabled={locked}
                                     aria-invalid={error ? true : undefined}
+                                    aria-describedby={error ? `${amountId}-error` : undefined}
                                     onChange={(e) => setAmount(e.target.value)}
                                 />
                             </div>
@@ -203,8 +205,9 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
                 </div>
                 <p className="t-admin-caption text-fg-secondary">
                     {courier ? t('checkoutSettings.charges.caption', { courier }) : t('checkoutSettings.charges.noCourier')}{' '}
+                    {/* Underlined always: a link inside a sentence must not rely on colour alone (WCAG 1.4.1, axe link-in-text-block). */}
                     {courierLink && (
-                        <Link to="/integrations/couriers" className="text-fg-brand underline-offset-2 hover:underline">
+                        <Link to="/integrations/couriers" className="text-fg-brand underline underline-offset-2">
                             {t('checkoutSettings.charges.edit')}
                         </Link>
                     )}
@@ -219,12 +222,14 @@ function Row({
     labelId,
     caption,
     error,
+    errorId,
     children,
 }: {
     label: string;
     labelId?: string;
     caption: string;
     error?: string;
+    errorId?: string;
     children: ReactNode;
 }) {
     return (
@@ -239,7 +244,7 @@ function Row({
                 <div className="flex shrink-0 items-center gap-3">{children}</div>
             </div>
             {error && (
-                <p role="alert" className="flex items-start gap-1 t-admin-caption text-fg-primary">
+                <p id={errorId} role="alert" className="flex items-start gap-1 t-admin-caption text-fg-primary">
                     <WarningCircleIcon size={14} aria-hidden className="mt-px shrink-0 text-feedback-danger" />
                     {error}
                 </p>

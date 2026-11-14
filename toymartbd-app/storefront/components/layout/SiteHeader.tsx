@@ -3,7 +3,7 @@ import type { IconName } from '@/components/icons/paths';
 import { LocaleToggle } from '@/components/LocaleToggle';
 import type { MenuItem } from '@/lib/category-tree';
 import { getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
-import { contact } from '@/lib/site-config';
+import type { ContactValue } from '@/lib/site-config';
 import { CartLink } from './CartLink';
 import { MegaMenu } from './MegaMenu';
 import { SearchBar } from './SearchBar';
@@ -19,6 +19,8 @@ interface Props {
     cartCount?: number;
     /** Mobile search row under the header (Figma Home 126:10 "SearchRow"; the search page). */
     mobileSearch?: boolean;
+    /** The store hotline (lib/store-info.ts on the server; the sample in a client error boundary). */
+    hotline: ContactValue;
 }
 
 const iconButton =
@@ -40,7 +42,7 @@ function IconLink({ href, label, icon, className = 'inline-flex text-fg-primary'
 // Desktop 72 (content 1280): wordmark · 560 search · EN/বাং locale pill · hotline · wishlist ·
 // account · cart with count badge; the MegaMenuBar (123:1833) sits directly under it (sticky 120).
 // Every control is a plain link or a GET form, so the header is fully usable without JavaScript.
-export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false }: Props) {
+export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false, hotline }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
 
@@ -87,11 +89,11 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                             <Icon name="phone" className="size-icon-sm text-fg-brand" />
                             <span className="sr-only">{t.nav.hotline}: </span>
                             {/* A placeholder number is plain text (never tel:) — see lib/site-config.ts. */}
-                            {contact.hotline.placeholder ? (
-                                <span data-placeholder="owner-to-confirm">{contact.hotline.display}</span>
+                            {hotline.placeholder ? (
+                                <span data-placeholder="owner-to-confirm">{hotline.display}</span>
                             ) : (
-                                <a href={contact.hotline.href} className="rounded-xs underline-offset-4 hover:underline">
-                                    {contact.hotline.display}
+                                <a href={hotline.href} className="rounded-xs underline-offset-4 hover:underline">
+                                    {hotline.display}
                                 </a>
                             )}
                         </p>

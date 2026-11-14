@@ -1,15 +1,17 @@
 import { format, type Messages } from '../i18n';
-import { contact } from '../site-config';
 import type { AccountMessages } from './messages';
 
 // Display helpers for the account pages (P4-STO-11).
 
-/** A flash message is either a key of `notices` or the API's own localised sentence (shown verbatim). */
-export function noticeText(message: string | null | undefined, m: AccountMessages): string | null {
+/**
+ * A flash message is either a key of `notices` or the API's own localised sentence (shown verbatim).
+ * `phone` is the store hotline for `{phone}` (lib/store-info.ts, `contact.hotline.display`).
+ */
+export function noticeText(message: string | null | undefined, m: AccountMessages, phone: string): string | null {
     if (!message) return null;
     if (message in m.notices) {
         const text = m.notices[message as keyof AccountMessages['notices']];
-        return format(text, { phone: contact.hotline.display });
+        return format(text, { phone });
     }
     return message;
 }

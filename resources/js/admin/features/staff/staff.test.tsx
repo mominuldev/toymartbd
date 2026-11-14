@@ -277,7 +277,12 @@ describe('settings → staff & roles', () => {
         fireEvent.click(within(table).getByRole('checkbox', { name: 'View finance for Viewer' }));
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Approve refunds for Order operator' }));
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Approve refunds for Order operator' })); // undone
-        expect(screen.getByText('Unsaved changes to 1 role(s)')).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'Unsaved changes to 1 role(s)' })).toBeTruthy();
+        // Announced (the bar mounts with its text, which is not read out), and the changed
+        // column says so in words, not only with its tint (WCAG 1.4.1).
+        expect(screen.getAllByRole('status').map((el) => el.textContent)).toContain('Unsaved changes to 1 role(s)');
+        expect(within(table).getByRole('columnheader', { name: /^Viewer/ }).textContent).toContain('(changed, not saved)');
+        expect(within(table).getByRole('columnheader', { name: /^Order operator/ }).textContent).not.toContain('(changed, not saved)');
 
         fireEvent.click(screen.getByRole('button', { name: 'Save permissions' }));
         const confirm = await screen.findByRole('dialog', { name: 'Change permissions for 1 role(s)?' });
@@ -296,7 +301,7 @@ describe('settings → staff & roles', () => {
         renderApp('/staff/roles');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Restore the default permissions for Viewer' }));
-        expect(screen.getByText('Unsaved changes to 1 role(s)')).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'Unsaved changes to 1 role(s)' })).toBeTruthy();
         expect((screen.getByRole('checkbox', { name: 'View finance for Viewer' }) as HTMLInputElement).checked).toBe(false);
 
         fireEvent.click(screen.getByRole('button', { name: 'Discard' }));

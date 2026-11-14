@@ -102,7 +102,10 @@ describe('store settings → checkout & delivery rules', () => {
 
         fireEvent.change(await screen.findByLabelText('Free delivery from (৳)'), { target: { value: '0' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-        expect(await screen.findByText('Enter an amount above 0, like 3000 or 2999.50.')).toBeTruthy();
+        const alert = await screen.findByRole('alert');
+        expect(alert.textContent).toBe('Enter an amount above 0, like 3000 or 2999.50.');
+        // The error is tied to the field, so it is read with it, not only announced once.
+        expect(screen.getByLabelText('Free delivery from (৳)').getAttribute('aria-describedby')).toBe(alert.id);
         expect(putBodies(calls)).toEqual([]);
     });
 
