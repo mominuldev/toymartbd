@@ -42,6 +42,9 @@ import { SettingsLayout } from '@/features/storeSettings/SettingsLayout';
 import { BusinessSection } from '@/features/storeSettings/BusinessSection';
 import { BranchesSection } from '@/features/storeSettings/BranchesSection';
 import { CheckoutSection } from '@/features/storeSettings/CheckoutSection';
+import { DeliveryAreasSection } from '@/features/storeSettings/DeliveryAreasSection';
+import { PosPage } from '@/features/pos/PosPage';
+import { InboxPage } from '@/features/inbox/InboxPage';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -78,7 +81,7 @@ import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
-const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff']);
+const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff', '/pos', '/inbox']);
 
 export const routes: RouteObject[] = [
     { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
@@ -89,6 +92,8 @@ export const routes: RouteObject[] = [
             // Homepage builder (Figma B · 26 Page builder 241:44102): full height beside the sidebar
             // rail, no topbar, so it sits outside the Shell. Static, so it wins over `store/*`.
             { path: '/store/home', element: <HomeBuilderPage /> },
+            // POS register (Figma B · 33 241:48158): sidebar rail and its own header, no topbar — outside the Shell.
+            { path: '/pos', element: <PosPage /> },
             // Two-factor sign-in (owner decision 2026-11-14; no frame — the sign-in frame B · 00).
             // Outside the Shell: someone who must enrol is held here before using the admin.
             { path: '/account/two-factor', element: <TwoFactorPage /> },
@@ -217,6 +222,9 @@ export const routes: RouteObject[] = [
                     { path: 'automations/templates', element: <MessageTemplatesPage /> },
                     { path: 'automations/templates/new', element: <NewTemplatePage /> },
                     { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
+                    // Unified inbox (Figma B · 22 241:43115); `:conversationId` selects a thread.
+                    { path: 'inbox', element: <InboxPage /> },
+                    { path: 'inbox/:conversationId', element: <InboxPage /> },
                     // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
                     { path: 'integrations', element: <IntegrationsHubPage /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
@@ -243,6 +251,7 @@ export const routes: RouteObject[] = [
                             { path: 'business', element: <BusinessSection /> },
                             { path: 'branches', element: <BranchesSection /> },
                             { path: 'checkout', element: <CheckoutSection /> },
+                            { path: 'delivery', element: <DeliveryAreasSection /> },
                             { path: 'invoice', element: <InvoiceSettingsPage /> },
                         ],
                     },
