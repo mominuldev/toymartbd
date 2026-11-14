@@ -325,3 +325,13 @@ Fill these in before launch:
 - the busy days with no deploys (Eid dates, sale days);
 - whether Horizon's dashboard should be reachable in production (audit S-14);
 - storefront token rotation schedule (S-13).
+
+## 11. Store settings, integrations and the activity log
+
+- **Admin → Settings → Store** (`/admin/settings`):
+  - **Business:** store name in English and Bangla, trade licence, BIN, hotline and WhatsApp. These are the values printed on invoices. The hotline saved here is also the one in SMS, WhatsApp and email; `STORE_HOTLINE` applies only until one is saved.
+  - **Branches & warehouses:** type, address with landmark, and a facts line. A branch is switched off, never deleted. The default branch, and any branch still holding, reserving or expecting stock, cannot be switched off.
+  - **Checkout & delivery:** the free-delivery amount. The other rules show what checkout really does, and the zone charges come from the default courier's rate card (**Integrations → Couriers**).
+  - **Taxes & invoices:** the invoice address, email, website, logo and footer.
+- **Admin → Integrations** (`/admin/integrations`) shows every outside service with its real status, and opens its settings. "Not available yet" means no connection to that service is built.
+- **Admin → Settings → Staff & roles → Audit log** (`/admin/staff/activity`) lists every audited change: prices and cost, refunds, roles and permissions, passwords and two-factor, and integration keys. It shows who made the change, when, a masked IP and the device, with filters and a CSV export. It needs `audit.view`; the export also needs `reports.export`.

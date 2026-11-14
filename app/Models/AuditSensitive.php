@@ -38,8 +38,27 @@ class AuditSensitive extends Model
 {
     public const UPDATED_AT = null;
 
+    /** Long enough to tell browsers and OSes apart; a UA string is attacker-controlled free text. */
+    public const int USER_AGENT_MAX = 255;
+
     protected static function booted(): void
     {
+        // Where the change came from, filled centrally so no writer can forget it. Only for a
+        // routed HTTP request: a console command or queued job has no client, so both stay null.
+        static::creating(static function (self $audit): void {
+            $request = app()->bound('request') ? request() : null;
+            if ($request === null || $request->route() === null) {
+                return;
+            }
+            if ($audit->ip === null) {
+                $audit->ip = $request->ip();
+            }
+            if ($audit->user_agent === null) {
+                $agent = $request->userAgent();
+                $audit->user_agent = $agent === null || trim($agent) === '' ? null : mb_substr(trim($agent), 0, self::USER_AGENT_MAX);
+            }
+        });
+
         static::updating(static function (self $audit): never {
             throw ImmutableRecordException::for($audit->getTable(), 'update');
         });

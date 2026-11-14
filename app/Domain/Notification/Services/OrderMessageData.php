@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Services;
 
+use App\Domain\Notification\Support\StoreHotline;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Queries\OrderRiderContact;
 use App\Support\Locale\Formatter;
@@ -36,7 +37,7 @@ final class OrderMessageData
             'total' => self::amount($order->grand_total),
             'cod_amount' => self::amount($order->due_total),
             'track_url' => config('notifications.short_link_base', 'tmbd.co').'/'.$order->number,
-            'hotline' => (string) config('notifications.hotline'),
+            'hotline' => StoreHotline::current(),
             // The RIDER's number from the shipment (owner decision 2026-11-13), `01XXXXXXXXX` as
             // customers dial it — never our hotline. Empty when none is recorded; the listener
             // then sends the `.no_rider` variant, which has no {rider_phone} to fill.

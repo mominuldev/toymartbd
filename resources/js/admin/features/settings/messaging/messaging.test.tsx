@@ -159,10 +159,25 @@ describe('integrations → messaging', () => {
         expect(calls.mock.calls.some(([url]) => String(url).endsWith('/settings/messaging'))).toBe(false);
     });
 
-    it('opens the Integrations section on Messaging, in Bangla too', async () => {
-        messagingApi(owner);
+    it('opens Messaging from the Integrations hub, in Bangla too', async () => {
+        mockApi((url, init) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: owner };
+            if (url.endsWith('/integrations')) {
+                return {
+                    status: 200,
+                    body: {
+                        data: [
+                            { key: 'sms', name: 'SMS gateway', category: 'messaging', status: 'connected_live', notes: ['driver_reve'], attention: null, bookings_count: null, enabled: null, courier_provider_id: null, can_toggle: false, settings_path: '/integrations/messaging' },
+                        ],
+                    },
+                };
+            }
+            if (url.endsWith('/settings/messaging') && init?.method !== 'PUT') return { status: 200, body: saved };
+            return { status: 404 };
+        });
         renderApp('/integrations', { locale: 'bn' });
 
+        fireEvent.click(await screen.findByRole('link', { name: 'সেটিংস: এসএমএস গেটওয়ে' }));
         expect(await screen.findByRole('heading', { name: 'মেসেজিং' })).toBeTruthy();
     });
 });

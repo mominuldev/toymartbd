@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Notification\Mail;
 
 use App\Domain\Notification\Models\NotificationTemplate;
+use App\Domain\Notification\Support\StoreHotline;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderItem;
 use App\Support\Locale\Formatter;
@@ -79,7 +80,7 @@ final class OrderNotificationMail extends Mailable
             items: $items,
             totals: $totals,
             trackUrl: 'https://'.config('notifications.store_url').($bn ? '/bn' : '').'/track?order='.rawurlencode($order->number),
-            hotline: (string) config('notifications.hotline'),
+            hotline: StoreHotline::current(),
             mailLocale: $locale,
         );
     }

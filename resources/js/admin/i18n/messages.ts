@@ -38,6 +38,10 @@ import { customersBn, customersEn } from './messages.customers';
 import { dashboardBn, dashboardEn } from './messages.dashboard';
 import { analyticsBn, analyticsEn } from './messages.analytics';
 import { staffBn, staffEn } from './messages.staff';
+import { auditBn, auditEn } from './messages.audit';
+import { integrationsHubBn, integrationsHubEn } from './messages.integrationsHub';
+import { storeSettingsBn, storeSettingsEn } from './messages.storeSettings';
+import { checkoutSettingsBn, checkoutSettingsEn } from './messages.checkoutSettings';
 
 export const en = {
     ...productsEn,
@@ -67,6 +71,10 @@ export const en = {
     ...blogEn,
     ...trackingEn,
     ...staffEn,
+    ...auditEn,
+    ...integrationsHubEn,
+    ...storeSettingsEn,
+    ...checkoutSettingsEn,
     ...invoicesEn,
     ...customersEn,
     ...dashboardEn,
@@ -361,6 +369,10 @@ export const bn: Messages = {
     ...blogBn,
     ...trackingBn,
     ...staffBn,
+    ...auditBn,
+    ...integrationsHubBn,
+    ...storeSettingsBn,
+    ...checkoutSettingsBn,
     ...invoicesBn,
     ...customersBn,
     ...dashboardBn,

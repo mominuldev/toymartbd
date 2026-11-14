@@ -36,6 +36,12 @@ import { InvoicesPage } from '@/features/invoices/InvoicesPage';
 import { InvoiceSettingsPage } from '@/features/invoices/InvoiceSettingsPage';
 import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
 import { PeopleTab, RolesTab, StaffPage } from '@/features/staff';
+import { ActivityLogPage } from '@/features/audit/ActivityLogPage';
+import { IntegrationsHubPage } from '@/features/integrations/IntegrationsHubPage';
+import { SettingsLayout } from '@/features/storeSettings/SettingsLayout';
+import { BusinessSection } from '@/features/storeSettings/BusinessSection';
+import { BranchesSection } from '@/features/storeSettings/BranchesSection';
+import { CheckoutSection } from '@/features/storeSettings/CheckoutSection';
 import { ReviewsPage } from '@/features/reviews/ReviewsPage';
 import { PurchaseOrdersPage } from '@/features/purchasing/PurchaseOrdersPage';
 import { PurchaseFormPage } from '@/features/purchasing/PurchaseFormPage';
@@ -211,13 +217,15 @@ export const routes: RouteObject[] = [
                     { path: 'automations/templates', element: <MessageTemplatesPage /> },
                     { path: 'automations/templates/new', element: <NewTemplatePage /> },
                     { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
-                    // Integrations: the hub (Figma B · 37) is not built yet, so the section opens on Messaging.
-                    { path: 'integrations', element: <Navigate to="/integrations/messaging" replace /> },
+                    // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
+                    { path: 'integrations', element: <IntegrationsHubPage /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
                     // P8 invoicing: the list (no frame; Purchase orders B · 16 DataTable pattern) and
                     // Settings → Invoice details (Store settings B · 38 241:50827 "Business" card).
                     { path: 'invoices', element: <InvoicesPage /> },
-                    // Settings → Staff & roles (Figma B · 35 241:48916): People and a read-only role matrix.
+                    // Settings → Staff & roles → Activity log (Figma B · 39 241:51276). Static, so it wins over `staff`'s children.
+                    { path: 'staff/activity', element: <ActivityLogPage /> },
+                    // Settings → Staff & roles (Figma B · 35 241:48916): People and the role matrix.
                     {
                         path: 'staff',
                         element: <StaffPage />,
@@ -226,8 +234,18 @@ export const routes: RouteObject[] = [
                             { path: 'roles', element: <RolesTab /> },
                         ],
                     },
-                    { path: 'settings', element: <Navigate to="/settings/invoice" replace /> },
-                    { path: 'settings/invoice', element: <InvoiceSettingsPage /> },
+                    // Settings › Store (Figma B · 38 241:50827): one layout, a route per section.
+                    {
+                        path: 'settings',
+                        element: <SettingsLayout />,
+                        children: [
+                            { index: true, element: <Navigate to="/settings/business" replace /> },
+                            { path: 'business', element: <BusinessSection /> },
+                            { path: 'branches', element: <BranchesSection /> },
+                            { path: 'checkout', element: <CheckoutSection /> },
+                            { path: 'invoice', element: <InvoiceSettingsPage /> },
+                        ],
+                    },
                     // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).
                     { path: 'integrations/tracking', element: <TrackingSettingsPage /> },
                     { path: 'integrations/tracking/diagnostics', element: <TrackingDiagnosticsPage /> },

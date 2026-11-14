@@ -6,8 +6,10 @@ namespace Database\Seeders;
 
 use App\Domain\Catalog\Events\ProductChanged;
 use App\Domain\Catalog\Models\Product;
+use App\Domain\Customer\Models\District;
 use App\Domain\Inventory\Actions\RecordOpeningStock;
 use App\Domain\Inventory\Actions\SetReorderLevels;
+use App\Domain\Inventory\Enums\StockLocationType;
 use App\Domain\Inventory\Events\StockLevelChanged;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\StockOverview;
@@ -123,12 +125,25 @@ class DemoInventorySeeder extends Seeder
         StockOverview::forgetLowCounts();
     }
 
+    /**
+     * Store-settings profile per branch (Figma B · 38 Branches & warehouses): type, district by
+     * name, area, address line and the facts line. Demo values; the owner edits real ones.
+     *
+     * @var array<string, array{StockLocationType, string, string, string, string}>
+     */
+    public const array PROFILES = [
+        'dhk' => [StockLocationType::Warehouse, 'Dhaka', 'Mirpur', 'House 7, Road 2, Section 10', 'Courier pickup 4–7 pm · 2 packers'],
+        'ctg' => [StockLocationType::Retail, 'Chattogram', 'Agrabad', 'Shop 12, Agrabad Commercial Area', '1 register · open 10 am–9 pm'],
+        'syl' => [StockLocationType::Pickup, 'Sylhet', 'Zindabazar', 'Zindabazar', 'Orders held 5 days'],
+    ];
+
     /** @return array<string, StockLocation> code → location */
     private function locations(): array
     {
         $out = [];
         foreach (self::LOCATIONS as $code => [$name, $nameBn, $description, $descriptionBn]) {
-            $attributes = ['code' => $code, 'name' => $name, 'name_bn' => $nameBn, 'description' => $description, 'description_bn' => $descriptionBn, 'is_active' => true];
+            $attributes = ['code' => $code, 'name' => $name, 'name_bn' => $nameBn, 'description' => $description, 'description_bn' => $descriptionBn, 'is_active' => true]
+                + self::profile($code);
 
             if ($code === 'dhk') {
                 $default = StockLocation::query()->findOrFail(StockLocation::defaultId());
@@ -142,5 +157,21 @@ class DemoInventorySeeder extends Seeder
         }
 
         return $out;
+    }
+
+    /** @return array<string, mixed> */
+    private static function profile(string $code): array
+    {
+        [$type, $districtName, $area, $line, $notes] = self::PROFILES[$code];
+        $district = District::query()->where('name', $districtName)->first();
+
+        return [
+            'type' => $type,
+            'division_id' => $district?->division_id,
+            'district_id' => $district?->id,
+            'area' => $area,
+            'address_line' => $line,
+            'notes' => $notes,
+        ];
     }
 }

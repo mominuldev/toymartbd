@@ -4411,6 +4411,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /audit` — cursor-paginated `{ data, links, meta }`, newest first; needs audit.view */
+        get: operations["v1.admin.audit.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /audit/export` — the same rows and filters as CSV (masked IP, short device) */
+        get: operations["v1.admin.audit.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /integrations` — `{ data: Integration[] }`, grouped by category in display order */
+        get: operations["v1.admin.integrations.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/business": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/business` */
+        get: operations["v1.admin.settings.business.show"];
+        /** `PUT /settings/business` — affects invoices issued from now on; issued ones keep their snapshot */
+        put: operations["v1.admin.settings.business.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/locations` — every location, active and inactive, default first. Not paginated (a handful of rows) */
+        get: operations["v1.admin.settings.locations.index"];
+        put?: never;
+        /** `POST /settings/locations` — 201 with the new location */
+        post: operations["v1.admin.settings.locations.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/locations/districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/locations/districts` — the 64 districts with division and upazilas, for the address picker */
+        get: operations["v1.admin.settings.locations.districts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/locations/{location}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /settings/locations/{location}` — edit, or switch off with `is_active: false` */
+        put: operations["v1.admin.settings.locations.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/checkout` */
+        get: operations["v1.admin.settings.checkout.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/blog/posts": {
         parameters: {
             query?: never;
@@ -6628,6 +6766,41 @@ export interface components {
             color_hex: string | null;
             position: number;
         };
+        /** AuditEntryResource */
+        AuditEntryResource: {
+            id: number;
+            /** @description `App\Models\Enums\AuditAction` */
+            action: string;
+            /** @enum {string} */
+            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "courier_credentials" | "credentials_changed";
+            /** @enum {string} */
+            area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports";
+            actor: {
+                id: number;
+                name: string;
+            } | null;
+            subject: {
+                type: string;
+                id: number | null;
+                label: string | null;
+            } | null;
+            changes: {
+                field: string;
+                before: string | null;
+                after: string | null;
+            }[] | [
+                {
+                    /** @constant */
+                    field: "permissions";
+                    before: null;
+                    after: string;
+                }
+            ];
+            created_at: string;
+            day: string;
+            ip: string | null;
+            device: string | null;
+        };
         /** AuthUserResource */
         AuthUserResource: {
             id: number;
@@ -6937,6 +7110,25 @@ export interface components {
             /** @description Courier provider code. Omitted: the active default provider. */
             provider?: string | null;
         };
+        /** BusinessDetails */
+        BusinessDetails: {
+            name_en: string | null;
+            name_bn: string | null;
+            trade_licence: string | null;
+            bin: string | null;
+            hotline: string | null;
+            /** @description E.164, e.g. `+8801711000222`. */
+            whatsapp: string | null;
+            /** @description What invoices print while a name is unset (the brand name). */
+            default_names: {
+                name_en: string;
+                name_bn: string;
+            };
+            /** @description The hotline order messages use while none is saved here (env `STORE_HOTLINE`). */
+            hotline_default: string | null;
+            /** @description Fields of this section an invoice still prints as "[placeholder]". */
+            placeholders: string[];
+        };
         /**
          * CancelOrderRequest
          * @description `POST /orders/{order}/cancel` — needs orders.cancel. `reason` is the fixed list
@@ -7175,6 +7367,48 @@ export interface components {
                 /** Format: uri */
                 event_source_url?: string | null;
             };
+        };
+        /** CheckoutSettings */
+        CheckoutSettings: {
+            /** @description Always true: checkout finds or creates the customer by phone; no account needed. Not configurable. */
+            guest_checkout: boolean;
+            /** @description Always true: COD is accepted in every serviced zone (rule 33). Not configurable. */
+            cash_on_delivery: boolean;
+            /** @description Online payment methods checkout accepts right now, besides COD. */
+            online_methods: string[];
+            /** @description Always true: the customer note is accepted and stored. Not configurable. */
+            order_notes: boolean;
+            /** @description Longest note checkout accepts. */
+            order_note_max: number;
+            /**
+             * @description Risk-based advance payment (bKash). `available` is false until it can be enforced;
+             *     `blocker` is `no_bkash_gateway` or `no_partial_advance_flow`; `hold_score` is the
+             *     score at which an order is held for verification instead (never cancelled).
+             */
+            risk_advance: {
+                available: boolean;
+                blocker: string;
+                bkash_status: string | null;
+                hold_score: number;
+            };
+            /**
+             * @description The COD advance rule checkout applies (held until staff arrange it by phone);
+             *     null = no rule. Zones are `inside_dhaka_metro` | `dhaka_suburb` | `outside_dhaka`.
+             */
+            cod_advance: {
+                zones: string[];
+                threshold: string;
+                amount: string;
+            } | null;
+            /** @description Subtotal at or above which delivery is free in every zone; null = off. Edited via PUT /settings/delivery. */
+            free_shipping_threshold: string | null;
+            /** @description The default courier whose rate card prices the customer's delivery charge; null = none active. */
+            delivery_courier: string | null;
+            /** @description Base charge per zone the customer is quoted (before weight surcharge); null when no courier is active. */
+            delivery_charges: {
+                zone: string;
+                charge: string | null;
+            }[];
         };
         /**
          * ClosePurchaseRequest
@@ -8829,6 +9063,34 @@ export interface components {
                 damaged: number;
             }[];
             note?: string | null;
+        };
+        /** Integration */
+        Integration: {
+            /** @description Stable service key: pathao, steadfast, redx, cod, sslcommerz, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console. */
+            key: string;
+            /** @description English name; the admin translates by `key` where the name is not a brand. */
+            name: string;
+            /** @enum {string} */
+            category: "couriers" | "payments" | "messaging" | "marketing";
+            /**
+             * @description `not_available` = no driver in the codebase yet.
+             * @enum {string}
+             */
+            status: "connected_live" | "test_mode" | "needs_attention" | "not_connected" | "not_available";
+            /** @description Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `unverified_booking_blocked`, `bookings`, `browser_only`. */
+            notes: string[];
+            /** @description Why it needs attention (a code), when `status` is `needs_attention`. */
+            attention: string | null;
+            /** @description Shipments booked through this courier (with a consignment id). */
+            bookings_count: number | null;
+            /** @description Switched on/off where the service has such a switch; null when it has none. */
+            enabled: boolean | null;
+            /** @description The courier row, for `PATCH /settings/couriers/{id}` (the only on/off this screen offers). */
+            courier_provider_id: number | null;
+            /** @description This user may switch it on/off here (couriers only, shipments.manage_rates). */
+            can_toggle: boolean;
+            /** @description The admin screen that configures it; null when none exists. */
+            settings_path: string | null;
         };
         /** InventoryAdjustment */
         InventoryAdjustment: {
@@ -12429,6 +12691,12 @@ export interface components {
          */
         StockAdjustmentReason: "damage" | "loss" | "found" | "recount" | "expiry" | "correction" | "gift_sample" | "theft";
         /**
+         * StockLocationType
+         * @description `stock_locations.type` — what a stock location is for (Store settings › Branches & warehouses, Figma B · 38 241:50827). Null on a location nobody has classified yet. - warehouse — online fulfilment: packs and hands parcels to the courier;  - retail    — a shop: POS sales and click & collect;  - pickup    — a partner pickup point: customers collect orders, nothing is sold there.
+         * @enum {string}
+         */
+        StockLocationType: "warehouse" | "retail" | "pickup";
+        /**
          * StoreAttributeRequest
          * @description `POST /attributes`. `type` is `select` (default), `color` (values carry a swatch)
          *     or `text`. When `slug` is omitted it is generated from `name` (or `name_bn`).
@@ -12552,6 +12820,58 @@ export interface components {
             body: string;
             /** @description Pinned notes show on the profile's summary rail. */
             is_pinned?: boolean;
+        };
+        /** StoreLocation */
+        StoreLocation: {
+            id: number;
+            code: string;
+            name: string;
+            name_bn: string | null;
+            /** @enum {string|null} */
+            type: "warehouse" | "retail" | "pickup" | null;
+            /** @description The inventory card label, e.g. "Retail branch · POS + pickup". */
+            description: string | null;
+            description_bn: string | null;
+            division: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            district: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            upazila: {
+                id: number;
+                name: string;
+                name_bn: string;
+            } | null;
+            area: string | null;
+            address_line: string | null;
+            landmark: string | null;
+            notes: string | null;
+            /** @description Sales, opening stock and the storefront read this one; it cannot be switched off. */
+            is_default: boolean;
+            is_active: boolean;
+            /** @description Holds, reserves or expects stock — it cannot be switched off until that is moved. */
+            holds_stock: boolean;
+        };
+        /** StoreLocationDistrict */
+        StoreLocationDistrict: {
+            id: number;
+            name: string;
+            name_bn: string;
+            division: {
+                id: number;
+                name: string;
+                name_bn: string;
+            };
+            upazilas: {
+                id: number;
+                name: string;
+                name_bn: string;
+            }[];
         };
         /**
          * StoreMediaRequest
@@ -12909,6 +13229,30 @@ export interface components {
                 /** @description The on-hand quantity a stock count found. Omit when sending `quantity`. */
                 counted?: number | null;
             }[];
+        };
+        /**
+         * StoreStockLocationRequest
+         * @description `POST /settings/locations` — add a branch, warehouse or pickup point; needs settings.update.
+         */
+        StoreStockLocationRequest: {
+            /** @description Short label the inventory screens show (`ctg` → "CTG 4"); lower-case letters, digits and dashes; fixed once created. */
+            code: string;
+            /** @description e.g. `Chattogram · Agrabad`. */
+            name: string;
+            name_bn?: string | null;
+            /** @description warehouse = online fulfilment; retail = shop with POS and click & collect; pickup = partner pickup point. */
+            type: components["schemas"]["StockLocationType"];
+            district_id: number;
+            /** @description Must belong to `district_id`; empty for a city address. */
+            upazila_id?: number | null;
+            area?: string | null;
+            address_line: string;
+            /** @description What a courier rider looks for (rule 31). */
+            landmark?: string | null;
+            /** @description The facts line, e.g. `Pathao pickup 4–7 pm · 2 packers`. */
+            notes?: string | null;
+            /** @description False switches the location off; refused (409) for the default one or one holding stock. */
+            is_active: boolean;
         };
         /**
          * StoreStockTransferRequest
@@ -14260,6 +14604,24 @@ export interface components {
             is_active?: boolean;
         };
         /**
+         * UpdateBusinessDetailsRequest
+         * @description `PUT /settings/business` — Store settings › Business; needs settings.update. The whole
+         *     section: a null or empty field removes the saved value. Name, trade licence, BIN and
+         *     hotline are the same rows `PUT /settings/invoice` writes, so the rules match
+         *     UpdateInvoiceSettingsRequest's for those fields.
+         */
+        UpdateBusinessDetailsRequest: {
+            name_en?: string | null;
+            name_bn?: string | null;
+            trade_licence?: string | null;
+            /** @description Business Identification Number (NBR), 9 or 13 digits; not otherwise checked. */
+            bin?: string | null;
+            /** @description As printed, e.g. `09610-123456` — a 09xxx hotline is not a mobile, so rule 30 does not apply. */
+            hotline?: string | null;
+            /** @description A Bangladeshi mobile, 013–019 only (rule 30); stored and returned as E.164. */
+            whatsapp?: string | null;
+        };
+        /**
          * UpdateCartItemRequest
          * @description `PATCH /cart/items/{item}` `{ quantity }` — 1…99; remove a line with DELETE.
          */
@@ -14817,6 +15179,30 @@ export interface components {
         UpdateStaffRequest: {
             name?: string;
             role?: components["schemas"]["Role"];
+        };
+        /**
+         * UpdateStockLocationRequest
+         * @description `PUT /settings/locations/{location}` — edit a branch / warehouse, or switch it off
+         *     (`is_active: false`); needs settings.update. The whole record except `code`, which is
+         *     fixed once created.
+         */
+        UpdateStockLocationRequest: {
+            /** @description e.g. `Chattogram · Agrabad`. */
+            name: string;
+            name_bn?: string | null;
+            /** @description warehouse = online fulfilment; retail = shop with POS and click & collect; pickup = partner pickup point. */
+            type: components["schemas"]["StockLocationType"];
+            district_id: number;
+            /** @description Must belong to `district_id`; empty for a city address. */
+            upazila_id?: number | null;
+            area?: string | null;
+            address_line: string;
+            /** @description What a courier rider looks for (rule 31). */
+            landmark?: string | null;
+            /** @description The facts line, e.g. `Pathao pickup 4–7 pm · 2 packers`. */
+            notes?: string | null;
+            /** @description False switches the location off; refused (409) for the default one or one holding stock. */
+            is_active: boolean;
         };
         /**
          * UpdateSupplierRequest
@@ -26403,6 +26789,329 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.audit.index": {
+        parameters: {
+            query?: {
+                /** @description Changes made by one staff member. */
+                "filter[user_id]"?: number;
+                /** @description One area of the admin. */
+                "filter[area]"?: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports";
+                /** @description One audited action (App\Models\Enums\AuditAction). */
+                "filter[action]"?: string;
+                /** @description First Dhaka calendar date, inclusive (YYYY-MM-DD). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka calendar date, inclusive (YYYY-MM-DD). */
+                "filter[to]"?: string;
+                /** @description Opaque cursor from `meta.next_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `AuditEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuditEntryResource"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter, a sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.audit.export": {
+        parameters: {
+            query?: {
+                /** @description As on GET /audit. */
+                "filter[user_id]"?: number;
+                /** @description As on GET /audit. */
+                "filter[area]"?: string;
+                /** @description As on GET /audit. */
+                "filter[action]"?: string;
+                /** @description As on GET /audit. */
+                "filter[from]"?: string;
+                /** @description As on GET /audit. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    /** @example attachment; filename=.csv */
+                    "Content-Disposition": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv; charset=UTF-8": string;
+                };
+            };
+            /** @description Unlisted filter, a sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing audit.view or reports.export (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.integrations.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `Integration` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Integration"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.business.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `BusinessDetails` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.business.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateBusinessDetailsRequest"];
+            };
+        };
+        responses: {
+            /** @description `BusinessDetails` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.locations.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StoreLocation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StoreLocation"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.locations.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreStockLocationRequest"];
+            };
+        };
+        responses: {
+            /** @description `StoreLocation` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreLocation"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.locations.districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `StoreLocationDistrict` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StoreLocationDistrict"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.locations.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The location ID */
+                location: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStockLocationRequest"];
+            };
+        };
+        responses: {
+            /** @description `StoreLocation` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreLocation"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Switching off the default location, or one that still holds stock (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.checkout.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CheckoutSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "v1.admin.blog.posts.index": {

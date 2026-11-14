@@ -218,18 +218,22 @@ describe('invoices', () => {
         expect(creditNotesPath({ search: '', from: '2026-11-01', to: '' }, null)).toBe('/credit-notes?filter%5Bissued_from%5D=2026-11-01');
     });
 
-    it('saves invoice details, keeping the logo and sending blanks as null', async () => {
+    it('saves invoice details, keeping the logo, the Business identity unchanged and sending blanks as null', async () => {
         const calls = invoicesApi(manager);
         renderApp('/settings/invoice');
 
-        const bin = await screen.findByLabelText(/BIN/);
+        const address = await screen.findByLabelText(/^Address/, { selector: 'input:not([lang])' });
         expect(screen.getByRole('status').textContent).toContain('Trade licence no.');
-        fireEvent.change(bin, { target: { value: '000111222-0101' } });
+        // The identity is edited under Business (one value for the store and invoices): shown, not editable here.
+        expect(screen.queryByLabelText(/BIN/)).toBeNull();
+        expect(screen.getByText('09600 111222')).toBeTruthy();
+        expect(screen.getByRole('link', { name: /Edit in Business/ }).getAttribute('href')).toBe('/settings/business');
+        fireEvent.change(address, { target: { value: 'House 7, Mirpur' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
         await waitFor(() => expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toBe(true));
         const call = calls.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')!;
-        expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({ name_en: 'Toy Mart BD', bin: '000111222-0101', name_bn: null, logo_media_id: 12 });
+        expect(JSON.parse(String((call[1] as RequestInit).body))).toMatchObject({ name_en: 'Toy Mart BD', hotline: '09600 111222', address_en: 'House 7, Mirpur', bin: null, name_bn: null, logo_media_id: 12 });
         expect(await screen.findByText('Invoice details saved. New invoices will use them.')).toBeTruthy();
     });
 
@@ -237,7 +241,7 @@ describe('invoices', () => {
         const calls = invoicesApi(manager);
         renderApp('/settings/invoice');
 
-        await screen.findByLabelText(/BIN/);
+        await screen.findByLabelText(/^Address/, { selector: 'input:not([lang])' });
         expect(document.querySelector('img[src="http://localhost/storage/media/logo/320.webp"]')).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Replace logo' })).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
@@ -254,7 +258,7 @@ describe('invoices', () => {
         invoicesApi(readOnly);
         renderApp('/settings/invoice');
 
-        expect((await screen.findByLabelText(/BIN/)).matches(':disabled')).toBe(true);
+        expect((await screen.findByLabelText(/^Address/, { selector: 'input:not([lang])' })).matches(':disabled')).toBe(true);
         expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
     });
 });

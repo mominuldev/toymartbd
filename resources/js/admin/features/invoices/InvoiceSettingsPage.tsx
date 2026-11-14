@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ImageIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
+import { Link } from 'react-router';
+import { ArrowRightIcon, ImageIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { updateInvoiceSettingsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
-import { ContentHeader } from '@/components/shell/ContentHeader';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { Field, inputClass, monoInputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { IconButton } from '@/components/ui/IconButton';
@@ -19,6 +20,13 @@ import { MediaPickerModal, type InsertFailure } from '@/features/media/picker';
 import { useInvoiceSettings, useSaveInvoiceSettings, type InvoiceSettings, type InvoiceSettingsInput } from './api';
 
 const FORM_ID = 'invoice-settings';
+
+/**
+ * Edited in Store settings › Business, the same saved rows (CompanyDetails::BUSINESS_FIELDS).
+ * Shown read-only here and sent back unchanged, because PUT /settings/invoice replaces the
+ * whole document.
+ */
+const businessFields = ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline'] as const;
 
 const textFields = ['name_en', 'name_bn', 'address_en', 'address_bn', 'trade_licence', 'bin', 'hotline', 'email', 'website', 'footer_en', 'footer_bn'] as const;
 type TextField = (typeof textFields)[number];
@@ -43,10 +51,12 @@ function toInput(v: FormValues, logo: number | null): InvoiceSettingsInput {
 }
 
 /**
- * Settings → Invoice details (P8, PRD N-13): the business identity printed on invoices — name,
- * address (EN + BN), trade licence, BIN, hotline, logo (P9). Follows the "Business" card of Store
- * settings (B · 38 241:50827): ContentHeader with "Save changes", a FormSection with two-column
- * fields. A save affects invoices issued from now on; every issued invoice keeps its own snapshot.
+ * Store settings › Taxes & invoices (P8, PRD N-13), rendered inside SettingsLayout (B · 38
+ * 241:50827): what invoices print besides the business identity — address (EN + BN), email,
+ * website, logo (P9) and footer. The identity (name, trade licence, BIN, hotline) is edited once,
+ * under Business, and shown here read-only: one value for the store and invoices. The card
+ * carries its own "Save changes", like every section. A save affects invoices issued from now
+ * on; every issued invoice keeps its own snapshot.
  */
 export function InvoiceSettingsPage() {
     const { t } = useI18n();
@@ -65,6 +75,7 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
     const { t } = useI18n();
     const { notify } = useToast();
     const save = useSaveInvoiceSettings();
+    const client = useQueryClient();
     const [logo, setLogo] = useState<Logo>(toLogo(settings));
     const [logoError, setLogoError] = useState<string | null>(null);
     const { register, handleSubmit, setError, formState, reset } = useForm<FormValues>({
@@ -82,7 +93,11 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
 
     const submit = handleSubmit((values) =>
         save.mutate(toInput(values, logo?.id ?? null), {
-            onSuccess: () => notify(t('invoiceSettings.saved')),
+            onSuccess: () => {
+                notify(t('invoiceSettings.saved'));
+                // Store settings › Business shows the same rows.
+                void client.invalidateQueries({ queryKey: ['settings', 'business'] });
+            },
             onError: (error) => {
                 if (error instanceof ApiError && error.status === 422) {
                     for (const field of textFields) {
@@ -113,38 +128,42 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
     );
 
     return (
-        <section className="flex flex-col gap-6">
-            <ContentHeader
-                breadcrumb={[{ label: t('invoiceSettings.crumb.settings') }, { label: t('invoiceSettings.title') }]}
-                title={t('invoiceSettings.title')}
-                subtitle={t('invoiceSettings.subtitle')}
-                actions={
-                    editable && (
-                        <Button type="submit" form={FORM_ID} disabled={save.isPending}>
-                            {save.isPending ? t('invoiceSettings.saving') : t('invoiceSettings.save')}
-                        </Button>
-                    )
-                }
-            />
-
+        <section className="flex min-w-0 flex-col gap-6">
             {settings.placeholders.length > 0 && (
-                <p className="flex max-w-4xl items-start gap-2 rounded-sm bg-subtle px-3.5 py-3 t-admin-caption text-fg-secondary" role="status">
+                <p className="flex items-start gap-2 rounded-sm bg-subtle px-3.5 py-3 t-admin-caption text-fg-secondary" role="status">
                     <InfoIcon size={16} aria-hidden className="shrink-0 text-fg-brand" />
                     {t('invoiceSettings.placeholders', { list: settings.placeholders.map((f) => t(`invoiceSettings.field.${f}` as MessageKey)).join(', ') })}
                 </p>
             )}
 
-            <form id={FORM_ID} onSubmit={submit} noValidate className="flex w-full min-w-0 max-w-4xl flex-col gap-6">
+            <FormSection
+                title={t('storeSettings.invoice.identity')}
+                description={t('storeSettings.invoice.identityHint')}
+                aside={
+                    <Link to="/settings/business" className={buttonClass('outline', 'sm')}>
+                        {t('storeSettings.invoice.editBusiness')}
+                        <ArrowRightIcon size={16} aria-hidden />
+                    </Link>
+                }
+            >
+                <dl className="grid gap-x-4 gap-y-3 md:grid-cols-2">
+                    {businessFields.map((f) => (
+                        <div key={f} className="flex min-w-0 flex-col gap-0.5">
+                            <dt className="t-admin-caption text-fg-tertiary">{t(`invoiceSettings.field.${f}` as MessageKey)}</dt>
+                            <dd lang={f === 'name_bn' ? 'bn' : undefined} className={`t-admin-body ${settings[f] ? 'text-fg-primary' : 'text-fg-tertiary'}`}>
+                                {settings[f] ?? t('storeSettings.invoice.notSet')}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+            </FormSection>
+
+            <form id={FORM_ID} onSubmit={submit} noValidate className="flex w-full min-w-0 flex-col gap-6">
                 <fieldset disabled={!editable || save.isPending} className="flex min-w-0 flex-col gap-6">
-                    <FormSection title={t('invoiceSettings.business')} description={t('invoiceSettings.businessHint')}>
+                    <FormSection title={t('storeSettings.invoice.title')} description={t('invoiceSettings.businessHint')}>
                         <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
-                            {text('name_en', { required: true })}
-                            {text('name_bn', { bn: true, required: true })}
                             {text('address_en', { required: true })}
                             {text('address_bn', { bn: true, required: true })}
-                            {text('trade_licence', { mono: true, required: true, hint: t('invoiceSettings.printed') })}
-                            {text('bin', { mono: true, required: true, hint: t('invoiceSettings.printed') })}
-                            {text('hotline', { mono: true, required: true })}
                             {text('email')}
                             {text('website')}
                         </div>
@@ -167,6 +186,13 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
                         </div>
                     </FormSection>
                 </fieldset>
+                {editable && (
+                    <div className="flex justify-end">
+                        <Button type="submit" disabled={save.isPending}>
+                            {save.isPending ? t('invoiceSettings.saving') : t('invoiceSettings.save')}
+                        </Button>
+                    </div>
+                )}
             </form>
         </section>
     );
