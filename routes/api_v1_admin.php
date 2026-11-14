@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\AttributeController;
 use App\Http\Controllers\Api\V1\Admin\AttributeValueController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Admin\Auth\TwoFactorController;
 use App\Http\Controllers\Api\V1\Admin\BrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController;
 use App\Http\Controllers\Api\V1\Admin\CouponController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\Admin\SupplierController;
 use App\Http\Controllers\Api\V1\Admin\SupplierPaymentController;
 use App\Http\Middleware\EnsureActiveStaffSession;
+use App\Http\Middleware\EnsureTwoFactorEnrolled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,13 +69,27 @@ Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:login')
     ->name('auth.login');
 
-Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class])->group(function (): void {
+// Second step of a sign-in with two-factor on: the session (not a user) knows who is half-way.
+Route::post('/auth/two-factor-challenge', [AuthController::class, 'twoFactorChallenge'])
+    ->middleware('throttle:two-factor')
+    ->name('auth.two-factor-challenge');
+
+Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFactorEnrolled::class])->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
+
+    // Your own two-factor sign-in (owner decision 2026-11-14). Reachable before enrolment.
+    Route::get('/auth/two-factor', [TwoFactorController::class, 'show'])->name('auth.two-factor.show');
+    Route::post('/auth/two-factor', [TwoFactorController::class, 'store'])->name('auth.two-factor.store');
+    Route::post('/auth/two-factor/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:two-factor')->name('auth.two-factor.confirm');
+    Route::post('/auth/two-factor/recovery-codes', [TwoFactorController::class, 'recoveryCodes'])->middleware('throttle:two-factor')->name('auth.two-factor.recovery-codes');
+    Route::delete('/auth/two-factor', [TwoFactorController::class, 'destroy'])->middleware('throttle:two-factor')->name('auth.two-factor.destroy');
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     // Staff & roles (B · 35). Writes need staff.manage; staff are deactivated, never deleted.
     Route::get('/staff/roles', [StaffController::class, 'roles'])->name('staff.roles');
+    Route::put('/staff/roles/{role}', [StaffController::class, 'updateRole'])->where('role', '[a-z_]+')->name('staff.roles.update');
+    Route::post('/staff/{user}/two-factor/reset', [StaffController::class, 'resetTwoFactor'])->whereNumber('user')->name('staff.two-factor.reset');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::patch('/staff/{user}', [StaffController::class, 'update'])->whereNumber('user')->name('staff.update');
     Route::post('/staff/{user}/deactivate', [StaffController::class, 'deactivate'])->whereNumber('user')->name('staff.deactivate');

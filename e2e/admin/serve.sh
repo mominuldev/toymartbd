@@ -22,6 +22,9 @@ export DEMO_SEED_TRANSACTIONS=false
 export AUTH_LOGIN_PER_MINUTE=60
 # …and the per-account limit (10 / 15 min): every spec signs the same owner in.
 export AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN=200
+# Staff two-factor off, so every spec need not enrol the owner; two-factor.spec.ts enrols one
+# account and signs in with a real code. Enforcement itself is covered by Pest.
+export TWO_FACTOR_ENFORCE=false
 
 "$PHP_BIN" artisan migrate:fresh --seed --force >/dev/null
 # The file cache outlives migrate:fresh: drop last run's sign-in counters.

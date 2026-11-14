@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
-import { BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
+import { Link } from 'react-router';
+import { BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
 import { IconButton } from '@/components/ui/IconButton';
@@ -89,10 +90,18 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
             </button>
             {open && (
                 <div id={menuId} role="menu" className="absolute end-0 top-full z-30 mt-1 min-w-44 rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3">
+                    <Link
+                        to="/account/two-factor"
+                        role="menuitem"
+                        autoFocus
+                        className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body whitespace-nowrap text-fg-primary hover:bg-subtle"
+                    >
+                        <ShieldCheckIcon size={18} aria-hidden />
+                        {t('twoFactor.menu')}
+                    </Link>
                     <button
                         type="button"
                         role="menuitem"
-                        autoFocus
                         disabled={signingOut}
                         onClick={onSignOut}
                         className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body text-fg-primary hover:bg-subtle disabled:text-fg-disabled"

@@ -16,7 +16,9 @@ export default defineConfig({
     timeout: 300_000,
     reporter: process.env.CI ? [['list'], ['html', { open: 'never', outputFolder: './playwright-report' }]] : 'list',
     use: { baseURL: `http://localhost:${port}`, trace: 'retain-on-failure', reducedMotion: 'reduce' },
-    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    // Locally: the Google Chrome installed on this machine (owner rule 2026-11-14), never a
+    // separately downloaded browser. CI keeps the Chromium its workflow installs.
+    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], channel: process.env.CI ? undefined : 'chrome' } }],
     webServer: {
         command: 'sh ./serve.sh',
         url: `http://localhost:${port}/up`,

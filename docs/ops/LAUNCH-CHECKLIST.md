@@ -117,7 +117,7 @@ Do D1–D6 first. Then D7–D10 on launch eve, with a real phone and a low-value
 | # | Item | Verify | Check | Who | Evidence |
 |---|---|---|---|---|---|
 | G1 | The owner's super admin account exists, and only real people have accounts | Reported automatically | `staff.super_admin` | Dev | |
-| G2 | Staff accounts created with correct roles (narrowest that fits) | `RUNBOOK.md` "Add or remove a staff member" | `staff.roles` | Owner + Dev | |
+| G2 | Staff accounts created with correct roles (narrowest that fits); everyone who can see money has two-factor on | Admin → Settings → Staff & roles; `RUNBOOK.md` §10 | `staff.roles` · `staff.two_factor` | Owner + Dev | |
 | G3 | No demo or seed data: no `@toymart.test` logins, demo customers or demo products | Production is seeded with reference data only | `data.no_demo` | Dev | |
 | G4 | Staff trained | Each person does one real task in their role while the owner watches | **manual** `staff.trained` | Owner | |
 | G5 | Owner has the runbook | Owner has read `RUNBOOK.md` and holds the password-manager entries it names | **manual** `owner.runbook` | Owner | |

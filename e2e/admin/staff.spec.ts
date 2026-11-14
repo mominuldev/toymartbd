@@ -85,12 +85,24 @@ test('owner adds, manages and deactivates a staff member', async ({ browser }) =
     await expect(self.getByRole('button', { name: 'Deactivate' })).toHaveCount(0);
     await self.getByRole('button', { name: 'Cancel' }).click();
 
-    // The read-only matrix.
+    // The matrix: owner-only rows locked; an edit is confirmed, saved and survives a reload.
     await owner.getByRole('link', { name: /Roles & permissions/ }).click();
     const matrix = owner.getByRole('table', { name: 'Permissions by role' });
     await expect(matrix.getByRole('rowheader', { name: /Approve refunds/ })).toBeVisible();
-    await expect(owner.getByText(/Roles are fixed in this version/)).toBeVisible();
+    await expect(matrix.getByRole('checkbox', { name: 'Manage staff for Manager' })).toHaveCount(0);
+    const financeForViewer = matrix.getByRole('checkbox', { name: 'View finance for Viewer' });
+    await expect(financeForViewer).not.toBeChecked();
+    await financeForViewer.check();
     if (shots) await owner.screenshot({ path: `${shots}/roles.png`, fullPage: true });
+    await owner.getByRole('button', { name: 'Save permissions' }).click();
+    await owner.getByRole('dialog', { name: 'Change permissions for 1 role(s)?' }).getByRole('button', { name: 'Save permissions' }).click();
+    await expect(owner.getByText('Permissions saved for 1 role(s)')).toBeVisible();
+    await owner.reload();
+    await expect(owner.getByRole('checkbox', { name: 'View finance for Viewer' })).toBeChecked();
+    await owner.getByRole('button', { name: 'Restore the default permissions for Viewer' }).click();
+    await owner.getByRole('button', { name: 'Save permissions' }).click();
+    await owner.getByRole('dialog', { name: 'Change permissions for 1 role(s)?' }).getByRole('button', { name: 'Save permissions' }).click();
+    await expect(owner.getByRole('checkbox', { name: 'View finance for Viewer' })).not.toBeChecked();
 
     // Bangla.
     await owner.getByRole('group', { name: 'Language' }).getByRole('button', { name: 'বাং' }).click();

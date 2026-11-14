@@ -535,6 +535,20 @@ it('requires an active super admin and role-bearing staff', function (): void {
     expect(launchStatus('staff.roles'))->toBe('fail');
 });
 
+it('fails with two-factor enforcement off, warns while a money-seeing person has not enrolled', function (): void {
+    config(['auth.two_factor.enforce' => false]);
+    expect(launchStatus('staff.two_factor'))->toBe('fail');
+
+    config(['auth.two_factor.enforce' => true]);
+    $accountant = User::factory()->create();
+    $accountant->assignRole(Role::Accountant->value);
+    User::factory()->create()->assignRole(Role::OrderOperator->value); // cannot see money: not counted
+    expect(launchStatus('staff.two_factor'))->toBe('warn');
+
+    $accountant->forceFill(['two_factor_secret' => 'JBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()])->save();
+    expect(launchStatus('staff.two_factor'))->toBe('pass');
+});
+
 it('does not count the storefront service account or inactive users as staff', function (): void {
     User::factory()->create(['is_active' => false])->assignRole(Role::SuperAdmin->value);
     Artisan::call('toymart:storefront-token');

@@ -1336,6 +1336,19 @@ export const testimonialRequestSchema = z.object({
 });
 export type TestimonialRequestInput = z.input<typeof testimonialRequestSchema>;
 
+/** `POST /auth/two-factor-challenge` — exactly one of `{ code }` (6 digits from the */
+export const twoFactorChallengeRequestSchema = z.object({
+    "code": z.string().max(16).nullable().optional(),
+    "recovery_code": z.string().max(32).nullable().optional(),
+});
+export type TwoFactorChallengeRequestInput = z.input<typeof twoFactorChallengeRequestSchema>;
+
+/** `{ code }` — the 6-digit code from the authenticator app; for the signed-in staff member. */
+export const twoFactorCodeRequestSchema = z.object({
+    "code": z.string().min(1).max(16),
+});
+export type TwoFactorCodeRequestInput = z.input<typeof twoFactorCodeRequestSchema>;
+
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({
     "name": z.string().max(80).optional(),
@@ -1762,6 +1775,12 @@ export const updateRobotsRequestSchema = z.object({
     "content": z.string().min(1).max(32768),
 });
 export type UpdateRobotsRequestInput = z.input<typeof updateRobotsRequestSchema>;
+
+/** `PUT /staff/roles/{role}` — `{ permissions: string[] }`, the role's complete new list; */
+export const updateRolePermissionsRequestSchema = z.object({
+    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view"])).max(67),
+});
+export type UpdateRolePermissionsRequestInput = z.input<typeof updateRolePermissionsRequestSchema>;
 
 /** `PATCH /shipments/{shipment}/rider` — the delivery rider's name and phone, typed in when the */
 export const updateShipmentRiderRequestSchema = z.object({

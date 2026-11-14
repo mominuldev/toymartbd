@@ -32,9 +32,34 @@ export interface paths {
         /**
          * Wrong email, wrong password and a deactivated account all get the same 422
          *     on `email`, so the response never reveals whether an account exists or its
-         *     state. Throttled by the `login` limiter (5/min per IP)
+         *     state. Throttled by the `login` limiter (5/min per IP, 10/15 min per account)
+         * @description With two-factor on, a correct password does NOT sign in: the answer is a 202
+         *     `{ two_factor: true }` and the session remembers who is half-way for a few minutes;
+         *     `POST /auth/two-factor-challenge` with a code completes it.
          */
         post: operations["v1.admin.auth.login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/auth/two-factor-challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/two-factor-challenge` — `{ code }` from the authenticator app, or
+         *     `{ recovery_code }`. Completes the sign-in started by `/auth/login`. A wrong code is a
+         *     422 on the field; an expired or missing pending sign-in is a 422 on `code` telling the
+         *     person to start again. Throttled per session and per account
+         */
+        post: operations["v1.admin.auth.two-factor-challenge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -73,6 +98,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/auth/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /auth/two-factor` — on/off, whether it is required, recovery codes left */
+        get: operations["v1.admin.auth.two-factor.show"];
+        put?: never;
+        /** `POST /auth/two-factor` — start setup: a new secret as a QR code and a setup key */
+        post: operations["v1.admin.auth.two-factor.store"];
+        /** `DELETE /auth/two-factor` — `{ code }` or `{ recovery_code }`; refused (409) when required */
+        delete: operations["v1.admin.auth.two-factor.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/auth/two-factor/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /auth/two-factor/confirm` — `{ code }`; turns it on and returns the recovery codes once */
+        post: operations["v1.admin.auth.two-factor.confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/auth/two-factor/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /auth/two-factor/recovery-codes` — `{ code }`; new codes, the old ones stop working */
+        post: operations["v1.admin.auth.two-factor.recovery-codes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/staff": {
         parameters: {
             query?: never;
@@ -99,12 +177,50 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * `GET /staff/roles` — every role, its permissions and how many active staff hold it,
-         *     in Role enum order; needs staff.view. Read-only: roles are defined in code
+         * `GET /staff/roles` — the Roles & permissions matrix: every role with what it holds now,
+         *     its defaults and how many active staff hold it, plus every permission's flags; needs
+         *     staff.view
          */
         get: operations["v1.admin.staff.roles"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/roles/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * `PUT /staff/roles/{role}` — replace what a role can do; needs roles.manage. Audited
+         *     (`role_permissions_changed`). Returns the whole matrix, as `GET /staff/roles`
+         */
+        put: operations["v1.admin.staff.roles.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/staff/{user}/two-factor/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /staff/{user}/two-factor/reset` — clear someone else's two-factor (lost phone) */
+        post: operations["v1.admin.staff.two-factor.reset"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6524,6 +6640,15 @@ export interface components {
             locale: "en" | "bn" | null;
             roles: string[];
             permissions: string[];
+            /**
+             * @description `required`: enforcement is on and this person can see money. The SPA sends someone
+             *     who is required but not `enabled` to the setup screen; the API refuses everything
+             *     else with 403 `two-factor-required` meanwhile.
+             */
+            two_factor: {
+                enabled: boolean;
+                required: boolean;
+            };
         };
         /** AutomationSettings */
         AutomationSettings: {
@@ -10087,6 +10212,13 @@ export interface components {
             method?: "bkash" | "nagad" | "cash" | "bank_transfer" | null;
             reference?: string | null;
         };
+        /** PermissionInfoResource */
+        PermissionInfoResource: {
+            /** @enum {string} */
+            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view";
+            owner_only: boolean;
+            reveals_money: boolean;
+        };
         /**
          * PhoneLookupRequest
          * @description `GET /risk/lookup?phone=…` and `POST /risk/lookup/rescore` — a Bangladesh mobile number
@@ -11102,6 +11234,10 @@ export interface components {
             reference?: string | null;
             note?: string | null;
         };
+        /** RecoveryCodesResource */
+        RecoveryCodesResource: {
+            recovery_codes: string[];
+        };
         /** Redirect */
         Redirect: {
             id: number;
@@ -11565,7 +11701,7 @@ export interface components {
         };
         /**
          * Role
-         * @description The 7 launch roles (DATABASE-DESIGN §3.10, PRD P-01) and the single source of truth for the role → permission matrix. The seeder and the tests both read {@see self::permissions()}. super_admin is seeded with every permission AND bypasses all gates via Gate::before (App\Providers\AuthServiceProvider); it is the only role that bypasses.
+         * @description The 7 launch roles (DATABASE-DESIGN §3.10, PRD P-01) and their DEFAULT permissions. Since the owner decision of 2026-11-14 roles are editable in the admin (Settings → Staff & roles), so at runtime the database (`role_has_permissions`) is authoritative and {@see self::permissions()} is what a role starts with: the seeder applies it to a role or a permission it creates, never over the owner's edits. The 403 role-matrix tests run on a freshly seeded database, so they still exercise exactly these defaults.  super_admin is seeded with every permission AND bypasses all gates via Gate::before (App\Providers\AuthServiceProvider); it is the only role that bypasses.
          * @enum {string}
          */
         Role: "super_admin" | "manager" | "order_operator" | "inventory_staff" | "accountant" | "content_editor" | "viewer";
@@ -12262,14 +12398,29 @@ export interface components {
             last_login_at: string | null;
             created_at: string | null;
             is_self: boolean;
+            two_factor_enabled: boolean;
+            two_factor_required: boolean;
+        };
+        /** StaffRoleMatrixResource */
+        StaffRoleMatrixResource: {
+            roles: components["schemas"]["StaffRoleResource"][];
+            permissions: components["schemas"]["PermissionInfoResource"][];
         };
         /** StaffRoleResource */
         StaffRoleResource: {
             key: string;
             permissions: string[];
+            default_permissions: string[];
             users_count: number;
             /** @description super_admin passes every check (Gate::before), whatever is listed. */
             bypasses_all: boolean;
+            /** @description Every role but the owner's can be edited by someone with roles.manage. */
+            editable: boolean;
+            /** @description Separation-of-duties pairs held together that the default does not combine. */
+            warnings: [
+                string,
+                string
+            ][];
         };
         /**
          * StockAdjustmentReason
@@ -14007,6 +14158,39 @@ export interface components {
          */
         TwitterCard: "summary_large_image" | "summary";
         /**
+         * TwoFactorChallengeRequest
+         * @description `POST /auth/two-factor-challenge` — exactly one of `{ code }` (6 digits from the
+         *     authenticator app) or `{ recovery_code }`. No user yet: the session holds who is signing in.
+         */
+        TwoFactorChallengeRequest: {
+            code?: string | null;
+            recovery_code?: string | null;
+        };
+        /** TwoFactorChallengeResource */
+        TwoFactorChallengeResource: {
+            two_factor: boolean;
+        };
+        /**
+         * TwoFactorCodeRequest
+         * @description `{ code }` — the 6-digit code from the authenticator app; for the signed-in staff member.
+         */
+        TwoFactorCodeRequest: {
+            code: string;
+        };
+        /** TwoFactorSetupResource */
+        TwoFactorSetupResource: {
+            secret: string;
+            otpauth_uri: string;
+            qr_svg: string;
+        };
+        /** TwoFactorStatusResource */
+        TwoFactorStatusResource: {
+            enabled: boolean;
+            required: boolean;
+            confirmed_at: string | null;
+            recovery_codes_left: number;
+        };
+        /**
          * UpdateAttributeRequest
          * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
          *     change. Changing `type` away from `color` clears the values' swatches.
@@ -14605,6 +14789,15 @@ export interface components {
             content: string;
         };
         /**
+         * UpdateRolePermissionsRequest
+         * @description `PUT /staff/roles/{role}` — `{ permissions: string[] }`, the role's complete new list;
+         *     needs roles.manage. Owner-only permissions (staff.manage, roles.manage) are refused, and
+         *     the owner role itself is not editable (409 from the Action).
+         */
+        UpdateRolePermissionsRequest: {
+            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view")[];
+        };
+        /**
          * UpdateShipmentRiderRequest
          * @description `PATCH /shipments/{shipment}/rider` — the delivery rider's name and phone, typed in when the
          *     rider calls (neither courier's API returns them). Both null clears the rider. The phone is
@@ -14824,6 +15017,15 @@ export interface operations {
                     "application/json": components["schemas"]["AuthUserResource"];
                 };
             };
+            /** @description Password accepted; a two-factor code is needed (`POST /auth/two-factor-challenge`) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorChallengeResource"];
+                };
+            };
             /** @description Bad request */
             400: {
                 headers: {
@@ -14831,6 +15033,31 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.two-factor-challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorChallengeRequest"];
+            };
+        };
+        responses: {
+            /** @description `AuthUserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthUserResource"];
                 };
             };
             422: components["responses"]["ValidationException"];
@@ -14874,6 +15101,144 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.admin.auth.two-factor.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TwoFactorStatusResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorStatusResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.admin.auth.two-factor.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TwoFactorSetupResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetupResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Two-factor is already on (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.auth.two-factor.destroy": {
+        parameters: {
+            query?: {
+                code?: string | null;
+                recovery_code?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Your role can see money, so two-factor must stay on (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.two-factor.confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description `RecoveryCodesResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.two-factor.recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description `RecoveryCodesResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.staff.index": {
@@ -14952,19 +15317,91 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Array of `StaffRoleResource` */
+            /** @description `StaffRoleMatrixResource` */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: components["schemas"]["StaffRoleResource"][];
-                    };
+                    "application/json": components["schemas"]["StaffRoleMatrixResource"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.staff.roles.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRolePermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description `StaffRoleMatrixResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRoleMatrixResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The owner role cannot be edited (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.two-factor.reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StaffResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Your own account (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.staff.update": {

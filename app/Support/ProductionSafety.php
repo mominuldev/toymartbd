@@ -8,7 +8,8 @@ use Illuminate\Contracts\Config\Repository;
 use Psr\Log\LoggerInterface;
 
 /**
- * Settings that must never be on in production, whatever the .env says (P9 security review).
+ * Settings that must never be on (debug) or off (staff two-factor) in production, whatever the
+ * .env says (P9 security review; owner decision 2026-11-14).
  *
  * APP_DEBUG=true in production turns every 5xx problem into an exception message, file and
  * line (ProblemDetails) — and an exception message can carry SQL with a phone number or an
@@ -19,7 +20,19 @@ final class ProductionSafety
 {
     public static function enforce(bool $isProduction, Repository $config, LoggerInterface $log): void
     {
-        if (! $isProduction || $config->get('app.debug') !== true) {
+        if (! $isProduction) {
+            return;
+        }
+
+        // Two-factor for anyone who can see money is an owner decision (2026-11-14), not a
+        // deploy option: switching it off is for the test suites only.
+        if ($config->get('auth.two_factor.enforce') !== true) {
+            $config->set('auth.two_factor.enforce', true);
+            $config->set('auth.two_factor.enforce_forced_on', true);
+            $log->critical('TWO_FACTOR_ENFORCE was off in production; forced on. Remove it from the environment.');
+        }
+
+        if ($config->get('app.debug') !== true) {
             return;
         }
 

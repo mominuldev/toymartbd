@@ -50,3 +50,10 @@ On 2026-11-11 the owner asked: "work with 3 agents, and create a git PR and merg
 - If a session dies mid-batch, background agents die with it, but their transcripts survive in `~/.claude/projects/<proj>/<session>/subagents/agent-*.jsonl` and their files stay on disk. Resume by re-sending the original brief plus "continue from what's on disk", pointing at the transcript.
 
 See [[figma-build-progress]] for design status.
+
+## Browser testing (owner rule, 2026-11-14)
+
+- Test and screenshot UI only through the **Playwright CLI** (`npx playwright test …`, the `npm run test:e2e:*` scripts).
+- Locally Playwright runs **this machine's Google Chrome** (`channel: 'chrome'` in all three `playwright.config.ts`). Do not download a separate Chromium, and do not use other browser tools (chrome-devtools MCP, Claude in Chrome, the in-app browser) for testing.
+- CI is the one exception: it has no local Chrome to borrow, so it keeps `npx playwright install chromium` (`process.env.CI` switches the channel off).
+- For a Figma comparison, write or extend a spec and pass `SHOTS_DIR=/path` (see `e2e/admin/staff.spec.ts`).

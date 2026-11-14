@@ -65,7 +65,7 @@ it('keeps the registry sorted and free of duplicates, so merges stay clean', fun
 });
 
 it('puts every admin route but the public ones behind a staff session', function (): void {
-    $public = ['api.v1.admin.ping', 'api.v1.admin.auth.login'];
+    $public = ['api.v1.admin.ping', 'api.v1.admin.auth.login', 'api.v1.admin.auth.two-factor-challenge'];
     $open = [];
 
     foreach (adminRoutesByName() as $name => $route) {

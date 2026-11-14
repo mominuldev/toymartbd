@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
+use App\Domain\Staff\Services\TwoFactor;
 use App\Http\Resources\ApiResource;
 use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
@@ -12,7 +13,7 @@ use Illuminate\Http\Request;
 
 /**
  * The signed-in staff member, for `GET /auth/me` and `POST /auth/login`:
- * `{ id, name, email, locale, roles[], permissions[] }`.
+ * `{ id, name, email, locale, roles[], permissions[], two_factor }`.
  *
  * `permissions` is the effective list the SPA uses to show or hide UI — never to
  * authorise; the API re-checks every request. super_admin gets every Permission,
@@ -23,7 +24,7 @@ use Illuminate\Http\Request;
 final class AuthUserResource extends ApiResource
 {
     /**
-     * @return array{id: int, name: string, email: string, locale: string|null, roles: list<string>, permissions: list<string>}
+     * @return array{id: int, name: string, email: string, locale: string|null, roles: list<string>, permissions: list<string>, two_factor: array{enabled: bool, required: bool}}
      */
     public function toArray(Request $request): array
     {
@@ -61,6 +62,15 @@ final class AuthUserResource extends ApiResource
             'roles' => $roles,
             /** @var list<string> */
             'permissions' => $permissions,
+            /**
+             * `required`: enforcement is on and this person can see money. The SPA sends someone
+             * who is required but not `enabled` to the setup screen; the API refuses everything
+             * else with 403 `two-factor-required` meanwhile.
+             */
+            'two_factor' => [
+                'enabled' => $user->hasTwoFactor(),
+                'required' => (bool) app(TwoFactor::class)->requiredFor($user),
+            ],
         ];
     }
 }

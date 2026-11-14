@@ -33,6 +33,8 @@ enum ProblemType: string
     case InsufficientStock = 'insufficient-stock';
     /** Media library (docs/api/media-library.md): delete refused, the file is used; `usages[]` lists where. */
     case MediaInUse = 'media-in-use';
+    /** Admin: the signed-in person can see money and has not set up two-factor yet (owner decision 2026-11-14). */
+    case TwoFactorRequired = 'two-factor-required';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -49,7 +51,7 @@ enum ProblemType: string
         return match ($this) {
             self::BadRequest => 400,
             self::Unauthenticated => 401,
-            self::Forbidden => 403,
+            self::Forbidden, self::TwoFactorRequired => 403,
             self::NotFound => 404,
             self::MethodNotAllowed => 405,
             self::Conflict => 409,
@@ -85,6 +87,7 @@ enum ProblemType: string
             self::PriceChanged => 'Price changed',
             self::InsufficientStock => 'Insufficient stock',
             self::MediaInUse => 'Media in use',
+            self::TwoFactorRequired => 'Two-factor sign-in required',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -111,6 +114,7 @@ enum ProblemType: string
             self::PriceChanged => 'The order total has changed. Review the cart and place the order again.',
             self::InsufficientStock => 'Some items are no longer available in the quantity requested.',
             self::MediaInUse => 'This file is in use and cannot be deleted.',
+            self::TwoFactorRequired => 'Your role can see money: set up two-factor sign-in before continuing.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

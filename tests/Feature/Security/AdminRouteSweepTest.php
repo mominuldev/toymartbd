@@ -53,7 +53,9 @@ function adminRouteSamples(): array
 }
 
 it('refuses a guest with 401 on every admin route but the public ones', function (): void {
-    $public = ['api.v1.admin.ping', 'api.v1.admin.auth.login'];
+    // The two-factor challenge is the second step of signing in: no session yet, by design
+    // (it answers 422 "start again" without a pending sign-in; throttled).
+    $public = ['api.v1.admin.ping', 'api.v1.admin.auth.login', 'api.v1.admin.auth.two-factor-challenge'];
     $leaks = [];
 
     foreach (adminRouteSamples() as [$name, $method, $uri]) {

@@ -22,4 +22,24 @@ final class StaffConflict extends ConflictHttpException
     {
         return new self((string) __('staff.conflict_last_owner'));
     }
+
+    public static function twoFactorAlreadyOn(): self
+    {
+        return new self((string) __('staff.conflict_two_factor_on'));
+    }
+
+    public static function twoFactorNotStarted(): self
+    {
+        return new self((string) __('staff.conflict_two_factor_not_started'));
+    }
+
+    public static function twoFactorRequired(): self
+    {
+        return new self((string) __('staff.conflict_two_factor_required'));
+    }
+
+    public static function ownerRole(): self
+    {
+        return new self((string) __('staff.conflict_owner_role'));
+    }
 }

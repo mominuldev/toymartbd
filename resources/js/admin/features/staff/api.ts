@@ -1,14 +1,17 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { ResetStaffPasswordRequestInput, StoreStaffRequestInput, UpdateStaffRequestInput } from '@toymart/api-types/zod';
+import type { ResetStaffPasswordRequestInput, StoreStaffRequestInput, UpdateRolePermissionsRequestInput, UpdateStaffRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
 
 export type StaffMember = Schema<'StaffResource'>;
 export type StaffRole = Schema<'StaffRoleResource'>;
+export type PermissionInfo = Schema<'PermissionInfoResource'>;
+export type RoleMatrix = Schema<'StaffRoleMatrixResource'>;
 /** Request bodies are the generated types, never hand-written copies (rule 27). */
 export type NewStaffInput = StoreStaffRequestInput;
 export type StaffChangeInput = UpdateStaffRequestInput;
 export type PasswordInput = ResetStaffPasswordRequestInput;
+export type RolePermissionsInput = UpdateRolePermissionsRequestInput;
 
 /** The 7 roles, in the server's order (App\Models\Enums\Role). */
 export const roleKeys = ['super_admin', 'manager', 'order_operator', 'inventory_staff', 'accountant', 'content_editor', 'viewer'] as const;
@@ -35,8 +38,23 @@ export function useStaff(enabled: boolean) {
 export function useStaffRoles(enabled: boolean) {
     return useQuery({
         queryKey: keys.roles,
-        queryFn: async () => (await api<{ data: StaffRole[] }>('/staff/roles')).data,
+        queryFn: () => api<RoleMatrix>('/staff/roles'),
         enabled,
+    });
+}
+
+/** Saves one role's complete permission list; the answer is the whole matrix again. */
+export function useUpdateRole() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ role, input }: { role: string; input: RolePermissionsInput }) =>
+            api<RoleMatrix>(`/staff/roles/${role}`, { method: 'PUT', body: JSON.stringify(input) }),
+        onSuccess: (matrix) => {
+            client.setQueryData(keys.roles, matrix);
+            // Two-factor requirements in the people list follow the role's permissions.
+            void client.invalidateQueries({ queryKey: keys.people });
+        },
     });
 }
 
@@ -70,6 +88,10 @@ export function useResetStaffPassword() {
     return useStaffMutation(({ id, input }: { id: number; input: PasswordInput }) =>
         api<undefined>(`/staff/${id}/password`, { method: 'POST', body: JSON.stringify(input) }),
     );
+}
+
+export function useResetStaffTwoFactor() {
+    return useStaffMutation((id: number) => api<StaffMember>(`/staff/${id}/two-factor/reset`, { method: 'POST' }));
 }
 
 /** The single role a staff account holds (the API assigns exactly one). */

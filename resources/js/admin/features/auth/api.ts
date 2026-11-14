@@ -7,6 +7,12 @@ export type Me = Schema<'AuthUserResource'>;
 
 export type Credentials = { email: string; password: string; remember: boolean };
 
+/** Second sign-in step: one of the authenticator code or a recovery code. */
+export type SecondFactor = { code: string } | { recovery_code: string };
+
+/** `POST /auth/login` answers 202 `{ two_factor: true }` when the account has two-factor on. */
+export type LoginResult = { kind: 'signed-in'; me: Me } | { kind: 'two-factor' };
+
 export const meQueryKey = ['auth', 'me'] as const;
 
 /**
@@ -32,10 +38,24 @@ export function useLogin() {
     const client = useQueryClient();
 
     return useMutation({
-        mutationFn: async (credentials: Credentials): Promise<Me> => {
+        mutationFn: async (credentials: Credentials): Promise<LoginResult> => {
             await ensureCsrfCookie();
-            return api<Me>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
+            const answer = await api<Me | Schema<'TwoFactorChallengeResource'>>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
+            // The 202 body is `{ two_factor: true }`; a signed-in Me has `two_factor` too, as an object.
+            return answer.two_factor === true ? { kind: 'two-factor' } : { kind: 'signed-in', me: answer as Me };
         },
+        onSuccess: (result) => {
+            if (result.kind === 'signed-in') client.setQueryData(meQueryKey, result.me);
+        },
+    });
+}
+
+/** Completes a sign-in that needed a second factor. */
+export function useTwoFactorChallenge() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: (factor: SecondFactor) => api<Me>('/auth/two-factor-challenge', { method: 'POST', body: JSON.stringify(factor) }),
         onSuccess: (me) => client.setQueryData(meQueryKey, me),
     });
 }

@@ -6,15 +6,19 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Staff\Actions\CreateStaff;
 use App\Domain\Staff\Actions\ResetStaffPassword;
+use App\Domain\Staff\Actions\ResetStaffTwoFactor;
 use App\Domain\Staff\Actions\SetStaffActive;
+use App\Domain\Staff\Actions\UpdateRolePermissions;
 use App\Domain\Staff\Actions\UpdateStaff;
 use App\Http\Controllers\Api\V1\ApiController;
+use App\Http\Requests\Admin\Staff\ManageStaffRequest;
 use App\Http\Requests\Admin\Staff\ResetStaffPasswordRequest;
-use App\Http\Requests\Admin\Staff\SetStaffActiveRequest;
 use App\Http\Requests\Admin\Staff\StoreStaffRequest;
+use App\Http\Requests\Admin\Staff\UpdateRolePermissionsRequest;
 use App\Http\Requests\Admin\Staff\UpdateStaffRequest;
 use App\Http\Resources\Admin\StaffResource;
-use App\Http\Resources\Admin\StaffRoleResource;
+use App\Http\Resources\Admin\StaffRoleMatrixResource;
+use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
 use App\Models\User;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
@@ -38,7 +42,7 @@ final class StaffController extends ApiController
         $this->authorize('viewAny', User::class);
 
         $staff = User::query()
-            ->with('roles')
+            ->with(['roles.permissions', 'permissions'])
             ->orderBy('id')
             ->cursorPaginate(self::PER_PAGE);
 
@@ -46,13 +50,39 @@ final class StaffController extends ApiController
     }
 
     /**
-     * `GET /staff/roles` — every role, its permissions and how many active staff hold it,
-     * in Role enum order; needs staff.view. Read-only: roles are defined in code.
+     * `GET /staff/roles` — the Roles & permissions matrix: every role with what it holds now,
+     * its defaults and how many active staff hold it, plus every permission's flags; needs
+     * staff.view.
      */
-    public function roles(): AnonymousResourceCollection
+    public function roles(): StaffRoleMatrixResource
     {
         $this->authorize('viewAny', User::class);
 
+        return new StaffRoleMatrixResource($this->roleRows());
+    }
+
+    /**
+     * `PUT /staff/roles/{role}` — replace what a role can do; needs roles.manage. Audited
+     * (`role_permissions_changed`). Returns the whole matrix, as `GET /staff/roles`.
+     */
+    #[OpenApiResponse(409, 'The owner role cannot be edited (`conflict`)')]
+    public function updateRole(UpdateRolePermissionsRequest $request, UpdateRolePermissions $update): StaffRoleMatrixResource
+    {
+        $update->handle($request->role(), $request->permissions(), $this->actorId($request));
+
+        return new StaffRoleMatrixResource($this->roleRows());
+    }
+
+    /** `POST /staff/{user}/two-factor/reset` — clear someone else's two-factor (lost phone). */
+    #[OpenApiResponse(409, 'Your own account (`conflict`)')]
+    public function resetTwoFactor(ManageStaffRequest $request, User $user, ResetStaffTwoFactor $reset): StaffResource
+    {
+        return new StaffResource($reset->handle($user, $this->actorId($request)));
+    }
+
+    /** @return list<array{role: Role, permissions: list<string>, users_count: int}> */
+    private function roleRows(): array
+    {
         /** @var array<string, int> $counts */
         $counts = DB::table('model_has_roles')
             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
@@ -65,12 +95,21 @@ final class StaffController extends ApiController
             ->map(static fn (mixed $n): int => (int) $n)
             ->all();
 
-        $rows = array_map(
-            static fn (Role $role): array => ['role' => $role, 'users_count' => $counts[$role->value] ?? 0],
-            Role::cases(),
-        );
+        /** @var array<string, list<string>> $held */
+        $held = [];
+        foreach (DB::table('role_has_permissions')
+            ->join('roles', 'roles.id', '=', 'role_has_permissions.role_id')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->get(['roles.name as role', 'permissions.name as permission']) as $row) {
+            $held[(string) $row->role][] = (string) $row->permission;
+        }
 
-        return StaffRoleResource::collection($rows);
+        return array_map(static fn (Role $role): array => [
+            'role' => $role,
+            // Enum order, whatever order the pivot returns.
+            'permissions' => array_values(array_filter(Permission::values(), static fn (string $p): bool => in_array($p, $held[$role->value] ?? [], true))),
+            'users_count' => $counts[$role->value] ?? 0,
+        ], Role::cases());
     }
 
     /** `POST /staff` — add a staff account with one role and a temporary password. */
@@ -88,14 +127,14 @@ final class StaffController extends ApiController
 
     /** `POST /staff/{user}/deactivate` — they cannot sign in; history keeps their name. */
     #[OpenApiResponse(409, 'Yourself, or the last active owner (`conflict`)')]
-    public function deactivate(SetStaffActiveRequest $request, User $user, SetStaffActive $set): StaffResource
+    public function deactivate(ManageStaffRequest $request, User $user, SetStaffActive $set): StaffResource
     {
         return new StaffResource($set->handle($user, false, $this->actorId($request)));
     }
 
     /** `POST /staff/{user}/reactivate`. */
     #[OpenApiResponse(409, 'Yourself (`conflict`)')]
-    public function reactivate(SetStaffActiveRequest $request, User $user, SetStaffActive $set): StaffResource
+    public function reactivate(ManageStaffRequest $request, User $user, SetStaffActive $set): StaffResource
     {
         return new StaffResource($set->handle($user, true, $this->actorId($request)));
     }

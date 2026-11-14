@@ -38,8 +38,8 @@ export function StaffPage() {
                 subtitle={
                     loaded !== undefined && roles.data
                         ? loaded === 1
-                            ? t('staff.subtitleOne', { roles: String(roles.data.length) })
-                            : t('staff.subtitle', { people: String(loaded), roles: String(roles.data.length) })
+                            ? t('staff.subtitleOne', { roles: String(roles.data.roles.length) })
+                            : t('staff.subtitle', { people: String(loaded), roles: String(roles.data.roles.length) })
                         : undefined
                 }
                 actions={
@@ -54,7 +54,7 @@ export function StaffPage() {
 
             <TabList label={t('staff.tabs')}>
                 <TabLink to="/staff" end label={t('staff.tab.people')} count={loaded} />
-                <TabLink to="/staff/roles" label={t('staff.tab.roles')} count={roles.data?.length} />
+                <TabLink to="/staff/roles" label={t('staff.tab.roles')} count={roles.data?.roles.length} />
             </TabList>
 
             <Outlet />

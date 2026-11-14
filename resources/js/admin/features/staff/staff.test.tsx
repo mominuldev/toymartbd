@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
 import { en, bn } from '@/i18n/messages';
-import type { StaffMember, StaffRole } from './api';
+import type { RoleMatrix, StaffMember, StaffRole } from './api';
 import { groupPermissions } from './parts';
 
 afterEach(() => {
@@ -11,13 +11,15 @@ afterEach(() => {
     localStorage.clear();
 });
 
-const owner: Me = { ...viewer, id: 1, name: 'Mominul Islam', roles: ['super_admin'], permissions: ['dashboard.view', 'staff.view', 'staff.manage'] };
+const owner: Me = { ...viewer, id: 1, name: 'Mominul Islam', roles: ['super_admin'], permissions: ['dashboard.view', 'staff.view', 'staff.manage', 'roles.manage'] };
 const manager: Me = { ...viewer, roles: ['manager'], permissions: ['dashboard.view', 'staff.view'] };
 
 const people: StaffMember[] = [
-    { id: 1, name: 'Mominul Islam', email: 'owner@toymartbd.com', is_active: true, roles: ['super_admin'], last_login_at: new Date().toISOString(), created_at: null, is_self: true },
-    { id: 2, name: 'Rina Akter', email: 'rina@toymartbd.com', is_active: true, roles: ['order_operator'], last_login_at: null, created_at: null, is_self: false },
-    { id: 3, name: 'Tanvir Nabi', email: 'tanvir@toymartbd.com', is_active: false, roles: ['inventory_staff'], last_login_at: null, created_at: null, is_self: false },
+    { id: 1, name: 'Mominul Islam', email: 'owner@toymartbd.com', is_active: true, roles: ['super_admin'], last_login_at: new Date().toISOString(), created_at: null, is_self: true, two_factor_enabled: true, two_factor_required: true },
+    { id: 2, name: 'Rina Akter', email: 'rina@toymartbd.com', is_active: true, roles: ['order_operator'], last_login_at: null, created_at: null, is_self: false, two_factor_enabled: false, two_factor_required: false },
+    { id: 3, name: 'Tanvir Nabi', email: 'tanvir@toymartbd.com', is_active: false, roles: ['inventory_staff'], last_login_at: null, created_at: null, is_self: false, two_factor_enabled: false, two_factor_required: false },
+    { id: 4, name: 'Kamrul Bari', email: 'kamrul@toymartbd.com', is_active: true, roles: ['accountant'], last_login_at: null, created_at: null, is_self: false, two_factor_enabled: false, two_factor_required: true },
+    { id: 5, name: 'Sadia Haque', email: 'sadia@toymartbd.com', is_active: true, roles: ['accountant'], last_login_at: null, created_at: null, is_self: false, two_factor_enabled: true, two_factor_required: true },
 ];
 
 /** Every permission the API knows, in the server's order (App\Models\Enums\Permission). */
@@ -25,15 +27,27 @@ const allPermissions = Object.keys(en)
     .filter((key) => key.startsWith('perm.') && !key.startsWith('perm.group.'))
     .map((key) => key.slice('perm.'.length));
 
+const ownerOnly = ['staff.manage', 'roles.manage'];
+const money = ['catalog.view_cost', 'refunds.approve', 'finance.view', 'reports.view'];
+
+function role(key: string, permissions: string[], extra: Partial<StaffRole> = {}): StaffRole {
+    return { key, permissions, default_permissions: permissions, users_count: 0, bypasses_all: false, editable: true, warnings: [], ...extra };
+}
+
 const roles: StaffRole[] = [
-    { key: 'super_admin', permissions: allPermissions, users_count: 1, bypasses_all: true },
-    { key: 'manager', permissions: allPermissions.filter((p) => p !== 'staff.manage' && p !== 'roles.manage'), users_count: 0, bypasses_all: false },
-    { key: 'order_operator', permissions: ['dashboard.view', 'orders.view', 'refunds.create'], users_count: 1, bypasses_all: false },
-    { key: 'inventory_staff', permissions: ['dashboard.view', 'inventory.view'], users_count: 0, bypasses_all: false },
-    { key: 'accountant', permissions: ['dashboard.view', 'refunds.approve'], users_count: 0, bypasses_all: false },
-    { key: 'content_editor', permissions: ['dashboard.view'], users_count: 0, bypasses_all: false },
-    { key: 'viewer', permissions: ['dashboard.view'], users_count: 0, bypasses_all: false },
+    role('super_admin', allPermissions, { users_count: 1, bypasses_all: true, editable: false }),
+    role('manager', allPermissions.filter((p) => !ownerOnly.includes(p))),
+    role('order_operator', ['dashboard.view', 'orders.view', 'refunds.create'], { users_count: 1 }),
+    role('inventory_staff', ['dashboard.view', 'inventory.view']),
+    role('accountant', ['dashboard.view', 'refunds.approve'], { users_count: 2 }),
+    role('content_editor', ['dashboard.view']),
+    role('viewer', ['dashboard.view']),
 ];
+
+const matrix: RoleMatrix = {
+    roles,
+    permissions: allPermissions.map((key) => ({ key, owner_only: ownerOnly.includes(key), reveals_money: money.includes(key) })) as RoleMatrix['permissions'],
+};
 
 type Reply = { status: number; body?: unknown };
 
@@ -45,15 +59,21 @@ function staffApi(me: Me, overrides: Partial<Record<string, Reply>> = {}) {
         if (override) return override;
         if (path === '/auth/me') return { status: 200, body: me };
         if (path === '/staff' && method === 'GET') return { status: 200, body: { data: people, links: {}, meta: { next_cursor: null, per_page: 25 } } };
-        if (path === '/staff/roles') return { status: 200, body: { data: roles } };
+        if (path === '/staff/roles') return { status: 200, body: matrix };
+        if (path.startsWith('/staff/roles/') && method === 'PUT') {
+            const key = path.split('/').pop()!;
+            const sent = JSON.parse(String(init?.body)) as { permissions: string[] };
+            return { status: 200, body: { ...matrix, roles: roles.map((r) => (r.key === key ? { ...r, permissions: sent.permissions } : r)) } };
+        }
         if (path === '/staff' && method === 'POST') {
             const sent = JSON.parse(String(init?.body)) as { name: string; email: string; role: string };
             return { status: 201, body: { ...people[1], id: 9, name: sent.name, email: sent.email, roles: [sent.role] } };
         }
-        const match = /^\/staff\/(\d+)(?:\/(\w+))?$/.exec(path);
+        const match = /^\/staff\/(\d+)(?:\/(\w+))?(?:-factor\/reset)?$/.exec(path);
         if (match) {
             const member = people.find((p) => p.id === Number(match[1]))!;
             if (match[2] === 'password') return { status: 204 };
+            if (match[2] === 'two') return { status: 200, body: { ...member, two_factor_enabled: false } };
             if (match[2] === 'deactivate') return { status: 200, body: { ...member, is_active: false } };
             if (match[2] === 'reactivate') return { status: 200, body: { ...member, is_active: true } };
             return { status: 200, body: { ...member, ...(JSON.parse(String(init?.body)) as object) } };
@@ -80,7 +100,7 @@ describe('settings → staff & roles', () => {
         expect(within(rina).getByText('Active')).toBeTruthy();
         expect(within(screen.getByText('Tanvir Nabi').closest('tr')!).getByText('Deactivated')).toBeTruthy();
         expect(within(within(screen.getByRole('table')).getByText('Mominul Islam').closest('tr')!).getByText('You')).toBeTruthy();
-        expect(await screen.findByText('3 people · 7 roles')).toBeTruthy();
+        expect(await screen.findByText('5 people · 7 roles')).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Add staff' })).toBeTruthy();
     });
 
@@ -200,22 +220,97 @@ describe('settings → staff & roles', () => {
         expect(await screen.findByText('This is the last active owner. Make someone else an owner first.')).toBeTruthy();
     });
 
-    it('shows a read-only permission matrix: allowed, not allowed, and the locked owner column', async () => {
+    it('shows the two-factor column: On, Off, and Off flagged where the role sees money', async () => {
         staffApi(owner);
+        renderApp('/staff');
+
+        const table = await screen.findByRole('table');
+        expect(within(within(table).getByText('Sadia Haque').closest('tr')!).getByText('On')).toBeTruthy();
+        const kamrul = within(table).getByText('Kamrul Bari').closest('tr')!;
+        expect(within(kamrul).getByText('Off')).toBeTruthy();
+        expect(within(kamrul).getByText('Their role can see money: they must set up two-factor at their next sign-in.')).toBeTruthy();
+        expect(within(within(table).getByText('Rina Akter').closest('tr')!).queryByText(/must set up two-factor/)).toBeNull();
+    });
+
+    it("resets someone's two-factor only after confirming", async () => {
+        const calls = staffApi(owner);
+        renderApp('/staff');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Manage Sadia Haque' }));
+        fireEvent.click(within(screen.getByRole('dialog', { name: 'Manage Sadia Haque' })).getByRole('button', { name: 'Reset two-factor' }));
+        expect(sent(calls, 'POST', '/staff/5/two-factor/reset')).toBeUndefined();
+
+        fireEvent.click(within(await screen.findByRole('dialog', { name: "Reset Sadia Haque's two-factor?" })).getByRole('button', { name: 'Reset two-factor' }));
+        await waitFor(() => expect(sent(calls, 'POST', '/staff/5/two-factor/reset')).toBeDefined());
+        expect(await screen.findByText("Sadia Haque's two-factor was reset")).toBeTruthy();
+    });
+
+    it('shows the matrix read-only without roles.manage: marks, no checkboxes', async () => {
+        staffApi(manager);
         renderApp('/staff/roles');
 
         const table = await screen.findByRole('table', { name: 'Permissions by role' });
-        expect(screen.getByText(/Roles are fixed in this version/)).toBeTruthy();
+        expect(screen.getByText('Only an owner can change what a role can do.')).toBeTruthy();
         expect(within(table).queryAllByRole('checkbox')).toHaveLength(0);
 
         const refunds = within(table).getByRole('rowheader', { name: /Issue refunds/ }).closest('tr')!;
         const cells = within(refunds).getAllByRole('img');
-        // super_admin · manager · order_operator · inventory_staff …
         expect(cells[0]!.getAttribute('aria-label')).toBe('Owner role: every permission, always');
         expect(cells[1]!.getAttribute('aria-label')).toBe('Allowed');
         expect(cells[2]!.getAttribute('aria-label')).toBe('Allowed');
         expect(cells[3]!.getAttribute('aria-label')).toBe('Not allowed');
         expect(within(table).getAllByText('1 active')).toHaveLength(2);
+    });
+
+    it('lets an owner edit: tick, review, confirm, and one PUT per changed role', async () => {
+        const calls = staffApi(owner);
+        renderApp('/staff/roles');
+
+        const table = await screen.findByRole('table', { name: 'Permissions by role' });
+        // Owner-only rows and the owner column are locked.
+        const manageStaff = within(table).getByRole('rowheader', { name: /Manage staff/ }).closest('tr')!;
+        expect(within(manageStaff).queryAllByRole('checkbox')).toHaveLength(0);
+        expect(within(manageStaff).getAllByRole('img', { name: 'Owner only: never given to another role' })).toHaveLength(6);
+        // Money rows carry the two-factor mark.
+        expect(within(within(table).getByRole('rowheader', { name: /View finance/ })).getByRole('img', { name: 'Shows money: holders must use two-factor sign-in' })).toBeTruthy();
+
+        fireEvent.click(within(table).getByRole('checkbox', { name: 'View finance for Viewer' }));
+        fireEvent.click(within(table).getByRole('checkbox', { name: 'Approve refunds for Order operator' }));
+        fireEvent.click(within(table).getByRole('checkbox', { name: 'Approve refunds for Order operator' })); // undone
+        expect(screen.getByText('Unsaved changes to 1 role(s)')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save permissions' }));
+        const confirm = await screen.findByRole('dialog', { name: 'Change permissions for 1 role(s)?' });
+        expect(sent(calls, 'PUT', '/staff/roles/viewer')).toBeUndefined();
+        fireEvent.click(within(confirm).getByRole('button', { name: 'Save permissions' }));
+
+        await waitFor(() => expect(sent(calls, 'PUT', '/staff/roles/viewer')).toBeDefined());
+        expect(sent(calls, 'PUT', '/staff/roles/viewer')?.body).toEqual({ permissions: ['dashboard.view', 'finance.view'] });
+        expect(sent(calls, 'PUT', '/staff/roles/order_operator')).toBeUndefined();
+        expect(await screen.findByText('Permissions saved for 1 role(s)')).toBeTruthy();
+    });
+
+    it('restores a role to its defaults and can discard edits', async () => {
+        const edited = { ...matrix, roles: roles.map((r) => (r.key === 'viewer' ? { ...r, permissions: ['dashboard.view', 'finance.view'] } : r)) };
+        const calls = staffApi(owner, { 'GET /staff/roles': { status: 200, body: edited } });
+        renderApp('/staff/roles');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Restore the default permissions for Viewer' }));
+        expect(screen.getByText('Unsaved changes to 1 role(s)')).toBeTruthy();
+        expect((screen.getByRole('checkbox', { name: 'View finance for Viewer' }) as HTMLInputElement).checked).toBe(false);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+        expect(screen.queryByText(/Unsaved changes/)).toBeNull();
+        expect((screen.getByRole('checkbox', { name: 'View finance for Viewer' }) as HTMLInputElement).checked).toBe(true);
+        expect(sent(calls, 'PUT', '/staff/roles/viewer')).toBeUndefined();
+    });
+
+    it('shows the separation-of-duties warning the server reports', async () => {
+        const warned = { ...matrix, roles: roles.map((r) => (r.key === 'order_operator' ? { ...r, warnings: [['refunds.create', 'refunds.approve'] as [string, string]] } : r)) };
+        staffApi(manager, { 'GET /staff/roles': { status: 200, body: warned } });
+        renderApp('/staff/roles');
+
+        expect(await screen.findByText('Order operator can both “Issue refunds” and “Approve refunds”. Separate those two.')).toBeTruthy();
     });
 
     it('puts every permission in exactly one group, so none can vanish from the matrix', () => {

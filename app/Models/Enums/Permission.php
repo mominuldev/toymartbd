@@ -120,6 +120,31 @@ enum Permission: string
     case AuditView = 'audit.view';
 
     /**
+     * Only an owner may hold these. Granting them to another role would let it hand itself
+     * more rights, so the role editor refuses them and the seeder strips them (owner
+     * decision 2026-11-14: roles are editable in the admin, except these two).
+     */
+    public function isOwnerOnly(): bool
+    {
+        return $this === self::StaffManage || $this === self::RolesManage;
+    }
+
+    /**
+     * "Can see money" (owner decision 2026-11-14): anyone holding one of these must sign in
+     * with two-factor. Margins, cost prices, the P&L, cash and refund approval.
+     */
+    public function revealsMoney(): bool
+    {
+        return match ($this) {
+            self::CatalogViewCost, self::RefundsApprove,
+            self::FinanceView, self::FinanceManageExpenses, self::FinanceReconcileCod,
+            self::FinanceRecordSupplierPayments, self::FinanceExport,
+            self::ReportsView, self::ReportsExport => true,
+            default => false,
+        };
+    }
+
+    /**
      * @return list<string>
      */
     public static function values(): array

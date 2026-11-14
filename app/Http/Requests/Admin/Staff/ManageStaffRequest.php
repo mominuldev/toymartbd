@@ -7,8 +7,11 @@ namespace App\Http\Requests\Admin\Staff;
 use App\Http\Requests\ApiFormRequest;
 use App\Models\User;
 
-/** `POST /staff/{user}/deactivate` and `/reactivate` — no body; needs staff.manage. */
-final class SetStaffActiveRequest extends ApiFormRequest
+/**
+ * A body-less action on one staff member — `POST /staff/{user}/deactivate`, `/reactivate`,
+ * `/two-factor/reset`; needs staff.manage.
+ */
+final class ManageStaffRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {

@@ -7,8 +7,13 @@ namespace App\Models\Enums;
 use App\Models\Enums\Permission as P;
 
 /**
- * The 7 launch roles (DATABASE-DESIGN §3.10, PRD P-01) and the single source of truth for
- * the role → permission matrix. The seeder and the tests both read {@see self::permissions()}.
+ * The 7 launch roles (DATABASE-DESIGN §3.10, PRD P-01) and their DEFAULT permissions.
+ *
+ * Since the owner decision of 2026-11-14 roles are editable in the admin (Settings → Staff &
+ * roles), so at runtime the database (`role_has_permissions`) is authoritative and
+ * {@see self::permissions()} is what a role starts with: the seeder applies it to a role or a
+ * permission it creates, never over the owner's edits. The 403 role-matrix tests run on a
+ * freshly seeded database, so they still exercise exactly these defaults.
  *
  * super_admin is seeded with every permission AND bypasses all gates via Gate::before
  * (App\Providers\AuthServiceProvider); it is the only role that bypasses.

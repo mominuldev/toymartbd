@@ -58,6 +58,10 @@ class ApiServiceProvider extends ServiceProvider
      */
     public const int LOGIN_PER_ACCOUNT_PER_FIFTEEN_MINUTES = 10;
 
+    public const int TWO_FACTOR_PER_MINUTE = 5;
+
+    public const int TWO_FACTOR_PER_ACCOUNT_PER_FIFTEEN_MINUTES = 15;
+
     /** POST /storefront/cart/coupon: tries per cart per 10 minutes (coupon-code guessing, P9). */
     public const int COUPON_PER_CART_PER_TEN_MINUTES = 10;
 
@@ -140,6 +144,19 @@ class ApiServiceProvider extends ServiceProvider
             }
 
             return $limits;
+        });
+
+        // Admin two-factor code (sign-in challenge and enrolment): per session, and per staff
+        // account across sessions, so 10⁶ codes cannot be walked even from many browsers.
+        RateLimiter::for('two-factor', function (Request $request): array {
+            $pending = $request->hasSession() ? $request->session()->get(\App\Http\Controllers\Api\V1\Admin\Auth\AuthController::TWO_FACTOR_PENDING) : null;
+            $userId = is_array($pending) ? ($pending['id'] ?? null) : $request->user()?->getAuthIdentifier();
+            $session = $request->hasSession() ? $request->session()->getId() : (string) $request->ip();
+
+            return [
+                Limit::perMinute(self::TWO_FACTOR_PER_MINUTE)->by('2fa-session:'.$session),
+                Limit::perMinutes(15, self::TWO_FACTOR_PER_ACCOUNT_PER_FIFTEEN_MINUTES)->by('2fa-account:'.(is_scalar($userId) ? (string) $userId : $session)),
+            ];
         });
 
         RateLimiter::for('coupon', fn (Request $request): array => [

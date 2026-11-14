@@ -59,6 +59,12 @@ final class RoleMatrixCoverage
             'api.v1.admin.auth.login' => 'sign-in itself; throttled (tests/Feature/Auth)',
             'api.v1.admin.auth.logout' => 'own session only (tests/Feature/Auth)',
             'api.v1.admin.auth.me' => 'own profile only (tests/Feature/Auth)',
+            'api.v1.admin.auth.two-factor-challenge' => 'second step of sign-in; the session names the user; throttled (tests/Feature/Staff/TwoFactorTest)',
+            'api.v1.admin.auth.two-factor.show' => 'own two-factor only (tests/Feature/Staff/TwoFactorTest)',
+            'api.v1.admin.auth.two-factor.store' => 'own two-factor only (tests/Feature/Staff/TwoFactorTest)',
+            'api.v1.admin.auth.two-factor.confirm' => 'own two-factor only (tests/Feature/Staff/TwoFactorTest)',
+            'api.v1.admin.auth.two-factor.recovery-codes' => 'own two-factor only (tests/Feature/Staff/TwoFactorTest)',
+            'api.v1.admin.auth.two-factor.destroy' => 'own two-factor only (tests/Feature/Staff/TwoFactorTest)',
         ];
     }
 

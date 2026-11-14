@@ -55,7 +55,7 @@ Item ids are those in `LAUNCH-CHECKLIST.md`. "Built" means the code and the auto
 | 404 and 500 pages styled | F6 | **Met in code.** Storefront 404 and 500 in EN and BN (Figma 163:9166 / 169:10286), `global-not-found` server-rendered, `global-error` keeps the locale; tests `toymartbd-app/storefront/tests/error-pages.test.ts` + `e2e/ssr.spec.ts`. Admin not-found on AdminEmptyState + router error boundary; tests `resources/js/admin/app/errors.test.tsx`. Laravel web 404/500/503 + 4xx/5xx branded, bilingual, token-only, no exception text; API stays problem+json (incl. maintenance); tests `tests/Feature/Ops/ErrorPagesTest.php`. Visual check on the real domain is manual. |
 | Return, privacy, terms and contact pages published with real details | F1 | **Owner**: seeded as drafts with "PLACEHOLDER" copy; `content.policy_pages` fails until each is published in EN and BN with no placeholder. |
 | Trade licence and contact information displayed as required | F2–F4, F7 | **Owner**: invoice company details, `STORE_HOTLINE`, storefront `site-config.ts` all placeholders. What must legally be displayed is unresearched — needs the owner's accountant/lawyer. |
-| Staff accounts created with correct roles and trained | G1, G2, G4 | Roles, the 403 matrix and the **Staff & roles screen** (Figma B · 35, `/admin/staff`: add, change role, reset password, deactivate/reactivate, read-only permission matrix; audited; no self-change, never zero active owners) are built — `RUNBOOK.md` §10. Accounts themselves are owner work. Not built: 2FA, sessions, shifts, editable roles. |
+| Staff accounts created with correct roles and trained | G1, G2, G4 | Roles, the 403 matrix and the **Staff & roles screen** (Figma B · 35, `/admin/staff`: add, change role, reset password, deactivate/reactivate, editable permission matrix; two-factor sign-in required for anyone who can see money; audited; no self-change, never zero active owners) are built — `RUNBOOK.md` §10. Accounts and each person's two-factor setup are owner work (`staff.two_factor`). Not built: sessions, shifts, branches. |
 | Owner has the runbook | G5 | `RUNBOOK.md` written; owner's password-manager entries and numbers to fill. |
 
 Not in the roadmap list but checked anyway (audits): `TRUSTED_PROXIES` (S-15, A8), no demo data (G3), courier rate cards (D5), placeholder business values (F5), scheduler heartbeat (B3), Horizon (B2), storefront token (B5).
@@ -155,7 +155,7 @@ Collected from every progress section of `IMPLEMENTATION-PLAN.md`, from `UI-UX-D
   - `reviews.moderate` for content_editor;
   - export permission;
   - staff mail English-only.
-- Staff & roles (B · 35) is built without the frame's two-factor, branch, sessions, shifts and editable-role parts: are any of those needed before launch? Two-factor for anyone who sees money is what the frame implies.
+- Staff & roles (B · 35): per-staff branches, sessions and shifts are not built — needed before launch? (Two-factor and editable roles were decided and built, §4.)
 
 ### 3.5 Owner work still owed from earlier gates
 
@@ -174,7 +174,7 @@ Fill this in at the review meeting. Each WARN that `toymart:launch:check --stric
 | WhatsApp off at launch, SMS for order updates (`whatsapp.state`) | | | |
 | Placeholder values kept or changed (`business.placeholder_values`) | | | |
 | Launch with manual fulfilment if no courier is verified? | | | |
-| Staff & roles: two-factor / sessions / editable roles before launch, or after? | | | |
+| Two-factor sign-in for staff who can see money; roles editable in the admin | **Yes, both — built before launch** (TOTP + recovery codes; enforcement forced on in production; `staff.two_factor` launch check). Sessions, shifts and custom roles stay out. | 2026-11-14 | Owner |
 
 ## 5. Go / no-go — blockers
 
