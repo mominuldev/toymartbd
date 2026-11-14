@@ -45,6 +45,8 @@ import { checkoutSettingsBn, checkoutSettingsEn } from './messages.checkoutSetti
 import { posBn, posEn } from './messages.pos';
 import { inboxBn, inboxEn } from './messages.inbox';
 import { deliverySettingsBn, deliverySettingsEn } from './messages.deliverySettings';
+import { shipmentsBoardBn, shipmentsBoardEn } from './messages.shipmentsBoard';
+import { bookingQueueBn, bookingQueueEn } from './messages.bookingQueue';
 
 export const en = {
     ...productsEn,
@@ -81,6 +83,8 @@ export const en = {
     ...posEn,
     ...inboxEn,
     ...deliverySettingsEn,
+    ...shipmentsBoardEn,
+    ...bookingQueueEn,
     ...invoicesEn,
     ...customersEn,
     ...dashboardEn,
@@ -382,6 +386,8 @@ export const bn: Messages = {
     ...posBn,
     ...inboxBn,
     ...deliverySettingsBn,
+    ...shipmentsBoardBn,
+    ...bookingQueueBn,
     ...invoicesBn,
     ...customersBn,
     ...dashboardBn,

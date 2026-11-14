@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import { bn, en } from '@/i18n/messages';
@@ -101,13 +101,12 @@ describe('app shell', () => {
         expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull();
     });
 
-    it('renders a placeholder for designed-but-unbuilt sections', async () => {
+    it('gives every sidebar section its own screen — no section falls back to the placeholder', async () => {
         signedInAs(viewer);
-        // Shipments & tracking (Figma B · 08) is the last sidebar section without its own screen;
-        // only its failed-bookings and location-mapping sub-pages exist.
+        // Shipments & tracking (Figma B · 08) was the last one (Phase 10 batch 5).
         renderApp('/shipments');
 
-        expect(await screen.findByText('This section is being built.')).toBeTruthy();
+        await waitFor(() => expect(screen.queryByText('This section is being built.')).toBeNull());
     });
 });
 

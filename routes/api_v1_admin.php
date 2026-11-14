@@ -495,6 +495,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     require __DIR__.'/api_v1_admin_pos.php';
     require __DIR__.'/api_v1_admin_inbox.php';
     require __DIR__.'/api_v1_admin_delivery_settings.php';
+    // Phase 10 batch 5.
+    require __DIR__.'/api_v1_admin_shipments_board.php';
+    require __DIR__.'/api_v1_admin_booking_queue.php';
 
     // Blog (Phase 7): posts, buying guides, categories, tags, authors — routes/api_v1_admin_blog.php.
     require __DIR__.'/api_v1_admin_blog.php';
