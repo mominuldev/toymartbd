@@ -119,7 +119,7 @@ return [
     // public ingest key (it ships to every admin browser), never the auth token. Release and
     // environment come from config/sentry.php (SENTRY_RELEASE = git SHA, SENTRY_ENVIRONMENT).
     'sentry_admin' => [
-        'dsn' => env('SENTRY_ADMIN_DSN'),
+        'dsn' => env('SENTRY_ADMIN_DSN') ?: null, // empty means off
         'sample_rate' => env('SENTRY_ADMIN_SAMPLE_RATE', '1.0'),
         'traces_sample_rate' => env('SENTRY_ADMIN_TRACES_SAMPLE_RATE', '0'),
     ],
