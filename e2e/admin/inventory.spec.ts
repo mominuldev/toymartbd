@@ -52,8 +52,8 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     await expect(page.getByRole('row').filter({ hasText: 'TM-00001-90PCS-BOX' })).toHaveCount(0);
     const row = page.getByRole('row').filter({ hasText: sku });
     await expect(row).toHaveCount(1);
-    // Cells: expand · product · status · on hand …
-    const onHandBefore = Number((await row.getByRole('cell').nth(3).innerText()).replace(/\D/g, ''));
+    // Cells: product · status · on hand …
+    const onHandBefore = Number((await row.getByRole('cell').nth(2).innerText()).replace(/\D/g, ''));
     expect(onHandBefore).toBeGreaterThan(1);
 
     // Adjusting lives in the header (Figma's rows carry no Adjust): search, pick, record.
@@ -70,7 +70,7 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     await dialog.getByLabel(/Note/).fill('Crushed box — বাক্স ভাঙা');
     await dialog.getByRole('button', { name: 'Record adjustment' }).click();
     await expect(page.getByText(/^Adjustment ADJ-\d{4}-\d{4} recorded$/)).toBeVisible();
-    await expect(row.getByRole('cell').nth(3)).toHaveText(new RegExp(`${onHandBefore - 1}$`));
+    await expect(row.getByRole('cell').nth(2)).toHaveText(new RegExp(`${onHandBefore - 1}$`));
 
     // A reason that only removes stock cannot add it: the server refuses the line.
     await pick();
