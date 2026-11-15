@@ -1,9 +1,8 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
     ArrowClockwiseIcon,
     ArrowsLeftRightIcon,
-    CaretDownIcon,
     ClockCountdownIcon,
     CoinsIcon,
     HandCoinsIcon,
@@ -28,10 +27,10 @@ import { KpiCard } from '@/components/ui/KpiCard';
 import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
 import { TabButton } from '@/components/ui/Tabs';
-import { stockStates, useAdjustments, useAlerts, useInventorySummary, useMovements, useStock, type AdjustmentReason, type InventoryLocation, type StockRow, type StockState } from './api';
+import { stockStates, useAdjustments, useAlerts, useInventorySummary, useStock, type AdjustmentReason, type InventoryLocation, type StockRow, type StockState } from './api';
 import { AdjustmentDialog } from './AdjustmentDialog';
 import { TransferDialog } from './TransferDialog';
-import { LocationCards, MovementTypeChip, StockStatusChip, TAKA, Taka, VariantCell, dhakaWhen, formatMoney, formatUnits, signed, variantLabel } from './parts';
+import { LocationCards, StockStatusChip, TAKA, Taka, VariantCell, dhakaWhen, formatMoney, formatUnits, variantLabel } from './parts';
 
 const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockState }[] = [
     { value: '', label: 'inventory.tab.all', count: 'all' },
@@ -93,8 +92,8 @@ function useSlashFocus(target: RefObject<HTMLInputElement | null>) {
  * barcode scanner, "/" focuses it); the state tabs with server counts; and the DataTable
  * 192:532 of variants. Each row shows the variant as its own tag, one status chip, the figures
  * right-aligned, branch stock spelled out, and a single ⋯ menu: Adjust stock, Transfer, Create
- * PO (short rows), View ledger. A row expands in place to its stock by branch and its last
- * movements.
+ * PO (short rows), View ledger. Rows do not expand (owner, 2026-11-16): branch stock is in the
+ * Other branches chips, history in View ledger.
  *
  * Every figure, state and count is the server's; nothing is computed here (rule 1). Location,
  * tab and search live in the URL (`?location=2&state=low&q=lego`). The list has a fixed server
@@ -120,7 +119,6 @@ export function InventoryPage() {
     const rows = useMemo(() => stock.data?.pages.flatMap((page) => page.data) ?? [], [stock.data]);
     const [adjust, setAdjust] = useState<Adjust>(null);
     const [transfer, setTransfer] = useState<Transfer>(null);
-    const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
     const [flash, setFlash] = useState<number | null>(null);
 
     const canAdjust = can(me, 'inventory.adjust');
@@ -167,14 +165,6 @@ export function InventoryPage() {
         const id = window.setTimeout(() => setFlash(null), 2400);
         return () => window.clearTimeout(id);
     }, [flash]);
-
-    const toggle = (id: number) =>
-        setExpanded((current) => {
-            const next = new Set(current);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
 
     const openTransfer = (row: StockRow | null, from?: { location_id: number; available: number }) => {
         if (!data) return;
@@ -274,7 +264,6 @@ export function InventoryPage() {
     // Table from 1280 (xl); below it each row is a card. Columns hug their figures; the product takes the rest.
     const cell = `${dataTable.td.replace('h-15', 'xl:h-16')} max-xl:h-auto max-xl:p-0`;
     const figure = `${cell} t-admin-num tabular xl:text-end max-xl:flex max-xl:min-w-0 max-xl:grow max-xl:basis-20 max-xl:flex-col max-xl:gap-0.5 max-xl:order-6`;
-    const columns = 8 + (multi ? 1 : 0) + (viewCost ? 1 : 0);
 
     return (
         <section className="flex flex-col gap-6 max-sm:gap-4">
@@ -458,9 +447,6 @@ export function InventoryPage() {
                         <thead className={`hidden xl:table-header-group ${dataTable.head} sticky top-15 z-10`}>
                             {/* Figma DataTable 192:532 header: a border/strong rule under the column names. */}
                             <tr className="border-b border-line-strong">
-                                <th scope="col" className={`${dataTable.th} w-10 pe-0`}>
-                                    <span className="sr-only">{t('inventory.detail.branches')}</span>
-                                </th>
                                 {/* Percentage widths (the 1440 layout): on a wide display every column grows, instead of the
                                     product column alone leaving the figures bunched at the right (owner, 2026-11-16). */}
                                 <Th className="w-[28%]">{t('inventory.col.product')}</Th>
@@ -490,26 +476,14 @@ export function InventoryPage() {
                         </thead>
                         <tbody className="max-xl:block">
                             {rows.map((row) => {
-                                const open = expanded.has(row.variant_id);
                                 const name = variantLabel(row, locale);
-                                const detailId = `inventory-detail-${row.variant_id}`;
-                                const onRowClick = (event: MouseEvent<HTMLTableRowElement>) => {
-                                    // A click on the row's own controls (or a text selection) is not a toggle.
-                                    if ((event.target as HTMLElement).closest('button, a, input, [role="menu"]')) return;
-                                    if (window.getSelection()?.toString()) return;
-                                    toggle(row.variant_id);
-                                };
                                 return (
-                                    <Fragment key={row.variant_id}>
                                         <tr
-                                            onClick={onRowClick}
-                                            className={`flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 transition-colors duration-300 ease-standard max-xl:border-t max-xl:border-line-default max-xl:first:border-t-0 xl:table-row xl:p-0 ${dataTable.row} ${
-                                                flash === row.variant_id ? 'bg-brand-subtle' : open ? 'bg-subtle' : ''
+                                            key={row.variant_id}
+                                            className={`flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 transition-colors duration-300 ease-standard max-xl:border-t max-xl:border-line-default max-xl:first:border-t-0 xl:table-row xl:p-0 ${dataTable.row} ${
+                                                flash === row.variant_id ? 'bg-brand-subtle' : ''
                                             }`}
                                         >
-                                            <td className={`${cell} max-xl:order-2 xl:pe-0`}>
-                                                <ExpandButton open={open} controls={detailId} label={t('inventory.details', { name })} onToggle={() => toggle(row.variant_id)} />
-                                            </td>
                                             <td className={`min-w-0 max-xl:order-1 max-xl:flex-1 max-xl:basis-0 ${cell}`}>
                                                 <VariantCell row={row} />
                                             </td>
@@ -548,20 +522,6 @@ export function InventoryPage() {
                                                 <ActionMenu label={t('inventory.rowMenu', { name })} items={rowItems(row)} />
                                             </td>
                                         </tr>
-                                        {open && (
-                                            <tr id={detailId} className="bg-subtle max-xl:block">
-                                                <td colSpan={columns} className="border-t border-line-default px-4 pt-3 pb-4 max-xl:block xl:ps-14 xl:pe-4">
-                                                    <RowDetail
-                                                        row={row}
-                                                        here={here}
-                                                        locations={locations}
-                                                        ledger={ledgerPath(row)}
-                                                        onTransfer={canTransfer && multi ? (from) => openTransfer(row, from) : undefined}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </Fragment>
                                 );
                             })}
                         </tbody>
@@ -603,21 +563,6 @@ export function InventoryPage() {
     );
 }
 
-function ExpandButton({ open, controls, label, onToggle }: { open: boolean; controls: string; label: string; onToggle: () => void }) {
-    return (
-        <button
-            type="button"
-            aria-expanded={open}
-            aria-controls={open ? controls : undefined}
-            aria-label={label}
-            onClick={onToggle}
-            onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => event.stopPropagation()}
-            className="inline-grid size-8 place-items-center rounded-sm text-fg-secondary transition-colors duration-150 ease-standard hover:bg-surface hover:text-fg-primary"
-        >
-            <CaretDownIcon size={16} aria-hidden className={`transition-transform duration-150 ease-standard ${open ? 'rotate-180' : ''}`} />
-        </button>
-    );
-}
 
 /**
  * What the other branches hold available, spelled out: a short code chip per branch with the full
@@ -650,142 +595,6 @@ function BranchStock({ row, locations }: { row: StockRow; locations: InventoryLo
     );
 }
 
-/**
- * The expanded row: stock by branch (the server's on hand and available per location; this
- * branch also shows what is reserved) and the variant's five latest movements from the ledger
- * endpoint, with a way to the full ledger. A branch with units available offers a transfer here.
- */
-function RowDetail({
-    row,
-    here,
-    locations,
-    ledger,
-    onTransfer,
-}: {
-    row: StockRow;
-    here: InventoryLocation | undefined;
-    locations: InventoryLocation[];
-    ledger: string;
-    onTransfer?: (from: { location_id: number; available: number }) => void;
-}) {
-    const { t, locale } = useI18n();
-    const movements = useMovements({ variant: String(row.variant_id), product: '', location: '', type: '', from: '', to: '' });
-    const recent = movements.data?.pages[0]?.data.slice(0, 5) ?? [];
-    const nameOf = (id: number, code: string) => {
-        const l = locations.find((x) => x.id === id);
-        return l ? (locale === 'bn' ? (l.name_bn ?? l.name) : l.name) : code.toUpperCase();
-    };
-    const head = 'px-2 py-1.5 t-admin-overline whitespace-nowrap text-fg-secondary';
-    const td = 'px-2 py-2 t-admin-body text-fg-primary';
-
-    return (
-        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
-            <section aria-label={t('inventory.detail.branches')} className="flex min-w-0 flex-col gap-2">
-                <h3 className="t-admin-body-strong text-fg-primary">{t('inventory.detail.branches')}</h3>
-                <div className="overflow-x-auto rounded-sm border border-line-default bg-surface">
-                    <table className="w-full border-collapse">
-                        <thead className="bg-subtle">
-                            <tr>
-                                <th scope="col" className={`${head} text-start`}>
-                                    {t('inventory.detail.branch')}
-                                </th>
-                                <th scope="col" className={`${head} text-end`}>
-                                    {t('inventory.col.onHand')}
-                                </th>
-                                <th scope="col" className={`${head} text-end`}>
-                                    {t('inventory.col.available')}
-                                </th>
-                                {onTransfer && (
-                                    <th scope="col" className={head}>
-                                        <span className="sr-only">{t('inventory.col.actions')}</span>
-                                    </th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {here && (
-                                <tr className="border-t border-line-default">
-                                    <th scope="row" className={`${td} text-start font-normal`}>
-                                        <span className="flex flex-wrap items-center gap-2">
-                                            {locale === 'bn' ? (here.name_bn ?? here.name) : here.name}
-                                            <span className="rounded-xs bg-brand-subtle px-1.5 t-admin-caption-strong text-fg-brand">{t('inventory.detail.viewing')}</span>
-                                        </span>
-                                    </th>
-                                    <td className={`${td} text-end tabular`}>{formatUnits(row.on_hand)}</td>
-                                    <td className={`${td} text-end tabular t-admin-body-strong`}>{formatUnits(row.available)}</td>
-                                    {onTransfer && <td className={td} />}
-                                </tr>
-                            )}
-                            {row.elsewhere.map((e) => (
-                                <tr key={e.location_id} className="border-t border-line-default">
-                                    <th scope="row" className={`${td} text-start font-normal`}>
-                                        {nameOf(e.location_id, e.code)}
-                                    </th>
-                                    <td className={`${td} text-end tabular`}>{formatUnits(e.on_hand)}</td>
-                                    <td className={`${td} text-end tabular t-admin-body-strong`}>{formatUnits(e.available)}</td>
-                                    {onTransfer && (
-                                        <td className={`${td} text-end`}>
-                                            {e.available > 0 && (
-                                                // On a phone the icon stands alone; the name stays whole for screen readers and as the tooltip.
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    title={t('inventory.action.transferIn', { count: formatUnits(e.available), branch: nameOf(e.location_id, e.code) })}
-                                                    onClick={() => onTransfer({ location_id: e.location_id, available: e.available })}
-                                                >
-                                                    <ArrowsLeftRightIcon size={16} aria-hidden />
-                                                    <span className="max-sm:sr-only">{t('inventory.action.transferIn', { count: formatUnits(e.available), branch: e.code.toUpperCase() })}</span>
-                                                </Button>
-                                            )}
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <p className="t-admin-caption text-fg-tertiary tabular">
-                    {t('inventory.detail.reorder', { point: formatUnits(row.reorder_point), quantity: row.reorder_quantity > 0 ? formatUnits(row.reorder_quantity) : '—' })}
-                </p>
-            </section>
-
-            <section aria-label={t('inventory.detail.recent')} className="flex min-w-0 flex-col gap-2">
-                <div className="flex items-center justify-between gap-2">
-                    <h3 className="t-admin-body-strong text-fg-primary">{t('inventory.detail.recent')}</h3>
-                    <Link to={ledger} className={buttonClass('ghost', 'sm')}>
-                        {t('inventory.detail.openLedger')}
-                    </Link>
-                </div>
-                {movements.isPending ? (
-                    <div aria-busy="true" className="flex flex-col gap-2">
-                        <span className="sr-only">{t('common.loading')}</span>
-                        {[0, 1, 2].map((i) => (
-                            <div key={i} aria-hidden className="h-8 rounded-xs bg-skeleton motion-safe:animate-pulse" />
-                        ))}
-                    </div>
-                ) : recent.length === 0 ? (
-                    <p className="t-admin-body text-fg-tertiary">{t('inventory.detail.noMovements')}</p>
-                ) : (
-                    <ul className="flex flex-col rounded-sm border border-line-default bg-surface">
-                        {recent.map((m) => {
-                            const when = dhakaWhen(m.created_at, locale);
-                            return (
-                                <li key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-default px-3 py-2 first:border-t-0">
-                                    <span className="w-28 shrink-0 t-admin-caption text-fg-secondary tabular">
-                                        {when.day} · {when.time}
-                                    </span>
-                                    <MovementTypeChip type={m.type} />
-                                    <span className="t-admin-caption text-fg-tertiary">{nameOf(m.location_id, String(m.location_id))}</span>
-                                    <span className="ms-auto t-admin-num tabular text-fg-primary">{signed(m.quantity)}</span>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
-            </section>
-        </div>
-    );
-}
 
 /** Placeholder rows while the first page loads: the card's shape, not a blank page. Not a table, so nothing reads it as data. */
 function SkeletonRows({ label }: { label: string }) {
