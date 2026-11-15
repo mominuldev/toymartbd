@@ -179,11 +179,11 @@ describe('POS register', () => {
         expect(await screen.findByRole('heading', { name: 'Chattogram · Agrabad · Register 1' })).toBeTruthy();
         expect(screen.getByText('Drawer since 10:02 am · float ৳5,000')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Dashboard' })).toBeTruthy();
-        const brick = await screen.findByRole('button', { name: 'Add Brick Box 500, ৳1,850, 7 in stock' });
+        const brick = await screen.findByRole('button', { name: 'Add Brick Box 500, BB-500, ৳1,850, 7 in stock' });
         expect(within(brick).getByText('7 in stock')).toBeTruthy();
         expect(within(brick).getByText('BB-500')).toBeTruthy();
         // None at this branch: shown, but cannot be added.
-        expect((screen.getByRole('button', { name: 'Add Foam Blaster X2, ৳1,750, Out of stock' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByRole('button', { name: 'Add Foam Blaster X2, FB-2, ৳1,750, Out of stock' }) as HTMLButtonElement).disabled).toBe(true);
         expect(screen.getByRole('button', { name: 'Building' })).toBeTruthy();
     });
 
@@ -301,6 +301,8 @@ describe('POS register', () => {
         expect(await within(dialog).findByText('On credit · ৳3,800 available')).toBeTruthy();
         const complete = within(dialog).getByRole('button', { name: 'Complete sale' });
         await waitFor(() => expect(complete).toHaveProperty('disabled', false));
+        const lookups = () => calls.mock.calls.filter(([url]) => String(url).includes('/pos/customers?')).length;
+        const before = lookups();
         fireEvent.click(complete);
 
         await screen.findByRole('heading', { name: 'Sale complete' });
@@ -309,6 +311,11 @@ describe('POS register', () => {
             customer_name: 'Rubina Akter',
             tenders: [{ method: 'due', amount: '3455.00', reference: null }],
         });
+
+        // The sale raised her open due: picking her again asks the server, not the 30-second cache.
+        fireEvent.click(screen.getByRole('button', { name: 'Start new sale' }));
+        await pickRubina();
+        await waitFor(() => expect(lookups()).toBeGreaterThan(before));
     });
 
     it("collects a customer's due against their oldest orders", async () => {

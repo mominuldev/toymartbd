@@ -321,6 +321,12 @@ test('orders board → order detail: filters, table, the three tracks, and the h
     await page.getByRole('button', { name: /^Delivered \d+/ }).click();
     await expect(page.getByRole('button', { name: /^Delivered \d+/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: /^All \d+/ })).toHaveAttribute('aria-pressed', 'false');
+    // A web order: a POS sale (another spec may have just rung one up) is delivered too, but its
+    // detail page has a different shape (no courier track, the Sell breadcrumb).
+    await page.getByRole('combobox', { name: 'Source' }).selectOption('web');
+    await expect(page).toHaveURL(/source=web/);
+    // The board keeps the last page on screen while the filtered one loads: wait for a web row.
+    await expect(page.getByRole('table').getByRole('row').nth(1)).toContainText('web');
     await settle(page);
 
     // Read the number and its target in one step: the list may still re-render after the
@@ -370,10 +376,14 @@ test('orders board → order detail: filters, table, the three tracks, and the h
     await page.goto('/admin/orders');
     await settle(page);
     await page.getByRole('button', { name: /^Confirmed \d+/ }).click();
+    // The board keeps the last page on screen while the filtered one loads: wait for a confirmed
+    // row, then read the number and its target in one step (as above).
+    await expect(page.getByRole('table').getByRole('row').nth(1)).toContainText('Confirmed');
     await settle(page);
     const confirmed = page.getByRole('table').getByRole('link', { name: /^TMB-/ }).first();
-    const held = (await confirmed.innerText()).trim();
-    await confirmed.click();
+    const [held, heldHref] = await confirmed.evaluate((a) => [(a.textContent ?? '').trim(), a.getAttribute('href') ?? '']);
+    await page.goto(heldHref.startsWith('/admin') ? heldHref : `/admin${heldHref}`);
+    await settle(page);
     const hold = page.getByRole('button', { name: 'Hold', exact: true });
     await hold.click();
     const dialog = page.getByRole('dialog', { name: `Hold ${held}?` });

@@ -55,7 +55,7 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
                     <h2 id="pos-done-title" className="t-admin-display text-fg-primary">
                         {t('pos.done.title')}
                     </h2>
-                    <p className="t-admin-body-lg text-fg-secondary">
+                    <p id="pos-done-sub" className="t-admin-body-lg text-fg-secondary">
                         {t('pos.done.sub', {
                             number: sale.order_number,
                             customer,
@@ -63,7 +63,7 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
                         })}
                     </p>
                 </div>
-                <dl className={`grid gap-3 ${stats.length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+                <dl id="pos-done-stats" className={`grid gap-3 ${stats.length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
                     {stats.map((s) => (
                         <div key={s.label} className="flex flex-col gap-1.5 rounded-md border border-line-default bg-surface px-4 py-3.5">
                             <dt className="t-admin-overline text-fg-secondary">{s.label}</dt>
@@ -108,7 +108,16 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
                         {t('pos.receipt.whatsapp')}
                     </Button>
                 </div>
-                <Button ref={nextRef} size="lg" className="h-14 justify-between" aria-keyshortcuts="Enter" onClick={onNext}>
+                {/* Focus lands here, so its description carries what just happened: the title, the order
+                    and the total / paid / change — "Start new sale, button, Sale complete, …". */}
+                <Button
+                    ref={nextRef}
+                    size="lg"
+                    className="h-14 justify-between"
+                    aria-keyshortcuts="Enter"
+                    aria-describedby="pos-done-title pos-done-sub pos-done-stats"
+                    onClick={onNext}
+                >
                     <span className="flex items-center gap-2">
                         <PlusIcon size={20} aria-hidden />
                         {t('pos.done.next')}

@@ -126,6 +126,9 @@ export function useCharge(sessionId: number) {
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: posKeys.context });
             void client.invalidateQueries({ queryKey: ['pos', 'catalog', sessionId] });
+            // A Due sale changes the customer's open due: the next lookup must show it (Collect due).
+            void client.invalidateQueries({ queryKey: ['pos', 'customer'] });
+            void client.invalidateQueries({ queryKey: ['pos', 'customer-search'] });
         },
     });
 }

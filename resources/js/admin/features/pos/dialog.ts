@@ -17,6 +17,19 @@ export function useDialog(open: boolean, onOpen: () => void) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
+    // Escape always closes. Chrome's close-watcher anti-abuse can swallow the native Escape for a
+    // modal opened by a key the page handled (F8 / F9 / F12), which would trap a keyboard cashier.
+    useEffect(() => {
+        const dialog = ref.current;
+        if (!dialog) return;
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape' || !dialog.open) return;
+            event.preventDefault();
+            if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close();
+        };
+        dialog.addEventListener('keydown', onKey);
+        return () => dialog.removeEventListener('keydown', onKey);
+    }, []);
     return ref;
 }
 

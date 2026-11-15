@@ -40,6 +40,8 @@ export function Register({ context, session }: { context: PosContext; session: P
     const [view, setView] = useState<'products' | 'cart'>('products');
     // Names of tiles the cashier added, so a line reads right before its quote arrives.
     const [names, setNames] = useState<Record<number, string>>({});
+    // F12 asks the cart, which knows whether the quote allows a charge (CartPanel sets it).
+    const chargeKey = useRef<() => void>(() => undefined);
 
     const filters = useMemo(() => ({ categoryId: category, q: term }), [category, term]);
     const catalog = useCatalog(session.id, filters);
@@ -103,13 +105,16 @@ export function Register({ context, session }: { context: PosContext; session: P
     // Register-wide function keys. Inside an open dialog its own keys apply instead.
     useEffect(() => {
         const onKey = (event: globalThis.KeyboardEvent) => {
-            if (completed || paying || closing || showHolds || choosingCustomer || collecting) {
-                if (completed && event.key === 'Enter' && document.activeElement === document.body) {
+            if (completed) {
+                if (event.key === 'Enter' && document.activeElement === document.body) {
                     event.preventDefault();
                     startNext();
                 }
                 return;
             }
+            // Ask the DOM, not the dialog flags: a dialog closed by Escape is gone at once, while its
+            // flag clears a render later — a quick F8 after Escape would otherwise be swallowed.
+            if (document.querySelector('dialog[open]')) return;
             if (event.key === 'F1') {
                 event.preventDefault();
                 searchRef.current?.focus();
@@ -121,13 +126,13 @@ export function Register({ context, session }: { context: PosContext; session: P
                 setChoosingCustomer(true);
             } else if (event.key === 'F12') {
                 event.preventDefault();
-                if (cart.lines.length > 0) setPaying(true);
+                chargeKey.current();
             }
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [completed, paying, closing, showHolds, choosingCustomer, collecting, cart.lines.length]);
+    }, [completed]);
 
     const heldCount = holds.data?.data.length ?? 0;
     // A count of pieces, not money.
@@ -222,6 +227,7 @@ export function Register({ context, session }: { context: PosContext; session: P
                         paying={paying}
                         setPaying={setPaying}
                         onCharged={setCompleted}
+                        chargeKey={chargeKey}
                     />
                 </div>
             )}

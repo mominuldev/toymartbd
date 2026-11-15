@@ -1,9 +1,10 @@
-import { useId, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useId, useMemo, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import { CreditCardIcon, MinusIcon, PhoneIcon, PlusIcon, StackIcon, TagIcon, TrashIcon, UserIcon, UserPlusIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Input } from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 import { useCustomer, useQuote, type PosContext, type PosSale, type PosSession } from './api';
 import { addLine, cleanPhone, emptyCart, quoteBody, removeLine, type CartState } from './cart';
 import { isZeroAmount, phoneDisplay, takaText } from './format';
@@ -25,6 +26,8 @@ type CartPanelProps = {
     paying: boolean;
     setPaying: (open: boolean) => void;
     onCharged: (sale: PosSale) => void;
+    /** What F12 does: open Collect payment when the quote allows a charge, else say why. */
+    chargeKey: MutableRefObject<() => void>;
 };
 
 /**
@@ -32,7 +35,7 @@ type CartPanelProps = {
  * the quote's itemised totals and Total payable, Hold / Coupon / Clear, then one Charge button
  * that opens Collect payment. Every amount here is the server's quote (rule 1).
  */
-export function CartPanel({ visible, context, session, cart, setCart, names, onOpenCustomer, onCollectDue, onHold, holdPending, paying, setPaying, onCharged }: CartPanelProps) {
+export function CartPanel({ visible, context, session, cart, setCart, names, onOpenCustomer, onCollectDue, onHold, holdPending, paying, setPaying, onCharged, chargeKey }: CartPanelProps) {
     const { t, locale } = useI18n();
     const headingId = useId();
     const body = useMemo(() => quoteBody(cart), [cart]);
@@ -48,9 +51,25 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
     const total = q?.grand_total ?? '0.00';
     const known = customer.data?.customer ?? null;
     const customerName = known?.name ?? (cart.name.trim() || null);
+    const { notify } = useToast();
+    const blockersId = useId();
+    const canCharge = q !== undefined && q.blockers.length === 0 && !(quote.isFetching && quote.isPlaceholderData);
+    // F12 is the Charge button's key, so it obeys the same rule; a refusal is spoken, not silent.
+    useEffect(() => {
+        chargeKey.current = () => {
+            if (canCharge) setPaying(true);
+            else if (q?.blockers[0]) notify(q.blockers[0].message, 'info');
+        };
+    }, [chargeKey, canCharge, q, setPaying, notify]);
 
     return (
         <>
+            {/* One polite status, mounted before the first line, speaks each new quote: the count
+                and the server's total, after a scan, a tap or a stepper press. Outside the aside,
+                so it still speaks on a tablet or phone while the Products view hides the cart. */}
+            <p role="status" data-testid="pos-cart-status" className="sr-only">
+                {q ? t('pos.cart.status', { count: q.item_count, amount: takaText(total) }) : ''}
+            </p>
             <aside aria-labelledby={headingId} className={`${visible ? 'flex' : 'hidden'} min-h-0 w-full flex-1 flex-col bg-surface lg:flex lg:w-[27.5rem] lg:flex-none lg:shrink-0 lg:border-s lg:border-line-default print:hidden`}>
                 <div className="flex flex-col gap-3 px-6 pt-5 pb-4">
                     <div className="flex items-baseline justify-between gap-3">
@@ -146,7 +165,7 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                                             >
                                                 <MinusIcon size={14} aria-hidden />
                                             </IconButton>
-                                            <span className="min-w-6 text-center t-admin-body-strong text-fg-primary" aria-live="polite">
+                                            <span className="min-w-6 text-center t-admin-body-strong text-fg-primary">
                                                 {line.quantity}
                                             </span>
                                             <IconButton size="sm" aria-label={t('pos.cart.increase', { name })} onClick={() => setCart((c) => addLine(c, line.variantId, 1))}>
@@ -190,7 +209,7 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                             ))}
                             <div className="flex items-baseline justify-between border-t border-line-default pt-3">
                                 <dt className="t-admin-body-strong text-fg-primary">{t('pos.totals.payable')}</dt>
-                                <dd className="t-admin-num-xl text-fg-primary" aria-live="polite">
+                                <dd className="t-admin-num-xl text-fg-primary">
                                     {takaText(total)}
                                 </dd>
                             </div>
@@ -242,8 +261,9 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                         size="lg"
                         className="h-13 justify-between"
                         aria-keyshortcuts="F12"
+                        aria-describedby={q && q.blockers.length > 0 ? blockersId : undefined}
                         onClick={() => setPaying(true)}
-                        disabled={!q || q.blockers.length > 0 || (quote.isFetching && quote.isPlaceholderData)}
+                        disabled={!canCharge}
                     >
                         <span className="flex items-center gap-2">
                             <CreditCardIcon size={20} aria-hidden />
@@ -253,6 +273,10 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                             {KEY.f12}
                         </kbd>
                     </Button>
+                    {/* Why Charge is disabled, as its description (the messages are also shown by their fields). */}
+                    <span id={blockersId} hidden>
+                        {q?.blockers.map((b) => b.message).join(' ')}
+                    </span>
                     <p className="text-center t-admin-caption text-fg-tertiary">{t('pos.shortcuts')}</p>
                 </div>
             </aside>

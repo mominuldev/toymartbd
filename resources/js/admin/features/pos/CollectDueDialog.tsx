@@ -256,7 +256,10 @@ export function CollectDueDialog({
                         </div>
                         <div className="flex items-baseline justify-between">
                             <dt className="t-admin-body text-fg-secondary">{t('pos.dueCollect.after')}</dt>
-                            <dd className={`t-admin-num ${isZeroAmount(remaining) ? 'text-feedback-success' : 'text-feedback-warning'}`}>{takaText(remaining)}</dd>
+                            {/* A chip, not bare tone text: warning text on this bg-subtle panel is 4.4:1, under AA. */}
+                            <dd className={`rounded-xs px-2 py-0.5 t-admin-num ${isZeroAmount(remaining) ? 'bg-success-subtle text-feedback-success' : 'bg-warning-subtle text-feedback-warning'}`}>
+                                {takaText(remaining)}
+                            </dd>
                         </div>
                         <div className="flex items-baseline justify-between">
                             <dt className="t-admin-body-strong">{t('pos.pay.change')}</dt>

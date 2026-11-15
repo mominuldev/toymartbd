@@ -17,6 +17,13 @@ import { Register } from './Register';
  * quote (rule 1); the register only collects lines, the phone, the coupon and the tenders.
  * Without an open drawer the page asks to open one at a branch with a float.
  */
+/**
+ * Below `lg` the register runs on a counter tablet or a phone: every control, in the page and in
+ * its dialogs, is at least 44 × 44 (fields 44 tall) — a finger, not a mouse. The desktop till
+ * keeps the Figma sizes.
+ */
+const TOUCH = 'max-lg:[&_button]:min-h-11 max-lg:[&_button]:min-w-11 max-lg:[&_select]:min-h-11 max-lg:[&_input:not([type=checkbox],[type=radio])]:min-h-11 max-lg:[&_div:has(>input)]:min-h-11';
+
 export function PosPage() {
     const { t } = useI18n();
     const { data: me } = useMe();
@@ -46,7 +53,7 @@ export function PosPage() {
 
     if (context.data?.session && allowed) {
         return (
-            <main id="content" className="flex h-dvh flex-col bg-canvas text-fg-primary">
+            <main id="content" className={`flex h-dvh flex-col bg-canvas text-fg-primary ${TOUCH}`}>
                 {body}
             </main>
         );
@@ -57,7 +64,7 @@ export function PosPage() {
             <aside data-theme="admin-dark" className="sticky top-0 hidden h-dvh w-16 shrink-0 lg:block print:hidden">
                 <Sidebar permissions={me?.permissions ?? []} collapsed user={me ? { name: me.name, role: '' } : undefined} />
             </aside>
-            <main id="content" className="flex min-w-0 flex-1 flex-col">
+            <main id="content" className={`flex min-w-0 flex-1 flex-col ${TOUCH}`}>
                 {body}
             </main>
         </div>
