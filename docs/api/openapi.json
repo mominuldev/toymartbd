@@ -2674,6 +2674,247 @@
                 }
             }
         },
+        "/admin/products/barcodes": {
+            "post": {
+                "operationId": "v1.admin.products.barcodes.bulk",
+                "summary": "`POST /products/barcodes` \u2014 every active variant without a barcode of each of `product_ids`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BulkGenerateBarcodesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Array of `GeneratedBarcode`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GeneratedBarcode"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "A generated code was taken at the same moment, or the prefix is exhausted (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/barcodes": {
+            "post": {
+                "operationId": "v1.admin.products.barcodes.store",
+                "summary": "`POST /products/{product}/barcodes` \u2014 this product's variants (or `variant_ids` of them)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateBarcodesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Array of `GeneratedBarcode`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GeneratedBarcode"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "A generated code was taken at the same moment, or the prefix is exhausted (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/labels/templates": {
+            "get": {
+                "operationId": "v1.admin.products.labels.templates",
+                "summary": "`GET /products/labels/templates` \u2014 the label stocks with their size in mm; needs catalog.view",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `LabelTemplateInfo`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/LabelTemplateInfo"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/labels": {
+            "post": {
+                "operationId": "v1.admin.products.labels.print",
+                "summary": "`POST /products/labels` \u2014 the labels as `application/pdf`, in the order of `items`, each\nrepeated `copies` times. Needs catalog.view; `generate_missing: true` also needs\ncatalog.update and first gives the listed variants without a barcode an in-store EAN-13",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PrintLabelsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The labels PDF",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "no-store, private"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "A variant has no barcode (`items.N.variant_id`), or a cap is exceeded (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing catalog.view, or `generate_missing` without catalog.update (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/seo/meta/{type}/{id}": {
             "get": {
                 "operationId": "v1.admin.seo.meta.show",
@@ -37427,6 +37668,25 @@
                 ],
                 "title": "BulkFulfilOrdersRequest"
             },
+            "BulkGenerateBarcodesRequest": {
+                "type": "object",
+                "description": "`POST /products/barcodes` \u2014 every active variant without a barcode, of each of\n`product_ids` (\u2264 200), gets an in-store EAN-13 (GenerateVariantBarcodes). Needs\ncatalog.update. A barcode that is already set is never replaced.",
+                "properties": {
+                    "product_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "maxItems": 200,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "product_ids"
+                ],
+                "title": "BulkGenerateBarcodesRequest"
+            },
             "BulkMediaRequest": {
                 "type": "object",
                 "description": "`POST /media/bulk/delete` and `POST /media/bulk/download` \u2014 `{ ids }`, 1\u2013200 distinct\nintegers. Both need media.delete (deleteAny). Delete reports unknown ids as\n`not_found`; the zip refuses them (422 on `ids.N`).",
@@ -44710,6 +44970,23 @@
                 ],
                 "title": "Gender"
             },
+            "GenerateBarcodesRequest": {
+                "type": "object",
+                "description": "`POST /products/{product}/barcodes` \u2014 give this product's variants without a barcode an\nin-store EAN-13 (GenerateVariantBarcodes). Needs catalog.update. `variant_ids` (optional)\npicks some of ITS variants, any status; without it every active variant without a barcode\ngets one. A barcode that is already set is never replaced.",
+                "properties": {
+                    "variant_ids": {
+                        "type": "array",
+                        "description": "Some of this product's variants (any status); omit for every active variant without a barcode.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "maxItems": 500,
+                        "uniqueItems": true
+                    }
+                },
+                "title": "GenerateBarcodesRequest"
+            },
             "GenerateCouponsRequest": {
                 "type": "object",
                 "description": "`POST /coupons/generate` (coupon builder, P7) \u2014 the coupon document without `code`,\nplus `count` (1\u20131000), `prefix` (optional, \u2264 12), `code_length` (6\u201316, default 8) and\n`batch` (the campaign label the codes share). Needs marketing.manage.",
@@ -44845,6 +45122,30 @@
                     "batch"
                 ],
                 "title": "GenerateCouponsRequest"
+            },
+            "GeneratedBarcode": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "product_id": {
+                        "type": "integer"
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "barcode": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "product_id",
+                    "sku",
+                    "barcode"
+                ],
+                "title": "GeneratedBarcode"
             },
             "HealthReportResource": {
                 "type": "object",
@@ -48512,6 +48813,58 @@
                     }
                 },
                 "title": "IssueCmsPreviewTokenRequest"
+            },
+            "LabelTemplate": {
+                "type": "string",
+                "description": "Barcode label stock (owner request 2026-11-16). All sizes in millimetres. - `roll_38x25`, `roll_50x25` \u2014 one label per page, for the thermal roll printers common in   Bangladeshi shops (the printer driver's page size is the label). - `a4_65` \u2014 A4 sheet, 5 \u00d7 13 labels of 38.1 \u00d7 21.2 (Avery L7651: 10.7 top, 4.7 side margin,   2.5 column gap, no row gap). - `a4_24` \u2014 A4 sheet, 3 \u00d7 8 labels of 70 \u00d7 37, no gaps (the Avery 3474 layout). Eight rows of   37 take 296 of the sheet's 297, so the top margin is 0.5, not the 4.5 of the 70 \u00d7 36   sheets \u2014 4.5 would push the last row 3.5 off the page.\n",
+                "enum": [
+                    "roll_38x25",
+                    "roll_50x25",
+                    "a4_65",
+                    "a4_24"
+                ],
+                "title": "LabelTemplate"
+            },
+            "LabelTemplateInfo": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": [
+                            "roll_38x25",
+                            "roll_50x25",
+                            "a4_65",
+                            "a4_24"
+                        ]
+                    },
+                    "stock": {
+                        "type": "string",
+                        "enum": [
+                            "roll",
+                            "a4"
+                        ]
+                    },
+                    "width_mm": {
+                        "type": "string",
+                        "description": "Label width, mm, as a decimal string (\"38.1\")."
+                    },
+                    "height_mm": {
+                        "type": "string",
+                        "description": "Label height, mm, as a decimal string (\"21.2\")."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Labels per page: 1 on a roll."
+                    }
+                },
+                "required": [
+                    "value",
+                    "stock",
+                    "width_mm",
+                    "height_mm",
+                    "per_page"
+                ],
+                "title": "LabelTemplateInfo"
             },
             "LandedCostMethod": {
                 "type": "string",
@@ -54738,6 +55091,67 @@
                     "body_bn"
                 ],
                 "title": "PreviewNotificationTemplateRequest"
+            },
+            "PrintLabelsRequest": {
+                "type": "object",
+                "description": "`POST /products/labels` \u2014 barcode labels as one PDF. Needs catalog.view; with\n`generate_missing: true` also catalog.update (it writes barcodes first), else 403.\n\n`items[] {variant_id, copies}` \u2014 \u2264 300 items, copies 1\u2013500, \u2264 5,000 labels in all; printed\nin the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless\n`generate_missing` is true. Only the fields below are accepted; any other is a 422.",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "copies": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 500
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "copies"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 300,
+                        "uniqueItems": true
+                    },
+                    "template": {
+                        "$ref": "#/components/schemas/LabelTemplate"
+                    },
+                    "show_price": {
+                        "type": "boolean",
+                        "description": "Print the selling price (default true)."
+                    },
+                    "show_name": {
+                        "type": "boolean",
+                        "description": "Print the product and variant name (default true)."
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Language of the printed name, falling back to English (default `en`).",
+                        "enum": [
+                            "en",
+                            "bn",
+                            null
+                        ]
+                    },
+                    "generate_missing": {
+                        "type": "boolean",
+                        "description": "Generate in-store EAN-13s for variants without a barcode first; needs catalog.update."
+                    }
+                },
+                "required": [
+                    "items",
+                    "template"
+                ],
+                "title": "PrintLabelsRequest"
             },
             "ProblemDetails": {
                 "type": "object",

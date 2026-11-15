@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
-import { ArrowSquareOutIcon, ArrowUUpLeftIcon, CaretDownIcon, ChartLineUpIcon, CheckIcon, CopyIcon, WarningCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, ArrowUUpLeftIcon, CaretDownIcon, ChartLineUpIcon, CheckIcon, CopyIcon, PrinterIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { storeProductRequestSchema, updateProductRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -17,7 +17,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { useAttributes } from '../attributes/api';
 import { flatten, useCategoryTree } from '../categories/api';
-import { genders, productStatuses, useArchiveProduct, useBrandOptions, useDuplicateProduct, useMarginPreview, useProduct, useSaveProduct, type Margin, type Product } from './api';
+import { genders, productStatuses, useArchiveProduct, useBrandOptions, useDuplicateProduct, useGenerateBarcodes, useMarginPreview, useProduct, useSaveProduct, type GeneratedBarcode, type Margin, type Product } from './api';
 import {
     combinations,
     emptyRow,
@@ -38,6 +38,8 @@ import {
 import { ProductStatusChip, TAKA, Toggle } from './parts';
 import { OPEN_SECTION_EVENT, ProductSection } from './ProductSection';
 import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
+import { GenerateBarcodesButton } from './GenerateBarcodesButton';
+import { PrintLabelsDialog } from './PrintLabelsDialog';
 import { RelationsEditor } from './RelationsEditor';
 import { ImagesPanel } from './ImagesPanel';
 import { SeoPanel } from './SeoPanel';
@@ -173,7 +175,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const addAnother = useRef(false);
 
     const form = useForm<FormValues>({ defaultValues: toForm(product) });
-    const { register, formState, setError, clearErrors, setValue, control, reset, getValues } = form;
+    const { register, formState, setError, clearErrors, setValue, control, reset, getValues, resetField } = form;
     const type = useWatch({ control, name: 'type' });
     const primaryId = useWatch({ control, name: 'primary_category_id' });
     const ageMin = useWatch({ control, name: 'age_min_months' });
@@ -365,6 +367,46 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         }
     };
 
+    // In-store barcodes (owner request 2026-11-16) for saved variants whose barcode is empty on
+    // screen. The codes land in the form as saved values, so other unsaved edits stay as they are.
+    const generateBarcodes = useGenerateBarcodes(id ?? 0);
+    const [labelsOpen, setLabelsOpen] = useState(false);
+    const canGenerateBarcodes = id !== null && can(me, 'catalog.update');
+    const simpleVariantId = product?.type === 'simple' ? (product.variants.find((v) => v.is_default) ?? product.variants[0])?.id : undefined;
+    const matrixRows = combos.map((combo) => matrix.rows[combo.key] ?? emptyRow(combo.valueIds));
+    const barcodeMissing =
+        type === 'variable'
+            ? matrixRows.flatMap((row) => (row.id !== null && row.status === 'active' && row.barcode.trim() === '' ? [row.id] : []))
+            : simpleVariantId !== undefined && simpleValues.barcode.trim() === ''
+              ? [simpleVariantId]
+              : [];
+    const barcodeUnsaved = type === 'variable' ? matrixRows.filter((row) => row.id === null && row.barcode.trim() === '').length : 0;
+    const applyBarcodes = (generated: GeneratedBarcode[]) => {
+        const codes = new Map(generated.map((g) => [g.id, g.barcode]));
+        setMatrix((current) => ({
+            ...current,
+            rows: Object.fromEntries(Object.entries(current.rows).map(([key, row]) => [key, row.id !== null && codes.has(row.id) && row.barcode.trim() === '' ? { ...row, barcode: codes.get(row.id) ?? '' } : row])),
+        }));
+        const simpleCode = simpleVariantId !== undefined ? codes.get(simpleVariantId) : undefined;
+        if (simpleCode && getValues('simple.barcode').trim() === '') resetField('simple.barcode', { defaultValue: simpleCode });
+    };
+    const generateMissing = async (variantIds: number[]) => {
+        const generated = await generateBarcodes.mutateAsync(variantIds);
+        applyBarcodes(generated);
+        notify(t('products.barcodes.generated', { count: generated.length }));
+    };
+    const onGenerateBarcodes = () => void generateMissing(barcodeMissing).catch((error: unknown) => notify(error instanceof ApiError ? (error.problem.detail ?? error.problem.title) : t('error.title'), 'danger'));
+    const barcodeButton = canGenerateBarcodes && (
+        <GenerateBarcodesButton
+            missing={barcodeMissing.length}
+            unsaved={barcodeUnsaved}
+            pending={generateBarcodes.isPending}
+            disabled={save.isPending}
+            onGenerate={onGenerateBarcodes}
+            single={type === 'simple'}
+        />
+    );
+
     const discard = () => {
         reset(toForm(product));
         setMatrix(initialMatrix);
@@ -517,6 +559,21 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                         </p>
                     )}
                 </div>
+                {product && (
+                    <Button variant="outline" onClick={() => setLabelsOpen(true)}>
+                        <PrinterIcon size={16} aria-hidden />
+                        {t('products.labels.open')}
+                    </Button>
+                )}
+                {product && (
+                    <PrintLabelsDialog
+                        open={labelsOpen}
+                        onClose={() => setLabelsOpen(false)}
+                        products={[product]}
+                        canGenerate={can(me, 'catalog.update')}
+                        onGenerateMissing={generateMissing}
+                    />
+                )}
                 {product && can(me, 'catalog.create') && (
                     <Button
                         variant="outline"
@@ -735,9 +792,12 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                         <Field label={t('products.field.sku')} hint={t('products.field.skuHint')} error={errorOf('simple.sku')}>
                                             {(ids) => <input {...inputProps(ids)} spellCheck={false} className={`${controlHeight.md} ${monoInputClass}`} {...register('simple.sku')} />}
                                         </Field>
-                                        <Field label={t('products.field.barcode')} error={errorOf('simple.barcode')}>
-                                            {(ids) => <input {...inputProps(ids)} spellCheck={false} className={`${controlHeight.md} ${monoInputClass}`} {...register('simple.barcode')} />}
-                                        </Field>
+                                        <div className="flex flex-col gap-2">
+                                            <Field label={t('products.field.barcode')} error={errorOf('simple.barcode')}>
+                                                {(ids) => <input {...inputProps(ids)} spellCheck={false} className={`${controlHeight.md} ${monoInputClass}`} {...register('simple.barcode')} />}
+                                            </Field>
+                                            {barcodeButton && barcodeMissing.length > 0 && barcodeButton}
+                                        </div>
                                         <Field label={t('products.field.weight')} error={errorOf('simple.weight_grams')}>
                                             {(ids) => <input {...inputProps(ids)} inputMode="numeric" className={`${controlHeight.md} ${inputClass} text-end tabular`} {...register('simple.weight_grams')} />}
                                         </Field>
@@ -897,6 +957,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                             margins={canCost ? matrixMargins : undefined}
                             disabled={!editable || save.isPending}
                             simple={type === 'simple' ? (id === null ? 'new' : 'fixed') : undefined}
+                            aside={type === 'variable' ? barcodeButton : undefined}
                         />
                     )}
                 </fieldset>
