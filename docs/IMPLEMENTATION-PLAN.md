@@ -390,19 +390,21 @@ Expanded to task level at each phase start. Each feature below carries its own t
   - The keys are used by the drivers and the webhook signature check.
   - Callback URLs are ready to copy into Meta. Channels are never marked verified.
 
+**Owner decisions of 2026-11-15, later (accepted; to build unless marked done):**
+- Shipments: the live tiles follow the chosen date range.
+- Booking queue:
+  - confirmed and processing orders belong in Ready to ship, alongside packed ones;
+  - areas whose name matches more than one courier location are listed under Unmapped;
+  - `BookingPreflight` refuses a 0 g parcel;
+  - courier balances are **not** read; the cards keep showing a stored balance only when one exists.
+- Inbox badge: counts every open conversation that is unread **or** waiting on a staff reply — what `GET /inbox/unread-count` already does (done).
+
 **Owner decisions open:**
 - Shipments:
   - a Sync now endpoint;
   - the failed-attempt definition;
-  - the 6 h chase threshold;
-  - whether live tiles follow the date range.
-- Booking queue:
-  - whether confirmed and processing orders belong in Ready to ship;
-  - listing ambiguous areas under Unmapped;
-  - refusing 0 g parcels in `BookingPreflight` (recommended);
-  - reading courier balances.
-- Rural Dhaka upazilas at the metro price.
-- Badge definition: unread only, or also waiting on a reply.
+  - the 6 h chase threshold.
+- Rural Dhaka upazilas at the metro price: the owner does not know yet (2026-11-15). Until decided, the shipped rule stands — the whole Dhaka district, rural upazilas included, is metro (৳70). Needs the courier rate cards (Gate 5 §5 item 8) to settle.
 
 ### Progress — Phase 10 batch 4: POS, unified inbox, delivery areas, admin a11y in CI (2026-11-15, 4 parallel agents)
 
