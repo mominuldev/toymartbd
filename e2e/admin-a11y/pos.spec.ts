@@ -237,7 +237,9 @@ test.describe('POS axe', () => {
                     await page.keyboard.press('F9');
                     await expect(customer).toBeVisible();
                     await customer.getByRole('searchbox', { name: m(locale, 'pos.customerDialog.search') }).fill(phone);
-                    await customer.getByRole('button', { name: new RegExp(escape(CUSTOMER[locale])) }).click();
+                    // The dialog lists recent counter customers too (other viewports' runs share the name):
+                    // pick this run's customer by name AND phone (shown grouped: 01770 015 169).
+                    await customer.getByRole('button', { name: new RegExp(`${escape(CUSTOMER[locale])}.*${phone.split('').join('\\s?')}`) }).click();
                     await show(page, locale, 'cart');
                     await cartPanel(page, locale).getByRole('button', { name: m(locale, 'pos.customer.collect') }).click();
                     const due = page.getByRole('dialog', { name: m(locale, 'pos.dueCollect.title') });
