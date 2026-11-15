@@ -298,7 +298,7 @@ export const chargePosSaleRequestSchema = z.object({
     "coupon_code": z.string().max(64).nullable().optional(),
     "customer_phone": z.string().max(32).nullable().optional(),
     "tenders": z.array(z.object({
-    "method": z.enum(["cash","bkash","nagad","card"]),
+    "method": z.enum(["cash","bkash","nagad","card","due"]),
     "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
     "reference": z.string().max(64).nullable().optional(),
 })).max(8),
@@ -392,6 +392,17 @@ export const cmsPageRequestSchema = z.object({
     "acknowledge_slug_redirect": z.boolean().optional(),
 });
 export type CmsPageRequestInput = z.input<typeof cmsPageRequestSchema>;
+
+/** `POST /pos/sessions/{session}/due-collections` — take the money. Requires an `Idempotency-Key` (rule 17). */
+export const collectDueRequestSchema = z.object({
+    "customer_phone": z.string().min(1).max(32),
+    "tenders": z.array(z.object({
+    "method": z.enum(["cash","bkash","nagad","card"]),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "reference": z.string().max(64).nullable().optional(),
+})).max(8),
+});
+export type CollectDueRequestInput = z.input<typeof collectDueRequestSchema>;
 
 /** `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`. */
 export const confirmOrderRequestSchema = z.object({
@@ -663,6 +674,17 @@ export const publishCmsLayoutRequestSchema = z.object({
 });
 export type PublishCmsLayoutRequestInput = z.input<typeof publishCmsLayoutRequestSchema>;
 
+/** `POST /pos/sessions/{session}/due-collections/quote` — read the tenders against the customer's open due. Writes nothing. */
+export const quoteDueCollectionRequestSchema = z.object({
+    "customer_phone": z.string().min(1).max(32),
+    "tenders": z.array(z.object({
+    "method": z.enum(["cash","bkash","nagad","card"]),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "reference": z.string().max(64).nullable().optional(),
+})).max(8),
+});
+export type QuoteDueCollectionRequestInput = z.input<typeof quoteDueCollectionRequestSchema>;
+
 /** `POST /pos/sessions/{session}/quote` — price the register cart and read the tenders. */
 export const quotePosSaleRequestSchema = z.object({
     "lines": z.array(z.object({
@@ -672,10 +694,11 @@ export const quotePosSaleRequestSchema = z.object({
     "coupon_code": z.string().max(64).nullable().optional(),
     "customer_phone": z.string().max(32).nullable().optional(),
     "tenders": z.array(z.object({
-    "method": z.enum(["cash","bkash","nagad","card"]),
+    "method": z.enum(["cash","bkash","nagad","card","due"]),
     "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
     "reference": z.string().max(64).nullable().optional(),
 })).max(8).nullable().optional(),
+    "customer_name": z.string().max(160).nullable().optional(),
 });
 export type QuotePosSaleRequestInput = z.input<typeof quotePosSaleRequestSchema>;
 
@@ -1947,7 +1970,7 @@ export type UpdateRobotsRequestInput = z.input<typeof updateRobotsRequestSchema>
 
 /** `PUT /staff/roles/{role}` — `{ permissions: string[] }`, the role's complete new list; */
 export const updateRolePermissionsRequestSchema = z.object({
-    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view","pos.use","pos.manage"])).max(69),
+    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view","pos.use","pos.manage","pos.sell_on_due"])).max(70),
 });
 export type UpdateRolePermissionsRequestInput = z.input<typeof updateRolePermissionsRequestSchema>;
 

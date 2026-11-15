@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Pos\Tenders;
 
-use App\Domain\Payment\Enums\PaymentMethod;
+use App\Domain\Pos\Enums\CounterTender;
 
 /** Nagad send-money; the cashier enters the TxnID from the SMS. */
 final readonly class NagadTender extends ManualTender
 {
-    public function method(): PaymentMethod
+    public function method(): CounterTender
     {
-        return PaymentMethod::Nagad;
+        return CounterTender::Nagad;
     }
 
     public function requiresReference(): bool

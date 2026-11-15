@@ -58,8 +58,21 @@ final class PosCustomers
         if ($customer->trashed()) {
             $customer->restore();
         }
+        // A number first seen without a name was stored as "Walk-in customer": the first real
+        // name the cashier types replaces that placeholder (never a name the customer gave).
+        if ($phone !== null && $label !== $customer->name && self::isPlaceholderName($customer->name) && ! self::isPlaceholderName($label)) {
+            $customer->forceFill(['name' => $label])->save();
+        }
 
         return $customer;
+    }
+
+    /** The "Walk-in customer" label a number gets when the sale had no name (either language). */
+    public static function isPlaceholderName(?string $name): bool
+    {
+        $name = $name === null ? '' : trim($name);
+
+        return $name === '' || in_array($name, [(string) __('pos.walk_in_customer', [], 'en'), (string) __('pos.walk_in_customer', [], 'bn')], true);
     }
 
     public static function isWalkIn(Customer $customer): bool

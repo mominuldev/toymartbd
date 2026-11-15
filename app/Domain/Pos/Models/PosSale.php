@@ -27,6 +27,7 @@ use LogicException;
  * @property Money $tendered_total
  * @property Money $cash_tendered
  * @property Money $change_due
+ * @property Money $due_amount put on the customer's due (no payment row; 0.00 for a fully paid sale)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read PosSession $session
@@ -73,6 +74,7 @@ final class PosSale extends Model
             'tendered_total' => MoneyCast::class,
             'cash_tendered' => MoneyCast::class,
             'change_due' => MoneyCast::class,
+            'due_amount' => MoneyCast::class,
         ];
     }
 }

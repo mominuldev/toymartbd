@@ -124,6 +124,13 @@ enum Permission: string
     case PosUse = 'pos.use';
     /** Close or look into another cashier's drawer (the over / short count). */
     case PosManage = 'pos.manage';
+    /**
+     * Put part or all of a counter sale on the customer's due / baki (owner decision
+     * 2026-11-15). Default: owner and manager. Not {@see revealsMoney()}: it shows a customer's
+     * open due and limit — what the register already shows any `pos.use` cashier about the
+     * drawer — never a margin, cost, the P&L or the ledger.
+     */
+    case PosSellOnDue = 'pos.sell_on_due';
 
     /**
      * Only an owner may hold these. Granting them to another role would let it hand itself

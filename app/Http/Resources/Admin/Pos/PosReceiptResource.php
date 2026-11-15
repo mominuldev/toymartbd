@@ -6,6 +6,7 @@ namespace App\Http\Resources\Admin\Pos;
 
 use App\Domain\Ordering\Models\OrderItem;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Pos\Models\PosDueCollectionAllocation;
 use App\Domain\Pos\Models\PosSale;
 use App\Domain\Pos\Services\PosCustomers;
 use App\Http\Resources\ApiResource;
@@ -37,6 +38,8 @@ final class PosReceiptResource extends ApiResource
         $customer = $order->customer;
         $walkIn = PosCustomers::isWalkIn($customer);
         $phone = $walkIn ? null : PhoneNumber::tryParse($order->shipping_phone);
+        // The sale's own tenders only: due collected later on this order is its own record.
+        $collected = PosDueCollectionAllocation::query()->where('order_id', $order->id)->pluck('payment_id')->all();
         $text = static fn (string $key): ?string => is_string($company[$key] ?? null) ? $company[$key] : null;
 
         return [
@@ -99,13 +102,15 @@ final class PosReceiptResource extends ApiResource
             'coupon_code' => $order->coupon_code,
             'grand_total' => $order->grand_total->toDecimal(),
             /** @var list<array{method: string, amount: string, reference: string|null}> */
-            'payments' => $order->payments->sortBy('id')->map(static fn (Payment $p): array => [
+            'payments' => $order->payments->whereNotIn('id', $collected)->sortBy('id')->map(static fn (Payment $p): array => [
                 'method' => $p->method->value,
                 'amount' => $p->amount->toDecimal(),
                 'reference' => $p->gateway_reference,
             ])->values()->all(),
             'cash_tendered' => $sale->cash_tendered->toDecimal(),
             'change_due' => $sale->change_due->toDecimal(),
+            /** Put on the customer's due at this sale (not a payment — `payments` lists money only). */
+            'due_amount' => $sale->due_amount->toDecimal(),
             'whatsapp' => [
                 'enabled' => false,
                 /** @var 'no_provider' */

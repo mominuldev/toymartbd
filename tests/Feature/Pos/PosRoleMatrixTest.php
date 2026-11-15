@@ -85,7 +85,7 @@ it('guards GET /pos/sales/{sale}/receipt', function (Role $role, bool $allowed):
         $sale = app(App\Domain\Pos\Actions\ChargeSale::class)->handle(new App\Domain\Pos\DTOs\SaleData(
             sessionId: rmDrawer()->id,
             lines: [$this->toy->id => 1],
-            tenders: [new App\Domain\Pos\DTOs\TenderInput(App\Domain\Payment\Enums\PaymentMethod::Cash, Money::of('500'))],
+            tenders: [new App\Domain\Pos\DTOs\TenderInput(App\Domain\Pos\Enums\CounterTender::Cash, Money::of('500'))],
             expectedTotal: Money::of('500'),
             cashierId: (int) auth()->id(),
         ));
@@ -93,6 +93,55 @@ it('guards GET /pos/sales/{sale}/receipt', function (Role $role, bool $allowed):
         return $this->getJson("/api/v1/admin/pos/sales/{$sale->id}/receipt");
     });
 })->with(RoleMatrix::dataset(Permission::PosUse));
+
+it('guards GET /pos/customers/search', function (Role $role, bool $allowed): void {
+    RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->getJson('/api/v1/admin/pos/customers/search?q=rahima'));
+})->with(RoleMatrix::dataset(Permission::PosUse));
+
+it('guards DELETE /pos/holds/{hold}', function (Role $role, bool $allowed): void {
+    RoleMatrix::assertFor($this, $role, $allowed, function () {
+        $hold = app(HoldSale::class)->handle(rmDrawer(), [$this->toy->id => 1], null, null, null, (int) auth()->id());
+
+        return $this->deleteJson("/api/v1/admin/pos/holds/{$hold->id}");
+    }, 204);
+})->with(RoleMatrix::dataset(Permission::PosUse));
+
+/** A drawer opened by whoever is signed in, with ৳500 on the customer's due (charged directly, bypassing the permission). */
+function rmDueDrawer(int $variantId): PosSession
+{
+    $drawer = rmDrawer();
+    app(App\Domain\Pos\Actions\ChargeSale::class)->handle(new App\Domain\Pos\DTOs\SaleData(
+        sessionId: $drawer->id,
+        lines: [$variantId => 1],
+        tenders: [new App\Domain\Pos\DTOs\TenderInput(App\Domain\Pos\Enums\CounterTender::Due, Money::of('500'))],
+        expectedTotal: Money::of('500'),
+        cashierId: (int) auth()->id(),
+        phone: App\Support\PhoneNumber::parse(PosKit::PHONE),
+        customerName: 'Rahima Akter',
+        canSellOnDue: true,
+    ));
+
+    return $drawer;
+}
+
+it('guards POST /pos/sessions/{session}/due-collections/quote', function (Role $role, bool $allowed): void {
+    RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->postJson('/api/v1/admin/pos/sessions/'.rmDueDrawer($this->toy->id)->id.'/due-collections/quote', [
+        'customer_phone' => PosKit::PHONE, 'tenders' => [['method' => 'cash', 'amount' => '500']],
+    ]));
+})->with(RoleMatrix::dataset(Permission::PosUse));
+
+it('guards POST /pos/sessions/{session}/due-collections', function (Role $role, bool $allowed): void {
+    RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->withHeader('Idempotency-Key', 'rm-due-'.bin2hex(random_bytes(6)))
+        ->postJson('/api/v1/admin/pos/sessions/'.rmDueDrawer($this->toy->id)->id.'/due-collections', [
+            'customer_phone' => PosKit::PHONE, 'tenders' => [['method' => 'cash', 'amount' => '500']],
+        ]), 201);
+})->with(RoleMatrix::dataset(Permission::PosUse));
+
+it('grants pos.sell_on_due to owner and manager only by default, and it does not reveal money', function (): void {
+    $holders = array_values(array_map(static fn (Role $r): string => $r->value, array_filter(Role::cases(), static fn (Role $r): bool => in_array(Permission::PosSellOnDue, $r->permissions(), true))));
+    expect($holders)->toBe(['super_admin', 'manager'])
+        ->and(Permission::PosSellOnDue->revealsMoney())->toBeFalse();
+});
 
 it('grants pos.use to the counter role and pos.manage to managers by default', function (): void {
     expect(Role::OrderOperator->permissions())->toContain(Permission::PosUse)

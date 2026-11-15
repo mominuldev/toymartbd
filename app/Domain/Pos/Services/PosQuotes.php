@@ -10,6 +10,7 @@ use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Pos\DTOs\PosQuote;
 use App\Domain\Pos\DTOs\TenderInput;
+use App\Support\Money;
 use App\Support\PhoneNumber;
 
 /**
@@ -26,6 +27,10 @@ use App\Support\PhoneNumber;
  *  - `customer_phone`   a discount applies but no customer phone was given — promotion and
  *                       coupon limits are counted per phone, so an anonymous sale cannot
  *                       consume them.
+ *
+ * A due tender's guards (permission, known customer, limit — PosDues) are tender errors, in
+ * `tenders.errors` on `tenders.{i}.method`. Here they are read without locks (a preview);
+ * ChargeSale re-checks the limit under the customer's row lock.
  */
 final readonly class PosQuotes
 {
@@ -33,14 +38,17 @@ final readonly class PosQuotes
         private PricingPipeline $pricing,
         private TenderPlanner $planner,
         private PosCustomers $customers,
+        private PosDues $dues,
     ) {}
 
     /**
      * @param  array<int, int>  $lines  variant id → quantity
      * @param  list<TenderInput>|null  $tenders
+     * @param  bool  $canSellOnDue  the cashier holds `pos.sell_on_due`
      */
-    public function quote(int $locationId, array $lines, ?string $couponCode, ?PhoneNumber $phone, ?array $tenders = null): PosQuote
+    public function quote(int $locationId, array $lines, ?string $couponCode, ?PhoneNumber $phone, ?array $tenders = null, ?string $customerName = null, bool $canSellOnDue = false): PosQuote
     {
+        $customer = $phone === null ? null : $this->customers->find($phone);
         $lines = array_filter($lines, static fn (int $q): bool => $q > 0);
         ksort($lines);
         $coupon = $couponCode !== null && trim($couponCode) !== '' ? trim($couponCode) : null;
@@ -49,7 +57,7 @@ final readonly class PosQuotes
             lines: $lines,
             couponCode: $coupon,
             phone: $phone,
-            customerId: $phone === null ? null : $this->customers->find($phone)?->id,
+            customerId: $customer?->id,
         ));
 
         $available = [];
@@ -85,11 +93,17 @@ final readonly class PosQuotes
             $blockers[] = ['field' => 'customer_phone', 'message' => (string) __('pos.phone_for_discount')];
         }
 
+        $plan = $tenders === null ? null : $this->planner->plan($breakdown->grandTotal, $tenders);
+        if ($plan !== null && $plan->hasDue()) {
+            $openDue = $customer === null ? Money::zero() : $this->dues->openDue($customer->id);
+            $plan = $plan->withErrors($this->dues->guard($plan, $canSellOnDue, $phone !== null, $customer, $customerName, $openDue));
+        }
+
         return new PosQuote(
             breakdown: $breakdown,
             available: $available,
             blockers: $blockers,
-            tenders: $tenders === null ? null : $this->planner->plan($breakdown->grandTotal, $tenders),
+            tenders: $plan,
         );
     }
 }

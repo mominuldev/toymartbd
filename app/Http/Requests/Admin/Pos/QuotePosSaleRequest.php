@@ -13,6 +13,11 @@ final class QuotePosSaleRequest extends PosCartRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return [...$this->cartRules(false), ...$this->tenderRules(false)];
+        return [
+            ...$this->cartRules(false),
+            ...$this->tenderRules(false),
+            /** The name the cashier typed for a new customer — a due tender needs one. */
+            'customer_name' => ['nullable', 'string', 'max:160'],
+        ];
     }
 }

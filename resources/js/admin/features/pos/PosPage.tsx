@@ -8,9 +8,10 @@ import { OpenDrawer } from './OpenDrawer';
 import { Register } from './Register';
 
 /**
- * POS register — Figma B · 33 (241:48158), Theme B. Full height beside the 64-wide dark
- * sidebar rail, no topbar (like the homepage builder): the drawer header, then the product
- * grid and the cart / payment panel.
+ * POS — Figma B · 33 POS v2 (344:63829), Theme B. An open drawer gets the whole screen: the
+ * dark POS bar (with a way back to the dashboard) replaces the sidebar, so the cashier sees
+ * only the catalog and the current sale. Opening a drawer, loading and errors keep the
+ * 64-wide sidebar rail.
  *
  * Every figure — line totals, discounts, total, change, what is still due — is the server's
  * quote (rule 1); the register only collects lines, the phone, the coupon and the tenders.
@@ -41,6 +42,14 @@ export function PosPage() {
         body = <Register key={context.data.session.id} context={context.data} session={context.data.session} />;
     } else {
         body = <OpenDrawer context={context.data} />;
+    }
+
+    if (context.data?.session && allowed) {
+        return (
+            <main id="content" className="flex h-dvh flex-col bg-canvas text-fg-primary">
+                {body}
+            </main>
+        );
     }
 
     return (

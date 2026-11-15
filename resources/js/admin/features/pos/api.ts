@@ -1,6 +1,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { ChargePosSaleRequestInput, ClosePosSessionRequestInput, HoldPosSaleRequestInput, OpenPosSessionRequestInput, QuotePosSaleRequestInput } from '@toymart/api-types/zod';
+import type {
+    ChargePosSaleRequestInput,
+    ClosePosSessionRequestInput,
+    CollectDueRequestInput,
+    HoldPosSaleRequestInput,
+    OpenPosSessionRequestInput,
+    QuoteDueCollectionRequestInput,
+    QuotePosSaleRequestInput,
+} from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
 
 export type PosContext = Schema<'PosContext'>;
@@ -12,6 +20,9 @@ export type PosHeldSale = Schema<'PosHeldSale'>;
 export type PosReceipt = Schema<'PosReceipt'>;
 export type PosCustomer = Schema<'PosCustomer'>;
 export type TenderMethod = PosContext['tenders'][number]['method'];
+export type PosCustomerMatch = Schema<'PosCustomerMatch'>;
+export type PosDueQuote = Schema<'PosDueQuote'>;
+export type PosDueCollection = Schema<'PosDueCollection'>;
 
 /** Request bodies are the generated types, never hand-written copies (rule 27). */
 export type OpenInput = OpenPosSessionRequestInput;
@@ -19,6 +30,8 @@ export type CloseInput = ClosePosSessionRequestInput;
 export type QuoteInput = QuotePosSaleRequestInput;
 export type ChargeInput = ChargePosSaleRequestInput;
 export type HoldInput = HoldPosSaleRequestInput;
+export type DueQuoteInput = QuoteDueCollectionRequestInput;
+export type CollectDueInput = CollectDueRequestInput;
 
 export const posKeys = {
     all: ['pos'] as const,
@@ -27,6 +40,8 @@ export const posKeys = {
     quote: (sessionId: number, body: QuoteInput) => ['pos', 'quote', sessionId, body] as const,
     holds: (sessionId: number) => ['pos', 'holds', sessionId] as const,
     customer: (phone: string) => ['pos', 'customer', phone] as const,
+    customerSearch: (q: string) => ['pos', 'customer-search', q] as const,
+    dueQuote: (sessionId: number, body: DueQuoteInput) => ['pos', 'due-quote', sessionId, body] as const,
     receipt: (saleId: number) => ['pos', 'receipt', saleId] as const,
 };
 
@@ -128,5 +143,49 @@ export function useResume(sessionId: number) {
     return useMutation({
         mutationFn: (holdId: number) => api<PosHeldSale>(`/pos/holds/${holdId}/resume`, { method: 'POST' }),
         onSuccess: () => client.invalidateQueries({ queryKey: posKeys.holds(sessionId) }),
+    });
+}
+
+/** Name fragment or phone digits (≥ 2 characters); the server matches and caps the list. */
+export function useCustomerSearch(q: string) {
+    const term = q.trim();
+    return useQuery({
+        queryKey: posKeys.customerSearch(term),
+        queryFn: () => api<{ data: PosCustomerMatch[] }>(`/pos/customers/search?q=${encodeURIComponent(term)}`),
+        enabled: term.length >= 2,
+        placeholderData: keepPreviousData,
+    });
+}
+
+/** Discard a parked cart for good (it never comes back to a register). */
+export function useDiscardHold(sessionId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (holdId: number) => api<void>(`/pos/holds/${holdId}`, { method: 'DELETE' }),
+        onSuccess: () => client.invalidateQueries({ queryKey: posKeys.holds(sessionId) }),
+    });
+}
+
+/** The tenders read against a customer's open due — applied oldest order first, change from cash only (rule 1). */
+export function useDueQuote(sessionId: number, body: DueQuoteInput, enabled: boolean) {
+    return useQuery({
+        queryKey: posKeys.dueQuote(sessionId, body),
+        queryFn: () => api<PosDueQuote>(`/pos/sessions/${sessionId}/due-collections/quote`, { method: 'POST', body: JSON.stringify(body) }),
+        placeholderData: keepPreviousData,
+        enabled,
+    });
+}
+
+/** Collect against open dues; one Idempotency-Key per attempt, kept across retries (rule 17). */
+export function useCollectDue(sessionId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: ({ input, key }: { input: CollectDueInput; key: string }) =>
+            api<PosDueCollection>(`/pos/sessions/${sessionId}/due-collections`, { method: 'POST', body: JSON.stringify(input), headers: { 'Idempotency-Key': key } }),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ['pos', 'customer'] });
+            void client.invalidateQueries({ queryKey: ['pos', 'customer-search'] });
+            void client.invalidateQueries({ queryKey: posKeys.context });
+        },
     });
 }

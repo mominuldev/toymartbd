@@ -4573,8 +4573,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /pos/customers?phone=` — whose number this is (null for a new one) */
+        /** `GET /pos/customers?phone=` — whose number this is (null for a new one), with their open due */
         get: operations["v1.admin.pos.customers.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/customers/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /pos/customers/search?q=` — up to 8 customers by name or phone digits, most recent order first, with their due */
+        get: operations["v1.admin.pos.customers.search"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4717,6 +4734,60 @@ export interface paths {
         put?: never;
         /** `POST /pos/holds/{hold}/resume` — take a parked cart back (or discard it). Once only */
         post: operations["v1.admin.pos.holds.resume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/holds/{hold}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /pos/holds/{hold}` — throw a parked cart away. Once only; open drawer only. 204 */
+        delete: operations["v1.admin.pos.holds.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/due-collections/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /pos/sessions/{session}/due-collections/quote` — FIFO preview, change, what stays owed. Writes nothing */
+        post: operations["v1.admin.pos.sessions.due-collections.quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/pos/sessions/{session}/due-collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /pos/sessions/{session}/due-collections` — take the money. Needs an
+         *     `Idempotency-Key`; a replay returns the first collection. 201
+         */
+        post: operations["v1.admin.pos.sessions.due-collections.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8055,8 +8126,11 @@ export interface components {
             /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
             customer_phone?: string | null;
             tenders: {
-                /** @enum {string} */
-                method: "cash" | "bkash" | "nagad" | "card";
+                /**
+                 * @description `due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).
+                 * @enum {string}
+                 */
+                method: "cash" | "bkash" | "nagad" | "card" | "due";
                 /** @description What the customer handed over in this tender, e.g. `4000.00` cash for a ৳3,455 total. */
                 amount: string;
                 /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
@@ -8064,7 +8138,7 @@ export interface components {
             }[];
             /** @description The quote's `grand_total`, e.g. `3455.00`. */
             expected_total: string;
-            /** @description Printed on the receipt for a new customer; an existing customer keeps their name. */
+            /** @description Printed on the receipt for a new customer; an existing customer keeps their name (a "Walk-in customer" placeholder is replaced). A due tender needs a name. */
             customer_name?: string | null;
         };
         /**
@@ -8341,6 +8415,22 @@ export interface components {
             token: string;
             expires_at: string;
             url: string | null;
+        };
+        /**
+         * CollectDueRequest
+         * @description `POST /pos/sessions/{session}/due-collections` — take the money. Requires an `Idempotency-Key` (rule 17).
+         */
+        CollectDueRequest: {
+            /** @description The customer's mobile, as typed (013–019, rule 30). */
+            customer_phone: string;
+            tenders: {
+                /** @enum {string} */
+                method: "cash" | "bkash" | "nagad" | "card";
+                /** @description What the customer handed over in this tender; cash may exceed the due (change). */
+                amount: string;
+                /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
+                reference?: string | null;
+            }[];
         };
         /**
          * ConfirmOrderRequest
@@ -11487,7 +11577,7 @@ export interface components {
         /** PermissionInfoResource */
         PermissionInfoResource: {
             /** @enum {string} */
-            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view" | "pos.use" | "pos.manage";
+            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due";
             owner_only: boolean;
             reveals_money: boolean;
         };
@@ -11760,10 +11850,13 @@ export interface components {
             }[];
             tenders: {
                 /** @enum {string} */
-                method: "cash" | "bkash" | "nagad" | "card";
+                method: "cash" | "bkash" | "nagad" | "card" | "due";
                 requires_reference: boolean;
                 gives_change: boolean;
+                requires_customer: boolean;
             }[];
+            /** @description Store-wide due limit per customer, e.g. `5000.00`. */
+            due_limit: string;
             categories: {
                 id: number;
                 name: string;
@@ -11785,7 +11878,65 @@ export interface components {
                 id: number;
                 name: string;
                 orders_count: number;
+                open_due: string;
+                due_limit: string;
+                due_available: string;
             } | null;
+        };
+        /** PosCustomerMatch */
+        PosCustomerMatch: {
+            id: number;
+            name: string;
+            /** @description 01XXXXXXXXX */
+            phone: string;
+            orders_count: number;
+            open_due: string;
+            due_limit: string;
+            due_available: string;
+        };
+        /** PosDueCollection */
+        PosDueCollection: {
+            id: number;
+            customer: {
+                name: string;
+                /** @description 01XXXXXXXXX */
+                phone: string;
+            };
+            collected: string;
+            tendered_total: string;
+            cash_tendered: string;
+            change_due: string;
+            remaining_due: string;
+            orders: {
+                order_number: string;
+                applied: string;
+            }[];
+            created_at: string | null;
+        };
+        /** PosDueQuote */
+        PosDueQuote: {
+            customer: {
+                name: string;
+                phone: string;
+            } | null;
+            open_due: string;
+            orders: {
+                order_id: number;
+                order_number: string;
+                due: string;
+                applied: string;
+            }[];
+            tenders: {
+                tendered: string;
+                cash_tendered: string;
+                remaining: string;
+                change: string;
+                errors: {
+                    field: string;
+                    message: string;
+                }[];
+            };
+            chargeable: boolean;
         };
         /** PosHeldSale */
         PosHeldSale: {
@@ -11834,11 +11985,13 @@ export interface components {
                 message: string;
             }[];
             chargeable: boolean;
+            /** @description `tendered` is money handed over; `due` is what is put on the customer's due ("0.00" when none). */
             tenders: {
                 tendered: string;
                 cash_tendered: string;
                 remaining: string;
                 change: string;
+                due: string;
                 errors: {
                     field: string;
                     message: string;
@@ -11896,6 +12049,8 @@ export interface components {
             }[];
             cash_tendered: string;
             change_due: string;
+            /** @description Put on the customer's due at this sale (not a payment — `payments` lists money only). */
+            due_amount: string;
             whatsapp: {
                 enabled: boolean;
                 /** @constant */
@@ -11911,6 +12066,8 @@ export interface components {
             tendered_total: string;
             cash_tendered: string;
             change_due: string;
+            /** @description Put on the customer's due (no payment), "0.00" for a fully paid sale. */
+            due_amount: string;
             created_at: string | null;
         };
         /** PosSession */
@@ -11941,8 +12098,13 @@ export interface components {
             totals: {
                 sales_count: number;
                 sales_total: string;
-                /** @description Cash the drawer should hold now: float + cash kept. */
+                /** @description Cash the drawer should hold now: float + cash kept (sales and due collected). */
                 expected_cash: string;
+                /** @description Put on customers' due by this drawer's sales — no money, never in expected cash. */
+                due_sold: string;
+                /** @description Due collected on this drawer (all tenders). */
+                due_collected: string;
+                due_collections_count: number;
                 by_method: {
                     method: string;
                     amount: string;
@@ -12669,6 +12831,22 @@ export interface components {
          */
         PurchaseTrigger: "order_placed" | "order_delivered";
         /**
+         * QuoteDueCollectionRequest
+         * @description `POST /pos/sessions/{session}/due-collections/quote` — read the tenders against the customer's open due. Writes nothing.
+         */
+        QuoteDueCollectionRequest: {
+            /** @description The customer's mobile, as typed (013–019, rule 30). */
+            customer_phone: string;
+            tenders: {
+                /** @enum {string} */
+                method: "cash" | "bkash" | "nagad" | "card";
+                /** @description What the customer handed over in this tender; cash may exceed the due (change). */
+                amount: string;
+                /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
+                reference?: string | null;
+            }[];
+        };
+        /**
          * QuotePosSaleRequest
          * @description `POST /pos/sessions/{session}/quote` — price the register cart and read the tenders.
          *     Writes nothing. Every figure on the register comes from here (rule 1).
@@ -12683,13 +12861,18 @@ export interface components {
             /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
             customer_phone?: string | null;
             tenders?: {
-                /** @enum {string} */
-                method: "cash" | "bkash" | "nagad" | "card";
+                /**
+                 * @description `due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).
+                 * @enum {string}
+                 */
+                method: "cash" | "bkash" | "nagad" | "card" | "due";
                 /** @description What the customer handed over in this tender, e.g. `4000.00` cash for a ৳3,455 total. */
                 amount: string;
                 /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
                 reference?: string | null;
             }[] | null;
+            /** @description The name the cashier typed for a new customer — a due tender needs one. */
+            customer_name?: string | null;
         };
         /**
          * ReceivePurchaseRequest
@@ -16703,7 +16886,7 @@ export interface components {
          *     the owner role itself is not editable (409 from the Action).
          */
         UpdateRolePermissionsRequest: {
-            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view" | "pos.use" | "pos.manage")[];
+            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due")[];
         };
         /**
          * UpdateShipmentRiderRequest
@@ -28708,6 +28891,34 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.pos.customers.search": {
+        parameters: {
+            query: {
+                /** @description A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `PosCustomerMatch` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PosCustomerMatch"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.pos.sessions.store": {
         parameters: {
             query?: never;
@@ -29031,6 +29242,130 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
             /** @description Already resumed, or the drawer is closed (`conflict`) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.pos.holds.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The hold ID */
+                hold: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already resumed or discarded, or the drawer is closed (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.pos.sessions.due-collections.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteDueCollectionRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosDueQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosDueQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.pos.sessions.due-collections.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The session ID */
+                session: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectDueRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosDueCollection` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosDueCollection"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Drawer closed (`conflict`) or key in flight (`request-in-progress`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open due, non-cash above the due, a missing reference, or nothing tendered (`validation-error`) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

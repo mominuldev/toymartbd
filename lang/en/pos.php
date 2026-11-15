@@ -28,5 +28,18 @@ return [
         'non_cash_over' => 'bKash, Nagad and card together cannot be more than the total — only cash gives change.',
         'short' => 'Add a payment.',
         'short_by' => '৳:amount is still due.',
+        'one_due' => 'Enter due once.',
+        'due_over' => 'bKash, Nagad, card and due together cannot be more than the total — only cash gives change.',
     ],
+
+    // Due / baki (owner decision 2026-11-15).
+    'due' => [
+        'not_allowed' => 'You cannot sell on due. Ask a manager.',
+        'needs_customer' => 'Due needs a known customer — add the phone and name.',
+        'over_limit' => 'Over the due limit — ৳:available available.',
+        'nothing_open' => 'This customer has no due to collect.',
+        'not_a_payment' => 'Due cannot pay off due — take cash, bKash, Nagad or card.',
+        'non_cash_over' => 'bKash, Nagad and card together cannot be more than the due of ৳:amount — only cash gives change.',
+    ],
+    'hold_discarded' => 'This held sale has been discarded.',
 ];

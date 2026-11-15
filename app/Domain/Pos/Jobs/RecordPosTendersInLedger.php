@@ -10,6 +10,7 @@ use App\Domain\Finance\Enums\Direction;
 use App\Domain\Finance\Enums\LedgerEntryType;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Pos\Models\PosDueCollectionAllocation;
 use App\Domain\Pos\Models\PosSale;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,7 +55,10 @@ final class RecordPosTendersInLedger implements ShouldQueue
         }
 
         $entries = [];
+        // The sale's own tenders: due collected later on the same order is booked by
+        // RecordPosDueCollectionInLedger (same type and key, so even a race books it once).
         $payments = Payment::query()->where('order_id', $sale->order_id)
+            ->whereNotIn('id', PosDueCollectionAllocation::query()->select('payment_id'))
             ->where('status', PaymentStatus::Paid->value)->orderBy('id')->get();
         foreach ($payments as $payment) {
             $entries[] = new LedgerEntry(

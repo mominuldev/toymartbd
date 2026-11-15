@@ -16,7 +16,7 @@ export type CartState = {
     tenders: TenderDraft[];
 };
 
-export const emptyCart = (): CartState => ({ lines: [], phone: '', name: '', coupon: '', tenders: [{ method: 'cash', amount: '', reference: '' }] });
+export const emptyCart = (): CartState => ({ lines: [], phone: '', name: '', coupon: '', tenders: [] });
 
 /** Rule 30's pattern — only to decide whether to send the phone yet; the server validates. */
 const PHONE = /^(?:\+?880|0)1[3-9]\d{8}$/;
@@ -47,6 +47,8 @@ export function quoteBody(cart: CartState): QuoteInput {
         lines: cart.lines.map((l) => ({ variant_id: l.variantId, quantity: l.quantity })),
         coupon_code: cart.coupon.trim() === '' ? null : cart.coupon.trim(),
         customer_phone: phone,
+        // Sent so the server can apply the Due guard (a named customer) before charging.
+        customer_name: phone && cart.name.trim() !== '' ? cart.name.trim() : null,
         tenders: cart.tenders
             .filter((d) => isMoneyInput(d.amount))
             .map((d) => ({ method: d.method, amount: d.amount.trim(), reference: d.reference.trim() === '' ? null : d.reference.trim() })),
