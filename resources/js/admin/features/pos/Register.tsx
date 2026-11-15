@@ -105,13 +105,16 @@ export function Register({ context, session }: { context: PosContext; session: P
     // Register-wide function keys. Inside an open dialog its own keys apply instead.
     useEffect(() => {
         const onKey = (event: globalThis.KeyboardEvent) => {
-            if (completed || paying || closing || showHolds || choosingCustomer || collecting) {
-                if (completed && event.key === 'Enter' && document.activeElement === document.body) {
+            if (completed) {
+                if (event.key === 'Enter' && document.activeElement === document.body) {
                     event.preventDefault();
                     startNext();
                 }
                 return;
             }
+            // Ask the DOM, not the dialog flags: a dialog closed by Escape is gone at once, while its
+            // flag clears a render later — a quick F8 after Escape would otherwise be swallowed.
+            if (document.querySelector('dialog[open]')) return;
             if (event.key === 'F1') {
                 event.preventDefault();
                 searchRef.current?.focus();
@@ -129,7 +132,7 @@ export function Register({ context, session }: { context: PosContext; session: P
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [completed, paying, closing, showHolds, choosingCustomer, collecting]);
+    }, [completed]);
 
     const heldCount = holds.data?.data.length ?? 0;
     // A count of pieces, not money.

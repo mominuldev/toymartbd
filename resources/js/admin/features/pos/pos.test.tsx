@@ -301,6 +301,8 @@ describe('POS register', () => {
         expect(await within(dialog).findByText('On credit · ৳3,800 available')).toBeTruthy();
         const complete = within(dialog).getByRole('button', { name: 'Complete sale' });
         await waitFor(() => expect(complete).toHaveProperty('disabled', false));
+        const lookups = () => calls.mock.calls.filter(([url]) => String(url).includes('/pos/customers?')).length;
+        const before = lookups();
         fireEvent.click(complete);
 
         await screen.findByRole('heading', { name: 'Sale complete' });
@@ -309,6 +311,11 @@ describe('POS register', () => {
             customer_name: 'Rubina Akter',
             tenders: [{ method: 'due', amount: '3455.00', reference: null }],
         });
+
+        // The sale raised her open due: picking her again asks the server, not the 30-second cache.
+        fireEvent.click(screen.getByRole('button', { name: 'Start new sale' }));
+        await pickRubina();
+        await waitFor(() => expect(lookups()).toBeGreaterThan(before));
     });
 
     it("collects a customer's due against their oldest orders", async () => {

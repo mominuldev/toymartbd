@@ -270,7 +270,7 @@ export const posBn: Record<keyof typeof posEn, string> = {
     'pos.tile.low': 'মাত্র {count}টি',
     'pos.tile.out': 'স্টক নেই',
     'pos.tile.inCart': 'কার্টে {count}',
-    'pos.tile.add': '{name} যোগ করুন, {sku}, {price}, {stock}',
+    'pos.tile.add': '{name}, {sku}, {price}, {stock} — যোগ করুন',
     'pos.cart.title': 'চলতি বিক্রি',
     'pos.cart.items': 'পণ্য: {count}',
     'pos.customer.change': 'বদলান',

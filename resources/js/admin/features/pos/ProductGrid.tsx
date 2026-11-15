@@ -42,7 +42,7 @@ export function ProductGrid({
                 const qty = inCart[item.variant_id] ?? 0;
                 const tone = none ? 'bg-danger-subtle text-feedback-danger' : low ? 'bg-warning-subtle text-feedback-warning' : 'bg-success-subtle text-feedback-success';
                 return (
-                    <li key={item.variant_id}>
+                    <li key={item.variant_id} className="relative">
                         <button
                             type="button"
                             disabled={none}
@@ -64,11 +64,6 @@ export function ProductGrid({
                                 ) : (
                                     <ImageIcon size={28} aria-hidden className="text-fg-tertiary" />
                                 )}
-                                {qty > 0 && (
-                                    <span aria-hidden className="absolute end-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 t-admin-badge text-fg-on-brand">
-                                        {qty}
-                                    </span>
-                                )}
                             </span>
                             <span className={`line-clamp-1 t-admin-body ${none ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{label}</span>
                             {/* Whitespace between the parts (a flex container drops it from layout), so the visible text
@@ -86,6 +81,16 @@ export function ProductGrid({
                                 </span>
                             )}
                         </button>
+                        {/* Outside the button: the count is not part of the tile's name (WCAG 2.5.3); the
+                            button's description says it in words. On the image's corner, as in Figma. */}
+                        {qty > 0 && (
+                            <span
+                                aria-hidden
+                                className="pointer-events-none absolute end-3.5 top-3.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 t-admin-badge text-fg-on-brand"
+                            >
+                                {qty}
+                            </span>
+                        )}
                     </li>
                 );
             })}
