@@ -7,9 +7,9 @@ use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Content\Blocks\Actions\PublishLayout;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
 use App\Domain\Content\Blocks\Services\ScheduleBoundarySweep;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Blog\Enums\PostStatus;
 use App\Domain\Content\Blog\Enums\PostType;
 use App\Domain\Content\Blog\Models\BlogPost;
@@ -35,7 +35,7 @@ beforeEach(function (): void {
 
 function cmsPublish(): CmsLayoutVersion
 {
-    return app(PublishLayout::class)->handle(BlockPlacement::Home, null);
+    return app(PublishLayout::class)->handle(LayoutKey::home(), null);
 }
 
 it('answers an empty home before the first publish, so the storefront keeps its built-in page', function (): void {
@@ -253,7 +253,7 @@ it('seeds the default homepage once, published as version 1, without queueing a 
     $this->seed(CmsHomeBlocksSeeder::class);
 
     expect(CmsLayoutVersion::query()->count())->toBe(1)
-        ->and(array_column(CmsLayoutVersion::latestFor(BlockPlacement::Home)?->blocks ?? [], 'type'))
+        ->and(array_column(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks ?? [], 'type'))
         ->toBe(['hero', 'category_tiles', 'flash_sale', 'age_tiles', 'product_rail', 'product_rail', 'usp_band', 'testimonials', 'blog_teaser']);
     Bus::assertNothingDispatched();
 

@@ -52,7 +52,7 @@ final class CmsPage extends Model
      */
     public const array RESERVED_SLUGS = [
         'account', 'admin', 'api', 'blog', 'bn', 'brands', 'cart', 'categories', 'checkout', 'delivery-charge',
-        'en', 'flash-sale', 'guides', 'maintenance', 'orders', 'pages', 'products', 'robots', 'search', 'sitemap',
+        'en', 'flash-sale', 'guides', 'maintenance', 'orders', 'pages', 'preview', 'products', 'robots', 'search', 'sitemap',
         'sitemaps', 'toys', 'track',
     ];
 

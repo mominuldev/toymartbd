@@ -35,7 +35,6 @@ function clean(html: string | null): string | null {
 // marked lang="en" with a notice.
 export function CmsPageView({ locale, page, otherPages = [] }: Props) {
     const t = getMessages(locale);
-    const title = localised(locale, page.title, page.title_bn);
     const template = pageTemplate(page);
     const body = pageBody(page, locale);
     const sanitised = clean(body.html);
@@ -78,12 +77,7 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
 
     return (
         <article className="flex flex-col gap-8">
-            <header className="flex flex-col gap-3 rounded-lg-plus bg-(image:--tm-gradient-bloom-sky) p-6 lg:rounded-xl-plus lg:p-10">
-                <h1 lang={title.lang} className={`t-display-2 text-fg-primary lg:t-display-1 ${bnClass(title.lang)}`}>
-                    {title.text}
-                </h1>
-                {body.lang === 'en' ? <p className="t-body-sm text-fg-secondary">{t.content.englishOnly}</p> : null}
-            </header>
+            <CmsPageHeader locale={locale} page={page} englishOnly={body.lang === 'en'} />
 
             {template === 'sidebar' ? (
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-8">
@@ -104,23 +98,7 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
                                 </ol>
                             </nav>
                         ) : null}
-                        {more.length > 0 ? (
-                            <nav aria-label={t.content.morePages} className="flex flex-col gap-1 rounded-lg bg-surface p-3 shadow-e1">
-                                <p className="t-overline px-3 py-2 text-fg-tertiary">{t.content.morePages}</p>
-                                <ul className="flex flex-col">
-                                    {more.map((p) => {
-                                        const label = localised(locale, p.title, p.title_bn);
-                                        return (
-                                            <li key={p.slug}>
-                                                <a href={localizedPath(locale, `/${p.slug}`)} lang={label.lang} className="t-body-sm flex min-h-touch-min items-center rounded-sm px-3 text-fg-link underline-offset-4 hover:underline">
-                                                    {label.text}
-                                                </a>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </nav>
-                        ) : null}
+                        <MorePagesNav locale={locale} pages={more} />
                     </aside>
                     <div lang={body.lang} className={`flex min-w-0 grow flex-col gap-4 ${bnClass(body.lang)}`}>
                         {sections.intro ? <div className={bodyClass} dangerouslySetInnerHTML={{ __html: sections.intro }} /> : null}
@@ -144,5 +122,45 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
                 </>
             )}
         </article>
+    );
+}
+
+/**
+ * The page's Bloom-sky header with its title as the page's only H1 — shared by the legacy
+ * templates above and pages built from sections (CmsSectionsPage).
+ */
+export function CmsPageHeader({ locale, page, englishOnly = false }: { locale: Locale; page: Pick<CmsPage, 'title' | 'title_bn'>; englishOnly?: boolean }) {
+    const t = getMessages(locale);
+    const title = localised(locale, page.title, page.title_bn);
+    return (
+        <header className="flex flex-col gap-3 rounded-lg-plus bg-(image:--tm-gradient-bloom-sky) p-6 lg:rounded-xl-plus lg:p-10">
+            <h1 lang={title.lang} className={`t-display-2 text-fg-primary lg:t-display-1 ${locale === 'bn' && !title.lang ? 'lang-bn' : ''}`}>
+                {title.text}
+            </h1>
+            {englishOnly ? <p className="t-body-sm text-fg-secondary">{t.content.englishOnly}</p> : null}
+        </header>
+    );
+}
+
+/** The sidebar template's links to the other live store pages (nothing when there are none). */
+export function MorePagesNav({ locale, pages, className = '' }: { locale: Locale; pages: CmsPageSummary[]; className?: string }) {
+    if (pages.length === 0) return null;
+    const t = getMessages(locale);
+    return (
+        <nav aria-label={t.content.morePages} className={`flex flex-col gap-1 rounded-lg bg-surface p-3 shadow-e1 ${className}`}>
+            <p className="t-overline px-3 py-2 text-fg-tertiary">{t.content.morePages}</p>
+            <ul className="flex flex-col">
+                {pages.map((p) => {
+                    const label = localised(locale, p.title, p.title_bn);
+                    return (
+                        <li key={p.slug}>
+                            <a href={localizedPath(locale, `/${p.slug}`)} lang={label.lang} className="t-body-sm flex min-h-touch-min items-center rounded-sm px-3 text-fg-link underline-offset-4 hover:underline">
+                                {label.text}
+                            </a>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
     );
 }

@@ -75,6 +75,7 @@ import { SettlementsPage } from '@/features/finance/settlements/SettlementsPage'
 import { AbandonedCartsPage, CouponFormPage, CouponsPage, PromotionFormPage, PromotionsPage } from '@/features/marketing';
 import { PagesPage } from '@/features/content/pages/PagesPage';
 import { PageFormPage } from '@/features/content/pages/PageFormPage';
+import { PageBuilderPage } from '@/features/content/pages/PageBuilderPage';
 import { MenuEditorPage } from '@/features/content/menus/MenuEditorPage';
 import { BannersPage } from '@/features/content/banners/BannersPage';
 import { BannerFormPage } from '@/features/content/banners/BannerFormPage';
@@ -95,6 +96,9 @@ export const routes: RouteObject[] = [
             // Homepage builder (Figma B · 26 Page builder 241:44102): full height beside the sidebar
             // rail, no topbar, so it sits outside the Shell. Static, so it wins over `store/*`.
             { path: '/store/home', element: <HomeBuilderPage /> },
+            // A static page's sections, in the same builder (owner decision 2026-11-16) — beside the
+            // store/pages routes in spirit, but full height outside the Shell like the homepage.
+            { path: '/store/pages/:pageId/build', element: <PageBuilderPage /> },
             // POS register (Figma B · 33 241:48158): sidebar rail and its own header, no topbar — outside the Shell.
             { path: '/pos', element: <PosPage /> },
             // Two-factor sign-in (owner decision 2026-11-14; no frame — the sign-in frame B · 00).

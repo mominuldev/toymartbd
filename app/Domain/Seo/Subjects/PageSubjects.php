@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Seo\Subjects;
 
 use App\Domain\Content\Models\CmsPage;
+use App\Domain\Content\Services\PageText;
 use App\Domain\Seo\Contracts\SeoSubject;
 use App\Domain\Seo\Contracts\SeoSubjectProvider;
 use Carbon\CarbonImmutable;
@@ -62,8 +63,8 @@ final class PageSubjects implements SeoSubjectProvider
             path: self::PREFIX.$page->slug,
             name: $page->title,
             nameBn: $page->title_bn,
-            description: ContentText::summary($page->content),
-            descriptionBn: ContentText::summary($page->content_bn),
+            description: ContentText::summary(app(PageText::class)->html($page)),
+            descriptionBn: ContentText::summary(app(PageText::class)->html($page, bangla: true)),
             image: null,
             isLive: $page->isLive(),
             updatedAt: $page->updated_at === null ? null : CarbonImmutable::instance($page->updated_at),

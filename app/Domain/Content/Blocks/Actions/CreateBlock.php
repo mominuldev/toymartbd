@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Content\Blocks\Actions;
 
 use App\Domain\Content\Blocks\DTOs\BlockSettings;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  */
 final class CreateBlock
 {
-    public function handle(BlockPlacement $placement, BlockType $type, BlockSettings $settings, ?int $position, ?int $userId): CmsBlock
+    public function handle(LayoutKey $placement, BlockType $type, BlockSettings $settings, ?int $position, ?int $userId): CmsBlock
     {
         return DB::transaction(static function () use ($placement, $type, $settings, $position, $userId): CmsBlock {
             $blocks = CmsBlock::query()->inPlacement($placement)->lockForUpdate()->get();

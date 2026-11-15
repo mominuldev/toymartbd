@@ -3,7 +3,7 @@
 // Read by next.config.ts `headers()`, which Next evaluates at BUILD time — ADMIN_URL / API_URL must be
 // set for `next build` (lib/env.ts enforces it in production).
 //
-// Framing: the only page that may be framed is the homepage preview inside the admin's live builder
+// Framing: the only pages that may be framed are the homepage and page previews inside the admin's live builders
 // (components/content/PreviewBridge.tsx), so `frame-ancestors` allows this site and the admin origin and
 // nothing else (clickjacking). X-Frame-Options cannot name a second origin, so it is not sent; every
 // browser we support honours frame-ancestors.

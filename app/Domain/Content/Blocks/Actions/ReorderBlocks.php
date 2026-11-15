@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Actions;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Exceptions\InvalidBlockOrder;
 use App\Domain\Content\Blocks\Models\CmsBlock;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ final class ReorderBlocks
      * @param  list<int>  $ids
      * @return Collection<int, CmsBlock>
      */
-    public function handle(BlockPlacement $placement, array $ids, ?int $userId): Collection
+    public function handle(LayoutKey $placement, array $ids, ?int $userId): Collection
     {
         return DB::transaction(static function () use ($placement, $ids, $userId): Collection {
             $blocks = CmsBlock::query()->inPlacement($placement)->lockForUpdate()->get()->keyBy('id');

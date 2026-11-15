@@ -10,7 +10,10 @@ import { normalizeHome, type HomeLayout } from './home-blocks';
 // show: `products` (rails), `categories` (tiles), `brands` (strip), `content:testimonials`,
 // `content:blog`, `flash-sale` (docs/api/revalidation.md). The draft is never cached.
 
-export const HOME_TAGS = ['content:home', 'products', 'categories', 'brands', 'content:testimonials', 'content:blog', 'flash-sale'] as const;
+/** The data the blocks read — shared with static pages built from the same blocks (./page-layout). */
+export const BLOCK_DATA_TAGS = ['products', 'categories', 'brands', 'content:testimonials', 'content:blog', 'flash-sale'] as const;
+
+export const HOME_TAGS = ['content:home', ...BLOCK_DATA_TAGS] as const;
 
 /** The live homepage, or null when the API cannot answer — the page then shows its built-in home. */
 export async function fetchHome(locale: Locale): Promise<HomeLayout | null> {

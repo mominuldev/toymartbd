@@ -253,6 +253,7 @@ export const bn: Messages = {
         info: 'জেনে রাখুন',
         close: 'বন্ধ করুন',
         menu: 'মেনু',
+        previewBanner: 'খসড়া প্রিভিউ — এটি লাইভ পাতা নয়।',
     },
     listing: {
         breadcrumb: 'ব্রেডক্রাম্ব',

@@ -160,6 +160,38 @@ test.describe('static pages', () => {
         await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/privacy-policy`);
     });
 
+    test('a page published from the builder renders its sections with the home blocks, one H1 and one FAQPage', async ({ page }) => {
+        for (const [path, question] of [
+            ['/privacy-policy', 'Do you sell my phone number?'],
+            ['/bn/privacy-policy', 'আপনারা কি আমার ফোন নম্বর বিক্রি করেন?'],
+        ] as const) {
+            await page.goto(path);
+            await expect(page.locator('h1'), path).toHaveCount(1);
+            await expect(page.locator('main [data-block="rich_text"]'), path).toHaveCount(1);
+            await expect(page.locator('main [data-block="faq"] summary'), path).toHaveText(question);
+            // Sections are the live layout: no builder ids on the live page.
+            await expect(page.locator('main [data-block-id]'), path).toHaveCount(0);
+            const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
+            expect(ld.filter((block) => block.includes('"FAQPage"')), path).toHaveLength(1);
+        }
+    });
+
+    test('a page never published from the builder keeps its legacy body and template', async ({ page }) => {
+        expect((await page.goto('/delivery-policy'))?.status()).toBe(200);
+        await expect(page.locator('h1')).toHaveText('Delivery policy');
+        await expect(page.locator('main [data-block]')).toHaveCount(0);
+        await expect(page.getByRole('navigation', { name: 'On this page' })).toBeVisible();
+        await expect(page.locator('main h2').first()).toContainText('Inside Dhaka');
+    });
+
+    test('a page preview link with a bad token is refused before draft mode turns on', async ({ request }) => {
+        for (const token of ['nope', `page_draft.1.9999999999.${'a'.repeat(64)}`, `home_draft.1.9999999999.${'a'.repeat(64)}`]) {
+            const res = await request.get(`/api/preview/page?token=${token}&locale=en`, { maxRedirects: 0 });
+            expect(res.status(), token).toBe(403);
+            expect(res.headers()['set-cookie'] ?? '', token).not.toContain('tm_page_preview');
+        }
+    });
+
     test('the old /pages/{slug} URLs redirect permanently to the page at the site root', async ({ request }) => {
         for (const [from, to] of [
             ['/pages/privacy-policy', '/privacy-policy'],

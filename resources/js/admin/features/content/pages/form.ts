@@ -1,19 +1,21 @@
 import type { CmsPage, CmsPageInput } from './api';
 import { fromDhakaInput, toDhakaInput } from '../shared/dhaka';
 
-export type FaqRow = { question: string; question_bn: string; answer: string; answer_bn: string };
-
 export type PageForm = {
     title: string;
     title_bn: string;
     slug: string;
-    content: string;
-    content_bn: string;
+    /**
+     * The page body before sections (owner decision 2026-11-16) — no longer edited here, but the
+     * PUT replaces the whole document, so the stored values go back untouched.
+     */
+    content: string | null;
+    content_bn: string | null;
+    faq_items: CmsPageInput['faq_items'];
     template: 'default' | 'sidebar' | 'faq';
     status: 'draft' | 'published' | 'archived';
     /** datetime-local value, Dhaka time. */
     published_at: string;
-    faq: FaqRow[];
     seo: {
         title: string;
         title_bn: string;
@@ -39,12 +41,12 @@ export function toPageForm(page?: CmsPage): PageForm {
         title: page?.title ?? '',
         title_bn: page?.title_bn ?? '',
         slug: page?.slug ?? '',
-        content: page?.content ?? '',
-        content_bn: page?.content_bn ?? '',
+        content: page?.content ?? null,
+        content_bn: page?.content_bn ?? null,
+        faq_items: page?.faq_items ? page.faq_items.map((f) => ({ question: f.question, question_bn: f.question_bn ?? null, answer: f.answer, answer_bn: f.answer_bn ?? null })) : null,
         template: page?.template ?? 'default',
         status: page?.status ?? 'draft',
         published_at: toDhakaInput(page?.published_at),
-        faq: (page?.faq_items ?? []).map((f) => ({ question: f.question, question_bn: f.question_bn ?? '', answer: f.answer, answer_bn: f.answer_bn ?? '' })),
         seo: {
             title: seo?.title ?? '',
             title_bn: seo?.title_bn ?? '',
@@ -65,15 +67,10 @@ export function toPageForm(page?: CmsPage): PageForm {
 
 const orNull = (value: string): string | null => (value.trim() === '' ? null : value.trim());
 
-/** An empty editor emits `<p></p>`: no content. */
-function html(value: string): string | null {
-    const stripped = value.replace(/<p>\s*<\/p>/g, '').trim();
-    return stripped === '' ? null : value;
-}
-
 /**
- * The PUT/POST body. The schedule goes out as Dhaka time with +06:00; the FAQ list only for the
- * FAQ template; `acknowledge_slug_redirect` only when the slug of a live page actually changes.
+ * The PUT/POST body. The schedule goes out as Dhaka time with +06:00; the legacy body and FAQ
+ * list exactly as stored (sections replaced them, but a PUT must not wipe them);
+ * `acknowledge_slug_redirect` only when the slug of a live page actually changes.
  */
 export function toPagePayload(form: PageForm, page?: CmsPage): CmsPageInput {
     const slug = orNull(form.slug);
@@ -82,15 +79,12 @@ export function toPagePayload(form: PageForm, page?: CmsPage): CmsPageInput {
         title: form.title.trim(),
         title_bn: orNull(form.title_bn),
         slug,
-        content: html(form.content),
-        content_bn: html(form.content_bn),
+        content: form.content,
+        content_bn: form.content_bn,
         template: form.template,
         status: form.status,
         published_at: fromDhakaInput(form.published_at),
-        faq_items:
-            form.template === 'faq'
-                ? form.faq.map((f) => ({ question: f.question.trim(), question_bn: orNull(f.question_bn), answer: f.answer.trim(), answer_bn: orNull(f.answer_bn) }))
-                : null,
+        faq_items: form.faq_items,
         seo: {
             title: orNull(form.seo.title),
             title_bn: orNull(form.seo.title_bn),

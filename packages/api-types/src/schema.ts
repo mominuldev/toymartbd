@@ -5731,6 +5731,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/content/pages/{page}/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/pages/{page}/layout` — the draft, the live version and whether they differ */
+        get: operations["v1.admin.content.pages.layout.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/pages/{page}/layout/blocks` — add a block (defaults when `content` is omitted) */
+        post: operations["v1.admin.content.pages.layout.blocks.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/blocks/{block}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** `DELETE /content/pages/{page}/layout/blocks/{block}` — removes it from the draft; published versions keep their copy */
+        delete: operations["v1.admin.content.pages.layout.blocks.destroy"];
+        options?: never;
+        head?: never;
+        /** `PATCH /content/pages/{page}/layout/blocks/{block}` */
+        patch: operations["v1.admin.content.pages.layout.blocks.update"];
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/blocks/{block}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/pages/{page}/layout/blocks/{block}/duplicate` — a copy directly below */
+        post: operations["v1.admin.content.pages.layout.blocks.duplicate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /content/pages/{page}/layout/order` — `ids` must list every draft block once */
+        put: operations["v1.admin.content.pages.layout.order"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /content/pages/{page}/layout/publish` — the draft goes live as the next version */
+        post: operations["v1.admin.content.pages.layout.publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/pages/{page}/layout/versions` — the 50 latest versions, newest first */
+        get: operations["v1.admin.content.pages.layout.versions.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/versions/{version}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /content/pages/{page}/layout/versions/{version}/revert` — with `publish` (default) the old version
+         *     goes live as a new version and 201 returns it; with `publish: false` only the draft is
+         *     replaced and 200 returns the draft
+         */
+        post: operations["v1.admin.content.pages.layout.versions.revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/content/pages/{page}/layout/preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /content/pages/{page}/layout/preview-token` — a signed token, valid for 10 minutes, that lets the
+         *     storefront render the draft, and the storefront URL that opens it
+         */
+        post: operations["v1.admin.content.pages.layout.preview-token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/customers": {
         parameters: {
             query?: never;
@@ -6438,6 +6599,44 @@ export interface paths {
         };
         /** `GET /pages/{slug}` — one live page; 404 when missing, draft, scheduled or archived */
         get: operations["v1.storefront.pages.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/content/pages/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /content/pages/preview?locale=en|bn[&at=ISO]` — one page's DRAFT sections, whatever the
+         *     page's status, for the builder's preview. The `X-Preview-Token` (from the admin's
+         *     `POST /content/pages/{page}/layout/preview-token`) names the page. Never cache this response
+         */
+        get: operations["v1.storefront.content.pages.preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/content/pages/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /content/pages/{slug}?locale=en|bn` — a live page and its live sections in that locale */
+        get: operations["v1.storefront.content.pages.show"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8323,8 +8522,8 @@ export interface components {
         };
         /** CmsHomeDraft */
         CmsHomeDraft: {
-            /** @constant */
-            placement: "home";
+            /** @description `home` or `page:{id}`. */
+            placement: string;
             blocks: {
                 [key: string]: unknown;
             }[];
@@ -15657,6 +15856,18 @@ export interface components {
                 og_image: string | null;
                 twitter_card: string;
             };
+        };
+        /** StorefrontPageLayout */
+        StorefrontPageLayout: {
+            page: {
+                [key: string]: unknown;
+            };
+            version: number | null;
+            published_at: string | null;
+            preview: boolean;
+            blocks: {
+                [key: string]: unknown;
+            }[];
         };
         /** StorefrontPageSummary */
         StorefrontPageSummary: {
@@ -31736,7 +31947,6 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
         };
     };
@@ -31793,7 +32003,6 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
         };
     };
@@ -31890,7 +32099,6 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            403: components["responses"]["AuthorizationException"];
         };
     };
     "v1.admin.content.home.versions.revert": {
@@ -31957,6 +32165,328 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.layout.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.pages.layout.blocks.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreCmsBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsBlock` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.layout.blocks.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.pages.layout.blocks.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCmsBlockRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsBlock` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.layout.blocks.duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+                /** @description The block ID */
+                block: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CmsBlock` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsBlock"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.pages.layout.order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderCmsBlocksRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The ids are not exactly the draft's blocks (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.content.pages.layout.publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PublishCmsLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsLayoutVersion` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsLayoutVersion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description The draft has no unpublished changes (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.layout.versions.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.content.pages.layout.versions.revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+                /** @description The version ID */
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RevertCmsLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsHomeDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsHomeDraft"];
+                };
+            };
+            /** @description `CmsLayoutVersion` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsLayoutVersion"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.content.pages.layout.preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page ID */
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["IssueCmsPreviewTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description `CmsPreviewToken` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CmsPreviewToken"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -33617,6 +34147,88 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description No live page has this slug */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.content.pages.preview": {
+        parameters: {
+            query: {
+                /** @description Storefront locale. */
+                locale: "en" | "bn";
+                /** @description Preview the schedule at this instant (ISO 8601). Default: now. */
+                at?: string;
+            };
+            header: {
+                /** @description Signed page preview token from POST /admin/content/pages/{page}/layout/preview-token. */
+                "X-Preview-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontPageLayout` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontPageLayout"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing, forged or expired preview token (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.content.pages.show": {
+        parameters: {
+            query: {
+                /** @description Storefront locale; picks the language and the per-locale visibility. */
+                locale: "en" | "bn";
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontPageLayout` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontPageLayout"];
+                };
+            };
+            /** @description Missing or unknown locale, or an unlisted parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
             /** @description No live page has this slug */
             404: {
                 headers: {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Support\PreviewToken;
 use Carbon\CarbonImmutable;
@@ -27,7 +27,7 @@ beforeEach(function (): void {
 /** @return list<int> */
 function cmsDraftIds(): array
 {
-    return CmsBlock::query()->inPlacement(BlockPlacement::Home)->pluck('id')->map(intval(...))->all();
+    return CmsBlock::query()->inPlacement(LayoutKey::home())->pluck('id')->map(intval(...))->all();
 }
 
 it('adds blocks at the end or at a position, and lists the draft in order', function (): void {
@@ -134,7 +134,7 @@ it('keeps a published version unchanged while the draft is edited', function ():
 
     $this->patchJson(CmsKit::ADMIN.'/blocks/'.$id, ['content' => ['title' => 'Changed', 'items' => [['question' => 'Q', 'answer' => 'A']]]])->assertOk();
 
-    $live = CmsLayoutVersion::latestFor(BlockPlacement::Home);
+    $live = CmsLayoutVersion::latestFor(LayoutKey::home());
     expect($live?->blocks[0]['content']['title'])->toBe('Questions parents ask');
 });
 

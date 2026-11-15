@@ -14,11 +14,11 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 /**
- * The homepage builder's state: the draft blocks in order, the live version (null before the
+ * A section builder's state (the homepage or one page): the draft blocks in order, the live version (null before the
  * first publish), whether the draft differs from live, the block types the library offers with
  * their default content, and a thumbnail for every media id the draft references.
  *
- * @property array{blocks: Collection<int, CmsBlock>, live: CmsLayoutVersion|null, has_unpublished_changes: bool} $resource
+ * @property array{placement: string, blocks: Collection<int, CmsBlock>, live: CmsLayoutVersion|null, has_unpublished_changes: bool} $resource
  */
 #[SchemaName('CmsHomeDraft')]
 final class CmsHomeDraftResource extends ApiResource
@@ -32,7 +32,8 @@ final class CmsHomeDraftResource extends ApiResource
         $live = $this->resource['live'];
 
         return [
-            'placement' => 'home',
+            /** `home` or `page:{id}`. */
+            'placement' => $this->resource['placement'],
             /** @var list<array<string, mixed>> */
             'blocks' => CmsBlockResource::collection($blocks)->resolve($request),
             /** @var array<string, mixed>|null */

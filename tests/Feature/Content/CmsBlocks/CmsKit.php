@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Content\CmsBlocks;
 
 use App\Domain\Catalog\Models\Product;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Models\CmsBlock;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Inventory\Actions\ReconcileStockLevels;
 use App\Domain\Inventory\Actions\RecordOpeningStock;
 use App\Models\Enums\Role;
@@ -64,7 +64,7 @@ final class CmsKit
 
         return CmsBlock::query()->create([
             'uuid' => (string) Str::uuid(),
-            'placement' => BlockPlacement::Home,
+            'placement' => LayoutKey::home(),
             'type' => $enum,
             'content' => $schema->normalize([...$schema->defaults(), ...$content]),
             'position' => CmsBlock::query()->where('placement', 'home')->exists() ? $position : 0,

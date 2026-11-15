@@ -260,6 +260,7 @@ export const en = {
         info: 'Good to know',
         close: 'Close',
         menu: 'Menu',
+        previewBanner: 'Draft preview — this is not the live page.',
     },
     listing: {
         // P4-STO-03 category and brand listings (storefront spec §A1, §A7, §A8; Figma 129:1572 / 136:2172).

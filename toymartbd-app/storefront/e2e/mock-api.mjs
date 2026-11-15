@@ -102,6 +102,31 @@ const PRIVACY_PAGE = {
 };
 const CMS_PAGES = [CMS_PAGE, PRIVACY_PAGE];
 
+// Pages built from sections (GET /storefront/content/pages/{slug}?locale=…, 2026-11-16): the page
+// document plus the homepage's block shape, copy already in the asked locale. The privacy policy is
+// published from the builder (a rich-text and an FAQ section); the delivery policy never was
+// (`version: null`, no blocks), so it renders its legacy body on the sidebar template.
+function pageLayout(page, locale) {
+    if (page.slug !== 'privacy-policy') return { page, version: null, published_at: null, preview: false, blocks: [] };
+    const bnText = locale === 'bn';
+    const section = (id, type, content) => ({ id, type, show_mobile: true, show_desktop: true, content });
+    return {
+        page,
+        version: 2,
+        published_at: '2026-11-16T00:00:00Z',
+        preview: false,
+        blocks: [
+            section('blk_privacy_text', 'rich_text', { html: bnText ? page.content_bn : page.content }),
+            section('blk_privacy_faq', 'faq', {
+                title: bnText ? 'প্রশ্ন ও উত্তর' : 'Questions and answers',
+                items: [bnText
+                    ? { question: 'আপনারা কি আমার ফোন নম্বর বিক্রি করেন?', answer: 'না। শুধু ডেলিভারির জন্য ব্যবহার করি।' }
+                    : { question: 'Do you sell my phone number?', answer: 'No. We use it only to deliver your order.' }],
+            }),
+        ],
+    };
+}
+
 const send = (res, status, body, type = 'application/json') => {
     res.writeHead(status, { 'Content-Type': type });
     res.end(JSON.stringify(body));
@@ -920,6 +945,15 @@ createServer(async (req, res) => {
     if (cmsPage) {
         const found = CMS_PAGES.find((p) => p.slug === decodeURIComponent(cmsPage[1]));
         return found ? send(res, 200, found) : problem(res, 404, 'Not Found', `No page "${cmsPage[1]}".`);
+    }
+    // No preview token is valid against the mock: the draft preview is refused like a forged one.
+    if (url.pathname === '/api/v1/storefront/content/pages/preview') return problem(res, 403, 'Forbidden', 'The preview token is missing, invalid or expired.');
+    const pageLayoutMatch = url.pathname.match(/^\/api\/v1\/storefront\/content\/pages\/([^/]+)$/);
+    if (pageLayoutMatch) {
+        const locale = url.searchParams.get('locale');
+        if (locale !== 'en' && locale !== 'bn') return problem(res, 400, 'Bad Request', 'The locale parameter is required.');
+        const found = CMS_PAGES.find((p) => p.slug === decodeURIComponent(pageLayoutMatch[1]));
+        return found ? send(res, 200, pageLayout(found, locale)) : problem(res, 404, 'Not Found', `No page "${pageLayoutMatch[1]}".`);
     }
     const match = url.pathname.match(/^\/api\/v1\/storefront\/brands\/([^/]+)$/);
     if (match) {

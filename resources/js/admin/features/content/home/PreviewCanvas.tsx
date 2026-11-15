@@ -10,6 +10,8 @@ const FRAME_WIDTH: Record<Device, number> = { desktop: 1280, mobile: 390 };
 export const BRIDGE_SOURCE = 'tm-home-builder';
 
 type Props = {
+    /** The iframe's accessible name ("Live preview of the draft homepage"). */
+    title: string;
     url: string | null | undefined;
     loading: boolean;
     device: Device;
@@ -55,7 +57,7 @@ export function parseFromCanvas(data: unknown): { type: 'ready' } | { type: 'sel
  * of reloading, so the scroll position and the selection survive. Selecting a section in the
  * list scrolls the canvas to it.
  */
-export function PreviewCanvas({ url, loading, device, revision, selectedId, labels, onSelect }: Props) {
+export function PreviewCanvas({ title, url, loading, device, revision, selectedId, labels, onSelect }: Props) {
     const { t } = useI18n();
     const box = useRef<HTMLDivElement>(null);
     const frame = useRef<HTMLIFrameElement>(null);
@@ -132,7 +134,7 @@ export function PreviewCanvas({ url, loading, device, revision, selectedId, labe
                     <iframe
                         ref={frame}
                         key={url}
-                        title={t('homeBuilder.canvas')}
+                        title={title}
                         src={url}
                         width={width}
                         height={height}

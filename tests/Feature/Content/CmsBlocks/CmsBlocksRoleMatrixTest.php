@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Content\Blocks\Actions\PublishLayout;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Models\CmsBlock;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
 use Illuminate\Support\Facades\Http;
@@ -67,6 +67,6 @@ it('guards POST /content/home/publish with content.manage', function (Role $role
 
 it('guards POST /content/home/versions/{version}/revert with content.manage', function (): void {
     CmsKit::block('faq');
-    $version = app(PublishLayout::class)->handle(BlockPlacement::Home, null);
+    $version = app(PublishLayout::class)->handle(LayoutKey::home(), null);
     RoleMatrix::assert($this, Permission::ContentManage, fn () => $this->postJson(CmsKit::ADMIN.'/versions/'.$version->id.'/revert', ['publish' => false]));
 });

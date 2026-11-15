@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Content\Blocks\Actions\PublishLayout;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Models\Enums\Role;
 use App\Models\User;
@@ -45,7 +45,7 @@ it('purges homepage blocks, banners and pages whose boundary passed — in one r
     $this->artisan('toymart:content:revalidate-scheduled')->assertSuccessful(); // sets the window start
 
     CmsKit::block('faq', [], ['starts_at' => '2026-12-01 00:01:00', 'ends_at' => '2026-12-01 05:00:00']);
-    app(PublishLayout::class)->handle(BlockPlacement::Home, null);
+    app(PublishLayout::class)->handle(LayoutKey::home(), null);
     $this->postJson('/api/v1/admin/content/banners', [
         'placement' => 'announcement_bar', 'name' => 'Winter sale',
         'title' => 'Free delivery in Dhaka', 'title_bn' => 'ঢাকায় ফ্রি ডেলিভারি',
