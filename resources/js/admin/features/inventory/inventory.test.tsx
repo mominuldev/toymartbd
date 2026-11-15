@@ -200,34 +200,19 @@ describe('inventory overview', () => {
         await waitFor(() => expect(summaryReads()).toBeGreaterThan(summaryBefore));
     });
 
-    it('expands a row in place to its stock by branch and latest movements', async () => {
-        const calls = inventoryApi(inventoryStaff, (url) => {
+    it('rows do not expand: branch stock is in the chips, history behind View ledger (owner, 2026-11-16)', async () => {
+        inventoryApi(inventoryStaff, (url) => {
             if (url.includes('/inventory/summary')) return { status: 200, body: branchSummary };
             if (url.includes('/inventory/stock')) return { status: 200, body: { data: branchRows, links: { next: null }, meta: { next_cursor: null } } };
             return undefined;
         });
         renderApp('/inventory');
-        await screen.findByRole('table');
+        const table = await screen.findByRole('table');
 
-        const toggle = screen.getByRole('button', { name: 'Details for Wooden Alphabet Puzzle' });
-        expect(toggle.getAttribute('aria-expanded')).toBe('false');
-        fireEvent.click(toggle);
-        expect(toggle.getAttribute('aria-expanded')).toBe('true');
-
-        const branches = screen.getByRole('region', { name: 'Stock by branch' });
-        expect(within(branches).getByRole('rowheader', { name: /Dhaka HQ · Mirpur/ })).toBeTruthy();
-        expect(within(branches).getByRole('rowheader', { name: 'Chattogram · Agrabad' })).toBeTruthy();
-        expect(within(branches).getByRole('rowheader', { name: 'Sylhet pickup point' })).toBeTruthy();
-        await waitFor(() => expect(urls(calls).some((u) => u.includes('/inventory/movements?filter%5Bvariant_id%5D=11'))).toBe(true));
-        const recent = screen.getByRole('region', { name: 'Recent movements' });
-        expect(await within(recent).findByText('Damage out')).toBeTruthy();
-        expect(within(recent).getByText('−2')).toBeTruthy();
-        expect(within(recent).getByRole('link', { name: 'Open full ledger' }).getAttribute('href')).toBe('/inventory/movements?variant=11&sku=TMB-WAP-BN');
-
-        // A click on the row itself toggles too.
-        fireEvent.click(within(screen.getAllByRole('table')[0]!).getAllByText('Wooden Alphabet Puzzle')[0]!);
-        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(screen.queryByRole('button', { name: /^Details for / })).toBeNull();
+        fireEvent.click(within(table).getAllByText('Wooden Alphabet Puzzle')[0]!);
         expect(screen.queryByRole('region', { name: 'Stock by branch' })).toBeNull();
+        expect(document.querySelector('[aria-expanded="true"]')).toBeNull();
     });
 
     it('lays out one card per branch; selecting one scopes the page through the URL', async () => {

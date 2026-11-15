@@ -487,6 +487,11 @@ test('product edit: section nav, bilingual fields in their own language, editor,
           - combobox "Brand"
         - region "Pricing":
           - textbox "VAT"
+        - region "Variants":
+          - table:
+            - rowgroup:
+              - row:
+                - columnheader "Select all variants"
         - region "Search & social":
           - tablist "Search & social":
             - tab "Basics" [selected]
@@ -498,11 +503,8 @@ test('product edit: section nav, bilingual fields in their own language, editor,
           - region "Status & visibility":
             - group "Sales channels":
               - switch "Online store"
-        - region "Variants":
-          - table:
-            - rowgroup:
-              - row:
-                - columnheader "Select all variants"
+          - region "Product URL":
+            - textbox "Slug"
     `);
     // Bangla fields are tagged lang="bn", so the reader switches to a Bangla voice for them.
     await expect(page.getByRole('textbox', { name: 'নাম (বাংলা)' })).toHaveAttribute('lang', 'bn');
