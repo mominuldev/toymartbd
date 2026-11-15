@@ -179,11 +179,11 @@ describe('POS register', () => {
         expect(await screen.findByRole('heading', { name: 'Chattogram · Agrabad · Register 1' })).toBeTruthy();
         expect(screen.getByText('Drawer since 10:02 am · float ৳5,000')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Dashboard' })).toBeTruthy();
-        const brick = await screen.findByRole('button', { name: 'Add Brick Box 500, ৳1,850, 7 in stock' });
+        const brick = await screen.findByRole('button', { name: 'Add Brick Box 500, BB-500, ৳1,850, 7 in stock' });
         expect(within(brick).getByText('7 in stock')).toBeTruthy();
         expect(within(brick).getByText('BB-500')).toBeTruthy();
         // None at this branch: shown, but cannot be added.
-        expect((screen.getByRole('button', { name: 'Add Foam Blaster X2, ৳1,750, Out of stock' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByRole('button', { name: 'Add Foam Blaster X2, FB-2, ৳1,750, Out of stock' }) as HTMLButtonElement).disabled).toBe(true);
         expect(screen.getByRole('button', { name: 'Building' })).toBeTruthy();
     });
 

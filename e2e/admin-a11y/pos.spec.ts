@@ -198,8 +198,8 @@ test.describe('POS axe', () => {
                     await customer.getByRole('button', { name: m(locale, 'pos.customerDialog.add') }).click();
                     await expect(customer.getByRole('alert')).toBeVisible();
                     await audit(page, testInfo, label('customer-error'));
-                    await customer.getByLabel(m(locale, 'pos.customerDialog.name')).fill(CUSTOMER[locale]);
-                    await customer.getByLabel(m(locale, 'pos.customerDialog.phone')).fill(phone);
+                    await customer.getByLabel(m(locale, 'pos.customerDialog.name'), { exact: true }).fill(CUSTOMER[locale]);
+                    await customer.getByLabel(m(locale, 'pos.customerDialog.phone'), { exact: true }).fill(phone);
                     await customer.getByRole('button', { name: m(locale, 'pos.customerDialog.add') }).click();
                     await expect(customer).toBeHidden();
                     await expect(cartPanel(page, locale).getByText(CUSTOMER[locale])).toBeVisible();

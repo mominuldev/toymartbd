@@ -49,6 +49,7 @@ export function ProductGrid({
                             onClick={() => onAdd(item.variant_id, label)}
                             aria-label={t('pos.tile.add', {
                                 name: label,
+                                sku: item.sku,
                                 price: takaText(item.price),
                                 stock,
                             })}
@@ -64,25 +65,26 @@ export function ProductGrid({
                                     <ImageIcon size={28} aria-hidden className="text-fg-tertiary" />
                                 )}
                                 {qty > 0 && (
-                                    <span
-                                        id={`pos-tile-qty-${item.variant_id}`}
-                                        className="absolute end-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 t-admin-badge text-fg-on-brand"
-                                    >
-                                        <span aria-hidden>{qty}</span>
-                                        <span className="sr-only">
-                                            {t('pos.tile.inCart', {
-                                                count: qty,
-                                            })}
-                                        </span>
+                                    <span aria-hidden className="absolute end-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 t-admin-badge text-fg-on-brand">
+                                        {qty}
                                     </span>
                                 )}
                             </span>
                             <span className={`line-clamp-1 t-admin-body ${none ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{label}</span>
-                            <span className="truncate t-admin-mono-sm text-fg-tertiary">{item.sku}</span>
+                            {/* Whitespace between the parts (a flex container drops it from layout), so the visible text
+                                reads "name sku price stock" — WCAG 2.5.3: the visible words are inside the accessible name. */}{' '}
+                            <span className="truncate t-admin-mono-sm text-fg-tertiary">{item.sku}</span>{' '}
                             <span className="flex items-center justify-between gap-2">
-                                <span className={`t-admin-num ${none ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{takaText(item.price)}</span>
+                                <span className={`t-admin-num ${none ? 'text-fg-tertiary' : 'text-fg-primary'}`}>{takaText(item.price)}</span>{' '}
                                 <span className={`rounded-xs px-2 py-0.5 t-admin-caption-strong ${tone}`}>{stock}</span>
                             </span>
+                            {/* The badge is decoration; its words are the tile's description (outside the name, so the
+                                visible text stays part of the accessible name — WCAG 2.5.3). */}
+                            {qty > 0 && (
+                                <span id={`pos-tile-qty-${item.variant_id}`} hidden>
+                                    {t('pos.tile.inCart', { count: qty })}
+                                </span>
+                            )}
                         </button>
                     </li>
                 );

@@ -321,6 +321,10 @@ test('orders board → order detail: filters, table, the three tracks, and the h
     await page.getByRole('button', { name: /^Delivered \d+/ }).click();
     await expect(page.getByRole('button', { name: /^Delivered \d+/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: /^All \d+/ })).toHaveAttribute('aria-pressed', 'false');
+    // A web order: a POS sale (another spec may have just rung one up) is delivered too, but its
+    // detail page has a different shape (no courier track, the Sell breadcrumb).
+    await page.getByRole('combobox', { name: 'Source' }).selectOption('web');
+    await expect(page).toHaveURL(/source=web/);
     await settle(page);
 
     // Read the number and its target in one step: the list may still re-render after the
