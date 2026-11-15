@@ -1366,6 +1366,17 @@ With the breakdown in `admin/caption` `color/text/tertiary`: "Received = ৳9,15
 
 ---
 
+### B8a · Inventory overview — `/admin/inventory` (as built 2026-11-16)
+
+Figma B · 14 Inventory `241:39494` is the base; the owner asked for it to be more user-friendly and dynamic, so the built page goes beyond the frame (Theme B tokens and components throughout):
+
+- **KPI row** — Stock value at cost · Low stock · Out of stock · Reserved, each with a tinted icon tile carrying its tone (no left-border edge). Low and Out of stock are shortcuts that toggle their tab. At 390 the value card spans the top and the three counts sit in one row.
+- **Branch cards are a filter** (`?location=`), the selected one checked; the stock endpoint is always one location (the default when none is given), so there is no "All branches" view.
+- **Search** (`?q=`, `filter[search]`: name, Bangla name, SKU, barcode), debounced, Enter applies at once and selects the text so the next barcode scan replaces it; `/` focuses it. "Updated h:mm · Refresh" beside it; data refetches on window focus.
+- **Table** — Product · Variant (2-line name, the variant as its own tag, SKU) · Status chip (In stock / Low / Out / Overstock) · On hand · Reserved · Available · Reorder at · Other branches (short-code chips, full name on hover and for screen readers) · Avg cost (2 dp, 4 dp on hover) · one ⋯ menu: Adjust stock, Transfer, Create PO (low/out only), View ledger. Sticky header, no horizontal overflow at 1440/768/390 (rows become cards at 390).
+- **Expandable row** — stock by branch with "Transfer N from X" per branch, and the 5 latest movements (movements endpoint filtered by variant) with a link to the full ledger. Adjust/Transfer from a row open the existing dialogs pre-filled; after a save the row and KPIs refresh in place, a toast confirms and the row highlights briefly.
+- No column sorting: the API's order is fixed (product, then variant) and a paginated list is never sorted client-side.
+
 ### B8 · Stock movement ledger — `/admin/inventory/movements`
 
 **1440 · content width 1144.** `StockMovementLedger` (A18), `scope: all`, `DateRangePicker` "Last 7 days · 02–08 Nov".

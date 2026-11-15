@@ -5,6 +5,8 @@ import {
     ArrowUUpLeftIcon,
     ArrowsLeftRightIcon,
     BuildingsIcon,
+    CaretRightIcon,
+    CheckCircleIcon,
     ImageIcon,
     PackageIcon,
     SlidersHorizontalIcon,
@@ -15,21 +17,48 @@ import {
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { Button, type ButtonSize, type ButtonVariant } from '@/components/ui/Button';
+import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import type { InventoryLocation, MovementType, StockRow } from './api';
 
 /** The taka sign — a currency symbol, not translatable copy. */
 export const TAKA = '৳';
 
+/** "0995" → "0996", "999" → "1000": a decimal-string increment for display rounding, never a float. */
+function increment(digits: string): string {
+    const chars = digits.split('');
+    for (let i = chars.length - 1; i >= 0; i--) {
+        if (chars[i] !== '9') {
+            chars[i] = String(Number(chars[i]) + 1);
+            return chars.join('');
+        }
+        chars[i] = '0';
+    }
+    return `1${chars.join('')}`;
+}
+
+const group = (whole: string): string => whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
 /**
- * "1250.00" → "1,250", "1050.4000" → "1,050.4". Groups and trims the server's decimal string;
- * never parses it into a float, never computes (rule 1).
+ * "1250" → "1,250.00", "2937.7371" → "2,937.74", "-100.5" → "-100.50". Money always shows two
+ * decimals (04-admin-spec: unit cost 4 dp in the tooltip, 2 dp displayed). The server's decimal
+ * string is rounded half-up on its digits for display; it is never parsed into a float and no
+ * figure is computed (rule 1).
  */
 export function formatMoney(decimal: string): string {
     const negative = decimal.startsWith('-');
     const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '-' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
+    let cents = `${whole}${fraction.padEnd(2, '0').slice(0, 2)}`;
+    if ((fraction[2] ?? '0') >= '5') cents = increment(cents);
+    cents = cents.replace(/^0+/, '').padStart(3, '0');
+    const zero = /^0+$/.test(cents);
+    return `${negative && !zero ? '-' : ''}${group(cents.slice(0, -2))}.${cents.slice(-2)}`;
+}
+
+/** The server's figure in full ("2,937.7371"): the tooltip behind a rounded amount. */
+export function exactMoney(decimal: string): string {
+    const negative = decimal.startsWith('-');
+    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
+    return `${negative ? '-' : ''}${group(whole.replace(/^0+(?=\d)/, '') || '0')}.${fraction.replace(/0+$/, '').padEnd(2, '0')}`;
 }
 
 /** Western digits with grouping in both locales (rule 36). */
@@ -44,40 +73,100 @@ export function signed(value: number): string {
     return '0';
 }
 
-/** A taka amount as Figma sets it: the sign in the currency face, the figures in the surrounding style. */
+/** A Dhaka day and time ("08 Nov", "12:20 pm"), Western digits in both locales (rules 11, 36). */
+export function dhakaWhen(iso: string | number, locale: string): { day: string; time: string } {
+    const date = new Date(iso);
+    const tag = locale === 'bn' ? 'bn-BD' : 'en-GB';
+    return {
+        day: new Intl.DateTimeFormat(tag, { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', numberingSystem: 'latn' }).format(date),
+        time: new Intl.DateTimeFormat(tag, { timeZone: 'Asia/Dhaka', hour: 'numeric', minute: '2-digit', hour12: true, numberingSystem: 'latn' }).format(date).toLowerCase(),
+    };
+}
+
+/**
+ * A taka amount as Figma sets it: the sign in the currency face, the figures in the surrounding
+ * style, always two decimals. When the server's figure is more precise (a 4 dp unit cost), the
+ * full figure is the tooltip.
+ */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
+    const shown = formatMoney(amount);
+    const exact = exactMoney(amount);
     return (
-        <>
+        <span title={exact !== shown ? `${TAKA}${exact}` : undefined}>
             <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
+            {shown}
+        </span>
+    );
+}
+
+export type KpiTone = 'brand' | 'warning' | 'danger' | 'info' | 'neutral';
+
+const kpiTiles: Record<KpiTone, string> = {
+    brand: 'bg-brand-subtle text-fg-brand',
+    warning: 'bg-warning-subtle text-feedback-warning',
+    danger: 'bg-danger-subtle text-feedback-danger',
+    info: 'bg-info-subtle text-feedback-info',
+    neutral: 'bg-subtle text-fg-secondary',
+};
+
+type KpiCardProps = {
+    label: string;
+    value: ReactNode;
+    hint: ReactNode;
+    icon: ComponentType<IconProps>;
+    tone?: KpiTone;
+    /** A shortcut card (Low stock → the Low stock tab): the whole card is the button. */
+    onClick?: () => void;
+    /** The shortcut's view is the one showing. */
+    active?: boolean;
+    /** Below 640 the card is one of three in a row: label and figure only (the tile and caption return from 640). */
+    compact?: boolean;
+    className?: string;
+};
+
+/**
+ * Inventory KPI card (StatCard 189:360 reworked within Theme B): overline label with a tinted
+ * 32px icon tile at its end, the figure, a caption. No status edge — the tile carries the tone
+ * and the label says what it is, so nothing rests on colour alone. A shortcut card lifts on
+ * hover, ends its caption with a caret, and is pressed while its view is the one showing.
+ */
+export function KpiCard({ label, value, hint, icon: Icon, tone = 'neutral', onClick, active = false, compact = false, className = '' }: KpiCardProps) {
+    const frame = `flex min-w-0 flex-col gap-1.5 rounded-md border bg-surface p-4 text-start shadow-e1 max-sm:p-3 ${
+        active ? 'border-line-brand ring-1 ring-inset ring-line-brand' : 'border-line-default'
+    } ${className}`;
+    const body = (
+        <>
+            <span className="flex items-center justify-between gap-2">
+                <span className={`min-w-0 truncate t-admin-overline text-fg-secondary ${compact ? 'max-sm:min-h-8 max-sm:whitespace-normal' : ''}`}>{label}</span>
+                <span aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-sm ${compact ? 'max-sm:hidden' : ''} ${kpiTiles[tone]}`}>
+                    <Icon size={16} weight="fill" />
+                </span>
+            </span>
+            <span className="tabular text-fg-primary">{value}</span>
+            <span className="flex min-w-0 items-center gap-1 t-admin-caption text-fg-tertiary">
+                <span className={`min-w-0 flex-1 ${compact ? 'max-sm:sr-only' : ''}`}>{hint}</span>
+                {onClick && <CaretRightIcon size={14} aria-hidden className="ms-auto shrink-0 transition-colors duration-150 ease-standard group-hover:text-fg-primary" />}
+            </span>
         </>
     );
-}
-
-/**
- * Figma StatCard 189:360 (Inventory 213:6955 stats): overline label, 26px value, caption.
- * `edge` swaps the hairline for the 3px status edge the Low stock card uses.
- */
-export function StatCard({ label, value, hint, edge }: { label: string; value: ReactNode; hint: ReactNode; edge?: 'low-stock' }) {
-    const frame = edge === 'low-stock' ? 'border-l-3 border-status-low-stock' : 'border border-line-default';
+    if (!onClick) return <div className={frame}>{body}</div>;
     return (
-        <div className={`flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md bg-surface p-4 shadow-e1 ${frame}`}>
-            <p className="t-admin-overline text-fg-secondary">{label}</p>
-            <p className="tabular text-fg-primary">{value}</p>
-            <p className="t-admin-caption text-fg-tertiary">{hint}</p>
-        </div>
+        <button type="button" aria-pressed={active} onClick={onClick} className={`group ${frame} cursor-pointer transition-shadow duration-150 ease-standard hover:shadow-e2`}>
+            {body}
+        </button>
     );
 }
 
 /**
- * The location cards row (B · 14 Inventory 241:39526 "branches"): one card per active
- * location, equal widths, the selected one in brand-subtle with a 2px brand edge. Name,
- * what the location is for (its description), units and value at cost.
+ * The location cards row (B · 14 Inventory 241:39526 "branches"): one card per active location,
+ * each a filter for the whole page (stats, tabs, table). The selected one is brand-subtle with a
+ * brand hairline and a check in place of its icon, so the choice never rests on colour alone.
+ * Below 1024 the row scrolls sideways instead of stacking three tall cards above the stock.
  */
 export function LocationCards({ locations, selected, showValue, onSelect }: { locations: InventoryLocation[]; selected: number; showValue: boolean; onSelect: (id: number) => void }) {
     const { t, locale } = useI18n();
     return (
-        <div role="group" aria-label={t('inventory.locations')} className="flex flex-wrap gap-4">
+        <div role="group" aria-label={t('inventory.locations')} className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 md:-mx-5 md:px-5 lg:mx-0 lg:flex-wrap lg:gap-4 lg:overflow-visible lg:px-0">
             {locations.map((location) => {
                 const active = location.id === selected;
                 const Icon = location.is_default ? WarehouseIcon : BuildingsIcon;
@@ -87,11 +176,13 @@ export function LocationCards({ locations, selected, showValue, onSelect }: { lo
                         type="button"
                         aria-pressed={active}
                         onClick={() => onSelect(location.id)}
-                        className={`flex min-w-0 flex-1 basis-64 items-center gap-3 rounded-md px-4 py-3.5 text-start transition-colors duration-150 ease-standard ${
-                            active ? 'border-2 border-brand bg-brand-subtle' : 'border border-line-default bg-surface hover:bg-subtle'
+                        className={`flex min-w-0 shrink-0 basis-80 snap-start items-center gap-3 rounded-md border px-4 py-3 text-start transition-colors duration-150 ease-standard lg:flex-1 ${
+                            active ? 'border-line-brand bg-brand-subtle ring-1 ring-inset ring-line-brand' : 'border-line-default bg-surface hover:bg-subtle'
                         }`}
                     >
-                        <Icon size={22} aria-hidden className="shrink-0 text-fg-secondary" />
+                        <span aria-hidden className={`grid size-9 shrink-0 place-items-center rounded-sm ${active ? 'bg-surface text-fg-brand' : 'bg-subtle text-fg-secondary'}`}>
+                            {active ? <CheckCircleIcon size={20} weight="fill" /> : <Icon size={20} />}
+                        </span>
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="truncate t-admin-body-strong text-fg-primary">{locale === 'bn' ? (location.name_bn ?? location.name) : location.name}</span>
                             <span className="truncate t-admin-caption text-fg-tertiary">
@@ -114,40 +205,63 @@ export function LocationCards({ locations, selected, showValue, onSelect }: { lo
     );
 }
 
-/** Thumbnail + product · variant name + SKU (DataTable product cell). */
-export function VariantCell({ row }: { row: Pick<StockRow, 'image_url' | 'product_name' | 'product_name_bn' | 'variant_name' | 'variant_name_bn' | 'sku'> }) {
+type VariantNames = Pick<StockRow, 'image_url' | 'product_name' | 'product_name_bn' | 'variant_name' | 'variant_name_bn' | 'sku'>;
+
+/** "LEGO Classic Creative Bricks / 90 pcs · Box" in the current language: accessible names and tooltips. */
+export function variantLabel(row: Pick<VariantNames, 'product_name' | 'product_name_bn' | 'variant_name' | 'variant_name_bn'>, locale: string): string {
+    const bn = locale === 'bn';
+    const product = bn ? (row.product_name_bn ?? row.product_name) : row.product_name;
+    const variant = bn ? (row.variant_name_bn ?? row.variant_name) : row.variant_name;
+    return variant ? `${product} / ${variant}` : product;
+}
+
+/**
+ * Thumbnail + product name + the variant as its own tag + SKU (DataTable product cell). Six
+ * variants of one product now read apart at a glance: the product line is the same, the tag is
+ * not. The full name is the tooltip when the line is cut.
+ */
+export function VariantCell({ row }: { row: VariantNames }) {
     const { locale } = useI18n();
     const bn = locale === 'bn';
     const product = bn ? (row.product_name_bn ?? row.product_name) : row.product_name;
     const variant = bn ? (row.variant_name_bn ?? row.variant_name) : row.variant_name;
     return (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-3">
             {row.image_url ? (
-                <img src={row.image_url} alt="" className="size-9 shrink-0 rounded-xs-plus object-cover" />
+                <img src={row.image_url} alt="" loading="lazy" className="size-10 shrink-0 rounded-xs-plus border border-line-default object-cover" />
             ) : (
-                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-xs-plus bg-subtle text-fg-tertiary">
-                    <ImageIcon size={16} />
+                <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xs-plus border border-line-default bg-subtle text-fg-tertiary">
+                    <ImageIcon size={18} />
                 </span>
             )}
-            <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="truncate t-admin-body-strong text-fg-primary">{variant ? `${product} / ${variant}` : product}</p>
-                <p className="truncate t-admin-mono-sm text-fg-tertiary">{row.sku}</p>
+            <div className="flex min-w-0 flex-col gap-1">
+                <p className="line-clamp-2 t-admin-body-strong text-fg-primary" title={variantLabel(row, locale)}>
+                    {product}
+                </p>
+                {/* The variant tag keeps its full width; the SKU is what gets cut. */}
+                <p className="flex min-w-0 items-center gap-2">
+                    {variant && (
+                        <span className="max-w-full shrink-0 truncate rounded-xs border border-line-default bg-subtle px-1.5 t-admin-caption-strong text-fg-primary">{variant}</span>
+                    )}
+                    <span className="min-w-0 truncate t-admin-mono-sm text-fg-tertiary">{row.sku}</span>
+                </p>
             </div>
         </div>
     );
 }
 
-/** Available with its state (B · 14 "avail" 241:39587): a 2px status edge + "low"/"out" word, never colour alone. Healthy and overstock rows show the plain number. */
-export function AvailableCell({ available, state }: { available: number; state: StockRow['state'] }) {
+const stockLooks: Record<'ok' | 'low' | 'out' | 'overstock', { tone: StatusTone; label: MessageKey }> = {
+    ok: { tone: 'success', label: 'inventory.status.ok' },
+    low: { tone: 'warning', label: 'inventory.status.low' },
+    out: { tone: 'danger', label: 'inventory.status.out' },
+    overstock: { tone: 'info', label: 'inventory.status.overstock' },
+};
+
+/** One status per row — In stock / Low stock / Out of stock / Overstock: icon shape + label + tint, never colour alone. The state is the server's. */
+export function StockStatusChip({ state }: { state: StockRow['state'] }) {
     const { t } = useI18n();
-    if (state !== 'low' && state !== 'out') return <span className="t-admin-num tabular text-fg-primary">{formatUnits(available)}</span>;
-    const edge = state === 'low' ? 'border-status-low-stock' : 'border-status-out-of-stock';
-    return (
-        <span className={`inline-flex items-center gap-1 rounded-xs border-l-2 bg-subtle py-0.75 ps-1.5 pe-2 whitespace-nowrap ${edge}`}>
-            <span className="t-admin-num tabular text-fg-primary">{formatUnits(available)}</span>
-            <span className="t-admin-caption text-fg-secondary">{t(state === 'low' ? 'inventory.state.low' : 'inventory.state.out')}</span>
-        </span>
-    );
+    const look = stockLooks[state ?? 'ok'];
+    return <StatusChip tone={look.tone} label={t(look.label)} />;
 }
 
 /**

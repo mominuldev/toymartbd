@@ -9,6 +9,9 @@ async function signIn(page: Page) {
     await expect(page.getByRole('heading', { name: 'Inventory', exact: true })).toBeVisible();
 }
 
+/** The stock-state tabs (a KPI card is also labelled "Low stock"). */
+const tabs = (page: Page) => page.getByRole('group', { name: 'Stock state' });
+
 test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfer', async ({ page }) => {
     await signIn(page);
 
@@ -17,14 +20,18 @@ test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfe
     await expect(page.getByRole('button', { name: /Transfer stock/ })).toBeEnabled();
     // The nav badge is the server's low-stock count at Dhaka HQ, the same as the Low stock tab.
     await expect(page.getByRole('link', { name: /Inventory.*3 low on stock/ }).first()).toBeAttached();
-    await page.getByRole('button', { name: /^Low stock\s*3$/ }).click();
+    await tabs(page).getByRole('button', { name: /^Low stock\s*3$/ }).click();
     await expect(page).toHaveURL(/state=low/);
 
     // The Barbie doll: 3 at Dhaka, 4 available in Chattogram (seeded opening balances).
     const barbie = page.getByRole('row', { name: /Barbie/ });
-    await expect(barbie).toContainText('CTG 4 · SYL 0');
-    await expect(barbie.getByRole('link', { name: 'Create PO' })).toHaveAttribute('href', /\/purchasing\/new\?sku=/);
-    await expect(barbie.getByRole('button', { name: 'Transfer 4' })).toBeEnabled();
+    await expect(barbie).toContainText('Chattogram · Agrabad: 4 available');
+    await expect(barbie).toContainText('Sylhet pickup point: 0 available');
+    // A low row's ⋯ menu offers Create PO and a transfer from the branch that has stock.
+    await barbie.getByRole('button', { name: /^Actions for Barbie/ }).click();
+    await expect(page.getByRole('menuitem', { name: 'Create PO' })).toHaveAttribute('href', /\/purchasing\/new\?sku=/);
+    await expect(page.getByRole('menuitem', { name: /^Transfer 4 from Chattogram/ })).toBeEnabled();
+    await page.keyboard.press('Escape');
 
     // Selecting Chattogram scopes the page; the URL carries it.
     await page.getByRole('button', { name: /Chattogram · Agrabad/ }).click();
@@ -41,11 +48,12 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     // click the table can still show All variants, which picked a healthy variant that
     // the Low stock list then no longer contained (flaky on CI).
     const sku = 'TMB-LEG-CL484';
-    await page.getByRole('button', { name: /^Low stock/ }).click();
+    await tabs(page).getByRole('button', { name: /^Low stock/ }).click();
     await expect(page.getByRole('row').filter({ hasText: 'TM-00001-90PCS-BOX' })).toHaveCount(0);
     const row = page.getByRole('row').filter({ hasText: sku });
     await expect(row).toHaveCount(1);
-    const onHandBefore = Number((await row.getByRole('cell').nth(1).innerText()).replace(/\D/g, ''));
+    // Cells: expand · product · status · on hand …
+    const onHandBefore = Number((await row.getByRole('cell').nth(3).innerText()).replace(/\D/g, ''));
     expect(onHandBefore).toBeGreaterThan(1);
 
     // Adjusting lives in the header (Figma's rows carry no Adjust): search, pick, record.
@@ -62,7 +70,7 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     await dialog.getByLabel(/Note/).fill('Crushed box — বাক্স ভাঙা');
     await dialog.getByRole('button', { name: 'Record adjustment' }).click();
     await expect(page.getByText(/^Adjustment ADJ-\d{4}-\d{4} recorded$/)).toBeVisible();
-    await expect(row.getByRole('cell').nth(1)).toHaveText(new RegExp(`${onHandBefore - 1}$`));
+    await expect(row.getByRole('cell').nth(3)).toHaveText(new RegExp(`${onHandBefore - 1}$`));
 
     // A reason that only removes stock cannot add it: the server refuses the line.
     await pick();
@@ -72,9 +80,10 @@ test('owner records damage on a variant; the ledger shows it and still matches t
     await expect(dialog.getByText(/reserved for open orders|unchanged|can only/)).toBeVisible();
     await dialog.getByRole('button', { name: 'Cancel' }).click();
 
-    // A healthy row's Ledger opens the movements ledger; clearing its variant shows every movement.
-    await page.getByRole('button', { name: /^All variants/ }).click();
-    await page.getByRole('link', { name: 'Ledger' }).first().click();
+    // A row's ⋯ → View ledger opens the movements ledger; clearing its variant shows every movement.
+    await tabs(page).getByRole('button', { name: /^All variants/ }).click();
+    await page.getByRole('button', { name: /^Actions for / }).first().click();
+    await page.getByRole('menuitem', { name: 'View ledger' }).click();
     await expect(page.getByRole('heading', { name: 'Stock movements' })).toBeVisible();
     await page.getByRole('button', { name: 'Show every variant' }).click();
     const ledger = page.getByRole('table');

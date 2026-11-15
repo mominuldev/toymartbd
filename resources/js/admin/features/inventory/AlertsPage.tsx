@@ -17,6 +17,7 @@ import {
     alertKinds,
     useAcknowledgeAlert,
     useAlerts,
+    useInventorySummary,
     type AlertKind,
     type InventoryAlert,
 } from "./api";
@@ -26,8 +27,9 @@ import { VariantCell, formatUnits, signed } from "./parts";
 const kindTone: Record<AlertKind, StatusTone> = {
     ledger_drift: "danger",
     reserved_drift: "danger",
-    out_of_stock: "warning",
-    low_stock: "anomaly",
+    // The same tones as the overview's status chips; no status edge.
+    out_of_stock: "danger",
+    low_stock: "warning",
 };
 
 /**
@@ -47,6 +49,12 @@ export function AlertsPage() {
         ? (kindParam as AlertKind)
         : "";
     const list = useAlerts({ kind });
+    // Branch names for the location codes (tooltip and screen readers).
+    const locations = useInventorySummary("").data?.locations ?? [];
+    const branchName = (code: string) => {
+        const l = locations.find((x) => x.code === code);
+        return l ? (locale === "bn" ? (l.name_bn ?? l.name) : l.name) : undefined;
+    };
     const rows = useMemo(
         () => list.data?.pages.flatMap((page) => page.data) ?? [],
         [list.data],
@@ -213,7 +221,10 @@ export function AlertsPage() {
                                         <td
                                             className={`${cell} t-admin-body-strong text-fg-secondary`}
                                         >
-                                            {a.location_code.toUpperCase()}
+                                            <span title={branchName(a.location_code)}>
+                                                <span aria-hidden={branchName(a.location_code) ? true : undefined}>{a.location_code.toUpperCase()}</span>
+                                                {branchName(a.location_code) && <span className="sr-only">{branchName(a.location_code)}</span>}
+                                            </span>
                                         </td>
                                         <td
                                             className={`${cell} t-admin-body tabular text-fg-primary`}

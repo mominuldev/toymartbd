@@ -43,6 +43,8 @@ type AdjustmentDialogProps = {
     initialReason: AdjustmentReason;
     locations: InventoryLocation[];
     locationId: number;
+    /** After a successful save, with the variant adjusted (the overview highlights its row). */
+    onSaved?: (variantId: number) => void;
 };
 
 /**
@@ -52,7 +54,7 @@ type AdjustmentDialogProps = {
  * from the API's FormRequest (rule 27); the server stays the authority and its 422 lands on
  * the same fields. One Idempotency-Key per opening, so a retry never adjusts twice.
  */
-export function AdjustmentDialog({ open, onClose, row, initialReason, locations, locationId }: AdjustmentDialogProps) {
+export function AdjustmentDialog({ open, onClose, row, initialReason, locations, locationId, onSaved }: AdjustmentDialogProps) {
     const { t } = useI18n();
     const { notify } = useToast();
     const ref = useRef<HTMLDialogElement>(null);
@@ -140,6 +142,7 @@ export function AdjustmentDialog({ open, onClose, row, initialReason, locations,
             {
                 onSuccess: (adjustment) => {
                     notify(t(adjustment.status === 'pending' ? 'adjust.pendingSaved' : 'adjust.saved', { number: adjustment.number }));
+                    onSaved?.(input.lines[0]!.variant_id);
                     onClose();
                 },
                 onError: (error) => {

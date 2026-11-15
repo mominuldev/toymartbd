@@ -40,7 +40,7 @@ export function renderApp(path: string, { locale = 'en' }: { locale?: Locale } =
         </QueryClientProvider>,
     );
 
-    return { ...view, client };
+    return { ...view, client, router };
 }
 
 export const viewer: Me = {

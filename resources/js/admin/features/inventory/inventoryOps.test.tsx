@@ -74,8 +74,16 @@ describe("stock transfer", () => {
             ).disabled,
         ).toBe(false);
 
+        // The short row's menu offers the transfer from the branch that has it, named in full.
         fireEvent.click(
-            within(table).getByRole("button", { name: "Transfer 4" }),
+            within(table).getByRole("button", {
+                name: "Actions for Wooden Alphabet Puzzle",
+            }),
+        );
+        fireEvent.click(
+            within(await screen.findByRole("menu")).getByRole("menuitem", {
+                name: "Transfer 4 from Chattogram · Agrabad",
+            }),
         );
         const dialog = await screen.findByRole("dialog", {
             name: "Transfer stock",
