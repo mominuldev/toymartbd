@@ -9,7 +9,7 @@ use App\Domain\Pos\Models\PosSession;
 use App\Models\Enums\Permission;
 use App\Models\User;
 
-/** A parked cart belongs to its drawer: resumed by that drawer's cashier (`pos.use`), or `pos.manage`. */
+/** A parked cart belongs to its drawer: resumed or discarded by that drawer's cashier (`pos.use`), or `pos.manage`. */
 final class PosHeldSalePolicy extends Policy
 {
     public function resume(User $user, PosHeldSale $hold): bool
@@ -20,5 +20,10 @@ final class PosHeldSalePolicy extends Policy
         $session = PosSession::query()->find($hold->session_id);
 
         return $session !== null && $this->allows($user, Permission::PosUse) && $session->opened_by === $user->id;
+    }
+
+    public function discard(User $user, PosHeldSale $hold): bool
+    {
+        return $this->resume($user, $hold);
     }
 }

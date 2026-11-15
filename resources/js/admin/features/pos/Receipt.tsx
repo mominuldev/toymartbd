@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
-import { useI18n } from '@/i18n/I18nProvider';
+import { translate, type Locale } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { useReceipt, type PosReceipt } from './api';
 import { dhakaDateTime, isZeroAmount, takaText } from './format';
 
 /**
  * The printable counter receipt (browser print, any receipt printer the OS knows). Hidden on
- * screen; `window.print()` runs once the server's receipt has loaded. Bangla or English with
- * the UI, Western digits in both (rule 36), times in Dhaka (rule 11). Every figure is the
- * order's own; the customer's phone is masked (rule 20).
+ * screen; `window.print()` runs once the server's receipt has loaded. In the language the
+ * cashier picks for this customer (English or Bangla, defaulting to the UI's), Western digits in
+ * both (rule 36), times in Dhaka (rule 11). Every figure is the order's own; the customer's
+ * phone is masked (rule 20).
  */
-export function Receipt({ saleId, onDone }: { saleId: number; onDone: () => void }) {
+export function Receipt({ saleId, language, onDone }: { saleId: number; language: Locale; onDone: () => void }) {
     const receipt = useReceipt(saleId);
 
     useEffect(() => {
@@ -21,12 +22,17 @@ export function Receipt({ saleId, onDone }: { saleId: number; onDone: () => void
         return () => window.removeEventListener('afterprint', done);
     }, [receipt.data, onDone]);
 
-    return receipt.data ? <ReceiptBody receipt={receipt.data} /> : null;
+    return receipt.data ? <ReceiptBody receipt={receipt.data} language={language} /> : null;
 }
 
-export function ReceiptBody({ receipt }: { receipt: PosReceipt }) {
-    const { t, locale } = useI18n();
-    const bn = locale === 'bn';
+/**
+ * `language` is the receipt's own, independent of the admin UI's. `preview` shows it on screen
+ * as well (the Sale complete paper); otherwise it exists for print only.
+ */
+export function ReceiptBody({ receipt, language, preview = false }: { receipt: PosReceipt; language: Locale; preview?: boolean }) {
+    const t = (key: MessageKey, vars?: Record<string, string | number>) => translate(language, key, vars);
+    const locale = language;
+    const bn = language === 'bn';
     const store = receipt.store;
     const name = (bn ? store.name_bn : store.name_en) || store.name_en;
     const address = bn ? (store.address_bn ?? store.address_en) : (store.address_en ?? store.address_bn);
@@ -40,7 +46,12 @@ export function ReceiptBody({ receipt }: { receipt: PosReceipt }) {
         );
 
     return (
-        <section aria-label={t('pos.receipt.title')} data-testid="pos-receipt" className="hidden w-full max-w-xs flex-col gap-2 t-admin-caption text-fg-primary print:flex">
+        <section
+            aria-label={t('pos.receipt.title')}
+            lang={language}
+            data-testid="pos-receipt"
+            className={`${preview ? 'flex' : 'hidden print:flex'} ${bn ? 'lang-bn' : ''} w-full max-w-xs flex-col gap-2 t-admin-caption text-fg-primary`}
+        >
             <header className="flex flex-col items-center gap-0.5 text-center">
                 <p className="t-admin-body-strong">{name}</p>
                 {address && <p>{address}</p>}
@@ -86,6 +97,12 @@ export function ReceiptBody({ receipt }: { receipt: PosReceipt }) {
                     <div className="flex justify-between">
                         <dt>{t('pos.receipt.tendered')}</dt>
                         <dd>{takaText(receipt.cash_tendered)}</dd>
+                    </div>
+                )}
+                {!isZeroAmount(receipt.due_amount) && (
+                    <div className="flex justify-between t-admin-body-strong">
+                        <dt>{t('pos.receipt.due')}</dt>
+                        <dd>{takaText(receipt.due_amount)}</dd>
                     </div>
                 )}
                 <div className="flex justify-between">

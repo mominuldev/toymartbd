@@ -25,11 +25,13 @@ use App\Domain\Ordering\Services\OrderNumberGenerator;
 use App\Domain\Ordering\Services\OrderTransitions;
 use App\Domain\Payment\Services\PaymentTransitions;
 use App\Domain\Pos\DTOs\SaleData;
+use App\Domain\Pos\Enums\CounterTender;
 use App\Domain\Pos\Exceptions\PosRefused;
 use App\Domain\Pos\Jobs\RecordPosTendersInLedger;
 use App\Domain\Pos\Models\PosSale;
 use App\Domain\Pos\Models\PosSession;
 use App\Domain\Pos\Services\PosCustomers;
+use App\Domain\Pos\Services\PosDues;
 use App\Domain\Pos\Services\PosQuotes;
 use App\Domain\Pos\Tenders\TenderRegistry;
 use App\Support\Money;
@@ -45,22 +47,28 @@ use Illuminate\Validation\ValidationException;
  *   2. re-price the lines through the checkout pipeline (PosQuotes, rule 1) and refuse on any
  *      blocker; refuse when the total differs from the one the cashier saw (`price-changed`);
  *   3. plan the tenders (TenderPlanner): split allowed, non-cash needs a reference, change is
- *      computed here and only from cash; refuse unless they settle the total exactly;
+ *      computed here and only from cash; refuse unless they settle the total exactly. A `due`
+ *      tender (owner decision 2026-11-15) settles part of the total with no money: it needs
+ *      `pos.sell_on_due` and a known customer (PosDues);
  *   4. reserve the lines at the SESSION'S BRANCH — FOR UPDATE, ascending variant id, all or
  *      nothing (rule 9); short anywhere → InsufficientStock, nothing written;
- *   5. customer by phone, or the anonymous walk-in row (PosCustomers);
+ *   5. customer by phone, or the anonymous walk-in row (PosCustomers) — locked FOR UPDATE.
+ *      With due, the guards run again on the LOCKED customer and a locking read of their open
+ *      POS orders, so two concurrent due sales for one customer cannot both pass the limit;
  *   6. the order: source `pos`, at the branch's address, already handed over — so it is
  *      written in `shipped` / `fulfilled` and moved to `delivered` below through the state
  *      machine; items with `cost_price_snapshot` from the BRANCH's average cost (rule 7);
  *   7. consume the reservation as `sale_out` movements at the branch (Σ movements = on_hand);
- *   8. one payment per tender through PaymentTransitions (pending → paid by the tender's
- *      driver; rule 5), then the order's payment_status re-derived (→ paid);
+ *   8. one payment per money tender through PaymentTransitions (pending → paid by the tender's
+ *      driver; rule 5) — none for due — then the order's payment_status re-derived (→ paid, or
+ *      partially paid / unpaid with `due_total` > 0 when part of it is on due);
  *   9. coupon and promotion usage under their own locks (limits re-checked);
  *  10. the `placed` timeline row, then shipped → delivered: OrderDelivered (after commit)
  *      makes Finance recognise sale revenue, discount and COGS on the Dhaka day of sale —
  *      the existing, idempotent delivery path, so a POS sale's P&L is built like any other;
- *  11. the pos_sales row (cash tendered, change, key). After commit, the tenders are booked
- *      as cash (`pos_receipt`, is_cash_movement, never revenue — rule 10) by a queued job.
+ *  11. the pos_sales row (cash tendered, change, due, key). After commit, the paid tenders are
+ *      booked as cash (`pos_receipt`, is_cash_movement, never revenue — rule 10) by a queued
+ *      job. The due part books nothing: it is revenue (recognised on delivery) not yet cash.
  *
  * No external call anywhere (rule 4): tenders are manual, no gateway is live.
  *
@@ -87,6 +95,7 @@ final readonly class ChargeSale
         private CouponUsages $couponUsages,
         private PromotionUsages $promotionUsages,
         private TenderRegistry $tenders,
+        private PosDues $dues,
     ) {}
 
     public function handle(SaleData $data): PosSale
@@ -119,7 +128,7 @@ final readonly class ChargeSale
         }
 
         // 2–3. Price and plan, from current data only.
-        $quote = $this->quotes->quote($session->location_id, $data->lines, $data->couponCode, $data->phone, $data->tenders);
+        $quote = $this->quotes->quote($session->location_id, $data->lines, $data->couponCode, $data->phone, $data->tenders, $data->customerName, $data->canSellOnDue);
         if ($quote->blockers !== []) {
             throw self::invalid($quote->blockers);
         }
@@ -144,8 +153,15 @@ final readonly class ChargeSale
         $locationId = $session->location_id;
         $this->reservations->reserve($lines, $locationId);
 
-        // 5. Customer.
+        // 5. Customer, row-locked. Due: re-check the guards on the locked row (the limit with a
+        //    locking read — the quote above read a snapshot).
         $customer = $this->customers->forSale($data->phone, $data->customerName);
+        if ($plan->hasDue()) {
+            $errors = $this->dues->guard($plan, $data->canSellOnDue, $data->phone !== null, $customer, $data->customerName, $this->dues->openDue($customer->id, lock: true));
+            if ($errors !== []) {
+                throw self::invalid($errors);
+            }
+        }
 
         // 6. The order, handed over at the counter.
         $location = $session->location;
@@ -199,10 +215,10 @@ final readonly class ChargeSale
         usort($consume, static fn (array $a, array $b): int => $a['variant_id'] <=> $b['variant_id']);
         $this->consume->handle($consume, OrderDispatcher::STOCK_REFERENCE, $order->id, $data->cashierId, $locationId);
 
-        // 8. Payments, one per tender, each through its driver.
+        // 8. Payments, one per money tender, each through its driver (due writes none).
         foreach ($plan->payments as $row) {
             $payment = $this->payments->open($order->id, $row['method'], $row['amount']);
-            $result = $this->tenders->for($row['method'])->capture($payment, $row['amount'], $row['reference'], $data->cashierId);
+            $result = $this->tenders->for(CounterTender::from($row['method']->value))->capture($payment, $row['amount'], $row['reference'], $data->cashierId);
             $this->payments->apply($payment, $result, $data->cashierId);
         }
 
@@ -237,6 +253,7 @@ final readonly class ChargeSale
             'tendered_total' => $plan->tendered,
             'cash_tendered' => $plan->cashTendered,
             'change_due' => $plan->change,
+            'due_amount' => $plan->dueAmount(),
         ]);
 
         RecordPosTendersInLedger::dispatch($sale->id)->afterCommit();

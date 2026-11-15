@@ -23,6 +23,8 @@ use Illuminate\Support\Carbon;
  * @property int $held_by
  * @property Carbon|null $resumed_at
  * @property int|null $resumed_by
+ * @property Carbon|null $discarded_at
+ * @property int|null $discarded_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read PosSession $session
@@ -66,6 +68,8 @@ final class PosHeldSale extends Model
             'held_by' => 'integer',
             'resumed_by' => 'integer',
             'resumed_at' => 'datetime',
+            'discarded_by' => 'integer',
+            'discarded_at' => 'datetime',
         ];
     }
 }

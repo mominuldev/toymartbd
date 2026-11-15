@@ -33,6 +33,8 @@ final class PosSaleResource extends ApiResource
             'tendered_total' => $sale->tendered_total->toDecimal(),
             'cash_tendered' => $sale->cash_tendered->toDecimal(),
             'change_due' => $sale->change_due->toDecimal(),
+            /** Put on the customer's due (no payment), "0.00" for a fully paid sale. */
+            'due_amount' => $sale->due_amount->toDecimal(),
             /** @var string|null */
             'created_at' => $sale->created_at?->toIso8601String(),
         ];

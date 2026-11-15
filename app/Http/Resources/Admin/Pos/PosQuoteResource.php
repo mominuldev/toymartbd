@@ -65,12 +65,17 @@ final class PosQuoteResource extends ApiResource
             /** @var list<array{field: string, message: string}> */
             'blockers' => $quote->blockers,
             'chargeable' => $quote->chargeable(),
-            /** @var array{tendered: string, cash_tendered: string, remaining: string, change: string, errors: list<array{field: string, message: string}>}|null */
+            /**
+             * `tendered` is money handed over; `due` is what is put on the customer's due ("0.00" when none).
+             *
+             * @var array{tendered: string, cash_tendered: string, remaining: string, change: string, due: string, errors: list<array{field: string, message: string}>}|null
+             */
             'tenders' => $plan === null ? null : [
                 'tendered' => $plan->tendered->toDecimal(),
                 'cash_tendered' => $plan->cashTendered->toDecimal(),
                 'remaining' => $plan->remaining->toDecimal(),
                 'change' => $plan->change->toDecimal(),
+                'due' => $plan->dueAmount()->toDecimal(),
                 'errors' => $plan->errors,
             ],
         ];

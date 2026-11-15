@@ -52,9 +52,10 @@ it('pins the matrix shape so a change is deliberate', function (): void {
         // P4-CAT-12: + reviews.moderate (super_admin, manager, content_editor).
         // P5-INV: + inventory.approve_adjustments (super_admin, manager).
         // P10 POS: + pos.use (super_admin, manager, order_operator), + pos.manage (super_admin, manager).
-        'super_admin' => 69,
+        // 2026-11-15 owner decision (POS due / baki): + pos.sell_on_due (super_admin, manager).
+        'super_admin' => 70,
         // 2026-11-13 owner decision: + settings.manage_integrations (manager).
-        'manager' => 67,
+        'manager' => 68,
         'order_operator' => 24,
         'inventory_staff' => 12,
         'accountant' => 20,

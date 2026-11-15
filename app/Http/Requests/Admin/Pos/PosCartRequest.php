@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Pos;
 
-use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Pos\DTOs\TenderInput;
+use App\Domain\Pos\Enums\CounterTender;
 use App\Domain\Pos\Models\PosSession;
 use App\Domain\Pos\Tenders\TenderRegistry;
 use App\Http\Requests\ApiFormRequest;
+use App\Models\Enums\Permission;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 use Illuminate\Validation\Rule;
@@ -48,6 +49,7 @@ abstract class PosCartRequest extends ApiFormRequest
     {
         return [
             'tenders' => [$required ? 'present' : 'nullable', 'array', 'max:8'],
+            /** `due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name). */
             'tenders.*.method' => ['required', 'string', Rule::in(TenderRegistry::methods())],
             /** What the customer handed over in this tender, e.g. `4000.00` cash for a ৳3,455 total. */
             'tenders.*.amount' => ['required', 'string', 'regex:'.self::MONEY],
@@ -89,6 +91,19 @@ abstract class PosCartRequest extends ApiFormRequest
         return is_string($phone) && trim($phone) !== '' ? PhoneNumber::tryParse($phone) : null;
     }
 
+    public function customerName(): ?string
+    {
+        $name = $this->input('customer_name');
+
+        return is_string($name) && trim($name) !== '' ? trim($name) : null;
+    }
+
+    /** The signed-in cashier may put a sale on due (`pos.sell_on_due`). */
+    public function canSellOnDue(): bool
+    {
+        return $this->user()?->can(Permission::PosSellOnDue->value) ?? false;
+    }
+
     public function couponCode(): ?string
     {
         $code = $this->input('coupon_code');
@@ -110,7 +125,7 @@ abstract class PosCartRequest extends ApiFormRequest
             }
             $reference = $tender['reference'] ?? null;
             $tenders[] = new TenderInput(
-                PaymentMethod::from($tender['method']),
+                CounterTender::from($tender['method']),
                 Money::of($tender['amount']),
                 is_string($reference) ? $reference : null,
             );

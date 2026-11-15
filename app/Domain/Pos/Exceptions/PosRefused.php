@@ -33,4 +33,9 @@ final class PosRefused extends ConflictHttpException
     {
         return new self((string) __('pos.hold_resumed'));
     }
+
+    public static function holdDiscarded(): self
+    {
+        return new self((string) __('pos.hold_discarded'));
+    }
 }

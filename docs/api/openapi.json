@@ -22042,7 +22042,7 @@
         "/admin/pos/customers": {
             "get": {
                 "operationId": "v1.admin.pos.customers.show",
-                "summary": "`GET /pos/customers?phone=` \u2014 whose number this is (null for a new one)",
+                "summary": "`GET /pos/customers?phone=` \u2014 whose number this is (null for a new one), with their open due",
                 "tags": [
                     "Admin"
                 ],
@@ -22065,6 +22065,60 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/PosCustomer"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/customers/search": {
+            "get": {
+                "operationId": "v1.admin.pos.customers.search",
+                "summary": "`GET /pos/customers/search?q=` \u2014 up to 8 customers by name or phone digits, most recent order first, with their due",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "description": "A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters.",
+                        "schema": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 64
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `PosCustomerMatch`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PosCustomerMatch"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
                                 }
                             }
                         }
@@ -22617,6 +22671,188 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/holds/{hold}": {
+            "delete": {
+                "operationId": "v1.admin.pos.holds.destroy",
+                "summary": "`DELETE /pos/holds/{hold}` \u2014 throw a parked cart away. Once only; open drawer only. 204",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "hold",
+                        "in": "path",
+                        "required": true,
+                        "description": "The hold ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "409": {
+                        "description": "Already resumed or discarded, or the drawer is closed (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/due-collections/quote": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.due-collections.quote",
+                "summary": "`POST /pos/sessions/{session}/due-collections/quote` \u2014 FIFO preview, change, what stays owed. Writes nothing",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuoteDueCollectionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosDueQuote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosDueQuote"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/pos/sessions/{session}/due-collections": {
+            "post": {
+                "operationId": "v1.admin.pos.sessions.due-collections.store",
+                "summary": "`POST /pos/sessions/{session}/due-collections` \u2014 take the money. Needs an\n`Idempotency-Key`; a replay returns the first collection. 201",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "session",
+                        "in": "path",
+                        "required": true,
+                        "description": "The session ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollectDueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosDueCollection`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosDueCollection"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "No open due, non-cash above the due, a missing reference, or nothing tendered (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Drawer closed (`conflict`) or key in flight (`request-in-progress`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -37320,11 +37556,13 @@
                             "properties": {
                                 "method": {
                                     "type": "string",
+                                    "description": "`due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).",
                                     "enum": [
                                         "cash",
                                         "bkash",
                                         "nagad",
-                                        "card"
+                                        "card",
+                                        "due"
                                     ]
                                 },
                                 "amount": {
@@ -37358,7 +37596,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "Printed on the receipt for a new customer; an existing customer keeps their name.",
+                        "description": "Printed on the receipt for a new customer; an existing customer keeps their name (a \"Walk-in customer\" placeholder is replaced). A due tender needs a name.",
                         "maxLength": 160
                     }
                 },
@@ -38446,6 +38684,57 @@
                     "url"
                 ],
                 "title": "CmsPreviewToken"
+            },
+            "CollectDueRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/due-collections` \u2014 take the money. Requires an `Idempotency-Key` (rule 17).",
+                "properties": {
+                    "customer_phone": {
+                        "type": "string",
+                        "description": "The customer's mobile, as typed (013\u2013019, rule 30).",
+                        "maxLength": 32
+                    },
+                    "tenders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cash",
+                                        "bkash",
+                                        "nagad",
+                                        "card"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string",
+                                    "description": "What the customer handed over in this tender; cash may exceed the due (change).",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender.",
+                                    "maxLength": 64
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "amount"
+                            ]
+                        },
+                        "maxItems": 8
+                    }
+                },
+                "required": [
+                    "customer_phone",
+                    "tenders"
+                ],
+                "title": "CollectDueRequest"
             },
             "ConfirmOrderRequest": {
                 "type": "object",
@@ -51313,7 +51602,8 @@
                             "roles.manage",
                             "audit.view",
                             "pos.use",
-                            "pos.manage"
+                            "pos.manage",
+                            "pos.sell_on_due"
                         ]
                     },
                     "owner_only": {
@@ -52378,7 +52668,8 @@
                                         "cash",
                                         "bkash",
                                         "nagad",
-                                        "card"
+                                        "card",
+                                        "due"
                                     ]
                                 },
                                 "requires_reference": {
@@ -52386,14 +52677,22 @@
                                 },
                                 "gives_change": {
                                     "type": "boolean"
+                                },
+                                "requires_customer": {
+                                    "type": "boolean"
                                 }
                             },
                             "required": [
                                 "method",
                                 "requires_reference",
-                                "gives_change"
+                                "gives_change",
+                                "requires_customer"
                             ]
                         }
+                    },
+                    "due_limit": {
+                        "type": "string",
+                        "description": "Store-wide due limit per customer, e.g. `5000.00`."
                     },
                     "categories": {
                         "type": "array",
@@ -52453,6 +52752,7 @@
                 "required": [
                     "locations",
                     "tenders",
+                    "due_limit",
                     "categories",
                     "session",
                     "can_manage",
@@ -52481,12 +52781,24 @@
                             },
                             "orders_count": {
                                 "type": "integer"
+                            },
+                            "open_due": {
+                                "type": "string"
+                            },
+                            "due_limit": {
+                                "type": "string"
+                            },
+                            "due_available": {
+                                "type": "string"
                             }
                         },
                         "required": [
                             "id",
                             "name",
-                            "orders_count"
+                            "orders_count",
+                            "open_due",
+                            "due_limit",
+                            "due_available"
                         ]
                     }
                 },
@@ -52495,6 +52807,223 @@
                     "customer"
                 ],
                 "title": "PosCustomer"
+            },
+            "PosCustomerMatch": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "01XXXXXXXXX"
+                    },
+                    "orders_count": {
+                        "type": "integer"
+                    },
+                    "open_due": {
+                        "type": "string"
+                    },
+                    "due_limit": {
+                        "type": "string"
+                    },
+                    "due_available": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "phone",
+                    "orders_count",
+                    "open_due",
+                    "due_limit",
+                    "due_available"
+                ],
+                "title": "PosCustomerMatch"
+            },
+            "PosDueCollection": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "customer": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "description": "01XXXXXXXXX"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone"
+                        ]
+                    },
+                    "collected": {
+                        "type": "string"
+                    },
+                    "tendered_total": {
+                        "type": "string"
+                    },
+                    "cash_tendered": {
+                        "type": "string"
+                    },
+                    "change_due": {
+                        "type": "string"
+                    },
+                    "remaining_due": {
+                        "type": "string"
+                    },
+                    "orders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "order_number": {
+                                    "type": "string"
+                                },
+                                "applied": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "order_number",
+                                "applied"
+                            ]
+                        }
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "customer",
+                    "collected",
+                    "tendered_total",
+                    "cash_tendered",
+                    "change_due",
+                    "remaining_due",
+                    "orders",
+                    "created_at"
+                ],
+                "title": "PosDueCollection"
+            },
+            "PosDueQuote": {
+                "type": "object",
+                "properties": {
+                    "customer": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "phone"
+                        ]
+                    },
+                    "open_due": {
+                        "type": "string"
+                    },
+                    "orders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "order_id": {
+                                    "type": "integer"
+                                },
+                                "order_number": {
+                                    "type": "string"
+                                },
+                                "due": {
+                                    "type": "string"
+                                },
+                                "applied": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "order_id",
+                                "order_number",
+                                "due",
+                                "applied"
+                            ]
+                        }
+                    },
+                    "tenders": {
+                        "type": "object",
+                        "properties": {
+                            "tendered": {
+                                "type": "string"
+                            },
+                            "cash_tendered": {
+                                "type": "string"
+                            },
+                            "remaining": {
+                                "type": "string"
+                            },
+                            "change": {
+                                "type": "string"
+                            },
+                            "errors": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "field": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "field",
+                                        "message"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "tendered",
+                            "cash_tendered",
+                            "remaining",
+                            "change",
+                            "errors"
+                        ]
+                    },
+                    "chargeable": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "customer",
+                    "open_due",
+                    "orders",
+                    "tenders",
+                    "chargeable"
+                ],
+                "title": "PosDueQuote"
             },
             "PosHeldSale": {
                 "type": "object",
@@ -52710,6 +53239,7 @@
                             "object",
                             "null"
                         ],
+                        "description": "`tendered` is money handed over; `due` is what is put on the customer's due (\"0.00\" when none).",
                         "properties": {
                             "tendered": {
                                 "type": "string"
@@ -52721,6 +53251,9 @@
                                 "type": "string"
                             },
                             "change": {
+                                "type": "string"
+                            },
+                            "due": {
                                 "type": "string"
                             },
                             "errors": {
@@ -52747,6 +53280,7 @@
                             "cash_tendered",
                             "remaining",
                             "change",
+                            "due",
                             "errors"
                         ]
                     }
@@ -52992,6 +53526,10 @@
                     "change_due": {
                         "type": "string"
                     },
+                    "due_amount": {
+                        "type": "string",
+                        "description": "Put on the customer's due at this sale (not a payment \u2014 `payments` lists money only)."
+                    },
                     "whatsapp": {
                         "type": "object",
                         "properties": {
@@ -53026,6 +53564,7 @@
                     "payments",
                     "cash_tendered",
                     "change_due",
+                    "due_amount",
                     "whatsapp"
                 ],
                 "title": "PosReceipt"
@@ -53054,6 +53593,10 @@
                     "change_due": {
                         "type": "string"
                     },
+                    "due_amount": {
+                        "type": "string",
+                        "description": "Put on the customer's due (no payment), \"0.00\" for a fully paid sale."
+                    },
                     "created_at": {
                         "type": [
                             "string",
@@ -53069,6 +53612,7 @@
                     "tendered_total",
                     "cash_tendered",
                     "change_due",
+                    "due_amount",
                     "created_at"
                 ],
                 "title": "PosSale"
@@ -53179,7 +53723,18 @@
                             },
                             "expected_cash": {
                                 "type": "string",
-                                "description": "Cash the drawer should hold now: float + cash kept."
+                                "description": "Cash the drawer should hold now: float + cash kept (sales and due collected)."
+                            },
+                            "due_sold": {
+                                "type": "string",
+                                "description": "Put on customers' due by this drawer's sales \u2014 no money, never in expected cash."
+                            },
+                            "due_collected": {
+                                "type": "string",
+                                "description": "Due collected on this drawer (all tenders)."
+                            },
+                            "due_collections_count": {
+                                "type": "integer"
                             },
                             "by_method": {
                                 "type": "array",
@@ -53204,6 +53759,9 @@
                             "sales_count",
                             "sales_total",
                             "expected_cash",
+                            "due_sold",
+                            "due_collected",
+                            "due_collections_count",
                             "by_method"
                         ]
                     }
@@ -55768,6 +56326,57 @@
                 ],
                 "title": "PurchaseTrigger"
             },
+            "QuoteDueCollectionRequest": {
+                "type": "object",
+                "description": "`POST /pos/sessions/{session}/due-collections/quote` \u2014 read the tenders against the customer's open due. Writes nothing.",
+                "properties": {
+                    "customer_phone": {
+                        "type": "string",
+                        "description": "The customer's mobile, as typed (013\u2013019, rule 30).",
+                        "maxLength": 32
+                    },
+                    "tenders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "method": {
+                                    "type": "string",
+                                    "enum": [
+                                        "cash",
+                                        "bkash",
+                                        "nagad",
+                                        "card"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": "string",
+                                    "description": "What the customer handed over in this tender; cash may exceed the due (change).",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender.",
+                                    "maxLength": 64
+                                }
+                            },
+                            "required": [
+                                "method",
+                                "amount"
+                            ]
+                        },
+                        "maxItems": 8
+                    }
+                },
+                "required": [
+                    "customer_phone",
+                    "tenders"
+                ],
+                "title": "QuoteDueCollectionRequest"
+            },
             "QuotePosSaleRequest": {
                 "type": "object",
                 "description": "`POST /pos/sessions/{session}/quote` \u2014 price the register cart and read the tenders.\nWrites nothing. Every figure on the register comes from here (rule 1).",
@@ -55821,11 +56430,13 @@
                             "properties": {
                                 "method": {
                                     "type": "string",
+                                    "description": "`due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).",
                                     "enum": [
                                         "cash",
                                         "bkash",
                                         "nagad",
-                                        "card"
+                                        "card",
+                                        "due"
                                     ]
                                 },
                                 "amount": {
@@ -55848,6 +56459,14 @@
                             ]
                         },
                         "maxItems": 8
+                    },
+                    "customer_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The name the cashier typed for a new customer \u2014 a due tender needs one.",
+                        "maxLength": 160
                     }
                 },
                 "required": [
@@ -71380,10 +71999,11 @@
                                 "staff.view",
                                 "audit.view",
                                 "pos.use",
-                                "pos.manage"
+                                "pos.manage",
+                                "pos.sell_on_due"
                             ]
                         },
-                        "maxItems": 69,
+                        "maxItems": 70,
                         "uniqueItems": true
                     }
                 },

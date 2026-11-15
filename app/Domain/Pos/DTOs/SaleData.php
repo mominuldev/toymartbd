@@ -7,7 +7,10 @@ namespace App\Domain\Pos\DTOs;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 
-/** A Charge as the register sent it. Every figure is re-derived on the server; `expectedTotal` is only compared. */
+/**
+ * A Charge as the register sent it. Every figure is re-derived on the server; `expectedTotal`
+ * is only compared. `canSellOnDue`: the cashier holds `pos.sell_on_due` (read by the HTTP layer).
+ */
 final readonly class SaleData
 {
     /**
@@ -24,5 +27,6 @@ final readonly class SaleData
         public ?PhoneNumber $phone = null,
         public ?string $customerName = null,
         public ?string $idempotencyKey = null,
+        public bool $canSellOnDue = false,
     ) {}
 }

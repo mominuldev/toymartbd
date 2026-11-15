@@ -16,6 +16,16 @@ use App\Support\Money;
  */
 abstract readonly class ManualTender implements TenderDriver
 {
+    public function recordsPayment(): bool
+    {
+        return true;
+    }
+
+    public function requiresCustomer(): bool
+    {
+        return false;
+    }
+
     public function capture(Payment $payment, Money $amount, ?string $reference, int $cashierId): GatewayResult
     {
         return new GatewayResult(

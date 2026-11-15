@@ -61,3 +61,30 @@ it('keeps a colleague out of another cashier\'s held carts', function (): void {
     $this->postJson("/api/v1/admin/pos/holds/{$held->json('id')}/resume")->assertForbidden();
     $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/quote", ['lines' => []])->assertForbidden();
 });
+
+it('discards a held cart once: gone from the list, never resumable, open drawer only', function (): void {
+    $held = $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds", ['lines' => PosKit::lines([$this->toy->id => 1])])->assertCreated();
+    $kept = $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds", ['lines' => PosKit::lines([$this->toy->id => 2])])->assertCreated();
+
+    $this->deleteJson("/api/v1/admin/pos/holds/{$held->json('id')}")->assertNoContent();
+    $this->getJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds")->assertOk()
+        ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $kept->json('id'));
+    $row = PosHeldSale::query()->findOrFail($held->json('id'));
+    expect($row->discarded_by)->toBe($this->cashier->id)->and($row->discarded_at)->not->toBeNull();
+
+    // Twice, or resumed after: a 409 `conflict` problem.
+    $this->deleteJson("/api/v1/admin/pos/holds/{$held->json('id')}")->assertStatus(409)
+        ->assertJsonPath('type', 'https://toymartbd.com/problems/conflict')
+        ->assertJsonPath('detail', 'This held sale has been discarded.');
+    $this->postJson("/api/v1/admin/pos/holds/{$held->json('id')}/resume")->assertStatus(409);
+
+    // A resumed hold cannot be discarded.
+    $this->postJson("/api/v1/admin/pos/holds/{$kept->json('id')}/resume")->assertOk();
+    $this->deleteJson("/api/v1/admin/pos/holds/{$kept->json('id')}")->assertStatus(409);
+
+    // A closed drawer's holds stay as they were.
+    $last = $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds", ['lines' => PosKit::lines([$this->toy->id => 1])])->assertCreated();
+    $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/close", ['counted_cash' => '5000'])->assertOk();
+    $this->deleteJson("/api/v1/admin/pos/holds/{$last->json('id')}")->assertStatus(409);
+    expect(PosHeldSale::query()->findOrFail($last->json('id'))->discarded_at)->toBeNull();
+});

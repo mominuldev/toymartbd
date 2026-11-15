@@ -22,14 +22,13 @@ final class ChargePosSaleRequest extends PosCartRequest
             ...$this->tenderRules(true),
             /** The quote's `grand_total`, e.g. `3455.00`. */
             'expected_total' => ['required', 'string', 'regex:'.self::MONEY],
-            /** Printed on the receipt for a new customer; an existing customer keeps their name. */
+            /** Printed on the receipt for a new customer; an existing customer keeps their name (a "Walk-in customer" placeholder is replaced). A due tender needs a name. */
             'customer_name' => ['nullable', 'string', 'max:160'],
         ];
     }
 
     public function toData(): SaleData
     {
-        $name = $this->input('customer_name');
         $key = $this->header(EnsureIdempotency::HEADER);
 
         return new SaleData(
@@ -40,8 +39,9 @@ final class ChargePosSaleRequest extends PosCartRequest
             cashierId: (int) $this->user()?->getAuthIdentifier(),
             couponCode: $this->couponCode(),
             phone: $this->phone(),
-            customerName: is_string($name) && trim($name) !== '' ? trim($name) : null,
+            customerName: $this->customerName(),
             idempotencyKey: is_string($key) && $key !== '' ? $key : null,
+            canSellOnDue: $this->canSellOnDue(),
         );
     }
 }
