@@ -216,3 +216,10 @@ jobs:
           name: admin-a11y-playwright-report
           path: e2e/admin-a11y/playwright-report
           retention-days: 7
+      - name: Upload Laravel log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-a11y-laravel-log
+          path: storage/logs/
+          retention-days: 7
