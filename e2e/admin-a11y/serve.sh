@@ -33,6 +33,10 @@ export TWO_FACTOR_ENFORCE=false
 # The demo catalog has no barcodes. Give the 3x3 cube an in-store EAN-13 (prefix 20, restricted
 # circulation: a shop's own label) so the POS keyboard-only test can scan it like a wedge scanner.
 "$PHP_BIN" artisan tinker --execute="App\\Domain\\Catalog\\Models\\ProductVariant::query()->where('sku', 'TMB-RUB-3X3')->update(['barcode' => '2000000000015']);" >/dev/null
+# The POS customer search lists only customers who have bought at the counter (an order with
+# source `pos`); the demo orders are all online. Mark the newest order of the two customers the
+# keyboard-only tests pick by phone as a counter sale, so the search finds them.
+"$PHP_BIN" artisan tinker --execute="foreach (['+8801819233467', '+8801711458231'] as \$p) { \$c = Illuminate\\Support\\Facades\\DB::table('customers')->where('phone', \$p)->value('id'); \$o = Illuminate\\Support\\Facades\\DB::table('orders')->where('customer_id', \$c)->orderByDesc('id')->value('id'); if (\$o === null) { throw new RuntimeException('no demo order for '.\$p); } Illuminate\\Support\\Facades\\DB::table('orders')->where('id', \$o)->update(['source' => 'pos']); }" >/dev/null
 # The file cache outlives migrate:fresh: drop the last run's sign-in counters.
 "$PHP_BIN" artisan cache:clear >/dev/null
 exec "$PHP_BIN" artisan serve --host=localhost --port="$PORT" --no-reload
