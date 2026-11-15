@@ -75,7 +75,7 @@ describe('storefront script CSP (S-11)', () => {
         for (const path of ['/cart', '/checkout', '/account', '/account/orders/TM-1001', '/orders/TM-1001/payment', '/blog', '/blog/preview/tok', '/toys', '/search', '/track/']) {
             expect(isNonceRoute(path), path).toBe(true);
         }
-        for (const path of ['/', '/products/lego-city', '/categories/blocks', '/brands', '/blog/some-post', '/blog/preview', '/guides/age-3', '/pages/about', '/cartx', '/account/orders/1/extra']) {
+        for (const path of ['/', '/products/lego-city', '/categories/blocks', '/brands', '/blog/some-post', '/blog/preview', '/guides/age-3', '/about', '/privacy-policy', '/cartx', '/account/orders/1/extra']) {
             expect(isNonceRoute(path), path).toBe(false);
         }
     });

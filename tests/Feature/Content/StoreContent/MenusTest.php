@@ -56,7 +56,7 @@ it('saves a nested footer with resolved targets, in order', function (): void {
         ->assertOk()
         ->assertJsonPath('is_published', true)
         ->assertJsonPath('items.0.label', 'Help')
-        ->assertJsonPath('items.0.children.0.target.path', '/pages/returns')
+        ->assertJsonPath('items.0.children.0.target.path', '/returns')
         ->assertJsonPath('items.0.children.0.target.live', true)
         ->assertJsonPath('items.0.children.1.url', '/track')
         ->assertJsonPath('items.1.children.0.target.path', '/brands/lego');

@@ -12,7 +12,7 @@ import { cmsPaths, footerColumns } from '@/lib/site-config';
 
 // Phase 9 SEO audit (docs/audits/SEO-AND-COVERAGE.md). A crawl of every reachable URL against a
 // DemoDataSeeder API found sitewide links that 404: the header wishlist (`/wishlist`), the footer
-// legal bar and consent banner (`/pages/privacy` — the seeded slug is `privacy-policy`) and ten
+// legal bar and consent banner (`/privacy` — the seeded slug is `privacy-policy`) and ten
 // fallback footer links to routes that never existed. These tests pin every hard-coded layout link
 // to a real route or to a CMS slug the production seeder creates.
 
@@ -39,18 +39,18 @@ function seededCmsSlugs(): string[] {
 function resolves(path: string): boolean {
     const pathname = path.split('?')[0]!;
     if (staticRoutes().includes(pathname)) return true;
-    const cms = /^\/pages\/([a-z0-9-]+)$/.exec(pathname);
+    const cms = /^\/([a-z0-9-]+)$/.exec(pathname);
     return cms !== null && seededCmsSlugs().includes(cms[1]!);
 }
 
 describe('layout links point at pages that exist', () => {
     it('reads the route table and the seeded CMS slugs', () => {
-        expect(staticRoutes()).toEqual(expect.arrayContaining(['/', '/toys', '/track', '/delivery-charge', '/flash-sale', '/account/wishlist', '/pages/about']));
+        expect(staticRoutes()).toEqual(expect.arrayContaining(['/', '/toys', '/track', '/delivery-charge', '/flash-sale', '/account/wishlist', '/about']));
         expect(seededCmsSlugs()).toEqual(expect.arrayContaining(['contact', 'privacy-policy', 'returns-policy', 'terms', 'faq']));
     });
 
     it('links the consent banner, legal bar and contact fallbacks to seeded CMS pages', () => {
-        expect(cmsPaths.privacy).toBe('/pages/privacy-policy');
+        expect(cmsPaths.privacy).toBe('/privacy-policy');
         for (const path of Object.values(cmsPaths)) expect(resolves(path), path).toBe(true);
     });
 

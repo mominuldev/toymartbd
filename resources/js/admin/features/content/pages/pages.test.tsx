@@ -21,7 +21,7 @@ const about: CmsPage = {
     status: 'published',
     state: 'live',
     published_at: '2026-11-01T04:00:00Z',
-    path: '/pages/about',
+    path: '/about',
     has_bangla: true,
     content: '<p>Hello</p>',
     content_bn: null,
@@ -44,7 +44,7 @@ const about: CmsPage = {
     updated_at: '2026-11-08T06:00:00Z',
     created_at: '2026-11-01T04:00:00Z',
 };
-const eid: CmsPage = { ...about, id: 4, slug: 'eid-collection', title: 'Eid collection 2026', path: '/pages/eid-collection', state: 'scheduled', published_at: '2027-06-14T18:30:00Z' };
+const eid: CmsPage = { ...about, id: 4, slug: 'eid-collection', title: 'Eid collection 2026', path: '/eid-collection', state: 'scheduled', published_at: '2027-06-14T18:30:00Z' };
 const emptyMenu = { location: 'header', exists: false, is_published: false, published_at: null, updated_at: null, max_depth: 3, max_items: 120, items: [] };
 
 function api(extra: (url: string, init?: RequestInit) => { status: number; body?: unknown } | null = () => null) {
@@ -65,7 +65,7 @@ describe('pages', () => {
         renderApp('/store/pages');
 
         const list = await screen.findByRole('list', { name: 'Pages' }, { timeout: 5000 });
-        expect(within(list).getByText('toymartbd.com/pages/about')).toBeTruthy();
+        expect(within(list).getByText('toymartbd.com/about')).toBeTruthy();
         expect(within(list).getByText('Live · edited 08 Nov')).toBeTruthy();
         expect(within(list).getByText('Scheduled 15 Jun')).toBeTruthy();
         // Scoped to the tab row: the sidebar's Online store submenu also has a "Pages" link.

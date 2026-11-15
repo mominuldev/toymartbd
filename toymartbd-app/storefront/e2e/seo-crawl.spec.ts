@@ -11,7 +11,7 @@ import { CRAWLER_UA, MOCK_API_URL, STOREFRONT_URL } from './constants';
 // hreflang en/bn + x-default, a title that carries the site name once, and <html lang>. Then
 // every sitemap URL must be a 200, indexable, self-canonical page.
 //
-// A link to `/pages/{slug}` may 404 only when the slug is one database/seeders/StaticPagesSeeder.php
+// A link to a CMS page (`/{slug}`) may 404 only when the slug is one database/seeders/StaticPagesSeeder.php
 // creates — that page exists at launch once the owner publishes it; the mock API serves two.
 
 test.use({ userAgent: CRAWLER_UA, javaScriptEnabled: false });
@@ -82,7 +82,7 @@ test('every crawlable page answers without an error and carries canonical, hrefl
     for (const { path, status, html } of pages) {
         const pathname = path.split('?')[0]!;
         if (status === 404) {
-            const cms = /^(?:\/bn)?\/pages\/([a-z0-9-]+)$/.exec(pathname);
+            const cms = /^(?:\/bn)?\/([a-z0-9-]+)$/.exec(pathname);
             if (!cms || !SEEDED_CMS.includes(cms[1]!)) problems.push(`${path}: 404 — a link to a page that does not exist`);
             continue;
         }

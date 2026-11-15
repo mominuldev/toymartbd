@@ -9,7 +9,7 @@ interface Props {
 }
 
 // The info strip (cart and checkout): one plain information line — a delivery cut-off, a holiday
-// notice. Text only; a link only to a store page (/pages/…). Never an image, a product or an offer
+// notice. Text only; a link only to a store page (/{slug}). Never an image, a product or an offer
 // (rule 25b: checkout completes one task). Renders nothing when no strip is live.
 export function InfoStrip({ locale, banners, context }: Props) {
     const banner = banners.find((b) => bannerAllowed(b, context));

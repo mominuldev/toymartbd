@@ -64,7 +64,7 @@ test('a prerendered (ISR) page keeps its cache and gets the static policy (no no
 });
 
 test('every page answers with a full script policy, and a nonce policy only where every script carries it', async ({ request }) => {
-    const paths = ['/', '/bn', PDP, '/bn/products/lego-classic-creative-bricks', '/categories', '/categories/building-blocks', '/brands', '/brands/lego', '/flash-sale', '/pages/about', '/pages/privacy-policy', '/cart', '/checkout', '/toys', '/search?q=lego', '/track', '/account/login', '/blog', '/no-such-page'];
+    const paths = ['/', '/bn', PDP, '/bn/products/lego-classic-creative-bricks', '/categories', '/categories/building-blocks', '/brands', '/brands/lego', '/flash-sale', '/about', '/privacy-policy', '/cart', '/checkout', '/toys', '/search?q=lego', '/track', '/account/login', '/blog', '/no-such/page'];
     for (const path of paths) {
         // Twice: the second answer is the cached one wherever the page is cached.
         await request.get(path);

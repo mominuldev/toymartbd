@@ -17,7 +17,7 @@ import { staticPage } from '@/lib/static-pages';
 // before the owner publishes the page. Tags: content:pages + content:page:about (body) and
 // seo + page:about (SEO document) — a page save or a page SEO save purges all four.
 
-const PATH = '/pages/about';
+const PATH = '/about';
 
 interface Props {
     params: Promise<{ locale: string }>;

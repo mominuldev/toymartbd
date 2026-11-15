@@ -112,7 +112,7 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
                                         const label = localised(locale, p.title, p.title_bn);
                                         return (
                                             <li key={p.slug}>
-                                                <a href={localizedPath(locale, `/pages/${p.slug}`)} lang={label.lang} className="t-body-sm flex min-h-touch-min items-center rounded-sm px-3 text-fg-link underline-offset-4 hover:underline">
+                                                <a href={localizedPath(locale, `/${p.slug}`)} lang={label.lang} className="t-body-sm flex min-h-touch-min items-center rounded-sm px-3 text-fg-link underline-offset-4 hover:underline">
                                                     {label.text}
                                                 </a>
                                             </li>

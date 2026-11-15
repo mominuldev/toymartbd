@@ -44,6 +44,24 @@ final class CmsPage extends Model
 
     public const int MAX_FAQ_ITEMS = 60;
 
+    /**
+     * A page lives at the site root (`/{slug}`), so its slug may not take a first path segment
+     * the storefront already routes (toymartbd-app/storefront/app/[locale]/…), the locale
+     * prefixes, or the paths the proxy and Laravel own. `about` is not here: the storefront's
+     * About route renders the CMS `about` page when one is live.
+     */
+    public const array RESERVED_SLUGS = [
+        'account', 'admin', 'api', 'blog', 'bn', 'brands', 'cart', 'categories', 'checkout', 'delivery-charge',
+        'en', 'flash-sale', 'guides', 'maintenance', 'orders', 'pages', 'products', 'robots', 'search', 'sitemap',
+        'sitemaps', 'toys', 'track',
+    ];
+
+    /** The page's locale-free storefront path. */
+    public static function pathFor(string $slug): string
+    {
+        return '/'.$slug;
+    }
+
     protected $table = 'cms_pages';
 
     /** @var list<string> */

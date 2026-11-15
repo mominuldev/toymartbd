@@ -33,7 +33,7 @@ const footer: Menu = {
     updated_at: '2026-11-10T00:00:00Z',
     max_depth: 2,
     max_items: 120,
-    items: [item(1, 'Help', [item(2, 'Track'), item(3, 'Returns', [], { link_type: 'page', link_id: 9, url: null, target: { label: 'Returns', label_bn: null, path: '/pages/returns', live: false } })], { link_type: 'none', url: null }), item(4, 'Shop')],
+    items: [item(1, 'Help', [item(2, 'Track'), item(3, 'Returns', [], { link_type: 'page', link_id: 9, url: null, target: { label: 'Returns', label_bn: null, path: '/returns', live: false } })], { link_type: 'none', url: null }), item(4, 'Shop')],
 };
 
 describe('menu editor', () => {
@@ -64,22 +64,41 @@ describe('menu editor', () => {
         expect(body.items[1]!.children.map((c) => c.label)).toEqual(['Returns']);
     });
 
-    it('blocks Save while an item has no target and shows why', { timeout: 20_000 }, async () => {
-        const calls = mockApi((url) => {
+    it('opens the New menu item form by default and adds only a filled-in item', { timeout: 20_000 }, async () => {
+        const calls = mockApi((url, init) => {
             if (url.endsWith('/auth/me')) return { status: 200, body: editor };
             if (url.includes('/content/menu-targets')) return { status: 200, body: { data: [] } };
+            if (url.endsWith('/content/menus/header') && init?.method === 'PUT') return { status: 200, body: { ...footer, location: 'header', max_depth: 3 } };
             if (url.endsWith('/content/menus/header')) return { status: 200, body: { ...footer, location: 'header', max_depth: 3, items: [] } };
             return { status: 404 };
         });
 
         renderApp('/store/navigation/header');
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Add item' }, { timeout: 5000 }));
+        // The add form is already open; no blank row is created by opening it.
+        expect(await screen.findByRole('heading', { name: 'New menu item' }, { timeout: 5000 })).toBeTruthy();
+        expect(screen.getByText('This menu is empty')).toBeTruthy();
+
+        // A page link with nothing chosen is refused and stays out of the tree.
         fireEvent.change(screen.getByLabelText('Label (English)'), { target: { value: 'Toys' } });
         fireEvent.change(screen.getByLabelText('Links to'), { target: { value: 'page' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Add item' }));
+        expect(await screen.findByText('Choose what this item links to.')).toBeTruthy();
+        expect(screen.queryByRole('list', { name: 'Header menu items' })).toBeNull();
 
-        expect((await screen.findAllByText('Choose what this item links to.')).length).toBeGreaterThan(0);
-        expect(calls.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
+        fireEvent.change(screen.getByLabelText('Links to'), { target: { value: 'custom' } });
+        fireEvent.change(screen.getByLabelText('URL'), { target: { value: '/toys' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add item' }));
+
+        const tree = await screen.findByRole('list', { name: 'Header menu items' });
+        expect(within(tree).getByText('Toys')).toBeTruthy();
+        // The form resets for the next item.
+        expect((screen.getByLabelText('Label (English)') as HTMLInputElement).value).toBe('');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(calls.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(true));
+        const put = calls.mock.calls.find(([, init]) => init?.method === 'PUT')!;
+        const body = JSON.parse(String(put[1]!.body)) as { items: { label: string; url: string | null }[] };
+        expect(body.items).toEqual([expect.objectContaining({ label: 'Toys', url: '/toys' })]);
     });
 });

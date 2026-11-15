@@ -77,11 +77,11 @@ export function whatsappHref(whatsapp: ContactValue, fallback: string): string {
 /**
  * CMS pages the layout links to directly (consent banner, footer legal bar, contact fallbacks).
  * The slugs are the ones database/seeders/StaticPagesSeeder.php creates — a link to any other
- * slug is a sitewide 404 (Phase 9 SEO audit: `/pages/privacy` never existed).
+ * slug is a sitewide 404 (Phase 9 SEO audit: `/privacy` never existed).
  */
 export const cmsPaths = {
-    privacy: '/pages/privacy-policy',
-    contact: '/pages/contact',
+    privacy: '/privacy-policy',
+    contact: '/contact',
 } as const;
 
 /**
@@ -107,18 +107,18 @@ export const footerColumns = [
         links: [
             { label: 'track', path: '/track' },
             { label: 'delivery', path: '/delivery-charge' },
-            { label: 'returns', path: '/pages/returns-policy' },
-            { label: 'faq', path: '/pages/faq' },
+            { label: 'returns', path: '/returns-policy' },
+            { label: 'faq', path: '/faq' },
             { label: 'contact', path: cmsPaths.contact },
         ],
     },
     {
         title: 'about',
         links: [
-            { label: 'about', path: '/pages/about' },
+            { label: 'about', path: '/about' },
             { label: 'blog', path: '/blog' },
             { label: 'privacy', path: cmsPaths.privacy },
-            { label: 'terms', path: '/pages/terms' },
+            { label: 'terms', path: '/terms' },
         ],
     },
 ] as const;

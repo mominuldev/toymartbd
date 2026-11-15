@@ -77,7 +77,10 @@ it('keeps the info strip text-only and linked only to store pages', function ():
         ->assertUnprocessable()->assertJsonPath('errors.0.field', 'media_id');
     $this->postJson('/api/v1/admin/content/banners', scBanner(['placement' => 'info_strip', 'link_url' => '/products/lego-city']))
         ->assertUnprocessable()->assertJsonPath('errors.0.field', 'link_url');
-    $this->postJson('/api/v1/admin/content/banners', scBanner(['placement' => 'info_strip', 'link_url' => '/pages/delivery-policy']))
+    // Pages live at the site root, but a one-segment storefront route is not a page.
+    $this->postJson('/api/v1/admin/content/banners', scBanner(['placement' => 'info_strip', 'link_url' => '/checkout']))
+        ->assertUnprocessable()->assertJsonPath('errors.0.field', 'link_url');
+    $this->postJson('/api/v1/admin/content/banners', scBanner(['placement' => 'info_strip', 'link_url' => '/delivery-policy']))
         ->assertCreated();
 });
 

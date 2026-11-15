@@ -8,6 +8,7 @@ use App\Domain\Content\DTOs\BannerData;
 use App\Domain\Content\Enums\BannerPlacement;
 use App\Domain\Content\Events\BannersChanged;
 use App\Domain\Content\Models\Banner;
+use App\Domain\Content\Models\CmsPage;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -68,7 +69,7 @@ final class SaveBanner
         }
 
         if ($data->placement === BannerPlacement::InfoStrip && $data->linkUrl !== null && ! self::isPageLink($data->linkUrl)) {
-            throw new InvalidArgumentException('An info strip links only to a static page (/pages/…).');
+            throw new InvalidArgumentException('An info strip links only to a static page (/{slug}).');
         }
 
         if ($data->startsAt !== null && $data->endsAt !== null && $data->endsAt->lessThanOrEqualTo($data->startsAt)) {
@@ -78,7 +79,12 @@ final class SaveBanner
 
     public static function isPageLink(string $url): bool
     {
-        return preg_match('#^/pages/[a-z0-9]+(?:-[a-z0-9]+)*/?$#', $url) === 1;
+        // A static page lives at the site root; a one-segment storefront route (/cart, /products …) is not one.
+        if (preg_match('#^/([a-z0-9]+(?:-[a-z0-9]+)*)/?$#', $url, $match) !== 1) {
+            return false;
+        }
+
+        return ! in_array($match[1], CmsPage::RESERVED_SLUGS, true);
     }
 
     private static function text(?string $value): ?string

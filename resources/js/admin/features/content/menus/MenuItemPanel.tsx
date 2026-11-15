@@ -16,7 +16,13 @@ type Props = {
     depth: number;
     error?: NodeError;
     onChange: (patch: Partial<Omit<MenuNode, 'key' | 'children'>>) => void;
+    /** The panel heading: "Menu item" while editing, "New menu item" for the add form. */
+    title: string;
+    /** The bottom button: "Done" while editing, "Add item" for the add form. */
+    actionLabel: string;
     onDone: () => void;
+    onCancel?: () => void;
+    actionDisabled?: boolean;
     disabled?: boolean;
 };
 
@@ -27,8 +33,8 @@ export const nodeErrorKey: Record<NodeError, MessageKey> = {
     treeTop: 'content.menus.error.treeTop',
 };
 
-/** The selected item's fields: EN/বাংলা label, what it links to (with a target search), visibility, new tab. */
-export function MenuItemPanel({ node, depth, error, onChange, onDone, disabled }: Props) {
+/** An item's fields (the selected one, or the always-open add form): EN/বাংলা label, what it links to (with a target search), visibility, new tab. */
+export function MenuItemPanel({ node, depth, error, onChange, title, actionLabel, onDone, onCancel, actionDisabled, disabled }: Props) {
     const { t } = useI18n();
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
@@ -41,7 +47,7 @@ export function MenuItemPanel({ node, depth, error, onChange, onDone, disabled }
     const typeLabel = (type: LinkType) => t(`content.menus.type.${type}` as MessageKey);
 
     return (
-        <FormSection title={node.label.trim() === '' ? t('content.menus.itemFormNew') : t('content.menus.itemForm')}>
+        <FormSection title={title}>
             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-1">
                 <Field label={t('content.menus.field.label')} error={error === 'label' ? t(nodeErrorKey.label) : undefined}>
                     {({ id, describedBy, invalid }) => (
@@ -144,9 +150,16 @@ export function MenuItemPanel({ node, depth, error, onChange, onDone, disabled }
                 <input type="checkbox" className="size-4 accent-brand" checked={node.open_in_new_tab} onChange={(e) => onChange({ open_in_new_tab: e.target.checked })} />
                 {t('content.menus.field.newTab')}
             </label>
-            <Button variant="outline" className="self-start" onClick={onDone}>
-                {t('content.menus.done')}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={onDone} disabled={actionDisabled}>
+                    {actionLabel}
+                </Button>
+                {onCancel && (
+                    <Button variant="ghost" onClick={onCancel}>
+                        {t('common.cancel')}
+                    </Button>
+                )}
+            </div>
         </FormSection>
     );
 }

@@ -38,7 +38,7 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         // Figma Footer 124:3310: help tile + Shop / Help / About link tiles + "Say hi!".
         for (const heading of ['Stuck choosing a toy? We love helping.', 'Shop', 'Help', 'About', 'Say hi!'])
             await expect(footer.getByRole('heading', { name: heading, exact: true })).toBeVisible();
-        await expect(footer.getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/pages/about');
+        await expect(footer.getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about');
         // Contact details come from GET /storefront/store-info (the mock sets hotline, WhatsApp,
         // trade licence and BIN; email is unset). A set value is a link, an unset one is the
         // tagged sample and never a link.
@@ -72,7 +72,7 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
 
         const footer = page.locator('footer');
         await expect(footer.getByRole('heading', { name: 'কিনুন', exact: true })).toBeVisible();
-        await expect(footer.getByRole('link', { name: 'আমাদের সম্পর্কে' })).toHaveAttribute('href', '/bn/pages/about');
+        await expect(footer.getByRole('link', { name: 'আমাদের সম্পর্কে' })).toHaveAttribute('href', '/bn/about');
         await expect(page.locator('nav[aria-label="শর্টকাট"] a', { hasText: 'ক্যাটাগরি' })).toHaveAttribute('href', '/bn/categories');
     });
 
@@ -112,7 +112,8 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
 
 test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', () => {
     for (const [path, lang, title, home, toggle] of [
-        ['/no-such-page', 'en', "This page isn't here", '/', { lang: 'bn', href: '/bn/no-such-page' }],
+        // Two segments: a one-segment URL matches the CMS page route (/{slug}) — see 'static pages'.
+        ['/no-such/page', 'en', "This page isn't here", '/', { lang: 'bn', href: '/bn/no-such/page' }],
         ['/bn/no/such/page', 'bn', 'এই পাতাটি নেই', '/bn', { lang: 'en', href: '/no/such/page' }],
     ] as const) {
         test(`${path}`, async ({ page }) => {
@@ -135,9 +136,9 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
     }
 
     test('links to pages not built yet get the same styled 404', async ({ page }) => {
-        // `/pages/{slug}` is a real route now (Phase 7 CMS pages), so an unmatched URL under it
-        // has to be deeper than one segment.
-        for (const path of ['/pages/privacy-policy/print', '/bn/wishlist']) {
+        // `/{slug}` is a real route (CMS pages at the site root), so an unmatched URL has to be
+        // deeper than one segment.
+        for (const path of ['/privacy-policy/print', '/bn/no-such/wishlist']) {
             const res = await page.goto(path);
             expect(res?.status(), path).toBe(404);
             await expect(page.locator('h1'), path).toHaveText(path.startsWith('/bn') ? 'এই পাতাটি নেই' : "This page isn't here");
@@ -147,34 +148,45 @@ test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', ()
 
 test.describe('static pages', () => {
     test('a CMS page renders server-side in both locales with canonical and hreflang', async ({ page }) => {
-        const res = await page.goto('/pages/privacy-policy');
+        const res = await page.goto('/privacy-policy');
         expect(res?.status()).toBe(200);
         await expect(page.locator('h1')).toHaveText('Privacy policy');
         await expect(page.locator('main h2').first()).toHaveText('What we collect');
-        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy-policy`);
-        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy-policy`);
-        await expect(page.locator('head link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${STOREFRONT_URL}/pages/privacy-policy`);
-        await page.goto('/bn/pages/privacy-policy');
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/privacy-policy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/privacy-policy`);
+        await expect(page.locator('head link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${STOREFRONT_URL}/privacy-policy`);
+        await page.goto('/bn/privacy-policy');
         await expect(page.locator('h1')).toHaveText('গোপনীয়তা নীতি');
-        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/privacy-policy`);
+        await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/privacy-policy`);
+    });
+
+    test('the old /pages/{slug} URLs redirect permanently to the page at the site root', async ({ request }) => {
+        for (const [from, to] of [
+            ['/pages/privacy-policy', '/privacy-policy'],
+            ['/bn/pages/about', '/bn/about'],
+        ] as const) {
+            const res = await request.get(from, { maxRedirects: 0 });
+            expect(res.status(), from).toBe(308);
+            expect(new URL(res.headers()['location']!, STOREFRONT_URL).pathname, from).toBe(to);
+        }
     });
 
     test('a CMS page that is not live is a 404, noindex', async ({ page }) => {
         // notFound() from a matched page: right status and robots, but Next's bare shell without
         // JavaScript (README "Known limitations") — the styled check lives with unmatched URLs.
-        const res = await page.goto('/pages/terms');
+        const res = await page.goto('/terms');
         expect(res?.status()).toBe(404);
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-        expect((await page.goto('/bn/pages/terms'))?.status()).toBe(404);
+        expect((await page.goto('/bn/terms'))?.status()).toBe(404);
     });
 
     test('About renders on the template, marked as draft, with hreflang and a way back', async ({ page }) => {
-        await page.goto('/pages/about');
+        await page.goto('/about');
         await expect(page.locator('h1')).toHaveText('About Toy Mart BD');
         await expect(page.locator('[data-placeholder="draft-copy"]')).toBeVisible();
-        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/pages/about`);
-        await expect(page.locator('main a[href="/pages/contact"]').first()).toBeVisible();
-        await page.goto('/bn/pages/about');
+        await expect(page.locator('head link[rel="alternate"][hreflang="bn"]')).toHaveAttribute('href', `${STOREFRONT_URL}/bn/about`);
+        await expect(page.locator('main a[href="/contact"]').first()).toBeVisible();
+        await page.goto('/bn/about');
         await expect(page.locator('h1')).toHaveText('টয় মার্ট বিডি সম্পর্কে');
     });
 
@@ -192,7 +204,7 @@ test.describe('static pages', () => {
 test.describe('320px reflow: no horizontal scroll', () => {
     test.use({ viewport: { width: 320, height: 640 } });
 
-    for (const path of ['/', '/bn', '/brands', '/bn/brands', '/categories', '/bn/categories/lego-sets', '/no-such-page', '/bn/no-such-page', '/bn/pages/about', '/bn/search?q=লেগো', '/search?q=zzqx', '/toys', '/bn/toys?age=24-48', '/maintenance']) {
+    for (const path of ['/', '/bn', '/brands', '/bn/brands', '/categories', '/bn/categories/lego-sets', '/no-such/page', '/bn/no-such/page', '/bn/about', '/bn/search?q=লেগো', '/search?q=zzqx', '/toys', '/bn/toys?age=24-48', '/maintenance']) {
         test(path, async ({ page }) => {
             await page.goto(path);
             const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));

@@ -14,7 +14,7 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
  * that reaches the column passes through {@see sanitize()}, an allowlist:
  *
  * - p, h2, h3, strong, em, ul, ol, li, blockquote, br — no attributes;
- * - a[href] with http, https or mailto, or a site-relative link — root-relative (`/pages/x`,
+ * - a[href] with http, https or mailto, or a site-relative link — root-relative (`/about`,
  *   `/bn/blog/y`) or an in-page `#anchor`; javascript:, data:, vbscript: and every other scheme,
  *   protocol-relative `//host` tricks and bare relative paths (`foo/bar`) lose their href.
  *   An external web link gets rel="noopener nofollow";

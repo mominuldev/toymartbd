@@ -5,12 +5,12 @@ import type { CmsPage } from '@/lib/content/types';
 import { locales, type Locale } from '@/lib/i18n';
 import type { SeoDocument } from '@/lib/seo/types';
 
-// The About route (app/[locale]/pages/about) builds its <head> through the lib/seo builder in
+// The About route (app/[locale]/about) builds its <head> through the lib/seo builder in
 // BOTH branches — the CMS `about` page and the built-in fallback copy — so it always carries the
 // canonical for its locale and hreflang en / bn / x-default (rule 35), like every other page.
 
 const SITE = 'https://toymartbd.com';
-const PATH = '/pages/about';
+const PATH = '/about';
 
 const findPage = vi.fn<(slug: string) => Promise<CmsPage | null>>();
 const getSeo = vi.fn<(type: string, slug: string) => Promise<SeoDocument | null>>();
@@ -52,7 +52,7 @@ function expectHead(meta: Metadata, locale: Locale): void {
 }
 
 async function metadataFor(locale: Locale): Promise<Metadata> {
-    const { generateMetadata } = await import('@/app/[locale]/pages/about/page');
+    const { generateMetadata } = await import('@/app/[locale]/about/page');
     return generateMetadata({ params: Promise.resolve({ locale }) });
 }
 

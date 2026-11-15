@@ -23,7 +23,7 @@ import { SITE_HOST } from './PagesPage';
 import { useArchivePage, usePage, useSavePage, type CmsPage } from './api';
 import { toPageForm, toPagePayload, type FaqRow, type PageForm } from './form';
 
-const URL_PREFIX = `${SITE_HOST}/pages/`;
+const URL_PREFIX = `${SITE_HOST}/`;
 
 /** Create and edit a static page. No dedicated Figma frame: Product edit (B · 12 241:37883) language. */
 export function PageFormPage() {
@@ -284,7 +284,7 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                                 {({ id: fid, describedBy, invalid }) => (
                                     <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
                                         <span aria-hidden className="flex items-center border-e border-line-default bg-subtle px-3 t-admin-mono-sm text-fg-tertiary">
-                                            {'/pages/'}
+                                            {'/'}
                                         </span>
                                         <input
                                             id={fid}

@@ -50,7 +50,7 @@ it('lists the storefront\'s own indexable routes in the static sitemap, in both 
 
     $en = seoAuditLocs('sitemap-static-en-1.xml');
     $bn = seoAuditLocs('sitemap-static-bn-1.xml');
-    foreach (['/delivery-charge', '/flash-sale', '/track', '/pages/about'] as $path) {
+    foreach (['/delivery-charge', '/flash-sale', '/track', '/about'] as $path) {
         expect($en)->toContain('https://toymartbd.com'.$path)
             ->and($bn)->toContain('https://toymartbd.com/bn'.$path);
     }
@@ -63,13 +63,13 @@ it('lists the storefront\'s own indexable routes in the static sitemap, in both 
     expect($raw)->toContain('<loc>https://toymartbd.com/bn/track</loc><xhtml:link rel="alternate" hreflang="en" href="https://toymartbd.com/track"/><xhtml:link rel="alternate" hreflang="bn" href="https://toymartbd.com/bn/track"/><xhtml:link rel="alternate" hreflang="x-default" href="https://toymartbd.com/track"/>');
 });
 
-it('lists /pages/about once — in the pages partition — when a live CMS About page exists', function (): void {
+it('lists /about once — in the pages partition — when a live CMS About page exists', function (): void {
     CmsPage::query()->create(['slug' => 'about', 'title' => 'About us', 'title_bn' => 'আমাদের কথা', 'content' => '<p>Toys for Bangladesh.</p>', 'status' => 'published', 'published_at' => now()->subDay()]);
 
     app(SitemapBuilder::class)->build();
 
-    expect(seoAuditLocs('sitemap-pages-en-1.xml'))->toContain('https://toymartbd.com/pages/about')
-        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->not->toContain('https://toymartbd.com/pages/about')
+    expect(seoAuditLocs('sitemap-pages-en-1.xml'))->toContain('https://toymartbd.com/about')
+        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->not->toContain('https://toymartbd.com/about')
         ->and(seoAuditLocs('sitemap-static-en-1.xml'))->toContain('https://toymartbd.com/delivery-charge');
 });
 

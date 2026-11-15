@@ -62,7 +62,7 @@ export default async function CartPage({ params }: Props) {
     const ready = cart ? canCheckout(cart, c) : false;
     const checkoutHref = localizedPath(locale, '/checkout');
 
-    // The info strip is the only banner allowed on the cart (rule 25b); text plus a /pages link.
+    // The info strip is the only banner allowed on the cart (rule 25b); text plus a link to a store page (/{slug}).
     const infoStrips = await getBanners('info_strip', 'cart');
 
     return (

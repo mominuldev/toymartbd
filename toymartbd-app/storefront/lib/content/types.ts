@@ -270,8 +270,20 @@ export function bannerAllowed(banner: Pick<Banner, 'placement' | 'link_url' | 'i
     return banner.placement === 'info_strip';
 }
 
+/**
+ * First path segments the storefront routes itself, so never a CMS page. Mirrors Laravel's
+ * CmsPage::RESERVED_SLUGS (pages live at the site root, /{slug}).
+ */
+export const RESERVED_PAGE_SLUGS: ReadonlySet<string> = new Set([
+    'account', 'admin', 'api', 'blog', 'bn', 'brands', 'cart', 'categories', 'checkout', 'delivery-charge',
+    'en', 'flash-sale', 'guides', 'maintenance', 'orders', 'pages', 'products', 'robots', 'search', 'sitemap',
+    'sitemaps', 'toys', 'track',
+]);
+
+/** A store page link (`/delivery-policy`): one slug segment that is not a storefront route. */
 export function safeInfoStripLink(href: string | null): string | null {
-    return href && /^\/pages\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(href) ? href : null;
+    const match = href ? /^\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/.exec(href) : null;
+    return match && !RESERVED_PAGE_SLUGS.has(match[1]!) ? href : null;
 }
 
 /** localStorage key for a dismissed popup (per banner, so a new popup shows again). */

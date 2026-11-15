@@ -9,10 +9,10 @@ use App\Domain\Seo\Contracts\SeoSubject;
 use App\Domain\Seo\Contracts\SeoSubjectProvider;
 use Carbon\CarbonImmutable;
 
-/** CMS static pages (`/pages/{slug}`) as SEO subjects. Live = published and reached. */
+/** CMS static pages (`/{slug}`, at the site root) as SEO subjects. Live = published and reached. */
 final class PageSubjects implements SeoSubjectProvider
 {
-    public const string PREFIX = '/pages/';
+    public const string PREFIX = '/';
 
     public function type(): string
     {
@@ -42,7 +42,8 @@ final class PageSubjects implements SeoSubjectProvider
 
     public function livePaths(array $paths): array
     {
-        $slugs = SubjectPaths::slugsUnder(self::PREFIX, $paths);
+        // Every one-segment path is a candidate; reserved ones are storefront routes, never pages.
+        $slugs = array_values(array_diff(SubjectPaths::slugsUnder(self::PREFIX, $paths), CmsPage::RESERVED_SLUGS));
         if ($slugs === []) {
             return [];
         }
