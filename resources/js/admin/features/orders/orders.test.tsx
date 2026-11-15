@@ -21,12 +21,13 @@ describe('order board', () => {
         expect(within(table).getByRole('link', { name: 'TMB-26-00126' })).toBeTruthy();
         expect(within(table).getByText('রিফাত চৌধুরী')).toBeTruthy();
         expect(within(table).getByText('High 80')).toBeTruthy();
-        expect(within(table).getAllByText('COD').length).toBe(2);
+        // Two COD orders; each chip sits in its column and again under the total (shown below 1280 only).
+        expect(within(table).getAllByText('COD').length).toBe(4);
         // The anomaly is the server's verdict, rendered with its plain reason.
         expect(within(table).getAllByText('Paid ৳200 · refund pending').length).toBeGreaterThan(0);
         // Couriers are Phase 6: never a fake consignment.
         expect(within(table).getAllByText('Not booked').length).toBeGreaterThan(0);
-        expect(within(table).getByText('Verify by phone first')).toBeTruthy();
+        expect(within(table).getAllByText('Verify by phone first').length).toBeGreaterThan(0);
         expect(screen.getByRole('button', { name: /^Pending\s*2$/ })).toBeTruthy();
         expect(screen.getByRole('button', { name: /^Anomalies\s*1$/ })).toBeTruthy();
     });
@@ -47,6 +48,68 @@ describe('order board', () => {
 
         fireEvent.change(screen.getByRole('searchbox', { name: 'Search orders' }), { target: { value: '00126' } });
         await waitFor(() => expect(urls(calls).some((u) => u.includes('filter[search]=00126'))).toBe(true));
+    });
+
+    it('shows the server board counts on the KPI cards, and a card picks its tab', async () => {
+        const calls = ordersApi(operator);
+        renderApp('/orders');
+        await screen.findByRole('table');
+        const kpis = screen.getByRole('group', { name: 'Order counts' });
+
+        // The same numbers the tabs show — the server's counts, never counted from loaded rows.
+        expect(within(kpis).getByText('All channels · counts refresh every 30 s')).toBeTruthy();
+        const pending = within(kpis).getByRole('button', { name: /^Pending\s*2\s*Waiting for confirmation/ });
+        expect(within(kpis).getByRole('button', { name: /^Ready to ship\s*3/ })).toBeTruthy();
+        expect(within(kpis).getByRole('button', { name: /^Verify\s*1\s*Held for a phone check/ })).toBeTruthy();
+        expect(pending.getAttribute('aria-pressed')).toBe('false');
+
+        fireEvent.click(pending);
+        await waitFor(() => expect(urls(calls).some((u) => u.includes('filter[status]=pending'))).toBe(true));
+        expect(pending.getAttribute('aria-pressed')).toBe('true');
+        expect(screen.getByRole('button', { name: /^Pending\s*2$/ }).getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('keeps On hold and Processing behind the tab row’s ⋯ menu, with their counts', async () => {
+        const calls = ordersApi(operator);
+        renderApp('/orders');
+        await screen.findByRole('table');
+        expect(screen.queryByRole('button', { name: /^On hold\s*0$/ })).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: 'More statuses' }));
+        fireEvent.click(await screen.findByRole('menuitem', { name: 'On hold · 0' }));
+        await waitFor(() => expect(urls(calls).some((u) => u.includes('filter[status]=on_hold'))).toBe(true));
+        expect(screen.getByRole('button', { name: /^On hold\s*0$/ }).getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('offers a row menu with only the actions the operator holds', async () => {
+        const calls = ordersApi(operator);
+        renderApp('/orders');
+        const table = await screen.findByRole('table');
+        expect(within(table).getAllByText(/^web · 2 items$/).length).toBeGreaterThan(0);
+
+        fireEvent.click(within(table).getByRole('button', { name: 'More actions for TMB-26-00126' }));
+        const menu = await screen.findByRole('menu');
+        expect(within(menu).getByRole('menuitem', { name: 'Open order' }).getAttribute('href')).toBe('/orders/126');
+        expect(within(menu).getByRole('menuitem', { name: 'Copy order number' })).toBeTruthy();
+        // No shipments.book and no customers.view_pii on this operator: no booking, no invoice.
+        expect(within(menu).queryByRole('menuitem', { name: 'Book courier' })).toBeNull();
+        expect(within(menu).queryByRole('menuitem', { name: 'Print invoice' })).toBeNull();
+
+        fireEvent.click(within(menu).getByRole('menuitem', { name: 'Confirm order' }));
+        await waitFor(() => expect(postedTo(calls, '/orders/bulk/confirm')).toEqual({ order_ids: [126] }));
+    });
+
+    it('hides a column from the picker and remembers it per staff member', async () => {
+        ordersApi(operator);
+        renderApp('/orders');
+        const table = await screen.findByRole('table');
+        expect(within(table).getByRole('columnheader', { name: 'Risk' })).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Columns' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Risk' }));
+        expect(within(table).queryByRole('columnheader', { name: 'Risk' })).toBeNull();
+        expect(within(table).queryByText('High 80')).toBeNull();
+        expect(JSON.parse(localStorage.getItem(`toymart.admin.orders.columns.${operator.id}`) ?? '[]')).toEqual(['risk']);
     });
 
     it('pages with the server cursor', async () => {

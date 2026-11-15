@@ -24,13 +24,14 @@ import { Button, buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { KpiCard } from '@/components/ui/KpiCard';
 import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
 import { TabButton } from '@/components/ui/Tabs';
 import { stockStates, useAdjustments, useAlerts, useInventorySummary, useMovements, useStock, type AdjustmentReason, type InventoryLocation, type StockRow, type StockState } from './api';
 import { AdjustmentDialog } from './AdjustmentDialog';
 import { TransferDialog } from './TransferDialog';
-import { KpiCard, LocationCards, MovementTypeChip, StockStatusChip, TAKA, Taka, VariantCell, dhakaWhen, formatMoney, formatUnits, signed, variantLabel } from './parts';
+import { LocationCards, MovementTypeChip, StockStatusChip, TAKA, Taka, VariantCell, dhakaWhen, formatMoney, formatUnits, signed, variantLabel } from './parts';
 
 const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockState }[] = [
     { value: '', label: 'inventory.tab.all', count: 'all' },

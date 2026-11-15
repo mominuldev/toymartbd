@@ -130,7 +130,9 @@ function SlotView({ slot, icon: Icon, size }: { slot: Slot; icon: ComponentType<
     }
     const anomaly = slot.severity === 'anomaly';
     return (
-        <span className={`${chipBase} t-admin-caption-strong ${size === 'lg' ? 'h-7' : 'h-5.5'} ${anomaly ? 'border-l-2 border-feedback-warning' : 'border border-line-default'}`}>
+        <span
+            className={`inline-flex items-center gap-1 rounded-xs px-2 whitespace-nowrap text-fg-primary t-admin-caption-strong ${size === 'lg' ? 'h-7' : 'h-5.5'} ${anomaly ? 'bg-warning-subtle' : 'border border-line-default bg-subtle'}`}
+        >
             {anomaly ? <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" /> : <InfoIcon size={14} aria-hidden className="shrink-0 text-feedback-info" />}
             {slot.text}
         </span>
@@ -161,19 +163,22 @@ export function OrderStatusBadge({ order, form = 'stacked', extra }: { order: Tr
     );
 }
 
-const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; edge: string; tint: string }> = {
-    low: { icon: ShieldCheckIcon, edge: 'border-feedback-success', tint: 'text-feedback-success' },
-    medium: { icon: ShieldWarningIcon, edge: 'border-status-low-stock', tint: 'text-status-low-stock' },
-    high: { icon: ShieldWarningIcon, edge: 'border-feedback-danger', tint: 'text-feedback-danger' },
+const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; edge: string; tint: string; fill: string }> = {
+    low: { icon: ShieldCheckIcon, edge: 'border-feedback-success', tint: 'text-feedback-success', fill: 'bg-success-subtle' },
+    medium: { icon: ShieldWarningIcon, edge: 'border-status-low-stock', tint: 'text-status-low-stock', fill: 'bg-warning-subtle' },
+    high: { icon: ShieldWarningIcon, edge: 'border-feedback-danger', tint: 'text-feedback-danger', fill: 'bg-danger-subtle' },
 };
 
-/** Figma RiskPill 190:405 — level word + our score, a 2px level edge; never colour alone. */
+/**
+ * Figma RiskPill 190:405 (Premium pass 370:66862) — level word + our score on the level's tinted
+ * fill, with the shield shape; never colour alone, and no left edge.
+ */
 export function RiskPill({ level, score }: { level: RiskLevel | null; score: number | null }) {
     const { t } = useI18n();
     if (level === null) return <span className="t-admin-caption text-fg-tertiary">{t('orders.risk.none')}</span>;
-    const { icon: Icon, edge, tint } = riskLook[level];
+    const { icon: Icon, tint, fill } = riskLook[level];
     return (
-        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs border-l-2 bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${edge}`}>
+        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs ps-1.5 pe-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${fill}`}>
             <Icon size={14} aria-hidden className={`shrink-0 ${tint}`} />
             {t(`orders.risk.pill.${level}` as MessageKey, { score: score ?? 0 })}
         </span>
@@ -202,9 +207,9 @@ export function PaymentChip({ method }: { method: string | null }) {
     const { t } = useI18n();
     const Icon = (method && methodIcons[method]) || MoneyIcon;
     return (
-        <span className={`${chipBase} h-5.5 border border-line-default t-admin-caption-strong`}>
+        <span className={`${chipBase} h-5.5 max-w-full border border-line-default t-admin-caption-strong`} title={t(methodLabel(method))}>
             <Icon size={14} aria-hidden className="shrink-0 text-fg-secondary" />
-            {t(methodLabel(method))}
+            <span className="min-w-0 truncate">{t(methodLabel(method))}</span>
         </span>
     );
 }
