@@ -207,7 +207,6 @@ test.describe('POS axe', () => {
                     await cartPanel(page, locale).getByRole('button', { name: m(locale, 'pos.coupon.toggle') }).click();
                     await expect(cartPanel(page, locale).getByRole('textbox', { name: m(locale, 'pos.coupon.label') })).toBeVisible();
                     await audit(page, testInfo, label('cart-customer-coupon'));
-                    await cartPanel(page, locale).getByRole('button', { name: m(locale, 'pos.coupon.toggle') }).click();
 
                     // Collect payment: the dialog, then ৳500 cash + the rest on Due (split tender).
                     await chargeButton(page, locale).click();
