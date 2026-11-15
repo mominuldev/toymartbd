@@ -4,6 +4,7 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
 import type { FooterMenuColumn } from '@/lib/content/types';
+import { chatLinks } from '@/lib/chat-links';
 import { cmsPaths, footerColumns, social, whatsappHref, type FooterColumn, type StoreInfo } from '@/lib/site-config';
 import { buttonClass, buttonIconClass } from './button-styles';
 import { ContactDetail } from './ContactDetail';
@@ -48,6 +49,10 @@ export function SiteFooter({ locale, path, menu = null, store }: Props) {
     const target = otherLocale(locale);
     const year = String(new Date().getFullYear());
     const whatsapp = whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact));
+    // Opens the chat app in a new tab once the number is real; while it is a sample the button stays a
+    // same-tab link to the contact page. Messenger shows only once the owner has set the Page.
+    const chatTab = contact.whatsapp.placeholder ? {} : { target: '_blank', rel: 'noopener noreferrer' };
+    const messenger = chatLinks(contact).find((link) => link.channel === 'messenger');
 
     return (
         <footer className="mt-section-mobile rounded-t-xl-plus bg-surface shadow-up-footer px-gutter-mobile pt-5.5 pb-[calc(--spacing(22)+env(safe-area-inset-bottom))] lg:mt-section-desktop lg:rounded-t-3xl lg:px-gutter-desktop lg:py-7">
@@ -75,10 +80,18 @@ export function SiteFooter({ locale, path, menu = null, store }: Props) {
                             <p className="t-body text-fg-secondary">{t.footer.helpTile.body}</p>
                         </div>
                         <div className="relative flex flex-wrap items-center gap-3">
-                            <a href={whatsapp} className={buttonClass('primary', 'md')}>
+                            <a href={whatsapp} {...chatTab} className={buttonClass('primary', 'md')}>
                                 <Icon name="whatsappLogo" className={buttonIconClass.md} />
                                 {t.footer.helpTile.whatsapp}
+                                {contact.whatsapp.placeholder ? null : <span className="sr-only"> {t.chat.newTab}</span>}
                             </a>
+                            {messenger ? (
+                                <a href={messenger.href} target="_blank" rel="noopener noreferrer" data-chat="messenger" className={buttonClass('outline', 'md')}>
+                                    <Icon name="messengerLogo" className={buttonIconClass.md} />
+                                    {t.chat.messenger}
+                                    <span className="sr-only"> {t.chat.newTab}</span>
+                                </a>
+                            ) : null}
                             <p className="t-body inline-flex items-center gap-1.5 font-semibold text-fg-primary">
                                 <Icon name="phoneFill" className="size-4.5 text-fg-brand" />
                                 <span className="sr-only">{t.footer.contact.hotline}: </span>

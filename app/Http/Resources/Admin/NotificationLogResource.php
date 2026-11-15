@@ -57,6 +57,19 @@ final class NotificationLogResource extends ApiResource
             'sent_at' => self::utc($log->sent_at),
             /** @var string|null */
             'failed_at' => self::utc($log->failed_at),
+            /**
+             * What WhatsApp reported after accepting it (Cloud API `statuses` webhook); null until then
+             * and for SMS / email.
+             *
+             * @var 'sent'|'delivered'|'read'|'failed'|null
+             */
+            'delivery_status' => $log->delivery_status?->value,
+            /** @var string|null */
+            'delivered_at' => self::utc($log->delivered_at),
+            /** @var string|null */
+            'read_at' => self::utc($log->read_at),
+            /** @var string|null Meta's error on a failed delivery, e.g. `provider_error:131026 …`. */
+            'delivery_error' => $log->delivery_error,
             /** @var string|null */
             'created_at' => self::utc($log->created_at),
         ];

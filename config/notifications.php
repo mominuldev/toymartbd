@@ -55,7 +55,8 @@ return [
     ],
 
     'whatsapp' => [
-        // log | null. No WhatsApp Business (BSP or Cloud API) account exists yet.
+        // log | null | cloud (WhatsApp Cloud API on the Inbox's number — UNVERIFIED, no account yet).
+        // Admin → Integrations → Messaging overrides this (messaging.whatsapp_driver).
         'driver' => env('WHATSAPP_DRIVER', 'log'),
         // PLACEHOLDER: ≈৳0.45 utility rate (PRD §6a). Meta's pricing moves; confirm before launch.
         'cost_per_message' => env('WHATSAPP_COST_PER_MESSAGE', '0.45'),

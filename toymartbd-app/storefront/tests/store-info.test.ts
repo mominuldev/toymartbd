@@ -18,6 +18,7 @@ const UNSET = {
     hotline_tel: null,
     whatsapp: null,
     whatsapp_display: null,
+    messenger: null,
     email: null,
     address_en: null,
     address_bn: null,
@@ -32,6 +33,7 @@ const SET = {
     hotline_tel: 'tel:+8809666700800',
     whatsapp: '+8801812345678',
     whatsapp_display: '01812-345678',
+    messenger: 'toymartbd',
     email: 'care@toymartbd.com',
     address_en: 'House 5, Road 2, Mirpur, Dhaka 1216',
     address_bn: 'বাসা ৫, রোড ২, মিরপুর, ঢাকা ১২১৬',
@@ -43,7 +45,8 @@ describe('toStoreInfo', () => {
     it('turns every unset value into the marked sample, never a link', () => {
         const info = toStoreInfo(UNSET);
         expect(info.contact).toEqual(sampleContact);
-        for (const value of Object.values(info.contact)) expect(value.placeholder).toBe(true);
+        for (const value of [info.contact.hotline, info.contact.whatsapp, info.contact.email]) expect(value.placeholder).toBe(true);
+        expect(info.contact.messenger).toBeNull(); // no sample: no Messenger link until the owner sets the Page
         expect(info.legal).toEqual({ tradeLicence: null, bin: null });
         expect(info.address).toEqual({ en: null, bn: null });
         expect(info.name).toEqual({ en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' });
@@ -67,6 +70,7 @@ describe('toStoreInfo', () => {
         expect(info.contact.hotline).toEqual({ display: '09666-700800', href: 'tel:+8809666700800', placeholder: false });
         expect(info.contact.whatsapp).toEqual({ display: '01812-345678', href: 'https://wa.me/8801812345678', placeholder: false });
         expect(info.contact.email).toEqual({ display: 'care@toymartbd.com', href: 'mailto:care@toymartbd.com', placeholder: false });
+        expect(info.contact.messenger).toEqual({ display: 'toymartbd', href: 'https://m.me/toymartbd', placeholder: false });
         expect(info.legal).toEqual({ tradeLicence: 'TRAD/DNCC/012345/2026', bin: '004567891-0101' });
         expect(info.address).toEqual({ en: SET.address_en, bn: SET.address_bn });
         expect(info.name).toEqual({ en: 'Toy Mart BD Ltd', bn: 'টয় মার্ট বিডি লিমিটেড' });
@@ -76,6 +80,12 @@ describe('toStoreInfo', () => {
         const info = toStoreInfo({ ...UNSET, hotline: SET.hotline, hotline_tel: SET.hotline_tel });
         expect(info.contact.hotline.placeholder).toBe(false);
         expect(info.contact.email).toBe(sampleContact.email);
+    });
+
+    it('takes a Messenger Page username with dots or a numeric id, and drops anything else', () => {
+        expect(toStoreInfo({ ...UNSET, messenger: 'toymart.bd' }).contact.messenger?.href).toBe('https://m.me/toymart.bd');
+        expect(toStoreInfo({ ...UNSET, messenger: '104857234567890' }).contact.messenger?.href).toBe('https://m.me/104857234567890');
+        for (const bad of ['', '  ', 'toy', 'https://m.me/x', 'toy mart', 'a/../b', 42]) expect(toStoreInfo({ ...UNSET, messenger: bad }).contact.messenger).toBeNull();
     });
 
     it('shows the E.164 WhatsApp number when the API sends no display form', () => {

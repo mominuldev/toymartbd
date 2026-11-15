@@ -72,7 +72,8 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                                 <span lang={locale}>{t.nav.languageShort[locale]}</span>
                                 <Icon name="caretDown" className="size-3.5" />
                             </summary>
-                            <div className="absolute top-full right-0 z-10 mt-2 flex min-w-32 flex-col rounded-md bg-surface-raised p-1 shadow-e3">
+                            {/* z-40 like the search suggestions: the MegaMenu bar below draws its row at z-20. */}
+                            <div className="absolute top-full right-0 z-40 mt-2 flex min-w-32 flex-col rounded-md bg-surface-raised p-1 shadow-e3">
                                 <span lang={locale} aria-current="true" className="t-body-sm flex min-h-touch-min items-center rounded-sm px-3 font-semibold text-fg-brand">
                                     {t.language[locale]}
                                 </span>

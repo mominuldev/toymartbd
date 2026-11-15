@@ -54,6 +54,11 @@ final class MessagingSettings
 
     public const string WHATSAPP_ENABLED = 'messaging.whatsapp_enabled';
 
+    /** WhatsApp drivers selectable in the admin: `log` sends nothing, `cloud` is the Cloud API (unverified). */
+    public const array WHATSAPP_DRIVERS = ['log', 'cloud'];
+
+    public const string WHATSAPP_DRIVER = 'messaging.whatsapp_driver';
+
     /** Stored encrypted; never returned by any API (only set/unset and a 4-char hint). */
     public const array SECRET_KEYS = [self::REVE_API_KEY, self::REVE_SECRET_KEY];
 
@@ -66,6 +71,7 @@ final class MessagingSettings
         self::REVE_SENDER_ID => 'notifications.sms.drivers.reve.sender_id',
         self::SMS_COST_PER_SEGMENT => 'notifications.sms.cost_per_segment',
         self::WHATSAPP_ENABLED => 'notifications.whatsapp.enabled',
+        self::WHATSAPP_DRIVER => 'notifications.whatsapp.driver',
     ];
 
     public function smsDriver(): string
@@ -100,6 +106,14 @@ final class MessagingSettings
         $rate = $this->value(self::SMS_COST_PER_SEGMENT);
 
         return Money::of(is_string($rate) || is_int($rate) ? $rate : '0.00');
+    }
+
+    /** log | null | cloud. The Cloud API credentials are the Inbox's WhatsApp number. */
+    public function whatsappDriver(): string
+    {
+        $driver = $this->value(self::WHATSAPP_DRIVER);
+
+        return is_string($driver) && $driver !== '' ? $driver : 'log';
     }
 
     public function whatsappEnabled(): bool
@@ -148,7 +162,7 @@ final class MessagingSettings
      * The admin screen's view: effective non-secret values, and for each secret ONLY
      * whether it is set, where from, and a last-4 hint. The secret values never appear.
      *
-     * @return array{sms_driver: string, reve_base_url: ?string, reve_sender_id: ?string, sms_cost_per_segment: string, whatsapp_enabled: bool, reve_api_key_set: bool, reve_api_key_hint: ?string, reve_api_key_source: ?string, reve_secret_key_set: bool, reve_secret_key_hint: ?string, reve_secret_key_source: ?string, sources: array<string, string>}
+     * @return array{sms_driver: string, reve_base_url: ?string, reve_sender_id: ?string, sms_cost_per_segment: string, whatsapp_enabled: bool, whatsapp_driver: string, reve_api_key_set: bool, reve_api_key_hint: ?string, reve_api_key_source: ?string, reve_secret_key_set: bool, reve_secret_key_hint: ?string, reve_secret_key_source: ?string, sources: array<string, string>}
      */
     public function adminView(): array
     {
@@ -162,6 +176,7 @@ final class MessagingSettings
             'reve_sender_id' => $this->string(self::REVE_SENDER_ID, $values),
             'sms_cost_per_segment' => $this->costPerSegment()->toDecimal(),
             'whatsapp_enabled' => $this->whatsappEnabled(),
+            'whatsapp_driver' => $this->whatsappDriver(),
             'reve_api_key_set' => $apiSource !== null,
             'reve_api_key_hint' => $this->secretHint(self::REVE_API_KEY),
             'reve_api_key_source' => $apiSource,
@@ -174,6 +189,7 @@ final class MessagingSettings
                 'reve_sender_id' => $this->source(self::REVE_SENDER_ID),
                 'sms_cost_per_segment' => $this->source(self::SMS_COST_PER_SEGMENT),
                 'whatsapp_enabled' => $this->source(self::WHATSAPP_ENABLED),
+                'whatsapp_driver' => $this->source(self::WHATSAPP_DRIVER),
             ],
         ];
     }

@@ -21,5 +21,7 @@ final readonly class MessagingSettingsData
         public ?string $reveSecretKey = null,
         public bool $clearReveApiKey = false,
         public bool $clearReveSecretKey = false,
+        /** log | cloud; null = keep the saved choice (a client that does not send it). */
+        public ?string $whatsappDriver = null,
     ) {}
 }

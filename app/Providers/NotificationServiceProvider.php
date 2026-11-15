@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Inbox\Events\WhatsAppMessageStatusReceived;
+use App\Domain\Inbox\Services\InboxWhatsAppCloudAccount;
 use App\Domain\Notification\Contracts\SmsGateway;
+use App\Domain\Notification\Contracts\WhatsAppCloudAccount;
 use App\Domain\Notification\Contracts\WhatsAppGateway;
-use App\Domain\Notification\Drivers\LogWhatsAppGateway;
-use App\Domain\Notification\Drivers\NullWhatsAppGateway;
 use App\Domain\Notification\Drivers\RecordingSmsGateway;
+use App\Domain\Notification\Listeners\ApplyWhatsAppDeliveryStatus;
 use App\Domain\Notification\Listeners\QueueOrderNotifications;
 use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Notification\Models\NotificationPreference;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Services\SmsDrivers;
+use App\Domain\Notification\Services\WhatsAppDrivers;
 use App\Domain\Ordering\Events\OrderCancelled;
 use App\Domain\Ordering\Events\OrderConfirmed;
 use App\Domain\Ordering\Events\OrderDelivered;
@@ -26,7 +29,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use InvalidArgumentException;
 
 /**
  * Notification wiring (P4-NOT-01..03). Drivers sit behind contracts (rule 5): a new SMS
@@ -45,15 +47,13 @@ final class NotificationServiceProvider extends ServiceProvider
             return new RecordingSmsGateway($drivers->driver(), $drivers->name());
         });
 
-        $this->app->bind(WhatsAppGateway::class, static function (Application $app): WhatsAppGateway {
-            $driver = config('notifications.whatsapp.driver', 'log');
+        // Admin → Integrations → Messaging first, WHATSAPP_DRIVER env as the fallback. Resolved
+        // per job, so a driver switched in the admin applies to the next send.
+        $this->app->bind(WhatsAppGateway::class, static fn (Application $app): WhatsAppGateway => $app->make(WhatsAppDrivers::class)->driver());
 
-            return match ($driver) {
-                'log' => $app->make(LogWhatsAppGateway::class),
-                'null' => $app->make(NullWhatsAppGateway::class),
-                default => throw new InvalidArgumentException('Unknown WhatsApp driver ['.(is_string($driver) ? $driver : '?').'].'),
-            };
-        });
+        // One WhatsApp number: the notification driver and the template sync use the Inbox's
+        // WhatsApp Cloud credentials through this seam (deptrac: Notification never reads Inbox).
+        $this->app->bind(WhatsAppCloudAccount::class, InboxWhatsAppCloudAccount::class);
     }
 
     public function boot(): void
@@ -75,5 +75,8 @@ final class NotificationServiceProvider extends ServiceProvider
         Event::listen(\App\Domain\Fulfilment\Events\ShipmentStatusChanged::class, [QueueOrderNotifications::class, 'onShipmentStatusChanged']);
         // P8 batch 3: a removed child's name leaves the birthday-reminder payloads too.
         Event::listen(\App\Domain\Customer\Events\CustomerChildRemoved::class, \App\Domain\Notification\Listeners\ForgetRemovedChild::class);
+        // WhatsApp delivery statuses for order-update templates arrive at the Inbox's webhook;
+        // the Inbox hands on the ones that are not conversation messages (rule 2).
+        Event::listen(WhatsAppMessageStatusReceived::class, ApplyWhatsAppDeliveryStatus::class);
     }
 }

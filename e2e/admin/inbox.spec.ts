@@ -75,7 +75,7 @@ test('notes, replies, assigns and resolves a demo conversation', async ({ page }
     await page.getByRole('radio', { name: 'Reply' }).click();
     await expect(page.getByRole('radio', { name: 'Reply' })).toBeChecked();
     const reply = page.getByRole('textbox', { name: 'Reply' });
-    if (await reply.isEnabled()) {
+    if ((await reply.isVisible()) && (await reply.isEnabled())) {
         // The composer re-renders when the mode changes; type once it has settled.
         await expect(async () => {
             await reply.fill('Apa, kal pouchabe.');

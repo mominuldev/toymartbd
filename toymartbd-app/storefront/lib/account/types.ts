@@ -9,6 +9,7 @@ export type SavedAddress = Schema<'StorefrontAddress'>;
 export type OrderSummary = Schema<'StorefrontOrderSummary'>;
 export type WishlistItem = Schema<'StorefrontWishlistItem'>;
 export type AccountConsents = Schema<'StorefrontAccountConsents'>;
+export type AccountNotificationPreferences = Schema<'StorefrontAccountNotificationPreferences'>;
 
 export const ORDER_GROUPS = ['active', 'delivered', 'cancelled', 'returned'] as const;
 export type OrderGroup = (typeof ORDER_GROUPS)[number];

@@ -40,6 +40,8 @@ final readonly class LogChannelDriver implements InboxChannelDriver
             'channel' => $message->channel->value,
             'message_id' => $message->messageId,
             'length' => mb_strlen($message->body),
+            'template' => $message->template?->name,
+            'tag' => $message->tag,
         ]);
 
         return SendResult::accepted('log-'.Str::uuid()->toString());

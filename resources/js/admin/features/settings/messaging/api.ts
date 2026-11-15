@@ -14,6 +14,11 @@ export type SmsTestInput = SendTestSmsRequestInput;
 export const smsDrivers = ['log', 'null', 'reve'] as const;
 export type SmsDriver = (typeof smsDrivers)[number];
 
+/** WhatsApp notification drivers selectable here; `null` stays env-only. */
+export const whatsAppDrivers = ['log', 'cloud'] as const;
+export type WhatsAppDriver = (typeof whatsAppDrivers)[number];
+export const isWhatsAppDriver = (value: string): value is WhatsAppDriver => (whatsAppDrivers as readonly string[]).includes(value);
+
 const key = ['settings', 'messaging'] as const;
 
 export function useMessagingSettings(enabled: boolean) {
@@ -59,5 +64,17 @@ export function useSaveInboxChannelSettings() {
             // The Integrations hub reads the same readiness.
             void client.invalidateQueries({ queryKey: ['integrations'] });
         },
+    });
+}
+
+export type InboxChannelTestResult = Schema<'InboxChannelTestResult'>;
+
+/** "Test connection": one read-only Meta call with the SAVED credentials; the card then shows `last_check`. */
+export function useTestInboxChannel() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: (channel: 'whatsapp' | 'messenger') => api<InboxChannelTestResult>(`/settings/inbox-channels/${channel}/test`, { method: 'POST' }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: inboxKey }),
     });
 }

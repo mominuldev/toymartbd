@@ -10,7 +10,7 @@ import { displayPhone } from '@/lib/account/flash';
 import { getStoreInfo } from '@/lib/store-info';
 import { noticeText } from '@/lib/account/format';
 import { accountMessages } from '@/lib/account/messages';
-import { getChildren, getConsents, readAccountFlash, requireAccount } from '@/lib/account/server';
+import { getChildren, getConsents, getNotificationPreferences, readAccountFlash, requireAccount } from '@/lib/account/server';
 import { format, getMessages, isLocale } from '@/lib/i18n';
 import { orderDate } from '@/lib/order/format';
 import { privateMetadata } from '@/lib/seo/metadata';
@@ -20,8 +20,10 @@ import { privateMetadata } from '@/lib/seo/metadata';
 // and "My kids" (P8 batch 3: first name/nickname + birthday per child) — then "Notifications & language":
 // the "Birthday reminders and offers" switch (the purpose consent, never pre-ticked, never on checkout)
 // and the message language, with its own Save. Then sign out. Three independent no-JS forms posting to
-// Route Handlers (rule 28: the API is reached only from the server). Not built (no backend for a
-// customer to set them): the frame's "Order updates on WhatsApp" and "SMS updates" switches.
+// Route Handlers (rule 28: the API is reached only from the server). The frame's "Order updates on
+// WhatsApp" and "SMS updates" switches sit above the birthday row in the same form: the customer's own
+// order_updates channels (GET/PUT /storefront/account/notification-preferences; on by default; sign-in
+// codes are never switchable). QueueOrderNotification honours them: WhatsApp off → SMS; both off → none.
 
 const PATH = '/account/profile';
 
@@ -49,7 +51,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     const n = p.notifications;
     const query = await searchParams;
     const { account, token } = await requireAccount(locale, PATH);
-    const [consents, children] = await Promise.all([getConsents(token, locale), getChildren(token, locale)]);
+    const [consents, children, channels] = await Promise.all([getConsents(token, locale), getChildren(token, locale), getNotificationPreferences(token, locale)]);
     const birthday = consents.birthday;
     const flash = await readAccountFlash();
     const draft = flash?.kind === 'error' ? flash.draft : {};
@@ -61,6 +63,11 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     const optedIn = draft.birthday_reminders !== undefined ? draft.birthday_reminders === '1' : birthday.consented;
     const state = birthday.consented ? n.on : birthday.withdrawn_at ? format(n.withdrawn, { date: orderDate(birthday.withdrawn_at, getMessages(locale)) }) : null;
     const childDraft = draft.child_id !== undefined ? draft : {};
+    // Order updates are on unless the customer turned a channel off (or just did, before an error).
+    const orderOn = (channel: 'whatsapp' | 'sms'): boolean => {
+        const drafted = draft[`order_updates_${channel}`];
+        return drafted !== undefined ? drafted === '1' : (channels.preferences.find((row) => row.channel === channel)?.enabled ?? true);
+    };
 
     return (
         <AccountShell locale={locale} path={PATH} account={account} section="profile" title={p.title} heading={{}}>
@@ -100,15 +107,17 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 <h2 id="notifications-title" className="t-h4 text-fg-primary">
                     {n.title}
                 </h2>
-                <label className="flex cursor-pointer items-center gap-3">
-                    <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="t-body-strong text-fg-primary">{n.reminders}</span>
-                        <span className="t-caption text-fg-tertiary">{n.remindersSub}</span>
-                    </span>
-                    {/* Figma Toggle 239:14146 — 48 × 28 track, 22 knob; a real checkbox underneath (no JS). */}
-                    <input type="checkbox" role="switch" name="birthday_reminders" value="1" defaultChecked={optedIn} aria-describedby="reminders-what reminders-stop" className="peer sr-only" />
-                    <span aria-hidden="true" className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors duration-(--tm-duration-fast) peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-line-focus after:absolute after:start-0.75 after:top-0.75 after:size-5.5 after:rounded-full after:bg-surface after:shadow-e1 after:transition-transform after:duration-(--tm-duration-fast) peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5" />
-                </label>
+                <input type="hidden" name="order_updates_shown" value="1" />
+                <Switch name="order_updates_whatsapp" title={n.orderWhatsapp} sub={n.orderWhatsappSub} checked={orderOn('whatsapp')} describedBy="order-how" />
+                <Switch name="order_updates_sms" title={n.orderSms} sub={n.orderSmsSub} checked={orderOn('sms')} describedBy="order-how" />
+                <p id="order-how" className="t-body-sm text-fg-secondary">
+                    {n.orderHow}
+                </p>
+                {channels.whatsapp_available ? null : <p className="t-caption text-fg-secondary">{n.whatsappUnavailable}</p>}
+                {!orderOn('whatsapp') && !orderOn('sms') ? <p className="t-caption text-fg-primary">{n.orderNone}</p> : null}
+                <div className="border-t border-line-default pt-3.5">
+                    <Switch name="birthday_reminders" title={n.reminders} sub={n.remindersSub} checked={optedIn} describedBy="reminders-what reminders-stop" />
+                </div>
                 <p id="reminders-what" className="t-body-sm text-fg-secondary">
                     {n.what}
                 </p>
@@ -146,5 +155,19 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 className="t-button flex h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-line-brand-subtle bg-surface text-fg-brand hover:bg-subtle lg:max-w-120 [&>svg]:text-fg-brand"
             />
         </AccountShell>
+    );
+}
+
+/** Figma Toggle 239:14146 — 48 × 28 track, 22 knob; a real checkbox underneath, so it works without JavaScript. */
+function Switch({ name, title, sub, checked, describedBy }: { name: string; title: string; sub: string; checked: boolean; describedBy: string }) {
+    return (
+        <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <span className="flex min-w-0 flex-1 flex-col">
+                <span className="t-body-strong text-fg-primary">{title}</span>
+                <span className="t-caption text-fg-tertiary">{sub}</span>
+            </span>
+            <input type="checkbox" role="switch" name={name} value="1" defaultChecked={checked} aria-describedby={describedBy} className="peer sr-only" />
+            <span aria-hidden="true" className="relative h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors duration-(--tm-duration-fast) peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-line-focus after:absolute after:start-0.75 after:top-0.75 after:size-5.5 after:rounded-full after:bg-surface after:shadow-e1 after:transition-transform after:duration-(--tm-duration-fast) peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5" />
+        </label>
     );
 }

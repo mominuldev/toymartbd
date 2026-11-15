@@ -55,6 +55,13 @@ final class CompanyDetails
      */
     public const string WHATSAPP_KEY = 'store.whatsapp';
 
+    /**
+     * The Facebook Page's public username or numeric id, as used in `https://m.me/{value}` (the
+     * storefront's Messenger chat link). Edited in Store settings › Business; a key of its own for
+     * the same reason as WHATSAPP_KEY.
+     */
+    public const string MESSENGER_KEY = 'store.messenger';
+
     /** Shown when the owner has not set a name yet (the brand, not a placeholder). */
     public const array DEFAULT_NAMES = ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি'];
 
@@ -88,6 +95,14 @@ final class CompanyDetails
     public function whatsapp(): ?string
     {
         $raw = Setting::get(self::WHATSAPP_KEY);
+
+        return is_string($raw) && trim($raw) !== '' ? $raw : null;
+    }
+
+    /** The saved Messenger Page username or id, or null. */
+    public function messenger(): ?string
+    {
+        $raw = Setting::get(self::MESSENGER_KEY);
 
         return is_string($raw) && trim($raw) !== '' ? $raw : null;
     }

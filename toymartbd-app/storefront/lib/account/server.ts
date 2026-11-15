@@ -8,7 +8,7 @@ import type { StorefrontOrder } from '../cart/types';
 import { localizedPath, type Locale } from '../i18n/config';
 import { ACCOUNT_COOKIE, ACCOUNT_FLASH_COOKIE } from './cookies';
 import { decodeFlash } from './flash';
-import type { Account, AccountChild, AccountConsents, AccountFlash, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
+import type { Account, AccountChild, AccountConsents, AccountFlash, AccountNotificationPreferences, OrderGroup, OrderPage, SavedAddress, WishlistItem } from './types';
 
 // The customer account, server side (P4-STO-11, docs/api/account.md). The customer's Sanctum token
 // lives in an httpOnly cookie, is read only here and in the account Server Actions, and is sent to
@@ -105,6 +105,11 @@ export async function getChildren(token: string, locale: Locale): Promise<Accoun
 /** The customer's own message consents (P8: birthday reminders with offers). No customer id is sent — the token is the customer. */
 export async function getConsents(token: string, locale: Locale): Promise<AccountConsents> {
     return read<AccountConsents>('storefront/account/consents', token, locale);
+}
+
+/** The customer's own order-update channels (WhatsApp / SMS). The token is the customer; security messages are not listed. */
+export async function getNotificationPreferences(token: string, locale: Locale): Promise<AccountNotificationPreferences> {
+    return read<AccountNotificationPreferences>('storefront/account/notification-preferences', token, locale);
 }
 
 export type Write<T> = { ok: true; data: T } | { ok: false; status: number; message: string | null; errors: Record<string, string> };

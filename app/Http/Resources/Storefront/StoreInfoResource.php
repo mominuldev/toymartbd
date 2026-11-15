@@ -13,12 +13,12 @@ use Illuminate\Http\Request;
  * not set is null, and the storefront then shows its marked sample instead (launch item F4).
  * Public data only: nothing here is a secret or personal.
  *
- * @property array{name_en: string, name_bn: string, hotline: string|null, whatsapp: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null} $resource
+ * @property array{name_en: string, name_bn: string, hotline: string|null, whatsapp: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null} $resource
  */
 final class StoreInfoResource extends ApiResource
 {
     /**
-     * @return array{name_en: string, name_bn: string, hotline: string|null, hotline_tel: string|null, whatsapp: string|null, whatsapp_display: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null}
+     * @return array{name_en: string, name_bn: string, hotline: string|null, hotline_tel: string|null, whatsapp: string|null, whatsapp_display: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -37,6 +37,8 @@ final class StoreInfoResource extends ApiResource
             'whatsapp' => $whatsapp,
             /** Local form for display, `01712-345678`. */
             'whatsapp_display' => self::localMobile($whatsapp),
+            /** The Facebook Page username or numeric id, for a `https://m.me/{messenger}` link. */
+            'messenger' => $info['messenger'],
             'email' => $info['email'],
             'address_en' => $info['address_en'],
             'address_bn' => $info['address_bn'],

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Storefront\Account\AccountController;
 use App\Http\Controllers\Api\V1\Storefront\Account\AddressController as AccountAddressController;
 use App\Http\Controllers\Api\V1\Storefront\Account\AuthController as AccountAuthController;
 use App\Http\Controllers\Api\V1\Storefront\Account\ConsentController as AccountConsentController;
+use App\Http\Controllers\Api\V1\Storefront\Account\NotificationPreferenceController as AccountNotificationPreferenceController;
 use App\Http\Controllers\Api\V1\Storefront\Account\OrderController as AccountOrderController;
 use App\Http\Controllers\Api\V1\Storefront\Account\ReviewController as AccountReviewController;
 use App\Http\Controllers\Api\V1\Storefront\Account\WishlistController as AccountWishlistController;
@@ -135,6 +136,9 @@ Route::middleware(['auth:customer', CheckAbilities::class.':customer', EnsureAct
     // Purpose consents (P8): birthday reminders with offers, opted in on the profile page — never on checkout.
     Route::get('/consents', [AccountConsentController::class, 'show'])->name('consents.show');
     Route::put('/consents', [AccountConsentController::class, 'update'])->name('consents.update');
+    // Order updates per channel (WhatsApp / SMS) on the profile page; security (OTP) is never switchable.
+    Route::get('/notification-preferences', [AccountNotificationPreferenceController::class, 'show'])->name('notification-preferences.show');
+    Route::put('/notification-preferences', [AccountNotificationPreferenceController::class, 'update'])->name('notification-preferences.update');
     // My kids (P8 batch 3): first name/nickname + birthday, for birthday reminders with an offer.
     Route::get('/children', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'index'])->name('children.index');
     Route::post('/children', [App\Http\Controllers\Api\V1\Storefront\Account\ChildController::class, 'store'])->name('children.store');

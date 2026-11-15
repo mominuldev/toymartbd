@@ -4,6 +4,9 @@
 //  - preferences  language (PATCH) + the "Birthday reminders and offers" switch (PUT /consents). The
 //                 switch is a plain checkbox: unticked (absent from the form) means "no" — never
 //                 assumed, never pre-ticked for someone who has not opted in, and never on checkout.
+//                 Plus the "Order updates on WhatsApp" and "SMS updates" switches (PUT
+//                 /notification-preferences, category order_updates). Unticked means off, but only when
+//                 the form carried them (`order_updates_shown`): a form without the switches changes nothing.
 //  - child        "My kids": add / edit / remove one child (first name or nickname, day + month,
 //                 optional year). The API judges whether the date is real (31 February) and the cap.
 
@@ -16,6 +19,8 @@ export interface PreferencesSubmission {
     draft: Record<string, string>;
     body: { preferred_language: 'en' | 'bn' };
     birthday: boolean;
+    /** PUT /storefront/account/notification-preferences, or null when the form had no order-update switches. */
+    orderUpdates: { preferences: Array<{ channel: 'whatsapp' | 'sms'; category: 'order_updates'; enabled: boolean }> } | null;
 }
 
 export interface ChildSubmission {
@@ -46,10 +51,25 @@ export function readDetailsForm(form: FormData): DetailsSubmission {
 export function readPreferencesForm(form: FormData): PreferencesSubmission {
     const language = text(form, 'preferred_language', 2);
     const birthday = form.get('birthday_reminders') === '1';
+    const shown = form.get('order_updates_shown') === '1';
+    const whatsapp = form.get('order_updates_whatsapp') === '1';
+    const sms = form.get('order_updates_sms') === '1';
     return {
-        draft: { preferred_language: language, birthday_reminders: birthday ? '1' : '0' },
+        draft: {
+            preferred_language: language,
+            birthday_reminders: birthday ? '1' : '0',
+            ...(shown ? { order_updates_whatsapp: whatsapp ? '1' : '0', order_updates_sms: sms ? '1' : '0' } : {}),
+        },
         body: { preferred_language: language === 'en' ? 'en' : 'bn' },
         birthday,
+        orderUpdates: shown
+            ? {
+                  preferences: [
+                      { channel: 'whatsapp', category: 'order_updates', enabled: whatsapp },
+                      { channel: 'sms', category: 'order_updates', enabled: sms },
+                  ],
+              }
+            : null,
     };
 }
 

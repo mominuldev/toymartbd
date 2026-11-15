@@ -41,7 +41,7 @@ const card: Card = {
 
 const productCard = {
     id: 3, slug: 'wooden-puzzle', name: 'Wooden Alphabet Puzzle', name_bn: 'কাঠের বর্ণমালা পাজল', brand: null, price: '650.00', compare_at_price: null, price_max: '650.00',
-    discount_percent: null, age_min_months: 36, age_max_months: 60, rating_avg: null, rating_count: 0, is_featured: false, variant_count: 1, in_stock: true, image: null, flash_sale: null,
+    discount_percent: null, age_min_months: 36, age_max_months: 60, rating_avg: null, rating_count: 0, is_featured: false, variant_count: 1, default_variant_id: null, in_stock: true, image: null, flash_sale: null,
 };
 
 const post: BlogPost = {

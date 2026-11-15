@@ -15,7 +15,7 @@ use App\Models\Enums\Permission;
 
 /**
  * Store settings › Business (Figma B · 38 241:50827): store name (EN/BN), trade licence,
- * BIN, support hotline and WhatsApp. Read with settings.view, save with settings.update.
+ * BIN, support hotline, WhatsApp and the Messenger Page. Read with settings.view, save with settings.update.
  *
  * Single source of truth: name, trade licence, BIN and hotline are the `invoice.company.*`
  * settings Invoice details (`/settings/invoice`) reads and writes — this endpoint is a
@@ -36,7 +36,7 @@ final class BusinessDetailsController extends ApiController
     {
         $userId = $request->user()?->getAuthIdentifier();
         $update->handle($request->toData(), is_int($userId) ? $userId : null);
-        // The storefront chrome shows these values (hotline, legal bar): purge its cache. Queued, after commit.
+        // The storefront chrome shows these values (hotline, legal bar, chat links): purge its cache. Queued, after commit.
         RevalidateStorefrontTags::dispatch([StoreInfoController::CACHE_TAG]);
 
         return self::view($company);
@@ -54,6 +54,7 @@ final class BusinessDetailsController extends ApiController
         return new BusinessDetailsResource([
             'values' => $values,
             'whatsapp' => $company->whatsapp(),
+            'messenger' => $company->messenger(),
             'placeholders' => array_values(array_filter(
                 CompanyDetails::BUSINESS_FIELDS,
                 static fn (string $f): bool => $values[$f] === null, // every Business field is required on invoices

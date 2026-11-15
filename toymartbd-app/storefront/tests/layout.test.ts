@@ -211,7 +211,9 @@ describe('mobile tab bar', () => {
 
 describe('contact placeholders', () => {
     it('every sample contact value is flagged as a placeholder, in Western digits', () => {
+        expect(sampleContact.messenger).toBeNull(); // no Messenger sample: no link until the owner sets the Page
         for (const [name, value] of Object.entries(sampleContact)) {
+            if (value === null) continue;
             expect(value.placeholder, name).toBe(true);
             expect(/[০-৯]/.test(value.display), name).toBe(false);
         }

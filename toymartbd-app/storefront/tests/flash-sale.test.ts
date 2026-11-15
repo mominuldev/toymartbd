@@ -95,6 +95,7 @@ const card = (over: Partial<Card> = {}): Card => ({
     rating_count: 0,
     is_featured: false,
     variant_count: 1,
+    default_variant_id: null,
     in_stock: true,
     image: null,
     flash_sale: null,

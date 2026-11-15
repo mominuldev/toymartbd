@@ -17,6 +17,7 @@ final readonly class InboxChannelCredentials
     /**
      * @param  array<string, string>  $secrets  name → new value
      * @param  list<string>  $clear  names of saved secrets to remove
+     * @param  array<string, string|bool|null>  $extra  name → new value (null = remove)
      */
     public function __construct(
         public InboxChannel $channel,
@@ -24,5 +25,6 @@ final readonly class InboxChannelCredentials
         public ?string $accountId,
         public array $secrets = [],
         public array $clear = [],
+        public array $extra = [],
     ) {}
 }

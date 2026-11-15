@@ -78,6 +78,7 @@ export function cardFromProduct(product: StorefrontProduct): ProductCard {
         rating_count: product.rating_count,
         is_featured: false,
         variant_count: product.variants.length,
+        default_variant_id: product.variants.length === 1 ? (product.variants[0]?.id ?? null) : null,
         in_stock: product.in_stock,
         // P7: the product's cheapest flash offer, copied as the API sent it (no per-variant map on a card).
         flash_sale: product.flash_sale

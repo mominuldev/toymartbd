@@ -19,6 +19,9 @@ use Closure;
  */
 final class UpdateBusinessDetailsRequest extends ApiFormRequest
 {
+    /** A Page username (letters, digits, dots; 5–50) or a numeric Page id. */
+    public const string MESSENGER_PATTERN = '/^(?:[A-Za-z0-9.]{5,50}|[0-9]{1,50})$/';
+
     public function authorize(): bool
     {
         return $this->user()?->can(Permission::SettingsUpdate->value) ?? false;
@@ -37,6 +40,11 @@ final class UpdateBusinessDetailsRequest extends ApiFormRequest
             'hotline' => ['nullable', 'string', 'max:32', 'regex:/^\+?[0-9 ()-]{5,32}$/'],
             /** A Bangladeshi mobile, 013–019 only (rule 30); stored and returned as E.164. */
             'whatsapp' => ['nullable', 'string', 'max:32', self::mobileRule()],
+            /**
+             * The Facebook Page behind the storefront's Messenger link `https://m.me/{messenger}`: its
+             * public username (letters, digits and dots, 5–50 characters) or its numeric Page id.
+             */
+            'messenger' => ['nullable', 'string', 'max:50', 'regex:'.self::MESSENGER_PATTERN],
         ];
     }
 
@@ -50,7 +58,15 @@ final class UpdateBusinessDetailsRequest extends ApiFormRequest
         $whatsapp = $this->input('whatsapp');
         $phone = is_string($whatsapp) && trim($whatsapp) !== '' ? PhoneNumber::parse($whatsapp) : null;
 
-        return new BusinessDetailsData($values, $phone?->e164());
+        $messenger = $this->input('messenger');
+
+        return new BusinessDetailsData($values, $phone?->e164(), is_string($messenger) && trim($messenger) !== '' ? trim($messenger) : null);
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['messenger.regex' => (string) __('store_settings.messenger_invalid')];
     }
 
     private static function mobileRule(): Closure

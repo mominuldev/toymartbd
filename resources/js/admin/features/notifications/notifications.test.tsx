@@ -78,6 +78,10 @@ const deadLetter: NotificationLog = {
     queued_at: '2026-11-12T08:00:00Z',
     sent_at: null,
     failed_at: '2026-11-12T08:05:00Z',
+    delivery_status: null,
+    delivered_at: null,
+    read_at: null,
+    delivery_error: null,
     created_at: '2026-11-12T08:00:00Z',
 };
 

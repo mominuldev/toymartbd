@@ -946,6 +946,14 @@ export const sendInboxReplyRequestSchema = z.object({
 });
 export type SendInboxReplyRequestInput = z.input<typeof sendInboxReplyRequestSchema>;
 
+/** `POST /inbox/conversations/{conversation}/template` — an approved WhatsApp template to a */
+export const sendInboxTemplateRequestSchema = z.object({
+    "template": z.string().min(1).max(512),
+    "language": z.enum(["en","bn_BD"]),
+    "parameters": z.array(z.string().max(1024)).max(20),
+});
+export type SendInboxTemplateRequestInput = z.input<typeof sendInboxTemplateRequestSchema>;
+
 /** `POST /inbox/conversations/{conversation}/quick-replies` — needs inbox.reply. The server */
 export const sendQuickReplyRequestSchema = z.object({
     "kind": z.enum(["product_card","tracking_link"]),
@@ -1523,6 +1531,16 @@ export const twoFactorCodeRequestSchema = z.object({
 });
 export type TwoFactorCodeRequestInput = z.input<typeof twoFactorCodeRequestSchema>;
 
+/** `PUT /storefront/account/notification-preferences` — the signed-in customer turns order updates */
+export const updateAccountNotificationPreferencesRequestSchema = z.object({
+    "preferences": z.array(z.object({
+    "channel": z.enum(["whatsapp","sms"]),
+    "category": z.string().min(1),
+    "enabled": z.boolean(),
+})).min(1).max(2),
+});
+export type UpdateAccountNotificationPreferencesRequestInput = z.input<typeof updateAccountNotificationPreferencesRequestSchema>;
+
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({
     "name": z.string().max(80).optional(),
@@ -1580,6 +1598,7 @@ export const updateBusinessDetailsRequestSchema = z.object({
     "bin": z.string().max(32).regex(new RegExp("^[0-9-]{5,32}$")).nullable().optional(),
     "hotline": z.string().max(32).regex(new RegExp("^\\+?[0-9 ()-]{5,32}$")).nullable().optional(),
     "whatsapp": z.string().max(32).nullable().optional(),
+    "messenger": z.string().max(50).regex(new RegExp("^(?:[A-Za-z0-9.]{5,50}|[0-9]{1,50})$")).nullable().optional(),
 });
 export type UpdateBusinessDetailsRequestInput = z.input<typeof updateBusinessDetailsRequestSchema>;
 
@@ -1713,6 +1732,7 @@ export type UpdateDeliverySettingsRequestInput = z.input<typeof updateDeliverySe
 export const updateInboxChannelSettingsRequestSchema = z.object({
     "whatsapp_driver": z.enum(["log","cloud"]),
     "whatsapp_phone_number_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
+    "whatsapp_business_account_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
     "whatsapp_access_token": z.string().max(2048).nullable().optional(),
     "whatsapp_app_secret": z.string().max(255).nullable().optional(),
     "whatsapp_verify_token": z.string().max(255).nullable().optional(),
@@ -1721,6 +1741,7 @@ export const updateInboxChannelSettingsRequestSchema = z.object({
     "clear_whatsapp_verify_token": z.boolean().optional(),
     "messenger_driver": z.enum(["log","messenger"]),
     "messenger_page_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
+    "messenger_human_agent": z.boolean().optional(),
     "messenger_page_access_token": z.string().max(2048).nullable().optional(),
     "messenger_app_secret": z.string().max(255).nullable().optional(),
     "messenger_verify_token": z.string().max(255).nullable().optional(),
@@ -1772,6 +1793,7 @@ export const updateMessagingSettingsRequestSchema = z.object({
     "reve_sender_id": z.string().max(16).regex(new RegExp("^\\+?\\d{5,15}$")).nullable().optional(),
     "sms_cost_per_segment": z.string().min(1).regex(new RegExp("^\\d{1,4}(?:\\.\\d{1,2})?$")),
     "whatsapp_enabled": z.boolean(),
+    "whatsapp_driver": z.enum(["log","cloud"]).optional(),
     "reve_api_key": z.string().max(255).nullable().optional(),
     "reve_secret_key": z.string().max(255).nullable().optional(),
     "clear_reve_api_key": z.boolean().optional(),
@@ -2091,7 +2113,7 @@ export type UpdateTrackingSettingsRequestInput = z.input<typeof updateTrackingSe
 
 /** `PUT /notifications/templates/{template}/whatsapp-status` (P7) — staff record where a */
 export const updateWhatsAppStatusRequestSchema = z.object({
-    "status": z.enum(["draft","submitted","approved"]),
+    "status": z.enum(["draft","submitted","approved","rejected","paused","disabled"]),
 });
 export type UpdateWhatsAppStatusRequestInput = z.input<typeof updateWhatsAppStatusRequestSchema>;
 

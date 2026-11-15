@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useForm, type FieldPath, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircleIcon, CheckIcon, CopyIcon, WarningCircleIcon, XCircleIcon } from '@phosphor-icons/react';
+import { CheckCircleIcon, CheckIcon, CopyIcon, PlugsConnectedIcon, WarningCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { updateInboxChannelSettingsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
+import { timeAgo } from '@/lib/format';
 import type { MessageKey } from '@/i18n/messages';
 import { Button } from '@/components/ui/Button';
 import { Field, monoInputClass } from '@/components/ui/Field';
@@ -16,11 +17,13 @@ import { useToast } from '@/components/ui/Toast';
 import {
     useInboxChannelSettings,
     useSaveInboxChannelSettings,
+    useTestInboxChannel,
     type InboxChannelCredentials,
     type InboxChannelSettings,
     type InboxChannelSettingsInput,
 } from './api';
 import { SecretField } from './SecretField';
+import { Switch } from './Switch';
 
 type Channel = 'whatsapp' | 'messenger';
 type SecretSlot = 'send_token' | 'app_secret' | 'verify_token';
@@ -28,6 +31,7 @@ type SecretSlot = 'send_token' | 'app_secret' | 'verify_token';
 type FormValues = {
     whatsapp_driver: string;
     whatsapp_phone_number_id: string;
+    whatsapp_business_account_id: string;
     whatsapp_access_token: string;
     whatsapp_app_secret: string;
     whatsapp_verify_token: string;
@@ -36,6 +40,7 @@ type FormValues = {
     clear_whatsapp_verify_token: boolean;
     messenger_driver: string;
     messenger_page_id: string;
+    messenger_human_agent: boolean;
     messenger_page_access_token: string;
     messenger_app_secret: string;
     messenger_verify_token: string;
@@ -81,6 +86,7 @@ function toForm(s: InboxChannelSettings): FormValues {
     return {
         whatsapp_driver: s.whatsapp.driver,
         whatsapp_phone_number_id: s.whatsapp.account_id_source === 'settings' ? (s.whatsapp.account_id ?? '') : '',
+        whatsapp_business_account_id: s.whatsapp.business_account_id_source === 'settings' ? (s.whatsapp.business_account_id ?? '') : '',
         whatsapp_access_token: '',
         whatsapp_app_secret: '',
         whatsapp_verify_token: '',
@@ -89,6 +95,7 @@ function toForm(s: InboxChannelSettings): FormValues {
         clear_whatsapp_verify_token: false,
         messenger_driver: s.messenger.driver,
         messenger_page_id: s.messenger.account_id_source === 'settings' ? (s.messenger.account_id ?? '') : '',
+        messenger_human_agent: s.messenger.human_agent,
         messenger_page_access_token: '',
         messenger_app_secret: '',
         messenger_verify_token: '',
@@ -104,6 +111,7 @@ function toInput(v: FormValues): InboxChannelSettingsInput {
     return {
         whatsapp_driver: v.whatsapp_driver as InboxChannelSettingsInput['whatsapp_driver'],
         whatsapp_phone_number_id: orNull(v.whatsapp_phone_number_id),
+        whatsapp_business_account_id: orNull(v.whatsapp_business_account_id),
         whatsapp_access_token: orNull(v.whatsapp_access_token),
         whatsapp_app_secret: orNull(v.whatsapp_app_secret),
         whatsapp_verify_token: orNull(v.whatsapp_verify_token),
@@ -112,6 +120,7 @@ function toInput(v: FormValues): InboxChannelSettingsInput {
         clear_whatsapp_verify_token: v.clear_whatsapp_verify_token,
         messenger_driver: v.messenger_driver as InboxChannelSettingsInput['messenger_driver'],
         messenger_page_id: orNull(v.messenger_page_id),
+        messenger_human_agent: v.messenger_human_agent,
         messenger_page_access_token: orNull(v.messenger_page_access_token),
         messenger_app_secret: orNull(v.messenger_app_secret),
         messenger_verify_token: orNull(v.messenger_verify_token),
@@ -156,8 +165,7 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
         resolver: async (values, context, options) => {
             const result = await validateInput(toInput(values), context, options as never);
             const errors = result.errors as Partial<Record<keyof FormValues, { message?: string }>>;
-            for (const channel of CHANNELS) {
-                const id = FIELDS[channel].id;
+            for (const id of [...CHANNELS.map((channel) => FIELDS[channel].id), 'whatsapp_business_account_id'] as const) {
                 if (errors[id]) errors[id] = { ...errors[id], message: t('messaging.inbox.idInvalid') };
             }
             return Object.keys(errors).length > 0 ? { values: {}, errors: errors as never } : { values, errors: {} };
@@ -193,7 +201,7 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
             </div>
             <fieldset disabled={save.isPending} className="flex min-w-0 flex-col gap-6">
                 {CHANNELS.map((channel) => (
-                    <ChannelCard key={channel} channel={channel} data={settings[channel]} form={form} />
+                    <ChannelCard key={channel} channel={channel} data={settings[channel]} form={form} dirty={form.formState.isDirty} />
                 ))}
             </fieldset>
             <div className="flex justify-end">
@@ -205,7 +213,7 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
     );
 }
 
-function ChannelCard({ channel, data, form }: { channel: Channel; data: InboxChannelCredentials; form: UseFormReturn<FormValues> }) {
+function ChannelCard({ channel, data, form, dirty }: { channel: Channel; data: InboxChannelCredentials; form: UseFormReturn<FormValues>; dirty: boolean }) {
     const { t } = useI18n();
     const { register, watch, setValue, formState } = form;
     const f = FIELDS[channel];
@@ -250,6 +258,30 @@ function ChannelCard({ channel, data, form }: { channel: Channel; data: InboxCha
                         />
                     )}
                 </Field>
+                {channel === 'whatsapp' && (
+                    <Field
+                        label={t('messaging.inbox.whatsapp.businessAccountId')}
+                        hint={
+                            data.business_account_id_source === 'env'
+                                ? t('messaging.inbox.idFromEnv', { id: data.business_account_id ?? '' })
+                                : t('messaging.inbox.whatsapp.businessAccountIdHint')
+                        }
+                        error={errorOf('whatsapp_business_account_id')}
+                    >
+                        {({ id, describedBy, invalid }) => (
+                            <input
+                                id={id}
+                                inputMode="numeric"
+                                autoComplete="off"
+                                spellCheck={false}
+                                aria-describedby={describedBy}
+                                aria-invalid={invalid || undefined}
+                                className={`h-10 ${monoInputClass}`}
+                                {...register('whatsapp_business_account_id')}
+                            />
+                        )}
+                    </Field>
+                )}
                 {SLOTS.map((slot) => {
                     const field = f.secrets[slot];
                     const clear = clearOf(field);
@@ -274,8 +306,96 @@ function ChannelCard({ channel, data, form }: { channel: Channel; data: InboxCha
                 })}
             </div>
 
+            {channel === 'messenger' && (
+                <div className="flex items-start gap-4 border-t border-line-default pt-3.5">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <p className="t-admin-body-strong text-fg-primary">{t('messaging.inbox.messenger.humanAgent')}</p>
+                        <p className="t-admin-caption text-fg-secondary">{t('messaging.inbox.messenger.humanAgentHint')}</p>
+                        {data.human_agent_source === 'env' && <p className="t-admin-caption text-fg-tertiary">{t('messaging.fromEnv')}</p>}
+                    </div>
+                    <Switch
+                        checked={watch('messenger_human_agent')}
+                        label={t('messaging.inbox.messenger.humanAgent')}
+                        onChange={(value) => setValue('messenger_human_agent', value, { shouldDirty: true })}
+                    />
+                </div>
+            )}
+
             <WebhookUrl channel={channel} url={data.webhook_url} />
+
+            <ConnectionTest channel={channel} lastCheck={data.last_check} dirty={dirty} />
         </FormSection>
+    );
+}
+
+/**
+ * "Test connection": one read-only Meta call with the SAVED credentials (so it is disabled while the
+ * form has unsaved changes), then the last result from the server. Never marks the channel verified.
+ */
+function ConnectionTest({ channel, lastCheck, dirty }: { channel: Channel; lastCheck: InboxChannelCredentials['last_check']; dirty: boolean }) {
+    const { t, locale } = useI18n();
+    const test = useTestInboxChannel();
+    const [failure, setFailure] = useState<string | null>(null);
+
+    const run = () => {
+        setFailure(null);
+        test.mutate(channel, {
+            onError: (error) =>
+                setFailure(error instanceof ApiError && error.status === 429 ? t('messaging.inbox.test.tooMany') : error instanceof ApiError ? error.problem.title : t('error.title')),
+        });
+    };
+
+    const codeText = (code: string | null) => {
+        if (code === 'not_configured' || code === 'unreachable') return t(`messaging.inbox.test.code.${code}` as MessageKey);
+        return code ?? '';
+    };
+
+    let status: string;
+    if (!lastCheck) {
+        status = t('messaging.inbox.test.never');
+    } else if (lastCheck.ok) {
+        const when = timeAgo(lastCheck.checked_at, locale);
+        const name = lastCheck.display_name ?? '—';
+        status = lastCheck.display_number
+            ? t('messaging.inbox.test.okNumber', { name, number: lastCheck.display_number, quality: lastCheck.quality_rating ?? '—', when })
+            : t('messaging.inbox.test.ok', { name, when });
+    } else {
+        const reason = [codeText(lastCheck.error_code), lastCheck.error_message].filter((part) => part !== null && part !== '').join(' — ');
+        status = t('messaging.inbox.test.failed', { code: reason, when: timeAgo(lastCheck.checked_at, locale) });
+    }
+
+    return (
+        <div className="flex flex-col gap-1.5 border-t border-line-default pt-3.5">
+            <div className="flex flex-wrap items-center gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={dirty || test.isPending}
+                    aria-busy={test.isPending || undefined}
+                    onClick={run}
+                    data-test-connection={channel}
+                >
+                    <PlugsConnectedIcon size={16} aria-hidden />
+                    {test.isPending ? t('messaging.inbox.test.testing') : t('messaging.inbox.test.button')}
+                </Button>
+                <p role="status" data-last-check={channel} className="flex min-w-0 flex-1 items-center gap-1.5 t-admin-caption text-fg-secondary">
+                    {lastCheck &&
+                        (lastCheck.ok ? (
+                            <CheckCircleIcon size={16} aria-hidden className="shrink-0 text-feedback-success" />
+                        ) : (
+                            <XCircleIcon size={16} aria-hidden className="shrink-0 text-feedback-danger" />
+                        ))}
+                    <span className="min-w-0 break-words">{status}</span>
+                </p>
+            </div>
+            {failure && (
+                <p role="alert" className="t-admin-caption text-feedback-danger">
+                    {failure}
+                </p>
+            )}
+            <p className="t-admin-caption text-fg-tertiary">{dirty ? t('messaging.inbox.test.saveFirst') : t('messaging.inbox.test.notVerifiedNote')}</p>
+        </div>
     );
 }
 

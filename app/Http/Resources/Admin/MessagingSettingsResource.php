@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  * and secret are NEVER returned — not even to super_admin: only whether each is set, where
  * it comes from, and a hint of at most its last four characters.
  *
- * @property array{sms_driver: string, reve_base_url: ?string, reve_sender_id: ?string, sms_cost_per_segment: string, whatsapp_enabled: bool, reve_api_key_set: bool, reve_api_key_hint: ?string, reve_api_key_source: ?string, reve_secret_key_set: bool, reve_secret_key_hint: ?string, reve_secret_key_source: ?string, sources: array<string, string>} $resource
+ * @property array{sms_driver: string, reve_base_url: ?string, reve_sender_id: ?string, sms_cost_per_segment: string, whatsapp_enabled: bool, whatsapp_driver: string, reve_api_key_set: bool, reve_api_key_hint: ?string, reve_api_key_source: ?string, reve_secret_key_set: bool, reve_secret_key_hint: ?string, reve_secret_key_source: ?string, sources: array<string, string>} $resource
  */
 #[SchemaName('MessagingSettings')]
 final class MessagingSettingsResource extends ApiResource
@@ -34,6 +34,13 @@ final class MessagingSettingsResource extends ApiResource
             'sms_cost_per_segment' => $r['sms_cost_per_segment'],
             /** @var bool Order updates go WhatsApp-first. Off until a WhatsApp account exists. */
             'whatsapp_enabled' => $r['whatsapp_enabled'],
+            /**
+             * `log` sends nothing; `cloud` sends approved utility templates through the WhatsApp
+             * Cloud API on the Inbox's number (UNVERIFIED). `null` is env/config only.
+             *
+             * @var 'log'|'null'|'cloud'
+             */
+            'whatsapp_driver' => $r['whatsapp_driver'],
             /** @var bool */
             'reve_api_key_set' => $r['reve_api_key_set'],
             /** @var string|null "••••1234" at most. */
@@ -46,7 +53,7 @@ final class MessagingSettingsResource extends ApiResource
             'reve_secret_key_hint' => $r['reve_secret_key_hint'],
             /** @var 'settings'|'env'|null */
             'reve_secret_key_source' => $r['reve_secret_key_source'],
-            /** @var array{sms_driver: 'settings'|'env', reve_base_url: 'settings'|'env', reve_sender_id: 'settings'|'env', sms_cost_per_segment: 'settings'|'env', whatsapp_enabled: 'settings'|'env'} */
+            /** @var array{sms_driver: 'settings'|'env', reve_base_url: 'settings'|'env', reve_sender_id: 'settings'|'env', sms_cost_per_segment: 'settings'|'env', whatsapp_enabled: 'settings'|'env', whatsapp_driver: 'settings'|'env'} */
             'sources' => $r['sources'],
         ];
     }

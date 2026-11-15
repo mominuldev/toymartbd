@@ -20,6 +20,10 @@ return [
         'limit' => 'সর্বোচ্চ :max জন সন্তানের তথ্য রাখা যায়। আগে একজনকে মুছুন।',
         'birthday_invalid' => 'এই জন্মদিনটি সঠিক তারিখ নয়। দিন, মাস ও বছর দেখে নিন।',
     ],
+    // Order-update channels on the profile page; security messages (sign-in codes) are never switchable.
+    'notifications' => [
+        'security_locked' => 'সাইন-ইন কোড সবসময় পাঠানো হয়; এটি বন্ধ করা যায় না।',
+    ],
     'wishlist' => [
         'limit' => 'পছন্দের তালিকা পূর্ণ (:max টি খেলনা)। আগে একটি সরান।',
         'unavailable' => 'এই খেলনাটি পাওয়া যাচ্ছে না।',

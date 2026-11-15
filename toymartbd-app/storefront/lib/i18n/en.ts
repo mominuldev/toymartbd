@@ -245,6 +245,15 @@ export const en = {
         sample: 'sample',
         sampleNotice: 'Contact details marked "sample" are placeholders until the owner confirms them.',
     },
+    // Click-to-chat links (lib/chat-links.ts): product page, contact page, footer. Western digits (rule 36).
+    chat: {
+        title: 'Questions? Chat with us',
+        productTitle: 'Questions about this toy?',
+        whatsapp: 'Chat on WhatsApp',
+        messenger: 'Chat on Messenger',
+        newTab: '(opens in a new tab)',
+        productText: 'Hi Toy Mart BD! I have a question about {name}: {url}',
+    },
     pages: {
         draftNotice: 'Draft copy — awaiting review before launch.',
         browse: 'Browse all toys',
@@ -334,6 +343,8 @@ export const en = {
         discount: '−{percent}%',
         buyNow: 'Buy now',
         addToCart: 'Add to cart: {name}',
+        chooseOptions: 'Choose options for {name}',
+        addedToCart: '{name} added to your cart',
         wishlist: 'Save {name} to wishlist',
         noImage: 'No photo yet',
         emptyTitle: 'No toys match these filters',
@@ -499,6 +510,7 @@ export const en = {
     cart: {
         // P4-STO-08 — Figma Cart 130:2302 (390) / 137:3203 (1440); storefront spec §A17–A19, §B5.
         title: 'Your cart',
+        toastDismiss: 'Dismiss',
         metaDescription: 'Your Toy Mart BD cart.',
         items: '{count} items',
         itemsOne: '1 item',

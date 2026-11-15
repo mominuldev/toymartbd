@@ -6,6 +6,7 @@ namespace App\Http\Resources\Admin\Inbox;
 
 use App\Domain\Customer\Support\CustomerPhoneMask;
 use App\Domain\Inbox\Models\Conversation;
+use App\Domain\Inbox\Services\ReplyWindow;
 use App\Models\Enums\Permission;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -28,6 +29,14 @@ final class InboxContact
             'phone_masked' => $phone === null ? null : CustomerPhoneMask::mask($phone),
             'phone' => $pii ? $phone : null,
         ];
+    }
+
+    /** @return array{state: string, window_closes_at: string|null} */
+    public static function reply(Conversation $conversation, ReplyWindow $window): array
+    {
+        $allowance = $window->for($conversation);
+
+        return ['state' => $allowance->state->value, 'window_closes_at' => $allowance->closesAt?->toIso8601String()];
     }
 
     /** @return array{applies: bool, open: bool, expires_at: string|null} */

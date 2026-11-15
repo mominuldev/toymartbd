@@ -40,6 +40,11 @@ final readonly class UpdateInboxChannelSettings
         $idName = InboxChannelSettings::ACCOUNT_ID[$channel->value];
 
         $plain = ['driver' => $data->driver, $idName => $data->accountId];
+        foreach (InboxChannelSettings::EXTRA[$channel->value] ?? [] as $name) {
+            if (array_key_exists($name, $data->extra)) {
+                $plain[$name] = $data->extra[$name];
+            }
+        }
         $plainKeys = array_map(fn (string $name): string => InboxChannelSettings::key($channel, $name), array_keys($plain));
 
         $before = [];

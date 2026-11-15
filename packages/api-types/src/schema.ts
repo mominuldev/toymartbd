@@ -3152,6 +3152,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/notifications/templates/whatsapp/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /notifications/templates/whatsapp/sync` — "Sync from Meta": reads the WhatsApp
+         *     Business Account's templates (`GET /{waba-id}/message_templates`) and records each local
+         *     WhatsApp template's status (matched on provider name + language) through the same Action as
+         *     a manual change. Needs settings.update. 409 when the Business Account id or access token is
+         *     not set, or Meta refused them (the detail names the Graph error code, e.g. `meta_190`); 503
+         *     when Meta cannot be reached. Nothing changes on either. Rate-limited
+         */
+        post: operations["v1.admin.notifications.templates.whatsapp-sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/notifications/logs": {
         parameters: {
             query?: never;
@@ -5084,6 +5108,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/inbox/conversations/{conversation}/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /inbox/conversations/{conversation}/templates` — the approved utility WhatsApp
+         *     templates in the conversation's language (the customer's preferred language, Bangla when
+         *     unknown), with their positional parameters and the body to preview. Empty for a
+         *     Messenger or live-chat conversation. Never an OTP/authentication or marketing template
+         */
+        get: operations["v1.admin.inbox.templates.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /inbox/conversations/{conversation}/template` — send an approved template; 202, sent by a queued job */
+        post: operations["v1.admin.inbox.templates.send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/delivery-areas": {
         parameters: {
             query?: never;
@@ -5283,6 +5346,28 @@ export interface paths {
         /** `PUT /settings/inbox-channels` — blank secret = keep; `clear_*` = remove. Audited (`credential_changed`, scope `inbox_{channel}`) */
         put: operations["v1.admin.settings.inbox-channels.update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/inbox-channels/{channel}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/inbox-channels/{channel}/test` — one read-only Graph API call with the saved
+         *     credentials (WhatsApp: the phone number's display number, verified name, quality rating;
+         *     Messenger: the Page name). Stored as the channel's `last_check` and audited. A failed check
+         *     is a 200 with `ok: false`. Never marks the channel verified. Rate-limited
+         */
+        post: operations["v1.admin.settings.inbox-channels.test"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7157,6 +7242,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/account/notification-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /account/notification-preferences` — no stored choice reads as the default (on) */
+        get: operations["v1.storefront.account.notification-preferences.show"];
+        /** `PUT /account/notification-preferences` — turn order updates on or off per channel; `security` is refused */
+        put: operations["v1.storefront.account.notification-preferences.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/account/children": {
         parameters: {
             query?: never;
@@ -7752,7 +7855,7 @@ export interface components {
             /** @description `App\Models\Enums\AuditAction` */
             action: string;
             /** @enum {string} */
-            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "courier_credentials" | "credentials_changed";
+            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
             /** @enum {string} */
             area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports";
             actor: {
@@ -8229,6 +8332,8 @@ export interface components {
             hotline: string | null;
             /** @description E.164, e.g. `+8801711000222`. */
             whatsapp: string | null;
+            /** @description The Facebook Page username or numeric id behind `https://m.me/{messenger}`. */
+            messenger: string | null;
             /** @description What invoices print while a name is unset (the brand name). */
             default_names: {
                 name_en: string;
@@ -10331,6 +10436,14 @@ export interface components {
             account_id: string | null;
             /** @enum {string|null} */
             account_id_source: "settings" | "env" | null;
+            /** @description WhatsApp only: the WhatsApp Business Account id ("Sync from Meta"). Null for Messenger. */
+            business_account_id: string | null;
+            /** @enum {string|null} */
+            business_account_id_source: "settings" | "env" | null;
+            /** @description Messenger only: reply with the HUMAN_AGENT tag for up to 7 days. Always false for WhatsApp. */
+            human_agent: boolean;
+            /** @enum {string} */
+            human_agent_source: "settings" | "env";
             /** @description WhatsApp access token / Messenger Page access token. Hint "••••1234" at most. */
             send_token: {
                 set: boolean;
@@ -10360,11 +10473,43 @@ export interface components {
             send_ready: boolean;
             /** @description Always false until a real account has been connected and watched. */
             verified: boolean;
+            /**
+             * @description The last "Test connection" (POST /settings/inbox-channels/{channel}/test), or null.
+             *     A passing test never marks the channel verified.
+             */
+            last_check: {
+                ok: boolean;
+                checked_at: string;
+                display_name: string | null;
+                display_number: string | null;
+                quality_rating: string | null;
+                error_code: string | null;
+                error_message: string | null;
+            } | null;
         };
         /** InboxChannelSettings */
         InboxChannelSettings: {
             whatsapp: components["schemas"]["InboxChannelCredentials"];
             messenger: components["schemas"]["InboxChannelCredentials"];
+        };
+        /** InboxChannelTestResult */
+        InboxChannelTestResult: {
+            /** @enum {string} */
+            channel: "whatsapp" | "messenger";
+            /** @description Meta answered the read with these credentials. */
+            ok: boolean;
+            /** @description ISO 8601. */
+            checked_at: string;
+            /** @description WhatsApp: the verified business name. Messenger: the Page name. */
+            display_name: string | null;
+            /** @description WhatsApp only: the number as Meta displays it. */
+            display_number: string | null;
+            /** @description WhatsApp only: GREEN | YELLOW | RED | NA (Meta's value, passed through). */
+            quality_rating: string | null;
+            /** @description `not_configured`, `unreachable`, `meta_{graph error code}` (e.g. meta_190 = token invalid or expired) or `http_{status}`. */
+            error_code: string | null;
+            /** @description Meta's own error text, token scrubbed, ≤ 300 characters. */
+            error_message: string | null;
         };
         /** InboxConversation */
         InboxConversation: {
@@ -10395,6 +10540,11 @@ export interface components {
                 open: boolean;
                 expires_at: string | null;
             };
+            reply: {
+                /** @enum {string} */
+                state: "open" | "human_agent" | "template_only" | "closed";
+                window_closes_at: string | null;
+            };
         };
         /** InboxConversationDetail */
         InboxConversationDetail: {
@@ -10424,6 +10574,11 @@ export interface components {
                 applies: boolean;
                 open: boolean;
                 expires_at: string | null;
+            };
+            reply: {
+                /** @enum {string} */
+                state: "open" | "human_agent" | "template_only" | "closed";
+                window_closes_at: string | null;
             };
             customer: {
                 id: number;
@@ -10457,7 +10612,7 @@ export interface components {
             /** @enum {string} */
             direction: "in" | "out";
             /** @enum {string} */
-            kind: "text" | "note" | "system";
+            kind: "text" | "template" | "note" | "system";
             body: string | null;
             /** @enum {string|null} */
             system_event: "assigned" | "unassigned" | "resolved" | "reopened" | null;
@@ -10466,18 +10621,48 @@ export interface components {
             /** @description Who did it: a staff name, or `customer` for an automatic reopen. */
             actor: string | null;
             unsupported_type: string | null;
+            /** @description Meta's template name and language code (kind `template`). */
+            template: {
+                name: string;
+                language: string;
+            } | null;
+            /**
+             * @description The Messenger message tag the reply went (or goes) with.
+             * @enum {string|null}
+             */
+            tag: "HUMAN_AGENT" | null;
             sender: {
                 id: number;
                 name: string;
             } | null;
             /** @enum {string|null} */
             delivery_status: "queued" | "sent" | "delivered" | "read" | "failed" | null;
-            /** @description `outside_window`, `not_configured`, `transport`, `provider_error:{code}` */
+            /** @description `outside_window`, `not_configured`, `transport`, `template_unavailable`, `template_not_allowed`, `provider_error:{code}` */
             failure_code: string | null;
             failure_reason: string | null;
             /** @description When it was written (inbound: the provider's timestamp). */
             at: string | null;
             read_at: string | null;
+        };
+        /** InboxTemplate */
+        InboxTemplate: {
+            /** @description The library key (`order.confirmed`, `custom.*`): the admin labels a system template by it. */
+            key: string;
+            /** @description Meta's template name. */
+            template: string;
+            /** @enum {string} */
+            language: "en" | "bn_BD";
+            /** @enum {string} */
+            locale: "en" | "bn";
+            /** @description A staff-made template's own name; null for a system template. */
+            name: string | null;
+            body: string;
+            /** @description {{1}} first. `name` is the library variable. */
+            parameters: {
+                position: number;
+                name: string;
+                example: string;
+            }[];
         };
         /** InboxUnreadCount */
         InboxUnreadCount: {
@@ -11303,6 +11488,12 @@ export interface components {
             sms_cost_per_segment: string;
             /** @description Order updates go WhatsApp-first. Off until a WhatsApp account exists. */
             whatsapp_enabled: boolean;
+            /**
+             * @description `log` sends nothing; `cloud` sends approved utility templates through the WhatsApp
+             *     Cloud API on the Inbox's number (UNVERIFIED). `null` is env/config only.
+             * @enum {string}
+             */
+            whatsapp_driver: "log" | "null" | "cloud";
             reve_api_key_set: boolean;
             /** @description "••••1234" at most. */
             reve_api_key_hint: string | null;
@@ -11324,6 +11515,8 @@ export interface components {
                 sms_cost_per_segment: "settings" | "env";
                 /** @enum {string} */
                 whatsapp_enabled: "settings" | "env";
+                /** @enum {string} */
+                whatsapp_driver: "settings" | "env";
             };
         };
         /**
@@ -11367,6 +11560,16 @@ export interface components {
             queued_at: string | null;
             sent_at: string | null;
             failed_at: string | null;
+            /**
+             * @description What WhatsApp reported after accepting it (Cloud API `statuses` webhook); null until then
+             *     and for SMS / email.
+             * @enum {string|null}
+             */
+            delivery_status: "sent" | "delivered" | "read" | "failed" | null;
+            delivered_at: string | null;
+            read_at: string | null;
+            /** @description Meta's error on a failed delivery, e.g. `provider_error:131026 …`. */
+            delivery_error: string | null;
             created_at: string | null;
         };
         /** NotificationPreference */
@@ -11416,7 +11619,7 @@ export interface components {
             name_en: string | null;
             name_bn: string | null;
             /** @enum {string|null} */
-            whatsapp_status: "draft" | "submitted" | "approved" | null;
+            whatsapp_status: "draft" | "submitted" | "approved" | "rejected" | "paused" | "disabled" | null;
             variables: string[];
             /** @description Positional parameters a WhatsApp system body must keep (Meta-approved). */
             required_variables: string[];
@@ -14142,6 +14345,20 @@ export interface components {
             body: string;
         };
         /**
+         * SendInboxTemplateRequest
+         * @description `POST /inbox/conversations/{conversation}/template` — an approved WhatsApp template to a
+         *     customer whose 24-hour window has closed; needs inbox.reply. `template` is Meta's template
+         *     name as `GET …/templates` lists it, `language` its Meta code, `parameters` the positional
+         *     values ({{1}} first, exactly as many as the template has). 409 when the conversation is not
+         *     a WhatsApp thread with a closed window; 422 when the template is not approved/utility.
+         */
+        SendInboxTemplateRequest: {
+            template: string;
+            /** @enum {string} */
+            language: "en" | "bn_BD";
+            parameters: string[];
+        };
+        /**
          * SendQuickReplyRequest
          * @description `POST /inbox/conversations/{conversation}/quick-replies` — needs inbox.reply. The server
          *     composes the text: `product_card` (target = product id) or `tracking_link` (target = an
@@ -14905,6 +15122,8 @@ export interface components {
             whatsapp: string;
             /** @description Local form for display, `01712-345678`. */
             whatsapp_display: string | null;
+            /** @description The Facebook Page username or numeric id, for a `https://m.me/{messenger}` link. */
+            messenger: string;
             email: string;
             address_en: string;
             address_bn: string;
@@ -15511,6 +15730,18 @@ export interface components {
                 consented_at: string | null;
                 withdrawn_at: string | null;
             };
+        };
+        /** StorefrontAccountNotificationPreferences */
+        StorefrontAccountNotificationPreferences: {
+            preferences: {
+                /** @enum {string} */
+                channel: "whatsapp" | "sms";
+                /** @constant */
+                category: "order_updates";
+                enabled: boolean;
+                is_default: boolean;
+            }[];
+            whatsapp_available: boolean;
         };
         /** StorefrontAccountSession */
         StorefrontAccountSession: {
@@ -16166,6 +16397,11 @@ export interface components {
             is_featured: boolean;
             variant_count: number;
             /**
+             * @description The one active variant of a single-variant product, so a card can add it to the
+             *     cart directly; null when the shopper must choose an option on the product page.
+             */
+            default_variant_id: number | null;
+            /**
              * @description An active variant has available stock (on_hand − reserved > 0). Sold-out
              *     cards stay listed and show their out-of-stock state.
              */
@@ -16637,6 +16873,23 @@ export interface components {
             recovery_codes_left: number;
         };
         /**
+         * UpdateAccountNotificationPreferencesRequest
+         * @description `PUT /storefront/account/notification-preferences` — the signed-in customer turns order updates
+         *     on or off per messaging channel (the profile page's "Order updates on WhatsApp" and "SMS updates"
+         *     switches). Allowlisted: channel `whatsapp` or `sms`, category `order_updates`. `security` (sign-in
+         *     codes) can never be turned off and is refused with a 422; anything else is simply not offered.
+         */
+        UpdateAccountNotificationPreferencesRequest: {
+            /** @description One row per channel; a channel left out keeps its current setting. */
+            preferences: {
+                /** @enum {string} */
+                channel: "whatsapp" | "sms";
+                /** @constant */
+                category: "order_updates";
+                enabled: boolean;
+            }[];
+        };
+        /**
          * UpdateAttributeRequest
          * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
          *     change. Changing `type` away from `color` clears the values' swatches.
@@ -16722,6 +16975,11 @@ export interface components {
             hotline?: string | null;
             /** @description A Bangladeshi mobile, 013–019 only (rule 30); stored and returned as E.164. */
             whatsapp?: string | null;
+            /**
+             * @description The Facebook Page behind the storefront's Messenger link `https://m.me/{messenger}`: its
+             *     public username (letters, digits and dots, 5–50 characters) or its numeric Page id.
+             */
+            messenger?: string | null;
         };
         /**
          * UpdateCartItemRequest
@@ -16926,6 +17184,8 @@ export interface components {
             whatsapp_driver: "log" | "cloud";
             /** @description WhatsApp Manager → API setup → "Phone number ID". Digits only. */
             whatsapp_phone_number_id?: string | null;
+            /** @description WhatsApp Manager → Business Account ID (digits, not secret) — for "Sync from Meta". Absent = keep; blank = remove. */
+            whatsapp_business_account_id?: string | null;
             whatsapp_access_token?: string | null;
             whatsapp_app_secret?: string | null;
             whatsapp_verify_token?: string | null;
@@ -16939,6 +17199,8 @@ export interface components {
             messenger_driver: "log" | "messenger";
             /** @description The Facebook Page id. Digits only. */
             messenger_page_id?: string | null;
+            /** @description Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep. */
+            messenger_human_agent?: boolean;
             messenger_page_access_token?: string | null;
             messenger_app_secret?: string | null;
             messenger_verify_token?: string | null;
@@ -17026,6 +17288,11 @@ export interface components {
             /** @description Decimal string, taka per segment, ≥ 0 (no sign allowed), 2 places at most. */
             sms_cost_per_segment: string;
             whatsapp_enabled: boolean;
+            /**
+             * @description `log` sends nothing; `cloud` = WhatsApp Cloud API on the Inbox's number. Absent = keep.
+             * @enum {string}
+             */
+            whatsapp_driver?: "log" | "cloud";
             reve_api_key?: string | null;
             reve_secret_key?: string | null;
             clear_reve_api_key?: boolean;
@@ -17459,7 +17726,7 @@ export interface components {
          */
         UpdateWhatsAppStatusRequest: {
             /** @enum {string} */
-            status: "draft" | "submitted" | "approved";
+            status: "draft" | "submitted" | "approved" | "rejected" | "paused" | "disabled";
         };
         /**
          * VariantStatus
@@ -17484,6 +17751,21 @@ export interface components {
             phone: string;
             /** @description The 6-digit code from the SMS. */
             code: string;
+        };
+        /** WhatsAppTemplateSync */
+        WhatsAppTemplateSync: {
+            /** @description Local WhatsApp templates whose provider name Meta has. */
+            matched: number;
+            /** @description Of those, how many changed status. */
+            updated: number;
+            /** @description Template names on Meta that no local template uses. */
+            unknown: number;
+            /** @description Local templates with a provider name Meta does not have. */
+            missing: number;
+            /** @description Up to 50 of the unknown Meta names. */
+            unknown_names: string[];
+            /** @description Up to 50 local template keys missing on Meta. */
+            missing_keys: string[];
         };
         /**
          * WishlistRequest
@@ -25701,6 +25983,56 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.notifications.templates.whatsapp-sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `WhatsAppTemplateSync` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppTemplateSync"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Business Account id / access token not set, or refused by Meta (`conflict`, detail names the code) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many syncs (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Meta unreachable (`service-unavailable`); nothing changed */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.admin.notifications.logs.index": {
         parameters: {
             query?: {
@@ -30519,6 +30851,95 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.inbox.templates.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `InboxTemplate` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InboxTemplate"][];
+                        meta: {
+                            /** @enum {string} */
+                            locale: "en" | "bn";
+                        };
+                    };
+                };
+            };
+            /** @description Any query parameter (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.inbox.templates.send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendInboxTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxMessage` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxMessage"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Not a WhatsApp conversation, or its 24-hour window is open (`conflict`) — nothing was queued */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.settings.delivery-areas.show": {
         parameters: {
             query?: never;
@@ -30974,6 +31395,40 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.inbox-channels.test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxChannelTestResult` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxChannelTestResult"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+            /** @description Too many tests (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.blog.posts.index": {
@@ -35802,6 +36257,80 @@ export interface operations {
             };
             403: components["responses"]["AuthorizationException"];
             /** @description A field is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.notification-preferences.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontAccountNotificationPreferences` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountNotificationPreferences"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.account.notification-preferences.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountNotificationPreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountNotificationPreferences` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountNotificationPreferences"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description A field is invalid, or a security message was to be turned off (`validation-error`) */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -88,10 +88,11 @@ const versions: TemplateVersion[] = [
     { id: 11, version: 1, subject_en: null, subject_bn: null, preheader_en: null, preheader_bn: null, body_en: 'Original {order_number}', body_bn: 'মূল {order_number}', restored_from: null, created_by_name: null, created_at: '2026-11-11T10:00:00Z' },
 ];
 
-function libraryApi(me: Me, rows: NotificationTemplate[] = [sms, whatsapp, future, custom]) {
+function libraryApi(me: Me, rows: NotificationTemplate[] = [sms, whatsapp, future, custom], sync: { status: number; body?: unknown } = { status: 404 }) {
     return mockApi((url, init) => {
         const method = init?.method ?? 'GET';
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
+        if (url.endsWith('/notifications/templates/whatsapp/sync')) return sync;
         if (url.includes('/preview')) return { status: 200, body: preview };
         if (url.includes('/versions/') && url.endsWith('/restore')) return { status: 200, body: { ...sms, body_en: 'Original {order_number}', updated_at: '2026-11-13T10:00:00Z' } };
         if (url.includes('/versions')) return { status: 200, body: { data: versions } };
@@ -156,11 +157,41 @@ describe('message templates library', () => {
         expect(screen.getByText('Eid greeting')).toBeTruthy();
     });
 
-    it('hides “New template” without settings.update', async () => {
+    it('hides “New template” and “Sync from Meta” without settings.update', async () => {
         libraryApi(settingsViewer);
         renderApp('/automations/templates');
         await screen.findByRole('region', { name: 'Order updates' });
         expect(screen.queryByRole('link', { name: 'New template' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Sync from Meta' })).toBeNull();
+    });
+
+    it('syncs WhatsApp approval statuses from Meta and reports the server’s counts', async () => {
+        const calls = libraryApi(manager, undefined, {
+            status: 200,
+            body: { matched: 3, updated: 2, unknown: 1, missing: 4, unknown_names: ['eid_offer'], missing_keys: ['order.delivered'] },
+        });
+        renderApp('/automations/templates');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Sync from Meta' }));
+
+        expect(await screen.findByText('Synced from Meta: 3 found, 2 updated, 4 missing on Meta, 1 only on Meta.')).toBeTruthy();
+        expect(calledWith(calls, (url, init) => url.endsWith('/notifications/templates/whatsapp/sync') && init?.method === 'POST')).toBeTruthy();
+    });
+
+    it('shows why a sync was refused (the server’s detail)', async () => {
+        libraryApi(manager, undefined, {
+            status: 409,
+            body: {
+                type: 'https://toymartbd.com/problems/conflict',
+                title: 'Conflict',
+                status: 409,
+                detail: 'Enter the WhatsApp Business Account ID and access token on the Inbox channels card first.',
+            },
+        });
+        renderApp('/automations/templates');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Sync from Meta' }));
+        expect(await screen.findByText('Enter the WhatsApp Business Account ID and access token on the Inbox channels card first.')).toBeTruthy();
     });
 });
 

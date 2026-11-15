@@ -10,7 +10,8 @@ use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
 
 /**
- * One line of a thread. `kind`: text (a real message), note (internal — never sent) or
+ * One line of a thread. `kind`: text (a real message), template (an approved WhatsApp
+ * template we sent — `body` is our rendering of it, `template` names it), note (internal — never sent) or
  * system (`system_event` with `meta.assignee`/`meta.by` names; the admin translates it).
  * `delivery_status` only on our outbound text. `unsupported_type` names a non-text inbound
  * message (image, audio…) the inbox cannot show yet.
@@ -31,7 +32,7 @@ final class InboxMessageResource extends ApiResource
             'id' => $m->id,
             /** @var 'in'|'out' */
             'direction' => $m->direction->value,
-            /** @var 'text'|'note'|'system' */
+            /** @var 'text'|'template'|'note'|'system' */
             'kind' => $m->kind->value,
             /** @var string|null */
             'body' => $m->body,
@@ -43,11 +44,15 @@ final class InboxMessageResource extends ApiResource
             'actor' => is_string($meta['by'] ?? null) ? $meta['by'] : null,
             /** @var string|null */
             'unsupported_type' => is_string($meta['type'] ?? null) ? $meta['type'] : null,
+            /** @var array{name: string, language: string}|null Meta's template name and language code (kind `template`). */
+            'template' => is_string($meta['template'] ?? null) && is_string($meta['language'] ?? null) ? ['name' => $meta['template'], 'language' => $meta['language']] : null,
+            /** @var 'HUMAN_AGENT'|null The Messenger message tag the reply went (or goes) with. */
+            'tag' => is_string($meta['tag'] ?? null) ? $meta['tag'] : null,
             /** @var array{id: int, name: string}|null */
             'sender' => $m->sender === null ? null : ['id' => $m->sender->id, 'name' => $m->sender->name],
             /** @var 'queued'|'sent'|'delivered'|'read'|'failed'|null */
             'delivery_status' => $m->delivery_status?->value,
-            /** @var string|null `outside_window`, `not_configured`, `transport`, `provider_error:{code}` */
+            /** @var string|null `outside_window`, `not_configured`, `transport`, `template_unavailable`, `template_not_allowed`, `provider_error:{code}` */
             'failure_code' => $m->failure_code,
             /** @var string|null */
             'failure_reason' => $m->failure_reason,

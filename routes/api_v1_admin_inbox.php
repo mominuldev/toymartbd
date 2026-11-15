@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Inbox\InboxConversationController;
 use App\Http\Controllers\Api\V1\Admin\Inbox\InboxMessageController;
+use App\Http\Controllers\Api\V1\Admin\Inbox\InboxTemplateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 | role-matrix test (tests/Support/role-matrix-routes.php) — rule 21.
 |
 | inbox.view: list, thread, messages, mark read. inbox.reply: reply, note, quick replies,
-| assign, resolve, reopen, assignees. Policy: App\Policies\ConversationPolicy.
+| assign, resolve, reopen, assignees, WhatsApp templates (list + send). Policy: App\Policies\ConversationPolicy.
 */
 
 Route::get('/inbox/conversations', [InboxConversationController::class, 'index'])->name('inbox.conversations.index');
@@ -29,3 +30,5 @@ Route::get('/inbox/conversations/{conversation}/messages', [InboxMessageControll
 Route::post('/inbox/conversations/{conversation}/messages', [InboxMessageController::class, 'store'])->whereNumber('conversation')->name('inbox.messages.store');
 Route::post('/inbox/conversations/{conversation}/notes', [InboxMessageController::class, 'note'])->whereNumber('conversation')->name('inbox.notes.store');
 Route::post('/inbox/conversations/{conversation}/quick-replies', [InboxMessageController::class, 'quick'])->whereNumber('conversation')->name('inbox.quick-replies.store');
+Route::get('/inbox/conversations/{conversation}/templates', [InboxTemplateController::class, 'index'])->whereNumber('conversation')->name('inbox.templates.index');
+Route::post('/inbox/conversations/{conversation}/template', [InboxTemplateController::class, 'store'])->whereNumber('conversation')->name('inbox.templates.send');

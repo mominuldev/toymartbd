@@ -100,7 +100,24 @@ const PRIVACY_PAGE = {
         canonical_url: null, robots: 'index,follow', og_title: null, og_description: null, og_image: null, twitter_card: 'summary_large_image',
     },
 };
-const CMS_PAGES = [CMS_PAGE, PRIVACY_PAGE];
+// The contact page the footer links to (`/contact`), live on the default template, never built from
+// sections. The storefront adds the WhatsApp and Messenger chat buttons under it (e2e/chat-links.spec.ts).
+const CONTACT_PAGE = {
+    slug: 'contact',
+    title: 'Contact us',
+    title_bn: 'যোগাযোগ',
+    template: 'default',
+    content: '<p>We answer every day from 9 am to 9 pm.</p>',
+    content_bn: '<p>আমরা প্রতিদিন সকাল 9টা থেকে রাত 9টা পর্যন্ত উত্তর দিই।</p>',
+    faq_items: [],
+    published_at: '2026-11-01T00:00:00Z',
+    updated_at: '2026-11-01T00:00:00Z',
+    seo: {
+        title: 'Contact us', title_bn: 'যোগাযোগ', description: 'Call, WhatsApp or message us.', description_bn: 'ফোন, হোয়াটসঅ্যাপ বা মেসেজে যোগাযোগ করুন।',
+        canonical_url: null, robots: 'index,follow', og_title: null, og_description: null, og_image: null, twitter_card: 'summary_large_image',
+    },
+};
+const CMS_PAGES = [CMS_PAGE, PRIVACY_PAGE, CONTACT_PAGE];
 
 // Pages built from sections (GET /storefront/content/pages/{slug}?locale=…, 2026-11-16): the page
 // document plus the homepage's block shape, copy already in the asked locale. The privacy policy is
@@ -292,7 +309,9 @@ function listProducts(res, query, search = null) {
     });
 }
 
-const card = ({ _categories, _gender, _published_at, ...rest }) => rest;
+// A one-variant fixture names its mock variant (9000 + id, as simpleDetail/variantInfo do) so its
+// card can add it to the cart; the multi-variant productDetail product sends shoppers to its page.
+const card = ({ _categories, _gender, _published_at, ...rest }) => ({ default_variant_id: rest.id === productDetail.id ? null : 9000 + rest.id, ...rest });
 
 // Banglish/Bangla → English, and the typo corrections the spelling suggester would offer.
 const SYNONYMS = { gari: 'car', 'গাড়ি': 'car', 'লেগো': 'lego' };
@@ -647,6 +666,7 @@ let account;
 let addresses;
 let wishlist;
 let birthdayConsent;
+let orderUpdates;
 let children;
 let nextChildId;
 
@@ -661,6 +681,7 @@ function resetAccount() {
     ];
     wishlist = [productFixtures[0], productFixtures[1]].map((p) => p.id);
     birthdayConsent = { consented: false, consented_at: null, withdrawn_at: null };
+    orderUpdates = { whatsapp: null, sms: null }; // null = no choice stored (on by default)
     children = [];
     nextChildId = 1;
 }
@@ -729,6 +750,22 @@ async function accountRoutes(req, res, url) {
         if (birthday && !birthdayConsent.consented) birthdayConsent = { consented: true, consented_at: now, withdrawn_at: null };
         else if (!birthday && birthdayConsent.consented) birthdayConsent = { ...birthdayConsent, consented: false, withdrawn_at: now };
         return send(res, 200, { birthday: birthdayConsent });
+    }
+    // Order updates per channel (WhatsApp / SMS): only order_updates is switchable; security is refused (422).
+    const prefsBody = () => ({
+        preferences: ['sms', 'whatsapp'].map((channel) => ({ channel, category: 'order_updates', enabled: orderUpdates[channel] ?? true, is_default: orderUpdates[channel] === null })),
+        whatsapp_available: true,
+    });
+    if (p === '/account/notification-preferences' && req.method === 'GET') return send(res, 200, prefsBody());
+    if (p === '/account/notification-preferences' && req.method === 'PUT') {
+        const { preferences } = await readJson(req);
+        if (!Array.isArray(preferences) || preferences.length === 0) return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: 'preferences', message: 'The preferences field is required.' }]);
+        for (const [i, row] of preferences.entries()) {
+            if (row?.category === 'security') return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: `preferences.${i}.category`, message: 'Sign-in codes are always sent; they cannot be turned off.' }]);
+            if (!['whatsapp', 'sms'].includes(row?.channel) || row?.category !== 'order_updates' || typeof row?.enabled !== 'boolean') return problemOf(res, 422, 'validation-error', 'Unprocessable', null, [{ field: `preferences.${i}`, message: 'The selected value is invalid.' }]);
+        }
+        for (const row of preferences) orderUpdates[row.channel] = row.enabled;
+        return send(res, 200, prefsBody());
     }
     // My kids (P8 batch 3): first name/nickname + birthday, year optional; real dates only; at most 6.
     if (p === '/account/children' && req.method === 'GET') return send(res, 200, { data: [...children].sort((a, b) => a.birth_month - b.birth_month || a.birth_day - b.birth_day || a.id - b.id) });
@@ -909,13 +946,13 @@ createServer(async (req, res) => {
         ] });
     }
     if (/^\/api\/v1\/storefront\/redirects\/\d+\/hit$/.test(url.pathname) && req.method === 'POST') return raw(res, 204, '', 'text/plain');
-    // Launch item F4: the owner has set hotline, WhatsApp, trade licence and BIN; email and
+    // Launch item F4: the owner has set hotline, WhatsApp, Messenger, trade licence and BIN; email and
     // address are still unset (null), so their marked samples stay in the e2e paths too.
     if (url.pathname === '/api/v1/storefront/store-info') {
         return send(res, 200, {
             name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি',
             hotline: '09666-700800', hotline_tel: 'tel:+8809666700800',
-            whatsapp: '+8801812345678', whatsapp_display: '01812-345678',
+            whatsapp: '+8801812345678', whatsapp_display: '01812-345678', messenger: 'toymartbd',
             email: null, address_en: null, address_bn: null,
             trade_licence: 'TRAD/DNCC/012345/2026', bin: '004567891-0101',
         });

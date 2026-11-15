@@ -240,6 +240,14 @@ const en = {
             withdrawn: 'You stopped birthday reminders on {date}.',
             // NEW
             needsKids: 'Add a child under “My kids” so we know when to remind you.',
+            // Order-update channels (PUT /storefront/account/notification-preferences).
+            orderWhatsapp: 'Order updates on WhatsApp',
+            orderWhatsappSub: 'Confirmed, shipped and delivered messages',
+            orderSms: 'SMS updates',
+            orderSmsSub: 'The same updates by text message',
+            orderHow: 'Each order update is sent once: on WhatsApp when it is on, otherwise by SMS. Sign-in codes always come by SMS and cannot be turned off.',
+            whatsappUnavailable: 'We do not send WhatsApp messages yet, so order updates come by SMS for now.',
+            orderNone: 'With both off we will not message you about your orders. You can still follow them under “My orders”.',
             save: 'Save preferences',
         },
     },
@@ -479,6 +487,14 @@ const bn: AccountMessages = {
             withdrawn: 'আপনি {date} তারিখে জন্মদিনের রিমাইন্ডার বন্ধ করেছেন।',
             // NEW
             needsKids: '“আমার সন্তান” অংশে সন্তানের তথ্য যোগ করুন, যাতে কখন মনে করিয়ে দেব তা জানি।',
+            // NEW — order-update channels
+            orderWhatsapp: 'হোয়াটসঅ্যাপে অর্ডারের আপডেট',
+            orderWhatsappSub: 'কনফার্ম, শিপ ও ডেলিভারির বার্তা',
+            orderSms: 'এসএমএসে আপডেট',
+            orderSmsSub: 'একই আপডেট এসএমএসে',
+            orderHow: 'প্রতিটি অর্ডার আপডেট একবারই পাঠানো হয়: হোয়াটসঅ্যাপ চালু থাকলে হোয়াটসঅ্যাপে, না হলে এসএমএসে। সাইন-ইন কোড সবসময় এসএমএসে আসে, এটি বন্ধ করা যায় না।',
+            whatsappUnavailable: 'আমরা এখনো হোয়াটসঅ্যাপে বার্তা পাঠাই না, তাই আপাতত অর্ডারের আপডেট এসএমএসে আসবে।',
+            orderNone: 'দুটোই বন্ধ থাকলে অর্ডার নিয়ে আমরা আপনাকে কোনো বার্তা পাঠাব না। “আমার অর্ডার” অংশে অর্ডারের খবর দেখতে পারবেন।',
             save: 'পছন্দ সেভ করুন',
         },
     },

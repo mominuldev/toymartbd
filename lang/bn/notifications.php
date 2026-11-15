@@ -14,6 +14,11 @@ return [
     'refund_sentence' => 'আপনার দেওয়া BDT :amount ফেরত দেওয়া হবে।',
     // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
     'sender_id_numeric' => 'সেন্ডার আইডি আপনার REVE নন-মাস্কিং নম্বর: শুধু সংখ্যা, 5 থেকে 15টি (যেমন 8809612345678, 01712345678 বা শর্ট কোড)। অক্ষর চলবে না।',
+    // Admin → Integrations → Messaging: the WhatsApp `cloud` driver sends on the Inbox's number.
+    'whatsapp_cloud_needs_inbox' => 'আগে ইনবক্স চ্যানেল কার্ডে WhatsApp যুক্ত করুন: সেখানে ফোন নম্বর আইডি আর অ্যাক্সেস টোকেন সেভ থাকতে হবে।',
+    // Message templates › Sync from Meta (GET /{waba-id}/message_templates).
+    'whatsapp_sync_not_configured' => 'আগে ইনবক্স চ্যানেল কার্ডে WhatsApp বিজনেস অ্যাকাউন্ট আইডি আর অ্যাক্সেস টোকেন দিন।',
+    'whatsapp_sync_failed' => 'Meta টেমপ্লেটের তালিকা দেয়নি (:code)। WhatsApp বিজনেস অ্যাকাউন্ট আইডি আর অ্যাক্সেস টোকেন দেখুন।',
 
     // জন্মদিনের রিমাইন্ডার (P8 batch 3): সন্তানের জন্মদিনের আগে অভিভাবককে। NEW লেখা মালিকের রিভিউয়ের জন্য।
     'birthday' => [

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 
+import { ChatSection } from '@/components/ChatLinks';
 import { DeliveryEstimator } from '@/components/delivery/DeliveryEstimator';
 import { Icon } from '@/components/icons/Icon';
 import { PageShell } from '@/components/PageShell';
@@ -29,7 +30,8 @@ import { getReviews, validCursor } from '@/lib/reviews/fetch';
 import { reviewMessages } from '@/lib/reviews/messages';
 import { isExplicitVariant, resolveVariant, variantHref, variantSummary, VARIANT_PARAM, type StorefrontProduct } from '@/lib/product/variants';
 import { getSeo } from '@/lib/seo/fetch';
-import { productMetadata } from '@/lib/seo/metadata';
+import { absoluteUrl, canonicalFor, productMetadata } from '@/lib/seo/metadata';
+import { getStoreInfo } from '@/lib/store-info';
 import '@/components/product/product.css';
 
 // Product detail page (P4-STO-05; Figma "Product detail" 135:1022 at 1440, 128:625 at 390, plus the
@@ -78,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params, searchParams }: Props) {
     const { locale, slug } = await params;
     if (!isLocale(locale)) notFound();
-    const [product, query, rates] = await Promise.all([loadProduct(slug, locale), searchParams, getDeliveryRates(locale)]);
+    const [product, query, rates, store] = await Promise.all([loadProduct(slug, locale), searchParams, getDeliveryRates(locale), getStoreInfo()]);
     if (!product) notFound();
     const variant = resolveVariant(product, query[VARIANT_PARAM]);
     if (!variant) notFound();
@@ -98,6 +100,8 @@ export default async function ProductPage({ params, searchParams }: Props) {
     const localPath = localizedPath(locale, basePath);
     const explicit = isExplicitVariant(product, query[VARIANT_PARAM]);
     const shellPath = explicit ? variantHref(basePath, variant.id) : basePath;
+    // "Questions about this toy?" — WhatsApp opens with the product's name and canonical URL typed in, in this page's language.
+    const chatText = format(t.chat.productText, { name: name.text, url: absoluteUrl(canonicalFor(locale, basePath)) });
     const cutoff = rates && beforeCutoff(rates.cutoff_time, new Date()) ? cutoffLabel(rates.cutoff_time, t) : null;
     const glance = ((locale === 'bn' ? (product.short_description_bn ?? product.short_description) : product.short_description) ?? '')
         .split(/\n+/)
@@ -161,6 +165,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                         trust={<TrustStrip t={t} />}
                         trackingItem={trackingItem}
                     />
+                    <ChatSection id="pdp-chat" locale={locale} title={t.chat.productTitle} contact={store.contact} text={chatText} />
                 </div>
             </div>
 

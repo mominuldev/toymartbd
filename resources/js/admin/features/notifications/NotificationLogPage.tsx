@@ -201,6 +201,11 @@ function LogRow({ row }: { row: NotificationLog }) {
             </td>
             <td className={cell}>
                 <LogStatusChip status={row.status} />
+                {row.delivery_status && row.delivery_status !== 'sent' && (
+                    <p className={`mt-1 t-admin-caption ${row.delivery_status === 'failed' ? 'text-feedback-danger' : 'text-fg-secondary'}`}>
+                        {t(`notif.delivery.${row.delivery_status}` as MessageKey)}
+                    </p>
+                )}
                 {row.error && <p className="mt-1 truncate t-admin-caption text-fg-tertiary">{row.error === 'opted_out' ? t('notif.error.opted_out') : row.error}</p>}
             </td>
             <td className={num}>{row.segments ?? '—'}</td>

@@ -14,6 +14,7 @@ use App\Domain\Notification\Mail\OrderNotificationMail;
 use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Services\SmsDrivers;
+use App\Domain\Notification\Services\WhatsAppDrivers;
 use App\Domain\Notification\Support\SmsSegments;
 use App\Domain\Notification\Support\TemplateCatalog;
 use App\Domain\Ordering\Models\Order;
@@ -178,7 +179,7 @@ final class SendNotification implements ShouldQueue
         $language = $log->locale === 'en' ? 'en' : 'bn_BD';
 
         $result = $whatsApp->sendTemplate($phone->e164(), (string) $template->provider_template, $language, $parameters, $log->template);
-        $log->provider = (string) config('notifications.whatsapp.driver', 'log');
+        $log->provider = app(WhatsAppDrivers::class)->name();
 
         if (! $result->accepted) {
             $this->finish($log, NotificationStatus::Failed, error: mb_substr($result->error ?? 'rejected', 0, 500));

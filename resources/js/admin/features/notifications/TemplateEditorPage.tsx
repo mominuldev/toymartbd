@@ -426,7 +426,7 @@ function WhatsAppApproval({ template, editable }: { template: NotificationTempla
     const { notify } = useToast();
     const set = useSetWhatsAppStatus(template.id);
     const status = template.whatsapp_status ?? 'draft';
-    const tone = status === 'approved' ? 'success' : status === 'submitted' ? 'info' : 'neutral';
+    const tone = status === 'approved' ? 'success' : status === 'submitted' ? 'info' : status === 'draft' ? 'neutral' : 'danger';
 
     return (
         <div className="flex flex-col gap-2.5 rounded-sm bg-subtle px-3.5 py-3">

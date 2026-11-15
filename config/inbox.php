@@ -39,6 +39,9 @@ return [
         // log | cloud
         'driver' => env('INBOX_WHATSAPP_DRIVER', 'log'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        // WhatsApp Business Account id (digits, not secret): template sync reads
+        // GET /{waba-id}/message_templates with the access token below.
+        'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'app_secret' => env('WHATSAPP_APP_SECRET'),
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
@@ -51,6 +54,10 @@ return [
         'page_access_token' => env('MESSENGER_PAGE_ACCESS_TOKEN'),
         'app_secret' => env('MESSENGER_APP_SECRET'),
         'verify_token' => env('MESSENGER_VERIFY_TOKEN'),
+        // Reply with Meta's HUMAN_AGENT message tag for up to 7 days after the customer's last
+        // message (instead of 24 h). Off by default: Meta may require app review for the tag.
+        // Admin → Integrations → Messaging overrides it (`inbox.messenger.human_agent`).
+        'human_agent' => (bool) env('MESSENGER_HUMAN_AGENT', false),
     ],
 
     // No storefront chat widget exists; live chat is a channel with no inbound path yet.

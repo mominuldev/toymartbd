@@ -10,14 +10,18 @@ use App\Domain\Inbox\Enums\DeliveryStatus;
 use App\Domain\Inbox\Enums\InboxChannel;
 use App\Domain\Inbox\Enums\MessageDirection;
 use App\Domain\Inbox\Enums\MessageKind;
+use App\Domain\Inbox\Events\WhatsAppMessageStatusReceived;
 use App\Domain\Inbox\Models\Conversation;
 use App\Domain\Inbox\Models\ConversationMessage;
 
 /**
  * A provider's delivery status for our outbound messages. Only moves forward
  * (sent → delivered → read), or to failed before delivery; a replay or an out-of-order
- * status changes nothing. Statuses for unknown ids (sent from another tool, or arriving
- * before the send job stored the id) are ignored. Row-at-a-time saves, no transaction.
+ * status changes nothing. A WhatsApp status for an id that is not an inbox message is handed
+ * on as {@see WhatsAppMessageStatusReceived} — the order-update templates Notification sends go
+ * out on the same number, and their statuses arrive at this webhook (Notification applies them
+ * to `notification_logs`). Any other unknown id (a Messenger send from another tool, or a status
+ * arriving before the send job stored the id) is ignored. Row-at-a-time saves, no transaction.
  */
 final readonly class ApplyDeliveryStatus
 {
@@ -29,7 +33,15 @@ final readonly class ApplyDeliveryStatus
             ->where('direction', MessageDirection::Out->value)
             ->first();
 
-        return $message !== null && $this->advance($message, $update->status, $update);
+        if ($message === null) {
+            if ($channel === InboxChannel::WhatsApp) {
+                WhatsAppMessageStatusReceived::dispatch($update->providerMessageId, $update->status->value, $update->at, $update->errorCode, $update->errorTitle);
+            }
+
+            return false;
+        }
+
+        return $this->advance($message, $update->status, $update);
     }
 
     /** Messenger's watermark: every message we sent in the thread up to it. */
@@ -44,7 +56,7 @@ final readonly class ApplyDeliveryStatus
         $messages = ConversationMessage::query()
             ->where('conversation_id', $conversation->id)
             ->where('direction', MessageDirection::Out->value)
-            ->where('kind', MessageKind::Text->value)
+            ->whereIn('kind', MessageKind::sentValues())
             ->whereNotNull('sent_at')
             ->where('sent_at', '<=', $update->watermark)
             ->whereIn('delivery_status', [DeliveryStatus::Sent->value, DeliveryStatus::Delivered->value])

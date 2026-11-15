@@ -24,8 +24,8 @@ final class InboxChannelSettings
 {
     /** @var array<string, list<string>> */
     public const array KEYS = [
-        'whatsapp' => ['driver', 'phone_number_id', 'access_token', 'app_secret', 'verify_token'],
-        'messenger' => ['driver', 'page_id', 'page_access_token', 'app_secret', 'verify_token'],
+        'whatsapp' => ['driver', 'phone_number_id', 'business_account_id', 'access_token', 'app_secret', 'verify_token'],
+        'messenger' => ['driver', 'page_id', 'page_access_token', 'app_secret', 'verify_token', 'human_agent'],
         'live_chat' => ['driver'],
     ];
 
@@ -40,6 +40,15 @@ final class InboxChannelSettings
 
     /** The non-secret account id Meta gives each channel. */
     public const array ACCOUNT_ID = ['whatsapp' => 'phone_number_id', 'messenger' => 'page_id'];
+
+    /**
+     * Non-secret values beyond driver + account id: the WhatsApp Business Account id (template
+     * sync) and the Messenger HUMAN_AGENT switch (a boolean, read with {@see self::enabled()}).
+     */
+    public const array EXTRA = ['whatsapp' => ['business_account_id'], 'messenger' => ['human_agent']];
+
+    /** The last "Test connection" result per channel (plain JSON, never a token). */
+    public const string LAST_CHECK = 'last_check';
 
     /** The token the Meta driver sends with. */
     public const array SEND_TOKEN = ['whatsapp' => 'access_token', 'messenger' => 'page_access_token'];
@@ -96,6 +105,40 @@ final class InboxChannelSettings
         }
 
         return mb_strlen($secret) >= 12 ? '••••'.mb_substr($secret, -4) : '••••';
+    }
+
+    /**
+     * A boolean setting (e.g. `inbox.messenger.human_agent`): the saved value, else
+     * config/inbox.php, else false.
+     */
+    public function enabled(InboxChannel $channel, string $name): bool
+    {
+        try {
+            $stored = Setting::query()->where('group', SettingGroup::Notification->value)->find(self::key($channel, $name))?->value;
+        } catch (DecryptException) {
+            $stored = null;
+        }
+        $value = $stored ?? config(self::key($channel, $name));
+
+        return $value === true || $value === 1 || $value === '1' || $value === 'true';
+    }
+
+    /** Where a boolean setting comes from: `settings` when saved, otherwise `env`. */
+    public function flagSource(InboxChannel $channel, string $name): string
+    {
+        return Setting::query()->where('group', SettingGroup::Notification->value)->whereKey(self::key($channel, $name))->exists() ? 'settings' : 'env';
+    }
+
+    /**
+     * The last connection test (`inbox.{channel}.last_check`), or null when never run.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function lastCheck(InboxChannel $channel): ?array
+    {
+        $value = Setting::query()->where('group', SettingGroup::Notification->value)->find(self::key($channel, self::LAST_CHECK))?->value;
+
+        return is_array($value) ? $value : null;
     }
 
     public function isSet(InboxChannel $channel, string $name): bool

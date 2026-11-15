@@ -77,7 +77,7 @@ it('returns cards in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe(['data', 'links', 'meta'])
         ->and(array_keys($response->json('data.0')))->toBe([
             'id', 'slug', 'name', 'name_bn', 'brand', 'price', 'compare_at_price', 'price_max', 'discount_percent', 'age_min_months',
-            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'in_stock', 'image', 'flash_sale',
+            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'default_variant_id', 'in_stock', 'image', 'flash_sale',
         ])
         ->and($response->json('data.0'))->toMatchArray([
             'slug' => 'rainbow-stacker',
@@ -93,12 +93,23 @@ it('returns cards in exactly the agreed shape', function (): void {
             'rating_count' => 0,
             'is_featured' => true,
             'variant_count' => 2,
+            // Two options: the card sends the shopper to the product page to choose.
+            'default_variant_id' => null,
             'image' => null,
         ])
         ->and($response->json('meta.total'))->toBe(1)
         ->and($response->json('meta.per_page'))->toBe(24)
         ->and($response->json('meta.sort'))->toBe('featured')
         ->and(array_keys($response->json('meta.facets')))->toBe(['category', 'brand', 'age_band', 'price_band', 'gender', 'rating', 'educational', 'availability']);
+});
+
+it('names the one variant of a single-variant product so a card can add it to the cart', function (): void {
+    $product = Product::factory()->withoutVariants()->create();
+    $variant = ProductVariant::factory()->for($product)->create(['price' => '500.00']);
+    ProductVariant::factory()->for($product)->archived()->create(['price' => '10.00']);
+
+    expect(listing()->json('data.0.default_variant_id'))->toBe($variant->id)
+        ->and(listing()->json('data.0.variant_count'))->toBe(1);
 });
 
 it('drops a was-price that is not above the price', function (): void {
