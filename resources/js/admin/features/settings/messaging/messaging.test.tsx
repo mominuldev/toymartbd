@@ -18,13 +18,14 @@ const saved: MessagingSettings = {
     reve_sender_id: '8809612345678',
     sms_cost_per_segment: '0.26',
     whatsapp_enabled: false,
+    whatsapp_driver: 'log',
     reve_api_key_set: true,
     reve_api_key_hint: '••••1234',
     reve_api_key_source: 'settings',
     reve_secret_key_set: true,
     reve_secret_key_hint: '••••',
     reve_secret_key_source: 'env',
-    sources: { sms_driver: 'settings', reve_base_url: 'settings', reve_sender_id: 'settings', sms_cost_per_segment: 'env', whatsapp_enabled: 'env' },
+    sources: { sms_driver: 'settings', reve_base_url: 'settings', reve_sender_id: 'settings', sms_cost_per_segment: 'env', whatsapp_enabled: 'env', whatsapp_driver: 'env' },
 };
 
 const accepted: SmsTestResult = { driver: 'reve', accepted: true, message_id: '4242', segments: 2, cost: '0.52', error: null };
@@ -78,12 +79,28 @@ describe('integrations → messaging', () => {
             reve_sender_id: '8809612345678',
             sms_cost_per_segment: '0.26',
             whatsapp_enabled: true,
+            whatsapp_driver: 'log',
             reve_api_key: null,
             reve_secret_key: 'new-secret-value',
             clear_reve_api_key: false,
             clear_reve_secret_key: false,
         });
         expect(await screen.findByText('Messaging settings saved')).toBeTruthy();
+    });
+
+    it('picks the WhatsApp Cloud API driver for order updates, explaining it uses the Inbox number', async () => {
+        const calls = messagingApi(owner);
+        renderApp('/integrations/messaging');
+
+        const off = await screen.findByRole('button', { name: 'Off — log only', pressed: true });
+        expect(off).toBeTruthy();
+        expect(screen.getByText(/Keep this until the WhatsApp number is connected/)).toBeTruthy();
+        fireEvent.click(screen.getAllByRole('button', { name: 'WhatsApp Cloud API' })[0]!);
+        expect(screen.getByText(/from the WhatsApp number on the Inbox channels card below/)).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(calls.mock.calls.some(([url, init]) => String(url).endsWith('/settings/messaging') && (init as RequestInit | undefined)?.method === 'PUT')).toBe(true));
+        expect(sentBody(calls, 'PUT', '/settings/messaging')).toMatchObject({ whatsapp_driver: 'cloud' });
     });
 
     it('refuses a masked (lettered) sender ID before sending, with a clear message', async () => {

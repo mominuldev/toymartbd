@@ -32,6 +32,21 @@ describe('details and preferences forms', () => {
         expect(readPreferencesForm(form({ birthday_reminders: 'on' })).birthday).toBe(false);
         expect(readPreferencesForm(form({ preferred_language: 'xx' })).body.preferred_language).toBe('bn');
     });
+
+    it('reads the order-update switches only when the form carried them, unticked meaning off', () => {
+        expect(readPreferencesForm(form({ preferred_language: 'en' })).orderUpdates).toBeNull();
+        const s = readPreferencesForm(form({ preferred_language: 'en', order_updates_shown: '1', order_updates_sms: '1' }));
+        expect(s.orderUpdates).toEqual({
+            preferences: [
+                { channel: 'whatsapp', category: 'order_updates', enabled: false },
+                { channel: 'sms', category: 'order_updates', enabled: true },
+            ],
+        });
+        expect(s.draft).toMatchObject({ order_updates_whatsapp: '0', order_updates_sms: '1' });
+        // Never a security row, whatever the form says.
+        const forged = readPreferencesForm(form({ order_updates_shown: '1', order_updates_whatsapp: '1', order_updates_sms: '1', category: 'security' }));
+        expect(forged.orderUpdates?.preferences.every((row) => row.category === 'order_updates')).toBe(true);
+    });
 });
 
 describe('child form', () => {

@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  * same saved values `GET /settings/invoice` returns. Null = not set yet: the values are
  * placeholders until the owner supplies real ones (UI-UX-DESIGN-SPEC §10).
  *
- * @property array{values: array<string, string|null>, whatsapp: string|null, placeholders: list<string>, default_names: array{name_en: string, name_bn: string}, hotline_default: string|null} $resource
+ * @property array{values: array<string, string|null>, whatsapp: string|null, messenger: string|null, placeholders: list<string>, default_names: array{name_en: string, name_bn: string}, hotline_default: string|null} $resource
  */
 #[SchemaName('BusinessDetails')]
 final class BusinessDetailsResource extends ApiResource
@@ -40,6 +40,12 @@ final class BusinessDetailsResource extends ApiResource
              * @var string|null
              */
             'whatsapp' => $this->resource['whatsapp'],
+            /**
+             * The Facebook Page username or numeric id behind `https://m.me/{messenger}`.
+             *
+             * @var string|null
+             */
+            'messenger' => $this->resource['messenger'],
             /**
              * What invoices print while a name is unset (the brand name).
              *

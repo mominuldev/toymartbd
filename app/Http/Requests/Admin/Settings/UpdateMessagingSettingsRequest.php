@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Settings;
 
+use App\Domain\Notification\Contracts\WhatsAppCloudAccount;
 use App\Domain\Notification\DTOs\MessagingSettingsData;
 use App\Domain\Notification\Services\MessagingSettings;
 use App\Http\Requests\ApiFormRequest;
@@ -44,6 +45,8 @@ final class UpdateMessagingSettingsRequest extends ApiFormRequest
             // Decimal string, taka per segment, ≥ 0 (no sign allowed), 2 places at most.
             'sms_cost_per_segment' => ['required', 'string', 'regex:/^\d{1,4}(?:\.\d{1,2})?$/'],
             'whatsapp_enabled' => ['required', 'boolean'],
+            /** `log` sends nothing; `cloud` = WhatsApp Cloud API on the Inbox's number. Absent = keep. */
+            'whatsapp_driver' => ['sometimes', 'string', Rule::in(MessagingSettings::WHATSAPP_DRIVERS)],
             'reve_api_key' => ['nullable', 'string', 'max:255'],
             'reve_secret_key' => ['nullable', 'string', 'max:255'],
             'clear_reve_api_key' => ['sometimes', 'boolean'],
@@ -72,6 +75,11 @@ final class UpdateMessagingSettingsRequest extends ApiFormRequest
                 if ($this->filled($field) && $this->boolean('clear_'.$field)) {
                     $validator->errors()->add($field, 'Enter a new value or clear it, not both.');
                 }
+            }
+
+            // `cloud` sends with the Inbox's WhatsApp number: its id and token must already exist.
+            if ($this->input('whatsapp_driver') === 'cloud' && ! app(WhatsAppCloudAccount::class)->credentials()->canSend()) {
+                $validator->errors()->add('whatsapp_driver', (string) __('notifications.whatsapp_cloud_needs_inbox'));
             }
 
             if ($this->input('sms_driver') !== 'reve') {
@@ -113,6 +121,7 @@ final class UpdateMessagingSettingsRequest extends ApiFormRequest
             reveSecretKey: $text('reve_secret_key'),
             clearReveApiKey: $this->boolean('clear_reve_api_key'),
             clearReveSecretKey: $this->boolean('clear_reve_secret_key'),
+            whatsappDriver: $this->filled('whatsapp_driver') ? $this->string('whatsapp_driver')->toString() : null,
         );
     }
 }

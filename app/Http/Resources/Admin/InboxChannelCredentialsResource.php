@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * One inbox channel on Admin → Integrations → Messaging. Secrets are NEVER returned — only
  * whether each is set, where it comes from, and a hint of at most its last four characters.
  *
- * @property array{channel: string, driver: string, driver_source: string, account_id: ?string, account_id_source: ?string, send_token: array{set: bool, hint: ?string, source: ?string}, app_secret: array{set: bool, hint: ?string, source: ?string}, verify_token: array{set: bool, hint: ?string, source: ?string}, webhook_url: string, webhook_ready: bool, send_ready: bool, verified: bool} $resource
+ * @property array{channel: string, driver: string, driver_source: string, account_id: ?string, account_id_source: ?string, business_account_id: ?string, business_account_id_source: ?string, human_agent: bool, human_agent_source: string, send_token: array{set: bool, hint: ?string, source: ?string}, app_secret: array{set: bool, hint: ?string, source: ?string}, verify_token: array{set: bool, hint: ?string, source: ?string}, webhook_url: string, webhook_ready: bool, send_ready: bool, verified: bool, last_check: array<string, mixed>|null} $resource
  */
 #[SchemaName('InboxChannelCredentials')]
 final class InboxChannelCredentialsResource extends ApiResource
@@ -33,6 +33,14 @@ final class InboxChannelCredentialsResource extends ApiResource
             'account_id' => $r['account_id'],
             /** @var 'settings'|'env'|null */
             'account_id_source' => $r['account_id_source'],
+            /** @var string|null WhatsApp only: the WhatsApp Business Account id ("Sync from Meta"). Null for Messenger. */
+            'business_account_id' => $r['business_account_id'],
+            /** @var 'settings'|'env'|null */
+            'business_account_id_source' => $r['business_account_id_source'],
+            /** @var bool Messenger only: reply with the HUMAN_AGENT tag for up to 7 days. Always false for WhatsApp. */
+            'human_agent' => $r['human_agent'],
+            /** @var 'settings'|'env' */
+            'human_agent_source' => $r['human_agent_source'],
             /** @var array{set: bool, hint: string|null, source: 'settings'|'env'|null} WhatsApp access token / Messenger Page access token. Hint "••••1234" at most. */
             'send_token' => $r['send_token'],
             /** @var array{set: bool, hint: string|null, source: 'settings'|'env'|null} Meta App Secret — keys the X-Hub-Signature-256 check. */
@@ -47,6 +55,13 @@ final class InboxChannelCredentialsResource extends ApiResource
             'send_ready' => $r['send_ready'],
             /** @var bool Always false until a real account has been connected and watched. */
             'verified' => $r['verified'],
+            /**
+             * The last "Test connection" (POST /settings/inbox-channels/{channel}/test), or null.
+             * A passing test never marks the channel verified.
+             *
+             * @var array{ok: bool, checked_at: string, display_name: string|null, display_number: string|null, quality_rating: string|null, error_code: string|null, error_message: string|null}|null
+             */
+            'last_check' => $r['last_check'],
         ];
     }
 }

@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { ChatSection } from '@/components/ChatLinks';
 import { CmsPageView } from '@/components/content/CmsPageView';
 import { CmsSectionsPage } from '@/components/content/CmsSectionsPage';
 import { PageShell } from '@/components/PageShell';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { chatLinks } from '@/lib/chat-links';
 import { getPage, listPages } from '@/lib/content/api';
 import { cmsPageMetadata } from '@/lib/content/metadata';
 import { usesSections } from '@/lib/content/page-blocks';
 import { draftPageLayout, getPageLayout } from '@/lib/content/page-layout';
 import { pageTemplate } from '@/lib/content/types';
-import { isLocale } from '@/lib/i18n';
+import { getMessages, isLocale, type Locale } from '@/lib/i18n';
+import { cmsPaths } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { getSeo } from '@/lib/seo/fetch';
 import { faqPageJsonLd } from '@/lib/seo/jsonld';
 
@@ -32,6 +36,9 @@ import { faqPageJsonLd } from '@/lib/seo/jsonld';
 // mode (opened by /api/preview/page) the page's DRAFT sections render instead, uncached, even before
 // the page is live. FAQPage JSON-LD: from the FAQ sections (HomeBlocks, once) or, on the legacy FAQ
 // template, from the page's questions — never both.
+//
+// The contact page (`/contact`, cmsPaths.contact) also gets the WhatsApp and Messenger chat buttons
+// (components/ChatLinks.tsx) under its content, each only when the owner has set it.
 
 interface Props {
     params: Promise<{ locale: string; slug: string }>;
@@ -54,11 +61,13 @@ export default async function CmsPageRoute({ params }: Props) {
     if (!layout) notFound();
     const { page } = layout;
     const others = pageTemplate(page) === 'sidebar' ? await listPages() : [];
+    const chat = `/${page.slug}` === cmsPaths.contact ? await contactChat(locale) : null;
 
     if (usesSections(layout)) {
         return (
             <PageShell locale={locale} path={`/${page.slug}`} top="tight" bleed>
                 <CmsSectionsPage locale={locale} layout={layout} otherPages={others} />
+                {chat ? <div className="mx-auto mt-8 w-full max-w-content px-gutter-mobile lg:px-gutter-desktop">{chat}</div> : null}
             </PageShell>
         );
     }
@@ -76,6 +85,13 @@ export default async function CmsPageRoute({ params }: Props) {
                 />
             ) : null}
             <CmsPageView locale={locale} page={page} otherPages={others} />
+            {chat ? <div className="mt-8">{chat}</div> : null}
         </PageShell>
     );
+}
+
+async function contactChat(locale: Locale) {
+    const { contact } = await getStoreInfo();
+    if (chatLinks(contact).length === 0) return null;
+    return <ChatSection id="contact-chat" locale={locale} title={getMessages(locale).chat.title} contact={contact} />;
 }

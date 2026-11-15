@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Saves Store settings › Business: store name (EN/BN), trade licence, BIN and hotline into the
  * very `invoice.company.*` rows Invoice details reads and writes — one value, two screens —
- * plus the WhatsApp number. Touches nothing else (address, logo and footer stay as they are).
+ * plus the WhatsApp number and the Messenger Page. Touches nothing else (address, logo and footer stay as they are).
  * Like an invoice-details save, it affects only invoices issued afterwards.
  */
 final readonly class UpdateBusinessDetails
@@ -25,6 +25,7 @@ final readonly class UpdateBusinessDetails
                 self::write(CompanyDetails::PREFIX.$field, $data->values[$field] ?? null, $userId);
             }
             self::write(CompanyDetails::WHATSAPP_KEY, $data->whatsapp, $userId);
+            self::write(CompanyDetails::MESSENGER_KEY, $data->messenger, $userId);
         });
     }
 

@@ -7,6 +7,7 @@ namespace App\Domain\Notification\Models;
 use App\Domain\Notification\Enums\NotificationCategory;
 use App\Domain\Notification\Enums\NotificationChannel;
 use App\Domain\Notification\Enums\NotificationStatus;
+use App\Domain\Notification\Enums\WhatsAppDeliveryStatus;
 use App\Support\Casts\MoneyCast;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +42,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $queued_at
  * @property Carbon|null $sent_at
  * @property Carbon|null $failed_at
+ * @property WhatsAppDeliveryStatus|null $delivery_status what WhatsApp reported after accepting it (webhook)
+ * @property Carbon|null $delivered_at
+ * @property Carbon|null $read_at
+ * @property string|null $delivery_error
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read NotificationLog|null $fallbackOf
@@ -78,6 +83,9 @@ final class NotificationLog extends Model
             'queued_at' => 'datetime',
             'sent_at' => 'datetime',
             'failed_at' => 'datetime',
+            'delivery_status' => WhatsAppDeliveryStatus::class,
+            'delivered_at' => 'datetime',
+            'read_at' => 'datetime',
         ];
     }
 

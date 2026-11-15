@@ -38,6 +38,14 @@ use Illuminate\Validation\ValidationException;
  * Exactly one active variant is the default: the current one while it survives,
  * else the first active combination.
  *
+ * The type may change after creation (owner decision 2026-11-16), and the existing variant
+ * always carries across — same id, SKU, barcode, stock and order history:
+ *   - simple → variable: the simple product's one variant (it has no option values) becomes
+ *     the combination whose row names its SKU, else the first combination;
+ *   - variable → simple: the default variant (else the first active one) loses its option
+ *     values and becomes the only active variant; every other variant is archived.
+ * Archived variants keep their stock, exactly as when an option value is removed.
+ *
  * Price and cost changes to an existing variant are written to `audit_sensitive`.
  */
 final class VariantMatrix
@@ -87,7 +95,25 @@ final class VariantMatrix
     private function syncSimple(Product $product, ProductData $data, ?int $actorId): bool
     {
         $row = $data->variants[0] ?? null;
-        $variant = $product->variants()->reorder()->orderByDesc('is_default')->orderBy('id')->first();
+        $variant = $product->variants()->reorder()
+            ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [VariantStatus::Active->value])
+            ->orderByDesc('is_default')->orderBy('id')->first();
+        $changed = false;
+
+        if ($variant !== null && $variant->attributeValues()->exists()) {
+            // Variable → simple: this variant is the product now; its option values go, the rest are archived.
+            $variant->attributeValues()->detach();
+            [$variant->name, $variant->name_bn] = [null, null];
+            $variant->status = VariantStatus::Active;
+            foreach ($product->variants()->whereKeyNot($variant->id)->get() as $other) {
+                if ($other->isActive() || $other->is_default) {
+                    $other->status = VariantStatus::Archived;
+                    $other->is_default = false;
+                    $changed = $this->save($other, $actorId) || $changed;
+                }
+            }
+            $changed = true;
+        }
 
         if ($variant === null) {
             $variant = $this->newVariant($product, $row, $data, 'variants.0', []);
@@ -102,7 +128,7 @@ final class VariantMatrix
         }
         $variant->is_default = true;
 
-        return $this->save($variant, $actorId);
+        return $this->save($variant, $actorId) || $changed;
     }
 
     /**
@@ -117,6 +143,8 @@ final class VariantMatrix
         foreach ($data->variants as $i => $row) {
             $rows[self::key($row->attributeValueIds)] = [$i, $row];
         }
+
+        $changed = $this->adoptSimpleVariant($product, $data, $combinations);
 
         /** @var EloquentCollection<int, ProductVariant> $existing */
         $existing = $product->variants()->with('attributeValues')->get();
@@ -180,6 +208,53 @@ final class VariantMatrix
         }
 
         return $changed;
+    }
+
+    /**
+     * Simple → variable: the simple product's variant (active, no option values) takes a
+     * combination instead of being archived — the one whose row names its SKU, else the first
+     * — so its stock, barcode and orders stay with a live variant.
+     *
+     * @param  list<list<ProductAttributeValue>>  $combinations
+     */
+    private function adoptSimpleVariant(Product $product, ProductData $data, array $combinations): bool
+    {
+        if ($combinations === []) {
+            return false;
+        }
+
+        $legacy = $product->variants()->whereDoesntHave('attributeValues')
+            ->reorder()->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [VariantStatus::Active->value])
+            ->orderByDesc('is_default')->orderBy('id')->first();
+        if ($legacy === null) {
+            return false;
+        }
+
+        $target = $combinations[0];
+        foreach ($data->variants as $row) {
+            if ($row->sku !== null && $row->sku === $legacy->sku) {
+                foreach ($combinations as $combination) {
+                    if (self::key(array_map(static fn (ProductAttributeValue $v): int => $v->id, $combination)) === self::key($row->attributeValueIds)) {
+                        $target = $combination;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        // Another variant already holds that combination (re-adding values after a round trip): leave it.
+        $key = self::key(array_map(static fn (ProductAttributeValue $v): int => $v->id, $target));
+        $taken = $product->variants()->whereHas('attributeValues')->with('attributeValues')->get()
+            ->contains(fn (ProductVariant $v): bool => self::key($v->attributeValues->modelKeys()) === $key);
+        if ($taken) {
+            return false;
+        }
+
+        foreach ($target as $value) {
+            $legacy->attributeValues()->attach($value->id, ['attribute_id' => $value->attribute_id]);
+        }
+
+        return true;
     }
 
     /**

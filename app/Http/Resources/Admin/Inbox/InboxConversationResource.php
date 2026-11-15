@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Admin\Inbox;
 
 use App\Domain\Inbox\Models\Conversation;
+use App\Domain\Inbox\Services\ReplyWindow;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
@@ -12,8 +13,11 @@ use Illuminate\Http\Request;
 /**
  * A row of the inbox list (Figma B · 22 left column). `needs_human` = the customer's latest
  * message still awaits a staff reply. `window` is Meta's 24-hour customer-service window:
- * `applies` false on live chat; outside it (`open` false) only an approved template may be
- * sent, which the inbox does not offer.
+ * `applies` false on live chat. `reply` is what staff may send now ({@see ReplyWindow}):
+ * `open` (a normal reply), `human_agent` (Messenger 24 h – 7 days with the switch on — a
+ * reply tagged HUMAN_AGENT), `template_only` (WhatsApp after the window — an approved
+ * template via `POST …/template`), `closed` (nothing); `window_closes_at` is when that state
+ * ends (or, once closed, when the last 24-hour window ended).
  *
  * @property Conversation $resource
  */
@@ -46,6 +50,8 @@ final class InboxConversationResource extends ApiResource
             'last_message_direction' => $c->last_message_direction,
             /** @var array{applies: bool, open: bool, expires_at: string|null} */
             'window' => InboxContact::window($c),
+            /** @var array{state: 'open'|'human_agent'|'template_only'|'closed', window_closes_at: string|null} */
+            'reply' => InboxContact::reply($c, app(ReplyWindow::class)),
         ];
     }
 }

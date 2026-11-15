@@ -239,6 +239,15 @@ export const bn: Messages = {
         sample: 'নমুনা',
         sampleNotice: '"নমুনা" চিহ্নিত যোগাযোগের তথ্যগুলো মালিক নিশ্চিত না করা পর্যন্ত অস্থায়ী।',
     },
+    // Click-to-chat links (lib/chat-links.ts): product page, contact page, footer. Western digits (rule 36).
+    chat: {
+        title: 'প্রশ্ন আছে? আমাদের সাথে চ্যাট করুন',
+        productTitle: 'এই খেলনা নিয়ে প্রশ্ন আছে?',
+        whatsapp: 'হোয়াটসঅ্যাপে কথা বলুন',
+        messenger: 'মেসেঞ্জারে কথা বলুন',
+        newTab: '(নতুন ট্যাবে খোলে)',
+        productText: 'হ্যালো টয় মার্ট বিডি! {name} খেলনাটি নিয়ে একটি প্রশ্ন ছিল: {url}',
+    },
     pages: {
         draftNotice: 'খসড়া লেখা — চালুর আগে যাচাই করা হবে।',
         browse: 'সব খেলনা দেখুন',
@@ -326,6 +335,8 @@ export const bn: Messages = {
         discount: '−{percent}%',
         buyNow: 'এখনই কিনুন',
         addToCart: 'কার্টে যোগ করুন: {name}',
+        chooseOptions: '{name}-এর অপশন বেছে নিন',
+        addedToCart: '{name} কার্টে যোগ হয়েছে',
         wishlist: '{name} পছন্দের তালিকায় রাখুন',
         noImage: 'ছবি শিগগিরই আসছে',
         emptyTitle: 'এই ফিল্টারে কোনো খেলনা নেই',
@@ -484,6 +495,7 @@ export const bn: Messages = {
     },
     cart: {
         title: 'আপনার কার্ট',
+        toastDismiss: 'বন্ধ করুন',
         metaDescription: 'টয় মার্ট বিডি-তে আপনার কার্ট।',
         items: '{count}টি পণ্য',
         itemsOne: '1টি পণ্য',
@@ -796,6 +808,7 @@ export const pendingNativeReview: ReadonlyArray<keyof Messages> = [
     'serverError',
     'maintenance',
     'footer',
+    'chat',
     'pages',
     'listing',
     'pdp',

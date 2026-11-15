@@ -16,6 +16,11 @@ return [
     'refund_sentence' => 'The BDT :amount you paid will be refunded.',
     // Admin → Integrations → Messaging: the owner's REVE sender is non-masking (2026-11-13).
     'sender_id_numeric' => 'The sender ID is your REVE non-masking number: digits only, 5 to 15 of them (e.g. 8809612345678, 01712345678 or a short code). Letters are not allowed.',
+    // Admin → Integrations → Messaging: the WhatsApp `cloud` driver sends on the Inbox's number.
+    'whatsapp_cloud_needs_inbox' => 'Connect WhatsApp on the Inbox channels card first: the Phone number ID and access token must be saved there.',
+    // Message templates › Sync from Meta (GET /{waba-id}/message_templates).
+    'whatsapp_sync_not_configured' => 'Enter the WhatsApp Business Account ID and access token on the Inbox channels card first.',
+    'whatsapp_sync_failed' => 'Meta refused the template list (:code). Check the WhatsApp Business Account ID and the access token.',
 
     // Birthday reminders (P8 batch 3): to the parent, before a child's birthday. Copy marked
     // NEW is for the owner's review (the batch-2 birthday copy was approved; this adapts it).

@@ -116,7 +116,7 @@ export type LibraryGroup = 'order_updates' | 'security' | 'marketing' | 'manual'
 export const libraryGroups: LibraryGroup[] = ['order_updates', 'security', 'marketing', 'manual'];
 export type LibraryStatus = '' | 'active' | 'off' | 'archived';
 export type LibraryFilters = { channel: Channel | ''; group: LibraryGroup | ''; status: LibraryStatus };
-export const whatsAppStatuses: WhatsAppStatus[] = ['draft', 'submitted', 'approved'];
+export const whatsAppStatuses: WhatsAppStatus[] = ['draft', 'submitted', 'approved', 'rejected', 'paused', 'disabled'];
 /** The generic variables a staff-made template may choose from — the generated enum, not a copy. */
 export const customVariables = ['name', 'order_number', 'store_name', 'hotline', 'store_url', 'track_url'] as const satisfies NewTemplateInput['variables'];
 
@@ -194,6 +194,16 @@ export function useSetWhatsAppStatus(id: number) {
     return useLibraryMutation((status: WhatsAppStatus) =>
         api<NotificationTemplate>(`/notifications/templates/${id}/whatsapp-status`, { method: 'PUT', body: JSON.stringify({ status }) }),
     );
+}
+
+export type WhatsAppTemplateSync = Schema<'WhatsAppTemplateSync'>;
+
+/**
+ * "Sync from Meta": the server reads the WhatsApp Business Account's templates and records each
+ * status (same Action as a manual change). Counts come back; the library refreshes.
+ */
+export function useSyncWhatsAppTemplates() {
+    return useLibraryMutation(() => api<WhatsAppTemplateSync>('/notifications/templates/whatsapp/sync', { method: 'POST' }));
 }
 
 /** Switches every channel of one template on or off — one PUT per row, each the full document. */

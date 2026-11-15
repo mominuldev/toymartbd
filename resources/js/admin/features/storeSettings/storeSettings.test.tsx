@@ -22,6 +22,7 @@ const business: BusinessDetails = {
     bin: '004567891-0101',
     hotline: null,
     whatsapp: '+8801711000222',
+    messenger: null,
     default_names: { name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি' },
     hotline_default: '09600123456',
     placeholders: ['name_bn', 'trade_licence', 'hotline'],
@@ -173,6 +174,7 @@ describe('business', () => {
         fireEvent.change(await screen.findByLabelText('Trade licence no.'), { target: { value: 'TRAD/DNCC/045512/2025' } });
         fireEvent.change(screen.getByLabelText('Support hotline'), { target: { value: '09610-123456' } });
         fireEvent.change(screen.getByLabelText('WhatsApp'), { target: { value: '01911-000222' } });
+        fireEvent.change(screen.getByLabelText('Messenger (Facebook Page)'), { target: { value: ' toymart.bd ' } });
         fireEvent.change(screen.getByLabelText('BIN (VAT registration)'), { target: { value: '' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
@@ -184,7 +186,24 @@ describe('business', () => {
             bin: null,
             hotline: '09610-123456',
             whatsapp: '01911-000222',
+            messenger: 'toymart.bd',
         });
+    });
+
+    it('explains the Messenger field and refuses a pasted link before sending anything', async () => {
+        const calls = storeApi(owner);
+        renderApp('/settings/business');
+
+        const messenger = (await screen.findByLabelText('Messenger (Facebook Page)')) as HTMLInputElement;
+        expect(messenger.value).toBe('');
+        expect(messenger.placeholder).toBe('e.g. toymartbd');
+        expect(screen.getByText(/open m\.me\/ followed by it/)).toBeTruthy();
+
+        fireEvent.change(messenger, { target: { value: 'https://m.me/toymartbd' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(messenger.getAttribute('aria-invalid')).toBe('true'));
+        expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toBe(false);
     });
 
     it('shows a server field error under its field', async () => {

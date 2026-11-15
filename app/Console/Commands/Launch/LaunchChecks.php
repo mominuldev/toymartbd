@@ -498,7 +498,7 @@ final class LaunchChecks
     {
         /** @var MessagingSettings $settings */
         $settings = $this->app->make(MessagingSettings::class);
-        $driver = (string) config('notifications.whatsapp.driver');
+        $driver = $settings->whatsappDriver();
         if ($settings->whatsappEnabled() && in_array($driver, ['log', 'null'], true)) {
             return CheckResult::fail('whatsapp.state', 'WhatsApp off unless a real account is connected', 'D3', "WhatsApp is ON with the `{$driver}` driver: order updates \"succeed\" into a log and the SMS fallback never fires — customers get nothing.", 'Turn the WhatsApp switch off at Admin → Integrations → Messaging (and WHATSAPP_ENABLED=false).');
         }

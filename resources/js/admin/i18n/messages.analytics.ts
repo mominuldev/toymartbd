@@ -76,6 +76,7 @@ export const analyticsEn = {
     'sales.channel.phone': 'Phone',
     'sales.channel.facebook': 'Facebook & Instagram',
     'sales.channel.whatsapp': 'WhatsApp',
+    'sales.channel.pos': 'Shop counter (POS)',
     'sales.payments.title': 'Payment methods',
     'sales.payments.subtitle': 'Share of orders placed (not cancelled)',
 
@@ -265,6 +266,7 @@ export const analyticsBn: Record<keyof typeof analyticsEn, string> = {
     'sales.channel.phone': 'ফোন',
     'sales.channel.facebook': 'ফেসবুক ও ইনস্টাগ্রাম',
     'sales.channel.whatsapp': 'হোয়াটসঅ্যাপ',
+    'sales.channel.pos': 'দোকানের কাউন্টার (POS)',
     'sales.payments.title': 'পেমেন্ট পদ্ধতি',
     'sales.payments.subtitle': 'দেওয়া অর্ডারের অংশ (বাতিল ছাড়া)',
 

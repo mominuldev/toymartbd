@@ -20,7 +20,8 @@ import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
-import { useAddNote, useAssign, useAssignees, useMessages, useResolve, useSendReply, type ConversationDetail, type InboxMessage } from './api';
+import { canReplyFreely, useAddNote, useAssign, useAssignees, useMessages, useResolve, useSendReply, type ConversationDetail, type InboxMessage } from './api';
+import { TemplatePanel } from './TemplatePanel';
 import { ChannelIcon, ContactAvatar, channelLabel, dhakaDayTime, dhakaTime, displayPhone, langProps, useContactName } from './parts';
 
 type Mode = 'reply' | 'note';
@@ -166,7 +167,7 @@ function Messages({ conversationId, detail }: { conversationId: number; detail: 
 }
 
 const failureKey = (code: string | null): MessageKey => {
-    if (code === 'outside_window' || code === 'not_configured' || code === 'transport') return `inbox.failure.${code}` as MessageKey;
+    if (code === 'outside_window' || code === 'not_configured' || code === 'transport' || code === 'template_unavailable' || code === 'template_not_allowed') return `inbox.failure.${code}` as MessageKey;
     return 'inbox.failure.other';
 };
 
@@ -216,6 +217,7 @@ export function MessageItem({ message: m, channel }: { message: InboxMessage; ch
     return (
         <li className={`flex flex-col gap-1 ${inbound ? 'items-start' : 'items-end'}`} data-kind={inbound ? 'in' : 'out'}>
             <div className={`max-w-[85%] rounded-md px-4 py-3 ${inbound ? 'border border-line-default bg-surface' : 'bg-brand-subtle'} ${failed ? 'border border-line-danger' : ''}`}>
+                {m.kind === 'template' && <p className="mb-1 t-admin-overline text-fg-secondary">{t('inbox.msg.template', { name: m.template?.name ?? '' })}</p>}
                 <p lang={body.lang} className={`t-admin-body whitespace-pre-wrap break-words text-fg-primary ${m.body ? body.className : 'italic text-fg-secondary'}`}>
                     {content}
                 </p>
@@ -230,6 +232,7 @@ export function MessageItem({ message: m, channel }: { message: InboxMessage; ch
                     <>
                         <span>{m.sender?.name ?? t('inbox.msg.you')}</span>
                         <span className="tabular">· {time}</span>
+                        {m.tag === 'HUMAN_AGENT' && <span>· {t('inbox.msg.humanAgent')}</span>}
                         {m.delivery_status && (
                             <span className={failed ? 'inline-flex items-center gap-1 text-feedback-danger' : ''}>
                                 {failed && <WarningCircleIcon size={14} aria-hidden />}· {t(`inbox.delivery.${m.delivery_status}` as MessageKey)}
@@ -243,7 +246,20 @@ export function MessageItem({ message: m, channel }: { message: InboxMessage; ch
     );
 }
 
-/** Reply / Internal note. A reply outside the 24-hour window is disabled with the reason; a note is always allowed. */
+/** Why nothing can be sent (reply state `closed`). Messenger: 24 h passed with the human-agent tag off, or 7 days passed. */
+function closedReason(detail: ConversationDetail): MessageKey {
+    const closedAt = detail.reply.window_closes_at;
+    if (detail.channel !== 'messenger' || !closedAt) return 'inbox.window.never';
+    // The 24-hour window closed at `closedAt`; Meta's human-agent tag reaches 6 days further.
+    return Date.now() < new Date(closedAt).getTime() + 6 * 86_400_000 ? 'inbox.closed.messenger' : 'inbox.closed.tooOld';
+}
+
+/**
+ * Reply / Internal note. The server's reply state decides the reply side: `open` is a normal
+ * reply; `human_agent` (Messenger 24 h – 7 days, switch on) is a normal reply with a notice that
+ * it goes with Meta's human-agent tag; `template_only` (WhatsApp after the window) replaces the
+ * reply box with {@see TemplatePanel}; `closed` disables it with the reason. A note is always allowed.
+ */
 export function Composer({ detail }: { detail: ConversationDetail }) {
     const { t, locale } = useI18n();
     const { notify } = useToast();
@@ -252,7 +268,8 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
     const [error, setError] = useState<string | null>(null);
     const reply = useSendReply(detail.id);
     const note = useAddNote(detail.id);
-    const windowClosed = mode === 'reply' && detail.window.applies && !detail.window.open;
+    const state = detail.reply.state;
+    const replyBlocked = mode === 'reply' && !canReplyFreely(state);
     const pending = reply.isPending || note.isPending;
 
     useEffect(() => {
@@ -263,7 +280,7 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
     const submit = (event?: FormEvent) => {
         event?.preventDefault();
         const body = text.trim();
-        if (!body || windowClosed || pending) return;
+        if (!body || replyBlocked || pending) return;
         const done = {
             onSuccess: () => {
                 setText('');
@@ -280,14 +297,16 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit();
     };
 
-    const notice = !detail.window.applies
-        ? null
-        : detail.window.open && detail.window.expires_at
-          ? t(detail.channel === 'messenger' ? 'inbox.window.openMessenger' : 'inbox.window.open', { time: dhakaDayTime(detail.window.expires_at, locale) })
-          : null;
+    const closesAt = detail.reply.window_closes_at;
+    const notice =
+        mode === 'reply' && state === 'human_agent' && closesAt
+            ? t('inbox.window.humanAgent', { time: dhakaDayTime(closesAt, locale) })
+            : detail.window.applies && state === 'open' && closesAt
+              ? t(detail.channel === 'messenger' ? 'inbox.window.openMessenger' : 'inbox.window.open', { time: dhakaDayTime(closesAt, locale) })
+              : null;
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-2 border-t border-line-default px-4 py-3 lg:px-5">
+        <div className="flex flex-col gap-2 border-t border-line-default px-4 py-3 lg:px-5">
             <div role="radiogroup" aria-label={t('inbox.composer.modes')} className="flex items-center gap-1">
                 {(['reply', 'note'] as const).map((m) => (
                     <button
@@ -302,44 +321,56 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
                     </button>
                 ))}
             </div>
-            {windowClosed && (
-                <p role="status" className="flex items-start gap-2 rounded-sm bg-warning-subtle px-3 py-2 t-admin-caption text-fg-primary">
-                    <ClockIcon size={16} aria-hidden className="mt-px shrink-0 text-feedback-warning" />
-                    {detail.window.expires_at ? t('inbox.window.closed') : t('inbox.window.never')}
-                </p>
-            )}
-            <label className="sr-only" htmlFor={`composer-${detail.id}`}>
-                {t(mode === 'reply' ? 'inbox.composer.reply' : 'inbox.composer.note')}
-            </label>
-            <textarea
-                id={`composer-${detail.id}`}
-                rows={2}
-                value={text}
-                disabled={windowClosed}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder={t(mode === 'reply' ? 'inbox.composer.replyPlaceholder' : 'inbox.composer.notePlaceholder')}
-                aria-invalid={error ? true : undefined}
-                className={`min-h-15 w-full resize-y rounded-sm border-2 px-3 py-2 t-admin-body text-fg-primary outline-none placeholder:text-fg-tertiary focus:border-line-focus disabled:cursor-not-allowed disabled:bg-disabled ${
-                    mode === 'note' ? 'border-dashed border-feedback-warning bg-warning-subtle' : 'border-line-brand bg-surface'
-                }`}
-            />
-            {error && <p className="t-admin-caption text-feedback-danger">{error}</p>}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="flex min-w-0 items-center gap-1.5 t-admin-caption text-fg-secondary">
-                    {notice && (
-                        <>
-                            <ChannelIcon channel={detail.channel} size={14} />
-                            <span className="truncate">{notice}</span>
-                        </>
+            {mode === 'reply' && state === 'template_only' ? (
+                <TemplatePanel detail={detail} />
+            ) : (
+                <form onSubmit={submit} className="flex flex-col gap-2">
+                    {mode === 'reply' && state === 'closed' && (
+                        <p role="status" className="flex items-start gap-2 rounded-sm bg-warning-subtle px-3 py-2 t-admin-caption text-fg-primary">
+                            <ClockIcon size={16} aria-hidden className="mt-px shrink-0 text-feedback-warning" />
+                            {t(closedReason(detail))}
+                        </p>
                     )}
-                    {!notice && <span>{t('inbox.composer.sendHint')}</span>}
-                </p>
-                <Button type="submit" size="sm" variant={mode === 'note' ? 'outline' : 'primary'} disabled={!text.trim() || windowClosed || pending}>
-                    {mode === 'reply' && <PaperPlaneRightIcon size={16} aria-hidden />}
-                    {t(mode === 'reply' ? 'inbox.composer.send' : 'inbox.composer.addNote')}
-                </Button>
-            </div>
-        </form>
+                    {mode === 'reply' && state === 'human_agent' && (
+                        <p role="status" className="flex items-start gap-2 rounded-sm bg-info-subtle px-3 py-2 t-admin-caption text-fg-primary">
+                            <InfoIcon size={16} aria-hidden className="mt-px shrink-0 text-feedback-info" />
+                            {t('inbox.humanAgent.notice')}
+                        </p>
+                    )}
+                    <label className="sr-only" htmlFor={`composer-${detail.id}`}>
+                        {t(mode === 'reply' ? 'inbox.composer.reply' : 'inbox.composer.note')}
+                    </label>
+                    <textarea
+                        id={`composer-${detail.id}`}
+                        rows={2}
+                        value={text}
+                        disabled={replyBlocked}
+                        onChange={(e) => setText(e.target.value)}
+                        onKeyDown={onKeyDown}
+                        placeholder={t(mode === 'reply' ? 'inbox.composer.replyPlaceholder' : 'inbox.composer.notePlaceholder')}
+                        aria-invalid={error ? true : undefined}
+                        className={`min-h-15 w-full resize-y rounded-sm border-2 px-3 py-2 t-admin-body text-fg-primary outline-none placeholder:text-fg-tertiary focus:border-line-focus disabled:cursor-not-allowed disabled:bg-disabled ${
+                            mode === 'note' ? 'border-dashed border-feedback-warning bg-warning-subtle' : 'border-line-brand bg-surface'
+                        }`}
+                    />
+                    {error && <p className="t-admin-caption text-feedback-danger">{error}</p>}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="flex min-w-0 items-center gap-1.5 t-admin-caption text-fg-secondary">
+                            {notice && (
+                                <>
+                                    <ChannelIcon channel={detail.channel} size={14} />
+                                    <span className="truncate">{notice}</span>
+                                </>
+                            )}
+                            {!notice && <span>{t('inbox.composer.sendHint')}</span>}
+                        </p>
+                        <Button type="submit" size="sm" variant={mode === 'note' ? 'outline' : 'primary'} disabled={!text.trim() || replyBlocked || pending}>
+                            {mode === 'reply' && <PaperPlaneRightIcon size={16} aria-hidden />}
+                            {t(mode === 'reply' ? 'inbox.composer.send' : 'inbox.composer.addNote')}
+                        </Button>
+                    </div>
+                </form>
+            )}
+        </div>
     );
 }

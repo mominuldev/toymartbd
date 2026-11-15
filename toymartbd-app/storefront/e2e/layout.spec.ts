@@ -110,6 +110,22 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
     });
 });
 
+test('the header language menu opens above the mega menu bar', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.locator('details.locale-menu > summary').click();
+    const panel = page.locator('details.locale-menu > div');
+    // The open menu overlaps the mega menu bar, whose row was drawn at z-20 over the menu's z-10:
+    // its middle showed a category link instead. Top, middle and bottom must all be the menu.
+    const covered = await panel.evaluate((menu) => {
+        const b = menu.getBoundingClientRect();
+        return [b.top + 8, b.top + b.height / 2, b.bottom - 8].filter((y) => !menu.contains(document.elementFromPoint(b.left + b.width / 2, y)));
+    });
+    expect(covered).toEqual([]);
+    await panel.locator('a[hreflang="bn"]').click();
+    await expect(page).toHaveURL(/\/bn$/);
+});
+
 test.describe('404 for unmatched URLs is styled and server-rendered (no JS)', () => {
     for (const [path, lang, title, home, toggle] of [
         // Two segments: a one-segment URL matches the CMS page route (/{slug}) — see 'static pages'.

@@ -63,15 +63,31 @@ describe('Variants section (VariantMatrixEditor 201:1201, 241:38029)', () => {
         expect(posted).toMatchObject({ type: 'variable', options: [{ attribute_id: 1, value_ids: [10] }] });
     });
 
-    it('shows on a saved simple product, explaining the type is fixed, with no Add option', async () => {
-        const simple = { ...product, type: 'simple' as const, options: [], variants: [{ ...product.variants[0]!, attribute_values: [], is_default: true }] };
-        productApi(owner, (url, init) => (/\/products\/42$/.test(url) && (!init?.method || init.method === 'GET') ? { status: 200, body: simple } : undefined));
+    it('turns a saved simple product into a variable one: rows start from its price, the first keeps its SKU', async () => {
+        const simple = { ...product, type: 'simple' as const, options: [], variants: [{ ...product.variants[0]!, sku: 'TM-00042', barcode: '2000000000015', price: '650.00', attribute_values: [], is_default: true }] };
+        const calls = productApi(owner, (url, init) => {
+            if (/\/products\/42$/.test(url) && init?.method === 'PUT') return { status: 200, body: product };
+            if (/\/products\/42$/.test(url)) return { status: 200, body: simple };
+            return undefined;
+        });
         renderApp('/products/42');
 
         const variants = await screen.findByRole('region', { name: 'Variants' });
-        expect(within(variants).getByText(/type cannot change after creation/)).toBeTruthy();
-        expect(within(variants).queryByLabelText('Add option')).toBeNull();
-        expect(tab('Variants')).toBeTruthy();
+        fireEvent.change(await within(variants).findByLabelText('Add option'), { target: { value: '1' } });
+        fireEvent.change(within(variants).getByLabelText('Add a Color value'), { target: { value: '10' } });
+        fireEvent.change(within(variants).getByLabelText('Add a Color value'), { target: { value: '11' } });
+
+        expect(screen.getByText(/current SKU, barcode and stock move to the first variant/)).toBeTruthy();
+        expect((within(variants).getByLabelText('Price — Red') as HTMLInputElement).value).toBe('650.00');
+        expect((within(variants).getByLabelText('Price — Blue') as HTMLInputElement).value).toBe('650.00');
+        expect((within(variants).getByLabelText('SKU — Red') as HTMLInputElement).value).toBe('TM-00042');
+        expect((within(variants).getByLabelText('SKU — Blue') as HTMLInputElement).value).toBe('');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await waitFor(() => expect(sentBody(calls, 'PUT')).not.toBeNull());
+        const body = sentBody(calls, 'PUT')!;
+        expect(body).toMatchObject({ type: 'variable', options: [{ attribute_id: 1, value_ids: [10, 11] }] });
+        expect((body.variants as Record<string, unknown>[])[0]).toMatchObject({ attribute_value_ids: [10], sku: 'TM-00042', barcode: '2000000000015', price: '650.00' });
     });
 });
 

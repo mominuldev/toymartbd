@@ -347,13 +347,19 @@ it('replaces curated relations but never touches rule-generated ones', function 
     expect($product->productRelations()->count())->toBe(2);
 });
 
-it('refuses to change the product type', function (): void {
+it('changes the product type, keeping the simple variant as the first combination', function (): void {
+    // Owner decision 2026-11-16: variants can be added to (and removed from) any product.
     ['colors' => $colors, 'sizes' => $sizes] = CatalogFixtures::colorAndSize();
     $data = CatalogFixtures::simple();
     $product = app(CreateProduct::class)->handle($data);
+    $simpleVariantId = $product->variants()->value('id');
 
     $variable = CatalogFixtures::variable($colors, $sizes, ['primaryCategoryId' => $data->primaryCategoryId, 'categoryIds' => $data->categoryIds]);
-    expect(productErrors(fn () => app(UpdateProduct::class)->handle($product, $variable)))->toHaveKey('type');
+    $updated = app(UpdateProduct::class)->handle($product, $variable)->refresh();
+
+    expect($updated->type->value)->toBe('variable')
+        ->and($updated->variants()->where('status', 'active')->count())->toBeGreaterThan(1)
+        ->and($updated->variants()->whereKey($simpleVariantId)->where('status', 'active')->whereHas('attributeValues')->exists())->toBeTrue();
 });
 
 it('needs at least one active variant', function (): void {

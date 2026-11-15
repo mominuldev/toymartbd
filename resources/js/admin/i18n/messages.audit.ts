@@ -70,6 +70,7 @@ export const auditEn = {
     'audit.kind.two_factor_changed': 'changed two-factor sign-in for {subject}',
     'audit.kind.messaging_settings': 'changed the messaging settings',
     'audit.kind.tracking_settings': 'changed the tracking settings',
+    'audit.kind.connection_tested': 'tested a Meta channel connection',
     'audit.kind.courier_credentials': 'changed the {subject} courier credentials',
     'audit.kind.credentials_changed': 'changed credentials for {subject}',
 } as const;
@@ -139,6 +140,7 @@ export const auditBn: Record<keyof typeof auditEn, string> = {
     'audit.kind.two_factor_changed': '{subject}-এর টু-ফ্যাক্টর সাইন-ইন বদলেছেন',
     'audit.kind.messaging_settings': 'মেসেজিং সেটিংস বদলেছেন',
     'audit.kind.tracking_settings': 'ট্র্যাকিং সেটিংস বদলেছেন',
+    'audit.kind.connection_tested': 'Meta চ্যানেলের সংযোগ পরীক্ষা করেছেন',
     'audit.kind.courier_credentials': '{subject} কুরিয়ারের ক্রেডেনশিয়াল বদলেছেন',
     'audit.kind.credentials_changed': '{subject}-এর ক্রেডেনশিয়াল বদলেছেন',
 };

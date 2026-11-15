@@ -16,7 +16,7 @@ vi.mock('@/public/images/home/hero.jpg', () => ({ default: { src: '/_next/static
 const image = { url: 'https://cdn.test/media/1/800.webp', srcset_webp: 'https://cdn.test/media/1/800.webp 800w', srcset_avif: 'https://cdn.test/media/1/800.avif 800w', width: 800, height: 500, alt: 'Bricks' };
 const card = {
     id: 7, slug: 'wooden-train', name: 'Wooden Train', name_bn: 'কাঠের ট্রেন', brand: null, price: '650.00', compare_at_price: null, price_max: '650.00', discount_percent: null,
-    age_min_months: 24, age_max_months: 72, rating_avg: null, rating_count: 0, is_featured: false, variant_count: 1, in_stock: true, image: null,
+    age_min_months: 24, age_max_months: 72, rating_avg: null, rating_count: 0, is_featured: false, variant_count: 1, default_variant_id: null, in_stock: true, image: null,
 };
 const post = {
     id: 3, type: 'buying_guide', slug: 'first-toys', title: 'First toys', title_bn: 'প্রথম খেলনা', excerpt: null, excerpt_bn: null, cover: null,

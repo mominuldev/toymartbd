@@ -52,7 +52,7 @@ final class NotificationTemplateResource extends ApiResource
             'is_custom' => $t->isCustom(),
             'name_en' => $t->name_en,
             'name_bn' => $t->name_bn,
-            /** @var 'draft'|'submitted'|'approved'|null */
+            /** @var 'draft'|'submitted'|'approved'|'rejected'|'paused'|'disabled'|null */
             'whatsapp_status' => $t->whatsAppStatus()?->value,
             /** @var list<string> */
             'variables' => $t->allowedVariables(),

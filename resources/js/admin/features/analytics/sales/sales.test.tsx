@@ -110,6 +110,16 @@ describe('sales analytics', () => {
         expect(screen.getByRole('link', { name: 'Scheduled reports' })).toBeTruthy();
     });
 
+    it('names every channel, including counter (POS) sales', async () => {
+        const body = report();
+        body.channels = [...body.channels, { source: 'pos', orders: 7, value: '47505.00', orders_percent: '16.67', value_percent: '38.56', aov: '6786.43' }];
+        api(manager, body);
+        renderApp('/analytics/sales');
+
+        expect(await screen.findByText('Shop counter (POS)')).toBeTruthy();
+        expect(screen.getByText('Website')).toBeTruthy();
+    });
+
     it('sends the preset, custom dates and grouping to the server and builds both export links', async () => {
         const calls = api();
         renderApp('/analytics/sales?range=custom&from=2026-11-01&to=2026-11-30');

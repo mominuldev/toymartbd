@@ -49,6 +49,19 @@ test.describe('desktop', () => {
         await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
     });
 
+    test('a card cart button adds a one-option toy without JavaScript; one with options opens its page', async ({ page }) => {
+        await page.goto('/categories/building-blocks');
+        // LEGO Classic has several variants: its cart icon is a link to choose on the product page.
+        const classic = page.locator('main article', { hasText: 'LEGO Classic' });
+        await expect(classic.getByRole('link', { name: /^Choose options for LEGO Classic/ })).toHaveAttribute('href', /\/products\//);
+        await expect(classic.locator('form[action="/api/cart/items"]')).toHaveCount(0);
+
+        const bag = page.locator('main article', { hasText: 'Big Building Bag' });
+        await bag.getByRole('button', { name: /^Add to cart: Big Building Bag/ }).click();
+        await expect(page).toHaveURL(/\/cart$/);
+        await expect(page.locator('main')).toContainText('Big Building Bag');
+    });
+
     test('filter by brand and age with the form, remove a chip, and go back', async ({ page }) => {
         await page.goto('/categories/building-blocks');
         await sidebar(page).locator('input[name="age"][value="12-24"]').check({ force: true });

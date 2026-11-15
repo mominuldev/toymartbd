@@ -13,8 +13,9 @@ import { pendingLegal, sampleContact, sampleStoreInfo, type ContactValue, type S
 //
 // Fallback, field by field: a value the owner has not set (null or blank) becomes the marked
 // sample from lib/site-config.ts with `placeholder: true`, which is never rendered as a link. A
-// set value becomes a link (tel:, https://wa.me/…, mailto:) built from the API's own normalised
-// form; the storefront does not re-validate or reformat a phone number.
+// set value becomes a link (tel:, https://wa.me/…, mailto:, https://m.me/…) built from the API's own normalised
+// form; the storefront does not re-validate or reformat a phone number. Messenger has no sample:
+// unset (or not a valid Page username/id) is null, and no Messenger link is shown.
 
 export const STORE_INFO_TAG = 'store-info';
 
@@ -26,6 +27,7 @@ export interface StoreInfoResponse {
     hotline_tel?: unknown;
     whatsapp?: unknown;
     whatsapp_display?: unknown;
+    messenger?: unknown;
     email?: unknown;
     address_en?: unknown;
     address_bn?: unknown;
@@ -50,6 +52,14 @@ function whatsapp(body: StoreInfoResponse): ContactValue {
     return { display: text(body.whatsapp_display) ?? e164, href: `https://wa.me/${digits}`, placeholder: false };
 }
 
+/** The Page username or numeric id, as the admin validates it; anything else is treated as unset. */
+const MESSENGER_PAGE = /^(?:[A-Za-z0-9.]{5,50}|[0-9]{1,50})$/;
+
+function messenger(body: StoreInfoResponse): ContactValue | null {
+    const page = text(body.messenger);
+    return page && MESSENGER_PAGE.test(page) ? { display: page, href: `https://m.me/${page}`, placeholder: false } : null;
+}
+
 function email(body: StoreInfoResponse): ContactValue {
     const address = text(body.email);
     return address && address.includes('@') ? { display: address, href: `mailto:${address}`, placeholder: false } : sampleContact.email;
@@ -59,7 +69,7 @@ function email(body: StoreInfoResponse): ContactValue {
 export function toStoreInfo(body: StoreInfoResponse): StoreInfo {
     return {
         name: { en: text(body.name_en) ?? sampleStoreInfo.name.en, bn: text(body.name_bn) ?? sampleStoreInfo.name.bn },
-        contact: { hotline: hotline(body), whatsapp: whatsapp(body), email: email(body) },
+        contact: { hotline: hotline(body), whatsapp: whatsapp(body), email: email(body), messenger: messenger(body) },
         legal: { tradeLicence: text(body.trade_licence) ?? pendingLegal.tradeLicence, bin: text(body.bin) ?? pendingLegal.bin },
         address: { en: text(body.address_en), bn: text(body.address_bn) },
     };

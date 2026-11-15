@@ -26,7 +26,7 @@ final class UpdateWhatsAppStatusRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            /** @var 'draft'|'submitted'|'approved' */
+            /** @var 'draft'|'submitted'|'approved'|'rejected'|'paused'|'disabled' */
             'status' => ['required', 'string', Rule::in(WhatsAppApprovalStatus::values())],
         ];
     }

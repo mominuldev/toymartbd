@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { AssignConversationRequestInput, SendInboxReplyRequestInput, SendQuickReplyRequestInput, StoreInboxNoteRequestInput } from '@toymart/api-types/zod';
+import type { AssignConversationRequestInput, SendInboxReplyRequestInput, SendInboxTemplateRequestInput, SendQuickReplyRequestInput, StoreInboxNoteRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
 
 export type Conversation = Schema<'InboxConversation'>;
@@ -9,11 +9,18 @@ export type InboxMessage = Schema<'InboxMessage'>;
 export type Channel = Conversation['channel'];
 export type ConversationStatus = Conversation['status'];
 export type InboxCustomer = NonNullable<ConversationDetail['customer']>;
+export type InboxTemplate = Schema<'InboxTemplate'>;
+/** What staff may send now — decided by the server (open, human_agent, template_only, closed). */
+export type ReplyState = Conversation['reply']['state'];
 /** The POST bodies — generated from the FormRequests (rule 27). */
 export type ReplyInput = SendInboxReplyRequestInput;
 export type NoteInput = StoreInboxNoteRequestInput;
 export type AssignInput = AssignConversationRequestInput;
 export type QuickReplyInput = SendQuickReplyRequestInput;
+export type TemplateInput = SendInboxTemplateRequestInput;
+
+/** A free-form reply is allowed (inside the window, or Messenger's human-agent period). */
+export const canReplyFreely = (state: ReplyState): boolean => state === 'open' || state === 'human_agent';
 
 export const views = ['all', 'mine', 'needs_human'] as const;
 export type View = (typeof views)[number];
@@ -35,6 +42,7 @@ export const inboxKeys = {
     detail: (id: number) => ['inbox', 'detail', id] as const,
     messages: (id: number) => ['inbox', 'messages', id] as const,
     assignees: ['inbox', 'assignees'] as const,
+    templates: (id: number) => ['inbox', 'templates', id] as const,
 };
 
 export function conversationsPath(f: InboxFilters, cursor?: string | null): string {
@@ -106,7 +114,18 @@ export const useSendReply = (id: number) => useInboxMutation(id, (input: ReplyIn
 export const useAddNote = (id: number) => useInboxMutation(id, (input: NoteInput) => api<InboxMessage>(`/inbox/conversations/${id}/notes`, post(input)));
 export const useQuickReply = (id: number) => useInboxMutation(id, (input: QuickReplyInput) => api<InboxMessage>(`/inbox/conversations/${id}/quick-replies`, post(input)));
 export const useAssign = (id: number) => useInboxMutation(id, (input: AssignInput) => api<ConversationDetail>(`/inbox/conversations/${id}/assign`, post(input)));
+export const useSendTemplate = (id: number) => useInboxMutation(id, (input: TemplateInput) => api<InboxMessage>(`/inbox/conversations/${id}/template`, post(input)));
 export const useResolve = (id: number) => useInboxMutation(id, (resolve: boolean) => api<ConversationDetail>(`/inbox/conversations/${id}/${resolve ? 'resolve' : 'reopen'}`, post()));
+
+/** Approved utility WhatsApp templates in the conversation's language (inbox.reply). Only fetched once the window has closed. */
+export function useTemplates(id: number, enabled: boolean) {
+    return useQuery({
+        queryKey: inboxKeys.templates(id),
+        queryFn: () => api<{ data: InboxTemplate[] }>(`/inbox/conversations/${id}/templates`).then((r) => r.data),
+        enabled: enabled && Number.isInteger(id) && id > 0,
+        staleTime: 60_000,
+    });
+}
 
 /** Opening a thread clears its unread count (inbox.view). */
 export function useMarkRead(id: number) {

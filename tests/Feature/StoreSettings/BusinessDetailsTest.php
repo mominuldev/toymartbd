@@ -27,6 +27,7 @@ function businessBody(array $overrides = []): array
         'bin' => '004567891-0101',
         'hotline' => '09610-123456',
         'whatsapp' => '01711-000222',
+        'messenger' => 'toymartbd',
         ...$overrides,
     ];
 }
@@ -38,6 +39,7 @@ it('starts empty, with the brand names and env hotline as honest fallbacks', fun
     $this->getJson(BUSINESS_URL)->assertOk()
         ->assertJsonPath('name_en', null)
         ->assertJsonPath('whatsapp', null)
+        ->assertJsonPath('messenger', null)
         ->assertJsonPath('default_names.name_en', 'Toy Mart BD')
         ->assertJsonPath('hotline_default', '09600123456')
         ->assertJsonPath('placeholders', ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline']);
@@ -50,6 +52,7 @@ it('round-trips the business details, storing WhatsApp as E.164', function (): v
         ->assertJsonPath('name_bn', 'টয় মার্ট বিডি')
         ->assertJsonPath('trade_licence', 'TRAD/DNCC/045512/2025')
         ->assertJsonPath('whatsapp', '+8801711000222')
+        ->assertJsonPath('messenger', 'toymartbd')
         ->assertJsonPath('placeholders', []);
 
     $this->getJson(BUSINESS_URL)->assertOk()->assertJsonPath('hotline', '09610-123456')->assertJsonPath('bin', '004567891-0101');
@@ -83,8 +86,9 @@ it('clears a value sent as null or blank', function (): void {
     Support::actingAs(Role::Manager);
     $this->putJson(BUSINESS_URL, businessBody())->assertOk();
 
-    $this->putJson(BUSINESS_URL, businessBody(['whatsapp' => null, 'bin' => '  ']))->assertOk()
+    $this->putJson(BUSINESS_URL, businessBody(['whatsapp' => null, 'messenger' => ' ', 'bin' => '  ']))->assertOk()
         ->assertJsonPath('whatsapp', null)
+        ->assertJsonPath('messenger', null)
         ->assertJsonPath('bin', null)
         ->assertJsonPath('placeholders', ['bin']);
 });
@@ -102,7 +106,17 @@ it('validates WhatsApp as a 013–019 mobile (rule 30) and the hotline and BIN a
     'landline as WhatsApp' => ['whatsapp', '09610-123456'],
     'letters in the hotline' => ['hotline', 'call us'],
     'letters in the BIN' => ['bin', 'not-a-bin!'],
+    'Messenger as a URL' => ['messenger', 'https://m.me/toymartbd'],
+    'Messenger too short' => ['messenger', 'toy'],
+    'Messenger with a space' => ['messenger', 'toy mart bd'],
+    'Messenger too long' => ['messenger', str_repeat('a', 51)],
 ]);
+
+it('accepts a Messenger Page username with dots, or a numeric Page id', function (string $value): void {
+    Support::actingAs(Role::Manager);
+
+    $this->putJson(BUSINESS_URL, businessBody(['messenger' => " {$value} "]))->assertOk()->assertJsonPath('messenger', $value);
+})->with(['username' => 'toymart.bd', 'numeric id' => '104857234567890']);
 
 it('accepts a 09xxx landline hotline and a +880 WhatsApp', function (): void {
     Support::actingAs(Role::Manager);

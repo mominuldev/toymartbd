@@ -47,6 +47,8 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
             'whatsapp_driver' => ['required', 'string', Rule::in(InboxChannelSettings::DRIVERS['whatsapp'])],
             /** WhatsApp Manager → API setup → "Phone number ID". Digits only. */
             'whatsapp_phone_number_id' => ['nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
+            /** WhatsApp Manager → Business Account ID (digits, not secret) — for "Sync from Meta". Absent = keep; blank = remove. */
+            'whatsapp_business_account_id' => ['sometimes', 'nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
             'whatsapp_access_token' => ['nullable', 'string', 'max:2048'],
             'whatsapp_app_secret' => ['nullable', 'string', 'max:255'],
             'whatsapp_verify_token' => ['nullable', 'string', 'max:255'],
@@ -57,6 +59,8 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
             'messenger_driver' => ['required', 'string', Rule::in(InboxChannelSettings::DRIVERS['messenger'])],
             /** The Facebook Page id. Digits only. */
             'messenger_page_id' => ['nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
+            /** Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep. */
+            'messenger_human_agent' => ['sometimes', 'boolean'],
             'messenger_page_access_token' => ['nullable', 'string', 'max:2048'],
             'messenger_app_secret' => ['nullable', 'string', 'max:255'],
             'messenger_verify_token' => ['nullable', 'string', 'max:255'],
@@ -71,6 +75,7 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
     {
         return [
             'whatsapp_phone_number_id.regex' => 'Digits only — the Phone number ID from WhatsApp Manager.',
+            'whatsapp_business_account_id.regex' => 'Digits only — the WhatsApp Business Account ID.',
             'messenger_page_id.regex' => 'Digits only — the Facebook Page ID.',
         ];
     }
@@ -140,12 +145,21 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
                 }
             }
 
+            $extra = [];
+            if ($channel === InboxChannel::WhatsApp && $this->has('whatsapp_business_account_id')) {
+                $extra['business_account_id'] = $text('whatsapp_business_account_id');
+            }
+            if ($channel === InboxChannel::Messenger && $this->has('messenger_human_agent')) {
+                $extra['human_agent'] = $this->boolean('messenger_human_agent');
+            }
+
             $out[] = new InboxChannelCredentials(
                 channel: $channel,
                 driver: $this->string($c.'_driver')->toString(),
                 accountId: $text($c.'_'.InboxChannelSettings::ACCOUNT_ID[$c]),
                 secrets: $secrets,
                 clear: $clear,
+                extra: $extra,
             );
         }
 

@@ -28,6 +28,11 @@ export interface StoreContact {
     hotline: ContactValue;
     whatsapp: ContactValue;
     email: ContactValue;
+    /**
+     * The Facebook Page behind `https://m.me/{page}`, or null while the owner has not set one. No
+     * sample: a Messenger link is shown only once it is real (lib/chat-links.ts).
+     */
+    messenger: ContactValue | null;
 }
 
 export interface StoreLegal {
@@ -53,6 +58,7 @@ export const sampleContact = {
     hotline: { display: '09610-123456', href: 'tel:+8809610123456', placeholder: true },
     whatsapp: { display: '01712-345678', href: 'https://wa.me/8801712345678', placeholder: true },
     email: { display: 'hello@toymartbd.com', href: 'mailto:hello@toymartbd.com', placeholder: true },
+    messenger: null,
 } as const satisfies StoreContact;
 
 /** Trade licence and BIN have no sample: the legal bar shows `footer.legalPending` instead. */

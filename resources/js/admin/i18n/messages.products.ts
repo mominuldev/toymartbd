@@ -67,6 +67,9 @@ export const productsEn = {
     'products.field.nameBn': 'নাম (বাংলা)',
     'products.field.nameBnHint': 'Bangla storefront /bn/',
     'products.field.slug': 'URL',
+    'products.field.slugShort': 'Slug',
+    'products.section.url': 'Product URL',
+    'products.slug.auto': 'made from the name when you save',
     'products.field.slugHint': 'ASCII only, shared by both languages. Leave empty to generate it from the name.',
     'products.field.shortDescription': 'Short description (English)',
     'products.field.shortDescriptionHint': 'Shown on cards and in search results',
@@ -158,6 +161,14 @@ export const productsEn = {
     'products.section.images': 'Images',
     'products.images.hint': 'Square images, alt text in English and বাংলা',
     'products.images.saveFirst': 'Save the product first to add images.',
+    'products.images.chooseOrUpload': 'Choose or upload images',
+    'products.images.pendingEmpty': 'Add photos now — they are attached as soon as the product is created.',
+    'products.images.pendingNote': 'The first image is the main photo. Variant images and alt text can be set after creating the product.',
+    'products.images.pendingList': 'Images to add',
+    'products.images.pendingSubtitle': '{count} of {max} chosen for the new product',
+    'products.images.primary': 'Main',
+    'products.images.removePending': 'Remove {name}',
+    'products.images.attachFailed': '{count} image(s) could not be added. Add them again from the Media section.',
 
     'products.relation.related': 'Related products',
     'products.relation.relatedHint': 'Similar toys shown on the product page',
@@ -337,7 +348,6 @@ export const productsEn = {
     'products.editor.pickerUploadHint': 'Saved to the {folder} folder',
     'products.editor.imageNotReady': 'This image is still processing. Try again in a moment.',
     'products.matrix.simpleHint': 'Sold as one item. Add an option, such as Colour or Size, to sell it in variants — the product then becomes variable.',
-    'products.matrix.simpleFixed': 'This product was created without variants, and a product’s type cannot change after creation. To sell it in variants, create a new product.',
     // Barcodes and labels (owner request 2026-11-16)
     'products.barcodes.generate': 'Generate missing barcodes',
     'products.barcodes.generateOne': 'Generate barcode',
@@ -374,6 +384,9 @@ export const productsEn = {
     'products.bulk.label': 'Selected products',
     'products.bulk.selected': '{count} selected',
     'products.bulk.clear': 'Clear selection',
+    'products.matrix.toVariable': 'When you save, this product’s current SKU, barcode and stock move to the first variant. The other variants start with no stock — receive or adjust stock for them.',
+    'products.matrix.toSimple': 'When you save, {variant} stays as this product’s only item. The other variants are archived, not deleted — their stock stays on them until you move it with a stock adjustment.',
+    'products.matrix.toSimpleNoName': 'When you save, the default variant stays as this product’s only item. The other variants are archived, not deleted — their stock stays on them until you move it with a stock adjustment.',
 };
 
 export type ProductsMessageKey = keyof typeof productsEn;
@@ -441,6 +454,9 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.field.nameBn': 'নাম (বাংলা)',
     'products.field.nameBnHint': 'বাংলা স্টোরফ্রন্ট /bn/',
     'products.field.slug': 'URL',
+    'products.field.slugShort': 'স্লাগ',
+    'products.section.url': 'পণ্যের URL',
+    'products.slug.auto': 'সংরক্ষণের সময় নাম থেকে তৈরি হবে',
     'products.field.slugHint': 'শুধু ইংরেজি অক্ষর, দুই ভাষায় একই। খালি রাখলে নাম থেকে তৈরি হবে।',
     'products.field.shortDescription': 'সংক্ষিপ্ত বিবরণ (ইংরেজি)',
     'products.field.shortDescriptionHint': 'কার্ডে ও সার্চ ফলাফলে দেখানো হয়',
@@ -532,6 +548,14 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.section.images': 'ছবি',
     'products.images.hint': 'বর্গাকার ছবি, ইংরেজি ও বাংলায় alt টেক্সট',
     'products.images.saveFirst': 'ছবি যোগ করতে আগে পণ্যটি সংরক্ষণ করুন।',
+    'products.images.chooseOrUpload': 'ছবি বেছে নিন বা আপলোড করুন',
+    'products.images.pendingEmpty': 'এখনই ছবি যোগ করুন — পণ্য তৈরি হলেই সেগুলো যুক্ত হয়ে যাবে।',
+    'products.images.pendingNote': 'প্রথম ছবিটি প্রধান ছবি। ভ্যারিয়েন্টের ছবি ও alt টেক্সট পণ্য তৈরির পরে দেওয়া যাবে।',
+    'products.images.pendingList': 'যে ছবিগুলো যোগ হবে',
+    'products.images.pendingSubtitle': 'নতুন পণ্যের জন্য {max}টির মধ্যে {count}টি বাছাই করা হয়েছে',
+    'products.images.primary': 'প্রধান',
+    'products.images.removePending': '{name} সরান',
+    'products.images.attachFailed': '{count}টি ছবি যোগ করা যায়নি। মিডিয়া অংশ থেকে আবার যোগ করুন।',
 
     'products.relation.related': 'সম্পর্কিত পণ্য',
     'products.relation.relatedHint': 'পণ্যের পাতায় দেখানো একই ধরনের খেলনা',
@@ -710,7 +734,6 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.editor.pickerUploadHint': '{folder} ফোল্ডারে রাখা হবে',
     'products.editor.imageNotReady': 'ছবিটি এখনও প্রস্তুত হচ্ছে। একটু পরে আবার চেষ্টা করুন।',
     'products.matrix.simpleHint': 'একটি পণ্য হিসেবে বিক্রি হয়। ভ্যারিয়েন্টে বিক্রি করতে রং বা সাইজের মতো একটি অপশন যোগ করুন — তখন পণ্যটি ভ্যারিয়েন্টসহ হবে।',
-    'products.matrix.simpleFixed': 'এই পণ্যটি ভ্যারিয়েন্ট ছাড়া তৈরি হয়েছে, আর তৈরির পরে পণ্যের ধরন বদলানো যায় না। ভ্যারিয়েন্টে বিক্রি করতে নতুন পণ্য তৈরি করুন।',
     // Barcodes and labels (owner request 2026-11-16)
     'products.barcodes.generate': 'বাকি বারকোড তৈরি করুন',
     'products.barcodes.generateOne': 'বারকোড তৈরি করুন',
@@ -747,4 +770,7 @@ export const productsBn: Record<ProductsMessageKey, string> = {
     'products.bulk.label': 'নির্বাচিত পণ্য',
     'products.bulk.selected': '{count}টি নির্বাচিত',
     'products.bulk.clear': 'নির্বাচন মুছুন',
+    'products.matrix.toVariable': 'সংরক্ষণ করলে এই পণ্যের বর্তমান SKU, বারকোড ও স্টক প্রথম ভ্যারিয়েন্টে যাবে। অন্য ভ্যারিয়েন্টগুলোর স্টক শূন্য থেকে শুরু হবে — সেগুলোর স্টক গ্রহণ বা সমন্বয় করুন।',
+    'products.matrix.toSimple': 'সংরক্ষণ করলে {variant} এই পণ্যের একমাত্র আইটেম হিসেবে থাকবে। অন্য ভ্যারিয়েন্টগুলো আর্কাইভ হবে, মুছে যাবে না — স্টক সমন্বয় না করা পর্যন্ত তাদের স্টক তাদের কাছেই থাকবে।',
+    'products.matrix.toSimpleNoName': 'সংরক্ষণ করলে ডিফল্ট ভ্যারিয়েন্টটি এই পণ্যের একমাত্র আইটেম হিসেবে থাকবে। অন্য ভ্যারিয়েন্টগুলো আর্কাইভ হবে, মুছে যাবে না — স্টক সমন্বয় না করা পর্যন্ত তাদের স্টক তাদের কাছেই থাকবে।',
 };

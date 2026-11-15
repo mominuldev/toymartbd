@@ -1,13 +1,15 @@
 import { accountWrite } from '@/lib/account/server';
 import { readDetailsForm, readPreferencesForm } from '@/lib/account/profile-form';
 import { clearAccountCookies, readAccountRequest, redirect303 } from '@/lib/account/route';
-import type { Account, AccountConsents } from '@/lib/account/types';
+import type { Account, AccountConsents, AccountNotificationPreferences } from '@/lib/account/types';
 
 // POST /api/account/profile — the profile page's two no-JS forms (P4-STO-11, P8 batch 3):
 //   intent=details      name + email (PATCH /storefront/account). The phone is the identity, not editable.
 //   intent=preferences  language (PATCH) and the "Birthday reminders and offers" switch — PUT
 //                       /storefront/account/consents, recorded by the API with source `storefront`; an
-//                       unticked switch withdraws a consent, it never deletes one.
+//                       unticked switch withdraws a consent, it never deletes one. Plus the "Order updates on
+//                       WhatsApp" and "SMS updates" switches — PUT /storefront/account/notification-preferences
+//                       (order_updates only; sign-in codes are not switchable).
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +36,13 @@ export async function POST(request: Request): Promise<Response> {
         if (!consent.ok) {
             if (consent.status === 401) return signedOut();
             return redirect303(req.locale, `${PAGE}#notifications`, { errors: consent.errors, draft: prefs.draft, message: 'failed' });
+        }
+        if (prefs.orderUpdates) {
+            const updates = await accountWrite<AccountNotificationPreferences>('PUT', 'storefront/account/notification-preferences', req.token, req.locale, prefs.orderUpdates);
+            if (!updates.ok) {
+                if (updates.status === 401) return signedOut();
+                return redirect303(req.locale, `${PAGE}#notifications`, { errors: updates.errors, draft: prefs.draft, message: 'failed' });
+            }
         }
         return redirect303(req.locale, `${PAGE}#notifications`, { kind: 'success', message: 'saved' });
     }

@@ -46,6 +46,15 @@ export const integrationsEn = {
     'messaging.whatsapp.explain':
         'Leave this off until a WhatsApp Business account is connected. Without a real WhatsApp connection, “sent” messages only go to the log and the SMS fallback never fires — customers would get nothing. Sign-in codes never go over WhatsApp.',
 
+    'messaging.whatsapp.driver': 'Sending',
+    'messaging.whatsapp.driverLabel': 'WhatsApp order updates are sent by',
+    'messaging.whatsapp.driver.log': 'Off — log only',
+    'messaging.whatsapp.driver.cloud': 'WhatsApp Cloud API',
+    'messaging.whatsapp.driver.logHint': 'Order updates on WhatsApp are only written to the log. Keep this until the WhatsApp number is connected and its templates are approved.',
+    'messaging.whatsapp.driver.cloudHint':
+        'Sends Meta-approved utility templates from the WhatsApp number on the Inbox channels card below (same number, same access token). If Meta refuses a message, it goes by SMS instead. Not verified with a real account yet.',
+    'messaging.whatsapp.driver.envOnly': 'The server environment sets the “{driver}” driver; pick one here to override it.',
+
     'messaging.test.title': 'Send test SMS',
     'messaging.test.description': 'Sends one real SMS with the saved settings. At most 5 a minute.',
     'messaging.test.phone': 'Mobile number',
@@ -107,6 +116,22 @@ export const integrationsEn = {
     'messaging.inbox.messenger.secret.verify_token': 'Verify token',
     'messaging.inbox.messenger.webhookHint':
         'In your Meta app’s Messenger webhook settings, paste this callback URL, enter the same verify token you saved here, and subscribe the Page to messages, message deliveries and message reads. Meta signs every delivery with the app secret; without it, every delivery is refused.',
+    'messaging.inbox.whatsapp.businessAccountId': 'WhatsApp Business Account ID',
+    'messaging.inbox.whatsapp.businessAccountIdHint': 'From WhatsApp Manager → Account tools, or the app’s WhatsApp API setup. Digits only. Used by “Sync from Meta” in Message templates.',
+    'messaging.inbox.messenger.humanAgent': 'Reply for up to 7 days (human agent)',
+    'messaging.inbox.messenger.humanAgentHint':
+        'Meta normally allows a Page to reply within 24 hours of the customer’s last message. With the HUMAN_AGENT tag a person may reply for up to 7 days. Meta may require your app to pass review for this before it works — leave it off until it is approved.',
+    'messaging.inbox.test.button': 'Test connection',
+    'messaging.inbox.test.testing': 'Testing…',
+    'messaging.inbox.test.never': 'Not tested yet.',
+    'messaging.inbox.test.ok': 'Connected as {name} · checked {when}',
+    'messaging.inbox.test.okNumber': 'Connected as {name} ({number}) · quality {quality} · checked {when}',
+    'messaging.inbox.test.failed': 'Failed: {code} · checked {when}',
+    'messaging.inbox.test.notVerifiedNote': 'A passing test does not mark the channel verified — the owner does that once a real message has arrived.',
+    'messaging.inbox.test.saveFirst': 'Save your changes first: the test uses the saved credentials.',
+    'messaging.inbox.test.tooMany': 'Too many tests. Wait a minute and try again.',
+    'messaging.inbox.test.code.not_configured': 'the ID or access token is not saved',
+    'messaging.inbox.test.code.unreachable': 'Meta could not be reached',
 } as const;
 
 export const integrationsBn: Record<keyof typeof integrationsEn, string> = {
@@ -149,6 +174,15 @@ export const integrationsBn: Record<keyof typeof integrationsEn, string> = {
     'messaging.whatsapp.toggle': 'অর্ডারের আপডেট আগে হোয়াটসঅ্যাপে পাঠান',
     'messaging.whatsapp.explain':
         'হোয়াটসঅ্যাপ বিজনেস অ্যাকাউন্ট যুক্ত না হওয়া পর্যন্ত এটি বন্ধ রাখুন। আসল হোয়াটসঅ্যাপ সংযোগ ছাড়া “পাঠানো” মেসেজ শুধু লগে যায় এবং এসএমএস বিকল্প কখনো চালু হয় না — গ্রাহক কিছুই পাবেন না। সাইন-ইন কোড কখনো হোয়াটসঅ্যাপে যায় না।',
+
+    'messaging.whatsapp.driver': 'পাঠানো',
+    'messaging.whatsapp.driverLabel': 'হোয়াটসঅ্যাপে অর্ডারের আপডেট পাঠাবে',
+    'messaging.whatsapp.driver.log': 'বন্ধ — শুধু লগ',
+    'messaging.whatsapp.driver.cloud': 'WhatsApp Cloud API',
+    'messaging.whatsapp.driver.logHint': 'হোয়াটসঅ্যাপের অর্ডার আপডেট শুধু লগে লেখা হয়। হোয়াটসঅ্যাপ নম্বর যুক্ত না হওয়া ও টেমপ্লেট অনুমোদন না পাওয়া পর্যন্ত এটাই রাখুন।',
+    'messaging.whatsapp.driver.cloudHint':
+        'নিচের ইনবক্স চ্যানেল কার্ডের হোয়াটসঅ্যাপ নম্বর থেকে Meta-অনুমোদিত ইউটিলিটি টেমপ্লেট পাঠায় (একই নম্বর, একই অ্যাক্সেস টোকেন)। Meta কোনো মেসেজ ফিরিয়ে দিলে সেটি এসএমএসে যায়। আসল অ্যাকাউন্টে এখনো যাচাই হয়নি।',
+    'messaging.whatsapp.driver.envOnly': 'সার্ভারের এনভায়রনমেন্ট “{driver}” ড্রাইভার ঠিক করেছে; বদলাতে এখানে একটি বেছে নিন।',
 
     'messaging.test.title': 'পরীক্ষামূলক এসএমএস পাঠান',
     'messaging.test.description': 'সংরক্ষিত সেটিংস দিয়ে একটি আসল এসএমএস পাঠায়। মিনিটে সর্বোচ্চ 5টি।',
@@ -211,4 +245,20 @@ export const integrationsBn: Record<keyof typeof integrationsEn, string> = {
     'messaging.inbox.messenger.secret.verify_token': 'ভেরিফাই টোকেন',
     'messaging.inbox.messenger.webhookHint':
         'আপনার Meta অ্যাপের Messenger ওয়েবহুক সেটিংসে এই কলব্যাক URL দিন, এখানে সংরক্ষিত একই ভেরিফাই টোকেন দিন, এবং পেজটিকে messages, message deliveries ও message reads-এ সাবস্ক্রাইব করুন। Meta প্রতিটি ডেলিভারি অ্যাপ সিক্রেট দিয়ে সাইন করে; এটি ছাড়া সব ডেলিভারি প্রত্যাখ্যান হয়।',
+    'messaging.inbox.whatsapp.businessAccountId': 'WhatsApp বিজনেস অ্যাকাউন্ট আইডি',
+    'messaging.inbox.whatsapp.businessAccountIdHint': 'WhatsApp Manager → Account tools অথবা অ্যাপের WhatsApp API সেটআপ থেকে। শুধু সংখ্যা। মেসেজ টেমপ্লেটের “Meta থেকে সিঙ্ক” এটি ব্যবহার করে।',
+    'messaging.inbox.messenger.humanAgent': '7 দিন পর্যন্ত উত্তর (হিউম্যান এজেন্ট)',
+    'messaging.inbox.messenger.humanAgentHint':
+        'Meta সাধারণত গ্রাহকের শেষ মেসেজের 24 ঘণ্টার মধ্যে পেজকে উত্তর দিতে দেয়। HUMAN_AGENT ট্যাগ দিয়ে একজন মানুষ 7 দিন পর্যন্ত উত্তর দিতে পারেন। এটি চালু হওয়ার আগে Meta আপনার অ্যাপের রিভিউ চাইতে পারে — অনুমোদন না পাওয়া পর্যন্ত বন্ধ রাখুন।',
+    'messaging.inbox.test.button': 'সংযোগ পরীক্ষা করুন',
+    'messaging.inbox.test.testing': 'পরীক্ষা হচ্ছে…',
+    'messaging.inbox.test.never': 'এখনো পরীক্ষা করা হয়নি।',
+    'messaging.inbox.test.ok': '{name} হিসেবে সংযুক্ত · পরীক্ষা {when}',
+    'messaging.inbox.test.okNumber': '{name} ({number}) হিসেবে সংযুক্ত · মান {quality} · পরীক্ষা {when}',
+    'messaging.inbox.test.failed': 'ব্যর্থ: {code} · পরীক্ষা {when}',
+    'messaging.inbox.test.notVerifiedNote': 'পরীক্ষা সফল হলেও চ্যানেলটি যাচাইকৃত হয় না — আসল মেসেজ আসার পর মালিক সেটি ঠিক করবেন।',
+    'messaging.inbox.test.saveFirst': 'আগে পরিবর্তন সংরক্ষণ করুন: পরীক্ষা সংরক্ষিত ক্রেডেনশিয়াল ব্যবহার করে।',
+    'messaging.inbox.test.tooMany': 'অনেকবার পরীক্ষা হয়েছে। এক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।',
+    'messaging.inbox.test.code.not_configured': 'আইডি বা অ্যাক্সেস টোকেন সংরক্ষিত নেই',
+    'messaging.inbox.test.code.unreachable': 'Meta-র সাথে যোগাযোগ করা যায়নি',
 };

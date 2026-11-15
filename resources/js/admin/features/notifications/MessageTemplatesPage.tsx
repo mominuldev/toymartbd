@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { CheckIcon, MinusIcon, PlusIcon } from '@phosphor-icons/react';
+import { ArrowsClockwiseIcon, CheckIcon, MinusIcon, PlusIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
 import { can, useMe } from '@/features/auth/api';
-import { buttonClass } from '@/components/ui/Button';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -20,6 +20,7 @@ import {
     libraryGroups,
     useLibrary,
     useSetTemplatesActive,
+    useSyncWhatsAppTemplates,
     type Channel,
     type LibraryFilters,
     type LibraryGroup,
@@ -99,10 +100,13 @@ export function MessageTemplatesPage() {
                 subtitle={t('notif.lib.subtitle')}
                 actions={
                     can(me, 'settings.update') ? (
-                        <Link to="/automations/templates/new" className={`${buttonClass('primary', 'md')} h-9`}>
-                            <PlusIcon size={16} aria-hidden />
-                            {t('notif.lib.new')}
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <SyncFromMetaButton />
+                            <Link to="/automations/templates/new" className={`${buttonClass('primary', 'md')} h-9`}>
+                                <PlusIcon size={16} aria-hidden />
+                                {t('notif.lib.new')}
+                            </Link>
+                        </div>
                     ) : undefined
                 }
             />
@@ -194,6 +198,42 @@ export function MessageTemplatesPage() {
                 ))
             )}
         </section>
+    );
+}
+
+/**
+ * "Sync from Meta": the server reads the WhatsApp Business Account's templates and records each
+ * WhatsApp template's approval status (matched on its Meta name and language). Needs the
+ * Business Account ID and access token on Integrations → Messaging → Inbox channels.
+ */
+function SyncFromMetaButton() {
+    const { t } = useI18n();
+    const { notify } = useToast();
+    const sync = useSyncWhatsAppTemplates();
+
+    return (
+        <Button
+            variant="outline"
+            disabled={sync.isPending}
+            aria-busy={sync.isPending || undefined}
+            onClick={() =>
+                sync.mutate(undefined, {
+                    onSuccess: (r) => notify(t('notif.lib.sync.done', { matched: r.matched, updated: r.updated, missing: r.missing, unknown: r.unknown })),
+                    onError: (error) =>
+                        notify(
+                            error instanceof ApiError
+                                ? error.status === 429
+                                    ? t('notif.lib.sync.tooMany')
+                                    : (error.problem.detail ?? error.problem.title)
+                                : t('error.title'),
+                            'danger',
+                        ),
+                })
+            }
+        >
+            <ArrowsClockwiseIcon size={16} aria-hidden />
+            {sync.isPending ? t('notif.lib.sync.running') : t('notif.lib.sync')}
+        </Button>
     );
 }
 

@@ -9,10 +9,12 @@ No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" a
 | Method & path | Permission | Notes |
 |---|---|---|
 | `GET /inbox/conversations` | inbox.view | Cursor (`cursor`). Filters, allowlisted (anything else → 400): `filter[view]` all\|mine\|needs_human, `filter[channel]` whatsapp\|messenger\|live_chat, `filter[status]` open\|resolved, `filter[search]` name / 4+ phone digits / order-number prefix. `meta.counts` = tab counts under every filter except `view`. |
-| `GET /inbox/conversations/{id}` | inbox.view | Header + customer panel: `orders_count`, `delivered_orders_count`, `lifetime_value` (ledger), `risk` = OUR score with `source: "ours"` (rule 24; null without risk.view), `last_order`. `customer` null without customers.view. |
+| `GET /inbox/conversations/{id}` | inbox.view | Header + customer panel (and every list row) carries `reply: {state, window_closes_at}` — see *Reply state* below. Header + customer panel: `orders_count`, `delivered_orders_count`, `lifetime_value` (ledger), `risk` = OUR score with `source: "ours"` (rule 24; null without risk.view), `last_order`. `customer` null without customers.view. |
 | `GET /inbox/conversations/{id}/messages` | inbox.view | Newest first, 50 a page, `cursor` for older. |
 | `POST /inbox/conversations/{id}/read` | inbox.view | Clears `unread_count`. |
-| `POST /inbox/conversations/{id}/messages` | inbox.reply | `{body}` ≤ 4096. 202, `delivery_status: queued`; sent by a queued job after commit. **409 `conflict`** outside the 24-hour window — nothing queued. |
+| `POST /inbox/conversations/{id}/messages` | inbox.reply | `{body}` ≤ 4096. 202, `delivery_status: queued`; sent by a queued job after commit. Allowed in reply state `open` or `human_agent` (Messenger, sent with `tag: HUMAN_AGENT`; the message carries `tag: "HUMAN_AGENT"`). **409 `conflict`** in `template_only` / `closed` — nothing queued. |
+| `GET /inbox/conversations/{id}/templates` | inbox.reply | Approved utility WhatsApp templates in the conversation's language (customer's `preferred_language`, Bangla when unknown; `meta.locale`). Each: `key` (library key), `template` (Meta name), `language` (`en`\|`bn_BD`), `locale`, `name` (a staff-made template's name, else null — the admin labels system ones by event), `body` (approved copy with `{{1}}`, `{{2}}`… and the hotline/store URL filled in), `parameters[]` `{position, name, example}`. Empty on Messenger / live chat. Any query parameter → 400. |
+| `POST /inbox/conversations/{id}/template` | inbox.reply | `{template, language: en\|bn_BD, parameters: string[]}` — exactly as many values as the template has; each non-empty, ≤ 1024, no newline/tab, no 5+ spaces in a row. Only in reply state `template_only` (WhatsApp, window closed) → else **409**. A template that is not approved / not utility / unknown, or the wrong number of values → **422**. 202 with the message: `kind: template`, `body` = our rendering of the approved copy with the values, `template: {name, language}`, `delivery_status: queued`. No Idempotency-Key (replies take none either). |
 | `POST /inbox/conversations/{id}/notes` | inbox.reply | `{body}` ≤ 2000. 201. Never sent, allowed outside the window. |
 | `POST /inbox/conversations/{id}/quick-replies` | inbox.reply | `{kind: product_card\|tracking_link, target_id}`. Server composes the text in the customer's language (bn by default). Product card: name + storefront link, **no price** (variant/promotion pricing lives elsewhere). Tracking link: only an order of the linked customer (409 otherwise), same short link as order notifications. Same window rule. |
 | `POST /inbox/conversations/{id}/assign` | inbox.reply | `{user_id}` (active staff with inbox.reply) or `{user_id: null}`. System line. |
@@ -21,6 +23,22 @@ No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" a
 | `GET /inbox/unread-count` | inbox.view | The sidebar Inbox badge (owner decision 2026-11-15): `{count}` = **open** conversations with unread inbound messages (`unread_count > 0`) **or** waiting on a staff reply (`needs_human`), each counted once. Resolved conversations never count; a new inbound message reopens one and brings it back. Same number for every staff member (not per assignee). One COUNT, uncached. The admin polls it every 60 s and on window focus, and every inbox action refreshes it (its query key sits under the inbox list key). `App\Domain\Inbox\Queries\ConversationsNeedingAttention`. |
 
 Phones are masked (`017****5678`) unless the viewer holds `customers.view_pii` (rule 20).
+
+## Reply state (restarting a closed conversation)
+
+`App\Domain\Inbox\Services\ReplyWindow` decides, for the resource, the Actions (before queueing and again under the row lock) and the send job (once more before calling Meta):
+
+| `reply.state` | When | What may be sent | `window_closes_at` |
+|---|---|---|---|
+| `open` | Live chat always; WhatsApp / Messenger within 24 h of the customer's last message | A normal reply | End of the 24-hour window (null on live chat) |
+| `human_agent` | Messenger, 24 h – 7 days after the customer's last message, **and** the switch `inbox.messenger.human_agent` is on | A normal reply, sent with `messaging_type: MESSAGE_TAG, tag: HUMAN_AGENT` | 7 days after the customer's last message |
+| `template_only` | WhatsApp after the 24-hour window (or a thread the customer never wrote in) | Only an approved template (`POST …/template`) | When the 24-hour window ended (null if it never opened) |
+| `closed` | Messenger past 24 h with the switch off, or past 7 days | Nothing (notes still allowed) | When the 24-hour window ended |
+
+* **Switch:** `settings` key `inbox.messenger.human_agent` (group notification, set at Admin → Integrations → Messaging) falling back to `config('inbox.messenger.human_agent')` (env `MESSENGER_HUMAN_AGENT`), default false. Not cached: switching it off fails the next queued tagged reply (`outside_window`) without calling Meta.
+* **Templates offered** come from the Notification domain's library through `App\Domain\Notification\Contracts\WhatsAppTemplateLibrary` (deptrac: Inbox → NotificationContracts only): WhatsApp channel, `whatsapp_status = approved`, active, not archived, a `provider_template` set, and category `order_updates` (utility). **Never** `security` (OTP — rule 32b) and **never** `marketing` (the library has no setting allowing marketing in the inbox). Positional parameters: a system template's `whatsapp_parameters` from `TemplateCatalog`; a custom template's body variables in order of appearance.
+* **The send job** re-reads the template from the library: withdrawn approval → `failed`, `failure_code: template_unavailable`; a template in a thread whose window reopened, or on another channel → `template_not_allowed`. Nothing is sent to Meta in either case. Delivery statuses (`sent`/`delivered`/`read`/`failed`) apply to a template exactly as to a reply (matched on the wamid).
+* WhatsApp payload: `POST /{version}/{phone-number-id}/messages` `{messaging_product: whatsapp, recipient_type: individual, to, type: template, template: {name, language: {code}, components: [{type: body, parameters: [{type: text, text}]}]}}` — no `components` for a template without parameters.
 
 ## Webhooks (`/api/v1/webhooks/inbox/{whatsapp|messenger}`)
 
@@ -35,12 +53,18 @@ Verified against developers.facebook.com:
 * WhatsApp send `POST /{version}/{phone-number-id}/messages`, Bearer token, `messages[0].id` = accepted only (`…/whatsapp/messages/text-messages`, `docs/whatsapp/cloud-api/guides/send-messages`); text ≤ 4096; version in examples v27.0.
 * 24-hour customer-service window; outside it templates only; error 131047 = "More than 24 hours have passed…" (`docs/whatsapp/cloud-api/support/error-codes`, `docs/whatsapp/pricing`).
 * Messenger `object: page`, `entry[].messaging[]`, delivery `mids`/`watermark`, read `watermark`; Send API `POST /{page-id}/messages` with `messaging_type: RESPONSE`; 24-hour standard window; HUMAN_AGENT tag = 7 days (`docs/messenger-platform/send-messages`, `…/policy/policy-overview`).
+* WhatsApp template send: `type: template` with `template.name`, `template.language.code`, and body `components[].parameters[]` of `{type: text, text}` in positional order (`docs/whatsapp/cloud-api/guides/send-message-templates`); a template may be sent outside the 24-hour window, a free-form message may not.
+* Messenger outside 24 h: `messaging_type: MESSAGE_TAG` with `tag: HUMAN_AGENT`, allowed up to 7 days after the user's last message, for a human agent's reply only (`docs/messenger-platform/send-messages/message-tags`).
 
 Assumed (could not be confirmed):
 * Messenger timestamps/watermarks are milliseconds (13-digit examples; unit not stated).
 * The Page access token is accepted as a Bearer header (Meta's examples use `?access_token=`; we avoid putting it in a URL).
 * Messenger text length limit — not found in the docs; we cap at 4096 like WhatsApp.
-* Whether HUMAN_AGENT needs approval — not found; the tag is not used, Messenger replies stop at 24 h.
+* **Whether the HUMAN_AGENT tag requires Meta app review (or a specific permission) is NOT confirmed** — not found in the docs read. That is why it sits behind the `inbox.messenger.human_agent` switch, off by default; turn it on only after the Meta app is cleared to use it.
+* Meta's limits on template body parameters (no newline/tab, at most 4 consecutive spaces) are from memory of Meta's error 132018 text, not re-read; we enforce them in the FormRequest. Per-parameter length: not found — we cap at 1024 (Meta's template body limit).
+* A WhatsApp template can be sent to a BSUID-only thread (no phone) the same way as a reply (`to` = the thread id) — not confirmed.
+* Language codes `en` and `bn_BD` are the codes the order notifications send with; they must match the languages the templates were approved in on the WhatsApp Business Account.
+* "Approved" is what staff recorded in Message templates (or a sync from Meta); the inbox never asks Meta at send time. A template paused or disabled at Meta but still marked approved here fails at Meta (`provider_error:{code}`).
 * Raw request bytes equal the signed bytes (Meta signs the escaped-unicode payload it sends).
 * A WhatsApp call opening the window is not modelled — only inbound messages extend it.
 
@@ -52,8 +76,8 @@ Entered at **Admin → Integrations → Messaging → Inbox channels** (`resourc
 
 | Method & path | Permission | Notes |
 |---|---|---|
-| `GET /settings/inbox-channels` | settings.manage_integrations | `{whatsapp, messenger}`, each: `driver` (`log`\|`cloud`\|`messenger`) + `driver_source`, `account_id` (phone_number_id / page_id) + `account_id_source`, `send_token` / `app_secret` / `verify_token` as `{set, hint, source}` — the value is **never** returned, `hint` is `••••` + last 4 characters (only for 12+ characters, otherwise `••••`), `source` `settings`\|`env`\|null; `webhook_url` (absolute, from `APP_URL`: `/api/v1/webhooks/inbox/{channel}`); `webhook_ready`, `send_ready`, `verified` straight from `InboxChannels::summary()` (so the Integrations hub agrees). `verified` is always false. |
-| `PUT /settings/inbox-channels` | settings.manage_integrations | Flat body: `whatsapp_driver` (`log`\|`cloud`), `whatsapp_phone_number_id` (digits), `whatsapp_access_token`, `whatsapp_app_secret`, `whatsapp_verify_token`, `clear_whatsapp_*`; `messenger_driver` (`log`\|`messenger`), `messenger_page_id` (digits), `messenger_page_access_token`, `messenger_app_secret`, `messenger_verify_token`, `clear_messenger_*`. A blank/absent secret **keeps** the saved one; `clear_*` removes it (env applies again); a value and its clear together → 422. A blank id removes the saved id. Choosing `cloud` / `messenger` needs the id and the send token to exist after the save (saved, typed or env) → otherwise 422 on that field. Returns the GET shape. |
+| `GET /settings/inbox-channels` | settings.manage_integrations | `{whatsapp, messenger}`, each: `driver` (`log`\|`cloud`\|`messenger`) + `driver_source`, `account_id` (phone_number_id / page_id) + `account_id_source`, `send_token` / `app_secret` / `verify_token` as `{set, hint, source}` — the value is **never** returned, `hint` is `••••` + last 4 characters (only for 12+ characters, otherwise `••••`), `source` `settings`\|`env`\|null; `webhook_url` (absolute, from `APP_URL`: `/api/v1/webhooks/inbox/{channel}`); `webhook_ready`, `send_ready`, `verified` straight from `InboxChannels::summary()` (so the Integrations hub agrees). `verified` is always false. Also `business_account_id` + `business_account_id_source` (WhatsApp; null on Messenger), `human_agent` + `human_agent_source` (Messenger; false on WhatsApp), and `last_check` (the last *Test connection*, or null — see below). |
+| `PUT /settings/inbox-channels` | settings.manage_integrations | Flat body: `whatsapp_driver` (`log`\|`cloud`), `whatsapp_phone_number_id` (digits), `whatsapp_access_token`, `whatsapp_app_secret`, `whatsapp_verify_token`, `clear_whatsapp_*`; `messenger_driver` (`log`\|`messenger`), `messenger_page_id` (digits), `messenger_page_access_token`, `messenger_app_secret`, `messenger_verify_token`, `clear_messenger_*`. A blank/absent secret **keeps** the saved one; `clear_*` removes it (env applies again); a value and its clear together → 422. A blank id removes the saved id. Optional: `whatsapp_business_account_id` (digits; absent = keep, blank = remove) and `messenger_human_agent` (boolean; absent = keep) — both audited like the id. Choosing `cloud` / `messenger` needs the id and the send token to exist after the save (saved, typed or env) → otherwise 422 on that field. Returns the GET shape. |
 
 Every change writes one `audit_sensitive` row per channel that changed: `credential_changed`, `before`/`after` with `scope: inbox_whatsapp|inbox_messenger`, driver and id before/after, and for a secret only `"changed"` / `"cleared"` — never a value or a hint. Nothing in this path logs. Saving never marks a channel verified (the drivers' `isVerified()` is false).
 
@@ -64,3 +88,60 @@ What the owner copies from Meta (once a Meta app, a WhatsApp Business account an
 * Switch **Replies** to the Meta driver only once both ids and tokens are saved; until then replies are logged, not sent, while incoming messages still arrive as soon as the webhook is verified.
 
 The Meta-console menu names above are from Meta's docs, not from a live account — check them against the real dashboard on first connection.
+
+## Meta integrations: notification driver, delivery statuses, test connection, template sync (2026-11-16)
+
+Still **UNVERIFIED** — no Meta app, WhatsApp Business Account or Page exists. Everything below is built from Meta's docs and tested with `Http::fake` (`tests/Feature/Notification/WhatsAppCloudNotificationsTest.php`, `WhatsAppTemplateSyncTest.php`, `tests/Feature/InboxSettings/InboxChannelConnectionTestTest.php`). A passing test or sync never flips `verified`.
+
+### One WhatsApp number
+
+The order notifications' `cloud` WhatsApp driver (`App\Domain\Notification\Drivers\CloudWhatsAppGateway`) and the template sync use the **Inbox's** WhatsApp credentials (`inbox.whatsapp.phone_number_id`, `access_token`, `business_account_id`). Notification may not read Inbox internals (deptrac), so it asks `App\Domain\Notification\Contracts\WhatsAppCloudAccount` (NotificationContracts layer); the Inbox implements it (`App\Domain\Inbox\Services\InboxWhatsAppCloudAccount`) and `NotificationServiceProvider` binds it. The secret is stored once.
+
+* Driver choice: `messaging.whatsapp_driver` in `settings` (Admin → Integrations → Messaging → WhatsApp, `PUT /settings/messaging` `whatsapp_driver: log|cloud`; absent = keep), falling back to `notifications.whatsapp.driver` (`WHATSAPP_DRIVER`: `log`\|`null`\|`cloud`). Default `log`. Choosing `cloud` → 422 unless the Inbox phone number id and access token exist. The WhatsApp-first switch (`whatsapp_enabled`) stays separate and off by default.
+* Send: `POST /{version}/{phone-number-id}/messages`, Bearer token, `{messaging_product: whatsapp, recipient_type: individual, to: <E.164 without +>, type: template, template: {name: provider_template, language: {code}, components: [{type: body, parameters: [{type: text, text}]}]}}` (no `components` without parameters). `messages[0].id` is stored as `notification_logs.provider_message_id`. A 4xx is a rejected `WhatsAppResult` (`provider_error:{code} {title}`) → the job marks the log `failed` and queues the SMS fallback once; a connection error, 429 or 5xx throws and the job retries. Only a masked number is ever logged; the token and URL never are.
+
+### Delivery statuses for notifications
+
+WhatsApp `statuses` for template sends arrive at the Inbox webhook (same number). `ApplyDeliveryStatus` (Inbox) applies a status to a conversation message as before; when the wamid is **not** an inbox message it dispatches `App\Domain\Inbox\Events\WhatsAppMessageStatusReceived` (provider message id, `sent|delivered|read|failed`, timestamp, error code/title; `ShouldDispatchAfterCommit`). Notification's listener (`ApplyWhatsAppDeliveryStatus` → `RecordWhatsAppDeliveryStatus`) updates the `notification_logs` row with that id, under a row lock:
+
+* New columns (migration `2026_12_07_730000`): `delivery_status` (`sent`\|`delivered`\|`read`\|`failed`), `delivered_at`, `read_at`, `delivery_error`; index `(channel, provider_message_id)`. `status` (our send attempt, what spend counts) is unchanged.
+* Forward only: sent → delivered → read, or failed before delivery. `read` never becomes `delivered`; a late `failed` after delivery is ignored; replays change nothing.
+* `failed` (e.g. 131026 undeliverable, 131049 ecosystem limit) queues the same message over SMS once (`QueueSmsFallback`, which refuses a second fallback).
+
+### Test connection
+
+| Method & path | Permission | Notes |
+|---|---|---|
+| `POST /settings/inbox-channels/{whatsapp\|messenger}/test` | settings.manage_integrations | No body; `throttle:5,1`. One read-only Graph call with the **saved** credentials, outside any transaction: WhatsApp `GET /{phone-number-id}?fields=display_phone_number,verified_name,quality_rating`; Messenger `GET /{page-id}?fields=name`. Always 200 with `{channel, ok, checked_at, display_name, display_number, quality_rating, error_code, error_message}`. `error_code`: `not_configured` (no call made), `unreachable`, `meta_{graph code}` (e.g. `meta_190` token expired/invalid), `http_{status}`. `error_message` = Meta's `error_user_msg`/`message` with the token scrubbed, ≤ 300 chars. Stored as `inbox.{channel}.last_check` (plain JSON) and shown as `last_check` on `GET /settings/inbox-channels`. Audited: `credential_changed`, scope `inbox_connection_test`, `{channel, result: ok\|failed, error_code}` (activity log kind `connection_tested`). **Never** marks the channel verified. |
+
+### WhatsApp template sync
+
+| Method & path | Permission | Notes |
+|---|---|---|
+| `POST /notifications/templates/whatsapp/sync` | settings.update (the `NotificationTemplatePolicy::update` that gates `PUT …/whatsapp-status`) | No body; `throttle:5,1`. Reads `GET /{waba-id}/message_templates?fields=name,language,status,category&limit=100` with the Inbox access token, following `paging.next` (only to the configured Graph host) or the `after` cursor, ≤ 20 pages — all before any write. Each local WhatsApp template with a `provider_template` is matched on Meta `name` per language (`en`; Bengali as `bn` or `bn_BD`); the combined status is the **less sendable** of the two languages, a language missing on Meta reads as `draft`, an unrecognised Meta status leaves the template alone. Changes go through `SetWhatsAppApprovalStatus` (same `updated_by` trail as a manual change). 200: `{matched, updated, unknown, missing, unknown_names[≤50], missing_keys[≤50]}`. **409** when the Business Account id / token is not set, or Meta refused them (detail names `meta_{code}`); **503** when Meta is unreachable. Nothing changes on an error. |
+
+Meta status → ours (`WhatsAppApprovalStatus`, which gains `rejected`, `paused`, `disabled`): `APPROVED` → approved; `PENDING`, `IN_APPEAL` → submitted; `REJECTED` → rejected; `PAUSED` → paused; `DISABLED`, `PENDING_DELETION`, `DELETED`, `ARCHIVED`, `LIMIT_EXCEEDED` → disabled. Only `approved` is sendable.
+
+### Messenger HUMAN_AGENT switch
+
+`inbox.messenger.human_agent` (boolean, plain `settings` row) falling back to `config('inbox.messenger.human_agent')` (env `MESSENGER_HUMAN_AGENT`, default false), read with `InboxChannelSettings::enabled()`. Edited as `messenger_human_agent` on `PUT /settings/inbox-channels`; the Messenger card explains Meta may require app review before the tag works. See *Reply state* above for what it changes.
+
+### Verified vs assumed (Meta docs read 2026-11-16)
+
+Verified:
+* Template send shape (`type: template`, `template.name`, `language.code`, body `components[].parameters[]` `{type: text, text}`) — `developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview`; response `messages[0].id`, accepted ≠ delivered — `…/whatsapp/messages/send-messages`.
+* `GET /{waba-id}/message_templates`: System User token with `whatsapp_business_management`; response objects carry `name`, `language`, `status`, `category`, `id`; status enum APPROVED, IN_APPEAL, PENDING, REJECTED, PENDING_DELETION, DELETED, DISABLED, PAUSED, LIMIT_EXCEEDED, ARCHIVED; errors 190, 100, 200, 80008 — `docs/graph-api/reference/whats-app-business-account/message_templates/`.
+* Phone number fields `display_phone_number`, `verified_name`, `quality_rating` (GREEN/YELLOW/RED/NA) — `…/whatsapp/reference/whatsapp-business-phone-number/whatsapp-business-account-phone-number-api`, `docs/whatsapp/business-management-api/manage-phone-numbers`.
+* Page `name` field — `docs/graph-api/reference/page/`.
+* Graph error shape `{error: {message, type, code, error_subcode, error_user_title, error_user_msg, fbtrace_id}}`; 190 = token expired/invalid — `docs/graph-api/guides/error-handling/`.
+* `statuses[]` items: `id`, `status` (sent/delivered/read/failed, `played` for voice), `timestamp` (string seconds), `recipient_id`, `errors[]{code, title, message}` on failure — `…/whatsapp/webhooks/reference/messages/status`.
+* **Bengali's template language code is `bn`** (and `bn_IN`); **`bn_BD` is not in Meta's supported-languages list** — `docs/whatsapp/business-management-api/message-templates/supported-languages`.
+
+Assumed / not confirmed:
+* **Order notifications and inbox templates still send Bangla as `bn_BD`** (existing code); per the list above this is likely wrong and should become `bn` before go-live — owner/lead decision, not changed here. The sync accepts both.
+* `fields` and `limit` query parameters on `message_templates`, and `paging.next` (the reference shows only `paging.cursors`) — standard Graph behaviour, not stated on the reference page.
+* LIMIT_EXCEEDED's meaning (treated as not sendable).
+* The phone-number read with a System User token in a Bearer header; the Page read with a Page token in a Bearer header (Meta's examples put `access_token` in the query).
+* Meta does not charge a failed template (cost stays as recorded at acceptance; pricing not re-read).
+* Whether HUMAN_AGENT needs app review — the message-tags page did not load as text; copy says it *may*.
+

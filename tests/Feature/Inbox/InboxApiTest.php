@@ -258,11 +258,11 @@ describe('replies', function (): void {
             ->push(['error' => ['code' => 2, 'message' => 'Service temporarily unavailable']], 503)]);
 
         $first = $queued();
-        (new SendInboxMessage($first->id))->handle(app(App\Domain\Inbox\Services\InboxChannels::class));
+        app()->call([new SendInboxMessage($first->id), 'handle']);
         expect($first->refresh()->delivery_status)->toBe(DeliveryStatus::Failed)->and($first->failure_code)->toBe('outside_window');
 
         $second = $queued();
-        expect(fn () => (new SendInboxMessage($second->id))->handle(app(App\Domain\Inbox\Services\InboxChannels::class)))->toThrow(RuntimeException::class);
+        expect(fn () => app()->call([new SendInboxMessage($second->id), 'handle']))->toThrow(RuntimeException::class);
         expect($second->refresh()->delivery_status)->toBe(DeliveryStatus::Queued);
     });
 

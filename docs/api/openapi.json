@@ -15243,6 +15243,66 @@
                 }
             }
         },
+        "/admin/notifications/templates/whatsapp/sync": {
+            "post": {
+                "operationId": "v1.admin.notifications.templates.whatsapp-sync",
+                "summary": "`POST /notifications/templates/whatsapp/sync` \u2014 \"Sync from Meta\": reads the WhatsApp\nBusiness Account's templates (`GET /{waba-id}/message_templates`) and records each local\nWhatsApp template's status (matched on provider name + language) through the same Action as\na manual change. Needs settings.update. 409 when the Business Account id or access token is\nnot set, or Meta refused them (the detail names the Graph error code, e.g. `meta_190`); 503\nwhen Meta cannot be reached. Nothing changes on either. Rate-limited",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`WhatsAppTemplateSync`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WhatsAppTemplateSync"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Business Account id / access token not set, or refused by Meta (`conflict`, detail names the code)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Meta unreachable (`service-unavailable`); nothing changed",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many syncs (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/notifications/logs": {
             "get": {
                 "operationId": "v1.admin.notifications.logs.index",
@@ -24039,6 +24099,155 @@
                 }
             }
         },
+        "/admin/inbox/conversations/{conversation}/templates": {
+            "get": {
+                "operationId": "v1.admin.inbox.templates.index",
+                "summary": "`GET /inbox/conversations/{conversation}/templates` \u2014 the approved utility WhatsApp\ntemplates in the conversation's language (the customer's preferred language, Bangla when\nunknown), with their positional parameters and the body to preview. Empty for a\nMessenger or live-chat conversation. Never an OTP/authentication or marketing template",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `InboxTemplate`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/InboxTemplate"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "locale": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "en",
+                                                        "bn"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "locale"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Any query parameter (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/template": {
+            "post": {
+                "operationId": "v1.admin.inbox.templates.send",
+                "summary": "`POST /inbox/conversations/{conversation}/template` \u2014 send an approved template; 202, sent by a queued job",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInboxTemplateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`InboxMessage`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxMessage"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Not a WhatsApp conversation, or its 24-hour window is open (`conflict`) \u2014 nothing was queued",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/settings/delivery-areas": {
             "get": {
                 "operationId": "v1.admin.settings.delivery-areas.show",
@@ -24911,6 +25120,56 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/inbox-channels/{channel}/test": {
+            "post": {
+                "operationId": "v1.admin.settings.inbox-channels.test",
+                "summary": "`POST /settings/inbox-channels/{channel}/test` \u2014 one read-only Graph API call with the saved\ncredentials (WhatsApp: the phone number's display number, verified name, quality rating;\nMessenger: the Page name). Stored as the channel's `last_check` and audited. A failed check\nis a 200 with `ok: false`. Never marks the channel verified. Rate-limited",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "channel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxChannelTestResult`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxChannelTestResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "429": {
+                        "description": "Too many tests (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -33384,6 +33643,95 @@
                 }
             }
         },
+        "/storefront/account/notification-preferences": {
+            "get": {
+                "operationId": "v1.storefront.account.notification-preferences.show",
+                "summary": "`GET /account/notification-preferences` \u2014 no stored choice reads as the default (on)",
+                "tags": [
+                    "Storefront"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountNotificationPreferences`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountNotificationPreferences"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid customer token (`unauthenticated`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.storefront.account.notification-preferences.update",
+                "summary": "`PUT /account/notification-preferences` \u2014 turn order updates on or off per channel; `security` is refused",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAccountNotificationPreferencesRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountNotificationPreferences`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountNotificationPreferences"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid customer token (`unauthenticated`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "A field is invalid, or a security message was to be turned off (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/storefront/account/children": {
             "get": {
                 "operationId": "v1.storefront.account.children.index",
@@ -36045,6 +36393,7 @@
                             "two_factor_changed",
                             "messaging_settings",
                             "tracking_settings",
+                            "connection_tested",
                             "courier_credentials",
                             "credentials_changed"
                         ]
@@ -37820,6 +38169,13 @@
                         ],
                         "description": "E.164, e.g. `+8801711000222`."
                     },
+                    "messenger": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Facebook Page username or numeric id behind `https://m.me/{messenger}`."
+                    },
                     "default_names": {
                         "type": "object",
                         "description": "What invoices print while a name is unset (the brand name).",
@@ -37858,6 +38214,7 @@
                     "bin",
                     "hotline",
                     "whatsapp",
+                    "messenger",
                     "default_names",
                     "hotline_default",
                     "placeholders"
@@ -46160,6 +46517,35 @@
                             null
                         ]
                     },
+                    "business_account_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp only: the WhatsApp Business Account id (\"Sync from Meta\"). Null for Messenger."
+                    },
+                    "business_account_id_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "human_agent": {
+                        "type": "boolean",
+                        "description": "Messenger only: reply with the HUMAN_AGENT tag for up to 7 days. Always false for WhatsApp."
+                    },
+                    "human_agent_source": {
+                        "type": "string",
+                        "enum": [
+                            "settings",
+                            "env"
+                        ]
+                    },
                     "send_token": {
                         "type": "object",
                         "description": "WhatsApp access token / Messenger Page access token. Hint \"\u2022\u2022\u2022\u20221234\" at most.",
@@ -46268,6 +46654,60 @@
                     "verified": {
                         "type": "boolean",
                         "description": "Always false until a real account has been connected and watched."
+                    },
+                    "last_check": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The last \"Test connection\" (POST /settings/inbox-channels/{channel}/test), or null.\nA passing test never marks the channel verified.",
+                        "properties": {
+                            "ok": {
+                                "type": "boolean"
+                            },
+                            "checked_at": {
+                                "type": "string"
+                            },
+                            "display_name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "display_number": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "quality_rating": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "error_code": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "error_message": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "ok",
+                            "checked_at",
+                            "display_name",
+                            "display_number",
+                            "quality_rating",
+                            "error_code",
+                            "error_message"
+                        ]
                     }
                 },
                 "required": [
@@ -46276,13 +46716,18 @@
                     "driver_source",
                     "account_id",
                     "account_id_source",
+                    "business_account_id",
+                    "business_account_id_source",
+                    "human_agent",
+                    "human_agent_source",
                     "send_token",
                     "app_secret",
                     "verify_token",
                     "webhook_url",
                     "webhook_ready",
                     "send_ready",
-                    "verified"
+                    "verified",
+                    "last_check"
                 ],
                 "title": "InboxChannelCredentials"
             },
@@ -46301,6 +46746,72 @@
                     "messenger"
                 ],
                 "title": "InboxChannelSettings"
+            },
+            "InboxChannelTestResult": {
+                "type": "object",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "whatsapp",
+                            "messenger"
+                        ]
+                    },
+                    "ok": {
+                        "type": "boolean",
+                        "description": "Meta answered the read with these credentials."
+                    },
+                    "checked_at": {
+                        "type": "string",
+                        "description": "ISO 8601."
+                    },
+                    "display_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp: the verified business name. Messenger: the Page name."
+                    },
+                    "display_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp only: the number as Meta displays it."
+                    },
+                    "quality_rating": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp only: GREEN | YELLOW | RED | NA (Meta's value, passed through)."
+                    },
+                    "error_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`not_configured`, `unreachable`, `meta_{graph error code}` (e.g. meta_190 = token invalid or expired) or `http_{status}`."
+                    },
+                    "error_message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Meta's own error text, token scrubbed, \u2264 300 characters."
+                    }
+                },
+                "required": [
+                    "channel",
+                    "ok",
+                    "checked_at",
+                    "display_name",
+                    "display_number",
+                    "quality_rating",
+                    "error_code",
+                    "error_message"
+                ],
+                "title": "InboxChannelTestResult"
             },
             "InboxConversation": {
                 "type": "object",
@@ -46426,6 +46937,30 @@
                             "open",
                             "expires_at"
                         ]
+                    },
+                    "reply": {
+                        "type": "object",
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "open",
+                                    "human_agent",
+                                    "template_only",
+                                    "closed"
+                                ]
+                            },
+                            "window_closes_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "state",
+                            "window_closes_at"
+                        ]
                     }
                 },
                 "required": [
@@ -46440,7 +46975,8 @@
                     "last_message_at",
                     "last_message_preview",
                     "last_message_direction",
-                    "window"
+                    "window",
+                    "reply"
                 ],
                 "title": "InboxConversation"
             },
@@ -46567,6 +47103,30 @@
                             "applies",
                             "open",
                             "expires_at"
+                        ]
+                    },
+                    "reply": {
+                        "type": "object",
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "open",
+                                    "human_agent",
+                                    "template_only",
+                                    "closed"
+                                ]
+                            },
+                            "window_closes_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "state",
+                            "window_closes_at"
                         ]
                     },
                     "customer": {
@@ -46698,6 +47258,7 @@
                     "last_message_preview",
                     "last_message_direction",
                     "window",
+                    "reply",
                     "customer"
                 ],
                 "title": "InboxConversationDetail"
@@ -46719,6 +47280,7 @@
                         "type": "string",
                         "enum": [
                             "text",
+                            "template",
                             "note",
                             "system"
                         ]
@@ -46762,6 +47324,36 @@
                             "null"
                         ]
                     },
+                    "template": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Meta's template name and language code (kind `template`).",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "language": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "language"
+                        ]
+                    },
+                    "tag": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Messenger message tag the reply went (or goes) with.",
+                        "enum": [
+                            "HUMAN_AGENT",
+                            null
+                        ]
+                    },
                     "sender": {
                         "type": [
                             "object",
@@ -46799,7 +47391,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "`outside_window`, `not_configured`, `transport`, `provider_error:{code}`"
+                        "description": "`outside_window`, `not_configured`, `transport`, `template_unavailable`, `template_not_allowed`, `provider_error:{code}`"
                     },
                     "failure_reason": {
                         "type": [
@@ -46830,6 +47422,8 @@
                     "assignee_name",
                     "actor",
                     "unsupported_type",
+                    "template",
+                    "tag",
                     "sender",
                     "delivery_status",
                     "failure_code",
@@ -46838,6 +47432,76 @@
                     "read_at"
                 ],
                 "title": "InboxMessage"
+            },
+            "InboxTemplate": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "The library key (`order.confirmed`, `custom.*`): the admin labels a system template by it."
+                    },
+                    "template": {
+                        "type": "string",
+                        "description": "Meta's template name."
+                    },
+                    "language": {
+                        "type": "string",
+                        "enum": [
+                            "en",
+                            "bn_BD"
+                        ]
+                    },
+                    "locale": {
+                        "type": "string",
+                        "enum": [
+                            "en",
+                            "bn"
+                        ]
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A staff-made template's own name; null for a system template."
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "array",
+                        "description": "{{1}} first. `name` is the library variable.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "position": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "example": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "position",
+                                "name",
+                                "example"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "key",
+                    "template",
+                    "language",
+                    "locale",
+                    "name",
+                    "body",
+                    "parameters"
+                ],
+                "title": "InboxTemplate"
             },
             "InboxUnreadCount": {
                 "type": "object",
@@ -49844,6 +50508,15 @@
                         "type": "boolean",
                         "description": "Order updates go WhatsApp-first. Off until a WhatsApp account exists."
                     },
+                    "whatsapp_driver": {
+                        "type": "string",
+                        "description": "`log` sends nothing; `cloud` sends approved utility templates through the WhatsApp\nCloud API on the Inbox's number (UNVERIFIED). `null` is env/config only.",
+                        "enum": [
+                            "log",
+                            "null",
+                            "cloud"
+                        ]
+                    },
                     "reve_api_key_set": {
                         "type": "boolean"
                     },
@@ -49923,6 +50596,13 @@
                                     "settings",
                                     "env"
                                 ]
+                            },
+                            "whatsapp_driver": {
+                                "type": "string",
+                                "enum": [
+                                    "settings",
+                                    "env"
+                                ]
                             }
                         },
                         "required": [
@@ -49930,7 +50610,8 @@
                             "reve_base_url",
                             "reve_sender_id",
                             "sms_cost_per_segment",
-                            "whatsapp_enabled"
+                            "whatsapp_enabled",
+                            "whatsapp_driver"
                         ]
                     }
                 },
@@ -49940,6 +50621,7 @@
                     "reve_sender_id",
                     "sms_cost_per_segment",
                     "whatsapp_enabled",
+                    "whatsapp_driver",
                     "reve_api_key_set",
                     "reve_api_key_hint",
                     "reve_api_key_source",
@@ -50097,6 +50779,39 @@
                             "null"
                         ]
                     },
+                    "delivery_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What WhatsApp reported after accepting it (Cloud API `statuses` webhook); null until then\nand for SMS / email.",
+                        "enum": [
+                            "sent",
+                            "delivered",
+                            "read",
+                            "failed",
+                            null
+                        ]
+                    },
+                    "delivered_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "read_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "delivery_error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Meta's error on a failed delivery, e.g. `provider_error:131026 \u2026`."
+                    },
                     "created_at": {
                         "type": [
                             "string",
@@ -50125,6 +50840,10 @@
                     "queued_at",
                     "sent_at",
                     "failed_at",
+                    "delivery_status",
+                    "delivered_at",
+                    "read_at",
+                    "delivery_error",
                     "created_at"
                 ],
                 "title": "NotificationLog"
@@ -50319,6 +51038,9 @@
                             "draft",
                             "submitted",
                             "approved",
+                            "rejected",
+                            "paused",
+                            "disabled",
                             null
                         ]
                     },
@@ -60885,6 +61607,38 @@
                 ],
                 "title": "SendInboxReplyRequest"
             },
+            "SendInboxTemplateRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/template` \u2014 an approved WhatsApp template to a\ncustomer whose 24-hour window has closed; needs inbox.reply. `template` is Meta's template\nname as `GET \u2026/templates` lists it, `language` its Meta code, `parameters` the positional\nvalues ({{1}} first, exactly as many as the template has). 409 when the conversation is not\na WhatsApp thread with a closed window; 422 when the template is not approved/utility.",
+                "properties": {
+                    "template": {
+                        "type": "string",
+                        "maxLength": 512
+                    },
+                    "language": {
+                        "type": "string",
+                        "enum": [
+                            "en",
+                            "bn_BD"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "description": "Meta refuses a body parameter with a newline or tab, or more than 4 spaces in a row.",
+                            "maxLength": 1024
+                        },
+                        "maxItems": 20
+                    }
+                },
+                "required": [
+                    "template",
+                    "language",
+                    "parameters"
+                ],
+                "title": "SendInboxTemplateRequest"
+            },
             "SendQuickReplyRequest": {
                 "type": "object",
                 "description": "`POST /inbox/conversations/{conversation}/quick-replies` \u2014 needs inbox.reply. The server\ncomposes the text: `product_card` (target = product id) or `tracking_link` (target = an\norder of the conversation's customer).",
@@ -63879,6 +64633,10 @@
                         ],
                         "description": "Local form for display, `01712-345678`."
                     },
+                    "messenger": {
+                        "type": "string",
+                        "description": "The Facebook Page username or numeric id, for a `https://m.me/{messenger}` link."
+                    },
                     "email": {
                         "type": "string"
                     },
@@ -63902,6 +64660,7 @@
                     "hotline_tel",
                     "whatsapp",
                     "whatsapp_display",
+                    "messenger",
                     "email",
                     "address_en",
                     "address_bn",
@@ -66049,6 +66808,50 @@
                     "birthday"
                 ],
                 "title": "StorefrontAccountConsents"
+            },
+            "StorefrontAccountNotificationPreferences": {
+                "type": "object",
+                "properties": {
+                    "preferences": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "channel": {
+                                    "type": "string",
+                                    "enum": [
+                                        "whatsapp",
+                                        "sms"
+                                    ]
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "const": "order_updates"
+                                },
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "is_default": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "channel",
+                                "category",
+                                "enabled",
+                                "is_default"
+                            ]
+                        }
+                    },
+                    "whatsapp_available": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "preferences",
+                    "whatsapp_available"
+                ],
+                "title": "StorefrontAccountNotificationPreferences"
             },
             "StorefrontAccountSession": {
                 "type": "object",
@@ -69068,6 +69871,13 @@
                     "variant_count": {
                         "type": "integer"
                     },
+                    "default_variant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The one active variant of a single-variant product, so a card can add it to the\ncart directly; null when the shopper must choose an option on the product page."
+                    },
                     "in_stock": {
                         "type": "boolean",
                         "description": "An active variant has available stock (on_hand \u2212 reserved > 0). Sold-out\ncards stay listed and show their out-of-stock state."
@@ -69195,6 +70005,7 @@
                     "rating_count",
                     "is_featured",
                     "variant_count",
+                    "default_variant_id",
                     "in_stock",
                     "image",
                     "flash_sale"
@@ -71025,6 +71836,47 @@
                 ],
                 "title": "TwoFactorStatusResource"
             },
+            "UpdateAccountNotificationPreferencesRequest": {
+                "type": "object",
+                "description": "`PUT /storefront/account/notification-preferences` \u2014 the signed-in customer turns order updates\non or off per messaging channel (the profile page's \"Order updates on WhatsApp\" and \"SMS updates\"\nswitches). Allowlisted: channel `whatsapp` or `sms`, category `order_updates`. `security` (sign-in\ncodes) can never be turned off and is refused with a 422; anything else is simply not offered.",
+                "properties": {
+                    "preferences": {
+                        "type": "array",
+                        "description": "One row per channel; a channel left out keeps its current setting.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "channel": {
+                                    "type": "string",
+                                    "enum": [
+                                        "whatsapp",
+                                        "sms"
+                                    ]
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "const": "order_updates"
+                                },
+                                "enabled": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "channel",
+                                "category",
+                                "enabled"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 2,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "preferences"
+                ],
+                "title": "UpdateAccountNotificationPreferencesRequest"
+            },
             "UpdateAttributeRequest": {
                 "type": "object",
                 "description": "`PATCH /attributes/{attribute}` \u2014 every field optional; only the fields sent\nchange. Changing `type` away from `color` clears the values' swatches.",
@@ -71264,6 +72116,15 @@
                         ],
                         "description": "A Bangladeshi mobile, 013\u2013019 only (rule 30); stored and returned as E.164.",
                         "maxLength": 32
+                    },
+                    "messenger": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Facebook Page behind the storefront's Messenger link `https://m.me/{messenger}`: its\npublic username (letters, digits and dots, 5\u201350 characters) or its numeric Page id.",
+                        "pattern": "^(?:[A-Za-z0-9.]{5,50}|[0-9]{1,50})$",
+                        "maxLength": 50
                     }
                 },
                 "title": "UpdateBusinessDetailsRequest"
@@ -71813,6 +72674,14 @@
                         "description": "WhatsApp Manager \u2192 API setup \u2192 \"Phone number ID\". Digits only.",
                         "pattern": "^\\d{1,32}$"
                     },
+                    "whatsapp_business_account_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "WhatsApp Manager \u2192 Business Account ID (digits, not secret) \u2014 for \"Sync from Meta\". Absent = keep; blank = remove.",
+                        "pattern": "^\\d{1,32}$"
+                    },
                     "whatsapp_access_token": {
                         "type": [
                             "string",
@@ -71858,6 +72727,10 @@
                         ],
                         "description": "The Facebook Page id. Digits only.",
                         "pattern": "^\\d{1,32}$"
+                    },
+                    "messenger_human_agent": {
+                        "type": "boolean",
+                        "description": "Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep."
                     },
                     "messenger_page_access_token": {
                         "type": [
@@ -72102,6 +72975,14 @@
                     },
                     "whatsapp_enabled": {
                         "type": "boolean"
+                    },
+                    "whatsapp_driver": {
+                        "type": "string",
+                        "description": "`log` sends nothing; `cloud` = WhatsApp Cloud API on the Inbox's number. Absent = keep.",
+                        "enum": [
+                            "log",
+                            "cloud"
+                        ]
                     },
                     "reve_api_key": {
                         "type": [
@@ -73728,7 +74609,10 @@
                         "enum": [
                             "draft",
                             "submitted",
-                            "approved"
+                            "approved",
+                            "rejected",
+                            "paused",
+                            "disabled"
                         ]
                     }
                 },
@@ -73779,6 +74663,50 @@
                     "code"
                 ],
                 "title": "VerifyOtpRequest"
+            },
+            "WhatsAppTemplateSync": {
+                "type": "object",
+                "properties": {
+                    "matched": {
+                        "type": "integer",
+                        "description": "Local WhatsApp templates whose provider name Meta has."
+                    },
+                    "updated": {
+                        "type": "integer",
+                        "description": "Of those, how many changed status."
+                    },
+                    "unknown": {
+                        "type": "integer",
+                        "description": "Template names on Meta that no local template uses."
+                    },
+                    "missing": {
+                        "type": "integer",
+                        "description": "Local templates with a provider name Meta does not have."
+                    },
+                    "unknown_names": {
+                        "type": "array",
+                        "description": "Up to 50 of the unknown Meta names.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "missing_keys": {
+                        "type": "array",
+                        "description": "Up to 50 local template keys missing on Meta.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "matched",
+                    "updated",
+                    "unknown",
+                    "missing",
+                    "unknown_names",
+                    "missing_keys"
+                ],
+                "title": "WhatsAppTemplateSync"
             },
             "WishlistRequest": {
                 "type": "object",

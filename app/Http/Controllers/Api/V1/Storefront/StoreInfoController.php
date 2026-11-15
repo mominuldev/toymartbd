@@ -11,8 +11,8 @@ use App\Http\Resources\Storefront\StoreInfoResource;
 
 /**
  * The shop's public contact and legal details for the storefront chrome (header hotline,
- * footer legal bar, WhatsApp buttons, error pages). One source: Admin → Settings → Store →
- * Business (`invoice.company.*` + `store.whatsapp`). The storefront caches it under the
+ * footer legal bar, WhatsApp and Messenger chat links, error pages). One source: Admin → Settings → Store →
+ * Business (`invoice.company.*` + `store.whatsapp` + `store.messenger`). The storefront caches it under the
  * `store-info` tag; the admin purges that tag on every Business or Invoice-details save.
  */
 final class StoreInfoController extends ApiController
@@ -30,6 +30,7 @@ final class StoreInfoController extends ApiController
             'name_bn' => $text('name_bn') ?? CompanyDetails::DEFAULT_NAMES['name_bn'],
             'hotline' => StoreHotline::confirmed(),
             'whatsapp' => $company->whatsapp(),
+            'messenger' => $company->messenger(),
             'email' => $text('email'),
             'address_en' => $text('address_en'),
             'address_bn' => $text('address_bn'),

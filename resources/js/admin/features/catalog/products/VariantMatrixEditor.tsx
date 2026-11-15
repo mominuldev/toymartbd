@@ -42,11 +42,8 @@ type Props = {
     id?: string;
     /** Right side of the title row. */
     aside?: ReactNode;
-    /**
-     * A simple product: `new` — no options yet, and adding the first one makes the new
-     * product variable; `fixed` — a saved simple product, whose type the API will not change.
-     */
-    simple?: 'new' | 'fixed';
+    /** A simple product (no options yet): adding the first option makes it variable, new or saved. */
+    simple?: 'new';
 };
 
 export type StockMode = 'opening' | 'readonly' | 'hidden';
@@ -73,7 +70,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
     const outside = Object.entries(value.rows).filter(([key, row]) => row.id !== null && !comboKeys.has(key));
     const usedAttributes = new Set(value.options.map((o) => o.attribute_id));
     const freeAttributes = attributes.filter((a) => !usedAttributes.has(a.id));
-    const canAddAttribute = simple !== 'fixed' && value.options.length < MAX_ATTRIBUTES && freeAttributes.length !== 0;
+    const canAddAttribute = value.options.length < MAX_ATTRIBUTES && freeAttributes.length !== 0;
     const tooMany = combos.length > MAX_VARIANTS;
     const enabledCount = combos.filter((c) => rowOf(c).status === 'active').length;
 
@@ -202,7 +199,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
 
                 {value.options.length === 0 && (
                     <p className="t-admin-body text-fg-secondary">
-                        {simple === 'new' ? t('products.matrix.simpleHint') : simple === 'fixed' ? t('products.matrix.simpleFixed') : t('products.matrix.noAttributes')}
+                        {simple === 'new' ? t('products.matrix.simpleHint') : t('products.matrix.noAttributes')}
                     </p>
                 )}
 

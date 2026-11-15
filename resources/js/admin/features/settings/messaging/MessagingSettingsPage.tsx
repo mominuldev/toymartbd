@@ -17,8 +17,11 @@ import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { InboxChannelsSection } from './InboxChannelsSection';
 import { SecretField } from './SecretField';
+import { Switch } from './Switch';
 import {
+    isWhatsAppDriver,
     smsDrivers,
+    whatsAppDrivers,
     useMessagingSettings,
     useSaveMessagingSettings,
     useSendTestSms,
@@ -36,6 +39,7 @@ type FormValues = {
     reve_sender_id: string;
     sms_cost_per_segment: string;
     whatsapp_enabled: boolean;
+    whatsapp_driver: string;
     reve_api_key: string;
     reve_secret_key: string;
     clear_reve_api_key: boolean;
@@ -48,6 +52,7 @@ const fields: (keyof FormValues)[] = [
     'reve_sender_id',
     'sms_cost_per_segment',
     'whatsapp_enabled',
+    'whatsapp_driver',
     'reve_api_key',
     'reve_secret_key',
     'clear_reve_api_key',
@@ -64,6 +69,7 @@ function toForm(s: MessagingSettings): FormValues {
         reve_sender_id: s.reve_sender_id ?? '',
         sms_cost_per_segment: s.sms_cost_per_segment,
         whatsapp_enabled: s.whatsapp_enabled,
+        whatsapp_driver: s.whatsapp_driver,
         reve_api_key: '',
         reve_secret_key: '',
         clear_reve_api_key: false,
@@ -80,6 +86,8 @@ function toInput(v: FormValues): MessagingSettingsInput {
         reve_sender_id: orNull(v.reve_sender_id),
         sms_cost_per_segment: v.sms_cost_per_segment.trim(),
         whatsapp_enabled: v.whatsapp_enabled,
+        // An env-only driver (`null`) is not selectable here: leave it out and the server keeps it.
+        ...(isWhatsAppDriver(v.whatsapp_driver) ? { whatsapp_driver: v.whatsapp_driver } : {}),
         reve_api_key: orNull(v.reve_api_key),
         reve_secret_key: orNull(v.reve_secret_key),
         clear_reve_api_key: v.clear_reve_api_key,
@@ -135,6 +143,7 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
 
     const driver = watch('sms_driver');
     const whatsapp = watch('whatsapp_enabled');
+    const whatsappDriver = watch('whatsapp_driver');
     const errorOf = (field: keyof FormValues) => formState.errors[field]?.message;
     const fromEnv = (key: keyof MessagingSettings['sources']) => (settings.sources[key] === 'env' ? t('messaging.fromEnv') : undefined);
     // An env-only driver (sms_net_bd) still shows as the current value, but cannot be picked.
@@ -272,6 +281,27 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
                                 onChange={(value) => setValue('whatsapp_enabled', value, { shouldDirty: true })}
                             />
                         </div>
+                        <div className="flex flex-col gap-1.5">
+                            <span className="t-admin-body-strong text-fg-primary">{t('messaging.whatsapp.driver')}</span>
+                            <SegmentedControl
+                                label={t('messaging.whatsapp.driverLabel')}
+                                value={whatsappDriver}
+                                onChange={(value) => setValue('whatsapp_driver', value, { shouldDirty: true })}
+                                className="self-start"
+                                options={whatsAppDrivers.map((value) => ({ value, label: t(`messaging.whatsapp.driver.${value}` as MessageKey) }))}
+                            />
+                            <p className="t-admin-caption text-fg-secondary">
+                                {isWhatsAppDriver(whatsappDriver)
+                                    ? t(whatsappDriver === 'cloud' ? 'messaging.whatsapp.driver.cloudHint' : 'messaging.whatsapp.driver.logHint')
+                                    : t('messaging.whatsapp.driver.envOnly', { driver: whatsappDriver })}
+                            </p>
+                            {fromEnv('whatsapp_driver') && <p className="t-admin-caption text-fg-tertiary">{fromEnv('whatsapp_driver')}</p>}
+                            {errorOf('whatsapp_driver') && (
+                                <p role="alert" className="t-admin-caption text-feedback-danger">
+                                    {errorOf('whatsapp_driver')}
+                                </p>
+                            )}
+                        </div>
                     </FormSection>
                 </fieldset>
             </form>
@@ -280,24 +310,6 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
 
             <InboxChannelsSection />
         </section>
-    );
-}
-
-/** Figma toggle (Store settings B · 38 rows): 36×20 track, bg/brand on, border/strong off. */
-function Switch({ checked, label, onChange }: { checked: boolean; label: string; onChange: (value: boolean) => void }) {
-    return (
-        <button
-            type="button"
-            role="switch"
-            aria-checked={checked}
-            aria-label={label}
-            onClick={() => onChange(!checked)}
-            className={`relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 ease-standard disabled:cursor-not-allowed disabled:opacity-60 ${
-                checked ? 'bg-brand' : 'bg-line-strong'
-            }`}
-        >
-            <span aria-hidden className={`size-4 rounded-full bg-surface shadow-e1 transition-transform duration-150 ease-standard ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
-        </button>
     );
 }
 

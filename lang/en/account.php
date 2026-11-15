@@ -20,6 +20,10 @@ return [
         'limit' => 'You can add up to :max children. Remove one first.',
         'birthday_invalid' => 'That birthday is not a real date. Check the day, month and year.',
     ],
+    // Order-update channels on the profile page; security messages (sign-in codes) are never switchable.
+    'notifications' => [
+        'security_locked' => 'Sign-in codes are always sent; they cannot be turned off.',
+    ],
     'wishlist' => [
         'limit' => 'Your wishlist is full (:max toys). Remove one first.',
         'unavailable' => 'This toy is not available.',

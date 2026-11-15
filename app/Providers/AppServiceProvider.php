@@ -58,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\Marketing\Contracts\CustomerOrderHistory::class, \App\Domain\Ordering\Queries\PhoneOrderHistory::class);
         // Birthday-reminder offers (P8 batch 3): Notification mints a personal coupon through this seam.
         $this->app->bind(\App\Domain\Marketing\Contracts\PersonalCouponIssuer::class, \App\Domain\Marketing\Actions\IssuePersonalCoupon::class);
+        // The Inbox restarts a closed WhatsApp conversation with an approved template it reads through this seam (P10).
+        $this->app->bind(\App\Domain\Notification\Contracts\WhatsAppTemplateLibrary::class, \App\Domain\Notification\Queries\ApprovedWhatsAppTemplates::class);
         // The nightly stock reconciliation checks reserved against open orders (§7 invariant 5).
         $this->app->bind(\App\Domain\Inventory\Contracts\OpenOrderReservations::class, \App\Domain\Ordering\Queries\EloquentOpenOrderReservations::class);
 

@@ -6,14 +6,16 @@ import { format, getMessages, localizedPath, type Locale, type Messages } from '
 import { ageLabel, formatPrice, sameAmount } from '@/lib/listing/format';
 import type { ProductCard as Card } from '@/lib/listing/response';
 import { WishlistHeart } from '@/components/wishlist/WishlistHeart';
+import { CardCartButton } from '@/components/listing/CardCartButton';
 
 // ProductCard, Layout=Grid / GridDesktop — Figma 100:852 (owner-chosen Version B; storefront spec
 // §A1 owner note). Photo framed inside a soft-pink-bordered card; discount badge top-left,
 // wishlist top-right, derived age pill bottom-left; title (2-line clamp), coral price beside the
 // struck was-price, then "Buy now" + the cart icon button.
 //
-// The wishlist heart is live (WishlistHeart, a form that works without JS). Not wired yet: "Buy now"
-// links to the product page and the cart icon renders disabled with its final look. Out of stock
+// The wishlist heart is live (WishlistHeart, a form that works without JS). "Buy now" links to the
+// product page. The cart icon adds a single-variant product straight to the cart (CardCartButton:
+// a form, enhanced in place with JS); with several options it links to the product page to choose. Out of stock
 // (Figma 100:741, from the API's `in_stock`): the photo fades to 60%, an "Out of stock" pill joins
 // the badge stack, and the actions become one outline "Notify me" (to the product page until
 // back-in-stock alerts exist). "Only N left" and the free-delivery pill need per-card data the
@@ -50,6 +52,7 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
     // to the photo's bottom edge and shows the sale price over the struck regular price.
     const flash = soldOut ? null : (product.flash_sale ?? null);
     const tf = getMessages(locale).flashSale;
+    const tc = getMessages(locale).cart;
 
     return (
         <article className="flex h-full flex-col rounded-sm border-(length:--tm-border-width-control) border-line-brand-subtle bg-surface px-1.5 pt-2 pb-3 shadow-e1 sm:px-2">
@@ -160,14 +163,24 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                     >
                         {t.buyNow}
                     </a>
-                    <button
-                        type="button"
-                        disabled
-                        aria-label={format(t.addToCart, { name })}
-                        className="relative flex size-control-sm shrink-0 items-center justify-center rounded-full border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface text-fg-brand lg:size-control-md before:absolute before:size-touch-min before:content-['']"
-                    >
-                        <Icon name="shoppingCartFill" className="size-icon-sm lg:size-icon-md" />
-                    </button>
+                    {product.default_variant_id ? (
+                        <CardCartButton
+                            variantId={product.default_variant_id}
+                            locale={locale}
+                            label={format(t.addToCart, { name })}
+                            cartHref={localizedPath(locale, '/cart')}
+                            labels={{ added: format(t.addedToCart, { name }), viewCart: tc.viewCart, dismiss: tc.toastDismiss, failed: tc.notices.addFailed, notices: tc.notices }}
+                        />
+                    ) : (
+                        // Several options (size, colour…): the shopper chooses on the product page.
+                        <a
+                            href={href}
+                            aria-label={format(t.chooseOptions, { name })}
+                            className="relative flex cursor-pointer size-control-sm shrink-0 items-center justify-center rounded-full border-(length:--tm-border-width-strong) border-line-brand-subtle bg-surface text-fg-brand transition-colors duration-(--tm-duration-fast) ease-standard hover:bg-subtle lg:size-control-md before:absolute before:size-touch-min before:content-['']"
+                        >
+                            <Icon name="shoppingCartFill" className="size-icon-sm lg:size-icon-md" />
+                        </a>
+                    )}
                     </>
                     )}
                 </div>

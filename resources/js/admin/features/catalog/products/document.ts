@@ -140,6 +140,45 @@ function variantToFields(variant?: ProductVariant): VariantFields {
     };
 }
 
+/**
+ * A simple product gains its first option (owner decision 2026-11-16: variants can be added to any
+ * product, any time). New rows start from the simple item's price, compare-at, cost, wholesale and
+ * weight, so nothing is typed twice. The first combination also takes its SKU, barcode, id and
+ * stock: the server keeps that variant (matched by SKU) for this combination, so its stock and
+ * order history stay with a live variant. Rows that already exist are left alone.
+ */
+export function seedVariantRows(next: MatrixState, combos: Combination[], simple: VariantFields, kept?: { id: number; stock: MatrixRow['stock'] }): MatrixState {
+    const rows = { ...next.rows };
+    combos.forEach((combo, index) => {
+        if (rows[combo.key]) return;
+        const carried = index === 0;
+        rows[combo.key] = {
+            ...simple,
+            sku: carried ? simple.sku : '',
+            barcode: carried ? simple.barcode : '',
+            opening_stock: carried ? simple.opening_stock : '',
+            id: carried ? (kept?.id ?? null) : null,
+            stock: carried ? (kept?.stock ?? null) : null,
+            value_ids: combo.valueIds,
+            status: 'active',
+        };
+    });
+    return { ...next, rows };
+}
+
+/**
+ * The last option is removed from a saved variable product: the default variant (else the first
+ * active one) becomes the simple item — the server keeps exactly that variant and archives the
+ * rest. Its fields come from the grid, so unsaved edits to its row are not lost.
+ */
+export function simpleFromVariants(product: Product, rows: MatrixState['rows']): { fields: VariantFields; stock: MatrixRow['stock']; label: string | null } | null {
+    const variant = product.variants.find((v) => v.is_default && v.status === 'active') ?? product.variants.find((v) => v.status === 'active') ?? product.variants[0];
+    if (!variant) return null;
+    const row = Object.values(rows).find((r) => r.id === variant.id);
+    const { id: _id, stock: _stock, value_ids: _values, status: _status, ...fields } = row ?? { ...variantToFields(variant), id: variant.id, stock: variant.stock ?? null, value_ids: [], status: 'active' as const };
+    return { fields: { ...fields, sku: fields.sku || variant.sku }, stock: variant.stock ?? null, label: variant.name };
+}
+
 export function emptyRow(valueIds: number[]): MatrixRow {
     return { ...variantToFields(), id: null, stock: null, value_ids: valueIds, status: 'active' };
 }

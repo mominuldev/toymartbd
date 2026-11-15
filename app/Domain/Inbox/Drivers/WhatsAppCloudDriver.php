@@ -38,6 +38,10 @@ use RuntimeException;
  *    customer-service window (…/cloud-api/support/error-codes). Inbox code refuses a reply
  *    outside the window BEFORE queueing; this mapping is the backstop.
  *  - Text body max 4096 characters (…/whatsapp/messages/text-messages).
+ *  - Template send (outside the window): the same endpoint with `type: template`,
+ *    `template: {name, language: {code}, components: [{type: body, parameters: [{type: text,
+ *    text}]}]}` (…/whatsapp/cloud-api/guides/send-message-templates). Positional parameters,
+ *    {{1}} first; no `components` when the template has none.
  *
  * Users who adopted a WhatsApp username may arrive without `from`/`wa_id` and only a BSUID
  * (`from_user_id`); the thread is then keyed on the BSUID and has no phone.
@@ -108,13 +112,7 @@ final readonly class WhatsAppCloudDriver implements InboxChannelDriver, Receives
             $response = Http::withToken($token)
                 ->acceptJson()
                 ->timeout((int) config('inbox.timeout', 10))
-                ->post($url, [
-                    'messaging_product' => 'whatsapp',
-                    'recipient_type' => 'individual',
-                    'to' => $message->recipient,
-                    'type' => 'text',
-                    'text' => ['preview_url' => true, 'body' => mb_substr($message->body, 0, self::MAX_BODY)],
-                ]);
+                ->post($url, self::payload($message));
         } catch (ConnectionException) {
             // Retryable. The exception text can carry the URL; never rethrow it as is.
             throw new RuntimeException('WhatsApp Cloud API unreachable.');
@@ -139,6 +137,26 @@ final readonly class WhatsAppCloudDriver implements InboxChannelDriver, Receives
         return $code === '131047'
             ? SendResult::rejected('outside_window', 'The 24-hour customer-service window has closed; only an approved template can be sent.')
             : SendResult::rejected('provider_error:'.$code, $this->errorTitle($response->json('error')));
+    }
+
+    /** @return array<string, mixed> */
+    private static function payload(OutboundMessage $message): array
+    {
+        $base = ['messaging_product' => 'whatsapp', 'recipient_type' => 'individual', 'to' => $message->recipient];
+
+        if ($message->template !== null) {
+            $template = ['name' => $message->template->name, 'language' => ['code' => $message->template->language]];
+            if ($message->template->parameters !== []) {
+                $template['components'] = [[
+                    'type' => 'body',
+                    'parameters' => array_map(static fn (string $text): array => ['type' => 'text', 'text' => $text], $message->template->parameters),
+                ]];
+            }
+
+            return [...$base, 'type' => 'template', 'template' => $template];
+        }
+
+        return [...$base, 'type' => 'text', 'text' => ['preview_url' => true, 'body' => mb_substr($message->body, 0, self::MAX_BODY)]];
     }
 
     /**

@@ -4,6 +4,7 @@ import { InfoIcon } from '@phosphor-icons/react';
 import { useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
+import type { Schema } from '@toymart/api-types';
 import { can, useMe } from '@/features/auth/api';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
@@ -133,7 +134,7 @@ export function SalesAnalyticsPage() {
                         <BarListCard
                             title={t('sales.channels.title')}
                             subtitle={t('sales.channels.subtitle')}
-                            rows={data.channels.map((c) => ({ key: c.source, label: t(`sales.channel.${c.source}` as MessageKey), value: c.value, orders: c.orders, percent: c.orders_percent }))}
+                            rows={data.channels.map((c) => ({ key: c.source, label: channelLabel(c.source, t), value: c.value, orders: c.orders, percent: c.orders_percent }))}
                         />
                     </div>
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -581,4 +582,22 @@ function RecommendationsCard({ data }: { data: SalesAnalytics }) {
             )}
         </Card>
     );
+}
+
+/**
+ * Every order source has a label, checked by the compiler: a new source (as `pos` was) fails the
+ * build here instead of rendering a nameless row. An unknown value from a newer API shows as-is.
+ */
+const channelLabels: Record<Schema<'OrderListItem'>['source'], MessageKey> = {
+    web: 'sales.channel.web',
+    admin: 'sales.channel.admin',
+    phone: 'sales.channel.phone',
+    facebook: 'sales.channel.facebook',
+    whatsapp: 'sales.channel.whatsapp',
+    pos: 'sales.channel.pos',
+};
+
+export function channelLabel(source: string, t: (key: MessageKey) => string): string {
+    const key = (channelLabels as Record<string, MessageKey | undefined>)[source];
+    return key ? t(key) : source;
 }

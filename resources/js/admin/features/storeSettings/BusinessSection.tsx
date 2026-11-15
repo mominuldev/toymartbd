@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PhoneIcon, WhatsappLogoIcon } from '@phosphor-icons/react';
+import { MessengerLogoIcon, PhoneIcon, WhatsappLogoIcon } from '@phosphor-icons/react';
 import { updateBusinessDetailsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -15,14 +15,14 @@ import { useToast } from '@/components/ui/Toast';
 import { useBusinessDetails, useSaveBusinessDetails, type BusinessDetails, type BusinessDetailsInput } from './api';
 import { Note, SaveRow, formatMobile, useSettingsAccess } from './parts';
 
-const fields = ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline', 'whatsapp'] as const;
+const fields = ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline', 'whatsapp', 'messenger'] as const;
 type FieldName = (typeof fields)[number];
 type FormValues = Record<FieldName, string>;
 
 const validateInput = zodResolver(updateBusinessDetailsRequestSchema);
 
 function toForm(b: BusinessDetails): FormValues {
-    return { name_en: b.name_en ?? '', name_bn: b.name_bn ?? '', trade_licence: b.trade_licence ?? '', bin: b.bin ?? '', hotline: b.hotline ?? '', whatsapp: formatMobile(b.whatsapp) };
+    return { name_en: b.name_en ?? '', name_bn: b.name_bn ?? '', trade_licence: b.trade_licence ?? '', bin: b.bin ?? '', hotline: b.hotline ?? '', whatsapp: formatMobile(b.whatsapp), messenger: b.messenger ?? '' };
 }
 
 /** Blank → null, which removes the saved value (an invoice then prints "[placeholder]"). */
@@ -32,7 +32,7 @@ function toInput(v: FormValues): BusinessDetailsInput {
 
 /**
  * Store settings › Business (Figma B · 38 241:50827): store name EN/BN, trade licence, BIN,
- * hotline and WhatsApp. One value for the store and invoices — the name, licence, BIN and
+ * hotline, WhatsApp and the Messenger Page (the storefront's m.me chat link). One value for the store and invoices — the name, licence, BIN and
  * hotline are the same settings Taxes & invoices prints (CompanyDetails); the server keeps
  * them in one place. Values are placeholders until the owner supplies real ones.
  */
@@ -89,6 +89,7 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
         bin: t('storeSettings.business.placeholder.bin'),
         hotline: t('storeSettings.business.placeholder.hotline'),
         whatsapp: t('storeSettings.business.placeholder.whatsapp'),
+        messenger: t('storeSettings.business.placeholder.messenger'),
     };
     const hint: Partial<Record<FieldName, string>> = {
         trade_licence: t('storeSettings.business.printed'),
@@ -96,6 +97,7 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
             business.hotline === null && business.hotline_default
                 ? t('storeSettings.business.hotlineFallback', { number: business.hotline_default })
                 : t('storeSettings.business.shown'),
+        messenger: t('storeSettings.business.messengerHint'),
     };
 
     const text = (f: FieldName, opts: { bn?: boolean; type?: string } = {}) => (
@@ -144,6 +146,22 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
                     {text('bin')}
                     {phone('hotline')}
                     {phone('whatsapp')}
+                    <Field label={label('messenger')} hint={hint.messenger} error={formState.errors.messenger?.message}>
+                        {({ id, describedBy, invalid }) => (
+                            <Input
+                                id={id}
+                                type="text"
+                                autoComplete="off"
+                                autoCapitalize="none"
+                                spellCheck={false}
+                                leading={<MessengerLogoIcon size={16} aria-hidden />}
+                                aria-describedby={describedBy}
+                                aria-invalid={invalid || undefined}
+                                placeholder={placeholder.messenger}
+                                {...register('messenger')}
+                            />
+                        )}
+                    </Field>
                 </fieldset>
                 {editable && (
                     <SaveRow>

@@ -70,6 +70,7 @@ final readonly class AuditEntry
                 },
                 'messaging' => 'messaging_settings',
                 'tracking' => 'tracking_settings',
+                'inbox_connection_test' => 'connection_tested',
                 default => $this->subject !== null && $this->subject['type'] === 'courier' ? 'courier_credentials' : 'credentials_changed',
             },
         };

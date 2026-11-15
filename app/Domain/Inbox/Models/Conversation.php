@@ -86,6 +86,12 @@ final class Conversation extends Model
         return $this->hasMany(ConversationMessage::class);
     }
 
+    /** The language we write to the customer in: their preferred language, Bangla when unknown. */
+    public function locale(): string
+    {
+        return $this->customer?->preferred_language === 'en' ? 'en' : 'bn';
+    }
+
     /** When the customer-service window closes; null when the channel has none or it never opened. */
     public function windowExpiresAt(): ?Carbon
     {

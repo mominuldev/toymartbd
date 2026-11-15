@@ -365,6 +365,8 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::get('/notifications/templates/{template}/versions', [NotificationTemplateController::class, 'versions'])->name('notifications.templates.versions');
     Route::post('/notifications/templates/{template}/versions/{version}/restore', [NotificationTemplateController::class, 'restoreVersion'])->whereNumber('version')->name('notifications.templates.versions.restore');
     Route::put('/notifications/templates/{template}/whatsapp-status', [NotificationTemplateController::class, 'whatsAppStatus'])->name('notifications.templates.whatsapp-status');
+    // Sync from Meta: every WhatsApp template's status from the WhatsApp Business Account (settings.update, rate-limited).
+    Route::post('/notifications/templates/whatsapp/sync', [NotificationTemplateController::class, 'syncWhatsApp'])->middleware('throttle:5,1')->name('notifications.templates.whatsapp-sync');
     Route::get('/notifications/logs', [NotificationLogController::class, 'index'])->name('notifications.logs.index');
     Route::get('/notifications/logs/summary', [NotificationLogController::class, 'summary'])->name('notifications.logs.summary');
     Route::post('/notifications/logs/{log}/retry', [NotificationLogController::class, 'retry'])->whereNumber('log')->name('notifications.logs.retry');

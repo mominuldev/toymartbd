@@ -19,13 +19,14 @@ const messaging: MessagingSettings = {
     reve_sender_id: null,
     sms_cost_per_segment: '0.26',
     whatsapp_enabled: false,
+    whatsapp_driver: 'log',
     reve_api_key_set: false,
     reve_api_key_hint: null,
     reve_api_key_source: null,
     reve_secret_key_set: false,
     reve_secret_key_hint: null,
     reve_secret_key_source: null,
-    sources: { sms_driver: 'env', reve_base_url: 'env', reve_sender_id: 'env', sms_cost_per_segment: 'env', whatsapp_enabled: 'env' },
+    sources: { sms_driver: 'env', reve_base_url: 'env', reve_sender_id: 'env', sms_cost_per_segment: 'env', whatsapp_enabled: 'env', whatsapp_driver: 'env' },
 };
 
 const unset = { set: false, hint: null, source: null } as const;
@@ -36,6 +37,10 @@ const whatsapp: InboxChannelCredentials = {
     driver_source: 'settings',
     account_id: '106540352242922',
     account_id_source: 'settings',
+    business_account_id: '102290129340398',
+    business_account_id_source: 'settings',
+    human_agent: false,
+    human_agent_source: 'env',
     send_token: { set: true, hint: '••••7781', source: 'settings' },
     app_secret: { set: true, hint: '••••4410', source: 'settings' },
     verify_token: { set: true, hint: '••••', source: 'env' },
@@ -43,6 +48,7 @@ const whatsapp: InboxChannelCredentials = {
     webhook_ready: true,
     send_ready: true,
     verified: false,
+    last_check: null,
 };
 
 const messenger: InboxChannelCredentials = {
@@ -51,6 +57,10 @@ const messenger: InboxChannelCredentials = {
     driver_source: 'env',
     account_id: null,
     account_id_source: null,
+    business_account_id: null,
+    business_account_id_source: null,
+    human_agent: false,
+    human_agent_source: 'env',
     send_token: unset,
     app_secret: unset,
     verify_token: unset,
@@ -58,13 +68,20 @@ const messenger: InboxChannelCredentials = {
     webhook_ready: false,
     send_ready: false,
     verified: false,
+    last_check: null,
 };
 
 const saved: InboxChannelSettings = { whatsapp, messenger };
 
-function inboxApi(me: Me, put: { status: number; body?: unknown } = { status: 200, body: saved }) {
+function inboxApi(me: Me, put: { status: number; body?: unknown } = { status: 200, body: saved }, test?: { status: number; body?: unknown }, after?: InboxChannelSettings) {
+    let tested = false;
     return mockApi((url, init) => {
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
+        if (url.endsWith('/settings/inbox-channels/whatsapp/test') && init?.method === 'POST') {
+            tested = true;
+            return test ?? { status: 404 };
+        }
+        if (url.endsWith('/settings/inbox-channels') && init?.method !== 'PUT' && tested && after) return { status: 200, body: after };
         if (url.endsWith('/settings/messaging')) return { status: 200, body: messaging };
         if (url.endsWith('/settings/inbox-channels') && init?.method === 'PUT') return put;
         if (url.endsWith('/settings/inbox-channels')) return { status: 200, body: saved };
@@ -111,7 +128,8 @@ describe('integrations → messaging → inbox channels', () => {
         expect(fb.getByText('Sending not ready')).toBeTruthy();
         expect(fb.getByText('Not verified — no real account yet')).toBeTruthy();
         expect(fb.getByRole('button', { name: 'Off — log only' }).getAttribute('aria-pressed')).toBe('true');
-        expect(fb.getByText('Currently from the server environment')).toBeTruthy();
+        // The driver and the HUMAN_AGENT switch both come from env until saved.
+        expect(fb.getAllByText('Currently from the server environment')).toHaveLength(2);
     });
 
     it('saves a body the generated schema accepts: blank secrets kept, typed ones sent, clears explicit', async () => {
@@ -123,6 +141,7 @@ describe('integrations → messaging → inbox channels', () => {
         fireEvent.change(fb.getByLabelText('Page ID'), { target: { value: ' 104857300112233 ' } });
         fireEvent.change(fb.getByLabelText(/^Page access token/), { target: { value: 'EAAG-page-token' } });
         fireEvent.change(fb.getByLabelText(/^App secret/), { target: { value: 'fb-app-secret' } });
+        fireEvent.click(fb.getByRole('switch', { name: 'Reply for up to 7 days (human agent)' }));
         const wa = within(await card('WhatsApp inbox'));
         fireEvent.click(wa.getByRole('button', { name: 'Remove saved app secret' }));
         expect(wa.getByText('Will be removed when you save.')).toBeTruthy();
@@ -133,6 +152,7 @@ describe('integrations → messaging → inbox channels', () => {
         expect(body).toEqual({
             whatsapp_driver: 'cloud',
             whatsapp_phone_number_id: '106540352242922',
+            whatsapp_business_account_id: '102290129340398',
             whatsapp_access_token: null,
             whatsapp_app_secret: null,
             whatsapp_verify_token: null,
@@ -141,6 +161,7 @@ describe('integrations → messaging → inbox channels', () => {
             clear_whatsapp_verify_token: false,
             messenger_driver: 'messenger',
             messenger_page_id: '104857300112233',
+            messenger_human_agent: true,
             messenger_page_access_token: 'EAAG-page-token',
             messenger_app_secret: 'fb-app-secret',
             messenger_verify_token: null,
@@ -152,6 +173,77 @@ describe('integrations → messaging → inbox channels', () => {
         expect(await screen.findByText('Inbox channel settings saved')).toBeTruthy();
         // The SMS form's own save was not touched.
         expect(calls.mock.calls.some(([url, init]) => String(url).endsWith('/settings/messaging') && (init as RequestInit | undefined)?.method === 'PUT')).toBe(false);
+    });
+
+    it('shows the Business Account ID and explains the HUMAN_AGENT switch may need Meta app review', async () => {
+        inboxApi(owner);
+        renderApp('/integrations/messaging');
+
+        const wa = within(await card('WhatsApp inbox'));
+        expect((wa.getByLabelText('WhatsApp Business Account ID') as HTMLInputElement).value).toBe('102290129340398');
+        const fb = within(await card('Messenger inbox'));
+        expect(fb.getByRole('switch', { name: 'Reply for up to 7 days (human agent)' }).getAttribute('aria-checked')).toBe('false');
+        expect(fb.getByText(/Meta may require your app to pass review/)).toBeTruthy();
+    });
+
+    it('tests the WhatsApp connection with the saved credentials and shows the result — never “verified”', async () => {
+        const after: InboxChannelSettings = {
+            ...saved,
+            whatsapp: {
+                ...whatsapp,
+                last_check: {
+                    ok: true,
+                    checked_at: new Date().toISOString(),
+                    display_name: 'Toy Mart BD',
+                    display_number: '+880 1700-000000',
+                    quality_rating: 'GREEN',
+                    error_code: null,
+                    error_message: null,
+                },
+            },
+        };
+        const calls = inboxApi(owner, undefined, { status: 200, body: { channel: 'whatsapp', ...after.whatsapp.last_check } }, after);
+        renderApp('/integrations/messaging');
+
+        const wa = within(await card('WhatsApp inbox'));
+        expect(wa.getByText('Not tested yet.')).toBeTruthy();
+        expect(wa.getByText(/A passing test does not mark the channel verified/)).toBeTruthy();
+        fireEvent.click(wa.getByRole('button', { name: 'Test connection' }));
+
+        expect(await wa.findByText(/Connected as Toy Mart BD \(\+880 1700-000000\) · quality GREEN/)).toBeTruthy();
+        expect(wa.getByText('Not verified — no real account yet')).toBeTruthy();
+        expect(calls.mock.calls.some(([url, init]) => String(url).endsWith('/settings/inbox-channels/whatsapp/test') && (init as RequestInit | undefined)?.method === 'POST')).toBe(true);
+    });
+
+    it('disables the test while the form has unsaved changes, and shows a failed check', async () => {
+        const failed: InboxChannelSettings = {
+            ...saved,
+            whatsapp: {
+                ...whatsapp,
+                last_check: {
+                    ok: false,
+                    checked_at: new Date().toISOString(),
+                    display_name: null,
+                    display_number: null,
+                    quality_rating: null,
+                    error_code: 'meta_190',
+                    error_message: 'Error validating access token.',
+                },
+            },
+        };
+        mockApi((url) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: owner };
+            if (url.endsWith('/settings/messaging')) return { status: 200, body: messaging };
+            if (url.endsWith('/settings/inbox-channels')) return { status: 200, body: failed };
+            return { status: 404 };
+        });
+        renderApp('/integrations/messaging');
+
+        const wa = within(await card('WhatsApp inbox'));
+        expect(wa.getByText(/Failed: meta_190 — Error validating access token\./)).toBeTruthy();
+        fireEvent.change(wa.getByLabelText('Phone number ID'), { target: { value: '999' } });
+        await waitFor(() => expect((wa.getByRole('button', { name: 'Test connection' }) as HTMLButtonElement).disabled).toBe(true));
+        expect(wa.getByText('Save your changes first: the test uses the saved credentials.')).toBeTruthy();
     });
 
     it('refuses a non-numeric id with the generated schema before calling the API', async () => {

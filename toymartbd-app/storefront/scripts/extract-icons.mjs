@@ -92,6 +92,8 @@ const ICONS = {
     creditCard: 'CreditCard',
     // P7 flash sales: the CountdownTimer's leading zap (spec §A15, Figma 119:1388).
     lightningFill: 'Lightning:fill',
+    // Chat links (WhatsApp click-to-chat, Messenger m.me) on the product, contact and footer.
+    messengerLogo: 'MessengerLogo',
 };
 
 const require = createRequire(import.meta.url);

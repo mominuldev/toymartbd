@@ -8,8 +8,10 @@ use App\Domain\Notification\Actions\ArchiveNotificationTemplate;
 use App\Domain\Notification\Actions\CreateCustomTemplate;
 use App\Domain\Notification\Actions\RestoreTemplateVersion;
 use App\Domain\Notification\Actions\SetWhatsAppApprovalStatus;
+use App\Domain\Notification\Actions\SyncWhatsAppTemplateStatuses;
 use App\Domain\Notification\Actions\UpdateNotificationTemplate;
 use App\Domain\Notification\Exceptions\TemplateLibraryViolation;
+use App\Domain\Notification\Exceptions\WhatsAppTemplateSyncFailed;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Models\NotificationTemplateVersion;
 use App\Domain\Notification\Services\TemplateMeasurer;
@@ -19,11 +21,13 @@ use App\Http\Requests\Admin\Notification\ArchiveNotificationTemplateRequest;
 use App\Http\Requests\Admin\Notification\PreviewNotificationTemplateRequest;
 use App\Http\Requests\Admin\Notification\RestoreNotificationTemplateVersionRequest;
 use App\Http\Requests\Admin\Notification\StoreNotificationTemplateRequest;
+use App\Http\Requests\Admin\Notification\SyncWhatsAppTemplatesRequest;
 use App\Http\Requests\Admin\Notification\UpdateNotificationTemplateRequest;
 use App\Http\Requests\Admin\Notification\UpdateWhatsAppStatusRequest;
 use App\Http\Resources\Admin\NotificationTemplatePreviewResource;
 use App\Http\Resources\Admin\NotificationTemplateResource;
 use App\Http\Resources\Admin\NotificationTemplateVersionResource;
+use App\Http\Resources\Admin\WhatsAppTemplateSyncResource;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,6 +36,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 /**
  * Notification templates (P4-NOT-03, P4-I18N-03) and the Message templates library (P7) —
@@ -197,6 +202,26 @@ final class NotificationTemplateController extends ApiController
         }
 
         return new NotificationTemplateResource($saved->load('editor'));
+    }
+
+    /**
+     * `POST /notifications/templates/whatsapp/sync` — "Sync from Meta": reads the WhatsApp
+     * Business Account's templates (`GET /{waba-id}/message_templates`) and records each local
+     * WhatsApp template's status (matched on provider name + language) through the same Action as
+     * a manual change. Needs settings.update. 409 when the Business Account id or access token is
+     * not set, or Meta refused them (the detail names the Graph error code, e.g. `meta_190`); 503
+     * when Meta cannot be reached. Nothing changes on either. Rate-limited.
+     */
+    #[OpenApiResponse(409, 'Business Account id / access token not set, or refused by Meta (`conflict`, detail names the code)')]
+    #[OpenApiResponse(503, 'Meta unreachable (`service-unavailable`); nothing changed')]
+    #[OpenApiResponse(429, 'Too many syncs (`too-many-requests`)')]
+    public function syncWhatsApp(SyncWhatsAppTemplatesRequest $request, SyncWhatsAppTemplateStatuses $sync): WhatsAppTemplateSyncResource
+    {
+        try {
+            return new WhatsAppTemplateSyncResource($sync->handle($this->userId($request)));
+        } catch (WhatsAppTemplateSyncFailed $e) {
+            throw $e->configuration ? new ConflictHttpException($e->getMessage(), $e) : new ServiceUnavailableHttpException(null, $e->getMessage(), $e);
+        }
     }
 
     /**

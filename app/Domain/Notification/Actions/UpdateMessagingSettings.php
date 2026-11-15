@@ -35,6 +35,10 @@ final readonly class UpdateMessagingSettings
                 MessagingSettings::SMS_COST_PER_SEGMENT => Money::of($data->costPerSegment)->toDecimal(),
                 MessagingSettings::WHATSAPP_ENABLED => $data->whatsappEnabled,
             ];
+            // Absent from an older client: keep whatever driver is saved.
+            if ($data->whatsappDriver !== null) {
+                $plain[MessagingSettings::WHATSAPP_DRIVER] = $data->whatsappDriver;
+            }
 
             $after = [];
             foreach ($plain as $key => $value) {

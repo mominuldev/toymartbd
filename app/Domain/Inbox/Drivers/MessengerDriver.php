@@ -39,8 +39,10 @@ use RuntimeException;
  *    `access_token` query parameter; we send it as a Bearer header instead so it can never
  *    appear in a logged URL — ASSUMPTION: Graph accepts the header form here as it does
  *    elsewhere. Verify on the first real Page.
- *  - The standard messaging window is 24 hours. The HUMAN_AGENT tag (7 days) is NOT used:
- *    whether it needs approval could not be confirmed from the docs.
+ *  - The standard messaging window is 24 hours. From 24 hours to 7 days a human reply may go
+ *    with `messaging_type: MESSAGE_TAG, tag: HUMAN_AGENT` (…/send-messages/message-tags) —
+ *    only when the inbox's human-agent switch is on ({@see \App\Domain\Inbox\Services\ReplyWindow}).
+ *    Whether the tag needs Meta app review / a permission could NOT be confirmed.
  *  - The sender's name is not in the webhook (it needs a separate User Profile call, which
  *    is not built); a Messenger thread has no name and no phone until linked.
  */
@@ -143,7 +145,8 @@ final readonly class MessengerDriver implements InboxChannelDriver, ReceivesWebh
                 ->timeout((int) config('inbox.timeout', 10))
                 ->post($url, [
                     'recipient' => ['id' => $message->recipient],
-                    'messaging_type' => 'RESPONSE',
+                    // HUMAN_AGENT (24 h – 7 days after the user's last message) goes as a message tag.
+                    ...($message->tag === null ? ['messaging_type' => 'RESPONSE'] : ['messaging_type' => 'MESSAGE_TAG', 'tag' => $message->tag]),
                     'message' => ['text' => $message->body],
                 ]);
         } catch (ConnectionException) {

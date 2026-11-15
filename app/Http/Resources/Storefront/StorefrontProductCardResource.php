@@ -88,6 +88,13 @@ final class StorefrontProductCardResource extends ApiResource
             /** @var int */
             'variant_count' => $variants->count(),
             /**
+             * The one active variant of a single-variant product, so a card can add it to the
+             * cart directly; null when the shopper must choose an option on the product page.
+             *
+             * @var int|null
+             */
+            'default_variant_id' => $variants->count() === 1 ? $variants->first()?->id : null,
+            /**
              * An active variant has available stock (on_hand − reserved > 0). Sold-out
              * cards stay listed and show their out-of-stock state.
              *

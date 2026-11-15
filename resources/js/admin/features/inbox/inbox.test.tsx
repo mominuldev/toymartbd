@@ -2,7 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
-import type { Conversation, ConversationDetail, InboxMessage } from './api';
+import type { Conversation, ConversationDetail, InboxMessage, InboxTemplate } from './api';
 
 afterEach(() => {
     cleanup();
@@ -34,6 +34,7 @@ const nusrat: Conversation = {
     last_message_preview: 'আমার পার্সেল কোথায়? অর্ডার TMB-26-00121',
     last_message_direction: 'in',
     window: { applies: true, open: true, expires_at: soon },
+    reply: { state: 'open', window_closes_at: soon },
 };
 const shahriar: Conversation = {
     ...nusrat,
@@ -74,6 +75,8 @@ const msg = (m: Partial<InboxMessage> & Pick<InboxMessage, 'id'>): InboxMessage 
     assignee_name: null,
     actor: null,
     unsupported_type: null,
+    template: null,
+    tag: null,
     sender: null,
     delivery_status: null,
     failure_code: null,
@@ -222,17 +225,18 @@ describe('Inbox composer', () => {
         expect(calls(fetchMock, 'POST', '/inbox/conversations/1/messages')).toHaveLength(1);
     });
 
-    it('disables replies outside the 24-hour window but still allows a note', async () => {
-        inboxApi(operator, { 'GET /inbox/conversations/1': { status: 200, body: detail({ ...nusrat, unread_count: 0, window: { applies: true, open: false, expires_at: ago(60) } }) } });
+    it('replaces the reply box with the template panel after the WhatsApp window, but still allows a note', async () => {
+        inboxApi(operator, { 'GET /inbox/conversations/1': { status: 200, body: detail({ ...nusrat, unread_count: 0, window: { applies: true, open: false, expires_at: ago(60) }, reply: { state: 'template_only', window_closes_at: ago(60) } }) } });
         renderApp('/inbox/1');
 
-        expect(await screen.findByText(/The 24-hour window has closed/)).toBeTruthy();
-        expect(screen.getByRole('textbox', { name: 'Reply' })).toHaveProperty('disabled', true);
-        expect(screen.getByRole('button', { name: 'Send' })).toHaveProperty('disabled', true);
+        expect(await screen.findByRole('heading', { name: 'Send a template' })).toBeTruthy();
+        expect(screen.getByText(/The 24-hour window closed/)).toBeTruthy();
+        expect(screen.queryByRole('textbox', { name: 'Reply' })).toBeNull();
         expect(screen.getByRole('button', { name: /Send product card/ })).toHaveProperty('disabled', true);
 
         fireEvent.click(screen.getByRole('radio', { name: 'Internal note' }));
         expect(screen.getByRole('textbox', { name: 'Internal note' })).toHaveProperty('disabled', false);
+        expect(screen.queryByRole('heading', { name: 'Send a template' })).toBeNull();
     });
 
     it('shows no composer to someone who can only read', async () => {
@@ -294,5 +298,110 @@ describe('Inbox customer panel', () => {
         const panel = await screen.findByRole('complementary', { name: 'কাস্টমার' });
         expect(within(panel).getByText('2 · 1টি ডেলিভারি')).toBeTruthy();
         expect(within(panel).getByText('ঝুঁকি (আমাদের)')).toBeTruthy();
+    });
+});
+
+const confirmed: InboxTemplate = {
+    key: 'order.confirmed',
+    template: 'order_confirmed',
+    language: 'bn_BD',
+    locale: 'bn',
+    name: null,
+    body: 'আপনার অর্ডার *{{1}}* কনফার্ম হয়েছে, প্যাক করা হচ্ছে। ডেলিভারি হবে {{2}}। ঠিকানা বদলাতে 09600123456 নম্বরে ফোন করুন।',
+    parameters: [
+        { position: 1, name: 'order_number', example: 'TMB-26-00482' },
+        { position: 2, name: 'date_range', example: '2-3 দিন' },
+    ],
+};
+
+const closedWa = detail({ ...nusrat, unread_count: 0, window: { applies: true, open: false, expires_at: ago(600) }, reply: { state: 'template_only', window_closes_at: ago(600) } });
+
+describe('Inbox restart with a template', () => {
+    it('picks an approved template, fills its values with a live preview, and sends it', async () => {
+        const fetchMock = inboxApi(operator, {
+            'GET /inbox/conversations/1': { status: 200, body: closedWa },
+            'GET /inbox/conversations/1/templates': { status: 200, body: { data: [confirmed], meta: { locale: 'bn' } } },
+            'POST /inbox/conversations/1/template': { status: 202, body: msg({ id: 96, direction: 'out', kind: 'template', body: 'x', delivery_status: 'queued' }) },
+        });
+        renderApp('/inbox/1');
+
+        const picker = await screen.findByRole('combobox', { name: 'Template' });
+        expect(screen.getByText('Sent in Bangla, the customer’s language.')).toBeTruthy();
+        fireEvent.change(picker, { target: { value: 'order_confirmed' } });
+        expect(within(picker).getByRole('option', { name: 'Order confirmed' })).toBeTruthy();
+
+        const first = screen.getByRole('textbox', { name: '{{1}} · Order number' });
+        const second = screen.getByRole('textbox', { name: '{{2}} · Delivery window' });
+        expect(first.getAttribute('placeholder')).toBe('TMB-26-00482');
+
+        // Sending with an empty value explains instead of posting.
+        fireEvent.click(screen.getByRole('button', { name: 'Send template' }));
+        expect((await screen.findByRole('alert')).textContent).toContain('Fill in every value.');
+        expect(calls(fetchMock, 'POST', '/template')).toHaveLength(0);
+
+        fireEvent.change(first, { target: { value: 'TMB-26-00121' } });
+        fireEvent.change(second, { target: { value: 'আগামীকাল' } });
+        const preview = screen.getByRole('note', { name: 'Preview' });
+        expect(preview.textContent).toContain('*TMB-26-00121*');
+        expect(preview.textContent).toContain('আগামীকাল');
+        expect(preview.getAttribute('lang')).toBe('bn');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Send template' }));
+        await waitFor(() => expect(calls(fetchMock, 'POST', '/inbox/conversations/1/template')).toHaveLength(1));
+        expect(JSON.parse(String(calls(fetchMock, 'POST', '/template')[0]![1]!.body))).toEqual({ template: 'order_confirmed', language: 'bn_BD', parameters: ['TMB-26-00121', 'আগামীকাল'] });
+        expect(await screen.findByText('Template queued')).toBeTruthy();
+        await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('combobox', { name: 'Template' })));
+    });
+
+    it('says so when no template is approved', async () => {
+        inboxApi(operator, {
+            'GET /inbox/conversations/1': { status: 200, body: closedWa },
+            'GET /inbox/conversations/1/templates': { status: 200, body: { data: [], meta: { locale: 'bn' } } },
+        });
+        renderApp('/inbox/1');
+
+        expect(await screen.findByText(/No WhatsApp template is approved for sending/)).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Send template' })).toBeNull();
+    });
+
+    it('labels a sent template in the thread', async () => {
+        inboxApi(operator, {
+            'GET /inbox/conversations/1/messages': {
+                status: 200,
+                body: { data: [msg({ id: 20, direction: 'out', kind: 'template', body: 'Your order *TMB-26-00121* is confirmed.', template: { name: 'order_confirmed', language: 'en' }, delivery_status: 'delivered' })], links: {}, meta: { next_cursor: null, prev_cursor: null, per_page: 50 } },
+            },
+        });
+        renderApp('/inbox/1');
+
+        expect(await screen.findByText('Template · order_confirmed')).toBeTruthy();
+    });
+});
+
+describe('Inbox Messenger after 24 hours', () => {
+    it('allows a reply in the human-agent period and says it goes with the tag', async () => {
+        const later = new Date(Date.now() + 4 * 86_400_000).toISOString();
+        const fetchMock = inboxApi(operator, { 'GET /inbox/conversations/2': { status: 200, body: detail({ ...shahriar, window: { applies: true, open: false, expires_at: ago(3000) }, reply: { state: 'human_agent', window_closes_at: later } }) } });
+        renderApp('/inbox/2');
+
+        expect(await screen.findByText(/This reply goes with Meta’s human-agent tag/)).toBeTruthy();
+        expect(screen.getByText(/Messenger human-agent reply · possible until/)).toBeTruthy();
+        const box = screen.getByRole('textbox', { name: 'Reply' });
+        expect(box).toHaveProperty('disabled', false);
+        fireEvent.change(box, { target: { value: 'Sorry for the wait' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+        await waitFor(() => expect(calls(fetchMock, 'POST', '/inbox/conversations/2/messages')).toHaveLength(1));
+    });
+
+    it('explains why no reply is possible when the human-agent tag is off, and after 7 days', async () => {
+        inboxApi(operator, { 'GET /inbox/conversations/2': { status: 200, body: detail({ ...shahriar, window: { applies: true, open: false, expires_at: ago(600) }, reply: { state: 'closed', window_closes_at: ago(600) } }) } });
+        renderApp('/inbox/2');
+
+        expect(await screen.findByText(/the human-agent tag \(up to 7 days\) is switched off/)).toBeTruthy();
+        expect(screen.getByRole('textbox', { name: 'Reply' })).toHaveProperty('disabled', true);
+        cleanup();
+
+        inboxApi(operator, { 'GET /inbox/conversations/2': { status: 200, body: detail({ ...shahriar, window: { applies: true, open: false, expires_at: ago(8 * 1440) }, reply: { state: 'closed', window_closes_at: ago(8 * 1440) } }) } });
+        renderApp('/inbox/2');
+        expect(await screen.findByText(/More than 7 days have passed/)).toBeTruthy();
     });
 });

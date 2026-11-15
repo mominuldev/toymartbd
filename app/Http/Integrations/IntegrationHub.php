@@ -211,11 +211,11 @@ final readonly class IntegrationHub
 
         $items = [$this->item('sms', 'SMS gateway', 'messaging', $status, $notes, $attention, path: $path)];
 
-        // Order notifications: no WhatsApp provider sends them (notifications.whatsapp.driver is
-        // log | null). Switched on, the log driver swallows every message and the SMS fallback
-        // never fires — the customer gets nothing.
+        // Order notifications: switched on with the log / null WhatsApp driver, every message is
+        // swallowed and the SMS fallback never fires — the customer gets nothing. With `cloud`
+        // they go through the Inbox's number, so the row is the Inbox channel's (never verified).
         $inbox = collect($this->inbox->summary())->keyBy('channel');
-        if ($this->messaging->whatsappEnabled()) {
+        if ($this->messaging->whatsappEnabled() && $this->messaging->whatsappDriver() !== 'cloud') {
             $items[] = $this->item('whatsapp', 'WhatsApp Business', 'messaging', 'needs_attention', ['no_driver'], 'whatsapp_on_without_driver', enabled: true, path: $path);
         } else {
             $items[] = $this->inboxChannel('whatsapp', 'WhatsApp Business', $inbox->get('whatsapp'));
