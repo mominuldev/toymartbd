@@ -47,7 +47,10 @@ final class PdfText
     /** Bangla consonants and independent vowels only (no signs, no hasant, no PUA, no spaces). */
     public static function banglaLetters(string $text): string
     {
-        // NFD first: ড় / ঢ় / য় may arrive precomposed (U+09DC…) or as letter + nukta.
+        // Scrub first: a binary stream that happens to contain "BT" (an embedded font) decodes
+        // to invalid UTF-8, and preg_replace() with /u returns null on that.
+        $text = mb_scrub($text, 'UTF-8');
+        // NFD next: ড় / ঢ় / য় may arrive precomposed (U+09DC…) or as letter + nukta.
         $decomposed = Normalizer::normalize($text, Normalizer::FORM_D);
 
         return (string) preg_replace('/[^\x{0985}-\x{09B9}\x{09CE}]/u', '', is_string($decomposed) ? $decomposed : $text);

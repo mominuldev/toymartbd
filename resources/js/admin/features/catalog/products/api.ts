@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { StoreProductRequestInput } from '@toymart/api-types/zod';
+import type { PrintLabelsRequestInput, StoreProductRequestInput } from '@toymart/api-types/zod';
 import { ApiError, api, apiLocale, csrfToken, isProblem } from '@/lib/api';
 import type { Brand } from '../brands/api';
 
@@ -248,4 +248,88 @@ export function useRemoveCertificate(productId: number) {
         mutationFn: () => api<ProductCompliance>(`/products/${productId}/compliance/certificate`, { method: 'DELETE' }),
         onSuccess: (compliance) => patchCompliance(client, productId, compliance),
     });
+}
+
+/* ---------- Barcodes and labels ---------- */
+
+export type GeneratedBarcode = Schema<'GeneratedBarcode'>;
+export type LabelTemplateInfo = Schema<'LabelTemplateInfo'>;
+export type LabelTemplate = LabelTemplateInfo['value'];
+export type PrintLabelsInput = PrintLabelsRequestInput;
+
+/**
+ * In-store EAN-13s for this product's variants without a barcode (`variant_ids`, or every
+ * active one). The server never replaces a barcode; the cached product is patched in place so
+ * an open form keeps its other unsaved edits.
+ */
+export function useGenerateBarcodes(productId: number) {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (variantIds?: number[]) =>
+            api<{ data: GeneratedBarcode[] }>(`/products/${productId}/barcodes`, { method: 'POST', body: JSON.stringify(variantIds ? { variant_ids: variantIds } : {}) }).then((r) => r.data),
+        onSuccess: (generated) => {
+            const codes = new Map(generated.map((g) => [g.id, g.barcode]));
+            client.setQueryData<Product>(keys.one(productId), (current) =>
+                current ? { ...current, variants: current.variants.map((v) => (codes.has(v.id) ? { ...v, barcode: codes.get(v.id) ?? v.barcode } : v)) } : current,
+            );
+            void client.invalidateQueries({ queryKey: [...keys.all, 'list'] });
+        },
+    });
+}
+
+/** The label stocks with their size in mm (GET /products/labels/templates). */
+export function useLabelTemplates(enabled = true) {
+    return useQuery({
+        queryKey: ['products', 'label-templates'],
+        queryFn: () => api<{ data: LabelTemplateInfo[] }>('/products/labels/templates').then((r) => r.data),
+        staleTime: Infinity,
+        enabled,
+    });
+}
+
+/** The full product documents for a list selection (cached per product), for the label dialog. */
+export function useProductsById(ids: number[], enabled: boolean) {
+    return useQueries({
+        queries: ids.map((id) => ({ queryKey: keys.one(id), queryFn: () => api<Product>(`/products/${id}`), enabled })),
+    });
+}
+
+/**
+ * POST /products/labels and hand the PDF to the browser as a download (cookie session +
+ * CSRF, like the shipping labels). A problem response becomes an ApiError.
+ */
+export function usePrintLabels() {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: async (input: PrintLabelsInput) => {
+            const response = await fetch('/api/v1/admin/products/labels', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { Accept: 'application/pdf, application/problem+json', 'Content-Type': 'application/json', 'Accept-Language': apiLocale(), 'X-XSRF-TOKEN': csrfToken() },
+                body: JSON.stringify(input),
+            });
+            if (!response.ok) {
+                const payload: unknown = await response.json().catch(() => null);
+                throw new ApiError(response.status, isProblem(payload) ? payload : { type: 'about:blank', title: response.statusText || 'Printing failed', status: response.status });
+            }
+            const disposition = response.headers.get('Content-Disposition') ?? '';
+            const filename = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'labels.pdf';
+            saveBlob(await response.blob(), filename);
+        },
+        onSuccess: (_, input) => {
+            // generate_missing wrote barcodes: refetch what shows them.
+            if (input.generate_missing) void client.invalidateQueries({ queryKey: keys.all });
+        },
+    });
+}
+
+function saveBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

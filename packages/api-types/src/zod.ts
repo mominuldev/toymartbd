@@ -37,6 +37,9 @@ export type ExpenseRecurrence = z.infer<typeof expenseRecurrenceSchema>;
 export const genderSchema = z.enum(["boys","girls","unisex"]);
 export type Gender = z.infer<typeof genderSchema>;
 
+export const labelTemplateSchema = z.enum(["roll_38x25","roll_50x25","a4_65","a4_24"]);
+export type LabelTemplate = z.infer<typeof labelTemplateSchema>;
+
 export const landedCostMethodSchema = z.enum(["value","quantity","weight"]);
 export type LandedCostMethod = z.infer<typeof landedCostMethodSchema>;
 
@@ -252,6 +255,12 @@ export const bulkFulfilOrdersRequestSchema = z.object({
     "courier_name": z.string().max(120).nullable().optional(),
 });
 export type BulkFulfilOrdersRequestInput = z.input<typeof bulkFulfilOrdersRequestSchema>;
+
+/** `POST /products/barcodes` — every active variant without a barcode, of each of */
+export const bulkGenerateBarcodesRequestSchema = z.object({
+    "product_ids": z.array(z.number().int()).min(1).max(200),
+});
+export type BulkGenerateBarcodesRequestInput = z.input<typeof bulkGenerateBarcodesRequestSchema>;
 
 /** `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct */
 export const bulkMediaRequestSchema = z.object({
@@ -475,6 +484,12 @@ export const expenseRequestSchema = z.object({
 });
 export type ExpenseRequestInput = z.input<typeof expenseRequestSchema>;
 
+/** `POST /products/{product}/barcodes` — give this product's variants without a barcode an */
+export const generateBarcodesRequestSchema = z.object({
+    "variant_ids": z.array(z.number().int()).min(1).max(500).optional(),
+});
+export type GenerateBarcodesRequestInput = z.input<typeof generateBarcodesRequestSchema>;
+
 /** `POST /coupons/generate` (coupon builder, P7) — the coupon document without `code`, */
 export const generateCouponsRequestSchema = z.object({
     "description": z.string().max(255).nullable().optional(),
@@ -676,6 +691,20 @@ export const previewNotificationTemplateRequestSchema = z.object({
     "body_bn": z.string().min(1).max(2000),
 });
 export type PreviewNotificationTemplateRequestInput = z.input<typeof previewNotificationTemplateRequestSchema>;
+
+/** `POST /products/labels` — barcode labels as one PDF. Needs catalog.view; with */
+export const printLabelsRequestSchema = z.object({
+    "items": z.array(z.object({
+    "variant_id": z.number().int(),
+    "copies": z.number().int().min(1).max(500),
+})).min(1).max(300),
+    "template": labelTemplateSchema,
+    "show_price": z.boolean().optional(),
+    "show_name": z.boolean().optional(),
+    "locale": z.enum(["en","bn"]).nullable().optional(),
+    "generate_missing": z.boolean().optional(),
+});
+export type PrintLabelsRequestInput = z.input<typeof printLabelsRequestSchema>;
 
 /** `POST /content/home/publish` — an optional note for the version history. */
 export const publishCmsLayoutRequestSchema = z.object({

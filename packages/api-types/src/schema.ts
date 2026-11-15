@@ -664,6 +664,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/products/barcodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /products/barcodes` — every active variant without a barcode of each of `product_ids` */
+        post: operations["v1.admin.products.barcodes.bulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/barcodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /products/{product}/barcodes` — this product's variants (or `variant_ids` of them) */
+        post: operations["v1.admin.products.barcodes.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/labels/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /products/labels/templates` — the label stocks with their size in mm; needs catalog.view */
+        get: operations["v1.admin.products.labels.templates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /products/labels` — the labels as `application/pdf`, in the order of `items`, each
+         *     repeated `copies` times. Needs catalog.view; `generate_missing: true` also needs
+         *     catalog.update and first gives the listed variants without a barcode an in-store EAN-13
+         */
+        post: operations["v1.admin.products.labels.print"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/seo/meta/{type}/{id}": {
         parameters: {
             query?: never;
@@ -8103,6 +8175,15 @@ export interface components {
             courier_name?: string | null;
         };
         /**
+         * BulkGenerateBarcodesRequest
+         * @description `POST /products/barcodes` — every active variant without a barcode, of each of
+         *     `product_ids` (≤ 200), gets an in-store EAN-13 (GenerateVariantBarcodes). Needs
+         *     catalog.update. A barcode that is already set is never replaced.
+         */
+        BulkGenerateBarcodesRequest: {
+            product_ids: number[];
+        };
+        /**
          * BulkMediaRequest
          * @description `POST /media/bulk/delete` and `POST /media/bulk/download` — `{ ids }`, 1–200 distinct
          *     integers. Both need media.delete (deleteAny). Delete reports unknown ids as
@@ -9932,6 +10013,17 @@ export interface components {
          */
         Gender: "boys" | "girls" | "unisex";
         /**
+         * GenerateBarcodesRequest
+         * @description `POST /products/{product}/barcodes` — give this product's variants without a barcode an
+         *     in-store EAN-13 (GenerateVariantBarcodes). Needs catalog.update. `variant_ids` (optional)
+         *     picks some of ITS variants, any status; without it every active variant without a barcode
+         *     gets one. A barcode that is already set is never replaced.
+         */
+        GenerateBarcodesRequest: {
+            /** @description Some of this product's variants (any status); omit for every active variant without a barcode. */
+            variant_ids?: number[];
+        };
+        /**
          * GenerateCouponsRequest
          * @description `POST /coupons/generate` (coupon builder, P7) — the coupon document without `code`,
          *     plus `count` (1–1000), `prefix` (optional, ≤ 12), `code_length` (6–16, default 8) and
@@ -9962,6 +10054,13 @@ export interface components {
             prefix?: string | null;
             code_length?: number;
             batch: string;
+        };
+        /** GeneratedBarcode */
+        GeneratedBarcode: {
+            id: number;
+            product_id: number;
+            sku: string;
+            barcode: string;
         };
         /** HealthReportResource */
         HealthReportResource: {
@@ -10935,6 +11034,25 @@ export interface components {
         IssueCmsPreviewTokenRequest: {
             /** @enum {string} */
             locale?: "en" | "bn";
+        };
+        /**
+         * LabelTemplate
+         * @description Barcode label stock (owner request 2026-11-16). All sizes in millimetres. - `roll_38x25`, `roll_50x25` — one label per page, for the thermal roll printers common in   Bangladeshi shops (the printer driver's page size is the label). - `a4_65` — A4 sheet, 5 × 13 labels of 38.1 × 21.2 (Avery L7651: 10.7 top, 4.7 side margin,   2.5 column gap, no row gap). - `a4_24` — A4 sheet, 3 × 8 labels of 70 × 37, no gaps (the Avery 3474 layout). Eight rows of   37 take 296 of the sheet's 297, so the top margin is 0.5, not the 4.5 of the 70 × 36   sheets — 4.5 would push the last row 3.5 off the page.
+         * @enum {string}
+         */
+        LabelTemplate: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+        /** LabelTemplateInfo */
+        LabelTemplateInfo: {
+            /** @enum {string} */
+            value: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+            /** @enum {string} */
+            stock: "roll" | "a4";
+            /** @description Label width, mm, as a decimal string ("38.1"). */
+            width_mm: string;
+            /** @description Label height, mm, as a decimal string ("21.2"). */
+            height_mm: string;
+            /** @description Labels per page: 1 on a roll. */
+            per_page: number;
         };
         /**
          * LandedCostMethod
@@ -12415,6 +12533,33 @@ export interface components {
         PreviewNotificationTemplateRequest: {
             body_en: string;
             body_bn: string;
+        };
+        /**
+         * PrintLabelsRequest
+         * @description `POST /products/labels` — barcode labels as one PDF. Needs catalog.view; with
+         *     `generate_missing: true` also catalog.update (it writes barcodes first), else 403.
+         *
+         *     `items[] {variant_id, copies}` — ≤ 300 items, copies 1–500, ≤ 5,000 labels in all; printed
+         *     in the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless
+         *     `generate_missing` is true. Only the fields below are accepted; any other is a 422.
+         */
+        PrintLabelsRequest: {
+            items: {
+                variant_id: number;
+                copies: number;
+            }[];
+            template: components["schemas"]["LabelTemplate"];
+            /** @description Print the selling price (default true). */
+            show_price?: boolean;
+            /** @description Print the product and variant name (default true). */
+            show_name?: boolean;
+            /**
+             * @description Language of the printed name, falling back to English (default `en`).
+             * @enum {string|null}
+             */
+            locale?: "en" | "bn" | null;
+            /** @description Generate in-store EAN-13s for variants without a barcode first; needs catalog.update. */
+            generate_missing?: boolean;
         };
         /**
          * ProblemDetails
@@ -18897,6 +19042,155 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.barcodes.bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkGenerateBarcodesRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `GeneratedBarcode` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["GeneratedBarcode"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description A generated code was taken at the same moment, or the prefix is exhausted (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.barcodes.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateBarcodesRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `GeneratedBarcode` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["GeneratedBarcode"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description A generated code was taken at the same moment, or the prefix is exhausted (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.products.labels.templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `LabelTemplateInfo` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LabelTemplateInfo"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.products.labels.print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrintLabelsRequest"];
+            };
+        };
+        responses: {
+            /** @description The labels PDF */
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    "Cache-Control"?: "no-store, private";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing catalog.view, or `generate_missing` without catalog.update (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A variant has no barcode (`items.N.variant_id`), or a cap is exceeded (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.seo.meta.show": {

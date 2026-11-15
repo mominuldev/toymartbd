@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ExportIcon, ImageIcon, PlusIcon } from '@phosphor-icons/react';
+import { ExportIcon, ImageIcon, PlusIcon, PrinterIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
@@ -14,10 +14,14 @@ import { Select } from '@/components/ui/Select';
 import { TabButton } from '@/components/ui/Tabs';
 import { formatDhakaDate } from '@/lib/format';
 import { flatten, useCategoryTree } from '../categories/api';
-import { productSorts, productTypes, useBrandOptions, useProducts, type ProductFilters, type ProductListItem, type ProductSort, type ProductStatus, type ProductType } from './api';
+import { productSorts, productTypes, useBrandOptions, useProducts, useProductsById, type ProductFilters, type ProductListItem, type ProductSort, type ProductStatus, type ProductType } from './api';
 import { formatMoney } from './document';
 import { ProductStatusChip, Taka } from './parts';
 import { ImportExportDialog } from './importExport/ImportExportDialog';
+import { PrintLabelsDialog } from './PrintLabelsDialog';
+
+/** Products per label run from the list: each needs its full document (variants) fetched first. */
+const MAX_LABEL_PRODUCTS = 50;
 
 const statusTabs: { value: ProductStatus | ''; label: MessageKey }[] = [
     { value: '', label: 'common.all' },
@@ -120,6 +124,23 @@ export function ProductsPage() {
     );
     const cell = `${dataTable.td} max-lg:h-auto max-lg:p-0`;
     const [ioOpen, setIoOpen] = useState(false);
+
+    // Bulk "Print labels": the selected products' variants, from their full documents.
+    const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [labelsOpen, setLabelsOpen] = useState(false);
+    const selectedIds = useMemo(() => [...selected], [selected]);
+    const details = useProductsById(selectedIds, labelsOpen);
+    const labelProducts = details.flatMap((q) => (q.data ? [q.data] : []));
+    const allOnPage = products.length > 0 && products.every((item) => selected.has(item.id));
+    const tooManyForLabels = selected.size > MAX_LABEL_PRODUCTS;
+    const toggle = (productId: number) =>
+        setSelected((current) => {
+            const next = new Set(current);
+            if (next.has(productId)) next.delete(productId);
+            else next.add(productId);
+            return next;
+        });
+    const toggleAll = () => setSelected(allOnPage ? new Set() : new Set(products.map((item) => item.id)));
     // Figma 241:37251: the outline "Import / export" AdminButton sits before "Add product".
     const headerActions = (
         <>
@@ -140,6 +161,13 @@ export function ProductsPage() {
                 actions={headerActions}
             />
             <ImportExportDialog open={ioOpen} onClose={() => setIoOpen(false)} filters={{ ...filters, search: debounced }} canImport={can(me, 'catalog.import')} />
+            <PrintLabelsDialog
+                open={labelsOpen}
+                onClose={() => setLabelsOpen(false)}
+                products={labelProducts}
+                loading={details.some((q) => q.isPending)}
+                canGenerate={can(me, 'catalog.update')}
+            />
 
             <div role="group" aria-label={t('products.statusFilter')} className="scrollbar-none flex overflow-x-auto border-b border-line-default">
                 {statusTabs.map((tab) => (
@@ -202,9 +230,27 @@ export function ProductsPage() {
                 )
             ) : (
                 <div className={dataTable.card}>
+                    {selected.size > 0 && (
+                        <div role="region" aria-label={t('products.bulk.label')} className="flex flex-wrap items-center gap-3 border-b border-line-default bg-brand-subtle px-4 py-2.5">
+                            <p className="min-w-0 flex-1 t-admin-body-strong text-fg-primary" aria-live="polite">
+                                {t('products.bulk.selected', { count: selected.size })}
+                                {tooManyForLabels && <span className="ms-2 t-admin-caption text-fg-secondary">{t('products.labels.tooMany', { max: MAX_LABEL_PRODUCTS })}</span>}
+                            </p>
+                            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                                {t('products.bulk.clear')}
+                            </Button>
+                            <Button size="sm" onClick={() => setLabelsOpen(true)} disabled={tooManyForLabels}>
+                                <PrinterIcon size={16} aria-hidden />
+                                {t('products.labels.open')}
+                            </Button>
+                        </div>
+                    )}
                     <table className={dataTable.table}>
                         <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
                             <tr>
+                                <th scope="col" className={`w-10 ${dataTable.th}`}>
+                                    <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label={t('products.selectAll')} className="size-4 accent-brand" />
+                                </th>
                                 <Th>{t('products.col.product')}</Th>
                                 <Th>{t('products.col.category')}</Th>
                                 <Th>{t('products.col.brand')}</Th>
@@ -220,7 +266,10 @@ export function ProductsPage() {
                                 const price = priceRange(item);
                                 return (
                                     <tr key={item.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${dataTable.row}`}>
-                                        <td className={`min-w-0 basis-full lg:basis-auto ${cell}`}>
+                                        <td className={`w-10 ${cell}`}>
+                                            <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggle(item.id)} aria-label={t('products.select', { name: item.name })} className="size-4 accent-brand" />
+                                        </td>
+                                        <td className={`min-w-0 flex-1 lg:basis-auto ${cell}`}>
                                             <div className="flex items-center gap-2.5">
                                                 {item.image_url ? (
                                                     <img src={item.image_url} alt="" className="size-11 shrink-0 rounded-xs-plus object-cover" />

@@ -27,11 +27,13 @@ use App\Http\Controllers\Api\V1\Admin\OrderInvoiceController;
 use App\Http\Controllers\Api\V1\Admin\OrderNoteController;
 use App\Http\Controllers\Api\V1\Admin\OrderPackingController;
 use App\Http\Controllers\Api\V1\Admin\OrderWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\ProductBarcodeController;
 use App\Http\Controllers\Api\V1\Admin\ProductComplianceController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
 use App\Http\Controllers\Api\V1\Admin\ProductExportController;
 use App\Http\Controllers\Api\V1\Admin\ProductImageController;
 use App\Http\Controllers\Api\V1\Admin\ProductImportController;
+use App\Http\Controllers\Api\V1\Admin\ProductLabelController;
 use App\Http\Controllers\Api\V1\Admin\ProductPricingController;
 use App\Http\Controllers\Api\V1\Admin\ProductSeoController;
 use App\Http\Controllers\Api\V1\Admin\PurchaseController;
@@ -135,6 +137,12 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // edits, and the BSTI certificate PDF (private; served only as a download).
     Route::post('/products/margin-preview', [ProductPricingController::class, 'marginPreview'])->name('products.margin-preview');
     Route::post('/products/seo-measure', [ProductSeoController::class, 'measure'])->name('products.seo-measure');
+
+    // In-store EAN-13 barcodes and barcode label PDFs (owner request 2026-11-16).
+    Route::post('/products/barcodes', [ProductBarcodeController::class, 'bulk'])->name('products.barcodes.bulk');
+    Route::post('/products/{product}/barcodes', [ProductBarcodeController::class, 'store'])->whereNumber('product')->name('products.barcodes.store');
+    Route::get('/products/labels/templates', [ProductLabelController::class, 'templates'])->name('products.labels.templates');
+    Route::post('/products/labels', [ProductLabelController::class, 'print'])->name('products.labels.print');
 
     // SEO module (P7, docs/api/seo.md §2): per-entity panel, redirects, sitemap, robots.txt.
     Route::prefix('seo')->name('seo.')->group(function (): void {
