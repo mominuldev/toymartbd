@@ -21,8 +21,11 @@
         </include>
     </source>
     <php>
-        <!-- The suite plus Scramble's OpenAPI generation needs more than PHP's 128M default. -->
-        <ini name="memory_limit" value="1G"/>
+        <!-- The suite plus Scramble's OpenAPI generation needs more than PHP's 128M default. 2G since
+             2026-11-15: a CI parallel worker crossed 1G inside the Media image tests (AVIF renditions on
+             the runner) once the POS Due tests were added — memory builds up per worker; not reproducible
+             locally (the same folders fit in 150M). Four workers × 2G fits the runner. -->
+        <ini name="memory_limit" value="2G"/>
         <env name="APP_ENV" value="testing"/>
         <!-- Staff two-factor: off so unrelated tests need no second factor; the 2FA tests switch it on. -->
         <env name="TWO_FACTOR_ENFORCE" value="false"/>
