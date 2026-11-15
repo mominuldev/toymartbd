@@ -12,6 +12,9 @@ rm -f "$DB_FILE" && touch "$DB_FILE"
 export APP_ENV=local APP_DEBUG=false APP_URL="http://localhost:$PORT"
 export DB_CONNECTION=sqlite DB_DATABASE="$DB_FILE"
 export SESSION_DRIVER=file CACHE_STORE=file QUEUE_CONNECTION=sync
+# Queued jobs run inline here, so an order mail would open SMTP inside the request: CI's .env
+# (from .env.example) points at 127.0.0.1:1025 with nothing listening, and the sale returned 500.
+export MAIL_MAILER=log
 export SANCTUM_STATEFUL_DOMAINS="localhost:$PORT" SESSION_DOMAIN=
 export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
