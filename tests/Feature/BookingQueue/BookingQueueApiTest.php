@@ -82,10 +82,13 @@ function bqActivatePathao(): CourierProvider
     return CourierProvider::query()->where('code', 'pathao')->sole();
 }
 
-it('counts each tab from real statuses, and only packed orders with no open shipment are ready', function (): void {
+it('counts each tab from real statuses; confirmed, processing and packed orders with no open shipment are ready', function (): void {
     Support::actingAs(Role::OrderOperator);
     $ready = bqOrder();
-    bqOrder(['status' => OrderStatus::Confirmed]);                               // not packed → not in the queue
+    // Not packed yet, but a courier may take them (owner, 2026-11-15): ready since confirmation.
+    $confirmed = bqOrder(['status' => OrderStatus::Confirmed, 'packed_at' => null, 'confirmed_at' => now()->subHours(3)]);
+    $processing = bqOrder(['status' => OrderStatus::Processing, 'packed_at' => null, 'confirmed_at' => now()->subHours(5)]);
+    bqOrder(['status' => OrderStatus::Pending, 'packed_at' => null]);              // not confirmed → never in the queue
     $submitted = bqOrder();
     bqShipment($submitted, ShipmentStatus::Submitted, ['pickup_requested_at' => now()]);
     $pending = bqOrder();
@@ -99,12 +102,18 @@ it('counts each tab from real statuses, and only packed orders with no open ship
 
     $json = $this->getJson(BQ)->assertOk()->json();
 
-    expect($json['counts'])->toBe(['ready' => 2, 'submitted' => 2, 'booked_today' => 1, 'failed' => 1, 'unmapped' => 0])
+    expect($json['counts'])->toBe(['ready' => 4, 'submitted' => 2, 'booked_today' => 1, 'failed' => 1, 'unmapped' => 0])
         ->and($json['cutoff_time'])->toMatch('/^\d{2}:\d{2}$/')
         ->and($json['production'])->toBeFalse();
 
     $rows = $this->getJson(BQ.'/ready')->assertOk()->json('data');
-    expect(collect($rows)->pluck('order_id')->all())->toBe([$ready->id, $failedAgain->id]);
+    expect(collect($rows)->pluck('order_id')->all())->toBe([$ready->id, $confirmed->id, $processing->id, $failedAgain->id]);
+    $byId = collect($rows)->keyBy('order_id');
+    expect($byId[$ready->id]['status'])->toBe('ready_to_ship')
+        ->and($byId[$ready->id]['ready_since'])->toBe($ready->packed_at->toIso8601String())
+        ->and($byId[$confirmed->id]['status'])->toBe('confirmed')
+        ->and($byId[$confirmed->id]['ready_since'])->toBe($confirmed->confirmed_at->toIso8601String())
+        ->and($byId[$processing->id]['status'])->toBe('processing');
 
     $awaiting = $this->getJson(BQ.'/shipments?filter[tab]=submitted')->assertOk()->json('data');
     expect(collect($awaiting)->pluck('shipment.status')->sort()->values()->all())->toBe(['pending', 'submitted'])
@@ -212,7 +221,20 @@ it('lists unmapped areas per courier and area, and drops one once mapped', funct
         'external_zone_id' => '20', 'external_zone_name' => 'Zone 20', 'district_id' => 8, 'upazila_id' => $upazilas[0]->id, 'is_mapped' => true, 'is_active' => true,
     ]);
     expect($this->getJson(BQ.'/unmapped')->json('data'))->toHaveCount(1)
-        ->and($this->getJson(BQ)->json('counts.unmapped'))->toBe(1);
+        ->and($this->getJson(BQ)->json('counts.unmapped'))->toBe(1)
+        ->and($areas[0]['reason'])->toBe('unmapped');
+
+    // A second zone mapped to the same upazila: bulk cannot choose, so the area is listed
+    // again as ambiguous (owner, 2026-11-15) — never resolved by guessing (rule 32).
+    CourierLocation::query()->create([
+        'provider_id' => $pathao->id, 'external_key' => '2:21:-', 'external_city_id' => '2', 'external_city_name' => 'Chattogram',
+        'external_zone_id' => '21', 'external_zone_name' => 'Zone 21', 'district_id' => 8, 'upazila_id' => $upazilas[0]->id, 'is_mapped' => true, 'is_active' => true,
+    ]);
+    $areas = collect($this->getJson(BQ.'/unmapped')->json('data'));
+    expect($areas)->toHaveCount(2)
+        ->and($areas->firstWhere('upazila.id', $upazilas[0]->id)['reason'])->toBe('ambiguous')
+        ->and($areas->firstWhere('upazila.id', $upazilas[1]->id)['reason'])->toBe('unmapped')
+        ->and($this->getJson(BQ)->json('counts.unmapped'))->toBe(2);
 });
 
 it('refuses an unlisted or missing filter with a 400 (rule 16)', function (): void {

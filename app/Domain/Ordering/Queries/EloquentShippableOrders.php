@@ -48,9 +48,12 @@ final class EloquentShippableOrders implements ShippableOrders
 
         $weight = 0;
         $count = 0;
+        $missing = $items->isEmpty();
         foreach ($items as $item) {
+            $grams = $item->variant_id !== null ? (int) ($weights[$item->variant_id] ?? 0) : 0;
             $count += $item->quantity;
-            $weight += (int) ($weights[$item->variant_id] ?? 0) * $item->quantity;
+            $weight += $grams * $item->quantity;
+            $missing = $missing || $grams <= 0;
         }
 
         $description = Str::limit($items->map(static fn (OrderItem $i): string => $i->quantity.'× '.$i->product_name)->implode(', '), 240, '…');
@@ -74,6 +77,7 @@ final class EloquentShippableOrders implements ShippableOrders
             weightGrams: $weight,
             itemCount: $count,
             itemDescription: $description,
+            weightMissing: $missing,
         );
     }
 }

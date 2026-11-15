@@ -86,6 +86,7 @@ const summary: BookingSummary = {
 const row = (over: Partial<ReadyOrder>): ReadyOrder => ({
     order_id: 125,
     number: 'TMB-26-00125',
+    status: 'ready_to_ship',
     ready_since: '2026-11-06T04:00:00Z',
     recipient_name: 'Abdullah Al Mamun',
     district: { id: 40, name: 'Khulna', name_bn: 'খুলনা' },
@@ -113,6 +114,9 @@ const ready: ReadyOrder[] = [
         order_id: 133,
         number: 'TMB-26-00133',
         recipient_name: 'Riya Saha',
+        // Confirmed, not packed yet: a courier may still take it (owner, 2026-11-15).
+        status: 'confirmed',
+        ready_since: '2026-11-14T04:00:00Z',
         weight_grams: 1200,
         cod_amount: '1780.00',
         zone: 'dhaka_suburb',
@@ -187,6 +191,7 @@ const shipment = (over: Partial<QueueShipment['shipment']>): QueueShipment['ship
 const unmapped: UnmappedArea[] = [
     {
         provider: { id: 2, code: 'pathao', name: 'Pathao', name_bn: 'পাঠাও' },
+        reason: 'ambiguous',
         district: { id: 40, name: 'Khulna', name_bn: 'খুলনা' },
         upazila: { id: 401, name: 'Sonadanga', name_bn: 'সোনাডাঙ্গা' },
         district_name: 'Khulna',
@@ -276,6 +281,8 @@ describe('courier booking queue', () => {
         expect(within(cards).getByText('৳3,240')).toBeTruthy();
         expect(within(cards).getByText(/no webhook received yet/)).toBeTruthy();
         expect(within(cards).queryByText('৳0')).toBeNull();
+        // A confirmed order not packed yet is ready too, and says so.
+        expect(await screen.findByText(/^confirmed .+ · not packed yet$/)).toBeTruthy();
         // The rule-24d notice is always on the ready tab.
         expect(screen.getByRole('note').textContent).toContain('Bulk booking returns no consignment IDs');
     });
@@ -380,6 +387,8 @@ describe('courier booking queue', () => {
         const link = await screen.findByRole('link', { name: 'Map area' });
         expect(link.getAttribute('href')).toBe('/shipments/locations?provider=pathao');
         expect(screen.getByText('Sonadanga, Khulna')).toBeTruthy();
+        // Listed for several mapped zones too, with the reason (owner, 2026-11-15).
+        expect(screen.getByText('Several zones mapped — bulk cannot choose')).toBeTruthy();
     });
 
     it('refuses a user without shipments.view', async () => {

@@ -5040,7 +5040,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /shipments/board/stats` — the stat tiles. In transit / submitted are live; the rest are outcome-dated in the range */
+        /** `GET /shipments/board/stats` — the stat tiles. In transit / submitted count the range's cohort (handed over in it); the rest are outcome-dated in the range */
         get: operations["v1.admin.shipments.board.stats"];
         put?: never;
         post?: never;
@@ -7727,7 +7727,12 @@ export interface components {
         BookingQueueOrder: {
             order_id: number;
             number: string;
-            /** @description When the order was packed (entered ready_to_ship). */
+            /**
+             * @description Not yet packed unless ready_to_ship.
+             * @enum {string}
+             */
+            status: "confirmed" | "processing" | "ready_to_ship";
+            /** @description When it was packed (ready_to_ship), else when it was confirmed. */
             ready_since: string | null;
             recipient_name: string;
             district: {
@@ -7816,6 +7821,11 @@ export interface components {
                 name: string;
                 name_bn: string | null;
             };
+            /**
+             * @description No zone mapped to the area, or several (bulk cannot choose; the booking drawer can).
+             * @enum {string}
+             */
+            reason: "unmapped" | "ambiguous";
             district: {
                 id: number;
                 name: string;

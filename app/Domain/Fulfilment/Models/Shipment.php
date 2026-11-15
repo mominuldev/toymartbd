@@ -138,6 +138,9 @@ final class Shipment extends Model
 
     public const string FAILURE_NO_BULK = 'bulk_unsupported';
 
+    /** A line has no weight: the parcel would be understated (owner decision 2026-11-15; rule 32a). */
+    public const string FAILURE_MISSING_WEIGHT = 'missing_weight';
+
     /** Courier accepted, but marking the order shipped failed — retry completes it without a second booking. */
     public const string FAILURE_COMPLETION = 'completion_failed';
 

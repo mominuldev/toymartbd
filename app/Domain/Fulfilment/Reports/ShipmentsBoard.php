@@ -115,8 +115,9 @@ final readonly class ShipmentsBoard
     }
 
     /**
-     * The four stat tiles. In transit and Submitted are live ("right now", not range-bound);
-     * success and days-to-deliver are outcome-dated within the range.
+     * The four stat tiles. In transit and Submitted count the range's cohort (handed over in the
+     * range, as the board) — owner decision 2026-11-15; success and days-to-deliver are
+     * outcome-dated within the range.
      *
      * @return array{
      *     from: string, to: string,
@@ -132,11 +133,12 @@ final readonly class ShipmentsBoard
         $providerId = self::providerId($providerCode);
         $scoped = static fn (): Builder => $providerId === null ? Shipment::query() : Shipment::query()->where('provider_id', $providerId);
 
-        $road = $scoped()->whereIn('status', self::ON_THE_ROAD)
+        // Range-bound like the board (owner, 2026-11-15): the shipments handed over in the range.
+        $road = self::cohort($scoped(), $from, $to)->whereIn('shipments.status', self::ON_THE_ROAD)
             ->get(['id', 'cod_amount']);
         $cod = $road->reduce(static fn (Money $sum, Shipment $s): Money => $sum->plus($s->cod_amount), Money::zero());
 
-        $submitted = $scoped()->where('status', ShipmentStatus::Submitted->value);
+        $submitted = self::cohort($scoped(), $from, $to)->where('shipments.status', ShipmentStatus::Submitted->value);
         $count = $submitted->clone()->count();
         $oldest = $submitted->clone()->whereNotNull('pickup_requested_at')->min('pickup_requested_at');
         $oldestAt = is_string($oldest) ? CarbonImmutable::parse($oldest, 'UTC') : null;

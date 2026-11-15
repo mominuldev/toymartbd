@@ -31,5 +31,7 @@ final readonly class ShippableOrder
         public int $weightGrams,
         public int $itemCount,
         public string $itemDescription,
+        /** A line has no variant or a variant weight ≤ 0: the parcel would be understated (rule 32a). */
+        public bool $weightMissing = false,
     ) {}
 }

@@ -20,6 +20,7 @@ use App\Domain\Fulfilment\Support\CourierCredentialFields;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderItem;
+use App\Domain\Ordering\Queries\EloquentShippableOrders;
 use App\Support\DhakaDate;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,18 +36,19 @@ use Illuminate\Support\Collection;
  *
  * Tabs, and what each counts (docs/api/booking-queue.md):
  *
- *   ready         orders in `ready_to_ship` (packed) with no open shipment — the same
- *                 "open" rule RequestShipment enforces, so a failed/cancelled shipment frees
- *                 the order again;
+ *   ready         orders a courier may take — confirmed, processing or ready_to_ship
+ *                 (EloquentShippableOrders::SHIPPABLE, what BookingPreflight accepts; owner
+ *                 decision 2026-11-15) — with no open shipment, the same "open" rule
+ *                 RequestShipment enforces, so a failed/cancelled shipment frees the order again;
  *   submitted     shipments `pending` (requested, job not yet run) or `submitted` (bulk or
  *                 uncertain: no consignment id yet, rule 24d);
  *   booked_today  shipments whose `booked_at` falls on today's Dhaka date (rule 11),
  *                 whatever their status since;
  *   failed        `Shipment::needsAttention()` — the retry queue `/shipments/failed` reads;
  *   unmapped      (courier, area) pairs among READY orders where an active courier that
- *                 needs its own zone ids has none mapped for the address (rule 32) — counted
- *                 per area, not per order. These orders still appear under `ready`, blocked
- *                 for that courier.
+ *                 needs its own zone ids has none — or several — mapped for the address
+ *                 (rule 32; `reason` unmapped|ambiguous) — counted per area, not per order.
+ *                 These orders still appear under `ready`, blocked for that courier.
  *
  * Per ready order and courier, `blocked_reason` mirrors what BookingPreflight and the booking
  * panel's quote would refuse: provider (`inactive`, `not_connected`,
@@ -76,7 +78,7 @@ final readonly class BookingQueueReadModel
     public static function readyOrders(): Builder
     {
         return Order::query()
-            ->where('status', OrderStatus::ReadyToShip->value)
+            ->whereIn('status', array_map(static fn (OrderStatus $s): string => $s->value, EloquentShippableOrders::SHIPPABLE))
             ->whereNotIn('id', Shipment::query()->open()->select('order_id'));
     }
 
@@ -291,12 +293,13 @@ final readonly class BookingQueueReadModel
     }
 
     /**
-     * Areas of ready orders that an active, zone-mapped courier cannot take because no
-     * `courier_locations` row is mapped to them (rule 32 — never guessed). One row per
+     * Areas of ready orders that an active, zone-mapped courier cannot book in bulk: no
+     * `courier_locations` row is mapped to them, or several are and bulk cannot choose (rule 32
+     * — never guessed; owner decision 2026-11-15 lists the ambiguous ones too). One row per
      * (courier, district, upazila).
      *
      * @param  EloquentCollection<int, CourierProvider>|null  $providers
-     * @return list<array{provider: CourierProvider, district: District|null, upazila: Upazila|null, district_name: string|null, upazila_name: string|null, orders_count: int, order_numbers: list<string>}>
+     * @return list<array{provider: CourierProvider, reason: string, district: District|null, upazila: Upazila|null, district_name: string|null, upazila_name: string|null, orders_count: int, order_numbers: list<string>}>
      */
     public function unmapped(?EloquentCollection $providers = null): array
     {
@@ -323,7 +326,8 @@ final readonly class BookingQueueReadModel
             foreach ($groups as $g) {
                 $districtId = (int) $g->shipping_district_id;
                 $upazilaId = $g->shipping_upazila_id !== null ? (int) $g->shipping_upazila_id : null;
-                if ($this->locations->for($provider, $districtId, $upazilaId)['status'] !== 'unmapped') {
+                $status = $this->locations->for($provider, $districtId, $upazilaId)['status'];
+                if ($status !== 'unmapped' && $status !== 'ambiguous') {
                     continue;
                 }
                 $numbers = self::readyOrders()
@@ -336,6 +340,7 @@ final readonly class BookingQueueReadModel
                 $upazila = $upazilaId !== null ? $upazilas->get($upazilaId) : null;
                 $rows[] = [
                     'provider' => $provider,
+                    'reason' => $status,
                     'district' => $district,
                     'upazila' => $upazila,
                     'district_name' => is_string($g->district_name) ? $g->district_name : null,

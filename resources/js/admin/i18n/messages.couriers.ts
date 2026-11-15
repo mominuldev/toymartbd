@@ -51,6 +51,7 @@ export const couriersEn = {
     'couriers.failure.order_not_shippable': 'The order can no longer be shipped (it was cancelled or changed).',
     'couriers.failure.bulk_unsupported': 'This courier does not accept bulk submissions.',
     'couriers.failure.completion_failed': 'The courier accepted the parcel, but the order could not be marked shipped. Retry completes it without booking again.',
+    'couriers.failure.missing_weight': 'A product on this order has no weight, so the parcel would be understated. Set the variant weight, then retry.',
     'couriers.failure.unknown': 'The booking failed.',
 
     'couriers.blocked.none': 'No courier is set up.',
@@ -290,6 +291,7 @@ export const couriersBn: Record<keyof typeof couriersEn, string> = {
     'couriers.failure.order_not_shippable': 'অর্ডারটি আর পাঠানো যাবে না (বাতিল বা পরিবর্তিত হয়েছে)।',
     'couriers.failure.bulk_unsupported': 'এই কুরিয়ার একসাথে অনেক অর্ডার নেয় না।',
     'couriers.failure.completion_failed': 'কুরিয়ার পার্সেল নিয়েছে, কিন্তু অর্ডারটি শিপড করা যায়নি। আবার চেষ্টা করলে নতুন বুকিং ছাড়াই এটি সম্পন্ন হবে।',
+    'couriers.failure.missing_weight': 'এই অর্ডারের একটি পণ্যের ওজন নেই, তাই পার্সেলের ওজন কম দেখাত। ভ্যারিয়েন্টের ওজন দিয়ে আবার চেষ্টা করুন।',
     'couriers.failure.unknown': 'বুকিং ব্যর্থ হয়েছে।',
 
     'couriers.blocked.none': 'কোনো কুরিয়ার সেট আপ করা নেই।',

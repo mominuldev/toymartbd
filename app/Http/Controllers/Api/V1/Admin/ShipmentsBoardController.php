@@ -98,7 +98,7 @@ final class ShipmentsBoardController extends ApiController
         ]]);
     }
 
-    /** `GET /shipments/board/stats` — the stat tiles. In transit / submitted are live; the rest are outcome-dated in the range. */
+    /** `GET /shipments/board/stats` — the stat tiles. In transit / submitted count the range's cohort (handed over in it); the rest are outcome-dated in the range. */
     #[QueryParameter('filter[from]', 'First Dhaka date (inclusive). Default: six days before today.', type: 'string', format: 'date')]
     #[QueryParameter('filter[to]', 'Last Dhaka date (inclusive). Default: today.', type: 'string', format: 'date')]
     #[QueryParameter('filter[provider]', 'Only this courier (`courier_providers.code`).', type: 'string')]

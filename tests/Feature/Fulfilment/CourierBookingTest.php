@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Finance\Enums\LedgerEntryType;
 use App\Domain\Finance\Models\FinancialTransaction;
 use App\Domain\Fulfilment\Actions\ApplyCourierStatus;
@@ -199,6 +200,20 @@ it('blocks production booking through an unverified provider (rule 33a), with a 
     expect($shipment->status)->toBe(ShipmentStatus::Failed)
         ->and($shipment->failure_code)->toBe(Shipment::FAILURE_UNVERIFIED)
         ->and($shipment->error_message)->toContain('not verified')
+        ->and($this->courier->booked)->toBe([])
+        ->and($order->refresh()->status)->toBe(OrderStatus::Confirmed);
+    cbInvariants();
+});
+
+it('refuses a parcel with a 0 g line before calling the courier (owner, 2026-11-15)', function (): void {
+    ProductVariant::query()->whereKey($this->b->id)->update(['weight_grams' => 0]);
+    $order = cbConfirmed([$this->a->id => 1, $this->b->id => 1]);
+
+    $shipment = app(RequestShipment::class)->handle($order->id)->refresh();
+
+    expect($shipment->status)->toBe(ShipmentStatus::Failed)
+        ->and($shipment->failure_code)->toBe(Shipment::FAILURE_MISSING_WEIGHT)
+        ->and($shipment->error_message)->toContain('no weight')
         ->and($this->courier->booked)->toBe([])
         ->and($order->refresh()->status)->toBe(OrderStatus::Confirmed);
     cbInvariants();
