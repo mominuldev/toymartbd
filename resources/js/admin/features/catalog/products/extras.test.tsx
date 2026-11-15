@@ -78,7 +78,7 @@ describe('product form extras (P4 batch 5)', () => {
         const calls = productApi(owner, serve(simple));
         renderApp('/products/42');
 
-        const slug = await screen.findByLabelText('URL');
+        const slug = await screen.findByLabelText('Slug');
         expect(screen.queryByText('Changing this URL creates a 301 redirect')).toBeNull();
         fireEvent.change(slug, { target: { value: 'classic-brick-box-500' } });
 

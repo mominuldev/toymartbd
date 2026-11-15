@@ -82,9 +82,8 @@ final class ProductDocumentValidator
 
     private function checkClassification(ProductData $data, ?Product $existing): void
     {
-        if ($existing !== null && $existing->type !== $data->type) {
-            $this->fail('type', 'The product type cannot change after creation.');
-        }
+        // The type follows the options and may change at any time (owner decision 2026-11-16):
+        // VariantMatrix carries the existing variant across, so stock and orders keep their variant.
 
         if ($data->ageMinMonths !== null && $data->ageMaxMonths !== null && $data->ageMinMonths > $data->ageMaxMonths) {
             $this->fail('age_max_months', 'The maximum age must not be below the minimum age.');

@@ -2,7 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderApp } from '@/test/renderApp';
 import type { ProductImage } from '@/features/catalog/media/api';
-import { owner, productApi } from './fixtures';
+import { owner, product, productApi } from './fixtures';
 
 beforeAll(() => {
     // jsdom has no <dialog> methods.
@@ -129,5 +129,52 @@ describe('product images panel', () => {
         expect(order).toEqual([72, 71]);
         expect(calls.mock.calls.filter(([url, init]) => /\/products\/42\/images$/.test(String(url)) && !(init as RequestInit | undefined)?.method).length).toBeGreaterThan(listsBefore);
         expect(await screen.findByRole('button', { name: 'Delete image 3' })).toBeTruthy();
+    });
+
+    it('holds images chosen on a new product and attaches them in order once it is created', async () => {
+        const item = (id: number, filename: string) => ({
+            id, kind: 'image', filename, caption: null, alt_text: 'Puzzle box', alt_text_bn: 'পাজল বক্স', alt_status: 'complete', folder_id: 1,
+            mime: 'image/webp', original_mime: 'image/jpeg', width: 1600, height: 1600, size_bytes: 184320, original_size_bytes: 2411724,
+            processing_status: 'ready', urls: { thumb: `/storage/media/${id}/320.webp`, medium: null, large: null }, srcset: null, public_url: null,
+            used_in_count: 0, origin: 'library', uploaded_by: null, created_at: '2026-11-12T08:30:00+00:00', updated_at: '2026-11-12T08:30:00+00:00',
+        });
+        const attached: number[] = [];
+        productApi(owner, (url, init) => {
+            if (url.endsWith('/media/folders')) return { status: 200, body: { data: [{ id: 1, name: 'Products', system_key: 'products', is_system: true, position: 0, created_at: '' }] } };
+            if (url.endsWith('/media/counts')) return { status: 200, body: { data: { all: 2, unused: 2, unfiled: 0, folders: [{ id: 1, count: 2 }], kinds: { image: 2, document: 0 }, missing_alt: { bn: 0, en: 0 } } } };
+            if (url.includes('/media?')) return { status: 200, body: { data: [item(71, 'puzzle-a.webp'), item(72, 'puzzle-b.webp')], links: { next: null }, meta: { per_page: 30, next_cursor: null, prev_cursor: null, total: 2 } } };
+            if (url.endsWith('/products') && init?.method === 'POST') {
+                return { status: 201, body: { ...product, id: 42, type: 'simple', options: [], variants: [{ ...product.variants[0]!, attribute_values: [] }] } };
+            }
+            if (/\/products\/42\/images$/.test(url) && init?.method === 'POST') {
+                attached.push((JSON.parse(String(init.body)) as { media_id: number }).media_id);
+                return { status: 201, body: { ...image, id: 600 + attached.length } };
+            }
+            if (/\/products\/42\/images$/.test(url)) return { status: 200, body: { data: [] } };
+            return undefined;
+        });
+        renderApp('/products/new');
+
+        fireEvent.click((await screen.findAllByRole('button', { name: 'Choose or upload images' }))[0]!);
+        const dialog = await screen.findByRole('dialog', { name: 'Choose product images' });
+        fireEvent.click(await within(dialog).findByRole('button', { name: /^puzzle-b/ }));
+        fireEvent.click(within(dialog).getByRole('button', { name: /^puzzle-a/ }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Insert 2 images' }));
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        const held = screen.getByRole('list', { name: 'Images to add' });
+        expect(within(held).getAllByRole('img').map((img) => img.getAttribute('src'))).toEqual(['/storage/media/72/320.webp', '/storage/media/71/320.webp']);
+        expect(within(held).getByText('Main')).toBeTruthy();
+        // Nothing is attached before the product exists.
+        expect(attached).toEqual([]);
+
+        fireEvent.change(screen.getByLabelText(/^Name \(English\)/), { target: { value: 'Wooden Puzzle' } });
+        fireEvent.change(screen.getByLabelText('নাম (বাংলা)'), { target: { value: 'কাঠের ধাঁধা' } });
+        await screen.findByRole('option', { name: /Building & Construction/ });
+        fireEvent.change(screen.getByLabelText('Category'), { target: { value: '5' } });
+        fireEvent.change(screen.getByLabelText(/^Price/), { target: { value: '650' } });
+        fireEvent.change(screen.getByLabelText(/^Cost price/), { target: { value: '400.50' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Create product' }));
+
+        await waitFor(() => expect(attached).toEqual([72, 71]));
     });
 });

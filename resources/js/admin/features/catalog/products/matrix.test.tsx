@@ -154,6 +154,22 @@ describe('VariantMatrixEditor', () => {
         expect(variants.find((v) => JSON.stringify(v.attribute_value_ids) === '[11,21]')).toMatchObject({ status: 'archived' });
     });
 
+    it('turns a saved variable product back into a simple one: the default variant is the item, the rest archive', async () => {
+        const calls = productApi(owner, (url, init) => (url.endsWith('/products/42') && init?.method === 'PUT' ? { status: 200, body: product } : undefined));
+        renderApp('/products/42?tab=variants');
+        expect(await findSellSwitches()).toHaveLength(4);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove Color' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Remove Size' }));
+        expect(screen.getByText(/stays as this product’s only item/)).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await waitFor(() => expect(sentBody(calls, 'PUT')).not.toBeNull());
+        const body = sentBody(calls, 'PUT')!;
+        expect(body).toMatchObject({ type: 'simple', options: [] });
+        expect(body.variants).toEqual([expect.objectContaining({ sku: 'TM-00042-100', price: '1250.00' })]);
+    });
+
     it('without catalog.view_cost the Cost column does not exist and cost is never sent', async () => {
         const calls = productApi({ ...owner, permissions: owner.permissions.filter((p) => p !== 'catalog.view_cost') }, (url, init) =>
             url.endsWith('/products/42') && init?.method === 'PUT' ? { status: 200, body: product } : undefined,

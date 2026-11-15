@@ -23,6 +23,8 @@ import {
     emptyRow,
     formatMoney,
     placeErrors,
+    seedVariantRows,
+    simpleFromVariants,
     toForm,
     toMatrix,
     toPayload,
@@ -41,7 +43,8 @@ import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
 import { GenerateBarcodesButton } from './GenerateBarcodesButton';
 import { PrintLabelsDialog } from './PrintLabelsDialog';
 import { RelationsEditor } from './RelationsEditor';
-import { ImagesPanel } from './ImagesPanel';
+import { ImagesPanel, attachPendingImages } from './ImagesPanel';
+import type { Media } from '@/features/media';
 import { SeoPanel } from './SeoPanel';
 import { DescriptionEditor } from './DescriptionEditor';
 import { CertificateFile, StockByBranchCard } from './RailCards';
@@ -169,6 +172,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const initialRelations = useMemo(() => toRelations(product), [product]);
     const [matrix, setMatrix] = useState<MatrixState>(initialMatrix);
     const [relations, setRelations] = useState<RelationRow[]>(initialRelations);
+    const [pendingImages, setPendingImages] = useState<Media[]>([]);
     const [placed, setPlaced] = useState<PlacedErrors>(noErrors);
     const [confirming, setConfirming] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
@@ -355,16 +359,37 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     );
 
     /**
-     * The matrix decides the type on a new product (Figma has no type select): any option
-     * makes it variable, none makes it simple again. A saved product keeps its type — the
-     * API refuses a change — so on edit this only edits the matrix.
+     * The matrix decides the type (Figma has no type select): any option makes the product
+     * variable, none makes it simple — on a new product and, since 2026-11-16 (owner decision),
+     * on a saved one too. Turning simple → variable seeds the new rows from the simple item (the
+     * first row keeps its SKU, barcode and stock); variable → simple brings the default variant
+     * back as the simple item. The server keeps those same variants (VariantMatrix).
      */
+    const keptLabel = product?.type === 'variable' && type === 'simple' ? (simpleFromVariants(product, matrix.rows)?.label ?? null) : null;
+    const conversionNotice =
+        type === 'variable' ? t('products.matrix.toVariable') : keptLabel ? t('products.matrix.toSimple', { variant: keptLabel }) : t('products.matrix.toSimpleNoName');
+
     const changeMatrix = (next: MatrixState) => {
-        setMatrix(next);
-        if (id === null) {
-            const nextType = next.options.length > 0 ? 'variable' : 'simple';
-            if (getValues('type') !== nextType) setValue('type', nextType, { shouldDirty: true });
+        const current = getValues('type');
+        const nextType = next.options.length > 0 ? 'variable' : 'simple';
+        // Converting a saved simple product: every row added before saving starts from its price.
+        const converting = nextType === 'variable' && product?.type === 'simple';
+        if (current === nextType && !converting) {
+            setMatrix(next);
+            return;
         }
+        if (nextType === 'variable') {
+            const kept = product?.type === 'simple' ? (product.variants.find((v) => v.is_default) ?? product.variants[0]) : undefined;
+            setMatrix(seedVariantRows(next, combinations(next.options, variantAttributes), getValues('simple'), kept ? { id: kept.id, stock: kept.stock ?? null } : undefined));
+        } else {
+            setMatrix(next);
+            const back = product?.type === 'variable' ? simpleFromVariants(product, matrix.rows) : null;
+            if (back) {
+                setValue('simple', back.fields, { shouldDirty: true });
+                setValue('simple_stock', back.stock);
+            }
+        }
+        if (current !== nextType) setValue('type', nextType, { shouldDirty: true });
     };
 
     // In-store barcodes (owner request 2026-11-16) for saved variants whose barcode is empty on
@@ -448,8 +473,13 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         }
 
         save.mutate(payload, {
-            onSuccess: (saved) => {
+            onSuccess: async (saved) => {
                 notify(t(id === null ? 'products.created' : 'products.saved'));
+                if (id === null && pendingImages.length > 0) {
+                    const failed = await attachPendingImages(saved.id, pendingImages);
+                    setPendingImages([]);
+                    if (failed > 0) notify(t('products.images.attachFailed', { count: failed }), 'danger');
+                }
                 if (another) {
                     if (id === null) {
                         // Same route, same form instance: start a fresh document.
@@ -770,7 +800,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
 
                             {/* Media — ImageUploader 201:1035 */}
                             <div id={anchor('media')} className="scroll-mt-32">
-                                <ImagesPanel product={product} disabled={!editable} />
+                                <ImagesPanel product={product} disabled={!editable} pending={pendingImages} onPendingChange={id === null ? setPendingImages : undefined} />
                             </div>
 
                             {/* Pricing (FormSection 241:37938) — a simple product's one variant. */}
@@ -827,6 +857,37 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                 </ProductSection>
                             )}
 
+                            {/* Variants — VariantMatrixEditor 201:1201 (241:38029), on every product. Owner decision 2026-11-16: in the main
+                                column after Pricing and before Search & social (Figma has it full width below the columns).
+                                A simple product shows it empty with "Add option"; on a new product the first option makes it variable. */}
+                            {/* The type changes on save (simple ⇄ variable): say what happens to the existing variant and stock. */}
+                            {product && product.type !== type && (
+                                <p role="status" className="flex items-start gap-3 rounded-sm border border-feedback-warning bg-subtle p-4 t-admin-body text-fg-primary">
+                                    <WarningCircleIcon size={20} aria-hidden className="shrink-0 text-feedback-warning" />
+                                    <span>{conversionNotice}</span>
+                                </p>
+                            )}
+                            {attributes.isError ? (
+                                <QueryError error={attributes.error} onRetry={() => void attributes.refetch()} />
+                            ) : (
+                                <VariantMatrixEditor
+                                    id={anchor('variants')}
+                                    attributes={variantAttributes}
+                                    value={matrix}
+                                    combos={combos}
+                                    onChange={changeMatrix}
+                                    errors={placed.rows}
+                                    matrixErrors={placed.matrix}
+                                    canCost={canCost}
+                                    canPrice={canPrice}
+                                    stockMode={stockMode}
+                                    margins={canCost ? matrixMargins : undefined}
+                                    disabled={!editable || save.isPending}
+                                    simple={type === 'simple' ? 'new' : undefined}
+                                    aside={type === 'variable' ? barcodeButton : undefined}
+                                />
+                            )}
+
                             {/* Search & social — SeoPanel 198:1123 (241:37939). */}
                             <SeoPanel
                                 id={anchor('seo')}
@@ -836,42 +897,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                 errorOf={(field) => errorOf(field)}
                             />
 
-                            {/* URL — SlugField 198:1086 (241:37940), outside a card as in Figma. */}
-                            <div className="flex flex-col gap-2">
-                                <Field label={t('products.field.slug')} hint={slugChanged ? undefined : t('products.field.slugHint')} error={errorOf('slug')}>
-                                    {(ids) => (
-                                        <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
-                                            <span aria-hidden className="flex items-center border-e border-line-default bg-subtle px-3 t-admin-mono text-fg-tertiary">
-                                                {URL_PREFIX}
-                                            </span>
-                                            <input {...inputProps(ids)} spellCheck={false} autoCapitalize="none" className="min-w-0 flex-1 bg-transparent px-3 t-admin-mono text-fg-primary outline-none" {...register('slug')} />
-                                            {slugOk && (
-                                                <span className="flex items-center pe-3">
-                                                    <CheckIcon size={16} aria-label={t('products.slug.ok')} className="text-feedback-success" />
-                                                </span>
-                                            )}
-                                        </span>
-                                    )}
-                                </Field>
-                                {slugChanged && product && (
-                                    <div className="flex items-start gap-3 rounded-sm border border-feedback-warning bg-subtle p-4">
-                                        <ArrowUUpLeftIcon size={20} aria-hidden className="shrink-0 text-feedback-warning" />
-                                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                                            <p className="t-admin-body-strong text-fg-primary">{t('products.slug.redirectTitle')}</p>
-                                            <p className="t-admin-mono-sm break-all whitespace-pre-wrap text-fg-secondary">
-                                                {`${URL_PREFIX}${product.slug}  →  ${URL_PREFIX}${slug.trim()}`}
-                                            </p>
-                                            <p className="t-admin-caption text-fg-secondary">
-                                                {publishedSince ? t('products.slug.redirectBodySince', { date: publishedSince }) : t('products.slug.redirectBody')}
-                                            </p>
-                                            <label className="flex min-h-11 items-center gap-3 t-admin-body text-fg-primary">
-                                                <input type="checkbox" className="size-5 accent-brand" {...register('acknowledge_slug_redirect')} />
-                                                {t('products.slug.redirectAck')}
-                                            </label>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
                         </div>
 
                         {/* Rail (241:37941) */}
@@ -909,6 +934,48 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                 </Field>
                             </ProductSection>
 
+                            {/* URL — SlugField 198:1086 (241:37940). Owner decision 2026-11-16: in the rail, in its own card,
+                                after Status (Figma has it in the main column under Search & social). */}
+                            <ProductSection title={t('products.section.url')} forceOpen={Boolean(errorOf('slug'))}>
+                            <div className="flex flex-col gap-2">
+                                <Field label={t('products.field.slugShort')} hint={slugChanged ? undefined : t('products.field.slugHint')} error={errorOf('slug')}>
+                                    {(ids) => (
+                                        <span className="flex h-10 items-stretch overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
+                                            <input {...inputProps(ids)} spellCheck={false} autoCapitalize="none" className="min-w-0 flex-1 bg-transparent px-3 t-admin-mono text-fg-primary outline-none" {...register('slug')} />
+                                            {slugOk && (
+                                                <span className="flex items-center pe-3">
+                                                    <CheckIcon size={16} aria-label={t('products.slug.ok')} className="text-feedback-success" />
+                                                </span>
+                                            )}
+                                        </span>
+                                    )}
+                                </Field>
+                                {/* The full address, under the field: the rail is too narrow for the prefix inline. */}
+                                <p className="t-admin-mono-sm break-all text-fg-tertiary">
+                                    {URL_PREFIX}
+                                    <span className="text-fg-secondary">{slug.trim() || t('products.slug.auto')}</span>
+                                </p>
+                                {slugChanged && product && (
+                                    <div className="flex items-start gap-3 rounded-sm border border-feedback-warning bg-subtle p-4">
+                                        <ArrowUUpLeftIcon size={20} aria-hidden className="shrink-0 text-feedback-warning" />
+                                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                                            <p className="t-admin-body-strong text-fg-primary">{t('products.slug.redirectTitle')}</p>
+                                            <p className="t-admin-mono-sm break-all whitespace-pre-wrap text-fg-secondary">
+                                                {`${URL_PREFIX}${product.slug}  →  ${URL_PREFIX}${slug.trim()}`}
+                                            </p>
+                                            <p className="t-admin-caption text-fg-secondary">
+                                                {publishedSince ? t('products.slug.redirectBodySince', { date: publishedSince }) : t('products.slug.redirectBody')}
+                                            </p>
+                                            <label className="flex min-h-11 items-center gap-3 t-admin-body text-fg-primary">
+                                                <input type="checkbox" className="size-5 accent-brand" {...register('acknowledge_slug_redirect')} />
+                                                {t('products.slug.redirectAck')}
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            </ProductSection>
+
                             <ProductSection
                                 title={t('products.section.compliance')}
                                 description={t('products.section.complianceHint')}
@@ -938,28 +1005,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                         </aside>
                     </div>
 
-                    {/* Variants — VariantMatrixEditor 201:1201 (241:38029), full 1144 width below the columns, on every product.
-                        A simple product shows it empty with "Add option"; on a new product the first option makes it variable. */}
-                    {attributes.isError ? (
-                        <QueryError error={attributes.error} onRetry={() => void attributes.refetch()} />
-                    ) : (
-                        <VariantMatrixEditor
-                            id={anchor('variants')}
-                            attributes={variantAttributes}
-                            value={matrix}
-                            combos={combos}
-                            onChange={changeMatrix}
-                            errors={placed.rows}
-                            matrixErrors={placed.matrix}
-                            canCost={canCost}
-                            canPrice={canPrice}
-                            stockMode={stockMode}
-                            margins={canCost ? matrixMargins : undefined}
-                            disabled={!editable || save.isPending}
-                            simple={type === 'simple' ? (id === null ? 'new' : 'fixed') : undefined}
-                            aside={type === 'variable' ? barcodeButton : undefined}
-                        />
-                    )}
                 </fieldset>
 
                 {/* Below 1024 the destructive action leaves the save bar and sits after the form (Figma 230:22079). */}

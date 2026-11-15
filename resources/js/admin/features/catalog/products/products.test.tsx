@@ -201,7 +201,7 @@ describe('product form', () => {
         expect(screen.getByRole('link', { name: /Related.*has errors/ })).toBeTruthy();
     });
 
-    it('embeds the image uploader on a saved product, and asks to save first on a new one', async () => {
+    it('embeds the image uploader on a saved product, and offers images on a new one', async () => {
         productApi(owner);
         renderApp('/products/42?tab=images');
         expect(await screen.findByRole('region', { name: 'Product images' })).toBeTruthy();
@@ -209,7 +209,9 @@ describe('product form', () => {
 
         productApi(owner);
         renderApp('/products/new?tab=images');
-        expect(await screen.findByText('Save the product first to add images.')).toBeTruthy();
+        // A new product can take images before its first save; they attach once it is created.
+        expect(await screen.findByText('Add photos now — they are attached as soon as the product is created.')).toBeTruthy();
+        expect(screen.getAllByRole('button', { name: 'Choose or upload images' }).length).toBeGreaterThan(0);
     });
 
     it('shows every section on one page (Figma 241:37883) and saves Featured from its switch', { timeout: 20_000 }, async () => {

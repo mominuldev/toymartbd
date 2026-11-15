@@ -133,6 +133,67 @@ it('updates the matrix through PUT: removed values archive, ids and SKUs survive
         ->assertJsonPath('options.0.value_ids', [$colors[0]->id]);
 });
 
+it('turns a simple product into a variable one: its variant keeps id, SKU, barcode and stock', function (): void {
+    ['color' => $color, 'colors' => $colors] = CatalogFixtures::colorAndSize();
+    $payload = adminProductPayload(['variants' => [['price' => '2450.00', 'cost_price' => '1600', 'barcode' => '2000000000015', 'weight_grams' => 1200]]]);
+    $created = $this->postJson('/api/v1/admin/products', $payload)->assertCreated();
+    $id = $created->json('id');
+    $simple = ProductVariant::query()->findOrFail($created->json('variants.0.id'));
+    app(App\Domain\Inventory\Actions\RecordOpeningStock::class)->handle(Product::query()->findOrFail($id), [$simple->id => 7]);
+
+    // Staff add Colour: Red, Blue. The form names the old SKU on the Blue row, so Blue is the old variant.
+    $updated = $this->putJson("/api/v1/admin/products/{$id}", [
+        ...$payload,
+        'type' => 'variable',
+        'options' => [['attribute_id' => $color->id, 'value_ids' => [$colors[0]->id, $colors[1]->id]]],
+        'variant_defaults' => ['price' => '2450'],
+        'variants' => [['attribute_value_ids' => [$colors[1]->id], 'sku' => $simple->sku, 'price' => '2450.00', 'barcode' => '2000000000015']],
+    ])->assertOk()->assertJsonPath('type', 'variable');
+
+    $active = collect($updated->json('variants'))->where('status', 'active');
+    expect($active)->toHaveCount(2);
+    $blue = $active->firstWhere('id', $simple->id);
+    expect($blue)->not->toBeNull()
+        ->and($blue['sku'])->toBe($simple->sku)
+        ->and($blue['barcode'])->toBe('2000000000015')
+        ->and($blue['name'])->toBe('Blue')
+        ->and($active->firstWhere('name', 'Red')['id'])->not->toBe($simple->id);
+    // The stock stayed on the same variant row.
+    expect(App\Domain\Inventory\Models\StockLevel::query()->where('variant_id', $simple->id)->sum('on_hand'))->toBe(7);
+    expect(app(App\Domain\Inventory\Actions\ReconcileStockLevels::class)->handle())->toMatchArray(['drift_count' => 0]);
+});
+
+it('turns a variable product back into a simple one: the default variant stays, the rest are archived', function (): void {
+    ['color' => $color, 'colors' => $colors] = CatalogFixtures::colorAndSize();
+    $payload = adminProductPayload([
+        'type' => 'variable',
+        'options' => [['attribute_id' => $color->id, 'value_ids' => [$colors[0]->id, $colors[1]->id, $colors[2]->id]]],
+        'variant_defaults' => ['price' => '500'],
+        'variants' => [],
+    ]);
+    $created = $this->postJson('/api/v1/admin/products', $payload)->assertCreated();
+    $id = $created->json('id');
+    $default = collect($created->json('variants'))->firstWhere('is_default', true);
+
+    $updated = $this->putJson("/api/v1/admin/products/{$id}", [
+        ...$payload, 'type' => 'simple', 'options' => [], 'variant_defaults' => null,
+        'variants' => [['sku' => $default['sku'], 'price' => '550.00']],
+    ])->assertOk()->assertJsonPath('type', 'simple')->assertJsonPath('options', []);
+
+    $active = collect($updated->json('variants'))->where('status', 'active')->values();
+    expect($active)->toHaveCount(1)
+        ->and($active[0]['id'])->toBe($default['id'])
+        ->and($active[0]['price'])->toBe('550.00')
+        ->and($active[0]['name'])->toBeNull()
+        ->and($active[0]['attribute_values'])->toBe([])
+        ->and(collect($updated->json('variants'))->where('status', 'archived'))->toHaveCount(2);
+
+    // And back again: the kept variant takes the first combination, the archived ones come back.
+    $again = $this->putJson("/api/v1/admin/products/{$id}", $payload)->assertOk()->assertJsonPath('type', 'variable');
+    expect(collect($again->json('variants'))->where('status', 'active'))->toHaveCount(3)
+        ->and(collect($again->json('variants'))->pluck('id')->unique())->toHaveCount(3);
+});
+
 it('shows a product with variants, attribute values, images, categories and relations', function (): void {
     $product = Product::factory()->create();
     $other = Product::factory()->create();
