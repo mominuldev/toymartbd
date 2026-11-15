@@ -24,6 +24,9 @@ export TWO_FACTOR_ENFORCE=false
 
 "$PHP_BIN" artisan migrate:fresh --seed --force >/dev/null
 "$PHP_BIN" artisan db:seed --class=DemoDataSeeder --force >/dev/null
+# The demo catalog has no barcodes. Give the 3x3 cube an in-store EAN-13 (prefix 20, restricted
+# circulation: a shop's own label) so the POS keyboard-only test can scan it like a wedge scanner.
+"$PHP_BIN" artisan tinker --execute="App\\Domain\\Catalog\\Models\\ProductVariant::query()->where('sku', 'TMB-RUB-3X3')->update(['barcode' => '2000000000015']);" >/dev/null
 # The file cache outlives migrate:fresh: drop the last run's sign-in counters.
 "$PHP_BIN" artisan cache:clear >/dev/null
 exec "$PHP_BIN" artisan serve --host=localhost --port="$PORT" --no-reload

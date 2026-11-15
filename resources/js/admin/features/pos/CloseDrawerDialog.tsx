@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { closePosSessionRequestSchema } from '@toymart/api-types/zod';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -26,6 +26,11 @@ export function CloseDrawerDialog({ open, session, onClose }: { open: boolean; s
     const [note, setNote] = useState('');
     const [error, setError] = useState<string | undefined>();
     const [result, setResult] = useState<PosSession | null>(null);
+    const doneRef = useRef<HTMLButtonElement>(null);
+    // The submit button is replaced by Done: move focus there rather than lose it to the page.
+    useEffect(() => {
+        if (result) doneRef.current?.focus();
+    }, [result]);
     const ref = useDialog(open, () => {
         setCounted('');
         setNote('');
@@ -73,11 +78,11 @@ export function CloseDrawerDialog({ open, session, onClose }: { open: boolean; s
                         <dd>{takaText(result?.expected_cash ?? session.totals.expected_cash)}</dd>
                     </div>
                 </dl>
-                {result ? (
-                    <p role="status" className="t-admin-body-strong">
-                        {t('pos.close.result', { counted: takaText(result.counted_cash ?? '0'), diff: diffText })}
-                    </p>
-                ) : (
+                {/* Mounted empty with the dialog, so the counted / over / short answer is announced. */}
+                <div role="status">
+                    {result && <p className="t-admin-body-strong">{t('pos.close.result', { counted: takaText(result.counted_cash ?? '0'), diff: diffText })}</p>}
+                </div>
+                {!result && (
                     <>
                         <Field label={t('pos.close.counted')} hint={t('pos.close.countedHint')} error={error}>
                             {({ id, describedBy, invalid }) => (
@@ -91,7 +96,9 @@ export function CloseDrawerDialog({ open, session, onClose }: { open: boolean; s
                 )}
                 <div className="flex justify-end gap-2">
                     {result ? (
-                        <Button onClick={() => closeDialog(ref.current, finish)}>{t('pos.close.done')}</Button>
+                        <Button ref={doneRef} onClick={() => closeDialog(ref.current, finish)}>
+                            {t('pos.close.done')}
+                        </Button>
                     ) : (
                         <>
                             <Button variant="outline" onClick={() => closeDialog(ref.current, finish)}>

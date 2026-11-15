@@ -183,7 +183,10 @@ export function PaymentDialog({ open, context, session, cart, setCart, quote: q,
                     className="flex flex-col gap-3 px-7 py-6"
                     onSubmit={(e) => {
                         e.preventDefault();
-                        addPayment();
+                        // Enter in an empty amount once it is fully paid completes the sale, so a
+                        // keyboard-only cashier goes amount → Enter (add) → Enter (complete).
+                        if (amount.trim() === '' && canComplete) complete();
+                        else addPayment();
                     }}
                 >
                     <fieldset className="flex flex-col gap-3">
@@ -348,12 +351,15 @@ export function PaymentDialog({ open, context, session, cart, setCart, quote: q,
                     </dl>
 
                     {tenderError('tenders') && <p className="t-admin-caption text-feedback-danger">{tenderError('tenders')}</p>}
-                    {q.chargeable && added.length > 0 && (
-                        <p role="status" className="flex items-center gap-2 rounded-sm bg-success-subtle px-3 py-2.5 t-admin-body-strong text-feedback-success">
-                            <CheckCircleIcon size={18} aria-hidden />
-                            {t('pos.pay.fullyPaid')}
-                        </p>
-                    )}
+                    {/* Mounted empty with the dialog, so "fully paid" is announced when it appears. */}
+                    <div role="status">
+                        {q.chargeable && added.length > 0 && (
+                            <p className="flex items-center gap-2 rounded-sm bg-success-subtle px-3 py-2.5 t-admin-body-strong text-feedback-success">
+                                <CheckCircleIcon size={18} aria-hidden />
+                                {t('pos.pay.fullyPaid')}
+                            </p>
+                        )}
+                    </div>
 
                     <h3 className="mt-auto pt-2 t-admin-body-strong">{t('pos.pay.quick')}</h3>
                     <div className="grid grid-cols-4 gap-2">
