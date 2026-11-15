@@ -27,7 +27,12 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
                 className="h-full min-w-0 flex-1 bg-transparent t-admin-body text-fg-primary outline-none placeholder:text-fg-tertiary focus-visible:shadow-none"
                 {...props}
             />
-            {shortcut && <Kbd>{shortcut}</Kbd>}
+            {/* A visual hint only: it is not part of the field's name (pass aria-keyshortcuts for that). */}
+            {shortcut && (
+                <span aria-hidden className="contents">
+                    <Kbd>{shortcut}</Kbd>
+                </span>
+            )}
         </label>
     );
 });

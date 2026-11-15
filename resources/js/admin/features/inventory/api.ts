@@ -101,6 +101,8 @@ export function useInventorySummary(location: string) {
         queryKey: keys.summary(location),
         queryFn: () => api<InventorySummary>(`/inventory/summary${query({ 'filter[location_id]': location })}`),
         placeholderData: keepPreviousData,
+        // The overview is a live picture of the shelves: coming back to the tab re-reads it.
+        refetchOnWindowFocus: true,
     });
 }
 
@@ -126,12 +128,14 @@ export function useStock(filters: StockFilters, enabled = true) {
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.meta.next_cursor ?? null,
         placeholderData: keepPreviousData,
+        refetchOnWindowFocus: true,
         enabled,
     });
 }
 
-export function useMovements(filters: MovementFilters) {
+export function useMovements(filters: MovementFilters, enabled = true) {
     return useInfiniteQuery({
+        enabled,
         queryKey: keys.movements(filters),
         queryFn: ({ pageParam }) => api<Page<Movement>>(`/inventory/movements${movementsPath(filters, pageParam)}`),
         initialPageParam: null as string | null,

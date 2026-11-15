@@ -42,6 +42,8 @@ type TransferDialogProps = {
     variantId?: number | null;
     /** Opening quantity (row action: what the source has available). */
     quantity?: number | null;
+    /** After a successful transfer, with the variant moved (the overview highlights its row). */
+    onSaved?: (variantId: number) => void;
 };
 
 /**
@@ -60,6 +62,7 @@ export function TransferDialog({
     toId,
     variantId = null,
     quantity = null,
+    onSaved,
 }: TransferDialogProps) {
     const { t, locale } = useI18n();
     const { notify } = useToast();
@@ -171,6 +174,7 @@ export function TransferDialog({
             {
                 onSuccess: (transfer) => {
                     notify(t("transfer.saved", { number: transfer.number }));
+                    onSaved?.(input.lines[0]!.variant_id);
                     onClose();
                 },
                 onError: (error) => {
