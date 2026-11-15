@@ -287,15 +287,22 @@ test('orders board → order detail: filters, table, the three tracks, and the h
       - heading "Orders" [level=1]
       - combobox "Date range"
       - link "New order"
+      - group "Order counts":
+        - button /^Pending \\d+ Waiting for confirmation/ [pressed=false]
+        - button /^Verify \\d+/ [pressed=false]
+        - button /^Ready to ship \\d+/ [pressed=false]
       - navigation "Order status":
         - button /All \\d+/ [pressed]
         - button /Pending \\d+/ [pressed=false]
         - button /Confirmed \\d+/ [pressed=false]
+      - button "More statuses"
+      - button /Anomalies \\d+/ [pressed=false]
       - searchbox "Search orders"
       - combobox "Payment status"
       - combobox "Source"
       - combobox "Risk"
       - switch "Only anomalies" [checked=false]
+      - button "Columns"
       - table:
         - rowgroup:
           - row:
@@ -304,12 +311,12 @@ test('orders board → order detail: filters, table, the three tracks, and the h
             - columnheader "Order"
             - columnheader "Placed"
             - columnheader "Customer"
-            - columnheader "Items"
             - columnheader "Total"
             - columnheader "Payment"
             - columnheader "Status"
             - columnheader "Risk"
             - columnheader "Courier"
+            - columnheader "Actions"
         - rowgroup:
           - row:
             - cell /Select TMB-\\d+-\\d+/:

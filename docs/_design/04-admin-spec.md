@@ -1094,6 +1094,17 @@ Navigation: `J` / `↓` next row · `K` / `↑` previous · `Space` toggle selec
 
 **768.** Tab strip becomes a horizontally scrolling chip row, Pending active and first, with the Anomalies chip pinned at the left edge after Pending. Rows become cards (A2): line 1 `TMB-26-00126` + `৳6,260`; line 2 "Shahriar Kabir · 01712•••318"; line 3 the workflow chip + risk pill + any `notable`/`anomaly` money chip. Swipe-left on a card reveals Confirm / Book. `BulkActionBar` docks to the bottom.
 
+#### B2a · Order board as built — Premium pass (2026-11-16)
+
+Figma Premium pass section `366:65205` → "Orders" `370:66859`: frame **B · 02 Orders board** `370:66862` and **· row menu open** `371:67709` (1440 only; no 1024/768/dark/Bangla variants were drawn, so those keep the 229:21429 layout). Built in `features/orders/OrdersPage.tsx`:
+
+- **KPI row** (`stats` `370:67602`) — the shared `components/ui/KpiCard.tsx` (Figma KpiCard `363:2852`, also used by Inventory so the two pages stay identical): Orders · {range} (receipt, brand) · Pending (warning) · Verify (shield, danger) · Ready to ship (truck, info). Figures are the server's board counts (`meta.counts`, the same numbers the tabs show), never counted from loaded rows. Pending / Verify / Ready to ship are shortcuts: a click opens that tab (pressed card = 2px brand border), a second click returns to All. 2×2 below 1024; below 640 the compact form (label + figure).
+- **Tabs** (`370:66878`) — Figma's nine (All, Pending, Verify, Confirmed, Ready to ship, Shipped, Delivered, Returned, Cancelled). On hold and Processing, which the frame leaves out, and any tab that does not fit the row's width, sit behind a ⋯ "More statuses" menu with their counts; the open tab always stays in the row, so nothing is ever clipped. **Anomalies** is a warning-tinted pill at the row's end (`370:66889`), no left edge.
+- **Filter bar inside the table card** (`370:66893`) — search, Payment status, Source, Risk, Only anomalies, and a column picker (`370:66905`: Placed, Payment, Risk, Courier; remembered per staff member in localStorage). The frame's **Courier** and **Zone** selects are not built: the orders API has no such filter (rule 16), and no backend filter was added.
+- **Rows** — order number with "web · 2 items" under it (the Items column is gone), Placed, Customer, Total, Payment, the OrderStatusBadge triad, RiskPill, Courier, and a ⋯ row menu (`371:68992`) with only the actions the board already offers: Open order, Confirm order (pending, `orders.confirm`, through the bulk endpoint), Book courier (confirmed → ready to ship, `orders.update` + `shipments.book`), Print invoice (`orders.view` + `customers.view_pii`), Copy order number. The frame's **Cancel order** is not in the row menu: cancel needs the detail's server-decided `available_actions` and the typed-confirmation dialog, so it stays on the detail page. Selected rows are `bg/brand-subtle`; the bulk bar is unchanged.
+- **No left-border edges** on this page: RiskPill is the level's tinted fill with the shield shape, an anomaly money slot is a warning-subtle chip, the verify flag on the 768 card is a warning-tinted chip.
+- Below 1280 the Payment column folds under the total and the Courier column is left out (the verify-first note moves under the risk pill), so 1024 has no horizontal scroll. Header actions Export and Import from Facebook in the frame are not built (no such features yet); there is no Placed sort and no rows-per-page select (the API's cursor page is fixed).
+
 ---
 
 ### B3 · Order detail — `/admin/orders/TMB-26-00122`
@@ -1370,7 +1381,7 @@ With the breakdown in `admin/caption` `color/text/tertiary`: "Received = ৳9,15
 
 Figma B · 14 Inventory `241:39494` is the base; the owner asked for it to be more user-friendly and dynamic, so the built page goes beyond the frame (Theme B tokens and components throughout):
 
-- **KPI row** — Stock value at cost · Low stock · Out of stock · Reserved, each with a tinted icon tile carrying its tone (no left-border edge). Low and Out of stock are shortcuts that toggle their tab. At 390 the value card spans the top and the three counts sit in one row.
+- **KPI row** (shared `components/ui/KpiCard.tsx`, the same card as the Orders board) — Stock value at cost · Low stock · Out of stock · Reserved, each with a tinted icon tile carrying its tone (no left-border edge). Low and Out of stock are shortcuts that toggle their tab. At 390 the value card spans the top and the three counts sit in one row.
 - **Branch cards are a filter** (`?location=`), the selected one checked; the stock endpoint is always one location (the default when none is given), so there is no "All branches" view.
 - **Search** (`?q=`, `filter[search]`: name, Bangla name, SKU, barcode), debounced, Enter applies at once and selects the text so the next barcode scan replaces it; `/` focuses it. "Updated h:mm · Refresh" beside it; data refetches on window focus.
 - **Table** — Product · Variant (2-line name, the variant as its own tag, SKU) · Status chip (In stock / Low / Out / Overstock) · On hand · Reserved · Available · Reorder at · Other branches (short-code chips, full name on hover and for screen readers) · Avg cost (2 dp, 4 dp on hover) · one ⋯ menu: Adjust stock, Transfer, Create PO (low/out only), View ledger. Sticky header, no horizontal overflow at 1440/768/390 (rows become cards at 390).

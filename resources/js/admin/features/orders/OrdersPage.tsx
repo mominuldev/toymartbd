@@ -1,16 +1,20 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
     ArrowLeftIcon,
     ArrowRightIcon,
+    ArrowSquareOutIcon,
     CalendarBlankIcon,
     CheckCircleIcon,
     CheckIcon,
+    ColumnsIcon,
+    CopyIcon,
     DotsThreeIcon,
     FunnelIcon,
     PackageIcon,
     PlusIcon,
     PrinterIcon,
+    ReceiptIcon,
     ShieldWarningIcon,
     TruckIcon,
     WarningCircleIcon,
@@ -20,12 +24,14 @@ import {
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
+import { ActionMenu, type ActionMenuItem } from '@/components/ui/ActionMenu';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { CountBadge } from '@/components/ui/CountBadge';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
+import { KpiCard } from '@/components/ui/KpiCard';
 import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
 import { Select } from '@/components/ui/Select';
@@ -52,11 +58,19 @@ import { CourierBookingPanel } from '@/features/couriers';
 import { Taka, ageLabel, dhakaDate, dhakaParts, isZeroAmount, rangeLabel } from './format';
 import { OrderStatusBadge, PaymentChip, RiskPill, paymentLabel, sourceLabel } from './parts';
 
-/** Status tabs in Figma 205:681 order, with On hold and Processing kept so every pre-ship order has a home. */
+/** Status tabs in Figma 370:66878 order, with On hold and Processing kept so every pre-ship order has a home. */
 const tabs: BoardTab[] = ['all', 'pending', 'verify', 'on_hold', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered', 'returned', 'cancelled'];
 const ranges = ['all', '1', '7', '30', '90'] as const;
 type Range = (typeof ranges)[number];
+/** On hold and Processing are not in the Figma tab row (370:66878): they wait behind the row's ⋯ menu and join the row only while open. */
+const quietTabs = new Set<BoardTab>(['on_hold', 'processing']);
 const preShip = new Set(['pending', 'on_hold', 'confirmed', 'processing', 'ready_to_ship']);
+/** Statuses a courier can be booked from (the booking panel and the server have the final say). */
+const bookable = new Set(['confirmed', 'processing', 'ready_to_ship']);
+
+/** Columns the operator may hide (the column picker 370:66905); order, customer, total and status always show. */
+const optionalColumns = ['placed', 'payment', 'risk', 'courier'] as const;
+type OptionalColumn = (typeof optionalColumns)[number];
 
 function useDebounced<T>(value: T, ms = 250): T {
     const [debounced, setDebounced] = useState(value);
@@ -71,12 +85,42 @@ const pick = <T extends string>(value: string | null, allowed: readonly T[], fal
 
 const tabLabel = (tab: BoardTab): MessageKey => `orders.tab.${tab}` as MessageKey;
 
+/** The hidden board columns, per staff member, in this browser only (a convenience, never shared state). */
+function useHiddenColumns(userId: number | undefined): [Set<OptionalColumn>, (column: OptionalColumn) => void] {
+    const key = `toymart.admin.orders.columns.${userId ?? 'anon'}`;
+    const read = (): Set<OptionalColumn> => {
+        try {
+            const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
+            return new Set(Array.isArray(parsed) ? optionalColumns.filter((column) => parsed.includes(column)) : []);
+        } catch {
+            return new Set();
+        }
+    };
+    const [hidden, setHidden] = useState<Set<OptionalColumn>>(read);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => setHidden(read()), [key]);
+    const toggle = (column: OptionalColumn) =>
+        setHidden((current) => {
+            const next = new Set(current);
+            if (next.has(column)) next.delete(column);
+            else next.add(column);
+            try {
+                localStorage.setItem(key, JSON.stringify([...next]));
+            } catch {
+                // Private mode or blocked storage: the choice lasts for this visit only.
+            }
+            return next;
+        });
+    return [hidden, toggle];
+}
+
 /**
- * Order board (Figma "02 Orders board" 205:681, Theme B colours): ContentHeader with the date
- * range, status AdminTabs with server counts and the pinned Anomalies tab, URL-driven filters,
- * DataTable 192:532 with the OrderStatusBadge triad, RiskPill and PaymentChip, cursor
- * pagination, and the floating BulkActionBar 193:740 for bulk confirm. Every filter is a
- * server-side allowlisted parameter; the URL carries all of it (`?tab=pending&risk=high`).
+ * Order board (Figma Premium pass "B · 02 Orders board" 370:66862, row menu 371:67709): the
+ * ContentHeader with the date range, four KpiCards (Orders · Pending · Verify · Ready to ship,
+ * the server's board counts — the same numbers the tabs show), status AdminTabs with the
+ * Anomalies pill at the end, and one table card holding the filter bar, the DataTable with a
+ * ⋯ row menu, and the pager. The floating BulkActionBar 193:740 handles selections. Every
+ * filter is a server-side allowlisted parameter; the URL carries all of it (`?tab=pending&risk=high`).
  */
 export function OrdersPage() {
     const { t } = useI18n();
@@ -91,6 +135,8 @@ export function OrdersPage() {
     const today = dhakaDate(0);
     const desktop = useDesktop();
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [hidden, toggleColumn] = useHiddenColumns(me?.id);
+    const shows = (column: OptionalColumn) => !hidden.has(column);
 
     const filters: BoardFilters = useMemo(
         () => ({
@@ -139,6 +185,7 @@ export function OrdersPage() {
             },
             { replace: true },
         );
+    const pickTab = (value: BoardTab) => setParam({ tab: value === 'all' ? '' : value });
 
     useEffect(() => {
         if (debounced !== (params.get('q') ?? '')) setParam({ q: debounced });
@@ -201,9 +248,9 @@ export function OrdersPage() {
         });
     };
 
-    const printSelected = () => {
+    const print = (ids: number[]) => {
         setPrinting(true);
-        openInvoices([...selected])
+        openInvoices(ids)
             .then(({ missing, notInvoiced }) => {
                 if (missing.length > 0) toast.notify(t('orders.invoice.missing', { count: missing.length }), 'danger');
                 if (notInvoiced.length > 0) toast.notify(t('invoices.bulk.notInvoiced', { count: notInvoiced.length }), 'danger');
@@ -212,12 +259,39 @@ export function OrdersPage() {
             .finally(() => setPrinting(false));
     };
 
+    /** The row menu's Confirm: the same server bulk endpoint with one order, so the state machine still decides. */
+    const confirmOne = (row: OrderRow) =>
+        bulk.mutate([row.id], {
+            onSuccess: (response) => {
+                const failure = response.data.find((r) => r.outcome !== 'done');
+                if (failure) toast.notify(failure.detail ?? t(failure.outcome === 'not_found' ? 'orders.bulk.notFound' : 'orders.bulk.conflict'), 'danger');
+                else toast.notify(t('orders.action.confirmed', { number: row.number }));
+            },
+            onError: (error) => toast.notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger'),
+        });
+
+    const copyNumber = (row: OrderRow) => {
+        const done = () => toast.notify(t('orders.row.copied', { number: row.number }));
+        if (navigator.clipboard) void navigator.clipboard.writeText(row.number).then(done, () => toast.notify(t('orders.row.copyFailed'), 'danger'));
+        else toast.notify(t('orders.row.copyFailed'), 'danger');
+    };
+
+    /** The ⋯ row menu (Figma ActionMenu 371:68992): only actions the board already offers, each behind its permission. */
+    const rowMenu = (row: OrderRow): ActionMenuItem[] => [
+        { key: 'open', label: t('orders.row.open'), icon: <ArrowSquareOutIcon size={16} aria-hidden />, to: `/orders/${row.id}` },
+        ...(canConfirm && row.status === 'pending' ? [{ key: 'confirm', label: t('orders.action.confirm'), icon: <CheckIcon size={16} aria-hidden />, onSelect: () => confirmOne(row) }] : []),
+        ...(canFulfil && bookable.has(row.status) ? [{ key: 'book', label: t('orders.bulk.bookCourier'), icon: <TruckIcon size={16} aria-hidden />, onSelect: () => setBooking([row.id]) }] : []),
+        ...(canPrint ? [{ key: 'print', label: t('orders.invoice.print'), icon: <PrinterIcon size={16} aria-hidden />, onSelect: () => print([row.id]) }] : []),
+        { key: 'copy', label: t('orders.row.copy'), icon: <CopyIcon size={16} aria-hidden />, onSelect: () => copyNumber(row) },
+    ];
+
     const rangeText = (value: Range): string =>
         value === 'all' ? t('orders.range.all') : value === '1' ? t('orders.range.today', { range: rangeLabel(today, today) }) : t(`orders.range.${value}` as MessageKey, { range: rangeLabel(dhakaDate(Number(value) - 1), today) });
 
     const subtitleCount = counts.all ?? 0;
     const highRisk = rows.filter((row) => selected.has(row.id) && row.risk_level === 'high').length;
     const activeFilters = [filters.payment, filters.source, filters.risk, range === 'all' ? '' : range, filters.onlyAnomalies ? '1' : ''].filter(Boolean).length;
+    const periodLabel = range === 'all' ? t('orders.kpi.orders') : t('orders.kpi.ordersIn', { range: rangeLabel(dhakaDate(Number(range) - 1), today) });
 
     const rangeSelect = (
         <label className="relative flex w-full sm:w-65">
@@ -256,7 +330,7 @@ export function OrdersPage() {
                     </option>
                 ))}
             </FilterSelect>
-            <label className="ms-2 inline-flex items-center gap-2 t-admin-body text-fg-primary">
+            <label className="inline-flex items-center gap-2 px-2 t-admin-body whitespace-nowrap text-fg-primary">
                 <button
                     type="button"
                     role="switch"
@@ -277,12 +351,104 @@ export function OrdersPage() {
             placeholder={t('orders.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={desktop ? 'w-full sm:w-85' : 'min-w-0 flex-1'}
+            className={desktop ? 'min-w-56 flex-1' : 'min-w-0 flex-1'}
         />
     );
 
+    /** Pending, Verify and Ready to ship are shortcuts to their tab; a second click goes back to All. */
+    const shortcut = (value: BoardTab) => ({ active: tab === value, onClick: () => pickTab(tab === value ? 'all' : value) });
+    const figure = (count: number | undefined) => <span className="t-admin-num-lg">{orders.data ? (count ?? 0) : '—'}</span>;
+
+    const kpis = (
+        <div role="group" aria-label={t('orders.kpi.label')} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <KpiCard
+                icon={ReceiptIcon}
+                tone="brand"
+                compact
+                label={periodLabel}
+                value={figure(counts.all)}
+                hint={t('orders.kpi.ordersHint', { channel: filters.source ? t(sourceLabel(filters.source)) : t('orders.kpi.allChannels') })}
+            />
+            <KpiCard icon={WarningIcon} tone="warning" compact label={t('orders.tab.pending')} value={figure(counts.pending)} hint={t('orders.kpi.pendingHint')} {...shortcut('pending')} />
+            <KpiCard icon={ShieldWarningIcon} tone="danger" compact label={t('orders.tab.verify')} value={figure(counts.verify)} hint={t('orders.kpi.verifyHint')} {...shortcut('verify')} />
+            <KpiCard icon={TruckIcon} tone="info" compact label={t('orders.tab.ready_to_ship')} value={figure(counts.ready_to_ship)} hint={t('orders.kpi.readyHint')} {...shortcut('ready_to_ship')} />
+        </div>
+    );
+
+    const pager = (
+        <>
+            <Button variant="outline" size="sm" disabled={!prev} onClick={() => setParam({ cursor: prev ?? '' }, true)}>
+                <ArrowLeftIcon size={16} aria-hidden />
+                {t('orders.newer')}
+            </Button>
+            <Button variant="outline" size="sm" disabled={!next} onClick={() => setParam({ cursor: next ?? '' }, true)}>
+                {t('orders.older')}
+                <ArrowRightIcon size={16} aria-hidden />
+            </Button>
+        </>
+    );
+
+    const status = orders.isError ? (
+        <QueryError error={orders.error} onRetry={() => void orders.refetch()} />
+    ) : orders.isPending ? (
+        <p className="t-admin-body text-fg-tertiary" aria-busy="true">
+            {t('common.loading')}
+        </p>
+    ) : null;
+
+    const desktopTable = (
+        <div className={dataTable.card}>
+            {/* Filter bar 370:66893: inside the table card, above the header row. */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-line-default px-4 py-3">
+                {searchField}
+                {filterControls}
+                <ColumnPicker hidden={hidden} onToggle={toggleColumn} />
+            </div>
+            {status ? (
+                <div className="p-4">{status}</div>
+            ) : rows.length === 0 ? (
+                <EmptyState reason="allClear" title={t('orders.empty')} body={t('orders.emptyBody')} className="rounded-none border-0" />
+            ) : (
+                <>
+                    <div className="overflow-x-auto">
+                        <table className={`${dataTable.table} table-fixed`}>
+                            <thead className={dataTable.head}>
+                                <tr className="border-b border-line-strong">
+                                    <th scope="col" className={`${dataTable.th} w-10 px-0 text-center`}>
+                                        {canConfirm && <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label={t('orders.selectPage')} className="size-5 accent-brand" />}
+                                    </th>
+                                    {/* Percentage widths (from the Figma widths at 1440): every column grows with the screen, so a
+                                        wide display has no empty band and no single giant column (owner, 2026-11-16). */}
+                                    <Th className="w-[11%]">{t('orders.col.order')}</Th>
+                                    {shows('placed') && <Th className="w-[9%]">{t('orders.col.placed')}</Th>}
+                                    <Th className="w-[14%]">{t('orders.col.customer')}</Th>
+                                    <Th end className="w-[8%]">
+                                        {t('orders.col.total')}
+                                    </Th>
+                                    {shows('payment') && <Th className="hidden w-[10%] xl:table-cell">{t('orders.col.payment')}</Th>}
+                                    <Th className="w-[18%]">{t('orders.col.status')}</Th>
+                                    {shows('risk') && <Th className="w-[9%]">{t('orders.col.risk')}</Th>}
+                                    {shows('courier') && <Th className="hidden w-[13%] xl:table-cell">{t('orders.col.courier')}</Th>}
+                                    <th scope="col" className={`${dataTable.th} w-12 px-0`}>
+                                        <span className="sr-only">{t('orders.col.actions')}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row) => (
+                                    <OrderRowView key={row.id} row={row} shows={shows} selectable={canConfirm} selected={selected.has(row.id)} onToggle={() => toggle(row.id)} menu={rowMenu(row)} />
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <DataTableFooter summary={t(selected.size > 0 ? 'orders.footer.selected' : 'orders.footer', { count: rows.length, selected: selected.size })}>{pager}</DataTableFooter>
+                </>
+            )}
+        </div>
+    );
+
     return (
-        <section className={`flex flex-col gap-4 ${desktop ? 'pb-24' : 'pb-36'}`}>
+        <section className={`flex flex-col gap-4 lg:gap-6 ${desktop ? 'pb-24' : 'pb-36'}`}>
             <ContentHeader
                 breadcrumb={[{ label: t('nav.group.sell') }, { label: t('orders.crumb') }]}
                 title={t('orders.title')}
@@ -300,22 +466,19 @@ export function OrdersPage() {
                 }
             />
 
+            {kpis}
+
             {desktop ? (
-                <div className="flex items-end gap-2 border-b border-line-default">
-                    <TabList label={t('orders.tabs')} className="min-w-0 flex-1 border-b-0">
-                        {tabs.map((value) => (
-                            <button key={value} type="button" aria-pressed={tab === value} onClick={() => setParam({ tab: value === 'all' ? '' : value })} className={tabClass(tab === value)}>
-                                {t(tabLabel(value))}
-                                <CountBadge count={counts[value] ?? 0} />
-                            </button>
-                        ))}
-                    </TabList>
-                    {/* Pinned Anomalies tab: a warning-edged chip, the exception the eye should land on. */}
+                <div className="flex items-center gap-4 border-b border-line-default">
+                    <StatusTabs tab={tab} counts={counts} onPick={pickTab} />
+                    {/* Anomalies 370:66889: a warning-tinted pill at the end of the row, the exception the eye should land on. */}
                     <button
                         type="button"
                         aria-pressed={tab === 'anomalies'}
-                        onClick={() => setParam({ tab: tab === 'anomalies' ? '' : 'anomalies' })}
-                        className={`mb-1 inline-flex h-8.25 shrink-0 items-center gap-1.5 rounded-xs border-l-2 border-feedback-warning px-3 t-admin-body-strong whitespace-nowrap text-fg-primary ${tab === 'anomalies' ? 'bg-warning-subtle' : 'bg-subtle hover:bg-warning-subtle'}`}
+                        onClick={() => pickTab(tab === 'anomalies' ? 'all' : 'anomalies')}
+                        className={`mb-1 inline-flex shrink-0 items-center gap-1.5 rounded-xs-plus bg-warning-subtle px-2.5 py-1.5 t-admin-body-strong whitespace-nowrap text-fg-primary transition-shadow duration-150 ease-standard ${
+                            tab === 'anomalies' ? 'ring-2 ring-inset ring-feedback-warning' : 'hover:shadow-e1'
+                        }`}
                     >
                         <WarningIcon size={14} aria-hidden className="text-feedback-warning" />
                         {t('orders.tab.anomalies')}
@@ -323,101 +486,54 @@ export function OrdersPage() {
                     </button>
                 </div>
             ) : (
-                <ChipTabs tab={tab} counts={counts} onPick={(value) => setParam({ tab: value === 'all' ? '' : value })} />
+                <ChipTabs tab={tab} counts={counts} onPick={pickTab} />
             )}
 
             {desktop ? (
-                <div className="flex flex-wrap items-center gap-2">
-                    {searchField}
-                    {filterControls}
-                </div>
-            ) : (
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                        {searchField}
-                        <Button variant="outline" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
-                            <FunnelIcon size={16} aria-hidden />
-                            {t('orders.filters')}
-                            {activeFilters > 0 && <span className="tabular">{activeFilters}</span>}
-                        </Button>
-                    </div>
-                    {filtersOpen && (
-                        <div className="flex flex-wrap items-center gap-2 rounded-md border border-line-default bg-surface p-3">
-                            {rangeSelect}
-                            {filterControls}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {orders.isError ? (
-                <QueryError error={orders.error} onRetry={() => void orders.refetch()} />
-            ) : orders.isPending ? (
-                <p className="t-admin-body text-fg-tertiary" aria-busy="true">
-                    {t('common.loading')}
-                </p>
-            ) : rows.length === 0 ? (
-                <EmptyState reason="allClear" title={t('orders.empty')} body={t('orders.emptyBody')} />
-            ) : desktop ? (
-                <div className={dataTable.card}>
-                    <table className={`${dataTable.table} table-fixed`}>
-                        <thead className={dataTable.head}>
-                            <tr className="border-b border-line-strong">
-                                <th scope="col" className={`${dataTable.th} w-10 px-0 text-center`}>
-                                    {canConfirm && <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label={t('orders.selectPage')} className="size-4 accent-brand" />}
-                                </th>
-                                <Th className="w-30">{t('orders.col.order')}</Th>
-                                <Th className="w-23">{t('orders.col.placed')}</Th>
-                                <Th className="w-42">{t('orders.col.customer')}</Th>
-                                <Th end className="w-13">
-                                    {t('orders.col.items')}
-                                </Th>
-                                <Th end className="w-24">
-                                    {t('orders.col.total')}
-                                </Th>
-                                <Th className="w-28">{t('orders.col.payment')}</Th>
-                                <Th className="w-54">{t('orders.col.status')}</Th>
-                                <Th className="w-25">{t('orders.col.risk')}</Th>
-                                <Th>{t('orders.col.courier')}</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map((row) => (
-                                <OrderRowView key={row.id} row={row} selectable={canConfirm} selected={selected.has(row.id)} onToggle={() => toggle(row.id)} />
-                            ))}
-                        </tbody>
-                    </table>
-                    <DataTableFooter summary={t(selected.size > 0 ? 'orders.footer.selected' : 'orders.footer', { count: rows.length, selected: selected.size })}>
-                        <Button variant="outline" size="sm" disabled={!prev} onClick={() => setParam({ cursor: prev ?? '' }, true)}>
-                            <ArrowLeftIcon size={16} aria-hidden />
-                            {t('orders.newer')}
-                        </Button>
-                        <Button variant="outline" size="sm" disabled={!next} onClick={() => setParam({ cursor: next ?? '' }, true)}>
-                            {t('orders.older')}
-                            <ArrowRightIcon size={16} aria-hidden />
-                        </Button>
-                    </DataTableFooter>
-                </div>
+                desktopTable
             ) : (
                 <>
-                    {/* 768: OrderCard 228:1891 replaces the table row. */}
-                    <ul className="flex flex-col gap-4" aria-label={t('orders.title')}>
-                        {rows.map((row) => (
-                            <OrderCardView key={row.id} row={row} selectable={canConfirm} selected={selected.has(row.id)} onToggle={() => toggle(row.id)} />
-                        ))}
-                    </ul>
-                    <div className="flex gap-2">
-                        {prev && (
-                            <Button variant="outline" className="flex-1" onClick={() => setParam({ cursor: prev }, true)}>
-                                <ArrowLeftIcon size={16} aria-hidden />
-                                {t('orders.newer')}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                            {searchField}
+                            <Button variant="outline" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+                                <FunnelIcon size={16} aria-hidden />
+                                {t('orders.filters')}
+                                {activeFilters > 0 && <span className="tabular">{activeFilters}</span>}
                             </Button>
+                        </div>
+                        {filtersOpen && (
+                            <div className="flex flex-wrap items-center gap-2 rounded-md border border-line-default bg-surface p-3">
+                                {rangeSelect}
+                                {filterControls}
+                            </div>
                         )}
-                        <Button variant="outline" className="flex-1" disabled={!next} onClick={() => setParam({ cursor: next ?? '' }, true)}>
-                            {t('orders.older')}
-                            <ArrowRightIcon size={16} aria-hidden />
-                        </Button>
                     </div>
+                    {status ??
+                        (rows.length === 0 ? (
+                            <EmptyState reason="allClear" title={t('orders.empty')} body={t('orders.emptyBody')} />
+                        ) : (
+                            <>
+                                {/* 768: OrderCard 228:1891 replaces the table row. */}
+                                <ul className="flex flex-col gap-4" aria-label={t('orders.title')}>
+                                    {rows.map((row) => (
+                                        <OrderCardView key={row.id} row={row} selectable={canConfirm} selected={selected.has(row.id)} onToggle={() => toggle(row.id)} />
+                                    ))}
+                                </ul>
+                                <div className="flex gap-2">
+                                    {prev && (
+                                        <Button variant="outline" className="flex-1" onClick={() => setParam({ cursor: prev }, true)}>
+                                            <ArrowLeftIcon size={16} aria-hidden />
+                                            {t('orders.newer')}
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" className="flex-1" disabled={!next} onClick={() => setParam({ cursor: next ?? '' }, true)}>
+                                        {t('orders.older')}
+                                        <ArrowRightIcon size={16} aria-hidden />
+                                    </Button>
+                                </div>
+                            </>
+                        ))}
                 </>
             )}
 
@@ -440,7 +556,7 @@ export function OrdersPage() {
                     onConfirm={confirmSelected}
                     onPack={packSelected}
                     onFulfil={fulfilSelected}
-                    onPrint={printSelected}
+                    onPrint={() => print([...selected])}
                     onBook={() => setBooking([...selected])}
                     onClear={() => {
                         setSelected(new Set());
@@ -469,8 +585,132 @@ function useDesktop(): boolean {
 }
 
 /**
- * 768 status tabs (Figma 229:21477): a scrolling row of chips — the active one brand-edged,
- * Anomalies warning-edged — with empty statuses left out and All last.
+ * The column picker (AdminIconButton 370:66905 at the end of the filter bar): a checkbox per
+ * optional column, remembered per staff member in this browser.
+ */
+function ColumnPicker({ hidden, onToggle }: { hidden: Set<OptionalColumn>; onToggle: (column: OptionalColumn) => void }) {
+    const { t } = useI18n();
+    const [open, setOpen] = useState(false);
+    const panelId = useId();
+    const root = useRef<HTMLDivElement>(null);
+    const button = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const close = (event: MouseEvent | KeyboardEvent) => {
+            if (event instanceof KeyboardEvent) {
+                if (event.key !== 'Escape') return;
+                setOpen(false);
+                button.current?.focus();
+            } else if (!root.current?.contains(event.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        document.addEventListener('keydown', close);
+        return () => {
+            document.removeEventListener('mousedown', close);
+            document.removeEventListener('keydown', close);
+        };
+    }, [open]);
+
+    return (
+        <div ref={root} className="relative ms-auto">
+            <IconButton ref={button} variant="outline" aria-label={t('orders.columns')} aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => setOpen((value) => !value)}>
+                <ColumnsIcon size={18} aria-hidden />
+            </IconButton>
+            {open && (
+                <fieldset id={panelId} className="absolute end-0 top-full z-30 mt-1 flex min-w-52 flex-col rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3">
+                    <legend className="sr-only">{t('orders.columns')}</legend>
+                    <p aria-hidden className="px-3 pt-2 pb-1 t-admin-overline text-fg-secondary">
+                        {t('orders.columns')}
+                    </p>
+                    {optionalColumns.map((column) => (
+                        <label key={column} className="flex h-9 cursor-pointer items-center gap-3 rounded-xs px-3 t-admin-body whitespace-nowrap text-fg-primary hover:bg-subtle">
+                            <input type="checkbox" checked={!hidden.has(column)} onChange={() => onToggle(column)} className="size-4 accent-brand" />
+                            {t(`orders.col.${column}` as MessageKey)}
+                        </label>
+                    ))}
+                </fieldset>
+            )}
+        </div>
+    );
+}
+
+/**
+ * The 1440 status tabs (Figma AdminTabs 370:66878): Figma's nine in one row, never clipped. Tabs
+ * that do not fit the row's width — and On hold and Processing, which the frame leaves out —
+ * move behind a ⋯ menu at the row's end with their server counts; the open tab always stays in
+ * the row. Widths come from an invisible measuring copy, so the split never oscillates.
+ */
+function StatusTabs({ tab, counts, onPick }: { tab: BoardTab; counts: Partial<Record<string, number>>; onPick: (tab: BoardTab) => void }) {
+    const { t } = useI18n();
+    const box = useRef<HTMLDivElement>(null);
+    const measure = useRef<HTMLDivElement>(null);
+    const [fit, setFit] = useState<number | null>(null);
+    const candidates = tabs.filter((value) => !quietTabs.has(value) || tab === value);
+
+    useLayoutEffect(() => {
+        const update = () => {
+            const width = box.current?.clientWidth ?? 0;
+            const items = Array.from(measure.current?.children ?? []) as HTMLElement[];
+            // jsdom (and a box not laid out yet) measures 0: show every tab.
+            if (width === 0 || items.length === 0) {
+                setFit(null);
+                return;
+            }
+            const room = width - 40;
+            let used = 0;
+            let count = 0;
+            for (const [index, item] of items.entries()) {
+                used += item.offsetWidth + (index > 0 ? 2 : 0);
+                if (used > room) break;
+                count += 1;
+            }
+            setFit(count);
+        };
+        update();
+        const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(update) : null;
+        if (box.current) observer?.observe(box.current);
+        return () => observer?.disconnect();
+    }, [counts, candidates.length, t]);
+
+    let shown = fit === null ? candidates : candidates.slice(0, fit);
+    if (!shown.includes(tab) && candidates.includes(tab)) shown = [...shown.slice(0, Math.max(0, shown.length - 1)), tab];
+    const overflow = [...candidates.filter((value) => !shown.includes(value)), ...[...quietTabs].filter((value) => !candidates.includes(value))];
+    const button = (value: BoardTab, measuring = false) => (
+        <button
+            key={value}
+            type="button"
+            tabIndex={measuring ? -1 : undefined}
+            aria-pressed={measuring ? undefined : tab === value}
+            onClick={() => onPick(value)}
+            className={tabClass(tab === value)}
+        >
+            {t(tabLabel(value))}
+            <CountBadge count={counts[value] ?? 0} />
+        </button>
+    );
+
+    return (
+        <div ref={box} className="relative flex min-w-0 flex-1 items-center overflow-hidden">
+            <div ref={measure} aria-hidden inert className="invisible absolute flex gap-0.5">
+                {candidates.map((value) => button(value, true))}
+            </div>
+            <TabList label={t('orders.tabs')} className="min-w-0 gap-0.5 border-b-0">
+                {shown.map((value) => button(value))}
+            </TabList>
+            {overflow.length > 0 && (
+                <ActionMenu
+                    label={t('orders.tab.more')}
+                    items={overflow.map((value) => ({ key: value, label: t('orders.tab.withCount', { tab: t(tabLabel(value)), count: counts[value] ?? 0 }), onSelect: () => onPick(value) }))}
+                />
+            )}
+        </div>
+    );
+}
+
+/**
+ * 768 status tabs (Figma 229:21477): a scrolling row of chips — the active one brand-bordered,
+ * Anomalies warning-tinted — with empty statuses left out and All last.
  */
 function ChipTabs({ tab, counts, onPick }: { tab: BoardTab; counts: Partial<Record<string, number>>; onPick: (tab: BoardTab) => void }) {
     const { t } = useI18n();
@@ -481,7 +721,7 @@ function ChipTabs({ tab, counts, onPick }: { tab: BoardTab; counts: Partial<Reco
             {shown.map((value) => {
                 const active = tab === value;
                 const anomalies = value === 'anomalies';
-                const look = active ? 'border-2 border-brand bg-brand-subtle' : anomalies ? 'border-l-2 border-feedback-warning bg-subtle' : 'border border-line-default bg-surface hover:bg-subtle';
+                const look = active ? 'border-2 border-brand bg-brand-subtle' : anomalies ? 'border border-transparent bg-warning-subtle' : 'border border-line-default bg-surface hover:bg-subtle';
                 return (
                     <button
                         key={value}
@@ -497,6 +737,17 @@ function ChipTabs({ tab, counts, onPick }: { tab: BoardTab; counts: Partial<Reco
                 );
             })}
         </div>
+    );
+}
+
+/** The verify-first flag: a warning-tinted chip (no edge), the same in the card and the courier cell. */
+function VerifyFirst() {
+    const { t } = useI18n();
+    return (
+        <span className="inline-flex h-5.5 items-center gap-1 rounded-xs bg-warning-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary">
+            <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />
+            {t('orders.courier.verifyFirst')}
+        </span>
     );
 }
 
@@ -529,12 +780,7 @@ function OrderCardView({ row, selectable, selected, onToggle }: { row: OrderRow;
                 extra={
                     <>
                         <RiskPill level={row.risk_level} score={row.risk_score} />
-                        {verify && (
-                            <span className="inline-flex h-5.5 items-center gap-1 rounded-xs border-l-2 border-feedback-warning bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary">
-                                <WarningIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />
-                                {t('orders.courier.verifyFirst')}
-                            </span>
-                        )}
+                        {verify && <VerifyFirst />}
                     </>
                 }
             />
@@ -554,72 +800,96 @@ function FilterSelect({ label, value, onChange, all, children }: { label: string
     );
 }
 
-function OrderRowView({ row, selectable, selected, onToggle }: { row: OrderRow; selectable: boolean; selected: boolean; onToggle: () => void }) {
+function OrderRowView({
+    row,
+    shows,
+    selectable,
+    selected,
+    onToggle,
+    menu,
+}: {
+    row: OrderRow;
+    shows: (column: OptionalColumn) => boolean;
+    selectable: boolean;
+    selected: boolean;
+    onToggle: () => void;
+    menu: ActionMenuItem[];
+}) {
     const { t, locale } = useI18n();
     const placed = row.placed_at ?? row.created_at;
     const at = placed ? dhakaParts(placed, locale) : null;
     const age = placed ? ageLabel(placed) : null;
     const verify = row.verification_status === 'pending';
     const partlyPaid = !isZeroAmount(row.paid_total) && !isZeroAmount(row.due_total);
-    const cell = `${dataTable.td.replace('h-15', 'h-auto')} py-3 max-lg:h-auto max-lg:p-0`;
-    // verification_status = pending: the only row-level emphasis on the board (a 2px danger edge).
-    const edge = verify ? 'max-lg:border-s-2 max-lg:border-s-feedback-danger' : '';
+    const cell = `${dataTable.td.replace('h-15', 'h-auto')} py-3`;
 
     return (
-        <tr
-            className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${selected ? `${dataTable.row.replace('hover:bg-subtle', '')} bg-brand-subtle` : dataTable.row} ${edge}`}
-            aria-selected={selectable ? selected : undefined}
-        >
-            <td className={`${cell} w-10 lg:px-0 lg:text-center ${verify ? 'lg:border-s-2 lg:border-s-feedback-danger' : ''}`}>
-                {selectable && <input type="checkbox" checked={selected} onChange={onToggle} aria-label={t('orders.select', { number: row.number })} className="size-4 accent-brand" />}
+        <tr className={selected ? `${dataTable.row.replace('hover:bg-subtle', '')} bg-brand-subtle` : dataTable.row} aria-selected={selectable ? selected : undefined}>
+            <td className={`${cell} w-10 px-0 text-center`}>
+                {selectable && <input type="checkbox" checked={selected} onChange={onToggle} aria-label={t('orders.select', { number: row.number })} className="size-5 accent-brand" />}
             </td>
             <td className={cell}>
                 <Link to={`/orders/${row.id}`} className="block t-admin-mono whitespace-nowrap text-fg-primary hover:text-fg-link hover:underline">
                     {row.number}
                 </Link>
-                <p className="t-admin-caption text-fg-tertiary">{t(sourceLabel(row.source))}</p>
+                <p className="truncate t-admin-caption tabular text-fg-tertiary">
+                    {t(sourceLabel(row.source))} · {t(row.items_count === 1 ? 'orders.row.item' : 'orders.row.items', { count: row.items_count })}
+                </p>
             </td>
-            <td className={cell}>
-                {at && (
-                    <>
-                        <p className="t-admin-body-strong tabular whitespace-nowrap text-fg-primary">{at.day}</p>
-                        <p className="t-admin-caption tabular whitespace-nowrap text-fg-tertiary">{age ? t(age.key, age.vars) : at.time}</p>
-                    </>
-                )}
-            </td>
-            <td className={`min-w-0 basis-full lg:basis-auto ${cell}`}>
+            {shows('placed') && (
+                <td className={cell}>
+                    {at && (
+                        <>
+                            <p className="t-admin-body-strong tabular whitespace-nowrap text-fg-primary">{at.day}</p>
+                            <p className="t-admin-caption tabular text-fg-tertiary">{age ? t(age.key, age.vars) : at.time}</p>
+                        </>
+                    )}
+                </td>
+            )}
+            <td className={`min-w-0 ${cell}`}>
                 <p className="truncate t-admin-body-strong text-fg-primary">{row.customer_name}</p>
                 <p className="truncate t-admin-caption tabular text-fg-tertiary">{[row.customer_phone_masked, row.district].filter(Boolean).join(' · ')}</p>
             </td>
-            <td className={`${cell} t-admin-num tabular lg:text-end`}>
-                <span className="me-1.5 t-admin-caption text-fg-tertiary lg:hidden">{t('orders.col.items')}</span>
-                {row.items_count}
-            </td>
-            <td className={`${cell} lg:text-end`}>
+            <td className={`${cell} text-end`}>
                 <p className="t-admin-num tabular whitespace-nowrap text-fg-primary">
                     <Taka amount={row.grand_total} />
                 </p>
-                {partlyPaid && <p className="t-admin-caption tabular whitespace-nowrap text-fg-tertiary">{t('orders.duePrefix')}
-                        <Taka amount={row.due_total} signClass="t-admin-currency-caption" /></p>}
+                {partlyPaid && (
+                    <p className="t-admin-caption tabular whitespace-nowrap text-fg-tertiary">
+                        {t('orders.duePrefix')}
+                        <Taka amount={row.due_total} signClass="t-admin-currency-caption" />
+                    </p>
+                )}
+                {/* Below 1280 the Payment column folds in here, under the amount. */}
+                {shows('payment') && (
+                    <span className="mt-1 flex justify-end xl:hidden">
+                        <PaymentChip method={row.payment_method} />
+                    </span>
+                )}
             </td>
+            {shows('payment') && (
+                <td className={`${cell} hidden xl:table-cell`}>
+                    <PaymentChip method={row.payment_method} />
+                </td>
+            )}
             <td className={cell}>
-                <PaymentChip method={row.payment_method} />
+                <OrderStatusBadge order={{ ...row, paid: row.paid_total, refunded: row.refunded_total }} />
             </td>
-            <td className={cell}>
-                <span className="hidden lg:block">
-                    <OrderStatusBadge order={{ ...row, paid: row.paid_total, refunded: row.refunded_total }} />
-                </span>
-                <span className="lg:hidden">
-                    <OrderStatusBadge form="compact" order={{ ...row, paid: row.paid_total, refunded: row.refunded_total }} />
-                </span>
-            </td>
-            <td className={cell}>
-                <RiskPill level={row.risk_level} score={row.risk_score} />
-            </td>
-            <td className={cell}>
-                {/* Couriers arrive in Phase 6: nothing is ever booked yet, so say so, never invent a consignment. */}
-                <p className="t-admin-body text-fg-primary">{preShip.has(row.status) ? t('orders.courier.notBooked') : t('orders.courier.noData')}</p>
-                {verify && <p className="t-admin-caption text-fg-tertiary">{t('orders.courier.verifyFirst')}</p>}
+            {shows('risk') && (
+                <td className={cell}>
+                    <RiskPill level={row.risk_level} score={row.risk_score} />
+                    {verify && <p className="mt-1 t-admin-caption text-fg-tertiary xl:hidden">{t('orders.courier.verifyFirst')}</p>}
+                </td>
+            )}
+            {shows('courier') && (
+                <td className={`${cell} hidden xl:table-cell`}>
+                    {/* Nothing booked yet: say so, never invent a consignment. */}
+                    <p className="truncate t-admin-body-strong text-fg-secondary">{preShip.has(row.status) ? t('orders.courier.notBooked') : t('orders.courier.noData')}</p>
+                    {verify && <p className="truncate t-admin-caption text-fg-tertiary" title={t('orders.courier.verifyFirst')}>{t('orders.courier.verifyFirst')}</p>}
+                </td>
+            )}
+            <td className={`${cell} w-12 px-0 text-center`}>
+                <ActionMenu label={t('orders.row.menu', { number: row.number })} items={menu} />
             </td>
         </tr>
     );
