@@ -14,6 +14,7 @@ const sections = [
     { to: 'checkout', label: 'storeSettings.nav.checkout' },
     { to: 'delivery', label: 'deliverySettings.nav' },
     { to: 'invoice', label: 'storeSettings.nav.invoice' },
+    { to: 'pos', label: 'storeSettings.nav.pos' },
 ] as const satisfies readonly { to: string; label: MessageKey }[];
 
 /**

@@ -98,6 +98,7 @@ export const detail: Order = {
         coupon_code: null,
         coupon_discount: '0.00',
         promotion_discount: '0.00',
+        manual_discount: '0.00',
         shipping_charge: '60.00',
         shipping_discount: '0.00',
         tax_total: '0.00',

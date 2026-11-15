@@ -160,7 +160,7 @@ final class PosController extends ApiController
     {
         return new PosQuoteResource($quotes->quote(
             $session->location_id, $request->lines(), $request->couponCode(), $request->phone(), $request->tenders(),
-            $request->customerName(), $request->canSellOnDue(),
+            $request->customerName(), $request->canSellOnDue(), $request->discount(),
         ));
     }
 
@@ -206,7 +206,7 @@ final class PosController extends ApiController
     {
         /** @var User $user */
         $user = $request->user();
-        $held = $hold->handle($session, $request->lines(), $request->couponCode(), $request->phone(), $request->label(), $user->id);
+        $held = $hold->handle($session, $request->lines(), $request->couponCode(), $request->phone(), $request->label(), $user->id, $request->customerName());
 
         return (new PosHeldSaleResource($held))->response()->setStatusCode(201);
     }

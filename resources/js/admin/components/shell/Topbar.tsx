@@ -1,8 +1,9 @@
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
+import { buttonClass } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { SearchField } from '@/components/ui/SearchField';
 import { Avatar } from './Avatar';
@@ -40,6 +41,20 @@ function useDhakaTime(locale: string): string {
 
     return time;
 }
+
+/** Storefront address from `<meta name="tm-storefront-url">` (config services.storefront.url). */
+function readStorefrontUrl(): string | null {
+    const raw = document.querySelector<HTMLMetaElement>('meta[name="tm-storefront-url"]')?.content?.trim();
+    if (!raw) return null;
+    try {
+        const url = new URL(raw);
+        return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+    } catch {
+        return null;
+    }
+}
+
+const storefrontUrl = typeof document === 'undefined' ? null : readStorefrontUrl();
 
 /** User block (avatar · name · role · caret) opening a small menu with Sign out. */
 function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'me' | 'roleLabel' | 'onSignOut' | 'signingOut'>) {
@@ -141,6 +156,19 @@ export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar
                 <ClockIcon size={14} aria-hidden />
                 {t('shell.timezone', { time })}
             </span>
+            {storefrontUrl && (
+                <a
+                    href={locale === 'bn' ? new URL('bn/', storefrontUrl).href : storefrontUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={t('shell.viewSiteHint')}
+                    aria-label={t('shell.viewSiteHint')}
+                    className={`${buttonClass('outline', 'sm')} gap-1.5`}
+                >
+                    <ArrowSquareOutIcon size={16} aria-hidden />
+                    <span className="hidden md:inline">{t('shell.viewSite')}</span>
+                </a>
+            )}
             <div className="hidden sm:block">
                 <LanguageSwitch />
             </div>

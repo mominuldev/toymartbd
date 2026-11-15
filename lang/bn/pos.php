@@ -16,6 +16,10 @@ return [
     'phone_for_discount' => 'ছাড় দিতে গ্রাহকের ফোন নম্বর দিন — অফারের সীমা ফোন নম্বর ধরে গোনা হয়।',
     'walk_in_customer' => 'ওয়াক-ইন গ্রাহক',
 
+    'discount' => [
+        'over_cap' => 'এই বিক্রিতে সর্বোচ্চ :percent% ছাড় দেওয়া যায় (৳:amount)।',
+    ],
+
     'stock' => [
         'only_here' => 'এখানে মাত্র :available টি আছে।',
         'none_here' => 'এই শাখায় স্টকে নেই।',

@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, int> $lines variant id (as a JSON key) → quantity
  * @property string|null $coupon_code
  * @property string|null $customer_phone E.164
+ * @property string|null $customer_name
  * @property int $held_by
  * @property Carbon|null $resumed_at
  * @property int|null $resumed_by

@@ -42,6 +42,7 @@ import { SettingsLayout } from '@/features/storeSettings/SettingsLayout';
 import { BusinessSection } from '@/features/storeSettings/BusinessSection';
 import { BranchesSection } from '@/features/storeSettings/BranchesSection';
 import { CheckoutSection } from '@/features/storeSettings/CheckoutSection';
+import { PosSection } from '@/features/storeSettings/PosSection';
 import { DeliveryAreasSection } from '@/features/storeSettings/DeliveryAreasSection';
 import { PosPage } from '@/features/pos/PosPage';
 import { InboxPage } from '@/features/inbox/InboxPage';
@@ -254,6 +255,7 @@ export const routes: RouteObject[] = [
                             { path: 'branches', element: <BranchesSection /> },
                             { path: 'checkout', element: <CheckoutSection /> },
                             { path: 'delivery', element: <DeliveryAreasSection /> },
+                            { path: 'pos', element: <PosSection /> },
                             { path: 'invoice', element: <InvoiceSettingsPage /> },
                         ],
                     },

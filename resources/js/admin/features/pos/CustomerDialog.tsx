@@ -40,8 +40,10 @@ export function CustomerDialog({ open, onClose, onPick }: { open: boolean; onClo
         setError(null);
         requestAnimationFrame(() => searchRef.current?.focus());
     });
-    const search = useCustomerSearch(q);
-    const matches = q.trim().length >= 2 ? (search.data?.data ?? []) : [];
+    const term = q.trim();
+    const search = useCustomerSearch(q, open);
+    // Empty → the most recent customers; one character → nothing until a real search term.
+    const matches = term.length === 1 ? [] : (search.data?.data ?? []);
 
     const pick = (customer: { phone: string; name: string } | null) => {
         onPick(customer);
@@ -108,8 +110,8 @@ export function CustomerDialog({ open, onClose, onPick }: { open: boolean; onClo
                         </li>
                     ))}
                 </ul>
-                {q.trim().length > 0 && q.trim().length < 2 && <p className="t-admin-caption text-fg-tertiary">{t('pos.customerDialog.short')}</p>}
-                {q.trim().length >= 2 && search.data && matches.length === 0 && <p className="t-admin-caption text-fg-secondary">{t('pos.customerDialog.none')}</p>}
+                {term.length === 1 && <p className="t-admin-caption text-fg-tertiary">{t('pos.customerDialog.short')}</p>}
+                {term.length >= 2 && search.data && !search.isPlaceholderData && matches.length === 0 && <p className="t-admin-caption text-fg-secondary">{t('pos.customerDialog.none')}</p>}
 
                 <form
                     className="flex flex-col gap-2.5 rounded-md border border-line-default bg-subtle p-4"

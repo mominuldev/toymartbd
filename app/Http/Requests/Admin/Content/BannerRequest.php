@@ -21,7 +21,7 @@ use Illuminate\Validation\Validator;
  *
  * Placement rules: only `category_page` and `popup` take an image (`media_id`, a library
  * image); only `category_page` targets a `category_id`; `info_strip` — the only placement shown
- * on cart and checkout — is text plus at most a link to a static page (`/pages/…`), never a
+ * on cart and checkout — is text plus at most a link to a static page (`/{slug}`), never a
  * product or category (rule 25b).
  */
 final class BannerRequest extends ApiFormRequest
@@ -83,7 +83,7 @@ final class BannerRequest extends ApiFormRequest
 
             if ($data->linkUrl !== null) {
                 if ($data->placement === BannerPlacement::InfoStrip && ! SaveBanner::isPageLink($data->linkUrl)) {
-                    $validator->errors()->add('link_url', 'An info strip shows on checkout, so it may only link to a store page (/pages/…).');
+                    $validator->errors()->add('link_url', 'An info strip shows on checkout, so it may only link to a store page (/{slug}, e.g. /delivery-policy).');
                 } elseif (! SaveMenuRequest::validUrl($data->linkUrl)) {
                     $validator->errors()->add('link_url', 'Enter a site path starting with / or a full https:// address.');
                 }

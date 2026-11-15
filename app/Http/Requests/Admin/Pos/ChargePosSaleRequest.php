@@ -19,6 +19,7 @@ final class ChargePosSaleRequest extends PosCartRequest
     {
         return [
             ...$this->cartRules(true),
+            ...$this->discountRules(),
             ...$this->tenderRules(true),
             /** The quote's `grand_total`, e.g. `3455.00`. */
             'expected_total' => ['required', 'string', 'regex:'.self::MONEY],
@@ -42,6 +43,7 @@ final class ChargePosSaleRequest extends PosCartRequest
             customerName: $this->customerName(),
             idempotencyKey: is_string($key) && $key !== '' ? $key : null,
             canSellOnDue: $this->canSellOnDue(),
+            discount: $this->discount(),
         );
     }
 }

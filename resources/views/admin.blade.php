@@ -33,6 +33,10 @@
             'tracesSampleRate' => (string) config('monitoring.sentry_admin.traces_sample_rate'),
         ]) }}">
     @endif
+    {{-- Public storefront address for the topbar's "View site" link; omitted when unset. --}}
+    @if (filled(config('services.storefront.url')))
+        <meta name="tm-storefront-url" content="{{ config('services.storefront.url') }}">
+    @endif
     @viteReactRefresh
     @vite(['resources/css/admin.css', 'resources/js/admin/main.tsx'])
 </head>

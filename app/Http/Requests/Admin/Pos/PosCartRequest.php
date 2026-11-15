@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin\Pos;
 
+use App\Domain\Pos\DTOs\DiscountInput;
 use App\Domain\Pos\DTOs\TenderInput;
 use App\Domain\Pos\Enums\CounterTender;
+use App\Domain\Pos\Enums\DiscountReason;
 use App\Domain\Pos\Models\PosSession;
 use App\Domain\Pos\Tenders\TenderRegistry;
 use App\Http\Requests\ApiFormRequest;
@@ -45,6 +47,21 @@ abstract class PosCartRequest extends ApiFormRequest
     }
 
     /** @return array<string, mixed> */
+    protected function discountRules(): array
+    {
+        return [
+            /** The cashier's discount, taken off the goods after promotions and the coupon. Capped by the store (`discount_max_percent` on the quote). */
+            'discount' => ['nullable', 'array:type,value,reason'],
+            /** `percent` of the goods, or a flat `amount` in taka. */
+            'discount.type' => ['required_with:discount', 'string', Rule::in([DiscountInput::PERCENT, DiscountInput::AMOUNT])],
+            /** `10` (percent, at most 100) or `150.00` (taka). */
+            'discount.value' => ['required_with:discount', 'string', 'regex:'.self::MONEY],
+            /** Why — one of the fixed reasons, kept with the sale. */
+            'discount.reason' => ['required_with:discount', 'string', Rule::enum(DiscountReason::class)],
+        ];
+    }
+
+    /** @return array<string, mixed> */
     protected function tenderRules(bool $required): array
     {
         return [
@@ -65,6 +82,10 @@ abstract class PosCartRequest extends ApiFormRequest
             $phone = $this->input('customer_phone');
             if (is_string($phone) && trim($phone) !== '' && ! PhoneNumber::isValid($phone)) {
                 $validator->errors()->add('customer_phone', (string) __('checkout.phone.invalid'));
+            }
+            $discount = $this->discount();
+            if ($discount?->type === DiscountInput::PERCENT && Money::of($discount->value)->greaterThan(Money::of('100'))) {
+                $validator->errors()->add('discount.value', (string) __('validation.max.numeric', ['attribute' => 'discount.value', 'max' => 100]));
             }
         }];
     }
@@ -102,6 +123,19 @@ abstract class PosCartRequest extends ApiFormRequest
     public function canSellOnDue(): bool
     {
         return $this->user()?->can(Permission::PosSellOnDue->value) ?? false;
+    }
+
+    public function discount(): ?DiscountInput
+    {
+        $raw = $this->input('discount');
+        if (! is_array($raw) || ! is_string($raw['type'] ?? null) || ! is_string($raw['value'] ?? null) || ! is_string($raw['reason'] ?? null)) {
+            return null;
+        }
+        if (preg_match(self::MONEY, $raw['value']) !== 1 || DiscountReason::tryFrom($raw['reason']) === null) {
+            return null;
+        }
+
+        return new DiscountInput($raw['type'], $raw['value'], DiscountReason::from($raw['reason']));
     }
 
     public function couponCode(): ?string

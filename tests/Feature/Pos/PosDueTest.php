@@ -344,4 +344,16 @@ it('searches customers by name or phone digits, never the walk-in, with their du
     $this->getJson('/api/v1/admin/pos/customers/search?q=walk')->assertOk()->assertJsonCount(0, 'data');
     $this->getJson('/api/v1/admin/pos/customers/search?q=01000000000')->assertOk()->assertJsonCount(0, 'data');
     $this->getJson('/api/v1/admin/pos/customers/search?q=r')->assertStatus(422);
+
+    // Online-only shoppers never appear: the counter lists customers who bought at the POS.
+    $online = Customer::factory()->create(['name' => 'Rahima Online', 'phone' => '+8801911000222', 'last_order_at' => now()->addDay()]);
+    Order::factory()->create(['customer_id' => $online->id]);
+    $this->getJson('/api/v1/admin/pos/customers/search?q=rahima')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Rahima Akter');
+    $this->getJson('/api/v1/admin/pos/customers/search?q=01911')->assertOk()->assertJsonCount(0, 'data');
+
+    // No term: the most recent customers, latest order first, never the walk-in row.
+    $this->getJson('/api/v1/admin/pos/customers/search')->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.phone', '01712000111')
+        ->assertJsonPath('data.1.phone', PosKit::PHONE);
 });

@@ -82,15 +82,18 @@ export function Register({ context, session }: { context: PosContext; session: P
 
     const onHold = (label: string | null = null) => {
         if (cart.lines.length === 0) return;
+        // No label typed: the sale is held under the customer's name, so it is found by name in Held.
+        const customerName = cart.name.trim();
         hold.mutate(
             {
-                label,
+                label: label ?? (customerName !== '' ? customerName.slice(0, 80) : null),
                 lines: cart.lines.map((l) => ({
                     variant_id: l.variantId,
                     quantity: l.quantity,
                 })),
                 coupon_code: cart.coupon.trim() || null,
                 customer_phone: cart.phone.trim() || null,
+                customer_name: cart.phone.trim() !== '' && customerName !== '' ? customerName.slice(0, 160) : null,
             },
             {
                 onSuccess: () => {
@@ -222,7 +225,7 @@ export function Register({ context, session }: { context: PosContext; session: P
                         names={names}
                         onOpenCustomer={() => setChoosingCustomer(true)}
                         onCollectDue={() => setCollecting(true)}
-                        onHold={() => onHold()}
+                        onHold={() => setShowHolds(true)}
                         holdPending={hold.isPending}
                         paying={paying}
                         setPaying={setPaying}
@@ -254,6 +257,7 @@ export function Register({ context, session }: { context: PosContext; session: P
                 holds={holds.data?.data ?? []}
                 cartHasLines={cart.lines.length > 0}
                 holdPending={hold.isPending}
+                defaultLabel={cart.name.trim()}
                 onHold={(label) => onHold(label)}
                 onClose={() => setShowHolds(false)}
                 onResumed={(held) => {
@@ -266,6 +270,7 @@ export function Register({ context, session }: { context: PosContext; session: P
                         })),
                         coupon: held.coupon_code ?? '',
                         phone: held.customer_phone ?? '',
+                        name: held.customer_name ?? '',
                     });
                     setShowHolds(false);
                 }}

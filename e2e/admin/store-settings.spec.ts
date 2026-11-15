@@ -94,3 +94,22 @@ test('owner adds, edits and switches off a branch; the default stays on', async 
     await first.getByRole('button', { name: /^Edit / }).click();
     await expect(page.getByRole('dialog').getByLabel('Active')).toBeDisabled();
 });
+
+test('owner sets the discount cap and the due limit under Point of sale', async ({ page }) => {
+    await signIn(page);
+    await page.getByRole('link', { name: 'Point of sale' }).click();
+    const cap = page.getByLabel('Maximum cashier discount');
+    await expect(cap).toHaveValue('10');
+    await expect(page.getByText('Not saved yet — the store default of 10% applies. 0 turns cashier discounts off.')).toBeVisible();
+    await cap.fill('15');
+    const due = page.getByLabel('Due limit per customer');
+    await expect(due).toHaveValue('5000');
+    await due.fill('8000');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Point of sale settings saved')).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/pos-settings.png` });
+
+    await page.reload();
+    await expect(page.getByLabel('Maximum cashier discount')).toHaveValue('15');
+    await expect(page.getByLabel('Due limit per customer')).toHaveValue('8000');
+});
