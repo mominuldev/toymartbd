@@ -417,16 +417,18 @@ export function OrdersPage() {
                                     <th scope="col" className={`${dataTable.th} w-10 px-0 text-center`}>
                                         {canConfirm && <input type="checkbox" checked={allOnPage} onChange={toggleAll} aria-label={t('orders.selectPage')} className="size-5 accent-brand" />}
                                     </th>
-                                    <Th className="w-33">{t('orders.col.order')}</Th>
-                                    {shows('placed') && <Th className="w-25">{t('orders.col.placed')}</Th>}
-                                    <Th className="w-41">{t('orders.col.customer')}</Th>
-                                    <Th end className="w-24">
+                                    {/* Percentage widths (from the Figma widths at 1440): every column grows with the screen, so a
+                                        wide display has no empty band and no single giant column (owner, 2026-11-16). */}
+                                    <Th className="w-[11%]">{t('orders.col.order')}</Th>
+                                    {shows('placed') && <Th className="w-[9%]">{t('orders.col.placed')}</Th>}
+                                    <Th className="w-[14%]">{t('orders.col.customer')}</Th>
+                                    <Th end className="w-[8%]">
                                         {t('orders.col.total')}
                                     </Th>
-                                    {shows('payment') && <Th className="hidden w-28 xl:table-cell">{t('orders.col.payment')}</Th>}
-                                    <Th className="w-51">{t('orders.col.status')}</Th>
-                                    {shows('risk') && <Th className="w-27">{t('orders.col.risk')}</Th>}
-                                    {shows('courier') && <Th className="hidden xl:table-cell">{t('orders.col.courier')}</Th>}
+                                    {shows('payment') && <Th className="hidden w-[10%] xl:table-cell">{t('orders.col.payment')}</Th>}
+                                    <Th className="w-[18%]">{t('orders.col.status')}</Th>
+                                    {shows('risk') && <Th className="w-[9%]">{t('orders.col.risk')}</Th>}
+                                    {shows('courier') && <Th className="hidden w-[13%] xl:table-cell">{t('orders.col.courier')}</Th>}
                                     <th scope="col" className={`${dataTable.th} w-12 px-0`}>
                                         <span className="sr-only">{t('orders.col.actions')}</span>
                                     </th>

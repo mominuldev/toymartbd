@@ -461,23 +461,25 @@ export function InventoryPage() {
                                 <th scope="col" className={`${dataTable.th} w-10 pe-0`}>
                                     <span className="sr-only">{t('inventory.detail.branches')}</span>
                                 </th>
-                                <Th>{t('inventory.col.product')}</Th>
-                                <Th className="w-30">{t('inventory.col.status')}</Th>
-                                <Th end className="w-22">
+                                {/* Percentage widths (the 1440 layout): on a wide display every column grows, instead of the
+                                    product column alone leaving the figures bunched at the right (owner, 2026-11-16). */}
+                                <Th className="w-[28%]">{t('inventory.col.product')}</Th>
+                                <Th className="w-[10%]">{t('inventory.col.status')}</Th>
+                                <Th end className="w-[8%]">
                                     {t('inventory.col.onHand')}
                                 </Th>
-                                <Th end className="w-22">
+                                <Th end className="w-[8%]">
                                     {t('inventory.col.reserved')}
                                 </Th>
-                                <Th end className="w-22">
+                                <Th end className="w-[8%]">
                                     {t('inventory.col.available')}
                                 </Th>
-                                <Th end className="w-24">
+                                <Th end className="w-[8%]">
                                     {t('inventory.col.reorderAt')}
                                 </Th>
-                                {multi && <Th className="w-36">{t('inventory.col.elsewhere')}</Th>}
+                                {multi && <Th className="w-[13%]">{t('inventory.col.elsewhere')}</Th>}
                                 {viewCost && (
-                                    <Th end className="w-28">
+                                    <Th end className="w-[10%]">
                                         {t('inventory.col.avgCost')}
                                     </Th>
                                 )}
