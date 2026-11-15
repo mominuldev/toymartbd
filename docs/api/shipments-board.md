@@ -38,8 +38,11 @@ returned parcel), or `null` (cancelled, or no zone because the order has no dist
 
 ## Stats
 
-- `in_transit` — live (not range-bound): count and Σ `cod_amount` of `booked … out_for_delivery, on_hold`.
-- `submitted` — live: count, oldest `pickup_requested_at`, its age in minutes, `overdue` at ≥ 360 min.
+- `in_transit` — the range's cohort (handed over in the range, as the board; owner decision 2026-11-15):
+  count and Σ `cod_amount` of `booked … out_for_delivery, on_hold`. A parcel handed over before the
+  range and still on the road is not counted.
+- `submitted` — the range's cohort: count, oldest `pickup_requested_at`, its age in minutes, `overdue`
+  at ≥ 360 min.
 - `success` — outcome-dated in the range: delivered = `delivered|partially_delivered` with `delivered_at`
   in range; returned = `returned` with `returned_at` in range; `rate` = delivered × 100 ÷ (delivered +
   returned), 1 dp; `null` when both are 0.

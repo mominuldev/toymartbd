@@ -35,11 +35,11 @@ No response carries a customer phone or street address (rule 20): only the recip
 
 | Tab | Rows | Count |
 |---|---|---|
-| Ready to ship | orders with `status = ready_to_ship` (packed) and **no open shipment** — the same "open" rule `RequestShipment` enforces, so an order whose shipment failed or was cancelled is ready again. "Ready since" is `orders.packed_at`. | same |
+| Ready to ship | orders a courier may take — `confirmed`, `processing` or `ready_to_ship` (`EloquentShippableOrders::SHIPPABLE`, exactly what `BookingPreflight` accepts; owner decision 2026-11-15) — with **no open shipment**, the same "open" rule `RequestShipment` enforces, so an order whose shipment failed or was cancelled is ready again. Each row carries `status`; "ready since" is `orders.packed_at` when packed, else `orders.confirmed_at`, and the UI says "not packed yet". | same |
 | Submitted — awaiting ID | shipments `pending` (requested; booking job not yet run, or the circuit is open) or `submitted` (bulk or uncertain booking, no consignment id yet). The status chip tells the two apart. | same |
 | Booked today | shipments whose `booked_at` falls on today's **Dhaka** date (rule 11, `DhakaDate::utcBounds`), whatever their status since | same |
 | Failed | `Shipment::needsAttention()` — exactly what `GET /shipments/failed` lists (failed, or `completion_failed`); retry happens on that screen | same |
-| Unmapped areas | one row per (courier, district, upazila) among **ready** orders where an **active** courier with `requires_location_mapping` has no explicitly mapped `courier_locations` row (`BookingLocationPreview` → `unmapped`; rule 32 — never matched by name). Up to five order numbers per area. | areas, not orders |
+| Unmapped areas | one row per (courier, district, upazila) among **ready** orders where an **active** courier with `requires_location_mapping` has no explicitly mapped `courier_locations` row, **or several** (`BookingLocationPreview` → `unmapped` / `ambiguous`; bulk cannot choose between several — owner decision 2026-11-15). `reason` says which. Rule 32: never matched by name, never guessed. Up to five order numbers per area. | areas, not orders |
 
 An order in an unmapped area stays under "Ready to ship" too — it is blocked only for that
 courier and may go with another (Steadfast needs no zone ids).
@@ -55,7 +55,8 @@ booking panel), `is_active`, `blocked_reason` (`inactive` → `not_connected` �
   "healthy"), else from the latest `webhook_receipts` row for `courier:{code}`: `healthy` when it
   verified and processed without `error`, `failing` otherwise; `last_received_at` is its time.
 - `balance` / `balance_checked_at`: the courier's own balance as stored on `courier_providers`;
-  `null` when never checked, and the UI then shows nothing (never ৳0). No code writes it yet.
+  `null` when never checked, and the UI then shows nothing (never ৳0). Nothing writes it: the
+  owner decided (2026-11-15) not to read courier balances.
 
 ## Per-row preflight (`couriers[].blocked_reason`)
 
@@ -73,8 +74,10 @@ as `BookingPreflight` and `POST /shipments/quote`):
 can, else `null`. The UI pre-selects it, disables blocked couriers in the row's select with the
 reason, and a row cannot be selected for bulk while its chosen courier is blocked.
 
-**Known gap:** `missing_weight` is enforced by the queue UI only. `BookingPreflight` (and therefore
-`POST /shipments/bulk` called directly) does not refuse a 0 g parcel.
+`missing_weight` is also enforced server-side (owner decision 2026-11-15): `BookingPreflight` refuses
+a shipment whose order has a line with no variant or a variant weight ≤ 0, as failure code
+`missing_weight`, before any courier call — so `POST /shipments/bulk` called directly cannot book
+an understated parcel either. The shipment lands in Failed; set the weight, then retry.
 
 Weight and COD are computed exactly as the booking snapshot (`EloquentShippableOrders`): variant
 `weight_grams` × quantity; COD = the order's `due_total`, never negative.

@@ -6,6 +6,7 @@ namespace App\Http\Resources\Admin\BookingQueue;
 
 use App\Domain\Customer\Models\District;
 use App\Domain\Customer\Models\Upazila;
+use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Http\Controllers\Api\V1\Admin\BookingQueue\BookingQueueReadModel;
 use App\Http\Resources\ApiResource;
@@ -34,8 +35,10 @@ final class BookingQueueOrderResource extends ApiResource
             /** @var int */
             'order_id' => $order->id,
             'number' => $order->number,
-            /** @var string|null When the order was packed (entered ready_to_ship). */
-            'ready_since' => $order->packed_at?->toIso8601String(),
+            /** @var 'confirmed'|'processing'|'ready_to_ship' Not yet packed unless ready_to_ship. */
+            'status' => $order->status->value,
+            /** @var string|null When it was packed (ready_to_ship), else when it was confirmed. */
+            'ready_since' => ($order->status === OrderStatus::ReadyToShip ? $order->packed_at : $order->confirmed_at)?->toIso8601String(),
             'recipient_name' => $order->shipping_name,
             /** @var array{id: int, name: string, name_bn: string}|null */
             'district' => $place($r['district']),

@@ -24015,7 +24015,7 @@
         "/admin/shipments/board/stats": {
             "get": {
                 "operationId": "v1.admin.shipments.board.stats",
-                "summary": "`GET /shipments/board/stats` \u2014 the stat tiles. In transit / submitted are live; the rest are outcome-dated in the range",
+                "summary": "`GET /shipments/board/stats` \u2014 the stat tiles. In transit / submitted count the range's cohort (handed over in it); the rest are outcome-dated in the range",
                 "tags": [
                     "Admin"
                 ],
@@ -36093,12 +36093,21 @@
                     "number": {
                         "type": "string"
                     },
+                    "status": {
+                        "type": "string",
+                        "description": "Not yet packed unless ready_to_ship.",
+                        "enum": [
+                            "confirmed",
+                            "processing",
+                            "ready_to_ship"
+                        ]
+                    },
                     "ready_since": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "When the order was packed (entered ready_to_ship)."
+                        "description": "When it was packed (ready_to_ship), else when it was confirmed."
                     },
                     "recipient_name": {
                         "type": "string"
@@ -36226,6 +36235,7 @@
                 "required": [
                     "order_id",
                     "number",
+                    "status",
                     "ready_since",
                     "recipient_name",
                     "district",
@@ -36484,6 +36494,14 @@
                             "name_bn"
                         ]
                     },
+                    "reason": {
+                        "type": "string",
+                        "description": "No zone mapped to the area, or several (bulk cannot choose; the booking drawer can).",
+                        "enum": [
+                            "unmapped",
+                            "ambiguous"
+                        ]
+                    },
                     "district": {
                         "type": [
                             "object",
@@ -36555,6 +36573,7 @@
                 },
                 "required": [
                     "provider",
+                    "reason",
                     "district",
                     "upazila",
                     "district_name",

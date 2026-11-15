@@ -18,6 +18,7 @@ const FAILURES = [
     'order_not_shippable',
     'bulk_unsupported',
     'completion_failed',
+    'missing_weight',
 ];
 
 function failureKey(code: string | null): MessageKey {
@@ -134,7 +135,8 @@ export function UnmappedTable({ rows }: { rows: UnmappedArea[] }) {
                             <tr key={`${r.provider.id}-${r.district?.id ?? 'x'}-${r.upazila?.id ?? 'x'}`} className={dataTable.row}>
                                 <td className={`${dataTable.td} t-admin-body-strong`}>{courierName(r.provider, locale)}</td>
                                 <td className={`${dataTable.td} t-admin-body`}>
-                                    {[name(r.upazila, r.upazila_name), name(r.district, r.district_name)].filter(Boolean).join(', ')}
+                                    <span className="block">{[name(r.upazila, r.upazila_name), name(r.district, r.district_name)].filter(Boolean).join(', ')}</span>
+                                    <span className="t-admin-caption text-fg-tertiary">{t(`bookingQueue.unmapped.reason.${r.reason}`)}</span>
                                 </td>
                                 <td className={dataTable.td}>
                                     <span className="block t-admin-body text-fg-primary">

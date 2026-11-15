@@ -88,7 +88,15 @@ it('computes the stat tiles from real rows, by Dhaka date', function (): void {
 
     // A one-day range on 2026-11-01 (Dhaka) holds only the 23:59 delivery.
     $this->getJson('/api/v1/admin/shipments/board/stats?filter[from]=2026-11-01&filter[to]=2026-11-01')
-        ->assertOk()->assertJsonPath('success.delivered', 1)->assertJsonPath('success.rate', '100.0');
+        ->assertOk()->assertJsonPath('success.delivered', 1)->assertJsonPath('success.rate', '100.0')
+        // In transit and Submitted follow the range too (owner, 2026-11-15): none was handed over that day.
+        ->assertJsonPath('in_transit.count', 0)->assertJsonPath('in_transit.cod_on_road', '0.00')
+        ->assertJsonPath('submitted.count', 0)->assertJsonPath('submitted.oldest_at', null);
+
+    // A parcel handed over before the range and still on the road is not counted in it.
+    Kit::shipment(sbOrder($this), ShipmentStatus::InTransit, ['booked_at' => '2026-10-20 06:00:00', 'cod_amount' => '999.00']);
+    $this->getJson('/api/v1/admin/shipments/board/stats')
+        ->assertOk()->assertJsonPath('in_transit.count', 1)->assertJsonPath('in_transit.cod_on_road', '2570.00');
 });
 
 it('returns null figures — never zero — when nothing had an outcome', function (): void {

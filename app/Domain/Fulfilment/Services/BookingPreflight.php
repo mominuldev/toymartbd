@@ -26,7 +26,9 @@ use App\Domain\Fulfilment\Models\Shipment;
  *      explicitly mapped `courier_locations` row — the one staff chose on the request, or
  *      the only one mapped to the address's upazila (or district) — else the booking is
  *      blocked as `unmapped_location` / `ambiguous_location`. Never matched by name, never
- *      guessed (rule 32).
+ *      guessed (rule 32);
+ *   5. every line has a weight — a 0 g line would understate the parcel, and Steadfast's 1 kg
+ *      step (rule 32a) makes that a real charge difference (owner decision 2026-11-15).
  *
  * Then builds the {@see ShipmentRequest}: the merchant reference is the shipment number.
  */
@@ -64,6 +66,13 @@ final readonly class BookingPreflight
                 return $resolved;
             }
             $location = $resolved;
+        }
+
+        if ($order->weightMissing) {
+            return PreflightOutcome::blocked(
+                Shipment::FAILURE_MISSING_WEIGHT,
+                'A product on this order has no weight, so the parcel would be understated. Set the variant weight, then retry.',
+            );
         }
 
         return PreflightOutcome::ready(new ShipmentRequest(

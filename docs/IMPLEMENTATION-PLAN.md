@@ -390,12 +390,12 @@ Expanded to task level at each phase start. Each feature below carries its own t
   - The keys are used by the drivers and the webhook signature check.
   - Callback URLs are ready to copy into Meta. Channels are never marked verified.
 
-**Owner decisions of 2026-11-15, later (accepted; to build unless marked done):**
-- Shipments: the live tiles follow the chosen date range.
-- Booking queue:
-  - confirmed and processing orders belong in Ready to ship, alongside packed ones;
-  - areas whose name matches more than one courier location are listed under Unmapped;
-  - `BookingPreflight` refuses a 0 g parcel;
+**Owner decisions of 2026-11-15, later (accepted; built on `phase-10/owner-decisions`):**
+- Shipments: the In transit and Submitted tiles follow the chosen date range — they count the range's cohort (handed over in it), like the board (done; `docs/api/shipments-board.md`).
+- Booking queue (done; `docs/api/booking-queue.md`):
+  - confirmed and processing orders are in Ready to ship alongside packed ones — the statuses `BookingPreflight` already accepts; "ready since" falls back to confirmation and the row says "not packed yet";
+  - areas with several mapped courier zones are listed under Unmapped with `reason: ambiguous` (bulk cannot choose; the drawer can);
+  - `BookingPreflight` refuses a parcel with a 0 g line as `missing_weight`, before any courier call;
   - courier balances are **not** read; the cards keep showing a stored balance only when one exists.
 - Inbox badge: counts every open conversation that is unread **or** waiting on a staff reply — what `GET /inbox/unread-count` already does (done).
 

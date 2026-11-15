@@ -123,6 +123,7 @@ const FAILURES = [
     'order_not_shippable',
     'bulk_unsupported',
     'completion_failed',
+    'missing_weight',
 ] as const;
 
 /** A known failure code's message key; anything new from the server reads as "unknown". */

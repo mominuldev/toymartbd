@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * it to that courier's own zone (rule 32: never guessed). Fixed on the courier location
  * mapping screen.
  *
- * @property array{provider: CourierProvider, district: District|null, upazila: Upazila|null, district_name: string|null, upazila_name: string|null, orders_count: int, order_numbers: list<string>} $resource
+ * @property array{provider: CourierProvider, reason: string, district: District|null, upazila: Upazila|null, district_name: string|null, upazila_name: string|null, orders_count: int, order_numbers: list<string>} $resource
  */
 #[SchemaName('BookingQueueUnmappedArea')]
 final class BookingQueueUnmappedAreaResource extends ApiResource
@@ -30,6 +30,8 @@ final class BookingQueueUnmappedAreaResource extends ApiResource
         return [
             /** @var array{id: int, code: string, name: string, name_bn: string|null} */
             'provider' => ['id' => $r['provider']->id, 'code' => $r['provider']->code, 'name' => $r['provider']->name, 'name_bn' => $r['provider']->name_bn],
+            /** @var 'unmapped'|'ambiguous' No zone mapped to the area, or several (bulk cannot choose; the booking drawer can). */
+            'reason' => $r['reason'],
             /** @var array{id: int, name: string, name_bn: string}|null */
             'district' => $place($r['district']),
             /** @var array{id: int, name: string, name_bn: string}|null Null: a district-level address (e.g. Dhaka city). */

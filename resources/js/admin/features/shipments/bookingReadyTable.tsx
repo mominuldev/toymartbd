@@ -95,11 +95,15 @@ export function ReadyTable({ rows, couriers, picks, selected, canBook, onPick, o
                                         {row.number}
                                     </Link>
                                     <span className="t-admin-caption text-fg-tertiary">
-                                        {row.ready_since
-                                            ? t('bookingQueue.readySince', {
-                                                  day: dhakaTime(row.ready_since, locale).day,
-                                              })
-                                            : t('bookingQueue.readyUnknown')}
+                                        {row.status !== 'ready_to_ship'
+                                            ? row.ready_since
+                                                ? t(`bookingQueue.notPacked.${row.status}`, { day: dhakaTime(row.ready_since, locale).day })
+                                                : t('bookingQueue.notPackedUnknown')
+                                            : row.ready_since
+                                              ? t('bookingQueue.readySince', {
+                                                    day: dhakaTime(row.ready_since, locale).day,
+                                                })
+                                              : t('bookingQueue.readyUnknown')}
                                     </span>
                                 </td>
                                 <td className={dataTable.td}>
