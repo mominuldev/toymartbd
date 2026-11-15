@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { DISCOUNT_REASONS, discountReasonKey, isDiscountReason, type DiscountDraft, type DiscountReason } from './cart';
 import { closeDialog, useDialog } from './dialog';
-import { isMoneyInput } from './format';
+import { isMoneyInput, TAKA } from './format';
 
 type DiscountDialogProps = {
     open: boolean;
@@ -90,7 +90,7 @@ export function DiscountDialog({ open, current, maxPercent, onApply, onClose }: 
                         id="pos-discount-value"
                         className="h-10"
                         inputMode="decimal"
-                        leading={<span aria-hidden>{type === 'percent' ? '%' : '৳'}</span>}
+                        leading={<span aria-hidden>{type === 'percent' ? '%' : TAKA}</span>}
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
                     />
