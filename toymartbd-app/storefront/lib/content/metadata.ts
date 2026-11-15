@@ -6,7 +6,7 @@ import { contentMetadata } from '../seo/metadata';
 import { localised, type CmsPage } from './types';
 
 /**
- * <head> for a CMS static page — /pages/{slug} and the About route (/pages/about) — through the
+ * <head> for a CMS static page — /{slug} and the About route (/about) — through the
  * lib/seo builder, so every page gets the same canonical, hreflang (en, bn, x-default), Open
  * Graph and the admin's SEO document overlay. The page payload's own `seo` block gives the
  * defaults; the SEO document (GET /storefront/seo/page/{slug}) wins where it is set.

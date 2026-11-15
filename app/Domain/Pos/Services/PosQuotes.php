@@ -8,6 +8,7 @@ use App\Domain\Cart\DTOs\PricingInput;
 use App\Domain\Cart\Services\PricingPipeline;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Pos\DTOs\DiscountInput;
 use App\Domain\Pos\DTOs\PosQuote;
 use App\Domain\Pos\DTOs\TenderInput;
 use App\Support\Money;
@@ -24,7 +25,9 @@ use App\Support\PhoneNumber;
  *  - `lines.{id}`       not sellable, not sold at the counter (`products.channel_pos`), or
  *                       more than the branch has available;
  *  - `coupon_code`      the coupon did not apply (its own reason);
- *  - `customer_phone`   a discount applies but no customer phone was given — promotion and
+ *  - `discount`         the cashier's discount is over the cap (PosDiscountSettings — a
+ *                       percent of the goods after promotions and the coupon);
+ *  - `customer_phone`   a promotion or coupon applies but no customer phone was given — promotion and
  *                       coupon limits are counted per phone, so an anonymous sale cannot
  *                       consume them.
  *
@@ -39,14 +42,16 @@ final readonly class PosQuotes
         private TenderPlanner $planner,
         private PosCustomers $customers,
         private PosDues $dues,
+        private PosDiscountSettings $discounts,
     ) {}
 
     /**
      * @param  array<int, int>  $lines  variant id → quantity
      * @param  list<TenderInput>|null  $tenders
      * @param  bool  $canSellOnDue  the cashier holds `pos.sell_on_due`
+     * @param  DiscountInput|null  $discount  the cashier's discount, applied after promotions and the coupon
      */
-    public function quote(int $locationId, array $lines, ?string $couponCode, ?PhoneNumber $phone, ?array $tenders = null, ?string $customerName = null, bool $canSellOnDue = false): PosQuote
+    public function quote(int $locationId, array $lines, ?string $couponCode, ?PhoneNumber $phone, ?array $tenders = null, ?string $customerName = null, bool $canSellOnDue = false, ?DiscountInput $discount = null): PosQuote
     {
         $customer = $phone === null ? null : $this->customers->find($phone);
         $lines = array_filter($lines, static fn (int $q): bool => $q > 0);
@@ -93,6 +98,19 @@ final readonly class PosQuotes
             $blockers[] = ['field' => 'customer_phone', 'message' => (string) __('pos.phone_for_discount')];
         }
 
+        // The cashier's discount: last, on the goods after promotions and the coupon, capped.
+        $maxPercent = $this->discounts->maxPercent();
+        if ($discount !== null) {
+            $goods = $breakdown->grandTotal;
+            $amount = $discount->type === DiscountInput::PERCENT ? $goods->percentage($discount->value) : Money::of($discount->value);
+            $cap = $goods->percentage($maxPercent);
+            if ($amount->greaterThan($cap)) {
+                $blockers[] = ['field' => 'discount', 'message' => (string) __('pos.discount.over_cap', ['percent' => $maxPercent, 'amount' => $cap->toDecimal()])];
+            } elseif (! $amount->isZero()) {
+                $breakdown = $breakdown->withManualDiscount($amount, $discount->reason->value);
+            }
+        }
+
         $plan = $tenders === null ? null : $this->planner->plan($breakdown->grandTotal, $tenders);
         if ($plan !== null && $plan->hasDue()) {
             $openDue = $customer === null ? Money::zero() : $this->dues->openDue($customer->id);
@@ -104,6 +122,8 @@ final readonly class PosQuotes
             available: $available,
             blockers: $blockers,
             tenders: $plan,
+            discountMaxPercent: $maxPercent,
+            discount: $discount,
         );
     }
 }

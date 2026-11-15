@@ -100,6 +100,14 @@ final class PosReceiptResource extends ApiResource
             'coupon_discount' => $order->coupon_discount->toDecimal(),
             /** @var string|null */
             'coupon_code' => $order->coupon_code,
+            /** The cashier's discount ("0.00" when none). */
+            'manual_discount' => $order->manual_discount->toDecimal(),
+            /**
+             * The reason code (`regular_customer`, `bulk_purchase`, … — the register shows its label).
+             *
+             * @var 'regular_customer'|'bulk_purchase'|'damaged_packaging'|'price_match'|'staff_purchase'|'promotional'|'other'|null
+             */
+            'discount_reason' => $sale->discount_reason,
             'grand_total' => $order->grand_total->toDecimal(),
             /** @var list<array{method: string, amount: string, reference: string|null}> */
             'payments' => $order->payments->whereNotIn('id', $collected)->sortBy('id')->map(static fn (Payment $p): array => [

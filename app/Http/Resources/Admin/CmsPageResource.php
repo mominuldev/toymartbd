@@ -51,7 +51,7 @@ final class CmsPageResource extends ApiResource
             /** @var string|null */
             'published_at' => ContentFormat::utc($page->published_at),
             /** Locale-free storefront path. */
-            'path' => '/pages/'.$page->slug,
+            'path' => CmsPage::pathFor($page->slug),
             'has_bangla' => ($page->title_bn ?? '') !== '' && (($page->content_bn ?? '') !== '' || $page->faq_items !== null),
             /** @var string|null */
             'content' => $this->full ? $page->content : null,

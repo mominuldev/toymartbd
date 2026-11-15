@@ -14,6 +14,8 @@ final class HoldPosSaleRequest extends PosCartRequest
             ...$this->cartRules(true),
             /** Optional name to find it again, e.g. `Blue shirt, coming back`. */
             'label' => ['nullable', 'string', 'max:80'],
+            /** The customer's name, kept with `customer_phone` so resuming restores the named customer. */
+            'customer_name' => ['nullable', 'string', 'max:160'],
         ];
     }
 

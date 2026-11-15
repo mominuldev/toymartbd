@@ -15,6 +15,7 @@ final class QuotePosSaleRequest extends PosCartRequest
     {
         return [
             ...$this->cartRules(false),
+            ...$this->discountRules(),
             ...$this->tenderRules(false),
             /** The name the cashier typed for a new customer — a due tender needs one. */
             'customer_name' => ['nullable', 'string', 'max:160'],

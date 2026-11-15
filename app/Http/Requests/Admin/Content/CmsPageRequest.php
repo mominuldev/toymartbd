@@ -48,6 +48,8 @@ final class CmsPageRequest extends ApiFormRequest
             'slug' => [
                 'nullable', 'string', 'max:'.CmsPage::SLUG_MAX, 'regex:'.self::SLUG_PATTERN,
                 Rule::unique('cms_pages', 'slug')->ignore($page?->id),
+                /** A page lives at `/{slug}`; a slug the storefront already routes would never be reached. */
+                Rule::notIn(CmsPage::RESERVED_SLUGS),
             ],
             /** Rich text (HTML from the admin editor); sanitised on save. */
             'content' => ['nullable', 'string', 'max:200000'],

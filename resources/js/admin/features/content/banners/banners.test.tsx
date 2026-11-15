@@ -65,7 +65,8 @@ describe('banners', () => {
     it('keeps the info strip linked only to store pages and the schedule in order', () => {
         const base = { ...toBannerForm(), name: 'x', title: 't', placement: 'info_strip' as const };
         expect(bannerRuleErrors({ ...base, link_url: '/products/lego' })).toEqual({ link_url: 'infoLink' });
-        expect(bannerRuleErrors({ ...base, link_url: '/pages/delivery-policy' })).toEqual({});
+        expect(bannerRuleErrors({ ...base, link_url: '/delivery-policy' })).toEqual({});
+        expect(bannerRuleErrors({ ...base, link_url: '/checkout' })).toEqual({ link_url: 'infoLink' });
         expect(bannerRuleErrors({ ...base, placement: 'popup', link_url: 'http://x.test' })).toEqual({ link_url: 'link' });
         expect(bannerRuleErrors({ ...base, title: '', starts_at: '2026-12-16T00:00', ends_at: '2026-12-15T00:00' })).toEqual({ title: 'content', ends_at: 'ends' });
     });
@@ -86,7 +87,7 @@ describe('banners', () => {
         fireEvent.change(screen.getByLabelText(/^Link\s*Optional$/), { target: { value: '/products/lego' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByText('An info strip may only link to a store page (/pages/…).')).toBeTruthy();
+        expect(await screen.findByText('An info strip may only link to a store page, like /delivery-policy.')).toBeTruthy();
         await waitFor(() => expect(calls.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false));
     });
 });

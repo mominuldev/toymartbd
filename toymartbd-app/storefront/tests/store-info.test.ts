@@ -85,8 +85,8 @@ describe('toStoreInfo', () => {
 
 describe('whatsappHref', () => {
     it('sends a sample number to the fallback page, a confirmed one to wa.me', () => {
-        expect(whatsappHref(sampleContact.whatsapp, '/pages/contact')).toBe('/pages/contact');
-        expect(whatsappHref(toStoreInfo(SET).contact.whatsapp, '/pages/contact')).toBe('https://wa.me/8801812345678');
+        expect(whatsappHref(sampleContact.whatsapp, '/contact')).toBe('/contact');
+        expect(whatsappHref(toStoreInfo(SET).contact.whatsapp, '/contact')).toBe('https://wa.me/8801812345678');
     });
 });
 

@@ -61,7 +61,7 @@ beacon host must be added to `TRACKING_SOURCES`, or the browser blocks it.
 | Site chrome | `components/PageShell.tsx` composes skip link, `layout/SiteHeader` (logo, `SearchBar`, wishlist/account/cart links, language toggle), `layout/MegaMenu`, `<main>`, `layout/SiteFooter` and `layout/MobileNav`. It is rendered by each page (not a layout) because the toggle needs the page's path and pages must stay ISR-cacheable |
 | Mega menu | Data: `lib/categories.ts` (`GET storefront/categories/tree`, tag `categories`, never throws — an API failure renders no menu). View model and depth cap: `lib/category-tree.ts`. Keyboard contract (spec §A4.4): `lib/megamenu-keys.ts`. Without JS it is plain server-rendered links revealed by CSS hover/focus-within |
 | Business contact details | `lib/site-config.ts` only. Hotline, WhatsApp, email, address, licence and BIN are **placeholders** until the owner confirms them; they render as plain text marked `data-placeholder="owner-to-confirm"` (no visible tag — the Figma designs show them bare) and never as tel:/mailto:/wa.me links |
-| Status and static pages | `app/global-not-found.tsx` (unmatched URLs, both locales, server-rendered), `app/[locale]/not-found.tsx` (route-level `notFound()`), `app/[locale]/error.tsx` + `app/global-error.tsx` (500), `app/[locale]/maintenance`, `components/StaticPage.tsx` + `lib/static-pages.ts` (first page: `/pages/about`, draft copy) |
+| Status and static pages | `app/global-not-found.tsx` (unmatched URLs, both locales, server-rendered), `app/[locale]/not-found.tsx` (route-level `notFound()`), `app/[locale]/error.tsx` + `app/global-error.tsx` (500), `app/[locale]/maintenance`, `components/StaticPage.tsx` + `lib/static-pages.ts` (first page: `/about`, draft copy) |
 | Stubs | `/search` (echoes the query, noindex) until P4-STO-04; `/categories` and `/categories/{slug}` (name, parents, sub-categories from the tree; no products) until P4-STO-03 |
 | Icons | `components/icons/paths.ts`, generated from Phosphor by `scripts/extract-icons.mjs` |
 | Figma fidelity | Chrome follows Figma Header 123:1832, MegaMenuBar 123:1833, MobileNav 111:784, SearchBar 111:853, Footer 124:3310 (giant logotype drawn as SVG text in `layout/FooterLogotype.tsx`), AnnouncementBar 123:1729 (Home only, `PageShell announcement`). Buttons: `layout/button-styles.ts`. Decorative pastel inks bound to palette primitives: `.deco-*` / `.blob-*` in `globals.css` |
@@ -76,13 +76,16 @@ beacon host must be added to `TRACKING_SOURCES`, or the browser blocks it.
 
 ## Known limitations
 
-- **404 HTML for `notFound()` from a page.** Unmatched URLs (`/no-such-page`, `/bn/x/y`, links to
+- **404 HTML for `notFound()` from a page.** Unmatched URLs (`/no-such/page`, `/bn/x/y`, links to
   pages not built yet) are fixed: `app/global-not-found.tsx` (`experimental.globalNotFound`) renders
   the styled, localized 404 server-side; proxy.ts passes it the locale and path in request headers.
   But in Next 16.4.3, `notFound()` called from a matched page (an unknown brand or category slug)
   still returns HTTP 404 + noindex with Next's empty `__next_error__` shell; the localized UI only
   appears once the client renders it. Moving the boundary into a nested layout does not change
   this. Crawlers get the right status; visitors with JavaScript disabled see a blank page there.
+  Since CMS pages moved to the site root (`app/[locale]/[slug]`, 2026-11-15), every unknown
+  **one-segment** URL (`/no-such-page`) matches that route, so it gets this shell too, not the
+  global-not-found page.
 - **Fredoka has no 800 weight.** It tops out at 700, so `display-1`, `display-2` and `price-lg`
   render Latin at 700.
 - **Bengali font files are over the 40 KB target.** Each is a variable file covering the weights

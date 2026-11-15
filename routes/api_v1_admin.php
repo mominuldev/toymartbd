@@ -327,6 +327,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::get('/credit-notes/{creditNote}/pdf', [App\Http\Controllers\Api\V1\Admin\CreditNoteController::class, 'pdf'])->whereNumber('creditNote')->name('credit-notes.pdf');
     Route::get('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'show'])->name('settings.invoice.show');
     Route::put('/settings/invoice', [App\Http\Controllers\Api\V1\Admin\Settings\InvoiceSettingsController::class, 'update'])->name('settings.invoice.update');
+    // Store settings › Point of sale (rule 33d): the cap on a cashier's discount.
+    Route::get('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'show'])->name('settings.pos.show');
+    Route::put('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'update'])->name('settings.pos.update');
 
     // Returns & refunds (DATABASE-DESIGN §4.7, PRD O-21, Figma 211:5121). Paying a refund out
     // moves money, so a double submit must replay, not pay twice.

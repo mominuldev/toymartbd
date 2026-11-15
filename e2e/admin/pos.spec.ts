@@ -65,10 +65,26 @@ test('cashier opens a drawer, sells for cash, holds and resumes a cart, and clos
     // Hold a cart, then resume it.
     await page.getByRole('button', { name: 'Start new sale' }).click();
     await tile.click();
+    // A cashier's discount: the server prices it and the totals show it with its reason.
+    await page.getByRole('button', { name: 'Discount', exact: true }).click();
+    const discount = page.getByRole('dialog', { name: 'Discount' });
+    await discount.getByLabel('Percent off').fill('5');
+    await discount.getByLabel('Reason').selectOption('regular_customer');
+    if (shots) await discount.screenshot({ path: `${shots}/pos-discount.png` });
+    await discount.getByRole('button', { name: 'Apply discount' }).click();
+    await expect(page.getByText('Discount · Regular customer')).toBeVisible();
+    await shot(page, 'discounted');
+
+    // Hold opens Held sales: type the title, hold, and the sale is listed under it.
     await page.getByRole('button', { name: 'Hold', exact: true }).click();
+    const held = page.getByRole('dialog', { name: 'Held sales' });
+    await held.getByLabel('Label').fill('Blue bag — back soon');
+    if (shots) await held.screenshot({ path: `${shots}/pos-hold-label.png` });
+    await held.getByRole('button', { name: 'Hold sale' }).click();
+    await expect(held.getByText('Blue bag — back soon')).toBeVisible();
     await expect(page.getByText('Scan or tap a product to start a sale.')).toBeVisible();
-    await page.getByRole('button', { name: '1 held' }).click();
-    await page.getByRole('dialog', { name: 'Held sales' }).getByRole('button', { name: 'Resume' }).click();
+    if (shots) await held.screenshot({ path: `${shots}/pos-held.png` });
+    await held.getByRole('button', { name: 'Resume' }).click();
     await expect(page.getByRole('list', { name: 'Cart' }).getByRole('listitem')).toHaveCount(1);
 
     // Close the drawer: expected = float + cash kept; counted 5000 → short by the sale.

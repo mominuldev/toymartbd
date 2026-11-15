@@ -237,7 +237,7 @@ export function productMetadata(input: ProductMetaInput): Metadata {
 
 export interface ContentMetaInput {
     locale: Locale;
-    /** `/pages/{slug}`, `/blog/{slug}`, `/guides/{slug}`. */
+    /** `/{slug}` (a CMS page), `/blog/{slug}`, `/guides/{slug}`. */
     path: string;
     title: string;
     description?: string | null;

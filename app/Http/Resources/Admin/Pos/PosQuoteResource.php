@@ -13,7 +13,8 @@ use Illuminate\Http\Request;
 
 /**
  * The register's figures — every number the cart panel shows (rule 1): lines with their own
- * totals, the itemised rows (subtotal, each promotion, the coupon) that sum to `grand_total`,
+ * totals, the itemised rows (subtotal, each promotion, the coupon, the cashier's `manual`
+ * discount labelled with its reason code) that sum to `grand_total`,
  * `blockers` (what stops a charge, field-level) and, when tenders were sent, how they settle:
  * `remaining` while short, `change` to give back from cash.
  *
@@ -54,11 +55,24 @@ final class PosQuoteResource extends ApiResource
             /**
              * Signed rows that sum to `grand_total` (no delivery at the counter, so free-delivery promotions are left out).
              *
-             * @var list<array{type: 'subtotal'|'promotion'|'coupon'|'shipping', label: string|null, label_bn: string|null, amount: string}>
+             * @var list<array{type: 'subtotal'|'promotion'|'coupon'|'manual'|'shipping', label: string|null, label_bn: string|null, amount: string}>
              */
             'rows' => self::rows($quote),
             'subtotal' => $breakdown->subtotal->toDecimal(),
             'discount_total' => $breakdown->discountTotal()->toDecimal(),
+            /**
+             * The cashier's discount: `max_percent` is the cap (of the goods after promotions and the
+             * coupon); `amount` what it came to ("0.00" when none, or over the cap — see `blockers`).
+             *
+             * @var array{amount: string, max_percent: string, type: string|null, value: string|null, reason: 'regular_customer'|'bulk_purchase'|'damaged_packaging'|'price_match'|'staff_purchase'|'promotional'|'other'|null}
+             */
+            'discount' => [
+                'amount' => $breakdown->manualDiscount->toDecimal(),
+                'max_percent' => $quote->discountMaxPercent,
+                'type' => $quote->discount?->type,
+                'value' => $quote->discount?->value,
+                'reason' => $quote->discount?->reason->value,
+            ],
             'grand_total' => $breakdown->grandTotal->toDecimal(),
             /** @var int */
             'item_count' => $breakdown->itemCount(),
@@ -86,7 +100,7 @@ final class PosQuoteResource extends ApiResource
      * free-delivery promotion (a 0.00 row in the storefront breakdown) is not shown. The rest
      * still sums to `grand_total`.
      *
-     * @return list<array{type: 'subtotal'|'promotion'|'coupon'|'shipping', label: string|null, label_bn: string|null, amount: string}>
+     * @return list<array{type: 'subtotal'|'promotion'|'coupon'|'manual'|'shipping', label: string|null, label_bn: string|null, amount: string}>
      */
     private static function rows(PosQuote $quote): array
     {

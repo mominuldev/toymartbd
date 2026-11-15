@@ -37,6 +37,11 @@ export function dhakaTime(iso: string, locale: string): string {
         .toLowerCase();
 }
 
+/** "15 Nov 2026" — the Dhaka calendar date (rule 11), Western digits (rule 36). */
+export function dhakaDate(iso: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', { timeZone: 'Asia/Dhaka', day: 'numeric', month: 'short', year: 'numeric', numberingSystem: 'latn' }).format(new Date(iso));
+}
+
 /** "15 Nov 2026, 10:02 am" in Dhaka time — the receipt's sold-at line. */
 export function dhakaDateTime(iso: string, locale: string): string {
     return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', {

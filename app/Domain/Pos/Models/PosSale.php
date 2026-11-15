@@ -24,6 +24,10 @@ use LogicException;
  * @property string|null $idempotency_key
  * @property int $cashier_id
  * @property Money $grand_total
+ * @property Money $manual_discount the cashier's discount (0.00 when none)
+ * @property string|null $discount_type `percent` | `amount` — what the cashier asked for
+ * @property Money|null $discount_value the percent or the taka asked for
+ * @property string|null $discount_reason
  * @property Money $tendered_total
  * @property Money $cash_tendered
  * @property Money $change_due
@@ -71,6 +75,8 @@ final class PosSale extends Model
             'order_id' => 'integer',
             'cashier_id' => 'integer',
             'grand_total' => MoneyCast::class,
+            'manual_discount' => MoneyCast::class,
+            'discount_value' => MoneyCast::class,
             'tendered_total' => MoneyCast::class,
             'cash_tendered' => MoneyCast::class,
             'change_due' => MoneyCast::class,

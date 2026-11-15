@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
     // Static art (Home hero = LCP, About collage) is served AVIF with a WebP fallback
     // (storefront spec §B1.0). Catalog photos come pre-encoded from the media pipeline.
     images: { formats: ['image/avif', 'image/webp'] },
+    // Static pages moved from /pages/{slug} to the site root (/{slug}); the old URLs, in both
+    // locales, answer a permanent redirect (308) so shared links and indexed URLs keep working.
+    async redirects() {
+        return [
+            { source: '/pages/:slug', destination: '/:slug', permanent: true },
+            { source: '/bn/pages/:slug', destination: '/bn/:slug', permanent: true },
+        ];
+    },
     // SEO: which user agents get BLOCKING metadata (all <head> tags in the first HTML) instead of
     // streamed metadata. Next.js docs (16.x):
     //   https://nextjs.org/docs/app/api-reference/functions/generate-metadata#streaming-metadata

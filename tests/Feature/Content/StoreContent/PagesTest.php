@@ -50,7 +50,17 @@ it('creates and publishes a page with a generated ASCII slug and sanitised HTML'
         ->assertJsonPath('state', 'live')
         ->assertJsonPath('title_bn', 'ডেলিভারি নীতি')
         ->assertJsonPath('content', '<h2>Dhaka</h2><p>Delivered in 24 hours.</p>')
-        ->assertJsonPath('path', '/pages/delivery-policy');
+        ->assertJsonPath('path', '/delivery-policy');
+});
+
+it('keeps a page off the storefront routes it would shadow at the site root', function (): void {
+    // A page lives at /{slug}: /cart or /products could never reach it.
+    $this->postJson('/api/v1/admin/content/pages', scPagePayload(['slug' => 'cart']))
+        ->assertUnprocessable()->assertJsonPath('errors.0.field', 'slug');
+    // A generated slug steps around a reserved one instead of failing.
+    $this->postJson('/api/v1/admin/content/pages', scPagePayload(['title' => 'Checkout', 'title_bn' => null]))
+        ->assertCreated()->assertJsonPath('slug', fn (string $slug): bool => $slug !== 'checkout' && str_starts_with($slug, 'checkout'))
+        ->assertJsonPath('path', fn (string $path): bool => $path !== '/checkout');
 });
 
 it('transliterates a Bangla-only title into the shared slug', function (): void {
@@ -188,7 +198,7 @@ it('purges the page body AND its SEO document fetch when a page is saved with SE
         'seo' => ['title_bn' => 'ডেলিভারি | টয় মার্ট', 'description' => 'How we deliver.'],
     ]))->assertOk();
 
-    // The storefront caches /pages/{slug} under content:page:{slug} and its SEO document
+    // The storefront caches /{slug} under content:page:{slug} and its SEO document
     // (lib/seo/fetch.ts seoTags) under seo + page:{slug}: a page save must reach both.
     Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => in_array('content:page:delivery-policy', $job->tags, true)
         && in_array('page:delivery-policy', $job->tags, true));

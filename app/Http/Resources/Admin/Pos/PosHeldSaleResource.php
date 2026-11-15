@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 /**
  * A parked cart: what to put back on the register (lines, coupon, the phone in the national
- * form the cashier typed). No prices — resuming re-quotes.
+ * form the cashier typed, the customer's name). No prices — resuming re-quotes.
  *
  * @property PosHeldSale $resource
  */
@@ -46,6 +46,8 @@ final class PosHeldSaleResource extends ApiResource
              * @var string|null
              */
             'customer_phone' => $phone?->national(),
+            /** @var string|null */
+            'customer_name' => $hold->customer_name,
             /** @var string|null */
             'held_at' => $hold->created_at?->toIso8601String(),
             /** @var string|null */

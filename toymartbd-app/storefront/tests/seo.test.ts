@@ -87,7 +87,7 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
     it.each([
         ['/categories', 'categories'],
         ['/brands', 'brands'],
-        ['/pages/about', 'about'],
+        ['/about', 'about'],
         ['/delivery-charge', 'delivery'],
     ])('static page %s', (path) => {
         const meta = staticMetadata(locale, path, 'Title', 'Description');
@@ -153,8 +153,8 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
     });
 
     it('content pages and articles', () => {
-        const page = contentMetadata({ locale, path: '/pages/returns', title: 'Returns', description: 'd' });
-        expectHead(page, locale, '/pages/returns');
+        const page = contentMetadata({ locale, path: '/returns', title: 'Returns', description: 'd' });
+        expectHead(page, locale, '/returns');
         expect((page.openGraph as Record<string, unknown>).type).toBe('website');
         const post = contentMetadata({ locale, path: '/blog/best-toys', title: 'Best toys', kind: 'article', publishedTime: '2026-11-01T00:00:00+06:00' });
         expectHead(post, locale, '/blog/best-toys');

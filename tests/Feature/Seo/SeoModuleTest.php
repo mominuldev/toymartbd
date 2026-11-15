@@ -470,7 +470,7 @@ it('covers CMS pages, articles and guides in the SEO document, sitemaps and conf
     Tests\Feature\Content\Blog\BlogKit::post(['slug' => 'best-toys-for-3', 'type' => App\Domain\Content\Blog\Enums\PostType::BuyingGuide]);
 
     $sf = seoStorefront('GET', '/api/v1/storefront/seo/page/returns')->assertOk()->json();
-    expect($sf['path'])->toBe('/pages/returns')
+    expect($sf['path'])->toBe('/returns')
         ->and($sf['en']['title'])->toBe('Returns | Toy Mart BD')
         ->and($sf['bn']['title'])->toBe('রিটার্ন | Toy Mart BD')
         ->and($sf['en']['description'])->toBe('Return any toy within 7 days.');
@@ -486,6 +486,6 @@ it('covers CMS pages, articles and guides in the SEO document, sitemaps and conf
     seoAdmin();
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/guides/best-toys-for-3', 'to_path' => '/toys'])->assertUnprocessable();
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/blog/best-toys-for-3', 'to_path' => '/toys'])->assertCreated();
-    $this->getJson("/api/v1/admin/seo/meta/page/{$page->id}")->assertOk()->assertJsonPath('urls.bn', 'https://toymartbd.com/bn/pages/returns');
+    $this->getJson("/api/v1/admin/seo/meta/page/{$page->id}")->assertOk()->assertJsonPath('urls.bn', 'https://toymartbd.com/bn/returns');
     $this->getJson("/api/v1/admin/seo/meta/blog_post/{$article->id}")->assertOk()->assertJsonPath('path', '/blog/why-blocks');
 });

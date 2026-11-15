@@ -367,6 +367,8 @@ return [
     'api.v1.admin.settings.messaging.show',
     'api.v1.admin.settings.messaging.test',
     'api.v1.admin.settings.messaging.update',
+    'api.v1.admin.settings.pos.show',
+    'api.v1.admin.settings.pos.update',
     'api.v1.admin.settings.tracking.show',
     'api.v1.admin.settings.tracking.test',
     'api.v1.admin.settings.tracking.update',

@@ -11,12 +11,16 @@ import { isLocale } from '@/lib/i18n';
 import { getSeo } from '@/lib/seo/fetch';
 import { faqPageJsonLd } from '@/lib/seo/jsonld';
 
-// A CMS static page (Phase 7): Delivery policy, Returns, Privacy, Terms, FAQ, Contact… — GET
+// A CMS static page (Phase 7) at the site root — /delivery-policy, /privacy-policy, /faq… — GET
 // /storefront/pages/{slug}, ISR under tags `content:pages` + `content:page:{slug}` (its SEO document: `seo` + `page:{slug}`), purged by
 // Laravel on every save and when a scheduled publish time passes. One ASCII slug for both
 // locales (rule 37). Unknown, draft, scheduled or archived → 404 (README "Known limitations":
 // notFound() from a matched page renders Next's bare 404 shell without JavaScript).
-// The About page keeps its own route (../about), which prefers the CMS `about` page.
+// The About page keeps its own route (../about), which prefers the CMS `about` page. Every other
+// first segment (cart, products, blog…) is a static route that wins over this one; Laravel refuses
+// those as page slugs (CmsPage::RESERVED_SLUGS). The old /pages/{slug} URLs redirect here permanently (next.config.ts).
+// Trade-off: an unknown one-segment URL (/no-such-page) now matches this route, so its 404 is the
+// notFound()-from-a-page shell (README "Known limitations"), not the global-not-found page.
 
 interface Props {
     params: Promise<{ locale: string; slug: string }>;
@@ -27,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!isLocale(locale)) return {};
     const page = await getPage(slug).catch(() => null);
     if (!page) return {};
-    return cmsPageMetadata(page, locale, `/pages/${page.slug}`, await getSeo('page', page.slug));
+    return cmsPageMetadata(page, locale, `/${page.slug}`, await getSeo('page', page.slug));
 }
 
 export default async function CmsPageRoute({ params }: Props) {
@@ -38,7 +42,7 @@ export default async function CmsPageRoute({ params }: Props) {
     const others = pageTemplate(page) === 'sidebar' ? await listPages() : [];
 
     return (
-        <PageShell locale={locale} path={`/pages/${page.slug}`} top="tight">
+        <PageShell locale={locale} path={`/${page.slug}`} top="tight">
             {pageTemplate(page) === 'faq' ? (
                 <JsonLd
                     data={faqPageJsonLd(

@@ -31,8 +31,8 @@ const STATIC_SCREENS: Array<[string, string]> = [
     ['cart-empty', '/cart'],
     ['track', '/track'],
     ['delivery-charge', '/delivery-charge'],
-    ['about', '/pages/about'],
-    ['cms-page', '/pages/privacy-policy'],
+    ['about', '/about'],
+    ['cms-page', '/privacy-policy'],
     ['not-found', '/products/no-such-toy'],
 ];
 

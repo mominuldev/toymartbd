@@ -13,7 +13,7 @@ these helpers; nothing builds its own `<head>`, JSON-LD, sitemap entry or redire
 | `product` | `/products/{slug}` | `ProductSubjects` — live = active, published, online-store channel |
 | `category` | `/categories/{slug}` | `CategorySubjects` — live = active |
 | `brand` | `/brands/{slug}` | `BrandSubjects` — live = active |
-| `page` | `/pages/{slug}` | `PageSubjects` (CMS `CmsPage::MORPH`) — live = published, `published_at` reached |
+| `page` | `/{slug}` (site root) | `PageSubjects` (CMS `CmsPage::MORPH`) — live = published, `published_at` reached. A slug may not be a storefront route's first segment (`CmsPage::RESERVED_SLUGS`); the old `/pages/{slug}` URLs redirect permanently (storefront `next.config.ts`) |
 | `blog_post` | `/blog/{slug}` (article) · `/guides/{slug}` (buying guide) | `Content\Blog\Seo\BlogPostSeoSubjects` (`BlogPost::SEO_TYPE`) |
 | `blog_category` · `blog_tag` · `blog_author` | `/blog/category/{slug}` · `/blog/tag/{slug}` · `/blog/author/{slug}` | `Content\Blog\Seo\Blog{Category,Tag,Author}SeoSubjects` — live = at least one live post |
 
@@ -143,13 +143,13 @@ Pages that are not wired yet carry a `// SEO: agent 4` marker.
 - `App\Domain\Seo\Jobs\GenerateSitemaps` runs daily at 03:00 Asia/Dhaka (and on demand from
   the admin). It writes `storage/app/private/sitemaps/` atomically: an index `sitemap.xml` and
   `sitemap-{partition}-{locale}-{n}.xml` — the partition is the path's first segment (`static,
-  products, categories, brands, pages, blog, guides`) × `en, bn`, chunked at 50,000 URLs. Every `<url>` has `<lastmod>` and `xhtml:link`
+  products, categories, brands, blog, guides`), and `pages` for a one-segment CMS page path (`/about`) × `en, bn`, chunked at 50,000 URLs. Every `<url>` has `<lastmod>` and `xhtml:link`
   alternates for `en`, `bn` and `x-default`. Excluded: not live, `robots` noindex,
   `sitemap_exclude`, a `canonical_url` override (the page canonicalises elsewhere), products not in
   the online store channel.
   The `static` partition lists `/`, the listing roots (`/toys`, `/categories`, `/brands`, plus
   `/blog` and `/guides` when they have posts) and the storefront's own indexable routes
-  (`SitemapBuilder::STATIC_PAGES`: `/delivery-charge`, `/flash-sale`, `/track`, and `/pages/about`
+  (`SitemapBuilder::STATIC_PAGES`: `/delivery-charge`, `/flash-sale`, `/track`, and `/about`
   while no live CMS `about` page lists it in `pages`). **A URL the served robots.txt blocks is never
   listed** (`RobotsTxt::allows()`, Google's longest-match rules, checked per locale path).
 - The storefront serves `/sitemap.xml`, `/sitemaps/{file}` and `/robots.txt` from these

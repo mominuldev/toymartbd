@@ -53,8 +53,8 @@ describe('localisation', () => {
 
 describe('links', () => {
     it('prefixes site paths with the locale and keeps https URLs absolute', () => {
-        expect(linkAttrs('en', '/pages/returns')).toEqual({ href: '/pages/returns' });
-        expect(linkAttrs('bn', '/pages/returns')).toEqual({ href: '/bn/pages/returns' });
+        expect(linkAttrs('en', '/returns')).toEqual({ href: '/returns' });
+        expect(linkAttrs('bn', '/returns')).toEqual({ href: '/bn/returns' });
         expect(linkAttrs('bn', 'https://facebook.com/toymartbd')).toEqual({ href: 'https://facebook.com/toymartbd', rel: 'noopener' });
         expect(linkAttrs('en', 'https://facebook.com/toymartbd', true)).toEqual({ href: 'https://facebook.com/toymartbd', target: '_blank', rel: 'noopener noreferrer' });
     });
@@ -102,8 +102,8 @@ describe('menus', () => {
     });
 
     it('maps footer columns and mobile rows with Bangla labels', () => {
-        const footer = footerMenu([item('Help', 'none', null, [item('Returns', 'page', '/pages/returns', [], { label_bn: 'রিটার্ন' }), item('Bad', 'custom', 'javascript:x')], { label_bn: 'সহায়তা' })], 'bn');
-        expect(footer).toEqual([{ heading: { text: 'সহায়তা' }, links: [{ label: 'রিটার্ন', path: '/pages/returns' }] }]);
+        const footer = footerMenu([item('Help', 'none', null, [item('Returns', 'page', '/returns', [], { label_bn: 'রিটার্ন' }), item('Bad', 'custom', 'javascript:x')], { label_bn: 'সহায়তা' })], 'bn');
+        expect(footer).toEqual([{ heading: { text: 'সহায়তা' }, links: [{ label: 'রিটার্ন', path: '/returns' }] }]);
         const rows = mobileMenu([item('Track', 'custom', '/track')], 'bn');
         expect(rows[0]?.link).toEqual({ label: 'Track', lang: 'en', path: '/track' });
     });
@@ -153,8 +153,11 @@ describe('banners on cart and checkout (rule 25b)', () => {
     });
 
     it('links the info strip only to store pages', () => {
-        expect(safeInfoStripLink('/pages/delivery-policy')).toBe('/pages/delivery-policy');
+        expect(safeInfoStripLink('/delivery-policy')).toBe('/delivery-policy');
+        // A storefront route is not a page, and the old /pages/ prefix is gone.
+        expect(safeInfoStripLink('/checkout')).toBeNull();
+        expect(safeInfoStripLink('/pages/delivery-policy')).toBeNull();
         expect(safeInfoStripLink('/products/lego-city')).toBeNull();
-        expect(safeInfoStripLink('https://toymartbd.com/pages/x')).toBeNull();
+        expect(safeInfoStripLink('https://toymartbd.com/x')).toBeNull();
     });
 });

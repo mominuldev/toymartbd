@@ -112,6 +112,7 @@ describe('store settings layout', () => {
             ['Checkout & delivery', '/settings/checkout'],
             ['Delivery areas & timing', '/settings/delivery'],
             ['Taxes & invoices', '/settings/invoice'],
+            ['Point of sale', '/settings/pos'],
         ]);
         // The index <Navigate> may land a tick after the layout's heading (seen under load).
         await waitFor(() => expect(within(nav).getByRole('link', { name: 'Business' }).getAttribute('aria-current')).toBe('page'));

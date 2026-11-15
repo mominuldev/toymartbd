@@ -39,10 +39,10 @@ final class SitemapBuilder
 
     /**
      * Indexable storefront routes that are not content entities (each renders `index,follow`
-     * with a self canonical — toymartbd-app/storefront/app/[locale]/…). `/pages/about` is listed
+     * with a self canonical — toymartbd-app/storefront/app/[locale]/…). `/about` is listed
      * here only while no live CMS `about` page puts it in the `pages` partition.
      */
-    public const array STATIC_PAGES = ['/delivery-charge', '/flash-sale', '/track', '/pages/about'];
+    public const array STATIC_PAGES = ['/delivery-charge', '/flash-sale', '/track', '/about'];
 
     /** Google's limit per sitemap file. */
     public int $chunk = 50000;
@@ -166,7 +166,12 @@ final class SitemapBuilder
     /** `/products/x` → `products`; anything odd → `pages`. */
     public static function partition(string $path): string
     {
-        $first = explode('/', trim($path, '/'))[0];
+        $segments = explode('/', trim($path, '/'));
+        // A one-segment path is a CMS page (`/about`); every other subject sits under its prefix.
+        if (count($segments) === 1) {
+            return 'pages';
+        }
+        $first = $segments[0];
 
         return preg_match('/^[a-z]{1,30}$/', $first) === 1 && $first !== 'static' ? $first : 'pages';
     }

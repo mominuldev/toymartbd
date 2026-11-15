@@ -1,12 +1,13 @@
 import { useEffect, useId, useMemo, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
-import { CreditCardIcon, MinusIcon, PhoneIcon, PlusIcon, StackIcon, TagIcon, TrashIcon, UserIcon, UserPlusIcon } from '@phosphor-icons/react';
+import { CreditCardIcon, MinusIcon, PercentIcon, PhoneIcon, PlusIcon, StackIcon, TagIcon, TrashIcon, UserIcon, UserPlusIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useCustomer, useQuote, type PosContext, type PosSale, type PosSession } from './api';
-import { addLine, cleanPhone, emptyCart, quoteBody, removeLine, type CartState } from './cart';
+import { addLine, cleanPhone, discountReasonKey, emptyCart, isDiscountReason, quoteBody, removeLine, type CartState } from './cart';
+import { DiscountDialog } from './DiscountDialog';
 import { isZeroAmount, phoneDisplay, takaText } from './format';
 import { PaymentDialog } from './PaymentDialog';
 import { KEY } from './keys';
@@ -43,6 +44,7 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
     const phone = cleanPhone(cart.phone);
     const customer = useCustomer(phone);
     const [showCoupon, setShowCoupon] = useState(false);
+    const [showDiscount, setShowDiscount] = useState(false);
 
     const q = cart.lines.length > 0 ? quote.data : undefined;
     const fieldError = (field: string) => q?.blockers.find((b) => b.field === field)?.message ?? q?.tenders?.errors.find((e) => e.field === field)?.message;
@@ -202,6 +204,8 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                                             ? t('pos.totals.coupon', {
                                                   code: row.label ?? '',
                                               })
+                                            : row.type === 'manual'
+                                            ? t('pos.totals.discount', { reason: isDiscountReason(row.label) ? t(discountReasonKey(row.label)) : '' })
                                             : (locale === 'bn' ? row.label_bn : null) ?? row.label ?? t('pos.totals.promotion')}
                                     </dt>
                                     <dd className={`t-admin-num ${row.amount.startsWith('-') ? 'text-feedback-success' : 'text-fg-primary'}`}>{takaText(row.amount)}</dd>
@@ -214,6 +218,15 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                                 </dd>
                             </div>
                         </dl>
+                    )}
+
+                    {fieldError('discount') && (
+                        <p className="flex items-center justify-between gap-2 t-admin-caption text-feedback-danger">
+                            <span>{fieldError('discount')}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setShowDiscount(true)}>
+                                {t('pos.discount.edit')}
+                            </Button>
+                        </p>
                     )}
 
                     {cart.lines.length > 0 && (showCoupon || cart.coupon !== '') && (
@@ -235,14 +248,21 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                         </div>
                     )}
 
+                    {cart.lines.length > 0 && !showCoupon && cart.coupon === '' && (
+                        <Button variant="ghost" size="sm" className="self-start" onClick={() => setShowCoupon(true)}>
+                            <TagIcon size={16} aria-hidden />
+                            {t('pos.coupon.toggle')}
+                        </Button>
+                    )}
+
                     <div className="grid grid-cols-3 gap-2">
                         <Button variant="outline" onClick={onHold} disabled={cart.lines.length === 0 || holdPending}>
                             <StackIcon size={16} aria-hidden />
                             {t('pos.hold')}
                         </Button>
-                        <Button variant="outline" aria-pressed={showCoupon || cart.coupon !== ''} onClick={() => setShowCoupon((v) => !v)} disabled={cart.lines.length === 0}>
-                            <TagIcon size={16} aria-hidden />
-                            {t('pos.coupon.toggle')}
+                        <Button variant="outline" aria-pressed={cart.discount !== null} onClick={() => setShowDiscount(true)} disabled={cart.lines.length === 0}>
+                            <PercentIcon size={16} aria-hidden />
+                            {t('pos.discount.toggle')}
                         </Button>
                         <Button
                             variant="outline"
@@ -303,6 +323,13 @@ export function CartPanel({ visible, context, session, cart, setCart, names, onO
                     }}
                 />
             )}
+            <DiscountDialog
+                open={showDiscount}
+                current={cart.discount}
+                maxPercent={q?.discount.max_percent ?? ''}
+                onApply={(discount) => setCart((c) => ({ ...c, discount }))}
+                onClose={() => setShowDiscount(false)}
+            />
         </>
     );
 }

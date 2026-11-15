@@ -183,11 +183,11 @@ export default async function CheckoutPage({ params }: Props) {
         <p className="t-caption text-fg-secondary">
             {c.agree.split(/(\{terms\}|\{returns\})/).map((part, i) =>
                 part === '{terms}' ? (
-                    <a key={i} href={localizedPath(locale, '/pages/terms')} className="text-fg-link underline">
+                    <a key={i} href={localizedPath(locale, '/terms')} className="text-fg-link underline">
                         {c.terms}
                     </a>
                 ) : part === '{returns}' ? (
-                    <a key={i} href={localizedPath(locale, '/pages/returns')} className="text-fg-link underline">
+                    <a key={i} href={localizedPath(locale, '/returns-policy')} className="text-fg-link underline">
                         {c.returns}
                     </a>
                 ) : (

@@ -9,9 +9,20 @@ export function isValidLink(url: string): boolean {
     }
 }
 
-/** The info strip (shown on checkout) may link only to a store page (rule 25b). */
+/**
+ * First path segments the storefront routes itself, so never a page slug. Mirrors the API's
+ * CmsPage::RESERVED_SLUGS (pages live at the site root, `/{slug}`); the API is the authority.
+ */
+const reservedSlugs: ReadonlySet<string> = new Set([
+    'account', 'admin', 'api', 'blog', 'bn', 'brands', 'cart', 'categories', 'checkout', 'delivery-charge',
+    'en', 'flash-sale', 'guides', 'maintenance', 'orders', 'pages', 'products', 'robots', 'search', 'sitemap',
+    'sitemaps', 'toys', 'track',
+]);
+
+/** The info strip (shown on checkout) may link only to a store page, `/{slug}` (rule 25b). */
 export function isPageLink(url: string): boolean {
-    return /^\/pages\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(url.trim());
+    const match = /^\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/.exec(url.trim());
+    return match !== null && !reservedSlugs.has(match[1]!);
 }
 
 /** Move one element of a list from one index to another, returning a new list. */

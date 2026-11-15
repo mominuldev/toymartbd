@@ -104,6 +104,8 @@ final class OrderResource extends ApiResource
                 'coupon_code' => $order->coupon_code,
                 'coupon_discount' => $order->coupon_discount->toDecimal(),
                 'promotion_discount' => $order->promotion_discount->toDecimal(),
+                /** A cashier's discount at the POS ("0.00" for other orders). */
+                'manual_discount' => $order->manual_discount->toDecimal(),
                 'shipping_charge' => $order->shipping_charge->toDecimal(),
                 'shipping_discount' => $order->shipping_discount->toDecimal(),
                 'tax_total' => $order->tax_total->toDecimal(),

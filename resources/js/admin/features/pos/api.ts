@@ -149,13 +149,16 @@ export function useResume(sessionId: number) {
     });
 }
 
-/** Name fragment or phone digits (≥ 2 characters); the server matches and caps the list. */
-export function useCustomerSearch(q: string) {
+/**
+ * Name fragment or phone digits (≥ 2 characters); the server matches and caps the list. An empty
+ * term lists the most recent customers. Runs only while `enabled` (the dialog is open).
+ */
+export function useCustomerSearch(q: string, enabled = true) {
     const term = q.trim();
     return useQuery({
         queryKey: posKeys.customerSearch(term),
-        queryFn: () => api<{ data: PosCustomerMatch[] }>(`/pos/customers/search?q=${encodeURIComponent(term)}`),
-        enabled: term.length >= 2,
+        queryFn: () => api<{ data: PosCustomerMatch[] }>(term === '' ? '/pos/customers/search' : `/pos/customers/search?q=${encodeURIComponent(term)}`),
+        enabled: enabled && (term.length === 0 || term.length >= 2),
         placeholderData: keepPreviousData,
     });
 }

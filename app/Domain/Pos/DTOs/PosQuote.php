@@ -9,7 +9,8 @@ use App\Domain\Cart\DTOs\PriceBreakdown;
 /**
  * A priced register cart: the checkout pricing pipeline's breakdown (no delivery line at
  * the counter), the stock available for each line at the session's branch, what stops it
- * being charged (`blockers`, field-level), and the tender plan when tenders were given.
+ * being charged (`blockers`, field-level), the tender plan when tenders were given, and the
+ * cashier's discount as asked (applied in the breakdown unless it was over the cap).
  */
 final readonly class PosQuote
 {
@@ -22,6 +23,8 @@ final readonly class PosQuote
         public array $available,
         public array $blockers,
         public ?TenderPlan $tenders,
+        public string $discountMaxPercent = '0',
+        public ?DiscountInput $discount = null,
     ) {}
 
     public function chargeable(): bool

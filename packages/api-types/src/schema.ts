@@ -2741,6 +2741,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/pos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/pos` */
+        get: operations["v1.admin.settings.pos.show"];
+        /** `PUT /settings/pos` */
+        put: operations["v1.admin.settings.pos.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/returns": {
         parameters: {
             query?: never;
@@ -7603,7 +7621,7 @@ export interface components {
          *
          *     Placement rules: only `category_page` and `popup` take an image (`media_id`, a library
          *     image); only `category_page` targets a `category_id`; `info_strip` — the only placement shown
-         *     on cart and checkout — is text plus at most a link to a static page (`/pages/…`), never a
+         *     on cart and checkout — is text plus at most a link to a static page (`/{slug}`), never a
          *     product or category (rule 25b).
          */
         BannerRequest: {
@@ -8135,6 +8153,18 @@ export interface components {
             coupon_code?: string | null;
             /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
             customer_phone?: string | null;
+            /** @description The cashier's discount, taken off the goods after promotions and the coupon. Capped by the store (`discount_max_percent` on the quote). */
+            discount?: {
+                /**
+                 * @description `percent` of the goods, or a flat `amount` in taka.
+                 * @enum {string}
+                 */
+                type?: "percent" | "amount";
+                /** @description `10` (percent, at most 100) or `150.00` (taka). */
+                value?: string;
+                /** @description Why — one of the fixed reasons, kept with the sale. */
+                reason?: components["schemas"]["DiscountReason"];
+            };
             tenders: {
                 /**
                  * @description `due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).
@@ -9487,6 +9517,12 @@ export interface components {
          * @enum {string}
          */
         DeliveryZone: "inside_dhaka_metro" | "dhaka_suburb" | "outside_dhaka";
+        /**
+         * DiscountReason
+         * @description Why a cashier gave a discount — a fixed list (owner request 2026-11-15), so the reasons can be counted. Stored as the code on `pos_sales.discount_reason`; each screen shows its own language's label.
+         * @enum {string}
+         */
+        DiscountReason: "regular_customer" | "bulk_purchase" | "damaged_packaging" | "price_match" | "staff_purchase" | "promotional" | "other";
         /** Expense */
         Expense: {
             id: number;
@@ -9935,6 +9971,8 @@ export interface components {
             customer_phone?: string | null;
             /** @description Optional name to find it again, e.g. `Blue shirt, coming back`. */
             label?: string | null;
+            /** @description The customer's name, kept with `customer_phone` so resuming restores the named customer. */
+            customer_name?: string | null;
         };
         /**
          * ImportRedirectsRequest
@@ -11177,6 +11215,8 @@ export interface components {
                 coupon_code: string | null;
                 coupon_discount: string;
                 promotion_discount: string;
+                /** @description A cashier's discount at the POS ("0.00" for other orders). */
+                manual_discount: string;
                 shipping_charge: string;
                 shipping_discount: string;
                 tax_total: string;
@@ -11960,6 +12000,7 @@ export interface components {
             coupon_code: string | null;
             /** @description 01XXXXXXXXX. */
             customer_phone: string | null;
+            customer_name: string | null;
             held_at: string | null;
             resumed_at: string | null;
         };
@@ -11981,13 +12022,25 @@ export interface components {
             /** @description Signed rows that sum to `grand_total` (no delivery at the counter, so free-delivery promotions are left out). */
             rows: {
                 /** @enum {string} */
-                type: "subtotal" | "promotion" | "coupon" | "shipping";
+                type: "subtotal" | "promotion" | "coupon" | "manual" | "shipping";
                 label: string | null;
                 label_bn: string | null;
                 amount: string;
             }[];
             subtotal: string;
             discount_total: string;
+            /**
+             * @description The cashier's discount: `max_percent` is the cap (of the goods after promotions and the
+             *     coupon); `amount` what it came to ("0.00" when none, or over the cap — see `blockers`).
+             */
+            discount: {
+                amount: string;
+                max_percent: string;
+                type: string | null;
+                value: string | null;
+                /** @enum {string|null} */
+                reason: "regular_customer" | "bulk_purchase" | "damaged_packaging" | "price_match" | "staff_purchase" | "promotional" | "other" | null;
+            };
             grand_total: string;
             item_count: number;
             blockers: {
@@ -12051,6 +12104,13 @@ export interface components {
             promotion_discount: string;
             coupon_discount: string;
             coupon_code: string | null;
+            /** @description The cashier's discount ("0.00" when none). */
+            manual_discount: string;
+            /**
+             * @description The reason code (`regular_customer`, `bulk_purchase`, … — the register shows its label).
+             * @enum {string|null}
+             */
+            discount_reason: "regular_customer" | "bulk_purchase" | "damaged_packaging" | "price_match" | "staff_purchase" | "promotional" | "other" | null;
             grand_total: string;
             payments: {
                 method: string;
@@ -12120,6 +12180,21 @@ export interface components {
                     amount: string;
                 }[];
             };
+        };
+        /** PosSettings */
+        PosSettings: {
+            /** @description e.g. `10` */
+            discount_max_percent: string;
+            /** @description e.g. `10` */
+            discount_max_percent_default: string;
+            /** @description False while the store default applies (nobody has saved a cap yet). */
+            discount_saved: boolean;
+            /** @description Per customer, e.g. `5000.00`. */
+            due_limit: string;
+            /** @description e.g. `5000.00` */
+            due_limit_default: string;
+            /** @description False while the store default applies. */
+            due_saved: boolean;
         };
         /**
          * PostStatus
@@ -12870,6 +12945,18 @@ export interface components {
             coupon_code?: string | null;
             /** @description Bangladeshi mobile (013–019, rule 30). Optional — an anonymous walk-in has none. */
             customer_phone?: string | null;
+            /** @description The cashier's discount, taken off the goods after promotions and the coupon. Capped by the store (`discount_max_percent` on the quote). */
+            discount?: {
+                /**
+                 * @description `percent` of the goods, or a flat `amount` in taka.
+                 * @enum {string}
+                 */
+                type?: "percent" | "amount";
+                /** @description `10` (percent, at most 100) or `150.00` (taka). */
+                value?: string;
+                /** @description Why — one of the fixed reasons, kept with the sale. */
+                reason?: components["schemas"]["DiscountReason"];
+            };
             tenders?: {
                 /**
                  * @description `due` puts that amount on the customer's due (needs `pos.sell_on_due`, a phone and a name).
@@ -16644,6 +16731,16 @@ export interface components {
             expected_total: string;
             /** @description Why the order was edited — shown on the activity timeline. */
             note?: string | null;
+        };
+        /**
+         * UpdatePosSettingsRequest
+         * @description `PUT /settings/pos` — Store settings › Point of sale (the whole section); needs settings.update.
+         */
+        UpdatePosSettingsRequest: {
+            /** @description The most a cashier may take off a sale, as a percent of the goods after promotions and the coupon, e.g. `10`. `0` turns cashier discounts off. */
+            discount_max_percent: string;
+            /** @description The most one customer may owe from POS sales on due, in taka, e.g. `5000.00`. `0` stops new sales on due. */
+            due_limit: string;
         };
         /**
          * UpdateProductImageRequest
@@ -24277,6 +24374,55 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.settings.pos.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PosSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.pos.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePosSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `PosSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.returns.index": {
         parameters: {
             query?: {
@@ -28903,9 +29049,9 @@ export interface operations {
     };
     "v1.admin.pos.customers.search": {
         parameters: {
-            query: {
-                /** @description A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. */
-                q: string;
+            query?: {
+                /** @description A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. Omit for the most recent customers. */
+                q?: string | null;
             };
             header?: never;
             path?: never;

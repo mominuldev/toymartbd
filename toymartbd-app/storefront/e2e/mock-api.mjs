@@ -83,7 +83,7 @@ const CMS_PAGE = {
     },
 };
 
-// The privacy policy the footer links to (`/pages/privacy-policy`, the slug StaticPagesSeeder creates), live in the CMS on the default
+// The privacy policy the footer links to (`/privacy-policy`, the slug StaticPagesSeeder creates), live in the CMS on the default
 // template. Any other slug is not live → 404.
 const PRIVACY_PAGE = {
     slug: 'privacy-policy',
@@ -908,7 +908,7 @@ createServer(async (req, res) => {
     }
     // CMS content (Phase 7). Menus: no location published, so the chrome keeps its built-in menus;
     // no live banners or testimonials. Two live pages (`delivery-policy`, `privacy-policy`); `about` is
-    // not in the CMS, so /pages/about keeps its built-in copy.
+    // not in the CMS, so /about keeps its built-in copy.
     if (url.pathname === '/api/v1/storefront/menus') return send(res, 200, { header: null, footer: null, mobile: null });
     // Blog (Phase 7): no posts yet, so /blog and /guides render their empty state (not an error).
     if (url.pathname === '/api/v1/storefront/blog/posts') return send(res, 200, { data: [], meta: { current_page: 1, last_page: 1, total: 0 } });

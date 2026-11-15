@@ -143,7 +143,7 @@ describe('browser runtime', () => {
         expect(win().fbq).toBeUndefined();
         expect(fetchCalls).toHaveLength(0);
 
-        const html = renderToStaticMarkup(createElement(TrackingRoot, { config: CONFIG, labels: getMessages('en').consent, privacyHref: '/pages/privacy', bangla: false }));
+        const html = renderToStaticMarkup(createElement(TrackingRoot, { config: CONFIG, labels: getMessages('en').consent, privacyHref: '/privacy-policy', bangla: false }));
         expect(html).not.toContain('<script');
         expect(html).not.toContain('googletagmanager');
         expect(html).not.toContain('fbevents');
@@ -385,7 +385,7 @@ describe('consent banner markup', () => {
             const html = renderToStaticMarkup(
                 createElement(ConsentBanner, {
                     labels,
-                    privacyHref: locale === 'bn' ? '/bn/pages/privacy' : '/pages/privacy',
+                    privacyHref: locale === 'bn' ? '/bn/privacy-policy' : '/privacy-policy',
                     bangla: locale === 'bn',
                     mode: 'opt_in',
                     initial: { analytics: false, ads: false },
@@ -398,7 +398,7 @@ describe('consent banner markup', () => {
             expect(html).toContain('role="dialog"');
             expect(html).toContain('aria-modal="false"');
             expect(html).toMatch(/aria-labelledby="[^"]+-title"/);
-            expect(html).toContain(`href="${locale === 'bn' ? '/bn/pages/privacy' : '/pages/privacy'}"`);
+            expect(html).toContain(`href="${locale === 'bn' ? '/bn/privacy-policy' : '/privacy-policy'}"`);
             for (const text of [labels.title, labels.acceptAll, labels.reject, labels.choose, labels.bodyOptIn]) expect(html).toContain(text);
             // First visit: no close button — closing is not a choice.
             expect(html).not.toContain(labels.close);

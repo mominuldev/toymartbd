@@ -337,7 +337,7 @@ class DemoContentSeeder extends Seeder
                 linkUrl: '/categories/puzzles-games', linkLabel: 'Shop Puzzle week', linkLabelBn: 'পাজল সপ্তাহ দেখুন', priority: 10),
             new BannerData(BannerPlacement::InfoStrip, 'Same-day dispatch cut-off',
                 'Order by 2 pm for same-day dispatch inside Dhaka', 'ঢাকার ভেতরে দুপুর ২টার মধ্যে অর্ডারে একই দিনে পাঠানো হয়',
-                linkUrl: '/pages/delivery-policy', linkLabel: 'Delivery policy', linkLabelBn: 'ডেলিভারি নীতি'),
+                linkUrl: '/delivery-policy', linkLabel: 'Delivery policy', linkLabelBn: 'ডেলিভারি নীতি'),
             new BannerData(BannerPlacement::CategoryPage, 'Baby & Toddler — BABY15',
                 '15% off Baby & Toddler', 'শিশু ও বেবি খেলনায় ১৫% ছাড়',
                 'Use code BABY15 on orders over ৳1,500.', '৳1,500-এর বেশি অর্ডারে BABY15 কোড ব্যবহার করুন।',

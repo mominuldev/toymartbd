@@ -13,8 +13,9 @@ use App\Support\Money;
  * other checkout rules in `settings` (group `checkout`, key `checkout.pos_due_limit`); a key
  * nobody has saved falls back to {@see self::DEFAULT_LIMIT}.
  *
- * PLACEHOLDER business value (UI-UX-DESIGN-SPEC §10): ৳5,000 until the owner sets it. There
- * is no per-customer override yet — every customer gets the store default.
+ * PLACEHOLDER business value (UI-UX-DESIGN-SPEC §10): ৳5,000 until the owner sets it at
+ * Settings › Store › Point of sale (`PUT /settings/pos`). There is no per-customer override
+ * yet — every customer gets the store limit.
  */
 final class PosDueSettings
 {

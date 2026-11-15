@@ -21,9 +21,11 @@ it('holds a cart without reserving stock and resumes it once', function (): void
     $held = $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds", [
         'lines' => PosKit::lines([$this->toy->id => 2]),
         'customer_phone' => '01819 552 310',
+        'customer_name' => ' Rubina Akter ',
         'label' => 'Blue shirt',
     ])->assertCreated()
         ->assertJsonPath('label', 'Blue shirt')
+        ->assertJsonPath('customer_name', 'Rubina Akter')
         ->assertJsonPath('item_count', 2)
         ->assertJsonPath('lines.0.variant_id', $this->toy->id)
         ->assertJsonPath('customer_phone', '01819552310');
@@ -35,12 +37,20 @@ it('holds a cart without reserving stock and resumes it once', function (): void
 
     $this->postJson("/api/v1/admin/pos/holds/{$held->json('id')}/resume")->assertOk()
         ->assertJsonPath('lines.0.quantity', 2)
+        ->assertJsonPath('customer_name', 'Rubina Akter')
         ->assertJsonPath('resumed_at', fn ($v) => is_string($v));
 
     // Gone from the list; a second resume is a 409.
     $this->getJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds")->assertOk()->assertJsonCount(0, 'data');
     $this->postJson("/api/v1/admin/pos/holds/{$held->json('id')}/resume")->assertStatus(409);
     expect(PosHeldSale::query()->findOrFail($held->json('id'))->resumed_by)->toBe($this->cashier->id);
+});
+
+it('drops a customer name held without a phone (a walk-in)', function (): void {
+    $this->postJson("/api/v1/admin/pos/sessions/{$this->session->id}/holds", [
+        'lines' => PosKit::lines([$this->toy->id => 1]),
+        'customer_name' => 'করিম উদ্দিন',
+    ])->assertCreated()->assertJsonPath('customer_name', null)->assertJsonPath('customer_phone', null);
 });
 
 it('refuses an empty hold and an invalid phone', function (): void {

@@ -38,9 +38,12 @@ import {
 } from './tree';
 
 /**
- * Online store → Header / Footer / Mobile menu (Figma B · 27 241:45525, Header menu card 241:45612,
- * full width on its own tab). Drag a row onto another to place it before/after; every move also
- * has a keyboard path: up/down, indent (under the item above) and outdent. Save sends the tree.
+ * Online store → Header / Footer / Mobile menu (Figma B · 27 241:45525, Header menu card 241:45612).
+ * The "New menu item" form is open beside the tree by default; its Add item button appends the
+ * filled-in item, so the tree never holds a blank row. A row's + aims the same form at that row,
+ * and its pencil swaps the form for that item's fields. Drag a row onto another to place it
+ * before/after; every move also has a keyboard path: up/down, indent (under the item above) and
+ * outdent. Save sends the tree.
  */
 export function MenuEditorPage() {
     const { location } = useParams();
@@ -64,6 +67,9 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
     const [tree, setTree] = useState<MenuNode[]>(() => fromApi(menu.items));
     const [published, setPublished] = useState(menu.is_published);
     const [selected, setSelected] = useState<string | null>(null);
+    const [draft, setDraft] = useState<MenuNode>(emptyNode);
+    const [draftParent, setDraftParent] = useState<string | null>(null);
+    const [showDraftError, setShowDraftError] = useState(false);
     const [dragKey, setDragKey] = useState<string | null>(null);
     const [showErrors, setShowErrors] = useState(false);
     const maxDepth = menu.max_depth;
@@ -72,11 +78,24 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
     const count = countItems(tree);
     const title = t(`content.menus.title.${location}`);
     const selectedRow = rows.find((r) => r.node.key === selected) ?? null;
+    const parentRow = draftParent === null ? null : (rows.find((r) => r.node.key === draftParent) ?? null);
+    const draftDepth = parentRow ? parentRow.depth + 1 : 1;
+    const draftError = validate([draft], isValidLink).get(draft.key);
 
-    const add = (parentKey: string | null) => {
-        const node = emptyNode();
-        setTree((current) => addNode(current, node, parentKey, maxDepth));
-        setSelected(node.key);
+    /** Aim the add form at the top level (null) or under a row. */
+    const startAdd = (parentKey: string | null) => {
+        setSelected(null);
+        setDraftParent(parentKey);
+        if (parentKey !== null && draft.link_type === 'category_tree') setDraft({ ...draft, link_type: 'custom', url: '' });
+    };
+
+    const addDraft = () => {
+        setShowDraftError(true);
+        if (draftError || count >= menu.max_items) return;
+        setTree((current) => addNode(current, draft, parentRow ? parentRow.node.key : null, maxDepth));
+        setDraft(emptyNode());
+        setDraftParent(null);
+        setShowDraftError(false);
     };
 
     const onDrop = (event: DragEvent<HTMLLIElement>, targetKey: string) => {
@@ -124,12 +143,6 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
                                 <h2 className="t-admin-section text-fg-primary">{title}</h2>
                                 <p className="t-admin-caption text-fg-tertiary">{t('content.menus.help', { depth: maxDepth })}</p>
                             </div>
-                            {editable && (
-                                <Button variant="outline" size="sm" onClick={() => add(null)} disabled={count >= menu.max_items}>
-                                    <PlusIcon size={16} aria-hidden />
-                                    {t('content.menus.addItem')}
-                                </Button>
-                            )}
                         </div>
                         {!published && <p className="t-admin-caption text-fg-secondary">{t('content.menus.fallbackNote')}</p>}
 
@@ -178,7 +191,7 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
                                                                 <ArrowRightIcon size={16} aria-hidden />
                                                             </IconButton>
                                                             {depth < maxDepth && node.link_type !== 'category_tree' && (
-                                                                <IconButton size="sm" aria-label={t('content.menus.addChild', { label: node.label })} disabled={count >= menu.max_items} onClick={() => add(node.key)}>
+                                                                <IconButton size="sm" aria-label={t('content.menus.addChild', { label: node.label })} disabled={count >= menu.max_items} aria-pressed={draftParent === node.key} onClick={() => startAdd(node.key)}>
                                                                     <PlusIcon size={16} aria-hidden />
                                                                 </IconButton>
                                                             )}
@@ -191,6 +204,7 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
                                                                 onClick={() => {
                                                                     setTree(removeNode(tree, node.key));
                                                                     if (selected && (selected === node.key || findNode(node.children, selected))) setSelected(null);
+                                                                    if (draftParent && (draftParent === node.key || findNode(node.children, draftParent))) setDraftParent(null);
                                                                 }}
                                                             >
                                                                 <TrashIcon size={16} aria-hidden />
@@ -207,15 +221,32 @@ function MenuEditor({ location, menu }: { location: MenuLocation; menu: Menu }) 
                         <p className="pt-2 t-admin-caption tabular text-fg-tertiary">{t('content.menus.count', { count, max: menu.max_items })}</p>
                     </div>
 
-                    {selectedRow && editable && (
-                        <MenuItemPanel
-                            node={selectedRow.node}
-                            depth={selectedRow.depth}
-                            error={showErrors ? errors.get(selectedRow.node.key) : undefined}
-                            onChange={(patch) => setTree((current) => updateNode(current, selectedRow.node.key, patch))}
-                            onDone={() => setSelected(null)}
-                        />
-                    )}
+                    {editable &&
+                        (selectedRow ? (
+                            <MenuItemPanel
+                                key={selectedRow.node.key}
+                                node={selectedRow.node}
+                                depth={selectedRow.depth}
+                                error={showErrors ? errors.get(selectedRow.node.key) : undefined}
+                                onChange={(patch) => setTree((current) => updateNode(current, selectedRow.node.key, patch))}
+                                title={t('content.menus.itemForm')}
+                                actionLabel={t('content.menus.done')}
+                                onDone={() => setSelected(null)}
+                            />
+                        ) : (
+                            <MenuItemPanel
+                                key={draft.key}
+                                node={draft}
+                                depth={draftDepth}
+                                error={showDraftError ? draftError : undefined}
+                                onChange={(patch) => setDraft((current) => ({ ...current, ...patch }))}
+                                title={parentRow ? t('content.menus.itemFormNewUnder', { label: parentRow.node.label }) : t('content.menus.itemFormNew')}
+                                actionLabel={t('content.menus.addItem')}
+                                actionDisabled={count >= menu.max_items}
+                                onDone={addDraft}
+                                onCancel={parentRow ? () => setDraftParent(null) : undefined}
+                            />
+                        ))}
                 </div>
 
                 {editable && (

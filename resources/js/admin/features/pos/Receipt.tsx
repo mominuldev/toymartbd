@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { translate, type Locale } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { useReceipt, type PosReceipt } from './api';
+import { discountReasonKey } from './cart';
 import { dhakaDateTime, isZeroAmount, takaText } from './format';
 
 /**
@@ -83,6 +84,7 @@ export function ReceiptBody({ receipt, language, preview = false }: { receipt: P
                 </div>
                 {discount(t('pos.receipt.promotion'), receipt.promotion_discount)}
                 {discount(t('pos.totals.coupon', { code: receipt.coupon_code ?? '' }), receipt.coupon_discount)}
+                {discount(receipt.discount_reason ? t('pos.totals.discount', { reason: t(discountReasonKey(receipt.discount_reason)) }) : t('pos.discount.title'), receipt.manual_discount)}
                 <div className="flex justify-between t-admin-body-strong">
                     <dt>{t('pos.totals.total')}</dt>
                     <dd>{takaText(receipt.grand_total)}</dd>

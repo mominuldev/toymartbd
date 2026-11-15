@@ -61,6 +61,7 @@ const quote = (tenders: SentTender[]): PosQuote => {
         rows: [{ type: 'subtotal', label: null, label_bn: null, amount: '1850.00' }],
         subtotal: '1850.00',
         discount_total: '0.00',
+        discount: { amount: '0.00', max_percent: '10', type: null, value: null, reason: null },
         grand_total: '3455.00',
         item_count: 1,
         blockers: [],
@@ -84,6 +85,8 @@ const receipt: PosReceipt = {
     promotion_discount: '0.00',
     coupon_discount: '0.00',
     coupon_code: null,
+    manual_discount: '0.00',
+    discount_reason: null,
     grand_total: '3455.00',
     payments: [{ method: 'cash', amount: '4000.00', reference: null }],
     cash_tendered: '4000.00',
@@ -95,7 +98,7 @@ const receipt: PosReceipt = {
 const rubina: PosCustomerMatch = { id: 7, name: 'Rubina Akter', phone: '01819552310', orders_count: 12, open_due: '1200.00', due_limit: '5000.00', due_available: '3800.00' };
 const rubinaLookup: PosCustomer = { phone: '01819552310', customer: { id: 7, name: 'Rubina Akter', orders_count: 12, open_due: '1200.00', due_limit: '5000.00', due_available: '3800.00' } };
 
-const held: PosHeldSale = { id: 9, label: 'Karim — school order', lines: [{ variant_id: 11, quantity: 2 }], item_count: 2, coupon_code: null, customer_phone: null, held_at: '2026-11-15T07:05:00+00:00', resumed_at: null };
+const held: PosHeldSale = { id: 9, label: 'Karim — school order', lines: [{ variant_id: 11, quantity: 2 }], item_count: 2, coupon_code: null, customer_phone: '01819552310', customer_name: 'Rubina Akter', held_at: '2026-11-15T07:05:00+00:00', resumed_at: null };
 
 const dueQuote = (tenders: SentTender[]): PosDueQuote => {
     const paid = tenders[0]?.amount ?? null;
@@ -134,7 +137,13 @@ function posApi(me: Me, open: PosSession | null = session) {
         if (path === '/pos/sessions/1/holds' && method === 'GET') return { status: 200, body: { data: [held] } };
         if (path === '/pos/sessions/1/holds' && method === 'POST') return { status: 201, body: { ...held, id: 10 } };
         if (path === '/pos/holds/9' && method === 'DELETE') return { status: 204 };
-        if (path === '/pos/sessions/1/quote') return { status: 200, body: quote(sent().tenders ?? []) };
+        if (path === '/pos/holds/9/resume' && method === 'POST') return { status: 200, body: { ...held, resumed_at: '2026-11-15T07:30:00+00:00' } };
+        if (path === '/pos/sessions/1/quote') {
+            const body = sent() as { tenders?: SentTender[]; discount?: { reason: string } };
+            const priced = quote(body.tenders ?? []);
+            // The server's figures for a discount — the register only renders them.
+            return { status: 200, body: body.discount ? { ...priced, rows: [...priced.rows, { type: 'manual', label: body.discount.reason, label_bn: null, amount: '-92.50' }] } : priced };
+        }
         if (path === '/pos/sessions/1/sales' && method === 'POST') return { status: 201, body: sale };
         if (path === '/pos/sales/40/receipt') return { status: 200, body: receipt };
         if (path === '/pos/customers/search') return { status: 200, body: { data: [rubina] } };
@@ -351,13 +360,80 @@ describe('POS register', () => {
         // A cart with items cannot be replaced by a resume.
         expect(within(dialog).getByRole('button', { name: 'Resume' })).toHaveProperty('disabled', true);
 
-        fireEvent.change(within(dialog).getByLabelText('Label (optional)'), { target: { value: 'Rubina — fetching cash' } });
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Hold current sale' }));
+        fireEvent.change(within(dialog).getByLabelText('Label'), { target: { value: 'Rubina — fetching cash' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Hold sale' }));
         await waitFor(() => expect(call(calls, 'POST', '/pos/sessions/1/holds')).toBeTruthy());
         expect(JSON.parse(String(call(calls, 'POST', '/pos/sessions/1/holds')!.body))).toMatchObject({ label: 'Rubina — fetching cash', lines: [{ variant_id: 11, quantity: 1 }] });
 
         fireEvent.click(within(dialog).getByRole('button', { name: 'Discard Karim — school order' }));
         await waitFor(() => expect(call(calls, 'DELETE', '/pos/holds/9')).toBeTruthy());
+    });
+
+    it('opens the customer dialog on a list of recent customers, before any search', async () => {
+        const calls = posApi(cashier);
+        renderApp('/pos');
+
+        await screen.findByRole('heading', { name: 'Chattogram · Agrabad · Register 1' });
+        fireEvent.click(within(cartPanel()).getByRole('button', { name: /^Add customer/ }));
+        const dialog = await screen.findByRole('dialog', { name: 'Customer' });
+        expect(await within(dialog).findByRole('button', { name: /^Rubina Akter/ })).toBeTruthy();
+        expect(calls.mock.calls.some(([url]) => String(url).endsWith('/pos/customers/search'))).toBe(true);
+    });
+
+    it('opens Held sales from the cart Hold button, the label prefilled with the customer name', async () => {
+        const calls = posApi(cashier);
+        renderApp('/pos');
+
+        fireEvent.click(await screen.findByRole('button', { name: /^Add Brick Box 500/ }));
+        await pickRubina();
+        fireEvent.click(within(cartPanel()).getByRole('button', { name: 'Hold' }));
+        const dialog = await screen.findByRole('dialog', { name: 'Held sales' });
+        expect(call(calls, 'POST', '/pos/sessions/1/holds')).toBeUndefined();
+        expect(within(dialog).getByLabelText('Label')).toHaveProperty('value', 'Rubina Akter');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Hold sale' }));
+        await waitFor(() => expect(call(calls, 'POST', '/pos/sessions/1/holds')).toBeTruthy());
+        expect(JSON.parse(String(call(calls, 'POST', '/pos/sessions/1/holds')!.body))).toMatchObject({ label: 'Rubina Akter', customer_phone: '01819552310', customer_name: 'Rubina Akter' });
+    });
+
+    it('resumes a held sale with its customer name back on the cart', async () => {
+        const calls = posApi(cashier);
+        renderApp('/pos');
+
+        await screen.findByRole('heading', { name: 'Chattogram · Agrabad · Register 1' });
+        fireEvent.keyDown(window, { key: 'F8' });
+        const dialog = await screen.findByRole('dialog', { name: 'Held sales' });
+        const resume = await within(dialog).findByRole('button', { name: 'Resume' });
+        await waitFor(() => expect(resume).toHaveProperty('disabled', false));
+        fireEvent.click(resume);
+        // The name travels with the cart (the Due guard needs it), not only the phone lookup's display.
+        await waitFor(() => expect(JSON.parse(String(call(calls, 'POST', '/pos/sessions/1/quote')?.body ?? '{}'))).toMatchObject({ customer_phone: '01819552310', customer_name: 'Rubina Akter' }));
+    });
+
+    it('sends a discount with its reason from the Discount dialog, and the server row shows', async () => {
+        const calls = posApi(cashier);
+        renderApp('/pos');
+
+        fireEvent.click(await screen.findByRole('button', { name: /^Add Brick Box 500/ }));
+        const button = within(cartPanel()).getByRole('button', { name: 'Discount' });
+        await waitFor(() => expect(button).toHaveProperty('disabled', false));
+        fireEvent.click(button);
+        const dialog = await screen.findByRole('dialog', { name: 'Discount' });
+        expect(within(dialog).getByText('Up to 10% of this sale.')).toBeTruthy();
+        fireEvent.change(within(dialog).getByLabelText('Percent off'), { target: { value: '5' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Apply discount' }));
+        expect(within(dialog).getByRole('alert').textContent).toBe('Choose a reason for the discount.');
+        const reason = within(dialog).getByLabelText('Reason');
+        expect(within(reason).getAllByRole('option').map((o) => o.textContent)).toEqual([
+            'Choose a reason', 'Regular customer', 'Bulk purchase', 'Damaged packaging', 'Price match', 'Staff purchase', 'Promotional offer', 'Other',
+        ]);
+        fireEvent.change(reason, { target: { value: 'regular_customer' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Apply discount' }));
+
+        await waitFor(() =>
+            expect(JSON.parse(String(call(calls, 'POST', '/pos/sessions/1/quote')?.body ?? '{}'))).toMatchObject({ discount: { type: 'percent', value: '5', reason: 'regular_customer' } }),
+        );
+        expect(await within(cartPanel()).findByText('Discount · Regular customer')).toBeTruthy();
+        expect(within(cartPanel()).getByRole('button', { name: 'Discount' }).getAttribute('aria-pressed')).toBe('true');
     });
 
     it('adds a new customer by name and phone (F9)', async () => {

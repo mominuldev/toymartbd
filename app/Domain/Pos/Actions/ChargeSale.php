@@ -128,7 +128,7 @@ final readonly class ChargeSale
         }
 
         // 2–3. Price and plan, from current data only.
-        $quote = $this->quotes->quote($session->location_id, $data->lines, $data->couponCode, $data->phone, $data->tenders, $data->customerName, $data->canSellOnDue);
+        $quote = $this->quotes->quote($session->location_id, $data->lines, $data->couponCode, $data->phone, $data->tenders, $data->customerName, $data->canSellOnDue, $data->discount);
         if ($quote->blockers !== []) {
             throw self::invalid($quote->blockers);
         }
@@ -181,6 +181,7 @@ final readonly class ChargeSale
             'coupon_code' => $coupon?->coupon?->code,
             'coupon_discount' => $breakdown->couponDiscount,
             'promotion_discount' => $breakdown->promotionDiscount,
+            'manual_discount' => $breakdown->manualDiscount,
             'shipping_charge' => Money::zero(),
             'tax_total' => Money::zero(),
             'grand_total' => $breakdown->grandTotal,
@@ -250,6 +251,10 @@ final readonly class ChargeSale
             'idempotency_key' => $data->idempotencyKey,
             'cashier_id' => $data->cashierId,
             'grand_total' => $breakdown->grandTotal,
+            'manual_discount' => $breakdown->manualDiscount,
+            'discount_type' => $breakdown->manualDiscount->isZero() ? null : $data->discount?->type,
+            'discount_value' => $breakdown->manualDiscount->isZero() || $data->discount === null ? null : Money::of($data->discount->value),
+            'discount_reason' => $breakdown->manualDiscount->isZero() ? null : $breakdown->manualDiscountReason,
             'tendered_total' => $plan->tendered,
             'cash_tendered' => $plan->cashTendered,
             'change_due' => $plan->change,

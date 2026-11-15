@@ -13599,6 +13599,71 @@
                 }
             }
         },
+        "/admin/settings/pos": {
+            "get": {
+                "operationId": "v1.admin.settings.pos.show",
+                "summary": "`GET /settings/pos`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PosSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.pos.update",
+                "summary": "`PUT /settings/pos`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePosSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PosSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PosSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/returns": {
             "get": {
                 "operationId": "v1.admin.returns.index",
@@ -22092,10 +22157,12 @@
                     {
                         "name": "q",
                         "in": "query",
-                        "required": true,
-                        "description": "A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters.",
+                        "description": "A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. Omit for the most recent customers.",
                         "schema": {
-                            "type": "string",
+                            "type": [
+                                "string",
+                                "null"
+                            ],
                             "minLength": 2,
                             "maxLength": 64
                         }
@@ -35614,7 +35681,7 @@
             },
             "BannerRequest": {
                 "type": "object",
-                "description": "`POST /content/banners` and `PUT /content/banners/{banner}` \u2014 the whole banner. `starts_at` /\n`ends_at` are ISO 8601 instants (the admin sends Dhaka time with +06:00); stored UTC.\n\nPlacement rules: only `category_page` and `popup` take an image (`media_id`, a library\nimage); only `category_page` targets a `category_id`; `info_strip` \u2014 the only placement shown\non cart and checkout \u2014 is text plus at most a link to a static page (`/pages/\u2026`), never a\nproduct or category (rule 25b).",
+                "description": "`POST /content/banners` and `PUT /content/banners/{banner}` \u2014 the whole banner. `starts_at` /\n`ends_at` are ISO 8601 instants (the admin sends Dhaka time with +06:00); stored UTC.\n\nPlacement rules: only `category_page` and `popup` take an image (`media_id`, a library\nimage); only `category_page` targets a `category_id`; `info_strip` \u2014 the only placement shown\non cart and checkout \u2014 is text plus at most a link to a static page (`/{slug}`), never a\nproduct or category (rule 25b).",
                 "properties": {
                     "placement": {
                         "$ref": "#/components/schemas/BannerPlacement"
@@ -37567,6 +37634,29 @@
                         ],
                         "description": "Bangladeshi mobile (013\u2013019, rule 30). Optional \u2014 an anonymous walk-in has none.",
                         "maxLength": 32
+                    },
+                    "discount": {
+                        "type": "object",
+                        "description": "The cashier's discount, taken off the goods after promotions and the coupon. Capped by the store (`discount_max_percent` on the quote).",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "description": "`percent` of the goods, or a flat `amount` in taka.",
+                                "enum": [
+                                    "percent",
+                                    "amount"
+                                ]
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "`10` (percent, at most 100) or `150.00` (taka).",
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "reason": {
+                                "description": "Why \u2014 one of the fixed reasons, kept with the sale.",
+                                "$ref": "#/components/schemas/DiscountReason"
+                            }
+                        }
                     },
                     "tenders": {
                         "type": "array",
@@ -43124,6 +43214,20 @@
                 ],
                 "title": "DeliveryZone"
             },
+            "DiscountReason": {
+                "type": "string",
+                "description": "Why a cashier gave a discount \u2014 a fixed list (owner request 2026-11-15), so the reasons can be counted. Stored as the code on `pos_sales.discount_reason`; each screen shows its own language's label.\n",
+                "enum": [
+                    "regular_customer",
+                    "bulk_purchase",
+                    "damaged_packaging",
+                    "price_match",
+                    "staff_purchase",
+                    "promotional",
+                    "other"
+                ],
+                "title": "DiscountReason"
+            },
             "Expense": {
                 "type": "object",
                 "properties": {
@@ -44915,6 +45019,14 @@
                         ],
                         "description": "Optional name to find it again, e.g. `Blue shirt, coming back`.",
                         "maxLength": 80
+                    },
+                    "customer_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The customer's name, kept with `customer_phone` so resuming restores the named customer.",
+                        "maxLength": 160
                     }
                 },
                 "required": [
@@ -49747,6 +49859,10 @@
                             "promotion_discount": {
                                 "type": "string"
                             },
+                            "manual_discount": {
+                                "type": "string",
+                                "description": "A cashier's discount at the POS (\"0.00\" for other orders)."
+                            },
                             "shipping_charge": {
                                 "type": "string"
                             },
@@ -49775,6 +49891,7 @@
                             "coupon_code",
                             "coupon_discount",
                             "promotion_discount",
+                            "manual_discount",
                             "shipping_charge",
                             "shipping_discount",
                             "tax_total",
@@ -53090,6 +53207,12 @@
                         ],
                         "description": "01XXXXXXXXX."
                     },
+                    "customer_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "held_at": {
                         "type": [
                             "string",
@@ -53110,6 +53233,7 @@
                     "item_count",
                     "coupon_code",
                     "customer_phone",
+                    "customer_name",
                     "held_at",
                     "resumed_at"
                 ],
@@ -53193,6 +53317,7 @@
                                         "subtotal",
                                         "promotion",
                                         "coupon",
+                                        "manual",
                                         "shipping"
                                     ]
                                 },
@@ -53225,6 +53350,53 @@
                     },
                     "discount_total": {
                         "type": "string"
+                    },
+                    "discount": {
+                        "type": "object",
+                        "description": "The cashier's discount: `max_percent` is the cap (of the goods after promotions and the\ncoupon); `amount` what it came to (\"0.00\" when none, or over the cap \u2014 see `blockers`).",
+                        "properties": {
+                            "amount": {
+                                "type": "string"
+                            },
+                            "max_percent": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "regular_customer",
+                                    "bulk_purchase",
+                                    "damaged_packaging",
+                                    "price_match",
+                                    "staff_purchase",
+                                    "promotional",
+                                    "other",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "max_percent",
+                            "type",
+                            "value",
+                            "reason"
+                        ]
                     },
                     "grand_total": {
                         "type": "string"
@@ -53309,6 +53481,7 @@
                     "rows",
                     "subtotal",
                     "discount_total",
+                    "discount",
                     "grand_total",
                     "item_count",
                     "blockers",
@@ -53511,6 +53684,27 @@
                             "null"
                         ]
                     },
+                    "manual_discount": {
+                        "type": "string",
+                        "description": "The cashier's discount (\"0.00\" when none)."
+                    },
+                    "discount_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The reason code (`regular_customer`, `bulk_purchase`, \u2026 \u2014 the register shows its label).",
+                        "enum": [
+                            "regular_customer",
+                            "bulk_purchase",
+                            "damaged_packaging",
+                            "price_match",
+                            "staff_purchase",
+                            "promotional",
+                            "other",
+                            null
+                        ]
+                    },
                     "grand_total": {
                         "type": "string"
                     },
@@ -53579,6 +53773,8 @@
                     "promotion_discount",
                     "coupon_discount",
                     "coupon_code",
+                    "manual_discount",
+                    "discount_reason",
                     "grand_total",
                     "payments",
                     "cash_tendered",
@@ -53801,6 +53997,44 @@
                     "totals"
                 ],
                 "title": "PosSession"
+            },
+            "PosSettings": {
+                "type": "object",
+                "properties": {
+                    "discount_max_percent": {
+                        "type": "string",
+                        "description": "e.g. `10`"
+                    },
+                    "discount_max_percent_default": {
+                        "type": "string",
+                        "description": "e.g. `10`"
+                    },
+                    "discount_saved": {
+                        "type": "boolean",
+                        "description": "False while the store default applies (nobody has saved a cap yet)."
+                    },
+                    "due_limit": {
+                        "type": "string",
+                        "description": "Per customer, e.g. `5000.00`."
+                    },
+                    "due_limit_default": {
+                        "type": "string",
+                        "description": "e.g. `5000.00`"
+                    },
+                    "due_saved": {
+                        "type": "boolean",
+                        "description": "False while the store default applies."
+                    }
+                },
+                "required": [
+                    "discount_max_percent",
+                    "discount_max_percent_default",
+                    "discount_saved",
+                    "due_limit",
+                    "due_limit_default",
+                    "due_saved"
+                ],
+                "title": "PosSettings"
             },
             "PostStatus": {
                 "type": "string",
@@ -56438,6 +56672,29 @@
                         ],
                         "description": "Bangladeshi mobile (013\u2013019, rule 30). Optional \u2014 an anonymous walk-in has none.",
                         "maxLength": 32
+                    },
+                    "discount": {
+                        "type": "object",
+                        "description": "The cashier's discount, taken off the goods after promotions and the coupon. Capped by the store (`discount_max_percent` on the quote).",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "description": "`percent` of the goods, or a flat `amount` in taka.",
+                                "enum": [
+                                    "percent",
+                                    "amount"
+                                ]
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "`10` (percent, at most 100) or `150.00` (taka).",
+                                "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                            },
+                            "reason": {
+                                "description": "Why \u2014 one of the fixed reasons, kept with the sale.",
+                                "$ref": "#/components/schemas/DiscountReason"
+                            }
+                        }
                     },
                     "tenders": {
                         "type": [
@@ -70957,6 +71214,29 @@
                     "expected_total"
                 ],
                 "title": "UpdateOrderRequest"
+            },
+            "UpdatePosSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/pos` \u2014 Store settings \u203a Point of sale (the whole section); needs settings.update.",
+                "properties": {
+                    "discount_max_percent": {
+                        "type": "string",
+                        "description": "The most a cashier may take off a sale, as a percent of the goods after promotions and the coupon, e.g. `10`. `0` turns cashier discounts off.",
+                        "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+                        "minLength": 0,
+                        "maxLength": 100
+                    },
+                    "due_limit": {
+                        "type": "string",
+                        "description": "The most one customer may owe from POS sales on due, in taka, e.g. `5000.00`. `0` stops new sales on due.",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    }
+                },
+                "required": [
+                    "discount_max_percent",
+                    "due_limit"
+                ],
+                "title": "UpdatePosSettingsRequest"
             },
             "UpdateProductImageRequest": {
                 "type": "object",

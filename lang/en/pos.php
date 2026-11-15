@@ -16,6 +16,10 @@ return [
     'phone_for_discount' => 'Enter the customer\'s phone to give a discount — offer limits are counted per phone.',
     'walk_in_customer' => 'Walk-in customer',
 
+    'discount' => [
+        'over_cap' => 'A discount can be at most :percent% of this sale (৳:amount).',
+    ],
+
     'stock' => [
         'only_here' => 'Only :available here.',
         'none_here' => 'None in stock at this branch.',

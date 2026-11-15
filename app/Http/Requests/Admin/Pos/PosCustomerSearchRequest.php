@@ -7,7 +7,11 @@ namespace App\Http\Requests\Admin\Pos;
 use App\Domain\Pos\Models\PosSession;
 use App\Http\Requests\ApiFormRequest;
 
-/** `GET /pos/customers/search?q=` — a name fragment or phone digits. Needs pos.use. */
+/**
+ * `GET /pos/customers/search?q=` — a name fragment or phone digits. With no `q`, the most
+ * recent customers (the list the F9 dialog opens on). Only customers who have bought at
+ * the POS are listed. Needs pos.use.
+ */
 final class PosCustomerSearchRequest extends ApiFormRequest
 {
     public function authorize(): bool
@@ -19,8 +23,8 @@ final class PosCustomerSearchRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            /** A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. */
-            'q' => ['required', 'string', 'min:2', 'max:64'],
+            /** A name fragment (`rahim`) or phone digits (`01819`, `552310`); at least 2 characters. Omit for the most recent customers. */
+            'q' => ['nullable', 'string', 'min:2', 'max:64'],
         ];
     }
 

@@ -118,7 +118,7 @@ final class MenuLinks
             ],
             $model instanceof CmsPage => [
                 'id' => $model->id, 'label' => $model->title, 'label_bn' => $model->title_bn,
-                'path' => '/pages/'.$model->slug, 'live' => $model->isLive(),
+                'path' => CmsPage::pathFor($model->slug), 'live' => $model->isLive(),
             ],
             $model instanceof BlogPost => [
                 'id' => $model->id, 'label' => $model->title, 'label_bn' => $model->title_bn,

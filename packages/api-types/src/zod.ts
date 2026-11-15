@@ -22,6 +22,9 @@ export type CouponType = z.infer<typeof couponTypeSchema>;
 export const deliveryZoneSchema = z.enum(["inside_dhaka_metro","dhaka_suburb","outside_dhaka"]);
 export type DeliveryZone = z.infer<typeof deliveryZoneSchema>;
 
+export const discountReasonSchema = z.enum(["regular_customer","bulk_purchase","damaged_packaging","price_match","staff_purchase","promotional","other"]);
+export type DiscountReason = z.infer<typeof discountReasonSchema>;
+
 export const expenseCategoryTypeSchema = z.enum(["cogs","operating","marketing","logistics","other"]);
 export type ExpenseCategoryType = z.infer<typeof expenseCategoryTypeSchema>;
 
@@ -297,6 +300,11 @@ export const chargePosSaleRequestSchema = z.object({
 })).min(1).max(100),
     "coupon_code": z.string().max(64).nullable().optional(),
     "customer_phone": z.string().max(32).nullable().optional(),
+    "discount": z.object({
+    "type": z.enum(["percent","amount"]).optional(),
+    "value": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "reason": discountReasonSchema.optional(),
+}).optional(),
     "tenders": z.array(z.object({
     "method": z.enum(["cash","bkash","nagad","card","due"]),
     "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
@@ -509,6 +517,7 @@ export const holdPosSaleRequestSchema = z.object({
     "coupon_code": z.string().max(64).nullable().optional(),
     "customer_phone": z.string().max(32).nullable().optional(),
     "label": z.string().max(80).nullable().optional(),
+    "customer_name": z.string().max(160).nullable().optional(),
 });
 export type HoldPosSaleRequestInput = z.input<typeof holdPosSaleRequestSchema>;
 
@@ -693,6 +702,11 @@ export const quotePosSaleRequestSchema = z.object({
 })).min(0).max(100),
     "coupon_code": z.string().max(64).nullable().optional(),
     "customer_phone": z.string().max(32).nullable().optional(),
+    "discount": z.object({
+    "type": z.enum(["percent","amount"]).optional(),
+    "value": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).optional(),
+    "reason": discountReasonSchema.optional(),
+}).optional(),
     "tenders": z.array(z.object({
     "method": z.enum(["cash","bkash","nagad","card","due"]),
     "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
@@ -1779,6 +1793,13 @@ export const updateOrderRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type UpdateOrderRequestInput = z.input<typeof updateOrderRequestSchema>;
+
+/** `PUT /settings/pos` — Store settings › Point of sale (the whole section); needs settings.update. */
+export const updatePosSettingsRequestSchema = z.object({
+    "discount_max_percent": z.string().min(0).max(100).regex(new RegExp("^\\d{1,3}(\\.\\d{1,2})?$")),
+    "due_limit": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+});
+export type UpdatePosSettingsRequestInput = z.input<typeof updatePosSettingsRequestSchema>;
 
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({

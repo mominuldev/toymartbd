@@ -51,6 +51,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $coupon_code
  * @property Money $coupon_discount
  * @property Money $promotion_discount
+ * @property Money $manual_discount a cashier's discount at the POS (0.00 elsewhere)
  * @property Money $shipping_charge
  * @property Money $shipping_discount
  * @property Money $tax_total
@@ -153,7 +154,7 @@ final class Order extends Model
     protected function casts(): array
     {
         $money = array_fill_keys([
-            'subtotal', 'discount_total', 'coupon_discount', 'promotion_discount', 'shipping_charge',
+            'subtotal', 'discount_total', 'coupon_discount', 'promotion_discount', 'manual_discount', 'shipping_charge',
             'shipping_discount', 'tax_total', 'grand_total', 'paid_total', 'due_total', 'refunded_total',
         ], MoneyCast::class);
 

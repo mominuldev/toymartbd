@@ -9,7 +9,7 @@ use App\Support\PhoneNumber;
 
 /**
  * A Charge as the register sent it. Every figure is re-derived on the server; `expectedTotal`
- * is only compared. `canSellOnDue`: the cashier holds `pos.sell_on_due` (read by the HTTP layer).
+ * is only compared. `discount` is the cashier's discount as asked; the server prices it. `canSellOnDue`: the cashier holds `pos.sell_on_due` (read by the HTTP layer).
  */
 final readonly class SaleData
 {
@@ -28,5 +28,6 @@ final readonly class SaleData
         public ?string $customerName = null,
         public ?string $idempotencyKey = null,
         public bool $canSellOnDue = false,
+        public ?DiscountInput $discount = null,
     ) {}
 }
