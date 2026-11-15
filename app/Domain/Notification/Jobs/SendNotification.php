@@ -176,7 +176,7 @@ final class SendNotification implements ShouldQueue
             static fn (string $name): string => $variables[$name] ?? '',
             TemplateCatalog::whatsAppParameters($log->template),
         );
-        $language = $log->locale === 'en' ? 'en' : 'bn_BD';
+        $language = $log->locale === 'en' ? 'en' : 'bn'; // Meta's code for Bengali (owner decision 2026-11-16)
 
         $result = $whatsApp->sendTemplate($phone->e164(), (string) $template->provider_template, $language, $parameters, $log->template);
         $log->provider = app(WhatsAppDrivers::class)->name();

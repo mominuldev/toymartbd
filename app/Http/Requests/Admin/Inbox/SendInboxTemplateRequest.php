@@ -30,8 +30,8 @@ final class SendInboxTemplateRequest extends ApiFormRequest
     {
         return [
             'template' => ['required', 'string', 'max:512'],
-            /** @var 'en'|'bn_BD' */
-            'language' => ['required', 'string', Rule::in(['en', 'bn_BD'])],
+            /** @var 'en'|'bn' */
+            'language' => ['required', 'string', Rule::in(['en', 'bn'])],
             'parameters' => ['present', 'array', 'max:20'],
             /** Meta refuses a body parameter with a newline or tab, or more than 4 spaces in a row. */
             'parameters.*' => ['required', 'string', 'max:'.SendTemplate::MAX_PARAMETER, 'not_regex:/[\r\n\t]|\s{5,}/'],

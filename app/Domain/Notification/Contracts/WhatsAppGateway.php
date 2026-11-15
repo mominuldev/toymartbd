@@ -11,7 +11,7 @@ use App\Domain\Notification\DTOs\WhatsAppResult;
  * Bangladesh is on Meta's authentication-international tier (rule 32b).
  *
  * Meta templates take positional parameters ({{1}}, {{2}}…) and are approved per
- * language (`en`, `bn_BD`). Like every gateway: only called from a queued job after
+ * language (`en`, `bn`). Like every gateway: only called from a queued job after
  * commit, returns a rejection rather than throwing for a provider-side refusal, and never
  * logs the full number.
  */

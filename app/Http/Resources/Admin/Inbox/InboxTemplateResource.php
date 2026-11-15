@@ -30,7 +30,7 @@ final class InboxTemplateResource extends ApiResource
             'key' => $t->key,
             /** Meta's template name. */
             'template' => $t->providerTemplate,
-            /** @var 'en'|'bn_BD' */
+            /** @var 'en'|'bn' */
             'language' => $t->language,
             /** @var 'en'|'bn' */
             'locale' => $t->locale,

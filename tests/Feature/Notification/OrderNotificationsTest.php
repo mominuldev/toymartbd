@@ -109,7 +109,7 @@ it('sends an order update over WhatsApp first, in Bangla, with its cost recorded
         ->and($log->locale)->toBe('bn')
         ->and($log->cost->toDecimal())->toBe('0.45')
         ->and($log->provider_message_id)->toBe('wamid.1')
-        ->and($wa->sent[0])->toMatchArray(['template' => 'order_placed', 'language' => 'bn_BD', 'parameters' => ['নুসরাত জাহান', $order->number, '2', '2450']])
+        ->and($wa->sent[0])->toMatchArray(['template' => 'order_placed', 'language' => 'bn', 'parameters' => ['নুসরাত জাহান', $order->number, '2', '2450']])
         ->and($sms->sent)->toBe([]);
 });
 

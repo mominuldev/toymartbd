@@ -949,7 +949,7 @@ export type SendInboxReplyRequestInput = z.input<typeof sendInboxReplyRequestSch
 /** `POST /inbox/conversations/{conversation}/template` — an approved WhatsApp template to a */
 export const sendInboxTemplateRequestSchema = z.object({
     "template": z.string().min(1).max(512),
-    "language": z.enum(["en","bn_BD"]),
+    "language": z.enum(["en","bn"]),
     "parameters": z.array(z.string().max(1024)).max(20),
 });
 export type SendInboxTemplateRequestInput = z.input<typeof sendInboxTemplateRequestSchema>;
