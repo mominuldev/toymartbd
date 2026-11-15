@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Services;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,7 +22,7 @@ final class CmsBlockMedia
     public const string LIVE = 'live';
 
     /** Rewrite the placement's draft usages from its cms_blocks rows. */
-    public static function syncDraft(BlockPlacement $placement): void
+    public static function syncDraft(LayoutKey $placement): void
     {
         $blocks = CmsBlock::query()->inPlacement($placement)->get()
             ->map(static fn (CmsBlock $block): array => $block->snapshot())->values()->all();
@@ -31,7 +31,7 @@ final class CmsBlockMedia
     }
 
     /** Rewrite the placement's live usages from its newest published version (none: no live usages). */
-    public static function syncLive(BlockPlacement $placement): void
+    public static function syncLive(LayoutKey $placement): void
     {
         $live = CmsLayoutVersion::query()->ofPlacement($placement)->orderByDesc('version')->first();
 
@@ -60,7 +60,7 @@ final class CmsBlockMedia
     }
 
     /** @param  list<array<string, mixed>>  $blocks  block snapshots */
-    private static function sync(BlockPlacement $placement, string $layer, array $blocks): void
+    private static function sync(LayoutKey $placement, string $layer, array $blocks): void
     {
         $rows = [];
         foreach ($blocks as $block) {

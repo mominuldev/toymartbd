@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Models;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
+use App\Domain\Content\Blocks\Casts\LayoutKeyCast;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -18,7 +19,7 @@ use LogicException;
  * PublishLayout / RevertLayout, never updated or deleted. The live page is the highest version.
  *
  * @property int $id
- * @property BlockPlacement $placement
+ * @property LayoutKey $placement
  * @property int $version
  * @property list<array<string, mixed>> $blocks
  * @property int $block_count
@@ -40,7 +41,7 @@ final class CmsLayoutVersion extends Model
     protected function casts(): array
     {
         return [
-            'placement' => BlockPlacement::class,
+            'placement' => LayoutKeyCast::class,
             'version' => 'integer',
             'blocks' => 'array',
             'block_count' => 'integer',
@@ -63,12 +64,12 @@ final class CmsLayoutVersion extends Model
 
     /** @param  Builder<self>  $query */
     #[Scope]
-    protected function ofPlacement(Builder $query, BlockPlacement $placement): void
+    protected function ofPlacement(Builder $query, LayoutKey $placement): void
     {
         $query->where('placement', $placement->value);
     }
 
-    public static function latestFor(BlockPlacement $placement): ?self
+    public static function latestFor(LayoutKey $placement): ?self
     {
         return self::query()->ofPlacement($placement)->orderByDesc('version')->first();
     }

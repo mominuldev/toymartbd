@@ -17,6 +17,8 @@ const getSeo = vi.fn<(type: string, slug: string) => Promise<SeoDocument | null>
 
 vi.mock('@/lib/content/api', () => ({ findPage: (slug: string) => findPage(slug) }));
 vi.mock('@/lib/seo/fetch', () => ({ getSeo: (type: string, slug: string) => getSeo(type, slug) }));
+// No draft preview open (draft mode reads request cookies, which a unit test has none of).
+vi.mock('@/lib/content/page-layout', () => ({ draftPageLayout: async () => null, findPageLayout: async () => null }));
 
 const about: CmsPage = {
     slug: 'about',

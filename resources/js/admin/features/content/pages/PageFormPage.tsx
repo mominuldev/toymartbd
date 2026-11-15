@@ -1,13 +1,12 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowUUpLeftIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react';
+import { ArrowUUpLeftIcon, SquaresFourIcon } from '@phosphor-icons/react';
 import { cmsPageRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
 import { Button, buttonClass } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { Field, inputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
@@ -16,16 +15,20 @@ import { Select } from '@/components/ui/Select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
-import { DescriptionEditor } from '@/features/catalog/products/DescriptionEditor';
 import { PageStateChip } from '../shared/PageStateChip';
 import { apiFieldErrors, issuesToErrors, type FieldErrors } from '../shared/errors';
 import { SITE_HOST } from './PagesPage';
 import { useArchivePage, usePage, useSavePage, type CmsPage } from './api';
-import { toPageForm, toPagePayload, type FaqRow, type PageForm } from './form';
+import { toPageForm, toPagePayload, type PageForm } from './form';
 
 const URL_PREFIX = `${SITE_HOST}/`;
 
-/** Create and edit a static page. No dedicated Figma frame: Product edit (B · 12 241:37883) language. */
+/**
+ * Create a static page and edit its settings — title, URL, status, template, SEO. No dedicated
+ * Figma frame: Product edit (B · 12 241:37883) language. The page body is sections, edited in
+ * the page builder (owner decision 2026-11-16); "Edit sections" opens it, and a new page goes
+ * straight there once created.
+ */
 export function PageFormPage() {
     const params = useParams();
     const id = params.pageId ? Number(params.pageId) : null;
@@ -51,7 +54,6 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
 
     const set = <K extends keyof PageForm>(key: K, value: PageForm[K]) => setForm((f) => ({ ...f, [key]: value }));
     const setSeo = <K extends keyof PageForm['seo']>(key: K, value: PageForm['seo'][K]) => setForm((f) => ({ ...f, seo: { ...f.seo, [key]: value } }));
-    const setFaq = (index: number, patch: Partial<FaqRow>) => setForm((f) => ({ ...f, faq: f.faq.map((row, i) => (i === index ? { ...row, ...patch } : row)) }));
     const err = (field: string) => errors[field];
 
     const slugChanged = page !== undefined && page.state === 'live' && form.slug.trim() !== '' && form.slug.trim() !== page.slug;
@@ -61,7 +63,6 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
         const payload = toPagePayload(form, page);
         const parsed = cmsPageRequestSchema.safeParse(payload);
         const local: FieldErrors = parsed.success ? {} : issuesToErrors(parsed.error.issues);
-        if (form.template === 'faq' && form.status === 'published' && form.faq.length === 0) local.faq_items = t('content.pages.faq.empty');
         if (slugChanged && !form.acknowledge_slug_redirect) local.slug = t('products.slug.redirectTitle');
         setErrors(local);
         if (Object.keys(local).length > 0) return;
@@ -69,7 +70,7 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
         save.mutate(payload, {
             onSuccess: (saved) => {
                 notify(t(id === null ? 'content.pages.created' : 'content.pages.saved'));
-                if (id === null) navigate(`/store/pages/${saved.id}`, { replace: true });
+                if (id === null) navigate(`/store/pages/${saved.id}/build`, { replace: true });
                 else setForm(toPageForm(saved));
             },
             onError: (error) => {
@@ -131,75 +132,26 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                 breadcrumb={[{ label: t('content.crumb.store') }, { label: t('content.pages.backToList'), to: '/store/pages' }, { label: title }]}
                 title={page?.title || title}
                 titleAddon={page && <PageStateChip page={page} />}
+                actions={
+                    page && (
+                        <Link to={`/store/pages/${page.id}/build`} className={buttonClass('primary')}>
+                            <SquaresFourIcon size={16} aria-hidden />
+                            {t('content.pages.editSections')}
+                        </Link>
+                    )
+                }
             />
 
             <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                 <fieldset disabled={!editable || save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
                     <div className="flex min-w-0 flex-col gap-6">
-                        <FormSection title={t('content.pages.section.content')}>
+                        <FormSection title={t('content.pages.section.details')}>
                             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                                 {text('title', 'content.pages.field.title')}
                                 {text('title_bn', 'content.pages.field.titleBn', { lang: 'bn', hint: t('content.pages.field.titleBnHint'), optional: true })}
                             </div>
-                            {/* DescriptionEditor carries its own label row and EN | বাং switch. */}
-                            <div className="flex flex-col gap-1.5">
-                                <DescriptionEditor
-                                    value={{ en: form.content, bn: form.content_bn }}
-                                    onChange={(language, value) => set(language === 'en' ? 'content' : 'content_bn', value)}
-                                    error={err('content') ?? err('content_bn')}
-                                    invalid={{ en: Boolean(err('content')), bn: Boolean(err('content_bn')) }}
-                                    disabled={!editable}
-                                />
-                            </div>
+                            <p className="t-admin-caption text-fg-secondary">{t(id === null ? 'content.pages.sectionsHintNew' : 'content.pages.sectionsHint')}</p>
                         </FormSection>
-
-                        {form.template === 'faq' && (
-                            <FormSection
-                                title={t('content.pages.section.faq')}
-                                aside={
-                                    <Button variant="outline" size="sm" onClick={() => set('faq', [...form.faq, { question: '', question_bn: '', answer: '', answer_bn: '' }])}>
-                                        <PlusIcon size={16} aria-hidden />
-                                        {t('content.pages.faq.add')}
-                                    </Button>
-                                }
-                            >
-                                {err('faq_items') && <p className="t-admin-caption text-fg-primary">{err('faq_items')}</p>}
-                                <ol className="flex flex-col gap-4">
-                                    {form.faq.map((row, index) => (
-                                        <li key={index} className="flex flex-col gap-3 rounded-sm border border-line-default p-4">
-                                            <div className="flex justify-end">
-                                                <IconButton aria-label={t('content.pages.faq.remove', { n: index + 1 })} size="sm" onClick={() => set('faq', form.faq.filter((_, i) => i !== index))}>
-                                                    <TrashIcon size={16} aria-hidden />
-                                                </IconButton>
-                                            </div>
-                                            <div className="grid gap-x-4 gap-y-3 md:grid-cols-2">
-                                                {(['question', 'question_bn', 'answer', 'answer_bn'] as const).map((key) => (
-                                                    <Field
-                                                        key={key}
-                                                        label={t(`content.pages.faq.${key === 'question' ? 'question' : key === 'question_bn' ? 'questionBn' : key === 'answer' ? 'answer' : 'answerBn'}`, { n: index + 1 })}
-                                                        error={err(`faq_items.${index}.${key}`)}
-                                                        optional={key.endsWith('_bn')}
-                                                    >
-                                                        {({ id: fid, describedBy, invalid }) => (
-                                                            <textarea
-                                                                id={fid}
-                                                                rows={key.startsWith('answer') ? 3 : 1}
-                                                                lang={key.endsWith('_bn') ? 'bn' : undefined}
-                                                                aria-describedby={describedBy}
-                                                                aria-invalid={invalid || undefined}
-                                                                className={`py-2 ${inputClass}`}
-                                                                value={row[key]}
-                                                                onChange={(e) => setFaq(index, { [key]: e.target.value })}
-                                                            />
-                                                        )}
-                                                    </Field>
-                                                ))}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </FormSection>
-                        )}
 
                         <FormSection title={t('content.pages.section.seo')}>
                             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
@@ -265,10 +217,11 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                                     />
                                 )}
                             </Field>
-                            <Field label={t('content.pages.field.template')} error={err('template')}>
+                            {/* `faq` belonged to the old FAQ editor: offered only to a page that still has it, so a save sends it back. */}
+                            <Field label={t('content.pages.field.template')} error={err('template') ?? err('faq_items')}>
                                 {({ id: fid }) => (
                                     <Select id={fid} value={form.template} onChange={(e) => set('template', e.target.value as PageForm['template'])}>
-                                        {(['default', 'sidebar', 'faq'] as const).map((tpl) => (
+                                        {(page?.template === 'faq' ? (['default', 'sidebar', 'faq'] as const) : (['default', 'sidebar'] as const)).map((tpl) => (
                                             <option key={tpl} value={tpl}>
                                                 {t(`content.pages.template.${tpl}`)}
                                             </option>

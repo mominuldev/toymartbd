@@ -9,20 +9,20 @@ import { QueryError } from '@/components/ui/QueryError';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
 import { formatDhakaDateTime } from '@/features/content/shared/dhaka';
-import { useHomeVersions, useRevert, type CmsLayoutVersion } from './api';
+import { useLayoutVersions, useRevert, type CmsLayoutVersion, type LayoutBase } from './api';
 
 /**
  * Version history (checklist §2.10 "version history"; no frame of its own — the ConfirmDialog
  * surface at 560 wide). Newest first; the live one is marked. "Revert to this" publishes the old
  * version again as a new version (confirmed); "Edit in draft" only loads it into the draft.
  */
-export function VersionHistoryDialog({ open, onClose, canManage }: { open: boolean; onClose: () => void; canManage: boolean }) {
+export function VersionHistoryDialog({ base, open, onClose, canManage, failedMessage }: { base: LayoutBase; open: boolean; onClose: () => void; canManage: boolean; failedMessage: string }) {
     const { t, locale } = useI18n();
     const toast = useToast();
     const ref = useRef<HTMLDialogElement>(null);
     const titleId = useId();
-    const versions = useHomeVersions(open);
-    const revert = useRevert();
+    const versions = useLayoutVersions(base, open);
+    const revert = useRevert(base);
     const [confirm, setConfirm] = useState<CmsLayoutVersion | null>(null);
 
     useEffect(() => {
@@ -47,7 +47,7 @@ export function VersionHistoryDialog({ open, onClose, canManage }: { open: boole
                     setConfirm(null);
                     onClose();
                 },
-                onError: () => toast.notify(t('homeBuilder.loadFailed'), 'danger'),
+                onError: () => toast.notify(failedMessage, 'danger'),
             },
         );
 

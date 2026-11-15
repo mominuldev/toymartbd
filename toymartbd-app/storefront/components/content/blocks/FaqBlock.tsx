@@ -6,13 +6,14 @@ import { faqPageJsonLd } from '@/lib/seo/jsonld';
 
 // FAQ (Phase 7): native <details> so the accordion works without JavaScript — the CMS page FAQ
 // template's look — plus FAQPage JSON-LD from the shared SEO builders (lib/seo/jsonld), in the
-// page's language. Answers are plain text.
+// page's language. Answers are plain text. `jsonLd={false}` when the page emits one FAQPage for
+// all its FAQ blocks (HomeBlocks), so the structured data never appears twice.
 
-export function FaqBlock({ id, title, items, locale }: { id: string; title: string; items: Array<{ question: string; answer: string }>; locale: Locale }) {
+export function FaqBlock({ id, title, items, locale, jsonLd = true }: { id: string; title: string; items: Array<{ question: string; answer: string }>; locale: Locale; jsonLd?: boolean }) {
     const headingId = `cms-${id}-title`;
     return (
         <section aria-labelledby={headingId} className={`mx-auto flex w-full max-w-prose flex-col gap-3 ${bnClass(locale)}`}>
-            <JsonLd data={[faqPageJsonLd(items)]} />
+            {jsonLd ? <JsonLd data={[faqPageJsonLd(items)]} /> : null}
             <h2 id={headingId} className="t-h2 text-fg-primary">
                 {title}
             </h2>

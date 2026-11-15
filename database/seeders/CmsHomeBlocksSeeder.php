@@ -7,7 +7,7 @@ namespace Database\Seeders;
 use App\Domain\Content\Blocks\Actions\CreateBlock;
 use App\Domain\Content\Blocks\Actions\PublishLayout;
 use App\Domain\Content\Blocks\DTOs\BlockSettings;
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
@@ -26,7 +26,7 @@ final class CmsHomeBlocksSeeder extends Seeder
 {
     public function run(CreateBlock $create, PublishLayout $publish): void
     {
-        $placement = BlockPlacement::Home;
+        $placement = LayoutKey::home();
 
         if (CmsBlock::query()->where('placement', $placement->value)->exists() || CmsLayoutVersion::latestFor($placement) !== null) {
             return;

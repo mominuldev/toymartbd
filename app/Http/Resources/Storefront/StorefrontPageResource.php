@@ -6,6 +6,7 @@ namespace App\Http\Resources\Storefront;
 
 use App\Domain\Catalog\Services\ProductDescription;
 use App\Domain\Content\Models\CmsPage;
+use App\Domain\Content\Services\PageText;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Http\Resources\ApiResource;
 use App\Http\Resources\Content\ContentFormat;
@@ -28,8 +29,10 @@ final class StorefrontPageResource extends ApiResource
     {
         $page = $this->resource;
         $meta = SeoMeta::query()->where('seoable_type', CmsPage::MORPH)->where('seoable_id', $page->id)->first();
-        $summary = self::summary(ProductDescription::plainText($page->content));
-        $summaryBn = self::summary(ProductDescription::plainText($page->content_bn)) ?: $summary;
+        // From the live sections' Rich text (legacy `content` for a page not yet built from sections).
+        $text = app(PageText::class);
+        $summary = self::summary($text->plain($page));
+        $summaryBn = self::summary($text->plain($page, bangla: true)) ?: $summary;
         $pick = static fn (?string $override, string $default): string => $override !== null && $override !== '' ? $override : $default;
 
         return [

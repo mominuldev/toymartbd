@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Models;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
+use App\Domain\Content\Blocks\Casts\LayoutKeyCast;
 use App\Domain\Content\Blocks\Enums\BlockType;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property string $uuid
- * @property BlockPlacement $placement
+ * @property LayoutKey $placement
  * @property BlockType $type
  * @property string|null $label
  * @property array<string, mixed> $content
@@ -59,7 +60,7 @@ final class CmsBlock extends Model
     protected function casts(): array
     {
         return [
-            'placement' => BlockPlacement::class,
+            'placement' => LayoutKeyCast::class,
             'type' => BlockType::class,
             'content' => 'array',
             'position' => 'integer',
@@ -77,7 +78,7 @@ final class CmsBlock extends Model
 
     /** @param  Builder<self>  $query */
     #[Scope]
-    protected function inPlacement(Builder $query, BlockPlacement $placement): void
+    protected function inPlacement(Builder $query, LayoutKey $placement): void
     {
         $query->where('placement', $placement->value)->orderBy('position')->orderBy('id');
     }

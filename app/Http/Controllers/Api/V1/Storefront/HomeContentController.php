@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Storefront;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Services\HomeLayoutCache;
 use App\Domain\Content\Blocks\Services\LayoutDraft;
 use App\Domain\Content\Blocks\Services\LayoutResolver;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Storefront\HomeContentQuery;
 use App\Http\Resources\Storefront\StorefrontHomeResource;
@@ -33,7 +33,7 @@ final class HomeContentController extends ApiController
     public function home(Request $request, HomeLayoutCache $cache, LayoutResolver $resolver): StorefrontHomeResource
     {
         $query = HomeContentQuery::fromRequest($request, preview: false);
-        $live = $cache->live(BlockPlacement::Home);
+        $live = $cache->live(LayoutKey::home());
 
         return new StorefrontHomeResource([
             'version' => $live['version'] ?? null,
@@ -58,7 +58,7 @@ final class HomeContentController extends ApiController
         $query = HomeContentQuery::fromRequest($request, preview: true);
         $token = $request->header('X-Preview-Token');
 
-        if (! is_string($token) || PreviewToken::verify($token, BlockPlacement::Home->previewTokenType()) === null) {
+        if (! is_string($token) || PreviewToken::verify($token, LayoutKey::home()->previewTokenType()) === null) {
             throw new AccessDeniedHttpException('The preview token is missing, invalid or expired.');
         }
 
@@ -67,7 +67,7 @@ final class HomeContentController extends ApiController
             'published_at' => null,
             'preview' => true,
             'locale' => $query->locale,
-            'blocks' => $resolver->resolve($draft->snapshot(BlockPlacement::Home), $query->locale, $query->at ?? CarbonImmutable::now('UTC')),
+            'blocks' => $resolver->resolve($draft->snapshot(LayoutKey::home()), $query->locale, $query->at ?? CarbonImmutable::now('UTC')),
         ]);
     }
 }

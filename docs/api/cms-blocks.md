@@ -1,16 +1,16 @@
-# CMS blocks and the homepage builder (Phase 7)
+# CMS blocks: the homepage and page builders (Phase 7; pages 2026-11-16)
 
-The homepage is an ordered list of typed blocks. Editors change a **draft**; **publish** freezes the
+The homepage — and, since 2026-11-16 (owner decision), **every static page** — is an ordered list of typed blocks ("sections"). Each one is a **layout** with its own key: `home` or `page:{id}` (`App\Domain\Content\Blocks\ValueObjects\LayoutKey`). Editors change a **draft**; **publish** freezes the
 draft into an immutable **version**, which is what the storefront renders. Domain:
 `app/Domain/Content/Blocks`. Admin: `resources/js/admin/features/content/home` (Figma B · 26 Page
 builder `241:44102`). Storefront: `toymartbd-app/storefront/components/content/**`.
 
 ## Data
 
-- `cms_blocks` — the draft: `uuid` (identity across versions), `placement` (`home`), `type`,
+- `cms_blocks` — the draft: `uuid` (identity across versions), `placement` (the layout key: `home` or `page:{id}`), `type`,
   `label` (internal), `content` JSON, `position`, `is_enabled`, `show_en`, `show_bn`, `show_mobile`,
   `show_desktop`, `starts_at` / `ends_at` (UTC; entered in Asia/Dhaka).
-- `cms_layout_versions` — append-only: `version` (per placement), `blocks` (ordered snapshot),
+- `cms_layout_versions` — append-only: `version` (per layout), `blocks` (ordered snapshot),
   `content_hash`, `restored_from_version`, `note`, `published_by`, `published_at`. The live page is
   the highest version. The model refuses update and delete.
 
@@ -51,6 +51,19 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `POST /content/home/versions/{id}/revert` | `{ publish = true }` → 201 new live version (`restored_from_version` set); `publish: false` only replaces the draft (200 draft) |
 | `POST /content/home/preview-token` | `{ locale }` → `{ token, expires_at, url }` — a 10-minute `App\Support\PreviewToken` of type `home_draft`; `url` is `{STOREFRONT_URL}/api/preview/home?token=…&locale=…` (null without STOREFRONT_URL) |
 
+### Page builders
+
+`/content/pages/{page}/layout` mirrors every `/content/home` endpoint above for one static page:
+`GET /`, `POST /blocks`, `PATCH|DELETE /blocks/{id}`, `POST /blocks/{id}/duplicate`, `PUT /order`,
+`POST /publish`, `GET /versions`, `POST /versions/{id}/revert`, `POST /preview-token` (token type
+`page_draft` whose id is the **page** id; `url` is `{STOREFRONT_URL}/api/preview/page?…`). Same
+policies and role split. A block or version of another layout is a 404 on either builder. The
+page's own `status` still decides whether its URL is live; the layout decides what it shows.
+Pages that predate the builder were moved by `BuildPageLayoutFromContent` (migration
+`2026_12_07_720000`): `content` → a Rich text section, `faq_items` → FAQ sections of 20 (answers as
+plain text), published as version 1. `cms_pages.content*` / `faq_items` stay for now
+(expand-and-contract) and are what the storefront renders for a page whose layout was never published.
+
 ## Storefront API (`/api/v1/storefront`, storefront token)
 
 - `GET /content/home?locale=en|bn` — the live version, resolved for that locale **now**: disabled,
@@ -60,12 +73,19 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
   is removed. `{version: null, blocks: []}` before the first publish.
 - `GET /content/home/preview?locale=…[&at=ISO]` with `X-Preview-Token` — the draft, same shape;
   403 `forbidden` for a missing, forged, other-type or expired token. Never cached.
+- `GET /content/pages/{slug}?locale=en|bn` — a live page: `{ page: StorefrontPage, version,
+  published_at, preview, blocks }`, `blocks` resolved exactly as the homepage's. 404 when the page
+  is not live. `GET /content/pages/preview?locale=…` with a `page_draft` token — that page's draft,
+  whatever its status.
 
 ## Caching and revalidation
 
 - Laravel caches the live snapshot until the next publish/revert. Seeding the default homepage publishes version 1 without queueing a revalidation.
 - The storefront caches `GET /content/home` under `content:home` plus `products`, `categories`,
   `brands`, `content:testimonials`, `content:blog`.
+- A page layout is cached under `content:pages` + `content:page:{slug}` plus the same data tags;
+  Laravel sends that pair on a page layout publish/revert and at its schedule boundaries
+  (`LayoutCacheTags`).
 - `content:home` is sent (queued, after commit) on every publish and revert
   (`CmsLayoutPublished` → `RevalidateCmsLayout`), and by `toymart:content:revalidate-scheduled`
   (every minute) when a `starts_at`/`ends_at` of the live version has passed since the last run.

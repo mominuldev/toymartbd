@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Actions;
 
-use App\Domain\Content\Blocks\Enums\BlockPlacement;
 use App\Domain\Content\Blocks\Exceptions\NothingToPublish;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use App\Domain\Content\Blocks\Services\HomeLayoutCache;
+use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Events\CmsLayoutPublished;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +23,7 @@ final class PublishLayout
 {
     public function __construct(private readonly HomeLayoutCache $cache) {}
 
-    public function handle(BlockPlacement $placement, ?int $userId, ?string $note = null): CmsLayoutVersion
+    public function handle(LayoutKey $placement, ?int $userId, ?string $note = null): CmsLayoutVersion
     {
         $version = DB::transaction(static function () use ($placement, $userId, $note): CmsLayoutVersion {
             // Serialise publishers of one placement: the draft rows are the lock.

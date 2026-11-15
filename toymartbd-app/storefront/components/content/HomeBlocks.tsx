@@ -13,19 +13,21 @@ import { RichTextBlock } from '@/components/content/blocks/RichTextBlock';
 import { Band } from '@/components/content/blocks/shared';
 import { TestimonialsBlock } from '@/components/content/blocks/TestimonialsBlock';
 import { UspBandBlock } from '@/components/content/blocks/UspBandBlock';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { deviceClass, type HomeBlock } from '@/lib/content/home-blocks';
 import { getMessages, type Locale } from '@/lib/i18n';
+import { faqPageJsonLd } from '@/lib/seo/jsonld';
 
 // The CMS homepage (Phase 7): the published blocks, in the editor's order, one component per
 // type (components/content/blocks/**). Server Components only. The per-device switch is a CSS
 // class at the 1024 breakpoint (the page is cached, so it cannot know the device). The first hero
 // carries the LCP image. Full-bleed bands (USP) skip the gutters; everything else sits in a Band.
 
-function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: string): ReactNode {
+function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: string, pageHeading: boolean): ReactNode {
     const t = getMessages(locale);
     switch (block.type) {
         case 'hero':
-            return <HeroBlock id={block.id} slides={block.content.slides} showAgePills={block.content.show_age_pills} locale={locale} t={t.home} priority={firstHero} />;
+            return <HeroBlock id={block.id} slides={block.content.slides} showAgePills={block.content.show_age_pills} locale={locale} t={t.home} priority={firstHero} pageHeading={pageHeading} />;
         case 'category_tiles':
             return <CategoryTilesBlock id={block.id} title={block.content.title} showSeeAll={block.content.show_see_all} categories={block.categories} locale={locale} t={t.home} />;
         case 'age_tiles':
@@ -47,7 +49,7 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: s
         case 'rich_text':
             return <RichTextBlock html={block.content.html} locale={locale} />;
         case 'faq':
-            return <FaqBlock id={block.id} title={block.content.title} items={block.content.items} locale={locale} />;
+            return <FaqBlock id={block.id} title={block.content.title} items={block.content.items} locale={locale} jsonLd={false} />;
     }
 }
 
@@ -55,13 +57,18 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: s
  * `editable` (the draft preview only) stamps each section with its block id, which the builder's
  * live editor (PreviewBridge) uses to outline and select it. The live page carries no ids.
  * `hotline` is the store hotline for `{phone}` in USP items (lib/store-info.ts, display form).
+ * `pageHeading={false}` on a static page built from sections (CmsSectionsPage): the page title is
+ * the H1 there, so a hero headline renders as an h2.
  */
-export function HomeBlocks({ blocks, locale, editable = false, hotline }: { blocks: HomeBlock[]; locale: Locale; editable?: boolean; hotline: string }) {
+export function HomeBlocks({ blocks, locale, editable = false, hotline, pageHeading = true }: { blocks: HomeBlock[]; locale: Locale; editable?: boolean; hotline: string; pageHeading?: boolean }) {
     const firstHero = blocks.findIndex((b) => b.type === 'hero');
+    // One FAQPage for every FAQ block on the page (a page carries at most one FAQPage).
+    const faqs = blocks.flatMap((b) => (b.type === 'faq' ? b.content.items : []));
     return (
         <div className="flex flex-col gap-12 lg:gap-20">
+            {faqs.length > 0 ? <JsonLd data={[faqPageJsonLd(faqs)]} /> : null}
             {blocks.map((block, i) => {
-                const node = render(block, locale, i === firstHero, hotline);
+                const node = render(block, locale, i === firstHero, hotline, pageHeading);
                 const device = deviceClass(block);
                 const blockId = editable && block.id ? block.id : undefined;
                 return block.type === 'usp_band' ? (
@@ -80,14 +87,15 @@ export function HomeBlocks({ blocks, locale, editable = false, hotline }: { bloc
     );
 }
 
-/** The thin bar shown over a draft preview, with a way out. */
-export function PreviewBar({ locale }: { locale: Locale }) {
-    const t = getMessages(locale).home;
+/** The thin bar shown over a draft preview, with a way out (`page`: a static page's draft). */
+export function PreviewBar({ locale, page }: { locale: Locale; page?: string }) {
+    const t = getMessages(locale);
+    const exit = page ? `/api/preview/page/exit?${new URLSearchParams({ slug: page, locale }).toString()}` : '/api/preview/home/exit';
     return (
         <div role="status" className="flex items-center justify-center gap-3 bg-warning-subtle px-gutter-mobile py-2 text-fg-primary">
-            <span className="t-body-sm-strong">{t.previewBanner}</span>
-            <a href="/api/preview/home/exit" className="t-body-sm-strong text-fg-link underline">
-                {t.previewExit}
+            <span className="t-body-sm-strong">{page ? t.content.previewBanner : t.home.previewBanner}</span>
+            <a href={exit} className="t-body-sm-strong text-fg-link underline">
+                {t.home.previewExit}
             </a>
         </div>
     );

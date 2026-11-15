@@ -21,16 +21,18 @@ interface Props {
     t: Messages['home'];
     /** True for the page's first hero: its first image is the LCP element. */
     priority: boolean;
+    /** False on a static page, whose title is already the H1: every headline is then an h2. */
+    pageHeading?: boolean;
 }
 
 const SIZES = '(min-width: 64rem) 38rem, calc(100vw - 4.5rem)';
 
-function Slide({ slide, index, total, blockId, showAgePills, locale, t, priority }: { slide: HeroSlide; index: number; total: number; blockId: string } & Omit<Props, 'slides' | 'id'>) {
+function Slide({ slide, index, total, blockId, showAgePills, locale, t, priority, pageHeading = true }: { slide: HeroSlide; index: number; total: number; blockId: string } & Omit<Props, 'slides' | 'id'>) {
     const pills = t.agePills as Record<string, string>;
     const lcp = priority && index === 0;
     const headingId = `hero-${blockId}-${index}-title`;
     const cta = slide.cta_href && slide.cta_label ? blockLink(locale, slide.cta_href) : null;
-    const Heading = index === 0 ? 'h1' : 'h2';
+    const Heading = pageHeading && index === 0 ? 'h1' : 'h2';
 
     return (
         <section
@@ -83,9 +85,9 @@ function Slide({ slide, index, total, blockId, showAgePills, locale, t, priority
     );
 }
 
-export function HeroBlock({ id, slides, showAgePills, locale, t, priority }: Props) {
+export function HeroBlock({ id, slides, showAgePills, locale, t, priority, pageHeading = true }: Props) {
     if (slides.length === 1) {
-        return <Slide slide={slides[0]!} index={0} total={1} blockId={id} showAgePills={showAgePills} locale={locale} t={t} priority={priority} />;
+        return <Slide slide={slides[0]!} index={0} total={1} blockId={id} showAgePills={showAgePills} locale={locale} t={t} priority={priority} pageHeading={pageHeading} />;
     }
 
     return (
@@ -93,7 +95,7 @@ export function HeroBlock({ id, slides, showAgePills, locale, t, priority }: Pro
             <ul className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none]">
                 {slides.map((slide, i) => (
                     <li key={i} className="w-full shrink-0 snap-start">
-                        <Slide slide={slide} index={i} total={slides.length} blockId={id} showAgePills={showAgePills} locale={locale} t={t} priority={priority} />
+                        <Slide slide={slide} index={i} total={slides.length} blockId={id} showAgePills={showAgePills} locale={locale} t={t} priority={priority} pageHeading={pageHeading} />
                     </li>
                 ))}
             </ul>

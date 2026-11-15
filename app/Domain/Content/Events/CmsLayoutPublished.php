@@ -8,7 +8,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * A new version of a CMS placement went live (publish or revert). `placement` is the
- * BlockPlacement value (`home`). Listeners: RevalidateCmsLayout (storefront cache tag).
+ * LayoutKey value (`home` or `page:{id}`). Listeners: RevalidateCmsLayout (storefront cache tag).
  */
 final readonly class CmsLayoutPublished
 {
