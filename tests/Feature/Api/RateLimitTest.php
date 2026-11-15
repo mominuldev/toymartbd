@@ -92,6 +92,20 @@ it('limits admin to 300 a minute, keyed by user once signed in', function (): vo
         ->and($userLimit->key)->toBe('user:42');
 });
 
+it('takes the admin limit from config (E2E servers raise it), falling back to 300', function (): void {
+    $limiter = RateLimiter::limiter('admin');
+    $request = Request::create('/api/v1/admin/ping', server: ['REMOTE_ADDR' => '10.0.0.9']);
+
+    config(['auth.admin_per_minute' => 3000]);
+    /** @var Limit $raised */
+    $raised = $limiter($request);
+    config(['auth.admin_per_minute' => 0]);
+    /** @var Limit $invalid */
+    $invalid = $limiter($request);
+
+    expect($raised->maxAttempts)->toBe(3000)->and($invalid->maxAttempts)->toBe(300);
+});
+
 it('returns 429 on the admin group at its threshold', function (): void {
     for ($i = 1; $i <= ApiServiceProvider::ADMIN_PER_MINUTE; $i++) {
         $this->getJson('/api/v1/admin/ping');

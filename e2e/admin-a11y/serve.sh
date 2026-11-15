@@ -21,6 +21,9 @@ export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
 export DEMO_SEED_IMAGES=false AUTH_LOGIN_PER_MINUTE=60
 # Every audit signs the owner in again; the per-account limit (10 / 15 min) would throttle it.
 export AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN=200
+# …and the admin API limit (300/min per user): the suite is one owner, and a fast runner
+# crossed it (429 on /auth/me broke a page). Production keeps 300.
+export ADMIN_API_PER_MINUTE=3000
 # Staff two-factor is not enforced here, so the owner reaches every screen without a code; the
 # Phase 10 two-factor audit enrols its own accounts and signs in with a real code.
 export TWO_FACTOR_ENFORCE=false

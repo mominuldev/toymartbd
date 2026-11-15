@@ -48,6 +48,7 @@ class ApiServiceProvider extends ServiceProvider
      */
     public const int STOREFRONT_SERVER_PER_MINUTE = 2400;
 
+    /** The production default; config('auth.admin_per_minute') overrides it (E2E servers only). */
     public const int ADMIN_PER_MINUTE = 300;
 
     public const int LOGIN_PER_MINUTE = 5;
@@ -129,7 +130,7 @@ class ApiServiceProvider extends ServiceProvider
         RateLimiter::for('admin', function (Request $request): Limit {
             $user = $request->user();
 
-            return Limit::perMinute(self::ADMIN_PER_MINUTE)
+            return Limit::perMinute(self::adminPerMinute())
                 ->by($user !== null ? 'user:'.$user->getAuthIdentifier() : 'ip:'.$request->ip());
         });
 
@@ -366,5 +367,12 @@ class ApiServiceProvider extends ServiceProvider
         }
 
         return is_scalar($cart) ? (string) $cart : '';
+    }
+
+    public static function adminPerMinute(): int
+    {
+        $limit = config('auth.admin_per_minute', self::ADMIN_PER_MINUTE);
+
+        return is_int($limit) && $limit > 0 ? $limit : self::ADMIN_PER_MINUTE;
     }
 }

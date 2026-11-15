@@ -139,6 +139,14 @@ return [
     'login_per_minute' => (int) env('AUTH_LOGIN_PER_MINUTE', 5),
 
     /*
+    | Admin API requests per minute, per signed-in user (the `admin` limiter). Keep the default in
+    | production; only the throwaway E2E servers raise it, because every spec signs the same
+    | owner in and a fast runner crosses 300/min across the suite.
+    */
+
+    'admin_per_minute' => (int) env('ADMIN_API_PER_MINUTE', 300),
+
+    /*
     | Sign-in attempts per account (email) per 15 minutes, from any IP (audit S-3). Keep the
     | production default; only the admin E2E server raises it, because every spec signs the
     | same owner in and the suite passed 10 sign-ins when the staff spec was added.
