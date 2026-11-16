@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Domain\Staff\Services\TwoFactor;
 use App\Models\AuditSensitive;
 use App\Models\Enums\AuditAction;
 use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
+use App\Models\Enums\SettingGroup;
+use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
@@ -205,7 +208,10 @@ it('wants one of code or recovery_code, not both', function (): void {
 });
 
 describe('enforcement', function (): void {
-    beforeEach(fn () => config(['auth.two_factor.enforce' => true]));
+    beforeEach(function (): void {
+        config(['auth.two_factor.enforce' => true]);
+        Setting::put(TwoFactor::SETTING, true, SettingGroup::System);
+    });
 
     it('holds anyone who can see money at setup until they enrol', function (): void {
         $user = tfStaff(Role::Accountant);

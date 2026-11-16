@@ -6,6 +6,7 @@ namespace App\Domain\Staff\Services;
 
 use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
+use App\Models\Setting;
 use App\Models\User;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -21,10 +22,19 @@ use PragmaRX\Google2FA\Google2FA;
  *
  * Who must use it is computed from live permissions — roles are editable — so a role edit
  * that grants a money permission makes its holders enrol at their next request.
+ *
+ * Whether anyone must use it is the owner's setting (Staff & roles › Two-factor sign-in, owner
+ * request 2026-11-16), saved as `security.two_factor_required` and OFF until switched on. Off,
+ * nobody is held at the setup screen, but anyone who set it up still gives a code at sign-in.
+ * `auth.two_factor.enforce` stays a config kill switch the test suites use; it is forced on in
+ * production, so there only the owner's setting decides.
  */
 final readonly class TwoFactor
 {
     public const int RECOVERY_CODES = 8;
+
+    /** Settings key for the owner's "require two-factor" switch (bool, default off). */
+    public const string SETTING = 'security.two_factor_required';
 
     /** One step either side of now: tolerates a phone clock up to ~30 s out. */
     private const int WINDOW = 1;
@@ -33,7 +43,13 @@ final readonly class TwoFactor
 
     public function enforced(): bool
     {
-        return config('auth.two_factor.enforce') === true;
+        return config('auth.two_factor.enforce') === true && self::requiredByOwner();
+    }
+
+    /** The owner's saved switch; false while never saved. */
+    public static function requiredByOwner(): bool
+    {
+        return Setting::get(self::SETTING) === true;
     }
 
     /** Does this person have to set up two-factor before using the admin? */

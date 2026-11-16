@@ -142,6 +142,9 @@ export const en = {
         slideRole: 'slide', // aria-roledescription of one slide
         carouselRole: 'carousel', // aria-roledescription of the hero carousel
         ratingLabel: 'Rated {rating} out of 5',
+        testimonialsPrev: 'Previous testimonials',
+        testimonialsNext: 'Next testimonials',
+        goToSlide: 'Go to slide {n}',
         readingTime: '{minutes} min read',
     },
     brands: {
@@ -264,6 +267,11 @@ export const en = {
     content: {
         // CMS static pages, menus and banners (Phase 7).
         onThisPage: 'On this page',
+        // Contact block (CMS section `contact_info`): labels; the values come from store info.
+        contactMessenger: 'Messenger',
+        contactAddress: 'Visit us',
+        contactHours: 'Opening hours',
+        contactMap: 'Open in Maps',
         morePages: 'More from Toy Mart BD',
         faqTitle: 'Questions and answers',
         englishOnly: 'This page is not available in Bangla yet, so it is shown in English.',
@@ -274,6 +282,13 @@ export const en = {
         previewBanner: 'Draft preview — this is not the live page.',
     },
     listing: {
+        // Product-rail slider below 1024 (components/carousel/SwiperCarousel). Western digits (rule 36).
+        sliderRole: 'carousel',
+        sliderSlideRole: 'slide',
+        sliderPrev: 'Previous products',
+        sliderNext: 'Next products',
+        sliderSlideOf: 'Product {n} of {total}',
+        sliderGoTo: 'Go to slide {n}',
         // P4-STO-03 category and brand listings (storefront spec §A1, §A7, §A8; Figma 129:1572 / 136:2172).
         breadcrumb: 'Breadcrumb',
         home: 'Home',

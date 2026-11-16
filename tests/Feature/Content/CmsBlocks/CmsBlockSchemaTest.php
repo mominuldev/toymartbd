@@ -72,6 +72,12 @@ it('rejects invalid content per type', function (string $type, array $content, s
     'rich text empty' => ['rich_text', ['html' => ''], 'html'],
     'faq no items' => ['faq', ['title' => 'x', 'items' => []], 'items'],
     'faq item without answer' => ['faq', ['title' => 'x', 'items' => [['question' => 'Q?']]], 'items.0.answer'],
+    'image unknown media' => ['image', ['media_id' => 999999], 'media_id'],
+    'image javascript link' => ['image', ['href' => 'javascript:alert(1)'], 'href'],
+    'image bad width' => ['image', ['width' => 'giant'], 'width'],
+    'contact without title' => ['contact_info', ['title' => ''], 'title'],
+    'contact javascript map link' => ['contact_info', ['title' => 'x', 'map_href' => 'javascript:alert(1)'], 'map_href'],
+    'contact bad switch' => ['contact_info', ['title' => 'x', 'show_email' => 'perhaps'], 'show_email'],
 ]);
 
 it('accepts a document media id only when it is an image', function (): void {

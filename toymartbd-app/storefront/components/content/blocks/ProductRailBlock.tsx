@@ -17,6 +17,7 @@ export function ProductRailBlock({ id, title, products, seeAllHref, locale, t }:
             products={products}
             locale={locale}
             t={t.listing}
+            slider
             action={link ? { href: link.href, label: t.home.seeAll, ariaLabel: format(t.home.seeAllLabel, { section: title }) } : undefined}
         />
     );

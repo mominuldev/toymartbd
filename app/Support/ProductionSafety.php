@@ -24,8 +24,8 @@ final class ProductionSafety
             return;
         }
 
-        // Two-factor for anyone who can see money is an owner decision (2026-11-14), not a
-        // deploy option: switching it off is for the test suites only.
+        // Whether two-factor is required is the owner's setting (Staff & roles, default off,
+        // 2026-11-16), not a deploy option: the env kill switch is for the test suites only.
         if ($config->get('auth.two_factor.enforce') !== true) {
             $config->set('auth.two_factor.enforce', true);
             $config->set('auth.two_factor.enforce_forced_on', true);

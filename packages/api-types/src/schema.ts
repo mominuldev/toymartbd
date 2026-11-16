@@ -210,6 +210,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/staff/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /staff/two-factor` */
+        get: operations["v1.admin.staff.two-factor.show"];
+        /** `PUT /staff/two-factor` */
+        put: operations["v1.admin.staff.two-factor.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/staff/{user}/two-factor/reset": {
         parameters: {
             query?: never;
@@ -8057,7 +8075,7 @@ export interface components {
             /** @description `App\Models\Enums\AuditAction` */
             action: string;
             /** @enum {string} */
-            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "capital_drawing_recorded" | "capital_contribution_recorded" | "capital_entry_reversed" | "capital_holder_added" | "capital_holder_changed" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
+            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "capital_drawing_recorded" | "capital_contribution_recorded" | "capital_entry_reversed" | "capital_holder_added" | "capital_holder_changed" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "two_factor_required" | "two_factor_optional" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
             /** @enum {string} */
             area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports" | "finance";
             actor: {
@@ -8254,9 +8272,11 @@ export interface components {
          *     | `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |
          *     | `rich_text` <br/>  |
          *     | `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |
+         *     | `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings › Store, plus hours. |
+         *     | `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -9061,7 +9081,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image";
             label: string | null;
             content: {
                 [key: string]: unknown;
@@ -17503,6 +17523,13 @@ export interface components {
         TwoFactorCodeRequest: {
             code: string;
         };
+        /** TwoFactorSetting */
+        TwoFactorSetting: {
+            /** @description True: anyone who can see money must set up two-factor before using the admin. False (the default): it is optional. */
+            required: boolean;
+            /** @description Active staff who can see money and have not set up two-factor — who would be held at the setup screen. */
+            staff_without: number;
+        };
         /** TwoFactorSetupResource */
         TwoFactorSetupResource: {
             secret: string;
@@ -18401,6 +18428,14 @@ export interface components {
             consent_policy_version?: string | null;
         };
         /**
+         * UpdateTwoFactorSettingRequest
+         * @description `PUT /staff/two-factor` — Staff & roles › Two-factor sign-in; needs staff.manage (owner only).
+         *     `required: true` makes everyone who can see money set up two-factor before using the admin.
+         */
+        UpdateTwoFactorSettingRequest: {
+            required: boolean;
+        };
+        /**
          * UpdateWhatsAppStatusRequest
          * @description `PUT /notifications/templates/{template}/whatsapp-status` (P7) — staff record where a
          *     WhatsApp template stands with Meta; needs settings.update. No Meta API is called.
@@ -18906,6 +18941,55 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.staff.two-factor.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TwoFactorSetting` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetting"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.staff.two-factor.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTwoFactorSettingRequest"];
+            };
+        };
+        responses: {
+            /** @description `TwoFactorSetting` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetting"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
         };
     };

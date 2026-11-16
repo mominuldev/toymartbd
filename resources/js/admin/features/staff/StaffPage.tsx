@@ -8,6 +8,7 @@ import { ContentHeader } from '@/components/shell/ContentHeader';
 import { TabLink, TabList } from '@/components/ui/Tabs';
 import { useStaff, useStaffRoles } from './api';
 import { StaffDialog } from './StaffDialog';
+import { TwoFactorPolicyCard } from './TwoFactorPolicyCard';
 
 /**
  * Settings → Staff & roles (Figma B · 35 241:48916): ContentHeader with the primary "Invite
@@ -61,6 +62,8 @@ export function StaffPage() {
                     )
                 }
             />
+
+            <TwoFactorPolicyCard />
 
             <TabList label={t('staff.tabs')}>
                 <TabLink to="/staff" end label={t('staff.tab.people')} count={loaded} />

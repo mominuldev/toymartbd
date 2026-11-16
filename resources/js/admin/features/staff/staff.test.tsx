@@ -60,6 +60,8 @@ function staffApi(me: Me, overrides: Partial<Record<string, Reply>> = {}) {
         if (path === '/auth/me') return { status: 200, body: me };
         if (path === '/staff' && method === 'GET') return { status: 200, body: { data: people, links: {}, meta: { next_cursor: null, per_page: 25 } } };
         if (path === '/staff/roles') return { status: 200, body: matrix };
+        if (path === '/staff/two-factor' && method === 'GET') return { status: 200, body: { required: false, staff_without: 1 } };
+        if (path === '/staff/two-factor' && method === 'PUT') return { status: 200, body: { ...(JSON.parse(String(init?.body)) as object), staff_without: 1 } };
         if (path.startsWith('/staff/roles/') && method === 'PUT') {
             const key = path.split('/').pop()!;
             const sent = JSON.parse(String(init?.body)) as { permissions: string[] };
@@ -232,6 +234,28 @@ describe('settings → staff & roles', () => {
         expect(within(within(table).getByText('Rina Akter').closest('tr')!).queryByText(/must set up two-factor/)).toBeNull();
     });
 
+    it('lets an owner require two-factor sign-in, off by default', async () => {
+        const calls = staffApi(owner);
+        renderApp('/staff');
+
+        const toggle = await screen.findByRole('switch', { name: 'Require two-factor sign-in' });
+        expect(toggle.getAttribute('aria-checked')).toBe('false');
+        expect(screen.getByText('Optional')).toBeTruthy();
+
+        fireEvent.click(toggle);
+        await waitFor(() => expect(sent(calls, 'PUT', '/staff/two-factor')?.body).toEqual({ required: true }));
+        expect(await screen.findByText('Required')).toBeTruthy();
+        expect(screen.getByText(/1 person\(s\) who can see money have not set it up yet/)).toBeTruthy();
+    });
+
+    it('shows the two-factor requirement read-only without staff.manage', async () => {
+        staffApi(manager);
+        renderApp('/staff');
+
+        expect(await screen.findByText('Only an owner can change this.')).toBeTruthy();
+        expect(screen.queryByRole('switch', { name: 'Require two-factor sign-in' })).toBeNull();
+    });
+
     it("resets someone's two-factor only after confirming", async () => {
         const calls = staffApi(owner);
         renderApp('/staff');
@@ -272,7 +296,7 @@ describe('settings → staff & roles', () => {
         expect(within(manageStaff).queryAllByRole('checkbox')).toHaveLength(0);
         expect(within(manageStaff).getAllByRole('img', { name: 'Owner only: never given to another role' })).toHaveLength(6);
         // Money rows carry the two-factor mark.
-        expect(within(within(table).getByRole('rowheader', { name: /View finance/ })).getByRole('img', { name: 'Shows money: holders must use two-factor sign-in' })).toBeTruthy();
+        expect(within(within(table).getByRole('rowheader', { name: /View finance/ })).getByRole('img', { name: 'Shows money: holders must use two-factor sign-in when it is required' })).toBeTruthy();
 
         fireEvent.click(within(table).getByRole('checkbox', { name: 'View finance for Viewer' }));
         fireEvent.click(within(table).getByRole('checkbox', { name: 'Approve refunds for Order operator' }));

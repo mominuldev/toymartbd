@@ -125,6 +125,10 @@ final class LayoutResolver
             case BlockType::PromoSplit:
                 return [$content, ['media' => $media]];
 
+            case BlockType::Image:
+                // No image (or a deleted one): nothing to show, so the block is removed.
+                return $media->has((int) ($raw['media_id'] ?? 0)) ? [$content, ['media' => $media]] : null;
+
             case BlockType::CategoryTiles:
                 $categories = $this->categories($raw);
 
@@ -167,6 +171,7 @@ final class LayoutResolver
                 return $items === [] ? null : [$content, []];
 
             case BlockType::UspBand:
+            case BlockType::ContactInfo: // values come from GET /storefront/store-info
             case BlockType::FlashSale:
                 // The flash sale is Marketing's: the storefront reads GET /storefront/flash-sales itself.
                 return [$content, []];

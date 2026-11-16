@@ -4,9 +4,11 @@ import { AgeTilesBlock } from '@/components/content/blocks/AgeTilesBlock';
 import { BlogTeaserBlock } from '@/components/content/blocks/BlogTeaserBlock';
 import { BrandStripBlock } from '@/components/content/blocks/BrandStripBlock';
 import { CategoryTilesBlock } from '@/components/content/blocks/CategoryTilesBlock';
+import { ContactInfoBlock } from '@/components/content/blocks/ContactInfoBlock';
 import { FaqBlock } from '@/components/content/blocks/FaqBlock';
 import { FlashSaleBlock } from '@/components/content/blocks/FlashSaleBlock';
 import { HeroBlock } from '@/components/content/blocks/HeroBlock';
+import { ImageBlock } from '@/components/content/blocks/ImageBlock';
 import { ProductRailBlock } from '@/components/content/blocks/ProductRailBlock';
 import { PromoSplitBlock } from '@/components/content/blocks/PromoSplitBlock';
 import { RichTextBlock } from '@/components/content/blocks/RichTextBlock';
@@ -50,6 +52,10 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: s
             return <RichTextBlock html={block.content.html} locale={locale} />;
         case 'faq':
             return <FaqBlock id={block.id} title={block.content.title} items={block.content.items} locale={locale} jsonLd={false} />;
+        case 'image':
+            return <ImageBlock content={block.content} locale={locale} />;
+        case 'contact_info':
+            return <ContactInfoBlock id={block.id} content={block.content} locale={locale} />;
     }
 }
 

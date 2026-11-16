@@ -4,7 +4,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { Button } from '@/components/ui/Button';
 import { MediaField, type PickedImage } from '@/features/content/shared/MediaField';
 import type { CmsBlock } from './api';
-import { bool, ids, num, rows, str, type Content } from './content';
+import { bool, CONTACT_CHANNELS, ids, num, rows, str, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
 
@@ -198,6 +198,33 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                 </>
             );
         }
+        case 'image':
+            return (
+                <>
+                    <MediaField
+                        label={t('homeBuilder.f.image')}
+                        hint={t('homeBuilder.f.imageRequired')}
+                        pickerTitle="homeBuilder.f.pickImage"
+                        value={imageValue(content, media, pickedThisSession)}
+                        onChange={pickImage((id) => set('media_id', id))}
+                        disabled={ctx.disabled}
+                        error={ctx.errors['content.media_id']}
+                    />
+                    <Bilingual content={content} keyName="alt" set={set} ctx={ctx} hint={t('homeBuilder.f.altHint')} />
+                    <Bilingual content={content} keyName="caption" set={set} ctx={ctx} multiline />
+                    <TextField label={t('homeBuilder.f.href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content.href)} onChange={(v) => set('href', v)} path="href" ctx={ctx} mono />
+                </>
+            );
+        case 'contact_info':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="sub" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="hours" set={set} ctx={ctx} />
+                    <TextField label={t('homeBuilder.f.map_href')} hint={t('homeBuilder.f.map_hrefHint')} value={str(content.map_href)} onChange={(v) => set('map_href', v)} path="map_href" ctx={ctx} mono />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactSource')}</p>
+                </>
+            );
     }
 }
 
@@ -304,6 +331,25 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                     path="image_side"
                     ctx={ctx}
                 />
+            );
+        case 'image':
+            return (
+                <SelectField
+                    label={t('homeBuilder.f.width')}
+                    value={str(content.width) || 'content'}
+                    options={(['content', 'wide'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.width.${v}`) }))}
+                    onChange={(v) => set('width', v)}
+                    path="width"
+                    ctx={ctx}
+                />
+            );
+        case 'contact_info':
+            return (
+                <>
+                    {CONTACT_CHANNELS.map((channel) => (
+                        <SwitchRow key={channel} label={t(`homeBuilder.f.show_${channel}`)} checked={bool(content[`show_${channel}`], true)} onChange={(v) => set(`show_${channel}`, v)} disabled={ctx.disabled} />
+                    ))}
+                </>
             );
         default:
             return null;

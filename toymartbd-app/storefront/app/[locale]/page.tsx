@@ -134,7 +134,7 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
 
             {best && best.products.length > 0 ? (
                 <Band>
-                    <ProductRail id="home-best" title={t.home.bestSellers} products={best.products.slice(0, 8)} locale={locale} t={t.listing} action={seeAll('/toys', t.home.bestSellers)} />
+                    <ProductRail id="home-best" title={t.home.bestSellers} products={best.products.slice(0, 8)} locale={locale} t={t.listing} action={seeAll('/toys', t.home.bestSellers)} slider />
                 </Band>
             ) : null}
 
@@ -147,6 +147,7 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
                         locale={locale}
                         t={t.listing}
                         action={seeAll('/toys?sort=newest', t.home.newArrivals)}
+                        slider
                     />
                 </Band>
             ) : null}

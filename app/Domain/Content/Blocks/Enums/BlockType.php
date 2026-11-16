@@ -9,9 +9,11 @@ use App\Domain\Content\Blocks\Schemas\BlockSchema;
 use App\Domain\Content\Blocks\Schemas\BlogTeaserSchema;
 use App\Domain\Content\Blocks\Schemas\BrandStripSchema;
 use App\Domain\Content\Blocks\Schemas\CategoryTilesSchema;
+use App\Domain\Content\Blocks\Schemas\ContactInfoSchema;
 use App\Domain\Content\Blocks\Schemas\FaqSchema;
 use App\Domain\Content\Blocks\Schemas\FlashSaleSchema;
 use App\Domain\Content\Blocks\Schemas\HeroSchema;
+use App\Domain\Content\Blocks\Schemas\ImageSchema;
 use App\Domain\Content\Blocks\Schemas\ProductRailSchema;
 use App\Domain\Content\Blocks\Schemas\PromoSplitSchema;
 use App\Domain\Content\Blocks\Schemas\RichTextSchema;
@@ -44,6 +46,10 @@ enum BlockType: string
     case RichText = 'rich_text';
     /** Questions and answers; the storefront emits FAQPage JSON-LD for it. */
     case Faq = 'faq';
+    /** Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings › Store, plus hours. */
+    case ContactInfo = 'contact_info';
+    /** One media-library image: alt text, optional caption and link, text width or wide. */
+    case Image = 'image';
 
     public function schema(): BlockSchema
     {
@@ -60,6 +66,8 @@ enum BlockType: string
             self::BlogTeaser => new BlogTeaserSchema,
             self::RichText => new RichTextSchema,
             self::Faq => new FaqSchema,
+            self::ContactInfo => new ContactInfoSchema,
+            self::Image => new ImageSchema,
         };
     }
 

@@ -9,8 +9,11 @@ import type { BlockType, CmsBlock } from './api';
 export type Content = Record<string, unknown>;
 
 export const BLOCK_TYPES: readonly BlockType[] = [
-    'hero', 'category_tiles', 'age_tiles', 'product_rail', 'flash_sale', 'brand_strip', 'usp_band', 'promo_split', 'testimonials', 'blog_teaser', 'rich_text', 'faq',
+    'hero', 'category_tiles', 'age_tiles', 'product_rail', 'flash_sale', 'brand_strip', 'usp_band', 'promo_split', 'testimonials', 'blog_teaser', 'rich_text', 'faq', 'contact_info', 'image',
 ];
+
+/** Channels a Contact block can show (ContactInfoSchema::CHANNELS); the values come from Settings › Store › Business. */
+export const CONTACT_CHANNELS = ['hotline', 'whatsapp', 'messenger', 'email', 'address'] as const;
 
 export const typeLabel = (type: BlockType): MessageKey => `homeBuilder.type.${type}` as MessageKey;
 
@@ -25,6 +28,7 @@ export function blockTitle(block: CmsBlock): string {
     const c = block.content as Content;
     if (block.type === 'hero') return str(rows(c.slides)[0]?.headline);
     if (block.type === 'promo_split') return str(c.headline);
+    if (block.type === 'image') return str(c.caption) || str(c.alt);
     if (block.type === 'rich_text') return str(c.html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
     return str(c.title);
 }

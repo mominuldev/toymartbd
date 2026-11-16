@@ -6,7 +6,9 @@ import {
     DotsSixVerticalIcon,
     EyeIcon,
     EyeSlashIcon,
+    IdentificationCardIcon,
     ImageIcon,
+    ImageSquareIcon,
     LightningIcon,
     LayoutIcon,
     PackageIcon,
@@ -38,6 +40,8 @@ export const typeIcons: Record<BlockType, Icon> = {
     blog_teaser: ArticleIcon,
     rich_text: TextAlignLeftIcon,
     faq: QuestionIcon,
+    contact_info: IdentificationCardIcon,
+    image: ImageSquareIcon,
 };
 
 type Props = {

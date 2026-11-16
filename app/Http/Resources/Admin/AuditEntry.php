@@ -71,6 +71,7 @@ final readonly class AuditEntry
                     'recovery_codes_regenerated' => 'two_factor_codes_regenerated',
                     default => 'two_factor_changed',
                 },
+                'two_factor_policy' => ($after['required'] ?? null) === true ? 'two_factor_required' : 'two_factor_optional',
                 'messaging' => 'messaging_settings',
                 'tracking' => 'tracking_settings',
                 'inbox_connection_test' => 'connection_tested',

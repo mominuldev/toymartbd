@@ -140,6 +140,9 @@ export const bn: Messages = {
         slideRole: 'স্লাইড', // aria-roledescription of one slide
         carouselRole: 'স্লাইডার', // aria-roledescription of the hero carousel
         ratingLabel: '5-এর মধ্যে {rating} রেটিং',
+        testimonialsPrev: 'আগের মতামত',
+        testimonialsNext: 'পরের মতামত',
+        goToSlide: '{n} নম্বর স্লাইডে যান',
         readingTime: '{minutes} মিনিটে পড়া',
     },
     brands: {
@@ -256,6 +259,10 @@ export const bn: Messages = {
     },
     content: {
         onThisPage: 'এই পাতায়',
+        contactMessenger: 'মেসেঞ্জার',
+        contactAddress: 'আমাদের ঠিকানা',
+        contactHours: 'খোলার সময়',
+        contactMap: 'ম্যাপে দেখুন',
         morePages: 'টয় মার্ট বিডি সম্পর্কে আরও',
         faqTitle: 'প্রশ্ন ও উত্তর',
         englishOnly: 'এই পাতাটি এখনো বাংলায় নেই, তাই ইংরেজিতে দেখানো হচ্ছে।',
@@ -266,6 +273,12 @@ export const bn: Messages = {
         previewBanner: 'খসড়া প্রিভিউ — এটি লাইভ পাতা নয়।',
     },
     listing: {
+        sliderRole: 'স্লাইডার',
+        sliderSlideRole: 'স্লাইড',
+        sliderPrev: 'আগের পণ্য',
+        sliderNext: 'পরের পণ্য',
+        sliderSlideOf: '{total}টির মধ্যে {n} নম্বর পণ্য',
+        sliderGoTo: '{n} নম্বর স্লাইডে যান',
         breadcrumb: 'ব্রেডক্রাম্ব',
         home: 'হোম',
         all: 'সব',

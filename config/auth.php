@@ -154,11 +154,13 @@ return [
     'login_per_account_per_fifteen_minutes' => (int) env('AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN', 10),
 
     /*
-    | Two-factor sign-in for staff (owner decision 2026-11-14). `enforce` makes anyone who can
-    | see money (Permission::revealsMoney(), and every owner) set it up before using the admin.
-    | It is FORCED ON in production whatever the env says (App\Support\ProductionSafety); the
-    | test suites switch it off so unrelated tests need no second factor. `issuer` is the name
-    | the authenticator app shows. A pending sign-in waits `challenge_minutes` for the code.
+    | Two-factor sign-in for staff. Whether anyone who can see money (Permission::revealsMoney(),
+    | and every owner) must set it up is the owner's setting — Staff & roles › Two-factor
+    | sign-in, `security.two_factor_required`, OFF by default (owner request 2026-11-16).
+    | `enforce` is only a kill switch over that setting: FORCED ON in production whatever the env
+    | says (App\Support\ProductionSafety), switched off by the test suites so unrelated tests
+    | need no second factor. `issuer` is the name the authenticator app shows. A pending sign-in
+    | waits `challenge_minutes` for the code.
     */
     'two_factor' => [
         'enforce' => (bool) env('TWO_FACTOR_ENFORCE', true),

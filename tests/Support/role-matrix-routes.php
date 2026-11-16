@@ -430,6 +430,8 @@ return [
     'api.v1.admin.staff.roles.update',
     'api.v1.admin.staff.store',
     'api.v1.admin.staff.two-factor.reset',
+    'api.v1.admin.staff.two-factor.show',
+    'api.v1.admin.staff.two-factor.update',
     'api.v1.admin.staff.update',
     'api.v1.admin.suppliers.destroy',
     'api.v1.admin.suppliers.index',

@@ -763,15 +763,20 @@ final class LaunchChecks
     }
 
     /**
-     * Owner decision 2026-11-14: anyone who can see money signs in with two-factor. The API
-     * holds them at the setup screen until they do, so a missing enrolment is a WARN (the
-     * person is locked out of money screens, not exposed); enforcement off is a FAIL.
+     * Anyone who can see money should sign in with two-factor. Whether it is required is the
+     * owner's setting (Staff & roles › Two-factor sign-in, default off, owner request
+     * 2026-11-16), so the setting off is a WARN, not a FAIL. Required, the API holds people at
+     * the setup screen until they enrol, so a missing enrolment is a WARN too (the person is
+     * locked out of money screens, not exposed). The config kill switch off is a FAIL.
      */
     private function staffTwoFactor(): CheckResult
     {
         $title = 'Staff who can see money use two-factor sign-in';
         if (config('auth.two_factor.enforce') !== true) {
             return CheckResult::fail('staff.two_factor', $title, 'G2', 'Two-factor enforcement is off (TWO_FACTOR_ENFORCE=false).', 'Remove TWO_FACTOR_ENFORCE from the environment; it is forced on in production anyway.');
+        }
+        if (! TwoFactor::requiredByOwner()) {
+            return CheckResult::warn('staff.two_factor', $title, 'G2', 'Two-factor sign-in is optional: the owner has not required it for staff who can see money.', 'Switch it on at Admin → Settings → Staff & roles › Two-factor sign-in when the team is ready.');
         }
 
         $twoFactor = app(TwoFactor::class);

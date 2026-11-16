@@ -35,6 +35,8 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `blog_teaser` | `title`*, `sub`, `limit` 1–6 — latest live posts (StorefrontBlogPostCard) |
 | `rich_text` | `html`*, `html_bn` |
 | `faq` | `title`*, `items[1..20]`: `question`*, `answer`* (plain text; the storefront adds FAQPage JSON-LD) |
+| `image` | `media_id` (library image; a block without one is removed on the storefront), `alt`, `caption`, `href` (store path or https), `width` content\|wide |
+| `contact_info` | `title`*, `sub`, `hours`, `map_href`, `show_hotline`, `show_whatsapp`, `show_messenger`, `show_email`, `show_address` (default true) — the values come from Settings › Store › Business via `GET /storefront/store-info`, never from the block; an unset value renders as the marked sample, never as a link |
 
 ## Admin API (`/api/v1/admin`, content.view to read, content.manage to change)
 

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
     {
         // Reference data — safe and required in every environment.
         $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(SecuritySettingsSeeder::class);
         $this->call(GeographySeeder::class);
         $this->call(CatalogReferenceSeeder::class);
         $this->call(MediaFoldersSeeder::class);
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ExpenseCategoriesSeeder::class);
         $this->call(CmsHomeBlocksSeeder::class);
         $this->call(StaticPagesSeeder::class);
+        $this->call(StaticPageSectionsSeeder::class);
 
         // A known login is only ever created on a developer's machine or in tests. In any
         // other environment a seeded account with a factory password is a back door.
