@@ -16,7 +16,7 @@ test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfe
     await signIn(page);
 
     await expect(page.getByText(/^Across 3 branches · /)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Dhaka HQ · Mirpur/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('main').getByRole('button', { name: /Dhaka HQ · Mirpur/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: /Transfer stock/ })).toBeEnabled();
     // The nav badge is the server's low-stock count at Dhaka HQ, the same as the Low stock tab.
     await expect(page.getByRole('link', { name: /Inventory.*3 low on stock/ }).first()).toBeAttached();
@@ -34,9 +34,9 @@ test('three branches (DemoInventorySeeder): low rows offer Create PO and Transfe
     await page.keyboard.press('Escape');
 
     // Selecting Chattogram scopes the page; the URL carries it.
-    await page.getByRole('button', { name: /Chattogram · Agrabad/ }).click();
+    await page.getByRole('main').getByRole('button', { name: /Chattogram · Agrabad/ }).click();
     await expect(page).toHaveURL(/location=\d+/);
-    await expect(page.getByRole('button', { name: /Chattogram · Agrabad/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('main').getByRole('button', { name: /Chattogram · Agrabad/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('columnheader', { name: 'Other branches' })).toBeVisible();
 });
 
