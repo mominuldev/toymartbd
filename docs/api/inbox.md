@@ -1,6 +1,6 @@
 # Unified inbox API (P10, Figma B · 22 241:43115)
 
-WhatsApp, Messenger and live chat in one admin inbox. **Every channel is UNVERIFIED**: no WhatsApp Business account, Meta app or Facebook Page exists (2026-11-15). The Meta drivers are written from Meta's published docs and tested only against hand-authored fixtures (`tests/Feature/Inbox/fixtures`). Every channel defaults to the `log` driver, which sends nothing.
+WhatsApp, Messenger, live chat and the storefront Contact page form (`web_form`, inbound only — see *Website contact form* below) in one admin inbox. **Every channel is UNVERIFIED**: no WhatsApp Business account, Meta app or Facebook Page exists (2026-11-15). The Meta drivers are written from Meta's published docs and tested only against hand-authored fixtures (`tests/Feature/Inbox/fixtures`). Every channel defaults to the `log` driver, which sends nothing.
 
 No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" and the AI tab/chips are not built — no AI provider is chosen.
 
@@ -8,7 +8,7 @@ No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" a
 
 | Method & path | Permission | Notes |
 |---|---|---|
-| `GET /inbox/conversations` | inbox.view | Cursor (`cursor`). Filters, allowlisted (anything else → 400): `filter[view]` all\|mine\|needs_human, `filter[channel]` whatsapp\|messenger\|live_chat, `filter[status]` open\|resolved, `filter[search]` name / 4+ phone digits / order-number prefix. `meta.counts` = tab counts under every filter except `view`. |
+| `GET /inbox/conversations` | inbox.view | Cursor (`cursor`). Filters, allowlisted (anything else → 400): `filter[view]` all\|mine\|needs_human, `filter[channel]` whatsapp\|messenger\|live_chat\|web_form, `filter[status]` open\|resolved, `filter[search]` name / 4+ phone digits / order-number prefix. `meta.counts` = tab counts under every filter except `view`. |
 | `GET /inbox/conversations/{id}` | inbox.view | Header + customer panel (and every list row) carries `reply: {state, window_closes_at}` — see *Reply state* below. Header + customer panel: `orders_count`, `delivered_orders_count`, `lifetime_value` (ledger), `risk` = OUR score with `source: "ours"` (rule 24; null without risk.view), `last_order`. `customer` null without customers.view. |
 | `GET /inbox/conversations/{id}/messages` | inbox.view | Newest first, 50 a page, `cursor` for older. |
 | `POST /inbox/conversations/{id}/read` | inbox.view | Clears `unread_count`. |
@@ -33,12 +33,30 @@ Phones are masked (`017****5678`) unless the viewer holds `customers.view_pii` (
 | `open` | Live chat always; WhatsApp / Messenger within 24 h of the customer's last message | A normal reply | End of the 24-hour window (null on live chat) |
 | `human_agent` | Messenger, 24 h – 7 days after the customer's last message, **and** the switch `inbox.messenger.human_agent` is on | A normal reply, sent with `messaging_type: MESSAGE_TAG, tag: HUMAN_AGENT` | 7 days after the customer's last message |
 | `template_only` | WhatsApp after the 24-hour window (or a thread the customer never wrote in) | Only an approved template (`POST …/template`) | When the 24-hour window ended (null if it never opened) |
-| `closed` | Messenger past 24 h with the switch off, or past 7 days | Nothing (notes still allowed) | When the 24-hour window ended |
+| `closed` | Messenger past 24 h with the switch off, or past 7 days; **always** on `web_form` (no sending channel) | Nothing (notes still allowed) | When the 24-hour window ended (null on `web_form`) |
 
 * **Switch:** `settings` key `inbox.messenger.human_agent` (group notification, set at Admin → Integrations → Messaging) falling back to `config('inbox.messenger.human_agent')` (env `MESSENGER_HUMAN_AGENT`), default false. Not cached: switching it off fails the next queued tagged reply (`outside_window`) without calling Meta.
 * **Templates offered** come from the Notification domain's library through `App\Domain\Notification\Contracts\WhatsAppTemplateLibrary` (deptrac: Inbox → NotificationContracts only): WhatsApp channel, `whatsapp_status = approved`, active, not archived, a `provider_template` set, and category `order_updates` (utility). **Never** `security` (OTP — rule 32b) and **never** `marketing` (the library has no setting allowing marketing in the inbox). Positional parameters: a system template's `whatsapp_parameters` from `TemplateCatalog`; a custom template's body variables in order of appearance.
 * **The send job** re-reads the template from the library: withdrawn approval → `failed`, `failure_code: template_unavailable`; a template in a thread whose window reopened, or on another channel → `template_not_allowed`. Nothing is sent to Meta in either case. Delivery statuses (`sent`/`delivered`/`read`/`failed`) apply to a template exactly as to a reply (matched on the wamid).
 * WhatsApp payload: `POST /{version}/{phone-number-id}/messages` `{messaging_product: whatsapp, recipient_type: individual, to, type: template, template: {name, language: {code}, components: [{type: body, parameters: [{type: text, text}]}]}}` — no `components` for a template without parameters.
+
+## Website contact form (`web_form`, owner decision 2026-11-16)
+
+The storefront Contact page's "Send us a message" form. **Inbound only**: there is no channel to reply through, so the reply state is always `closed` (`POST …/messages` and `…/template` → 409, quick replies 409, nothing queued); internal notes work as usual. The admin composer says "Sent from the website contact form. Reply by WhatsApp or call {phone}." Its driver (`NoReplyChannelDriver`, name `none`) refuses every send, so even a queued id that reached the job could never be "sent" (the log driver is never used for it). No webhook, no service window, no credentials; `InboxChannels::summary()` lists it with `driver: none` and every readiness flag false.
+
+**`POST /api/v1/storefront/contact-messages`** — the Next.js server's storefront token (`storefront:read`; none → 401), forwarding the shopper's IP (`X-Forwarded-For`, trusted only from `TRUSTED_PROXIES`).
+
+| Field | Rule |
+|---|---|
+| `name` | required, string ≤ 80 |
+| `phone` | required, a Bangladeshi mobile 013–019 (rule 30: `/^(?:\+?880|0)1[3-9]\d{8}$/`, so 010/011/012 and 06x are refused); stored E.164 |
+| `topic` | required, one of `choosing_toy`, `order`, `delivery`, `returns`, `gifts_bulk`, `other` (`App\Domain\Inbox\Enums\ContactTopic`) |
+| `order_number` | optional, ≤ 32, an order number as tracking accepts it (`TMB-26-00042`, `26-00042`, Bengali digits); stored canonical |
+| `message` | required, 10–500 characters |
+| `locale` | optional, `en` \| `bn` (accepted; not stored — the inbox has no per-thread language column) |
+
+* **202** `{"status": "received"}`. **422** `validation-error` problem with per-field `errors[]` (an invalid phone is not echoed). **429** `too-many-requests` with `Retry-After`: at most **5 an hour per phone** and **10 an hour per client IP** (limiter `contact-message`, `ApiServiceProvider::CONTACT_MESSAGE_PER_*`).
+* `App\Domain\Inbox\Actions\ReceiveContactFormMessage` hands an `InboundMessage` to `IngestInboundMessage` on `web_form`: thread id `web:{E.164}` (every message from one phone joins one conversation; a resolved one reopens), a fresh `web-{ULID}` message id, `contact_name` = name, `contact_phone` = the E.164 phone, the customer linked when one has that phone, `needs_human` set. Body: `Topic: {English label} · Order: {number}` (order part only when given), a blank line, then the message.
 
 ## Webhooks (`/api/v1/webhooks/inbox/{whatsapp|messenger}`)
 

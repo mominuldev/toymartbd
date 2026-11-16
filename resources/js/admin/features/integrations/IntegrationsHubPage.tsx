@@ -5,6 +5,7 @@ import {
     ChatTextIcon,
     CheckCircleIcon,
     CreditCardIcon,
+    EnvelopeSimpleIcon,
     FlaskIcon,
     GoogleLogoIcon,
     MessengerLogoIcon,
@@ -86,6 +87,7 @@ const nameKeys: Record<string, MessageKey> = {
     cod: 'integrationsHub.name.cod',
     sms: 'integrationsHub.name.sms',
     live_chat: 'integrationsHub.name.live_chat',
+    web_form: 'integrationsHub.name.web_form',
 };
 
 const icons: Record<string, ComponentType<IconProps>> = {
@@ -97,6 +99,7 @@ const icons: Record<string, ComponentType<IconProps>> = {
     whatsapp: WhatsappLogoIcon,
     messenger: MessengerLogoIcon,
     live_chat: ChatsCircleIcon,
+    web_form: EnvelopeSimpleIcon,
     meta_capi: TargetIcon,
     ga4: ChartLineUpIcon,
     gtm: TagIcon,

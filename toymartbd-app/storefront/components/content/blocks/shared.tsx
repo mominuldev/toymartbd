@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
-import type { BlockImage } from '@/lib/content/home-blocks';
+import type { IconName } from '@/components/icons/paths';
+import type { BlockImage, BloomTone, TileIconKey } from '@/lib/content/home-blocks';
 import { localizedPath, type Locale } from '@/lib/i18n';
 
 // Pieces shared by the CMS block components (Phase 7).
@@ -44,3 +45,28 @@ export function MediaPicture({ image, sizes, className = '', priority = false }:
         </picture>
     );
 }
+
+/** Bloom gradient grounds (Figma: About = sunrise, Contact/Terms/FAQ = sky, Privacy = mint, 404/Returns/visit band = candy). */
+export const bloomTone: Record<BloomTone, string> = {
+    sunrise: 'bg-(image:--tm-gradient-bloom-sunrise)',
+    sky: 'bg-(image:--tm-gradient-bloom-sky)',
+    mint: 'bg-(image:--tm-gradient-bloom-mint)',
+    candy: 'bg-(image:--tm-gradient-bloom-candy)',
+};
+
+/** The Phosphor glyph of each tile / button icon (TileIcon on the API). */
+export const tileIcons: Record<TileIconKey, IconName> = {
+    shield_check: 'shieldCheckFill',
+    check_circle: 'checkCircle',
+    gift: 'gift',
+    map_pin: 'mapPin',
+    truck: 'truck',
+    money: 'moneyFill',
+    chat: 'chatCircleDots',
+    phone: 'phoneFill',
+    star: 'starFill',
+    heart: 'heartFill',
+    puzzle: 'puzzlePiece',
+    books: 'books',
+    clock: 'clock',
+};

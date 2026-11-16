@@ -4,7 +4,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { Button } from '@/components/ui/Button';
 import { MediaField, type PickedImage } from '@/features/content/shared/MediaField';
 import type { CmsBlock } from './api';
-import { bool, ids, num, rows, str, type Content } from './content';
+import { BLOOM_TONES, bool, CONTACT_CHANNELS, ids, num, rows, str, TILE_ICONS, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
 
@@ -27,6 +27,13 @@ type Props = {
 };
 
 const USP_ICONS = ['cod', 'return', 'authentic', 'support', 'delivery', 'gift', 'educational'] as const;
+
+const tileIconOptions = (t: (key: MessageKey) => string) => TILE_ICONS.map((icon) => ({ value: icon, label: t(`homeBuilder.tileIcon.${icon}` as MessageKey) }));
+
+function pickedValue(id: number | null, media: ReadonlyMap<number, MediaThumb>, picked: Map<number, PickedImage>): PickedImage | null {
+    if (id === null) return null;
+    return picked.get(id) ?? { media_id: id, url: media.get(id)?.thumb_url ?? null, alt: media.get(id)?.alt_text ?? null };
+}
 
 function imageValue(content: Content, media: ReadonlyMap<number, MediaThumb>, picked: Map<number, PickedImage>): PickedImage | null {
     const id = typeof content.media_id === 'number' ? content.media_id : null;
@@ -198,6 +205,213 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                 </>
             );
         }
+        case 'image':
+            return (
+                <>
+                    <MediaField
+                        label={t('homeBuilder.f.image')}
+                        hint={t('homeBuilder.f.imageRequired')}
+                        pickerTitle="homeBuilder.f.pickImage"
+                        value={imageValue(content, media, pickedThisSession)}
+                        onChange={pickImage((id) => set('media_id', id))}
+                        disabled={ctx.disabled}
+                        error={ctx.errors['content.media_id']}
+                    />
+                    <Bilingual content={content} keyName="alt" set={set} ctx={ctx} hint={t('homeBuilder.f.altHint')} />
+                    <Bilingual content={content} keyName="caption" set={set} ctx={ctx} multiline />
+                    <TextField label={t('homeBuilder.f.href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content.href)} onChange={(v) => set('href', v)} path="href" ctx={ctx} mono />
+                </>
+            );
+        case 'contact_info':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="sub" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="hours" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="whatsapp_note" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="email_note" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="address_label" set={set} ctx={ctx} hint={t('homeBuilder.f.address_labelHint')} />
+                    <Bilingual content={content} keyName="address_note" set={set} ctx={ctx} />
+                    <TextField label={t('homeBuilder.f.map_href')} hint={t('homeBuilder.f.map_hrefHint')} value={str(content.map_href)} onChange={(v) => set('map_href', v)} path="map_href" ctx={ctx} mono />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactSource')}</p>
+                </>
+            );
+        case 'story_hero': {
+            const photos = ids(content.media_ids);
+            // Three fixed slots; clearing one closes the gap so the collage keeps its order.
+            const setPhoto = (slot: number, id: number | null) => {
+                const next = [...photos];
+                if (id === null) next.splice(slot, 1);
+                else next[slot] = id;
+                set('media_ids', next.filter((v, i, all) => all.indexOf(v) === i));
+            };
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.storyHeading')} />
+                    <Bilingual content={content} keyName="overline" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="lead" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.photosHint')}</p>
+                    {[0, 1, 2].slice(0, Math.min(photos.length + 1, 3)).map((slot) => (
+                        <MediaField
+                            key={slot}
+                            label={t('homeBuilder.f.photo', { n: slot + 1 })}
+                            pickerTitle="homeBuilder.f.pickImage"
+                            ratio={[1, 1]}
+                            value={pickedValue(photos[slot] ?? null, media, pickedThisSession)}
+                            onChange={pickImage((id) => setPhoto(slot, id))}
+                            disabled={ctx.disabled}
+                            error={ctx.errors[`content.media_ids.${slot}`] ?? (slot === 0 ? ctx.errors['content.media_ids'] : undefined)}
+                        />
+                    ))}
+                    <Bilingual content={content} keyName="badge" set={set} ctx={ctx} hint={t('homeBuilder.f.badgeHint')} />
+                    <Bilingual content={content} keyName="badge_sub" set={set} ctx={ctx} />
+                </>
+            );
+        }
+        case 'feature_tiles': {
+            const items = rows(content.items);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.tilesTitleHint')} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.tilesColours')}</p>
+                    {items.map((item, i) => {
+                        const setItem = (key: string, value: unknown) => setRow('items', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.item', { n: i + 1 })} index={i} count={items.length} min={2} disabled={ctx.disabled} {...listOps('items')}>
+                                <SelectField label={t('homeBuilder.f.icon')} value={str(item.icon) || 'check_circle'} options={tileIconOptions(t)} onChange={(v) => setItem('icon', v)} path={`items.${i}.icon`} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="title" labelKey="itemTitle" set={setItem} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="body" set={setItem} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    {ctx.errors['content.items'] && <p className="t-admin-caption text-fg-primary">{ctx.errors['content.items']}</p>}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || items.length >= 4} onClick={() => set('items', [...items, { icon: 'check_circle', title: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addItem')}
+                    </Button>
+                </>
+            );
+        }
+        case 'numbered_cards': {
+            const items = rows(content.items);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    {items.map((item, i) => {
+                        const setItem = (key: string, value: unknown) => setRow('items', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.card', { n: i + 1 })} index={i} count={items.length} min={1} disabled={ctx.disabled} {...listOps('items')}>
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="title" labelKey="itemTitle" set={setItem} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="body" set={setItem} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    {ctx.errors['content.items'] && <p className="t-admin-caption text-fg-primary">{ctx.errors['content.items']}</p>}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || items.length >= 6} onClick={() => set('items', [...items, { title: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addCard')}
+                    </Button>
+                </>
+            );
+        }
+        case 'cta_band':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
+                    {(['primary', 'secondary'] as const).map((button) => (
+                        <div key={button} className="flex flex-col gap-4">
+                            <Bilingual content={content} keyName={`${button}_label`} set={set} ctx={ctx} />
+                            <TextField label={t(`homeBuilder.f.${button}_href`)} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content[`${button}_href`])} onChange={(v) => set(`${button}_href`, v)} path={`${button}_href`} ctx={ctx} mono />
+                            <SelectField
+                                label={t(`homeBuilder.f.${button}_icon`)}
+                                value={str(content[`${button}_icon`])}
+                                options={[{ value: '', label: t('homeBuilder.f.noIcon') }, ...tileIconOptions(t)]}
+                                onChange={(v) => set(`${button}_icon`, v === '' ? null : v)}
+                                path={`${button}_icon`}
+                                ctx={ctx}
+                            />
+                        </div>
+                    ))}
+                </>
+            );
+        case 'contact_hero': {
+            const bubbles = rows(content.bubbles);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.storyHeading')} />
+                    <Bilingual content={content} keyName="overline" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="lead" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="status" set={set} ctx={ctx} hint={t('homeBuilder.f.statusHint')} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.bubblesHint')}</p>
+                    {bubbles.map((bubble, i) => {
+                        const setBubble = (key: string, value: unknown) => setRow('bubbles', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.bubble', { n: i + 1 })} index={i} count={bubbles.length} min={0} disabled={ctx.disabled} {...listOps('bubbles')}>
+                                <SelectField
+                                    label={t('homeBuilder.f.bubbleFrom')}
+                                    value={str(bubble.from) || 'customer'}
+                                    options={(['customer', 'store'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.bubbleFrom.${v}`) }))}
+                                    onChange={(v) => setBubble('from', v)}
+                                    path={`bubbles.${i}.from`}
+                                    ctx={ctx}
+                                />
+                                <Bilingual content={bubble} prefix={`bubbles.${i}.`} keyName="label" labelKey="bubbleLabel" set={setBubble} ctx={ctx} />
+                                <Bilingual content={bubble} prefix={`bubbles.${i}.`} keyName="text" labelKey="bubbleText" set={setBubble} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || bubbles.length >= 4} onClick={() => set('bubbles', [...bubbles, { from: bubbles.length % 2 ? 'store' : 'customer', text: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addBubble')}
+                    </Button>
+                </>
+            );
+        }
+        case 'contact_form': {
+            const hours = rows(content.hours);
+            const links = rows(content.links);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="intro" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="privacy" set={set} ctx={ctx} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactFormFields')}</p>
+                    <Bilingual content={content} keyName="visit_title" set={set} ctx={ctx} hint={t('homeBuilder.f.sideCardHint')} />
+                    <Bilingual content={content} keyName="visit_body" set={set} ctx={ctx} multiline />
+                    <TextField label={t('homeBuilder.f.visit_map_href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content.visit_map_href)} onChange={(v) => set('visit_map_href', v)} path="visit_map_href" ctx={ctx} mono />
+                    {hours.map((row, i) => {
+                        const setHour = (key: string, value: unknown) => setRow('hours', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.hoursRow', { n: i + 1 })} index={i} count={hours.length} min={0} disabled={ctx.disabled} {...listOps('hours')}>
+                                <Bilingual content={row} prefix={`hours.${i}.`} keyName="label" labelKey="hoursLabel" set={setHour} ctx={ctx} />
+                                <Bilingual content={row} prefix={`hours.${i}.`} keyName="value" labelKey="hoursValue" set={setHour} ctx={ctx} />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || hours.length >= 6} onClick={() => set('hours', [...hours, { label: '', value: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addHoursRow')}
+                    </Button>
+                    <Bilingual content={content} keyName="links_title" set={set} ctx={ctx} hint={t('homeBuilder.f.sideCardHint')} />
+                    {links.map((row, i) => {
+                        const setLink = (key: string, value: unknown) => setRow('links', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.linkRow', { n: i + 1 })} index={i} count={links.length} min={0} disabled={ctx.disabled} {...listOps('links')}>
+                                <SelectField label={t('homeBuilder.f.icon')} value={str(row.icon) || 'check_circle'} options={tileIconOptions(t)} onChange={(v) => setLink('icon', v)} path={`links.${i}.icon`} ctx={ctx} />
+                                <Bilingual content={row} prefix={`links.${i}.`} keyName="label" labelKey="linkLabel" set={setLink} ctx={ctx} />
+                                <TextField label={t('homeBuilder.f.linkHref')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(row.href)} onChange={(v) => setLink('href', v)} path={`links.${i}.href`} ctx={ctx} mono />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || links.length >= 6} onClick={() => set('links', [...links, { icon: 'check_circle', label: '', href: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addLink')}
+                    </Button>
+                </>
+            );
+        }
     }
 }
 
@@ -302,6 +516,37 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                     options={(['left', 'right'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.imageSide.${v}`) }))}
                     onChange={(v) => set('image_side', v)}
                     path="image_side"
+                    ctx={ctx}
+                />
+            );
+        case 'image':
+            return (
+                <SelectField
+                    label={t('homeBuilder.f.width')}
+                    value={str(content.width) || 'content'}
+                    options={(['content', 'wide'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.width.${v}`) }))}
+                    onChange={(v) => set('width', v)}
+                    path="width"
+                    ctx={ctx}
+                />
+            );
+        case 'contact_info':
+            return (
+                <>
+                    {CONTACT_CHANNELS.map((channel) => (
+                        <SwitchRow key={channel} label={t(`homeBuilder.f.show_${channel}`)} checked={bool(content[`show_${channel}`], true)} onChange={(v) => set(`show_${channel}`, v)} disabled={ctx.disabled} />
+                    ))}
+                </>
+            );
+        case 'story_hero':
+        case 'cta_band':
+            return (
+                <SelectField
+                    label={t('homeBuilder.f.tone')}
+                    value={str(content.tone) || (block.type === 'cta_band' ? 'candy' : 'sunrise')}
+                    options={BLOOM_TONES.map((v) => ({ value: v, label: t(`homeBuilder.f.tone.${v}`) }))}
+                    onChange={(v) => set('tone', v)}
+                    path="tone"
                     ctx={ctx}
                 />
             );

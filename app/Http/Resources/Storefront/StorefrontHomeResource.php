@@ -22,7 +22,7 @@ use Illuminate\Support\Collection;
  * `{ version, published_at, preview, blocks: [{ id, type, show_mobile, show_desktop, content, … }] }`.
  *
  * `content` is single-language (Bangla falls back to English). Each type adds its data:
- * hero `content.slides[].image`, promo_split `image`, category_tiles `categories` (the
+ * hero `content.slides[].image`, promo_split and image `image`, story_hero `images` (0–3), category_tiles `categories` (the
  * StorefrontCategoryNode shape), age_tiles `age_counts`, product_rail `products`
  * (StorefrontProductCard) + `see_all_href`, brand_strip `brands`, testimonials `testimonials`,
  * blog_teaser `posts` (StorefrontBlogPostCard). Blocks that would render empty are already gone. `version` is null and
@@ -79,9 +79,22 @@ final class StorefrontHomeResource extends ApiResource
                 $content['slides'] = $slides;
                 break;
 
+            case BlockType::Image:
             case BlockType::PromoSplit:
                 $content['image'] = self::image($media->get($content['media_id'] ?? 0), $content['alt'] ?? null, $locale);
                 unset($content['media_id'], $content['alt']);
+                break;
+
+            case BlockType::StoryHero:
+                $images = [];
+                foreach (is_array($content['media_ids'] ?? null) ? $content['media_ids'] : [] as $id) {
+                    $image = self::image($media->get((int) $id), null, $locale);
+                    if ($image !== null) {
+                        $images[] = $image;
+                    }
+                }
+                $content['images'] = $images;
+                unset($content['media_ids']);
                 break;
 
             case BlockType::CategoryTiles:

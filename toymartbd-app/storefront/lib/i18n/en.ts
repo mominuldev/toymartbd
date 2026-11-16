@@ -113,6 +113,7 @@ export const en = {
         ageChooser: 'Choose an age',
         agePills: { '0-12': '0–1 yr', '12-24': '1–2 yrs', '24-48': '2–4 yrs', '48-72': '4–6 yrs', '72-96': '6–8 yrs', '96-144': '8–12 yrs', '144-': '12+' },
         browseAll: 'Browse all toys',
+        seeFlashSale: 'See the flash sale', // Figma 133:308, shown only while a sale runs
         // Sections.
         categoriesTitle: 'Shop by category',
         seeAll: 'See all',
@@ -123,6 +124,9 @@ export const en = {
         toyCountOne: '1 toy',
         bestSellers: 'Best sellers',
         newArrivals: 'New arrivals',
+        // Blog teaser (Figma 134:1002 / 127:486).
+        blogTitle: 'From the toy guide',
+        blogSub: 'Which toy at which age, and how to choose',
         // USP band (Figma 134:960 / 127:444, TrustStrip Feature2x2 144:2033 / FeatureRow4 144:2062).
         uspEyebrow: 'Our promise',
         uspTitle: 'Why parents shop with us',
@@ -142,6 +146,9 @@ export const en = {
         slideRole: 'slide', // aria-roledescription of one slide
         carouselRole: 'carousel', // aria-roledescription of the hero carousel
         ratingLabel: 'Rated {rating} out of 5',
+        testimonialsPrev: 'Previous testimonials',
+        testimonialsNext: 'Next testimonials',
+        goToSlide: 'Go to slide {n}',
         readingTime: '{minutes} min read',
     },
     brands: {
@@ -169,6 +176,7 @@ export const en = {
         search: 'Search for a toy',
         browse: 'Browse all toys',
         categoriesTitle: 'Or start with a category',
+        bestSellersTitle: 'Loved by kids this week',
         seeAll: 'See all',
     },
     serverError: {
@@ -264,6 +272,57 @@ export const en = {
     content: {
         // CMS static pages, menus and banners (Phase 7).
         onThisPage: 'On this page',
+        jumpTo: 'Jump to a section',
+        updated: 'Last updated {date}',
+        // Contact block (CMS section `contact_info`): labels; the values come from store info.
+        contactMessenger: 'Messenger',
+        contactAddress: 'Visit the shop',
+        contactHours: 'Opening hours',
+        contactMap: 'Get directions',
+        contactCallTitle: 'Call us',
+        contactWhatsappTitle: 'WhatsApp',
+        contactEmailTitle: 'Email',
+        contactCallCta: 'Call now',
+        contactChatCta: 'Start a chat',
+        contactEmailCta: 'Write an email',
+        contactChannels: 'Ways to reach us',
+        // Contact form (CMS section `contact_form`, → admin Inbox). Topic codes match the API's enum.
+        contactFormName: 'Your name',
+        contactFormNameHelp: 'So we know who to ask for.',
+        contactFormNamePlaceholder: 'e.g. Nusrat Jahan',
+        contactFormPhone: 'Mobile number',
+        contactFormPhoneHelp: 'We will call or WhatsApp you on this number.',
+        contactFormTopic: 'What is it about?',
+        contactFormTopicHelp: 'Orders, delivery, returns, gifts or bulk orders',
+        contactFormTopics: {
+            choosing_toy: 'Help choosing a toy',
+            order: 'An order I placed',
+            delivery: 'Delivery',
+            returns: 'Returns and refunds',
+            gifts_bulk: 'Gifts or bulk orders',
+            other: 'Something else',
+        },
+        contactFormOrder: 'Order number',
+        contactFormOrderHelp: 'Optional. It is on your SMS and invoice.',
+        contactFormMessage: 'Your message',
+        contactFormMessageHelp: 'The more you tell us, the better we can help.',
+        contactFormMessagePlaceholder: 'Tell us your child’s age and what they love, or what went wrong with an order.',
+        contactFormCount: '{count} / {max}',
+        contactFormSend: 'Send message',
+        contactFormRequired: 'required',
+        contactFormErrors: {
+            name: 'Please tell us your name.',
+            phone: 'Enter a Bangladeshi mobile number, such as 01712345678.',
+            topic: 'Choose what your message is about.',
+            order_number: 'Check the order number — it looks like TMB-26-00042.',
+            message: 'Please write at least 10 characters (up to 500).',
+        },
+        contactFormFailed: 'We could not send your message just now. Please try again, or call or WhatsApp us.',
+        contactFormLimited: 'You have sent several messages in a short time. Please wait a little, or call or WhatsApp us.',
+        contactSentTitle: 'Thank you — your message is with us',
+        contactSentBody: 'Someone from our shop will call or WhatsApp you on {phone}, usually within a few hours while we are open.',
+        contactSentBack: 'Back to Contact us',
+        contactMessageTitle: 'Send us a message',
         morePages: 'More from Toy Mart BD',
         faqTitle: 'Questions and answers',
         englishOnly: 'This page is not available in Bangla yet, so it is shown in English.',
@@ -274,6 +333,13 @@ export const en = {
         previewBanner: 'Draft preview — this is not the live page.',
     },
     listing: {
+        // Product-rail slider below 1024 (components/carousel/SwiperCarousel). Western digits (rule 36).
+        sliderRole: 'carousel',
+        sliderSlideRole: 'slide',
+        sliderPrev: 'Previous products',
+        sliderNext: 'Next products',
+        sliderSlideOf: 'Product {n} of {total}',
+        sliderGoTo: 'Go to slide {n}',
         // P4-STO-03 category and brand listings (storefront spec §A1, §A7, §A8; Figma 129:1572 / 136:2172).
         breadcrumb: 'Breadcrumb',
         home: 'Home',

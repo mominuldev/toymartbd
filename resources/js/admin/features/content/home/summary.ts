@@ -1,7 +1,7 @@
 import { formatDhakaDayMonth } from '@/features/content/shared/dhaka';
 import type { MessageKey } from '@/i18n/messages';
 import type { CmsBlock } from './api';
-import { bool, ids, num, rows, str, type Content } from './content';
+import { bool, CONTACT_CHANNELS, ids, num, rows, str, type Content } from './content';
 
 type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -28,7 +28,24 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
             break;
         case 'usp_band':
         case 'faq':
+        case 'feature_tiles':
+        case 'numbered_cards':
             parts.push(t('homeBuilder.summary.items', { count: rows(c.items).length }));
+            break;
+        case 'image':
+            parts.push(typeof c.media_id === 'number' ? t(`homeBuilder.summary.image.${str(c.width) === 'wide' ? 'wide' : 'content'}`) : t('homeBuilder.summary.noImage'));
+            break;
+        case 'contact_hero':
+            parts.push(t('homeBuilder.summary.bubbles', { count: rows(c.bubbles).length }));
+            break;
+        case 'contact_form':
+            parts.push(t('homeBuilder.summary.contactForm'));
+            break;
+        case 'story_hero':
+            parts.push(ids(c.media_ids).length ? t('homeBuilder.summary.photos', { count: ids(c.media_ids).length }) : t('homeBuilder.summary.noImage'));
+            break;
+        case 'contact_info':
+            parts.push(t('homeBuilder.summary.channels', { count: CONTACT_CHANNELS.filter((ch) => bool(c[`show_${ch}`], true)).length }));
             break;
         case 'flash_sale':
             parts.push(t('homeBuilder.summary.flashSale', { count: num(c.limit, 8) }));

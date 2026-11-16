@@ -373,7 +373,8 @@ export default async function CheckoutPage({ params }: Props) {
 
                     <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:w-110 lg:shrink-0">
                         {coupon}
-                        <CartSummary cart={cart} locale={locale} t={t} totalId="checkout-total" cta={placeButton('hidden lg:inline-flex')} className="max-lg:border-0 max-lg:bg-transparent max-lg:p-0" />
+                        {/* Below lg the summary is Figma's bare Totals block (131:2983) and Place order lives only in the pinned bar. */}
+                        <CartSummary cart={cart} locale={locale} t={t} totalId="checkout-total" variant="checkout" cta={placeButton('')} ctaClassName="max-lg:hidden" className="max-lg:border-0 max-lg:bg-transparent max-lg:p-0" />
                         <PlainTrust t={t} />
                         {agree}
                     </aside>

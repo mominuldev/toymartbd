@@ -16,8 +16,8 @@ interface Props {
     locale: Locale;
     t: Messages;
     rates: DeliveryRates | null;
-    /** The fifth desktop tab's label ("Reviews 42"); it scrolls to the Reviews section (#reviews). */
-    reviewsTab?: string;
+    /** The fifth desktop tab ("Reviews" + the API's count pill, Figma Tabs/Item 158:4188); it scrolls to the Reviews section (#reviews). */
+    reviewsTab?: { label: string; count: number };
 }
 
 type Size = 'desktop' | 'mobile';
@@ -111,8 +111,17 @@ export function ProductInfoPanel({ product, variant, locale, t, rates, reviewsTa
                         ))}
                     </div>
                     {reviewsTab ? (
-                        <a href="#reviews" className="t-body-strong relative flex h-11 min-w-18 items-center justify-center px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle">
-                            {reviewsTab}
+                        <a href="#reviews" className="t-body-strong relative flex h-11 min-w-18 items-center justify-center gap-2 px-4 whitespace-nowrap text-fg-secondary hover:rounded-t-md hover:bg-subtle">
+                            {reviewsTab.label}
+                            {/* The count is in the name as text ("Reviews 42"); the pill is its visible form. */}
+                            {reviewsTab.count > 0 ? (
+                                <>
+                                    <span className="sr-only"> {reviewsTab.count}</span>
+                                    <span aria-hidden="true" className="t-badge flex h-5 items-center rounded-full bg-subtle px-2 tabular-nums text-fg-secondary">
+                                        {reviewsTab.count}
+                                    </span>
+                                </>
+                            ) : null}
                         </a>
                     ) : null}
                 </div>

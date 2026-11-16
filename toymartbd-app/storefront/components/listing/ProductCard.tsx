@@ -27,6 +27,11 @@ interface Props {
     t: Messages['listing'];
     /** The first row is above the fold: load eagerly. */
     priority?: boolean;
+    /**
+     * Rail card of the Home flash-sale band (Figma 133:453 / mobile flash rail): the photo carries the
+     * discount badge only — no wishlist heart, age pill or per-card countdown (the band's header has it).
+     */
+    compact?: boolean;
 }
 
 /** The age pill's icon (also the Home age tiles): baby → puzzle → smiley → graduation cap. */
@@ -38,7 +43,7 @@ export function ageIcon(min: number | null): IconName {
     return 'graduationCap';
 }
 
-export function ProductCard({ product, locale, t, priority = false }: Props) {
+export function ProductCard({ product, locale, t, priority = false, compact = false }: Props) {
     const name = locale === 'bn' && product.name_bn ? product.name_bn : product.name;
     const nameLang = locale === 'bn' && !product.name_bn ? 'en' : undefined;
     const href = localizedPath(locale, `/products/${product.slug}`);
@@ -82,7 +87,12 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                 </a>
                 {product.discount_percent || soldOut || flash ? (
                     <div className="pointer-events-none absolute top-2.5 left-2 flex flex-col items-start gap-1">
-                        {flash ? (
+                        {flash && compact ? (
+                            // The band already says "flash sale": the compact card carries the plain discount badge (Figma 133:453).
+                            <span className="t-badge inline-flex h-6 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-fg-on-brand">
+                                {format(t.discount, { percent: String(flash.discount_percent) })}
+                            </span>
+                        ) : flash ? (
                             <FlashBadge discountPercent={flash.discount_percent} t={tf} discountTemplate={t.discount} />
                         ) : product.discount_percent ? (
                             <span className="t-badge inline-flex h-6 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-fg-on-brand">
@@ -97,6 +107,7 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                         ) : null}
                     </div>
                 ) : null}
+                {compact ? null : (
                 <WishlistHeart
                     productId={product.id}
                     label={format(t.wishlist, { name })}
@@ -106,10 +117,11 @@ export function ProductCard({ product, locale, t, priority = false }: Props) {
                     buttonClassName="flex size-7 items-center justify-center rounded-full bg-surface text-fg-secondary shadow-e1 lg:size-8 before:absolute before:size-touch-min before:content-['']"
                     iconClassName="size-icon-sm"
                 />
-                {flash ? (
+                )}
+                {flash && !compact ? (
                     <CountdownTimer endsAt={flash.ends_at} size="xs" t={tf} fill className="absolute inset-x-0 bottom-0" />
                 ) : null}
-                {age ? (
+                {age && !compact ? (
                     <span className={`t-caption-strong pointer-events-none absolute left-2 ${flash ? 'bottom-7.5' : 'bottom-2'} inline-flex h-5.5 items-center gap-1 rounded-full bg-surface px-2 text-fg-primary`}>
                         <Icon name={ageIcon(product.age_min_months)} className="size-3.5" />
                         {age}

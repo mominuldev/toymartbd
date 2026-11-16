@@ -26,8 +26,8 @@ export function ServerErrorContent({ locale, onRetry, hotline }: Props) {
     const action = 'w-full lg:w-auto';
 
     return (
-        <div className="flex justify-center pt-2 lg:pt-16 lg:pb-10">
-            <section className="flex w-full max-w-160 flex-col gap-3 rounded-lg border border-line-default bg-surface p-5 lg:gap-4.5 lg:p-10">
+        <div className="flex justify-center pt-4 lg:pt-16 lg:pb-10">
+            <section className="flex w-full max-w-160 flex-col gap-3.5 rounded-lg border border-line-default bg-surface p-5 lg:gap-4.5 lg:p-10">
                 <p className="t-overline text-fg-secondary">{t.serverError.eyebrow}</p>
                 <h1 className="t-display-2 text-fg-primary">{t.serverError.title}</h1>
                 <p className="t-body-lg text-fg-secondary">
@@ -35,15 +35,15 @@ export function ServerErrorContent({ locale, onRetry, hotline }: Props) {
                     <ContactDetail value={hotline} />
                     {after}
                 </p>
-                <ul aria-label={t.serverError.reassureLabel} className="flex flex-col gap-2.5 rounded-md bg-success-subtle px-4 py-3.5 lg:px-5 lg:py-4">
+                <ul aria-label={t.serverError.reassureLabel} className="flex flex-col gap-2 rounded-md-minus bg-success-subtle px-4 py-3.5 lg:gap-2.5 lg:px-5 lg:py-4">
                     {reassurances.map((line) => (
                         <li key={line} className="t-body flex items-center gap-2.5 font-semibold text-fg-primary">
-                            <Icon name="checkCircle" className="size-icon-md text-feedback-success" />
+                            <Icon name="checkCircle" className="size-4.5 shrink-0 text-feedback-success lg:size-icon-md" />
                             {line}
                         </li>
                     ))}
                 </ul>
-                <div className="flex flex-col gap-2.5 pt-2 lg:flex-row lg:gap-3">
+                <div className="flex flex-col gap-2.5 pt-1.5 lg:flex-row lg:gap-3 lg:pt-2">
                     {onRetry ? (
                         <button type="button" onClick={onRetry} className={`${buttonClass('primary')} ${action}`}>
                             {t.serverError.retry}

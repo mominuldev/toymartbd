@@ -149,10 +149,11 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 </button>
             </form>
 
+            {/* 390 (238:10951) ends with Sign out; at 1440 (239:13856) it lives in the account menu only. */}
             <SignOutButton
                 locale={locale}
                 label={p.signOut}
-                className="t-button flex h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-line-brand-subtle bg-surface text-fg-brand hover:bg-subtle lg:max-w-120 [&>svg]:text-fg-brand"
+                className="t-button flex h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-line-brand-subtle bg-surface text-fg-brand hover:bg-subtle lg:hidden [&>svg]:text-fg-brand"
             />
         </AccountShell>
     );

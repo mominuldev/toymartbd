@@ -42,6 +42,52 @@ it('answers an empty home before the first publish, so the storefront keeps its 
     CmsKit::home()->assertOk()->assertExactJson(['version' => null, 'published_at' => null, 'preview' => false, 'blocks' => []]);
 });
 
+it('renders the About blocks: collage photos with renditions, copy in the locale', function (): void {
+    [$a, $b] = [Media::factory()->create(['alt_text' => 'Shape sorter']), Media::factory()->create()];
+    CmsKit::block('story_hero', ['overline' => 'Our story', 'title' => 'About', 'title_bn' => 'আমাদের কথা', 'lead' => 'Why.', 'lead_bn' => '', 'media_ids' => [$a->id, $b->id], 'badge' => 'Ages', 'badge_sub' => '0–12']);
+    CmsKit::block('feature_tiles', ['items' => [['icon' => 'shield_check', 'title' => 'Age-checked', 'title_bn' => 'বয়স যাচাই'], ['icon' => 'map_pin', 'title' => 'Nationwide']]]);
+    CmsKit::block('numbered_cards', ['title' => 'What we believe', 'items' => [['title' => 'Play', 'body' => 'Learn.']]]);
+    CmsKit::block('cta_band', ['title' => 'Visit', 'primary_label' => 'Directions', 'primary_href' => 'https://maps.example/x', 'primary_icon' => 'map_pin']);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    expect(CmsKit::types($en))->toBe(['story_hero', 'feature_tiles', 'numbered_cards', 'cta_band'])
+        ->and($en->json('blocks.0.content.images'))->toHaveCount(2)
+        ->and($en->json('blocks.0.content.images.0.alt'))->toBe('Shape sorter')
+        ->and($en->json('blocks.0.content'))->not->toHaveKey('media_ids')
+        ->and($en->json('blocks.0.content.badge_sub'))->toBe('0–12')
+        ->and($en->json('blocks.1.content.items.1.icon'))->toBe('map_pin')
+        ->and($en->json('blocks.3.content.primary_icon'))->toBe('map_pin');
+
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($bn->json('blocks.0.content.title'))->toBe('আমাদের কথা')
+        ->and($bn->json('blocks.0.content.lead'))->toBe('Why.')
+        ->and($bn->json('blocks.1.content.items.0.title'))->toBe('বয়স যাচাই');
+});
+
+it('renders the Contact blocks with copy in the locale', function (): void {
+    CmsKit::block('contact_hero', ['title' => 'Contact us', 'lead' => 'Ask us.', 'status' => 'Online now', 'bubbles' => [
+        ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Is it OK for 2?'],
+        ['from' => 'store', 'label' => 'Toy Mart', 'text' => 'Yes.'],
+    ]]);
+    CmsKit::block('contact_info', ['title' => null, 'whatsapp_note' => 'Fastest', 'address_label' => 'Dhanmondi, Dhaka']);
+    CmsKit::block('contact_form', ['hours' => [['label' => 'Friday', 'label_bn' => 'শুক্রবার', 'value' => 'Closed']], 'visit_title' => 'Visit our shop',
+        'links_title' => 'Quicker than a message', 'links' => [['icon' => 'clock', 'label' => 'Delivery', 'href' => '/delivery-policy']]]);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    expect(CmsKit::types($en))->toBe(['contact_hero', 'contact_info', 'contact_form'])
+        ->and($en->json('blocks.0.content.bubbles.1.from'))->toBe('store')
+        ->and($en->json('blocks.1.content.title'))->toBeNull()
+        ->and($en->json('blocks.1.content.whatsapp_note'))->toBe('Fastest')
+        ->and($en->json('blocks.2.content.links.0.href'))->toBe('/delivery-policy');
+
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($bn->json('blocks.0.content.bubbles.0.label'))->toBe('অভিভাবক')
+        ->and($bn->json('blocks.0.content.bubbles.1.label'))->toBe('Toy Mart')
+        ->and($bn->json('blocks.2.content.hours.0.label'))->toBe('শুক্রবার');
+});
+
 it('requires the storefront token and an allowlisted locale', function (): void {
     $this->getJson(CmsKit::STOREFRONT.'?locale=en')->assertUnauthorized();
     CmsKit::home('fr')->assertStatus(400);

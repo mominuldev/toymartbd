@@ -16,6 +16,7 @@ use App\Domain\Payment\Models\PaymentProvider;
 use App\Domain\Risk\Services\RiskSettings;
 use App\Domain\Seo\Services\RobotsTxt;
 use App\Domain\Seo\Services\SitemapBuilder;
+use App\Domain\Staff\Services\TwoFactor;
 use App\Models\Enums\Role;
 use App\Models\Enums\SettingGroup;
 use App\Models\Setting;
@@ -543,11 +544,15 @@ it('requires an active super admin and role-bearing staff', function (): void {
     expect(launchStatus('staff.roles'))->toBe('fail');
 });
 
-it('fails with two-factor enforcement off, warns while a money-seeing person has not enrolled', function (): void {
+it('fails with two-factor enforcement off, warns while optional or a money-seeing person has not enrolled', function (): void {
     config(['auth.two_factor.enforce' => false]);
     expect(launchStatus('staff.two_factor'))->toBe('fail');
 
     config(['auth.two_factor.enforce' => true]);
+    expect(launchStatus('staff.two_factor'))->toBe('warn'); // the owner has not required it (the default)
+    expect(launchDetail('staff.two_factor'))->toContain('optional');
+
+    Setting::put(TwoFactor::SETTING, true, SettingGroup::System);
     $accountant = User::factory()->create();
     $accountant->assignRole(Role::Accountant->value);
     User::factory()->create()->assignRole(Role::OrderOperator->value); // cannot see money: not counted

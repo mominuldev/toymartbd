@@ -77,6 +77,7 @@ const ICONS = {
     // Search suggestions (Figma 115:887) and the Home USP band (144:2033 / 144:2062).
     storefront: 'Storefront',
     arrowRight: 'ArrowRight',
+    signOut: 'SignOut',
     arrowCounterClockwiseFill: 'ArrowCounterClockwise:fill',
     // Cart, checkout and order tracking (P4-STO-08/09/10; Figma 120:2627, 120:2745, 131:2602).
     trash: 'Trash',

@@ -115,7 +115,8 @@ test.describe('390', () => {
         await page.goto('/search?q=lego');
         await expect(page.locator('h1')).toHaveClass(/max-lg:sr-only/);
         await expect(page.locator('nav[aria-label="Breadcrumb"]')).toBeHidden();
-        await expect(page.getByText('5 results', { exact: true })).toBeVisible();
+        // The desktop sidebar (hidden here) also reads "5 results" (Figma 161:15289), so match the visible head.
+        await expect(page.getByText('5 results', { exact: true }).filter({ visible: true })).toBeVisible();
         await expect(page.getByText('for “lego”', { exact: true })).toBeVisible();
         await expect(page.locator('#search-mobile')).toHaveValue('lego');
         // Compact pagination below sm.

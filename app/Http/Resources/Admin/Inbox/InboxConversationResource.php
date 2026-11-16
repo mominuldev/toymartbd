@@ -31,7 +31,7 @@ final class InboxConversationResource extends ApiResource
 
         return [
             'id' => $c->id,
-            /** @var 'whatsapp'|'messenger'|'live_chat' */
+            /** @var 'whatsapp'|'messenger'|'live_chat'|'web_form' */
             'channel' => $c->channel->value,
             /** @var 'open'|'resolved' */
             'status' => $c->status->value,

@@ -24,7 +24,9 @@ export const canReplyFreely = (state: ReplyState): boolean => state === 'open' |
 
 export const views = ['all', 'mine', 'needs_human'] as const;
 export type View = (typeof views)[number];
-export const channels: Channel[] = ['whatsapp', 'messenger', 'live_chat'];
+export const channels: Channel[] = ['whatsapp', 'messenger', 'live_chat', 'web_form'];
+/** Inbound only (the storefront Contact page form): staff answer by WhatsApp or a call. */
+export const isWebForm = (channel: Channel): boolean => channel === 'web_form';
 export const statuses: ConversationStatus[] = ['open', 'resolved'];
 
 /** Every filter is a server allowlist (rule 16); the browser computes nothing (rule 1). */

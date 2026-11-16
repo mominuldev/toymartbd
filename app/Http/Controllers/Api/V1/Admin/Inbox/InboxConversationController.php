@@ -46,7 +46,7 @@ final class InboxConversationController extends ApiController
      * viewer holds customers.view_pii (rule 20).
      */
     #[QueryParameter('filter[view]', 'all|mine|needs_human (the tabs).', type: 'string', default: 'all')]
-    #[QueryParameter('filter[channel]', 'whatsapp|messenger|live_chat', type: 'string')]
+    #[QueryParameter('filter[channel]', 'whatsapp|messenger|live_chat|web_form', type: 'string')]
     #[QueryParameter('filter[status]', 'open|resolved (both when absent).', type: 'string')]
     #[QueryParameter('filter[search]', 'A name, 4+ phone digits, or an order number prefix.', type: 'string')]
     #[QueryParameter('cursor', 'The `meta.next_cursor` of the previous page.', type: 'string')]

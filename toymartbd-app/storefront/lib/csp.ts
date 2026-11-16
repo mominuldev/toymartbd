@@ -40,6 +40,7 @@ export const NONCE_ROUTES = [
     '/blog/preview/[token]',
     '/cart',
     '/checkout',
+    '/contact-message',
     '/delivery-charge',
     '/guides',
     '/orders/[number]',

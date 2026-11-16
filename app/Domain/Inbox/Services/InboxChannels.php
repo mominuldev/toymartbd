@@ -8,6 +8,7 @@ use App\Domain\Inbox\Contracts\InboxChannelDriver;
 use App\Domain\Inbox\Contracts\ReceivesWebhooks;
 use App\Domain\Inbox\Drivers\LogChannelDriver;
 use App\Domain\Inbox\Drivers\MessengerDriver;
+use App\Domain\Inbox\Drivers\NoReplyChannelDriver;
 use App\Domain\Inbox\Drivers\WhatsAppCloudDriver;
 use App\Domain\Inbox\Enums\InboxChannel;
 
@@ -23,6 +24,10 @@ final readonly class InboxChannels
 
     public function sender(InboxChannel $channel): InboxChannelDriver
     {
+        if (! $channel->canSend()) {
+            return new NoReplyChannelDriver($channel);
+        }
+
         return match ([$channel, $this->settings->driver($channel)]) {
             [InboxChannel::WhatsApp, 'cloud'] => new WhatsAppCloudDriver($this->settings),
             [InboxChannel::Messenger, 'messenger'] => new MessengerDriver($this->settings),
@@ -35,7 +40,7 @@ final readonly class InboxChannels
         return match ($channel) {
             InboxChannel::WhatsApp => new WhatsAppCloudDriver($this->settings),
             InboxChannel::Messenger => new MessengerDriver($this->settings),
-            InboxChannel::LiveChat => null,
+            InboxChannel::LiveChat, InboxChannel::WebForm => null,
         };
     }
 
@@ -56,12 +61,12 @@ final readonly class InboxChannels
                 'verified' => $driver->isVerified(),
                 'webhook_ready' => match ($channel) {
                     InboxChannel::WhatsApp, InboxChannel::Messenger => $this->settings->isSet($channel, 'app_secret') && $this->settings->isSet($channel, 'verify_token'),
-                    InboxChannel::LiveChat => false,
+                    InboxChannel::LiveChat, InboxChannel::WebForm => false,
                 },
                 'send_ready' => match ($channel) {
                     InboxChannel::WhatsApp => $this->settings->isSet($channel, 'phone_number_id') && $this->settings->isSet($channel, 'access_token'),
                     InboxChannel::Messenger => $this->settings->isSet($channel, 'page_id') && $this->settings->isSet($channel, 'page_access_token'),
-                    InboxChannel::LiveChat => false,
+                    InboxChannel::LiveChat, InboxChannel::WebForm => false,
                 },
             ];
         }

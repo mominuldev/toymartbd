@@ -6,7 +6,7 @@ import type { BlogCard as Card } from '@/lib/blog/types';
 import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
 
 // Blog teaser (storefront spec B1.8, Figma Home "Blog" row): header + sub-line, then the blog's own
-// BlogCard (components/blog) — a 280-wide swipe rail below 1024, a 3-up row from 1024. The posts
+// BlogCard (components/blog) — a 260-wide swipe rail below 1024 (Figma 127:493), a 3-up row from 1024. The posts
 // come resolved with the homepage (StorefrontBlogPostCard, the same shape as getBlogTeaser()).
 
 export function BlogTeaserBlock({ id, title, sub, posts, locale, t }: { id: string; title: string; sub: string | null; posts: Card[]; locale: Locale; t: Messages['home'] }) {
@@ -20,7 +20,7 @@ export function BlogTeaserBlock({ id, title, sub, posts, locale, t }: { id: stri
             </div>
             <ul className="relative -mx-gutter-mobile flex snap-x snap-mandatory gap-3 overflow-x-auto px-gutter-mobile pb-2 md:-mx-gutter-tablet md:px-gutter-tablet lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:p-0">
                 {posts.map((post) => (
-                    <li key={post.id} className="w-70 shrink-0 snap-start lg:w-auto">
+                    <li key={post.id} className="w-65 shrink-0 snap-start lg:w-auto">
                         <BlogCard post={post} locale={locale} t={bt} as="h3" />
                     </li>
                 ))}

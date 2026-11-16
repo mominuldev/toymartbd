@@ -60,3 +60,22 @@ export function groupPermissions(codes: readonly string[]): { key: (typeof permi
         .map((group) => ({ key: group.key, codes: codes.filter((code) => (group.prefixes as readonly string[]).includes(code.split('.')[0] ?? '')) }))
         .filter((group) => group.codes.length > 0);
 }
+
+/** Figma toggle (B · 25 cards 241:31103): 36×20 track, bg/brand on, border/strong off. */
+export function Switch({ checked, label, onChange, disabled }: { checked: boolean; label: string; onChange: (value: boolean) => void; disabled?: boolean }) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            aria-label={label}
+            disabled={disabled}
+            onClick={() => onChange(!checked)}
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 ease-standard disabled:cursor-not-allowed disabled:opacity-60 ${
+                checked ? 'bg-brand' : 'bg-line-strong'
+            }`}
+        >
+            <span aria-hidden className={`size-4 rounded-full bg-surface shadow-e1 transition-transform duration-150 ease-standard ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+    );
+}

@@ -1,7 +1,14 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
-import type { ResetStaffPasswordRequestInput, StoreStaffRequestInput, UpdateRolePermissionsRequestInput, UpdateStaffRequestInput } from '@toymart/api-types/zod';
+import type {
+    ResetStaffPasswordRequestInput,
+    StoreStaffRequestInput,
+    UpdateRolePermissionsRequestInput,
+    UpdateStaffRequestInput,
+    UpdateTwoFactorSettingRequestInput,
+} from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
+import { meQueryKey } from '@/features/auth/api';
 
 export type StaffMember = Schema<'StaffResource'>;
 export type StaffRole = Schema<'StaffRoleResource'>;
@@ -12,6 +19,8 @@ export type NewStaffInput = StoreStaffRequestInput;
 export type StaffChangeInput = UpdateStaffRequestInput;
 export type PasswordInput = ResetStaffPasswordRequestInput;
 export type RolePermissionsInput = UpdateRolePermissionsRequestInput;
+export type TwoFactorSetting = Schema<'TwoFactorSetting'>;
+export type TwoFactorSettingInput = UpdateTwoFactorSettingRequestInput;
 
 /** The 7 roles, in the server's order (App\Models\Enums\Role). */
 export const roleKeys = ['super_admin', 'manager', 'order_operator', 'inventory_staff', 'accountant', 'content_editor', 'viewer'] as const;
@@ -23,6 +32,7 @@ const keys = {
     all: ['staff'] as const,
     people: ['staff', 'people'] as const,
     roles: ['staff', 'roles'] as const,
+    twoFactor: ['staff', 'two-factor'] as const,
 };
 
 export function useStaff(enabled: boolean) {
@@ -98,4 +108,23 @@ export function useResetStaffTwoFactor() {
 export function roleOf(member: StaffMember): RoleKey | null {
     const role = member.roles[0];
     return role !== undefined && (roleKeys as readonly string[]).includes(role) ? (role as RoleKey) : null;
+}
+
+/** Staff & roles › Two-factor sign-in: whether staff who can see money must use it (default off). */
+export function useTwoFactorSetting(enabled: boolean) {
+    return useQuery({ queryKey: keys.twoFactor, queryFn: () => api<TwoFactorSetting>('/staff/two-factor'), enabled });
+}
+
+export function useSaveTwoFactorSetting() {
+    const client = useQueryClient();
+
+    return useMutation({
+        mutationFn: (input: TwoFactorSettingInput) => api<TwoFactorSetting>('/staff/two-factor', { method: 'PUT', body: JSON.stringify(input) }),
+        onSuccess: (saved) => {
+            client.setQueryData(keys.twoFactor, saved);
+            // Who must enrol, in the people list and in /auth/me, follows the setting.
+            void client.invalidateQueries({ queryKey: keys.people });
+            void client.invalidateQueries({ queryKey: meQueryKey });
+        },
+    });
 }

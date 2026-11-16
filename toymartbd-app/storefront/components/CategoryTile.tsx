@@ -7,8 +7,8 @@ import { localizedPath, type Locale } from '@/lib/i18n';
 // bubble in the theme ink, a centred Fredoka h4 label. Size sm (mobile, 148 tall) / md (≥1024,
 // 180 tall). Themes cycle Pink → Butter → Mint → Sky → Lavender so neighbours never repeat.
 // Rim: border-width/rim (3px) in color/bg/surface. Lift: the theme's Glow/Tile-* effect; hover e3
-// (the Glow/Tile-* description). The product count line is left out: the categories tree endpoint
-// returns no counts yet.
+// (the Glow/Tile-* description). The count line ("84 toys") shows when the page has the count — the
+// built-in Home reads it from the catalogue's category facet; the categories tree carries none.
 const themes = [
     { ground: 'bg-tile-pink shadow-glow-tile-pink', ink: 'text-fg-brand' },
     { ground: 'bg-tile-butter shadow-glow-tile-butter', ink: 'text-fg-primary' },
@@ -64,13 +64,14 @@ export function TileLink({
     );
 }
 
-export function CategoryTile({ node, locale, index }: { node: CategoryNode; locale: Locale; index: number }) {
+export function CategoryTile({ node, locale, index, count }: { node: CategoryNode; locale: Locale; index: number; count?: string }) {
     return (
         <TileLink
             href={localizedPath(locale, categoryPath(node.slug))}
             icon={categoryIcon(node.icon)}
             label={categoryName(node, locale)}
             labelLang={categoryNameIsFallback(node, locale) ? 'en' : undefined}
+            count={count}
             index={index}
         />
     );

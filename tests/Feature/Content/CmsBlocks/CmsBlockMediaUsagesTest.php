@@ -52,6 +52,15 @@ it('registers every hero slide image', function (): void {
     expect(blockUsages($a->id))->toHaveCount(1)->and(blockUsages($b->id))->toHaveCount(1);
 });
 
+it('registers every story hero collage photo', function (): void {
+    [$a, $b] = [Media::factory()->create(), Media::factory()->create()];
+
+    $this->postJson(CmsKit::ADMIN.'/blocks', ['type' => 'story_hero', 'content' => ['title' => 'About', 'lead' => 'Why.', 'media_ids' => [$a->id, $b->id]]])
+        ->assertCreated()->assertJsonPath('content.media_ids', [$a->id, $b->id]);
+
+    expect(blockUsages($a->id))->toHaveCount(1)->and(blockUsages($b->id))->toHaveCount(1);
+});
+
 it('unregisters when the image is replaced, the block deleted and the deletion published', function (): void {
     [$old, $new] = [Media::factory()->create(), Media::factory()->create()];
     $id = $this->postJson(CmsKit::ADMIN.'/blocks', ['type' => 'promo_split', 'content' => ['headline' => 'x', 'media_id' => $old->id]])->json('id');

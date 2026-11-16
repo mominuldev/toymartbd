@@ -192,7 +192,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                     locale={locale}
                     t={t}
                     rates={rates}
-                    reviewsTab={reviews ? (product.rating_count > 0 ? `${rm.tab} ${product.rating_count}` : rm.tab) : undefined}
+                    reviewsTab={reviews ? { label: rm.tab, count: product.rating_count } : undefined}
                 />
             </div>
 

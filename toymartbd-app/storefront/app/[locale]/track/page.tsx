@@ -17,7 +17,7 @@ import { getStoreInfo } from '@/lib/store-info';
 // message, never a hint which part was wrong. The form POSTs to /api/track (no digits in the URL);
 // this page reads that one-shot cookie and asks the API. The answer carries no street address.
 // Layout: 1440 — status column (header card, timeline, delivery details) + 440 rail (form, items,
-// help); 390 — form first, then the same cards.
+// help); 390 — heading, form first, then the same cards (no sub-line or intro: Figma 132:2899 has neither).
 
 const PATH = '/track';
 
@@ -62,7 +62,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
     const error = result && !result.ok ? { 'not-found': k.notFound, invalid: k.invalid, 'too-many': format(k.tooMany, { phone: contact.hotline.display }), failed: k.failed }[result.reason] : null;
 
     const form = (
-        <form method="post" action="/api/track" className="flex flex-col gap-3 rounded-sm border border-line-default bg-surface p-4">
+        <form method="post" action="/api/track" className="flex flex-col gap-3 rounded-sm border border-line-default bg-surface p-4 lg:p-6">
             <input type="hidden" name="locale" value={locale} />
             <Field id="track-number" label={k.number} required help={k.numberHelp}>
                 <input id="track-number" name="number" type="text" required maxLength={32} autoComplete="off" spellCheck={false} defaultValue={prefill} placeholder={k.numberPlaceholder} aria-describedby="track-number-help" className={`${inputClass} uppercase tabular-nums placeholder:normal-case`} />
@@ -86,7 +86,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
             <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
                 <header className="flex flex-col gap-1 lg:flex-row lg:items-baseline lg:gap-3">
                     <h1 className="t-h1 text-fg-primary">{k.title}</h1>
-                    <p className="t-body text-fg-secondary">{k.sub}</p>
+                    <p className="t-body hidden text-fg-secondary lg:block">{k.sub}</p>
                 </header>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
                     <div className="order-2 flex min-w-0 flex-col gap-4 lg:order-none lg:grow">
@@ -103,10 +103,7 @@ export default async function TrackPage({ params, searchParams }: Props) {
                         )}
                     </div>
                     <aside className="contents lg:flex lg:w-110 lg:shrink-0 lg:flex-col lg:gap-4">
-                        <div className="order-1 flex flex-col gap-2 lg:order-none">
-                            <p className="t-body-sm text-fg-secondary lg:hidden">{k.intro}</p>
-                            {form}
-                        </div>
+                        <div className="order-1 lg:order-none">{form}</div>
                         {order ? (
                             <div className="order-3 lg:order-none">
                                 <OrderItems order={order} locale={locale} t={t} />

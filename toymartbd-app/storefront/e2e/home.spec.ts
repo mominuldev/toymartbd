@@ -17,7 +17,9 @@ test.describe('desktop', () => {
         const res = await page.goto('/');
         expect(res?.status()).toBe(200);
         await expect(page.locator('h1')).toHaveText('Tell us the age. See the right toys.');
-        await expect(page.locator('main h2')).toHaveText(['Shop by category', 'Shop by age', 'Best sellers', 'New arrivals', 'Why parents shop with us']);
+        // The mock runs a flash sale, so its band sits after the categories (Figma 133:431); the mock has
+        // no blog posts, so "From the toy guide" is left out.
+        await expect(page.locator('main h2')).toHaveText(['Shop by category', 'Flash sale', 'Shop by age', 'Best sellers', 'New arrivals', 'Why parents shop with us']);
 
         // Age pills and the CTA land on the URL-addressable all-toys listing.
         const pills = page.locator('nav[aria-label="Choose an age"] a');
@@ -25,10 +27,17 @@ test.describe('desktop', () => {
         await expect(pills.first()).toHaveText('0–1 yr');
         await expect(pills.nth(2)).toHaveAttribute('href', '/toys?age=24-48');
         await expect(page.getByRole('link', { name: 'Browse all toys' })).toHaveAttribute('href', '/toys');
+        await expect(page.getByRole('link', { name: 'See the flash sale' })).toHaveAttribute('href', '/flash-sale');
 
         // Category tiles from the menu tree; age tiles with counts from the catalogue facet.
         const categories = page.locator('section[aria-labelledby="home-categories"] li a');
         await expect(categories.first()).toHaveAttribute('href', '/categories/building-blocks');
+        await expect(categories.first()).toContainText(/\d+ toys/);
+
+        // The flash-sale band: the running sale's cards, compact (no wishlist heart on the card).
+        const flash = page.locator('section[aria-labelledby="cms-home-flash-title"]');
+        await expect(flash.locator('article').first()).toBeVisible();
+        await expect(flash.locator('[role="timer"]:visible')).toHaveCount(1);
         const ages = page.locator('#shop-by-age li a');
         await expect(ages).toHaveCount(7);
         await expect(ages.nth(1)).toHaveAttribute('href', '/toys?age=12-24');

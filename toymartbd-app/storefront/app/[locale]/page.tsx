@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { cookies, draftMode } from 'next/headers';
 
 import { CategoryTile, TileLink } from '@/components/CategoryTile';
+import { BlogTeaserBlock } from '@/components/content/blocks/BlogTeaserBlock';
+import { FlashSaleBlock } from '@/components/content/blocks/FlashSaleBlock';
 import { Band } from '@/components/content/blocks/shared';
 import { HomeBlocks, PreviewBar } from '@/components/content/HomeBlocks';
 import { PreviewBridge } from '@/components/content/PreviewBridge';
@@ -10,8 +12,10 @@ import { UspBand } from '@/components/home/UspBand';
 import { ageIcon } from '@/components/listing/ProductCard';
 import { ProductRail, SectionHeader } from '@/components/listing/ProductRail';
 import { PageShell } from '@/components/PageShell';
+import { getBlogTeaser } from '@/lib/blog/fetch';
 import { getCategoryTree } from '@/lib/categories';
 import { fetchHome, fetchHomePreview } from '@/lib/content/home';
+import { getFlashSales } from '@/lib/flash-sale/fetch';
 import type { HomeLayout } from '@/lib/content/home-blocks';
 import { HOME_PREVIEW_COOKIE } from '@/lib/content/preview';
 import { adminOrigin } from '@/lib/content/preview-bridge';
@@ -31,14 +35,15 @@ import { getStoreInfo } from '@/lib/store-info';
 //
 // Built-in home (P4-STO-02, Figma 133:8 / 126:10) — shown when the CMS has nothing published or the
 // API cannot answer, so the page never fails: the layout and copy live here, the data is real. Sections, in Figma order: hero
-// (age chooser), category tiles (the menu tree's top level), shop by age (counts from the
-// catalogue's age facet), best sellers and new arrivals (GET /storefront/products sorted
-// `featured` / `newest`), and the "Why parents shop with us" band.
+// (age chooser; "See the flash sale" while a sale runs), category tiles (the menu tree's top level,
+// counts from the catalogue's category facet), the flash-sale band (GET /storefront/flash-sales —
+// removed when no sale runs, §B1.3), shop by age (counts from the catalogue's age facet), best
+// sellers and new arrivals (GET /storefront/products sorted `featured` / `newest`), the "Why parents
+// shop with us" band, and the blog teaser "From the toy guide" (GET /storefront/blog/teaser).
 //
-// Not built, by design: the flash-sale band (no sale data — a band with no sale is removed, §B1.3)
-// and the blog teaser (no blog until Phase 7). ISR: the product and category fetches are tagged
-// `products` / `categories`, so writes in Laravel refresh Home through POST /api/revalidate.
-// Every section that loses its data hides; the page itself never fails on a rail.
+// ISR: the product, category, flash-sale and blog fetches are tagged, so writes in Laravel refresh
+// Home through POST /api/revalidate. Every section that loses its data hides; the page itself never
+// fails on a rail.
 
 interface Props {
     params: Promise<{ locale: string }>;
@@ -85,9 +90,12 @@ export default async function HomePage({ params }: Props) {
 
 async function BuiltInHome({ locale }: { locale: Locale }) {
     const t = getMessages(locale);
-    const [tree, best, fresh] = await Promise.all([getCategoryTree(), fetchRail('featured', locale), fetchRail('newest', locale)]);
+    const [tree, best, fresh, flash, posts] = await Promise.all([getCategoryTree(), fetchRail('featured', locale), fetchRail('newest', locale), getFlashSales(locale), getBlogTeaser(locale)]);
     const categories = tree.slice(0, CATEGORY_TILES);
+    const flashSale = (flash?.sales ?? []).some((s) => s.products.length > 0);
     const ageCounts = new Map((best?.facets.age ?? []).map((o) => [o.value, o.count]));
+    // Unfiltered, the category facet is the top level with each subtree's count (ProductListing::categoryFacet).
+    const categoryCounts = new Map((best?.facets.category ?? []).map((o) => [o.value, o.count]));
     const ageTiles = t.home.ageTiles as Record<string, string>;
     const seeAll = (href: string, section: string) => ({ href: localizedPath(locale, href), label: t.home.seeAll, ariaLabel: format(t.home.seeAllLabel, { section }) });
     const toys = (count: number | undefined) => (count === undefined ? undefined : count === 1 ? t.home.toyCountOne : format(t.home.toyCount, { count: String(count) }));
@@ -95,7 +103,7 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
     return (
         <div className="flex flex-col gap-12 lg:gap-20">
             <Band>
-                <HomeHero locale={locale} t={t.home} />
+                <HomeHero locale={locale} t={t.home} flashSale={flashSale} />
             </Band>
 
             {categories.length > 0 ? (
@@ -105,13 +113,15 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
                         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-6">
                             {categories.map((node, i) => (
                                 <li key={node.slug}>
-                                    <CategoryTile node={node} locale={locale} index={i} />
+                                    <CategoryTile node={node} locale={locale} index={i} count={toys(categoryCounts.get(node.slug))} />
                                 </li>
                             ))}
                         </ul>
                     </section>
                 </Band>
             ) : null}
+
+            {flashSale ? <FlashSaleBlock id="home-flash" title={t.flashSale.title} limit={8} locale={locale} /> : null}
 
             <Band>
                 <section id="shop-by-age" aria-labelledby="home-age" className="flex scroll-mt-34 flex-col gap-3 lg:gap-6">
@@ -134,7 +144,7 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
 
             {best && best.products.length > 0 ? (
                 <Band>
-                    <ProductRail id="home-best" title={t.home.bestSellers} products={best.products.slice(0, 8)} locale={locale} t={t.listing} action={seeAll('/toys', t.home.bestSellers)} />
+                    <ProductRail id="home-best" title={t.home.bestSellers} products={best.products.slice(0, 8)} locale={locale} t={t.listing} action={seeAll('/toys', t.home.bestSellers)} slider />
                 </Band>
             ) : null}
 
@@ -147,11 +157,18 @@ async function BuiltInHome({ locale }: { locale: Locale }) {
                         locale={locale}
                         t={t.listing}
                         action={seeAll('/toys?sort=newest', t.home.newArrivals)}
+                        slider
                     />
                 </Band>
             ) : null}
 
             <UspBand t={t.home} />
+
+            {posts.length > 0 ? (
+                <Band>
+                    <BlogTeaserBlock id="home-blog" title={t.home.blogTitle} sub={t.home.blogSub} posts={posts} locale={locale} t={t.home} />
+                </Band>
+            ) : null}
         </div>
     );
 }

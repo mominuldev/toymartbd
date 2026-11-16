@@ -107,6 +107,15 @@ class ApiServiceProvider extends ServiceProvider
     /** POST /storefront/account/reviews (P4-CAT-12): per customer per hour. */
     public const int REVIEWS_PER_HOUR = 10;
 
+    /**
+     * POST /storefront/contact-messages (Contact page form, 2026-11-16): per phone per hour —
+     * each message lands in the staff Inbox, so a flood costs staff time, not money.
+     */
+    public const int CONTACT_MESSAGE_PER_PHONE_PER_HOUR = 5;
+
+    /** …and per shopper IP per hour (the Next.js server forwards it; see `otp-ip`). */
+    public const int CONTACT_MESSAGE_PER_IP_PER_HOUR = 10;
+
     public function boot(): void
     {
         // Attached to the whole storefront group. Behind the Next.js server, $request->ip() is
@@ -196,6 +205,13 @@ class ApiServiceProvider extends ServiceProvider
 
         RateLimiter::for('order-lookup', fn (Request $request): Limit => Limit::perMinute(self::ORDER_LOOKUP_PER_MINUTE)
             ->by('ip:'.$request->ip()));
+
+        // The Contact page form: per phone and per shopper IP. A request without a usable phone
+        // fails validation anyway; it still counts against its IP.
+        RateLimiter::for('contact-message', fn (Request $request): array => [
+            Limit::perHour(self::CONTACT_MESSAGE_PER_PHONE_PER_HOUR)->by('contact-phone:'.(($phone = self::phoneKey($request)) !== '' ? $phone : 'ip:'.$request->ip())),
+            Limit::perHour(self::CONTACT_MESSAGE_PER_IP_PER_HOUR)->by('contact-ip:'.$request->ip()),
+        ]);
 
         RateLimiter::for('reviews', function (Request $request): Limit {
             $customer = $request->user('customer');

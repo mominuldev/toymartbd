@@ -91,6 +91,9 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Staff & roles (B · 35). Writes need staff.manage; staff are deactivated, never deleted.
     Route::get('/staff/roles', [StaffController::class, 'roles'])->name('staff.roles');
     Route::put('/staff/roles/{role}', [StaffController::class, 'updateRole'])->where('role', '[a-z_]+')->name('staff.roles.update');
+    // Whether staff who can see money must use two-factor (owner request 2026-11-16, default off).
+    Route::get('/staff/two-factor', [App\Http\Controllers\Api\V1\Admin\TwoFactorSettingController::class, 'show'])->name('staff.two-factor.show');
+    Route::put('/staff/two-factor', [App\Http\Controllers\Api\V1\Admin\TwoFactorSettingController::class, 'update'])->name('staff.two-factor.update');
     Route::post('/staff/{user}/two-factor/reset', [StaffController::class, 'resetTwoFactor'])->whereNumber('user')->name('staff.two-factor.reset');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::patch('/staff/{user}', [StaffController::class, 'update'])->whereNumber('user')->name('staff.update');
