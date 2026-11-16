@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Catalog\Enums\LabelTemplate;
 use App\Domain\Catalog\Services\Ean13;
-use Illuminate\Support\Facades\File;
+use App\Support\MpdfCache;
 use Mpdf\Barcode;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -37,6 +37,12 @@ final class ProductLabelPdf
      * @param  list<array{name: string, variant: string|null, price: string, sku: string, barcode: string}>  $labels  one entry per printed label (copies expanded)
      */
     public function render(LabelTemplate $template, array $labels, string $locale, bool $showPrice, bool $showName): string
+    {
+        return MpdfCache::exclusive(fn (): string => $this->renderLocked($template, $labels, $locale, $showPrice, $showName));
+    }
+
+    /** @param  list<array{name: string, variant: string|null, price: string, sku: string, barcode: string}>  $labels */
+    private function renderLocked(LabelTemplate $template, array $labels, string $locale, bool $showPrice, bool $showName): string
     {
         $mpdf = $this->mpdf($template);
         $mpdf->SetTitle('Toy Mart BD — barcode labels');
@@ -157,8 +163,7 @@ final class ProductLabelPdf
 
     private function mpdf(LabelTemplate $template): Mpdf
     {
-        $tempDir = storage_path('framework/cache/mpdf');
-        File::ensureDirectoryExists($tempDir);
+        $tempDir = MpdfCache::path();
 
         $defaults = (new ConfigVariables)->getDefaults();
         $fonts = (new FontVariables)->getDefaults();

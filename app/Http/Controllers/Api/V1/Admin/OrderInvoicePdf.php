@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Invoicing\Models\CreditNote;
 use App\Domain\Invoicing\Models\Invoice;
-use Illuminate\Support\Facades\File;
+use App\Support\MpdfCache;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
@@ -30,6 +30,12 @@ final class OrderInvoicePdf
     /** @param  list<array{invoice: Invoice, locale: string}>  $invoices */
     public function render(array $invoices): string
     {
+        return MpdfCache::exclusive(fn (): string => $this->renderLocked($invoices));
+    }
+
+    /** @param  list<array{invoice: Invoice, locale: string}>  $invoices */
+    private function renderLocked(array $invoices): string
+    {
         $mpdf = $this->mpdf();
         $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Toy Mart BD — invoices');
         $mpdf->WriteHTML(view('invoices.invoice', ['invoices' => $invoices])->render());
@@ -45,6 +51,12 @@ final class OrderInvoicePdf
      */
     public function renderCreditNotes(array $notes): string
     {
+        return MpdfCache::exclusive(fn (): string => $this->renderCreditNotesLocked($notes));
+    }
+
+    /** @param  list<array{credit_note: CreditNote, locale: string}>  $notes */
+    private function renderCreditNotesLocked(array $notes): string
+    {
         $mpdf = $this->mpdf();
         $mpdf->SetTitle(count($notes) === 1 ? $notes[0]['credit_note']->number : 'Toy Mart BD — credit notes');
         $mpdf->WriteHTML(view('invoices.credit-note', ['notes' => $notes])->render());
@@ -54,8 +66,7 @@ final class OrderInvoicePdf
 
     private function mpdf(): Mpdf
     {
-        $tempDir = storage_path('framework/cache/mpdf');
-        File::ensureDirectoryExists($tempDir);
+        $tempDir = MpdfCache::path();
 
         $defaults = (new ConfigVariables)->getDefaults();
         $fonts = (new FontVariables)->getDefaults();
