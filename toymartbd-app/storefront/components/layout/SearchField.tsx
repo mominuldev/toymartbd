@@ -4,7 +4,9 @@ import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, ty
 
 import { categoryIcon } from '@/components/CategoryTile';
 import { Icon } from '@/components/icons/Icon';
-import { format, localizedPath, type Locale, type Messages } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n';
+import { localizedPath, type Locale } from '@/lib/i18n/config';
+import { format } from '@/lib/i18n/format';
 import { ageLabel, formatPrice, type AgeCopy } from '@/lib/listing/format';
 import { MIN_SUGGEST_QUERY, parseQuery, searchPath } from '@/lib/search/query';
 import { normalizeSuggestions, type Suggestions } from '@/lib/search/response';

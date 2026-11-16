@@ -13,7 +13,8 @@ import {
     tiles,
     type CountdownState,
 } from '@/lib/flash-sale/format';
-import { format, type Messages } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n';
+import { format } from '@/lib/i18n/format';
 
 // CountdownTimer — storefront spec §A15, Figma 119:1388 (Size xs 96×22 · sm 140×32 · md 288×64;
 // State Normal / Urgent / Ended).
