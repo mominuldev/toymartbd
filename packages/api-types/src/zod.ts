@@ -2053,6 +2053,21 @@ export const updateShipmentRiderRequestSchema = z.object({
 });
 export type UpdateShipmentRiderRequestInput = z.input<typeof updateShipmentRiderRequestSchema>;
 
+/** `PUT /settings/site` — Store settings › Site & branding; needs settings.update. The whole */
+export const updateSiteBrandingRequestSchema = z.object({
+    "name": z.string().max(60).nullable().optional(),
+    "name_bn": z.string().max(60).nullable().optional(),
+    "tagline": z.string().max(80).nullable().optional(),
+    "tagline_bn": z.string().max(80).nullable().optional(),
+    "description": z.string().max(160).nullable().optional(),
+    "description_bn": z.string().max(160).nullable().optional(),
+    "logo_media_id": z.number().int().nullable().optional(),
+    "logo_dark_media_id": z.number().int().nullable().optional(),
+    "icon_media_id": z.number().int().nullable().optional(),
+    "social_image_media_id": z.number().int().nullable().optional(),
+});
+export type UpdateSiteBrandingRequestInput = z.input<typeof updateSiteBrandingRequestSchema>;
+
 /** `PATCH /staff/{user}` — `{ name?, role? }`; needs staff.manage. Email is not editable: */
 export const updateStaffRequestSchema = z.object({
     "name": z.string().min(2).max(120).optional(),

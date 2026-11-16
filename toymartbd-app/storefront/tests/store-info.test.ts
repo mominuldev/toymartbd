@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { sampleContact, sampleStoreInfo, whatsappHref } from '@/lib/site-config';
-import { getStoreInfo, STORE_INFO_TAG, toStoreInfo } from '@/lib/store-info';
+import { getStoreInfo, STORE_INFO_TAG, toSite, toStoreInfo } from '@/lib/store-info';
 
 // Launch item F4: the storefront shows the contact and legal details the owner entered in
 // Admin → Settings → Store → Business (GET /storefront/store-info), and a marked, non-link sample
@@ -90,6 +90,58 @@ describe('toStoreInfo', () => {
 
     it('shows the E.164 WhatsApp number when the API sends no display form', () => {
         expect(toStoreInfo({ ...UNSET, whatsapp: '+8801812345678' }).contact.whatsapp.display).toBe('+8801812345678');
+    });
+});
+
+// Store → Site & branding: the `site` part of store-info (logo, favicons, share image, name, tagline).
+describe('toSite', () => {
+    const business = { en: 'Toy Mart BD Ltd', bn: 'টয় মার্ট বিডি লিমিটেড' };
+
+    it('keeps every default while the owner has set nothing (or the API predates `site`)', () => {
+        expect(toSite(undefined, business)).toEqual({
+            name: business,
+            tagline: { en: null, bn: null },
+            description: { en: null, bn: null },
+            logo: null,
+            logoDark: null,
+            icons: [],
+            socialImage: null,
+        });
+        expect(toStoreInfo(UNSET).site.name).toEqual({ en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' });
+    });
+
+    it('reads names, taglines, images and icons; a blank Bangla text borrows the English one', () => {
+        const site = toSite(
+            {
+                name_en: 'ToyMart',
+                name_bn: 'টয়মার্ট',
+                tagline_en: 'Toys & learning for every age',
+                tagline_bn: '  ',
+                description_en: 'Educational toys, delivered.',
+                description_bn: 'শিক্ষামূলক খেলনা।',
+                logo: { url: 'https://cdn.toymartbd.com/media/a/480.webp', width: 1200, height: 360 },
+                logo_dark: null,
+                icons: [
+                    { size: 180, url: 'https://api.toymartbd.com/site-assets/9/icon-180.png' },
+                    { size: 32, url: 'https://api.toymartbd.com/site-assets/9/icon-32.png' },
+                ],
+                social_image: { url: 'https://api.toymartbd.com/site-assets/10/share.jpg', width: 1200, height: 630 },
+            },
+            business,
+        );
+        expect(site.name).toEqual({ en: 'ToyMart', bn: 'টয়মার্ট' });
+        expect(site.tagline).toEqual({ en: 'Toys & learning for every age', bn: 'Toys & learning for every age' });
+        expect(site.description.bn).toBe('শিক্ষামূলক খেলনা।');
+        expect(site.logo).toEqual({ url: 'https://cdn.toymartbd.com/media/a/480.webp', width: 1200, height: 360 });
+        expect(site.icons.map((i) => i.size)).toEqual([32, 180]);
+        expect(site.socialImage?.width).toBe(1200);
+    });
+
+    it('drops anything that is not an http(s) URL, so the head never carries a javascript: or data: link', () => {
+        const site = toSite({ logo: { url: 'javascript:alert(1)' }, icons: [{ size: 32, url: 'data:image/png;base64,AAAA' }, { size: 'x', url: 'https://ok.test/a.png' }], social_image: { url: 'not a url' } }, business);
+        expect(site.logo).toBeNull();
+        expect(site.icons).toEqual([]);
+        expect(site.socialImage).toBeNull();
     });
 });
 

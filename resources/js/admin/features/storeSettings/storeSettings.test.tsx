@@ -109,6 +109,7 @@ describe('store settings layout', () => {
         const links = within(nav).getAllByRole('link');
         expect(links.map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
             ['Business', '/settings/business'],
+            ['Site & brandingNew', '/settings/site'],
             ['Branches & warehouses', '/settings/branches'],
             ['Checkout & delivery', '/settings/checkout'],
             ['Delivery areas & timing', '/settings/delivery'],

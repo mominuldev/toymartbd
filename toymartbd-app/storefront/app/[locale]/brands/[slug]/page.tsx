@@ -10,6 +10,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { getSeo } from '@/lib/seo/fetch';
 import { breadcrumbJsonLd } from '@/lib/seo/jsonld';
 import { listingPageMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 import { hrefFor, parseListingState, withCategory, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing, getCategoryPage } from '@/lib/products';
 
@@ -45,6 +46,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         title: name,
         description: brandDescription(brand, locale) ?? format(getMessages(locale).listing.metaBrand, { brand: name }),
         seo,
+        site: await getSiteMeta(locale),
     });
 }
 

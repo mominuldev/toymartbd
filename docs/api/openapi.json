@@ -22173,6 +22173,70 @@
                 }
             }
         },
+        "/admin/settings/site": {
+            "get": {
+                "operationId": "v1.admin.settings.site.show",
+                "summary": "`GET /settings/site`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SiteBranding`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SiteBranding"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.site.update",
+                "summary": "`PUT /settings/site` \u2014 the storefront shows the change once its `store-info` cache is purged",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSiteBrandingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`SiteBranding`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SiteBranding"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/settings/locations": {
             "get": {
                 "operationId": "v1.admin.settings.locations.index",
@@ -63800,6 +63864,270 @@
                 ],
                 "title": "ShipmentTracking"
             },
+            "SiteBranding": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "logo": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Logo for light backgrounds.",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "width": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "height": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "filename": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "url",
+                            "width",
+                            "height",
+                            "filename"
+                        ]
+                    },
+                    "logo_dark": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Optional logo for dark backgrounds.",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "width": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "height": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "filename": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "url",
+                            "width",
+                            "height",
+                            "filename"
+                        ]
+                    },
+                    "icon": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Square store icon the favicons (32, 180, 192, 512 px PNG) are made from.",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "width": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "height": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "filename": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "url",
+                            "width",
+                            "height",
+                            "filename"
+                        ]
+                    },
+                    "social_image": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The image a shared link shows (1.91 : 1).",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "url": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "width": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "height": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "filename": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "url",
+                            "width",
+                            "height",
+                            "filename"
+                        ]
+                    },
+                    "fallback_names": {
+                        "type": "object",
+                        "description": "What the storefront shows while a name is blank: the business name, else the brand.",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "name_bn"
+                        ]
+                    },
+                    "max_lengths": {
+                        "type": "object",
+                        "description": "Most characters per text field.",
+                        "properties": {
+                            "name": {
+                                "type": "integer"
+                            },
+                            "name_bn": {
+                                "type": "integer"
+                            },
+                            "tagline": {
+                                "type": "integer"
+                            },
+                            "tagline_bn": {
+                                "type": "integer"
+                            },
+                            "description": {
+                                "type": "integer"
+                            },
+                            "description_bn": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "name_bn",
+                            "tagline",
+                            "tagline_bn",
+                            "description",
+                            "description_bn"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "name_bn",
+                    "tagline",
+                    "tagline_bn",
+                    "description",
+                    "description_bn",
+                    "logo",
+                    "logo_dark",
+                    "icon",
+                    "social_image",
+                    "fallback_names",
+                    "max_lengths"
+                ],
+                "title": "SiteBranding"
+            },
             "SitemapStatus": {
                 "type": "object",
                 "properties": {
@@ -64651,6 +64979,150 @@
                     },
                     "bin": {
                         "type": "string"
+                    },
+                    "site": {
+                        "type": "object",
+                        "description": "Site & branding; `icons` lists the favicon / app-icon PNGs (32, 180, 192, 512 px), empty until a store icon is set.",
+                        "properties": {
+                            "name_en": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": "string"
+                            },
+                            "tagline_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "tagline_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "description_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "description_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "logo": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "width": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "height": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "url",
+                                    "width",
+                                    "height"
+                                ]
+                            },
+                            "logo_dark": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "width": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "height": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "url",
+                                    "width",
+                                    "height"
+                                ]
+                            },
+                            "icons": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "size": {
+                                            "type": "integer"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "size",
+                                        "url"
+                                    ]
+                                }
+                            },
+                            "social_image": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "width": {
+                                        "type": "integer"
+                                    },
+                                    "height": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "url",
+                                    "width",
+                                    "height"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name_en",
+                            "name_bn",
+                            "tagline_en",
+                            "tagline_bn",
+                            "description_en",
+                            "description_bn",
+                            "logo",
+                            "logo_dark",
+                            "icons",
+                            "social_image"
+                        ]
                     }
                 },
                 "required": [
@@ -64665,7 +65137,8 @@
                     "address_en",
                     "address_bn",
                     "trade_licence",
-                    "bin"
+                    "bin",
+                    "site"
                 ],
                 "title": "StoreInfoResource"
             },
@@ -74332,6 +74805,86 @@
                     }
                 },
                 "title": "UpdateShipmentRiderRequest"
+            },
+            "UpdateSiteBrandingRequest": {
+                "type": "object",
+                "description": "`PUT /settings/site` \u2014 Store settings \u203a Site & branding; needs settings.update. The whole\nsection: a null or blank field clears the saved value (the storefront then falls back \u2014 the\nbusiness name, its built-in wordmark, its own icon).\n\nEvery image is a ready library image. The store icon must be square and at least 512 \u00d7 512\n(the largest app icon made from it); the share image about 1.91 : 1 and at least 600 wide;\na logo at least 120 wide.",
+                "properties": {
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Storefront name in English; blank uses the business name.",
+                        "maxLength": 60
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 60
+                    },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Shown under the logo and in the home page title.",
+                        "maxLength": 80
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 80
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The search and social description a page uses when it has none of its own.",
+                        "maxLength": 160
+                    },
+                    "description_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 160
+                    },
+                    "logo_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Logo for light backgrounds (`media.id`)."
+                    },
+                    "logo_dark_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Optional logo for dark backgrounds (`media.id`)."
+                    },
+                    "icon_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Square store icon, \u2265 512 \u00d7 512: the favicons and app icons are made from it (`media.id`)."
+                    },
+                    "social_image_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Share image, ~1.91 : 1 and \u2265 600 wide (`media.id`)."
+                    }
+                },
+                "title": "UpdateSiteBrandingRequest"
             },
             "UpdateStaffRequest": {
                 "type": "object",

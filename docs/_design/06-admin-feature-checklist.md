@@ -145,6 +145,7 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 - [S] Automations & notifications: workflow list (order confirmed → WhatsApp utility message; high risk → hold + alert; low stock → email; abandoned cart → reminder), template editor, channel costs
 - [S] Integrations hub: couriers, payments, messaging, marketing/tracking, AI, accounting, with status
 - [S] Store settings: business info, trade licence/BIN, branches & warehouses, invoice, checkout rules, languages
+  - **Site & branding — built 2026-11-16** (`features/storeSettings/SiteSection.tsx`, `GET/PUT /settings/site`): storefront name, tagline and search/social description in EN + বাংলা with counters, logo, optional dark-background logo, square store icon (favicons 32/180/192/512 PNG are generated from it), 1200 × 630 share image, read-only brand colours, live preview (browser tab, header, WhatsApp card). Premium Figma frames: **B · 38 Store settings · Premium** `390:69035` (1440) and **· 390** `396:69446`, in the Premium pass section `366:65205` → group "Store settings" `390:69032`. The premium section nav (card, icons) applies to every Store settings section.
 - [S] Activity log: global audit feed with sensitive-change diff
 - [S] Sign in (email/phone + password, 2FA)
 

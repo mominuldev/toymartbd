@@ -3,12 +3,13 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Settings\BusinessDetailsController;
+use App\Http\Controllers\Api\V1\Admin\Settings\SiteBrandingController;
 use App\Http\Controllers\Api\V1\Admin\Settings\StoreLocationController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Store settings (Figma B · 38): Business details and Branches & warehouses.
+| Store settings (Figma B · 38): Business details, Site & branding and Branches & warehouses.
 |--------------------------------------------------------------------------
 | Required from routes/api_v1_admin.php inside its auth:sanctum + EnsureActiveStaffSession
 | + EnsureTwoFactorEnrolled group; names are prefixed api.v1.admin. Every route needs a 403
@@ -20,6 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/settings/business', [BusinessDetailsController::class, 'show'])->name('settings.business.show');
 Route::put('/settings/business', [BusinessDetailsController::class, 'update'])->name('settings.business.update');
+
+Route::get('/settings/site', [SiteBrandingController::class, 'show'])->name('settings.site.show');
+Route::put('/settings/site', [SiteBrandingController::class, 'update'])->name('settings.site.update');
 
 Route::get('/settings/locations', [StoreLocationController::class, 'index'])->name('settings.locations.index');
 Route::get('/settings/locations/districts', [StoreLocationController::class, 'districts'])->name('settings.locations.districts');

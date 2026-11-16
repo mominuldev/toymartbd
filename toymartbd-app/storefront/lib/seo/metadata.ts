@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { htmlLang, localizedPath, locales, type Locale } from '../i18n/config';
 import { getMessages } from '../i18n';
+import type { SiteIdentity } from '../site-config';
 import { indexing, hrefFor, type ListingState } from '../listing/state';
 import { siteUrl } from './site';
 import type { SeoDocument } from './types';
@@ -23,6 +24,33 @@ export interface SeoImage {
     alt?: string | null;
 }
 
+/**
+ * The store's own identity in one locale (Admin → Settings → Store → Site & branding, via
+ * lib/store-info.ts): the Open Graph site name, the share image a page without its own falls back
+ * to, the default description and the favicons. Built by {@link siteMetaFor}.
+ */
+export interface SiteMeta {
+    name: string;
+    tagline: string | null;
+    description: string | null;
+    image: SeoImage | null;
+    icons: Array<{ size: number; url: string }>;
+}
+
+/** The SiteMeta for a locale; the catalog's own name and tagline while the owner has set nothing. */
+export function siteMetaFor(locale: Locale, site?: SiteIdentity | null): SiteMeta {
+    const t = getMessages(locale);
+    if (!site) return { name: t.site.name, tagline: null, description: null, image: null, icons: [] };
+    const social = site.socialImage;
+    return {
+        name: site.name[locale],
+        tagline: site.tagline[locale],
+        description: site.description[locale],
+        image: social ? { url: social.url, width: social.width, height: social.height, alt: site.name[locale] } : null,
+        icons: site.icons,
+    };
+}
+
 export interface PageSeoInput {
     locale: Locale;
     /** Locale-independent path, optionally with the canonical query (`/categories/blocks?age=24-48`). */
@@ -40,6 +68,8 @@ export interface PageSeoInput {
     /** Absolute canonical override (seo_meta.canonical_url). Localised when it points at this site. */
     canonicalUrl?: string | null;
     article?: { publishedTime?: string | null; modifiedTime?: string | null };
+    /** The store's identity: Open Graph site name and the share image used when the page has none. */
+    site?: SiteMeta;
 }
 
 export const INDEX: Robots = { index: true, follow: true };
@@ -113,7 +143,8 @@ export function buildMetadata(input: PageSeoInput): Metadata {
     const description = input.description ?? undefined;
     const ogTitle = input.ogTitle ?? input.title;
     const ogDescription = input.ogDescription ?? description;
-    const images = input.image ? [{ url: input.image.url, ...(input.image.width ? { width: input.image.width } : {}), ...(input.image.height ? { height: input.image.height } : {}), ...(input.image.alt ? { alt: input.image.alt } : {}) }] : undefined;
+    const image = input.image ?? input.site?.image ?? null;
+    const images = image ? [{ url: image.url, ...(image.width ? { width: image.width } : {}), ...(image.height ? { height: image.height } : {}), ...(image.alt ? { alt: image.alt } : {}) }] : undefined;
     const card = input.twitterCard ?? (images ? 'summary_large_image' : 'summary');
 
     return {
@@ -124,7 +155,7 @@ export function buildMetadata(input: PageSeoInput): Metadata {
         ...(robots.index && robots.follow ? {} : { robots: { index: robots.index, follow: robots.follow } }),
         openGraph: {
             type: input.ogType ?? 'website',
-            siteName: t.site.name,
+            siteName: input.site?.name ?? t.site.name,
             locale: ogLocale[locale],
             alternateLocale: locales.filter((l) => l !== locale).map((l) => ogLocale[l]),
             url: absoluteUrl(canonical),
@@ -172,14 +203,43 @@ export function withSeoDocument(input: PageSeoInput, doc: SeoDocument | null | u
 
 // ── Per-template builders ──────────────────────────────────────────────────────────────────────
 
-export function homeMetadata(locale: Locale, separator: string = DEFAULT_TITLE_SEPARATOR): Metadata {
+/**
+ * The layout's metadata: the title template and default, the fallback description, the favicons
+ * and the Open Graph / Twitter defaults a page without tags of its own inherits — all from the
+ * store's identity (Site & branding), else the catalog.
+ */
+export function layoutMetadata(locale: Locale, site: SiteMeta, separator: string = DEFAULT_TITLE_SEPARATOR): Metadata {
     const t = getMessages(locale);
-    return buildMetadata({ locale, path: '/', title: `${t.site.name}${separator}${t.site.tagline}`, absoluteTitle: true, description: t.home.metaDescription });
+    const png = (size: number) => site.icons.find((i) => i.size === size);
+    const icon = [32, 192, 512].flatMap((size) => {
+        const found = png(size);
+        return found ? [{ url: found.url, sizes: `${size}x${size}`, type: 'image/png' }] : [];
+    });
+    const apple = png(180);
+    return {
+        title: { default: site.name, template: titleTemplate(site.name, separator) },
+        description: site.description ?? site.tagline ?? t.site.tagline,
+        ...(icon.length > 0 || apple ? { icons: { ...(icon.length > 0 ? { icon } : {}), ...(apple ? { apple: [{ url: apple.url, sizes: '180x180', type: 'image/png' }] } : {}) } } : {}),
+        openGraph: {
+            type: 'website',
+            siteName: site.name,
+            locale: ogLocale[locale],
+            ...(site.image ? { images: [{ url: site.image.url, ...(site.image.width ? { width: site.image.width } : {}), ...(site.image.height ? { height: site.image.height } : {}), alt: site.name }] } : {}),
+        },
+        ...(site.image ? { twitter: { card: 'summary_large_image', images: [site.image.url] } } : {}),
+    };
+}
+
+export function homeMetadata(locale: Locale, separator: string = DEFAULT_TITLE_SEPARATOR, site?: SiteMeta): Metadata {
+    const t = getMessages(locale);
+    const name = site?.name ?? t.site.name;
+    const tagline = site?.tagline ?? t.site.tagline;
+    return buildMetadata({ locale, path: '/', title: `${name}${separator}${tagline}`, absoluteTitle: true, description: site?.description ?? t.home.metaDescription, site });
 }
 
 /** An indexable page with no SEO document of its own (category/brand indexes, about, delivery, track). */
-export function staticMetadata(locale: Locale, path: string, title: string, description?: string | null, robots: Robots = INDEX): Metadata {
-    return buildMetadata({ locale, path, title, description, robots });
+export function staticMetadata(locale: Locale, path: string, title: string, description?: string | null, robots: Robots = INDEX, site?: SiteMeta): Metadata {
+    return buildMetadata({ locale, path, title, description, robots, site });
 }
 
 export interface ListingPageInput {
@@ -197,6 +257,7 @@ export interface ListingPageInput {
      * be an indexable, self-canonical duplicate of the bare listing — an infinite URL space.
      */
     listing?: { prevCursor: string | null } | null;
+    site?: SiteMeta;
 }
 
 /**
@@ -210,11 +271,11 @@ export function listingPageMetadata(input: ListingPageInput): Metadata {
     if (staleCursor) {
         // A cursor that resolved to page 1: canonicalise to the cursor-less view and keep it out of the index.
         const first = indexing({ ...input.state, cursor: null }).canonical;
-        return buildMetadata({ ...withSeoDocument({ locale: input.locale, path: hrefFor(input.path, first), title: input.title, description: input.description, image: input.image }, input.seo), robots: NOINDEX_FOLLOW, canonicalUrl: null });
+        return buildMetadata({ ...withSeoDocument({ locale: input.locale, path: hrefFor(input.path, first), title: input.title, description: input.description, image: input.image, site: input.site }, input.seo), robots: NOINDEX_FOLLOW, canonicalUrl: null });
     }
     const { indexable, canonical } = indexing(input.state);
     const path = hrefFor(input.path, canonical);
-    const base: PageSeoInput = { locale: input.locale, path, title: input.title, description: input.description, image: input.image, robots: indexable ? INDEX : NOINDEX_FOLLOW };
+    const base: PageSeoInput = { locale: input.locale, path, title: input.title, description: input.description, image: input.image, robots: indexable ? INDEX : NOINDEX_FOLLOW, site: input.site };
     const merged = withSeoDocument(base, input.seo);
     // A facet or later page keeps its own canonical; the admin override applies to the bare listing only.
     const bare = path === input.path;
@@ -228,11 +289,12 @@ export interface ProductMetaInput {
     description: string;
     image?: SeoImage | null;
     seo?: SeoDocument | null;
+    site?: SiteMeta;
 }
 
 /** The product page. The canonical never carries `?variant=`: every variant is one page (rule 37). */
 export function productMetadata(input: ProductMetaInput): Metadata {
-    return buildMetadata(withSeoDocument({ locale: input.locale, path: `/products/${input.slug}`, title: input.name, description: input.description, image: input.image }, input.seo));
+    return buildMetadata(withSeoDocument({ locale: input.locale, path: `/products/${input.slug}`, title: input.name, description: input.description, image: input.image, site: input.site }, input.seo));
 }
 
 export interface ContentMetaInput {
@@ -247,6 +309,7 @@ export interface ContentMetaInput {
     kind?: 'page' | 'article';
     publishedTime?: string | null;
     modifiedTime?: string | null;
+    site?: SiteMeta;
 }
 
 /** CMS pages, blog posts and buying guides. */
@@ -260,6 +323,7 @@ export function contentMetadata(input: ContentMetaInput): Metadata {
                 title: input.title,
                 description: input.description,
                 image: input.image,
+                site: input.site,
                 ogType: article ? 'article' : 'website',
                 ...(article ? { article: { publishedTime: input.publishedTime, modifiedTime: input.modifiedTime } } : {}),
             },

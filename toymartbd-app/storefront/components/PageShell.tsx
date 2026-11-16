@@ -103,7 +103,7 @@ export async function PageShell({ locale, path, searchQuery, announcement = fals
                     <AnnouncementBar message={t.announcement.cod} />
                 )
             ) : null}
-            <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} hotline={store.contact.hotline} />
+            <SiteHeader locale={locale} path={path} menu={menu} cartCount={cartCount} searchQuery={searchQuery} mobileSearch={mobileSearch || Boolean(searchQuery)} hotline={store.contact.hotline} logo={store.site.logo} />
             {/* Gutters outside, content capped at 1280 inside: at 1440 that is the design's 80px margin. */}
             <main
                 id="main"

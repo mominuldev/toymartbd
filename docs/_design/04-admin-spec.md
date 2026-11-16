@@ -1468,6 +1468,20 @@ Added 2026-11-12. Sidebar **Online store** active; breadcrumb `Store / Online st
 
 ---
 
+### B10 · Store settings — Site & branding — `/admin/settings/site` (as built 2026-11-16)
+
+Figma Premium pass section `366:65205` → group "Store settings" `390:69032`: **B · 38 Store settings · Premium** `390:69035` (1440) and **B · 38 Store settings · Premium · 390** `396:69446`. The original B · 38 `241:50827` is untouched. Built in `features/storeSettings/SiteSection.tsx` + `SettingsLayout.tsx`.
+
+- **Section nav (all Store settings sections)** — from lg a surface card (radius/md, border/default, e1, 8 padding) with a "Store" overline and 40-high rows: Phosphor icon (18, text/tertiary; text/brand when active) + label; active row bg/brand-subtle. Order: Business, **Site & branding** ("New" chip), Branches & warehouses, Checkout & delivery, Delivery areas & timing, Taxes & invoices, Point of sale. Below lg the AdminTab underline row, unchanged.
+- **Header** — "Site & branding" (Admin/card-title) + description; StatusChip success "Live on the storefront".
+- **Two columns from 1280**: main column + a 320 **Live preview** rail (sticky). Below 1280 the rail follows the cards.
+- **Store identity** card (IconTile storefront on bg/brand-subtle) — 2-column grid: Store name, Store name · বাংলা, Tagline, Tagline · বাংলা, Search & social description, Description · বাংলা (textareas). Each field has a hint and a mono `count / max` counter (60 / 80 / 160, code points like the server). A blank name shows the business name as placeholder ("Blank uses the business name").
+- **Logo & icons** card (IconTile image-square on bg/info-subtle) — 2×2 upload tiles: Logo · Dark-background logo (Optional chip, previewed on the admin dark surface) · Store icon & favicon (previews at 64/40/24/16) · Social share image (1.91 : 1). A set tile: preview, `filename · W × H`, spec line, Replace (opens the MediaPickerModal on Upload) + Library (on Library), trash icon in the title row. An empty tile: dashed "Upload an image" button + "Choose from library". The picker shows the shape hint and fit flags; the tile refuses a non-ready, non-square / < 512 icon, a share image outside 1.8–2.0 : 1 or < 600 wide, a logo < 120 wide (display only — the server decides). Note strip: PNG/JPG/WebP ≤ 10 MB, no SVG.
+- **Brand colours** card (IconTile palette on bg/grape-subtle, "Read-only" lock pill) — swatches bg/brand, bg/accent, bg/teal, bg/pink, bg/canvas with token names; a lock note explains why they are not editable (contrast; a colour change is a design update).
+- **Live preview** rail (IconTile browser on bg/teal-subtle) — English / বাংলা SegmentedControl; Browser tab (favicon + `name | tagline`, address pill with the storefront host from `tm-storefront-url`), Storefront header (logo or name + tagline), Shared on WhatsApp (share image or a tile-sky stand-in, title, description, host) on a tile-mint chat; cache caveat. Bangla falls back like the storefront: name → business name in Bangla; tagline/description → the English one.
+- **Save bar** — sticky at the bottom of the section column (rounded card, e4): status dot + "Unsaved changes in Site & branding" / "All changes saved", Discard (ghost) and Save changes (primary), both disabled until something changes. One PUT for the section. Deviation: the frame's bar spans the whole content width like FormActions; in the settings layout it stays inside the section column so it never covers the nav.
+- **No left-border accents** anywhere (tinted icon tiles carry the tone).
+
 ## Part C — Sample dataset and its arithmetic
 
 One dataset. Every figure in Parts A and B comes from it, and the sums below are stated so they can be checked.

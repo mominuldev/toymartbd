@@ -15,6 +15,7 @@ use App\Domain\Content\Models\CmsPage;
 use App\Domain\Content\Models\Menu;
 use App\Domain\Content\Models\Testimonial;
 use App\Domain\Content\Services\BannerMediaUsages;
+use App\Domain\Content\Services\SiteBrandingMediaUsages;
 use App\Domain\Content\Services\TestimonialMediaUsages;
 use App\Policies\BannerPolicy;
 use App\Policies\CmsPagePolicy;
@@ -32,7 +33,7 @@ final class StoreContentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->tag([BannerMediaUsages::class, TestimonialMediaUsages::class], MediaUsageProvider::TAG);
+        $this->app->tag([BannerMediaUsages::class, TestimonialMediaUsages::class, SiteBrandingMediaUsages::class], MediaUsageProvider::TAG);
     }
 
     public function boot(): void

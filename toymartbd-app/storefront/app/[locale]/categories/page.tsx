@@ -8,6 +8,7 @@ import { getMenus } from '@/lib/content/api';
 import { fetchCategoryTree } from '@/lib/categories';
 import { getMessages, isLocale } from '@/lib/i18n';
 import { staticMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 
 // All categories (the mobile "Categories" tab and every "browse all toys" link). ISR under tag
 // `categories`. Uses the throwing fetch: if the API fails during a revalidation, Next keeps
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale);
-    return staticMetadata(locale, '/categories', t.categories.title, t.categories.metaDescription);
+    return staticMetadata(locale, '/categories', t.categories.title, t.categories.metaDescription, undefined, await getSiteMeta(locale));
 }
 
 export default async function CategoriesPage({ params }: Props) {

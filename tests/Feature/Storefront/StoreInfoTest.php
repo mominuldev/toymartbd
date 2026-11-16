@@ -46,6 +46,18 @@ it('answers nulls (the storefront shows its marked samples) until the owner sets
             'address_bn' => null,
             'trade_licence' => null,
             'bin' => null,
+            'site' => [
+                'name_en' => 'Toy Mart BD',
+                'name_bn' => 'টয় মার্ট বিডি',
+                'tagline_en' => null,
+                'tagline_bn' => null,
+                'description_en' => null,
+                'description_bn' => null,
+                'logo' => null,
+                'logo_dark' => null,
+                'icons' => [],
+                'social_image' => null,
+            ],
         ]);
 });
 

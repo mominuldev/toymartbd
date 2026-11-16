@@ -8,6 +8,7 @@ import { dhakaDateTime } from '@/lib/flash-sale/format';
 import { getFlashSales } from '@/lib/flash-sale/fetch';
 import { format, getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { staticMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 
 // /flash-sale (P7, storefront spec §B1.3 band language, §A15 countdown). Server Component, ISR under
 // `flash-sale` + `products` (lib/flash-sale/fetch.ts). Each running sale: its name, an md countdown
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!isLocale(locale)) return {};
     const t = getMessages(locale).flashSale;
     // SEO: agent 4 — staticMetadata gives canonical + hreflang (en, bn, x-default) for /flash-sale.
-    return staticMetadata(locale, '/flash-sale', t.metaTitle, t.metaDescription);
+    return staticMetadata(locale, '/flash-sale', t.metaTitle, t.metaDescription, undefined, await getSiteMeta(locale));
 }
 
 export default async function FlashSalePage({ params }: Props) {

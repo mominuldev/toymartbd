@@ -54,6 +54,7 @@ export function usageContext(usage: MediaUsage, t: T): string {
     if (usage.type === 'seo_og_image') return t('media.usage.seoOg');
     if (usage.type === 'cms_block_live') return t('media.usage.cmsBlockLive');
     if (usage.type === 'cms_block_draft') return t('media.usage.cmsBlockDraft');
+    if (usage.type === 'site_branding') return t('media.usage.siteBranding');
     return t('media.usage.other', { type: usage.subject_type });
 }
 

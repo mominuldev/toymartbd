@@ -12,6 +12,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { getSeo } from '@/lib/seo/fetch';
 import { breadcrumbJsonLd } from '@/lib/seo/jsonld';
 import { listingPageMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 import { hrefFor, parseListingState, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing, getCategoryPage } from '@/lib/products';
 
@@ -50,6 +51,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         title: name,
         description: (locale === 'bn' ? category.description_bn : category.description) ?? format(getMessages(locale).listing.metaCategory, { category: name }),
         seo,
+        site: await getSiteMeta(locale),
     });
 }
 

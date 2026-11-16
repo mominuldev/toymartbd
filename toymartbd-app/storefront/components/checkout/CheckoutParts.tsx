@@ -1,5 +1,5 @@
 import { Icon } from '@/components/icons/Icon';
-import { Wordmark } from '@/components/layout/Wordmark';
+import { SiteLogo } from '@/components/layout/SiteLogo';
 import { isZero } from '@/lib/cart/format';
 import type { Cart } from '@/lib/cart/types';
 import { arrivalLine, quotePlace, workingDaysLine } from '@/lib/delivery/format';
@@ -10,7 +10,8 @@ import { getStoreInfo } from '@/lib/store-info';
 // Pieces of the checkout page (Figma Checkout 131:2601 / 137:3670). Server components.
 
 /** Header (checkout): back to cart · centred wordmark · "Secure checkout". 56 / 72 tall, no menu or search. */
-export function CheckoutHeader({ locale, t }: { locale: Locale; t: Messages }) {
+export async function CheckoutHeader({ locale, t }: { locale: Locale; t: Messages }) {
+    const { site } = await getStoreInfo();
     return (
         <header className="sticky top-0 z-30 border-b border-line-default bg-surface">
             <div className="mx-auto flex h-14 max-w-content items-center gap-3 px-gutter-mobile md:px-gutter-tablet lg:h-18 lg:px-gutter-desktop">
@@ -20,7 +21,7 @@ export function CheckoutHeader({ locale, t }: { locale: Locale; t: Messages }) {
                 </a>
                 <div className="flex grow justify-center">
                     <a href={localizedPath(locale, '/')} aria-label={t.nav.logoAria}>
-                        <Wordmark locale={locale} />
+                        <SiteLogo locale={locale} logo={site.logo} />
                     </a>
                 </div>
                 <p className="t-body-sm-strong flex items-center gap-1.5 text-status-in-stock">

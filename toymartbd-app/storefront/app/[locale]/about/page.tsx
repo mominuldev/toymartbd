@@ -12,6 +12,7 @@ import { draftPageLayout, findPageLayout } from '@/lib/content/page-layout';
 import { isLocale } from '@/lib/i18n';
 import { getSeo } from '@/lib/seo/fetch';
 import { staticMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 import { staticPage } from '@/lib/static-pages';
 
 // The About page. A fixed route (it wins over ../[slug]) so the designed About layout (Figma About
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Both branches go through the lib/seo builder: canonical, hreflang en/bn/x-default, OG.
     if (page) return cmsPageMetadata(page, locale, PATH, await getSeo('page', 'about'));
     const content = staticPage('about', locale);
-    return staticMetadata(locale, PATH, content.title, content.metaDescription);
+    return staticMetadata(locale, PATH, content.title, content.metaDescription, undefined, await getSiteMeta(locale));
 }
 
 export default async function AboutPage({ params }: Props) {

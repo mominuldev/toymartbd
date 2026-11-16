@@ -31,7 +31,7 @@ import { reviewMessages } from '@/lib/reviews/messages';
 import { isExplicitVariant, resolveVariant, variantHref, variantSummary, VARIANT_PARAM, type StorefrontProduct } from '@/lib/product/variants';
 import { getSeo } from '@/lib/seo/fetch';
 import { absoluteUrl, canonicalFor, productMetadata } from '@/lib/seo/metadata';
-import { getStoreInfo } from '@/lib/store-info';
+import { getSiteMeta, getStoreInfo } from '@/lib/store-info';
 import '@/components/product/product.css';
 
 // Product detail page (P4-STO-05; Figma "Product detail" 135:1022 at 1440, 128:625 at 390, plus the
@@ -74,6 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         image: image ? { url: image.url, width: image.width, height: image.height, alt: (locale === 'bn' ? image.alt_bn : image.alt) ?? name } : null,
         seo,
+        site: await getSiteMeta(locale),
     });
 }
 

@@ -81,6 +81,8 @@ type MediaPickerModalProps = {
     onClose: () => void;
     /** "Add alt text" in the warning bar: insert, then take the user to the alt fields. Hidden when absent. */
     onAddAlt?: InsertHandler;
+    /** The tab it opens on: Library (default) or Upload (a "Replace" button that goes straight to a new file). */
+    initialTab?: 'library' | 'upload';
 };
 
 type Tab = 'library' | 'upload';
@@ -103,7 +105,7 @@ const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,image/avif';
  * <dialog>.showModal() gives the focus trap, Esc and the inert background; it is portalled
  * to <body> so it never nests inside the caller's <form>.
  */
-export function MediaPickerModal({ context, onInsert, onClose, onAddAlt }: MediaPickerModalProps) {
+export function MediaPickerModal({ context, onInsert, onClose, onAddAlt, initialTab = 'library' }: MediaPickerModalProps) {
     const { t } = useI18n();
     const dialog = useRef<HTMLDialogElement>(null);
     const titleId = useId();
@@ -111,7 +113,7 @@ export function MediaPickerModal({ context, onInsert, onClose, onAddAlt }: Media
     const tabIds = { library: useId(), upload: useId() };
     const panelId = useId();
 
-    const [tab, setTab] = useState<Tab>('library');
+    const [tab, setTab] = useState<Tab>(initialTab);
     const [picked, setPicked] = useState<Media[]>([]);
     const [inserting, setInserting] = useState(false);
     const [failures, setFailures] = useState<InsertFailure[]>([]);

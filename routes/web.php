@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\PublicMediaController;
+use App\Http\Controllers\Web\SiteAssetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +35,15 @@ Route::get('/m/{media}/{filename}', PublicMediaController::class)
     ->where(['media' => '[0-9]+', 'filename' => '[^/]+'])
     ->middleware('throttle:240,1')
     ->name('media.public');
+
+/*
+| Site & branding files for the storefront's <head> (Store settings › Site & branding): favicon
+| and app-icon PNGs, the share-image JPEG. Generated once per image, then a short-cache 302.
+*/
+Route::get('/site-assets/{media}/{name}', SiteAssetController::class)
+    ->where(['media' => '[0-9]+', 'name' => 'icon-(?:32|180|192|512)\.png|share\.jpg'])
+    ->middleware('throttle:240,1')
+    ->name('site-assets');
 
 /*
 | Admin SPA

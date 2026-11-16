@@ -8,6 +8,8 @@ use App\Domain\Catalog\Exceptions\InvalidImage;
 use finfo;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\AvifEncoder;
+use Intervention\Image\Encoders\JpegEncoder;
+use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
@@ -169,6 +171,21 @@ final class ImagePipeline
         }
 
         return $out;
+    }
+
+    /**
+     * One fixed-size copy of a master for a consumer that cannot take WebP: a square PNG (favicons
+     * and app icons — Apple touch icons need PNG) or a JPEG (the share image link previews read).
+     * Covers the box from the centre; a smaller source is scaled up, never padded.
+     *
+     * @param  'png'|'jpeg'  $format
+     */
+    public function fixed(string $masterBytes, int $width, int $height, string $format): string
+    {
+        $image = $this->manager()->decodeBinary($masterBytes)->cover($width, $height);
+        $encoder = $format === 'png' ? new PngEncoder(strip: true) : new JpegEncoder(quality: 85, progressive: true, strip: true);
+
+        return $image->encode($encoder)->toString();
     }
 
     /** The type the leading bytes declare, or null for anything else. */

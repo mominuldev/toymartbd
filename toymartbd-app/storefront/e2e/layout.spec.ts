@@ -13,6 +13,20 @@ test.beforeAll(async ({ request }) => {
 
 const megaMenu = (page: Page, name: string) => page.getByRole('navigation', { name });
 
+test.describe('site & branding in <head> (Store settings → Site & branding)', () => {
+    test('favicons and the share-image fallback come from store-info, in both locales', async ({ page }) => {
+        for (const [path, siteName] of [['/', 'Toy Mart BD'], ['/bn', 'টয় মার্ট বিডি']] as const) {
+            await page.goto(path);
+            await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute('href', `${MOCK_API_URL}/site-assets/9/icon-32.png`);
+            await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', `${MOCK_API_URL}/site-assets/9/icon-180.png`);
+            await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute('content', siteName);
+            await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute('content', `${MOCK_API_URL}/site-assets/10/share.jpg`);
+        }
+        // No logo set: the header keeps the built-in Wordmark.
+        await expect(page.getByTestId('site-logo')).toHaveCount(0);
+    });
+});
+
 test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
     test('English: header controls, mega-menu links from the API, footer, tab bar', async ({ page }) => {
         await page.goto('/');

@@ -5,6 +5,7 @@ import { PageShell } from '@/components/PageShell';
 import { brandName, brandNameIsFallback, listBrands } from '@/lib/brands';
 import { getMessages, isLocale, localizedPath } from '@/lib/i18n';
 import { staticMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 
 // ISR: the API fetch is tagged `brands` with a 3600 s ceiling (lib/api.ts `cached`);
 // POST /api/revalidate {"tags":["brands"]} refreshes it immediately.
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const t = getMessages(locale);
-    return staticMetadata(locale, '/brands', t.brands.title, t.brands.metaDescription);
+    return staticMetadata(locale, '/brands', t.brands.title, t.brands.metaDescription, undefined, await getSiteMeta(locale));
 }
 
 export default async function BrandsPage({ params }: Props) {

@@ -3,11 +3,11 @@ import type { IconName } from '@/components/icons/paths';
 import { LocaleToggle } from '@/components/LocaleToggle';
 import type { MenuItem } from '@/lib/category-tree';
 import { getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
-import type { ContactValue } from '@/lib/site-config';
+import type { ContactValue, SiteImage } from '@/lib/site-config';
 import { CartLink } from './CartLink';
 import { MegaMenu } from './MegaMenu';
 import { SearchBar } from './SearchBar';
-import { Wordmark } from './Wordmark';
+import { SiteLogo } from './SiteLogo';
 
 interface Props {
     locale: Locale;
@@ -21,6 +21,8 @@ interface Props {
     mobileSearch?: boolean;
     /** The store hotline (lib/store-info.ts on the server; the sample in a client error boundary). */
     hotline: ContactValue;
+    /** The owner's logo (Site & branding); null keeps the built-in Wordmark. */
+    logo?: SiteImage | null;
 }
 
 const iconButton =
@@ -42,7 +44,7 @@ function IconLink({ href, label, icon, className = 'inline-flex text-fg-primary'
 // Desktop 72 (content 1280): wordmark · 560 search · EN/বাং locale pill · hotline · wishlist ·
 // account · cart with count badge; the MegaMenuBar (123:1833) sits directly under it (sticky 120).
 // Every control is a plain link or a GET form, so the header is fully usable without JavaScript.
-export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false, hotline }: Props) {
+export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false, hotline, logo = null }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
 
@@ -57,7 +59,7 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                         aria-label={t.nav.logoAria}
                         className="mx-auto inline-flex min-h-touch-min min-w-0 shrink-0 items-center rounded-xs lg:mx-0"
                     >
-                        <Wordmark locale={locale} />
+                        <SiteLogo locale={locale} logo={logo} />
                     </a>
                     <div className="hidden w-140 shrink lg:mx-auto lg:block">
                         <SearchBar locale={locale} id="search-desktop" defaultValue={searchQuery} />

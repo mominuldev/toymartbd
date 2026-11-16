@@ -5,6 +5,7 @@ import { ListingView } from '@/components/listing/ListingView';
 import { PageShell } from '@/components/PageShell';
 import { getMessages, isLocale } from '@/lib/i18n';
 import { listingPageMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 import { hrefFor, parseListingState, type ListingScope, type RawSearchParams } from '@/lib/listing/state';
 import { fetchListing } from '@/lib/products';
 
@@ -31,7 +32,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const state = parseListingState(await searchParams, SCOPE);
     // A cursor page: the same (deduplicated) listing fetch the page makes, to spot a stale cursor.
     const listing = state.cursor ? await fetchListing(state, SCOPE, locale) : null;
-    return listingPageMetadata({ locale, path: PATH, state, title: t.allToys, description: t.metaAll, listing });
+    return listingPageMetadata({ locale, path: PATH, state, title: t.allToys, description: t.metaAll, listing, site: await getSiteMeta(locale) });
 }
 
 export default async function AllToysPage({ params, searchParams }: Props) {

@@ -955,7 +955,21 @@ createServer(async (req, res) => {
             whatsapp: '+8801812345678', whatsapp_display: '01812-345678', messenger: 'toymartbd',
             email: null, address_en: null, address_bn: null,
             trade_licence: 'TRAD/DNCC/012345/2026', bin: '004567891-0101',
+            // Store → Site & branding. Texts unset (titles keep the catalog's tagline); a store icon and a
+            // share image set, so the <head> carries the favicon links and the og:image fallback.
+            site: {
+                name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি',
+                tagline_en: null, tagline_bn: null, description_en: null, description_bn: null,
+                logo: null, logo_dark: null,
+                icons: [32, 180, 192, 512].map((size) => ({ size, url: `http://127.0.0.1:${port}/site-assets/9/icon-${size}.png` })),
+                social_image: { url: `http://127.0.0.1:${port}/site-assets/10/share.jpg`, width: 1200, height: 630 },
+            },
         });
+    }
+    // The generated favicon / share files (Laravel /site-assets/{media}/{name}): a 1×1 PNG stands in.
+    if (url.pathname.startsWith('/site-assets/')) {
+        res.writeHead(200, { 'Content-Type': url.pathname.endsWith('.jpg') ? 'image/jpeg' : 'image/png' });
+        return res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'));
     }
     if (url.pathname === '/api/v1/storefront/robots') return raw(res, 200, 'User-agent: *\nDisallow: /checkout\n', 'text/plain; charset=utf-8');
     const sitemap = url.pathname.match(/^\/api\/v1\/storefront\/sitemaps\/(sitemap(?:-[a-z]+-(?:en|bn)-\d+)?\.xml)$/);

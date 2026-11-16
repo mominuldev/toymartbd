@@ -8,6 +8,7 @@ import type { DeliveryQuote } from '@/lib/delivery/types';
 import { format, getMessages, isLocale } from '@/lib/i18n';
 import { formatPrice } from '@/lib/listing/format';
 import { NOINDEX_FOLLOW, staticMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 
 // /delivery-charge — the standalone delivery-charge page (storefront spec §A12.7): the full
 // DeliveryEstimator centred at 480 plus the whole zone table below it. It is also where the
@@ -35,7 +36,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const t = getMessages(locale).delivery;
     const query = await searchParams;
     // A quote for one address is not a landing page; the bare table is (canonical stays bare).
-    return staticMetadata(locale, PATH, t.pageTitle, t.pageIntro, Object.keys(query).length > 0 ? NOINDEX_FOLLOW : undefined);
+    return staticMetadata(locale, PATH, t.pageTitle, t.pageIntro, Object.keys(query).length > 0 ? NOINDEX_FOLLOW : undefined, await getSiteMeta(locale));
 }
 
 export default async function DeliveryChargePage({ params, searchParams }: Props) {

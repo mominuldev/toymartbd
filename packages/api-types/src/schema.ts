@@ -4594,6 +4594,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/site": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/site` */
+        get: operations["v1.admin.settings.site.show"];
+        /** `PUT /settings/site` — the storefront shows the change once its `store-info` cache is purged */
+        put: operations["v1.admin.settings.site.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/locations": {
         parameters: {
             query?: never;
@@ -14872,6 +14890,61 @@ export interface components {
                 }[];
             } | null;
         };
+        /** SiteBranding */
+        SiteBranding: {
+            name: string | null;
+            name_bn: string | null;
+            tagline: string | null;
+            tagline_bn: string | null;
+            description: string | null;
+            description_bn: string | null;
+            /** @description Logo for light backgrounds. */
+            logo: {
+                id: number;
+                url: string | null;
+                width: number | null;
+                height: number | null;
+                filename: string;
+            } | null;
+            /** @description Optional logo for dark backgrounds. */
+            logo_dark: {
+                id: number;
+                url: string | null;
+                width: number | null;
+                height: number | null;
+                filename: string;
+            } | null;
+            /** @description Square store icon the favicons (32, 180, 192, 512 px PNG) are made from. */
+            icon: {
+                id: number;
+                url: string | null;
+                width: number | null;
+                height: number | null;
+                filename: string;
+            } | null;
+            /** @description The image a shared link shows (1.91 : 1). */
+            social_image: {
+                id: number;
+                url: string | null;
+                width: number | null;
+                height: number | null;
+                filename: string;
+            } | null;
+            /** @description What the storefront shows while a name is blank: the business name, else the brand. */
+            fallback_names: {
+                name: string;
+                name_bn: string;
+            };
+            /** @description Most characters per text field. */
+            max_lengths: {
+                name: number;
+                name_bn: number;
+                tagline: number;
+                tagline_bn: number;
+                description: number;
+                description_bn: number;
+            };
+        };
         /** SitemapStatus */
         SitemapStatus: {
             sitemap_url: string;
@@ -15129,6 +15202,34 @@ export interface components {
             address_bn: string;
             trade_licence: string;
             bin: string;
+            /** @description Site & branding; `icons` lists the favicon / app-icon PNGs (32, 180, 192, 512 px), empty until a store icon is set. */
+            site: {
+                name_en: string;
+                name_bn: string;
+                tagline_en: string | null;
+                tagline_bn: string | null;
+                description_en: string | null;
+                description_bn: string | null;
+                logo: {
+                    url: string;
+                    width: number | null;
+                    height: number | null;
+                } | null;
+                logo_dark: {
+                    url: string;
+                    width: number | null;
+                    height: number | null;
+                } | null;
+                icons: {
+                    size: number;
+                    url: string;
+                }[];
+                social_image: {
+                    url: string;
+                    width: number;
+                    height: number;
+                } | null;
+            };
         };
         /** StoreLocation */
         StoreLocation: {
@@ -17629,6 +17730,35 @@ export interface components {
             rider_name?: string | null;
             /** @description The rider's mobile: `01XXXXXXXXX`, `8801XXXXXXXXX` or `+8801XXXXXXXXX`, 013–019 only. */
             rider_phone?: string | null;
+        };
+        /**
+         * UpdateSiteBrandingRequest
+         * @description `PUT /settings/site` — Store settings › Site & branding; needs settings.update. The whole
+         *     section: a null or blank field clears the saved value (the storefront then falls back — the
+         *     business name, its built-in wordmark, its own icon).
+         *
+         *     Every image is a ready library image. The store icon must be square and at least 512 × 512
+         *     (the largest app icon made from it); the share image about 1.91 : 1 and at least 600 wide;
+         *     a logo at least 120 wide.
+         */
+        UpdateSiteBrandingRequest: {
+            /** @description Storefront name in English; blank uses the business name. */
+            name?: string | null;
+            name_bn?: string | null;
+            /** @description Shown under the logo and in the home page title. */
+            tagline?: string | null;
+            tagline_bn?: string | null;
+            /** @description The search and social description a page uses when it has none of its own. */
+            description?: string | null;
+            description_bn?: string | null;
+            /** @description Logo for light backgrounds (`media.id`). */
+            logo_media_id?: number | null;
+            /** @description Optional logo for dark backgrounds (`media.id`). */
+            logo_dark_media_id?: number | null;
+            /** @description Square store icon, ≥ 512 × 512: the favicons and app icons are made from it (`media.id`). */
+            icon_media_id?: number | null;
+            /** @description Share image, ~1.91 : 1 and ≥ 600 wide (`media.id`). */
+            social_image_media_id?: number | null;
         };
         /**
          * UpdateStaffRequest
@@ -29692,6 +29822,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BusinessDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.site.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SiteBranding` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteBranding"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.site.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSiteBrandingRequest"];
+            };
+        };
+        responses: {
+            /** @description `SiteBranding` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteBranding"];
                 };
             };
             401: components["responses"]["AuthenticationException"];

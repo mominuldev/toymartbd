@@ -12,10 +12,12 @@ import {
     canonicalFor,
     contentMetadata,
     homeMetadata,
+    layoutMetadata,
     listingPageMetadata,
     noindexMetadata,
     privateMetadata,
     productMetadata,
+    siteMetaFor,
     searchMetadata,
     staticMetadata,
     titleSeparatorOf,
@@ -407,5 +409,52 @@ describe('route handlers', () => {
         expect(String((fetchMock.mock.calls[1] as unknown as [string])[0])).toBe('http://api.test/api/v1/storefront/sitemaps/sitemap-products-en-1.xml');
         expect((await file.GET(new Request('http://x'), { params: Promise.resolve({ file: '..%2F.env' }) })).status).toBe(404);
         expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+});
+
+// Store → Site & branding in the <head>: the name, tagline and description per locale, the
+// favicons (PNG renditions from the API) and the share image a page without its own falls back to.
+describe('site identity in metadata', () => {
+    const site = {
+        name: { en: 'ToyMart', bn: 'টয়মার্ট' },
+        tagline: { en: 'Toys & learning for every age', bn: 'সব বয়সের খেলনা ও শেখা' },
+        description: { en: 'Educational toys, delivered across Bangladesh.', bn: null },
+        logo: null,
+        logoDark: null,
+        icons: [32, 180, 192, 512].map((size) => ({ size, url: `https://api.test/site-assets/9/icon-${size}.png` })),
+        socialImage: { url: 'https://api.test/site-assets/10/share.jpg', width: 1200, height: 630 },
+    };
+
+    it('falls back to the catalog while nothing is set', () => {
+        const meta = siteMetaFor('en');
+        expect(meta).toEqual({ name: getMessages('en').site.name, tagline: null, description: null, image: null, icons: [] });
+        const layout = layoutMetadata('en', meta);
+        expect(layout.title).toEqual({ default: getMessages('en').site.name, template: titleTemplate(getMessages('en').site.name) });
+        expect(layout.description).toBe(getMessages('en').site.tagline);
+        expect(layout.icons).toBeUndefined();
+        expect(layout.twitter).toBeUndefined();
+    });
+
+    it('puts the owner’s name in the title template, the favicons in icons and the share image in Open Graph', () => {
+        const layout = layoutMetadata('bn', siteMetaFor('bn', site), ' | ');
+        expect(layout.title).toEqual({ default: 'টয়মার্ট', template: '%s | টয়মার্ট' });
+        expect(layout.description).toBe('সব বয়সের খেলনা ও শেখা'); // no Bangla description: the tagline
+        expect(layout.icons).toEqual({
+            icon: [32, 192, 512].map((size) => ({ url: `https://api.test/site-assets/9/icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png' })),
+            apple: [{ url: 'https://api.test/site-assets/9/icon-180.png', sizes: '180x180', type: 'image/png' }],
+        });
+        expect(layout.openGraph).toMatchObject({ siteName: 'টয়মার্ট', images: [{ url: 'https://api.test/site-assets/10/share.jpg', width: 1200, height: 630 }] });
+    });
+
+    it('home and other pages carry the site name, and the share image when they have none of their own', () => {
+        const meta = siteMetaFor('en', site);
+        const home = homeMetadata('en', ' | ', meta);
+        expect(home.title).toEqual({ absolute: 'ToyMart | Toys & learning for every age' });
+        expect(home.description).toBe('Educational toys, delivered across Bangladesh.');
+        expect(home.openGraph).toMatchObject({ siteName: 'ToyMart', images: [{ url: 'https://api.test/site-assets/10/share.jpg' }] });
+
+        const product = productMetadata({ locale: 'en', slug: 'robot', name: 'Robot', description: 'A robot.', image: { url: 'https://cdn.test/robot.webp' }, site: meta });
+        expect(product.openGraph).toMatchObject({ siteName: 'ToyMart', images: [{ url: 'https://cdn.test/robot.webp' }] });
+        expect(staticMetadata('en', '/brands', 'Brands', null, undefined, meta).openGraph).toMatchObject({ siteName: 'ToyMart' });
     });
 });

@@ -1,4 +1,4 @@
-# Store settings API — Business, Branches & warehouses
+# Store settings API — Business, Site & branding, Branches & warehouses
 
 Admin → Settings › Store (Figma B · 38 `241:50827`). All routes are under `/api/v1/admin`,
 behind the admin Sanctum cookie session (CSRF on writes). Reads need `settings.view`, writes
@@ -31,6 +31,61 @@ Response extras: `default_names` (what invoices print while a name is unset — 
 `hotline_default` (env `STORE_HOTLINE`, which order messages still use), `placeholders` (Business
 fields an invoice still prints as "[placeholder]"). Values are placeholders until the owner
 supplies real ones (UI-UX-DESIGN-SPEC §10).
+
+## Site & branding
+
+Figma **B · 38 Store settings · Premium** `390:69035`. How the storefront introduces itself.
+
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/settings/site` | settings.view |
+| PUT | `/settings/site` | settings.update |
+
+Body (whole section; `null` or blank removes the saved value — the storefront then falls back):
+
+| Field | Rule | Stored as |
+|---|---|---|
+| `name`, `name_bn` | string ≤ 60 | `store.name`, `store.name_bn` |
+| `tagline`, `tagline_bn` | string ≤ 80 | `store.tagline`, `store.tagline_bn` |
+| `description`, `description_bn` | string ≤ 160 | `store.description`, `store.description_bn` |
+| `logo_media_id` | ready library image, ≥ 120 px wide | `store.logo_media_id` |
+| `logo_dark_media_id` | ready library image, ≥ 120 px wide (optional) | `store.logo_dark_media_id` |
+| `icon_media_id` | ready image, square (±1 %), ≥ 512 × 512 | `store.icon_media_id` |
+| `social_image_media_id` | ready image, ratio 1.8–2.0 (1200 × 630 ideal), ≥ 600 wide | `store.social_image_media_id` |
+
+`settings` group `store`, `updated_by` = the saver (like Business and POS). Response `SiteBranding`:
+the six texts, `logo` / `logo_dark` / `icon` / `social_image` as `{ id, url (480 WebP), width, height,
+filename }` or null, `fallback_names` (what a blank name shows: the business name, else the brand) and
+`max_lengths`.
+
+**Why its own endpoint, not more fields on `/settings/business`:** Business is a second view of the
+invoice identity (`invoice.company.*`, shared with `/settings/invoice`); the storefront's display
+name and look are not printed on invoices, and the shop's legal name and its tab name may differ.
+
+- A save that changes anything queues `RevalidateStorefrontTags(['store-info'])` after commit.
+- The four images are **media usages** (`SiteBrandingMediaUsages`, type `site_branding`, admin path
+  `/admin/settings/site`): the library refuses to delete one while it is set (409).
+- Brand colours are not settings: they come from `packages/tokens` and the screen shows them read-only.
+
+### Generated files — `GET /site-assets/{media}/{name}` (web route, public)
+
+The media pipeline makes WebP/AVIF only, which Apple touch icons and some link previewers do not
+take. `App\Domain\Content\Services\SiteAssets` makes, on first request, square PNGs from the store
+icon (`icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png`) and a 1200 × 630 JPEG from the
+share image (`share.jpg`), stored beside the media's renditions (`{base}/site-{name}`, immutable
+with the base, removed with the media), then answers a `302` (`Cache-Control: public, max-age=300`)
+like `/m/{media}/…`. A media id that is not the current icon / share image is a 404, so the route
+never converts an arbitrary library image. Throttled 240/min.
+
+### Storefront — `GET /storefront/store-info` → `site` (additive)
+
+`{ name_en, name_bn` (site name → business name → brand), `tagline_en, tagline_bn, description_en,
+description_bn, logo, logo_dark` (`{ url, width, height }` or null), `icons` (`[{ size, url }]` for 32,
+180, 192, 512 — empty until an icon is set), `social_image` (`{ url, width: 1200, height: 630 }` → the
+JPEG above) `}`. The storefront renders the logo in the header (else its built-in Wordmark), uses the
+name in the title template and `og:site_name`, the description (else tagline) as the default
+description, `icons` as `<link rel="icon">` / `apple-touch-icon`, and the share image as the
+`og:image` of any page without its own. A blank Bangla tagline / description borrows the English one.
 
 ## Branches & warehouses (stock locations)
 

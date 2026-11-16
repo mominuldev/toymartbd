@@ -22,7 +22,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo/jsonld';
 import { getTitleSeparator } from '@/lib/seo/fetch';
 import { homeMetadata } from '@/lib/seo/metadata';
-import { getStoreInfo } from '@/lib/store-info';
+import { getSiteMeta, getStoreInfo } from '@/lib/store-info';
 
 // Home — the CMS homepage (Phase 7): the published blocks from GET /storefront/content/home,
 // ISR-cached under `content:home` (+ the tags of the data they show), revalidated on publish and at
@@ -51,7 +51,7 @@ async function localeOf(params: Props['params']): Promise<Locale> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const locale = await localeOf(params);
-    return homeMetadata(locale, await getTitleSeparator());
+    return homeMetadata(locale, await getTitleSeparator(), await getSiteMeta(locale));
 }
 
 const CATEGORY_TILES = 8;

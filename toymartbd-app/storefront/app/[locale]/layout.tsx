@@ -9,7 +9,8 @@ import { getMessages, htmlLang, isLocale, localizedPath } from '@/lib/i18n';
 import { siteUrl } from '@/lib/seo';
 import { cmsPaths } from '@/lib/site-config';
 import { getTitleSeparator } from '@/lib/seo/fetch';
-import { titleTemplate } from '@/lib/seo/metadata';
+import { layoutMetadata } from '@/lib/seo/metadata';
+import { getSiteMeta } from '@/lib/store-info';
 import { getTrackingConfig } from '@/lib/tracking/fetch';
 import '../globals.css';
 
@@ -30,14 +31,11 @@ interface LayoutProps {
 export async function generateMetadata({ params }: Omit<LayoutProps, 'children'>): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
-    const t = getMessages(locale);
-    return {
-        metadataBase: siteUrl(),
-        // One separator for every title (config/seo.php via the API) — the same one the server's SEO
-        // documents end with, so a page title never carries two different suffixes.
-        title: { default: t.site.name, template: titleTemplate(t.site.name, await getTitleSeparator()) },
-        description: t.site.tagline,
-    };
+    // One separator for every title (config/seo.php via the API) — the same one the server's SEO
+    // documents end with, so a page title never carries two different suffixes. The name, default
+    // description, favicons and share image are the owner's Site & branding (tag store-info).
+    const [separator, site] = await Promise.all([getTitleSeparator(), getSiteMeta(locale)]);
+    return { metadataBase: siteUrl(), ...layoutMetadata(locale, site, separator) };
 }
 
 export const viewport: Viewport = {

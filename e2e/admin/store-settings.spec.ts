@@ -113,3 +113,25 @@ test('owner sets the discount cap and the due limit under Point of sale', async 
     await expect(page.getByLabel('Maximum cashier discount')).toHaveValue('15');
     await expect(page.getByLabel('Due limit per customer')).toHaveValue('8000');
 });
+
+test('owner sets the storefront name and tagline under Site & branding, previewed live', async ({ page }) => {
+    await signIn(page);
+    await page.getByRole('link', { name: /Site & branding/ }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Site & branding' })).toBeVisible();
+    const preview = page.getByRole('complementary', { name: 'Live preview' });
+    const save = page.getByRole('button', { name: 'Save changes' });
+    await expect(save).toBeDisabled();
+
+    await page.getByLabel('Store name', { exact: true }).fill('ToyMart');
+    await page.getByLabel('Tagline', { exact: true }).fill('Toys & learning for every age');
+    await page.getByLabel('Tagline · বাংলা').fill('সব বয়সের খেলনা ও শেখা');
+    await expect(preview.getByText('ToyMart | Toys & learning for every age').first()).toBeVisible();
+    await expect(page.getByText('29 / 80').first()).toBeVisible();
+    await save.click();
+    await expect(page.getByText('Site & branding saved — the storefront updates in a moment')).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/site-branding.png`, fullPage: true });
+
+    await page.reload();
+    await expect(page.getByLabel('Store name', { exact: true })).toHaveValue('ToyMart');
+    await expect(page.getByLabel('Tagline · বাংলা')).toHaveValue('সব বয়সের খেলনা ও শেখা');
+});

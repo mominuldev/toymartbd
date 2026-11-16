@@ -48,6 +48,7 @@ function PHASE10_SCREENS(): Array<[string, string]> {
         ['two-factor', '/admin/account/two-factor'],
         ['integrations-hub', '/admin/integrations'],
         ['settings-business', '/admin/settings/business'],
+        ['settings-site', '/admin/settings/site'],
         ['settings-branches', '/admin/settings/branches'],
         ['settings-checkout', '/admin/settings/checkout'],
     ];

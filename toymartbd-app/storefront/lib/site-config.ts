@@ -41,6 +41,32 @@ export interface StoreLegal {
     bin: string | null;
 }
 
+/** An image from Admin → Settings → Store → Site & branding (an absolute URL from the media pipeline). */
+export interface SiteImage {
+    url: string;
+    width: number | null;
+    height: number | null;
+}
+
+/**
+ * How the storefront introduces itself (Admin → Settings → Store → Site & branding): its name,
+ * tagline and description per locale, the header logo, the favicon / app-icon PNGs and the share
+ * image. Each image is null (icons empty) until the owner sets one, and the storefront keeps its
+ * built-in default: the Wordmark, no custom favicon, no share image. A Bangla tagline or
+ * description the owner left blank borrows the English one; a blank name is the business name.
+ */
+export interface SiteIdentity {
+    name: { en: string; bn: string };
+    tagline: { en: string | null; bn: string | null };
+    description: { en: string | null; bn: string | null };
+    logo: SiteImage | null;
+    logoDark: SiteImage | null;
+    /** Square PNGs by size (32 tab, 180 Apple touch, 192 Android, 512 PWA), ascending. */
+    icons: Array<{ size: number; url: string }>;
+    /** 1200 × 630 JPEG for link previews. */
+    socialImage: SiteImage | null;
+}
+
 /** What the storefront chrome shows about the business (lib/store-info.ts builds it from the API). */
 export interface StoreInfo {
     name: { en: string; bn: string };
@@ -51,6 +77,8 @@ export interface StoreInfo {
      * catalog copy `footer.contact.address` (also a sample). Nothing renders an address today.
      */
     address: { en: string | null; bn: string | null };
+    /** Site & branding (additive in `GET /storefront/store-info`). */
+    site: SiteIdentity;
 }
 
 /** The design-file samples, each marked `placeholder: true`. */
@@ -70,6 +98,15 @@ export const sampleStoreInfo: StoreInfo = {
     contact: sampleContact,
     legal: pendingLegal,
     address: { en: null, bn: null },
+    site: {
+        name: { en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' },
+        tagline: { en: null, bn: null },
+        description: { en: null, bn: null },
+        logo: null,
+        logoDark: null,
+        icons: [],
+        socialImage: null,
+    },
 };
 
 /**

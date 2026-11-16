@@ -13,12 +13,16 @@ use Illuminate\Http\Request;
  * not set is null, and the storefront then shows its marked sample instead (launch item F4).
  * Public data only: nothing here is a secret or personal.
  *
- * @property array{name_en: string, name_bn: string, hotline: string|null, whatsapp: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null} $resource
+ * `site` (additive): Store settings › Site & branding — the storefront's own name per locale (falls back to
+ * the business name, then the brand), tagline, description, logos, the favicon / app-icon PNGs by size
+ * and the 1200 × 630 share-image JPEG. Each unset value is null.
+ *
+ * @property array{name_en: string, name_bn: string, hotline: string|null, whatsapp: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null, site: array<string, mixed>} $resource
  */
 final class StoreInfoResource extends ApiResource
 {
     /**
-     * @return array{name_en: string, name_bn: string, hotline: string|null, hotline_tel: string|null, whatsapp: string|null, whatsapp_display: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null}
+     * @return array{name_en: string, name_bn: string, hotline: string|null, hotline_tel: string|null, whatsapp: string|null, whatsapp_display: string|null, messenger: string|null, email: string|null, address_en: string|null, address_bn: string|null, trade_licence: string|null, bin: string|null, site: array{name_en: string, name_bn: string, tagline_en: string|null, tagline_bn: string|null, description_en: string|null, description_bn: string|null, logo: array{url: string, width: int|null, height: int|null}|null, logo_dark: array{url: string, width: int|null, height: int|null}|null, icons: list<array{size: int, url: string}>, social_image: array{url: string, width: int, height: int}|null}}
      */
     public function toArray(Request $request): array
     {
@@ -44,6 +48,12 @@ final class StoreInfoResource extends ApiResource
             'address_bn' => $info['address_bn'],
             'trade_licence' => $info['trade_licence'],
             'bin' => $info['bin'],
+            /**
+             * Site & branding; `icons` lists the favicon / app-icon PNGs (32, 180, 192, 512 px), empty until a store icon is set.
+             *
+             * @var array{name_en: string, name_bn: string, tagline_en: string|null, tagline_bn: string|null, description_en: string|null, description_bn: string|null, logo: array{url: string, width: int|null, height: int|null}|null, logo_dark: array{url: string, width: int|null, height: int|null}|null, icons: list<array{size: int, url: string}>, social_image: array{url: string, width: int, height: int}|null}
+             */
+            'site' => $info['site'],
         ];
     }
 
