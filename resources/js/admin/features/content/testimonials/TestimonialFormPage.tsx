@@ -124,13 +124,16 @@ function TestimonialEditor({ id, testimonial }: { id: number | null; testimonial
             <ContentHeader breadcrumb={[{ label: t('content.crumb.store') }, { label: t('content.testimonials.title'), to: '/store/testimonials' }, { label: title }]} title={title} />
 
             <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-                <fieldset disabled={!editable || save.isPending} className="flex max-w-3xl min-w-0 flex-col gap-6">
+                <fieldset disabled={!editable || save.isPending} className="flex min-w-0 flex-col gap-6">
                     <FormSection>
-                        <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                        {/* Fills the content width (spec rule 4b): the short name and place fields run four across at xl. */}
+                        <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-4">
                             {text('name', 'content.testimonials.field.name')}
                             {text('name_bn', 'content.testimonials.field.nameBn', { lang: 'bn', optional: true })}
                             {text('location', 'content.testimonials.field.location', { optional: true })}
                             {text('location_bn', 'content.testimonials.field.locationBn', { lang: 'bn', optional: true })}
+                        </div>
+                        <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                             {text('quote', 'content.testimonials.field.quote', { area: true })}
                             {text('quote_bn', 'content.testimonials.field.quoteBn', { lang: 'bn', optional: true, area: true })}
                         </div>

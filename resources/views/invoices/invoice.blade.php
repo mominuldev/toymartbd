@@ -25,14 +25,14 @@
         'subtle' => '#EEF1F5',    // color/bg/subtle
         'brand' => '#4F46E5',     // color/bg/brand
     ];
-    $money = static fn (\App\Support\Money|string $m): string => \App\Support\Locale\Formatter::money($m);
+    $money = static fn (\App\Support\Money|string $m): string => \App\Support\Locale\Formatter::lakhMoney($m);
     // Purchase unit costs carry up to 4 decimals (DECIMAL(14,4)); show them when non-zero.
     $cost = static function (string $v): string {
         $fraction = rtrim(explode('.', $v.'.')[1], '0');
 
         return strlen($fraction) > 2
-            ? '৳'.\App\Support\Locale\Formatter::number($v, 4)
-            : \App\Support\Locale\Formatter::money(bcadd($v, '0', 2));
+            ? '৳'.\App\Support\Locale\Formatter::lakhNumber($v, 4)
+            : \App\Support\Locale\Formatter::lakhMoney(bcadd($v, '0', 2));
     };
 @endphp
 <!doctype html>
@@ -163,7 +163,7 @@
                     @endif
                 </td>
                 <td class="muted">{{ $line['sku'] }}</td>
-                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
+                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::lakhQuantity((int) $line['quantity']) }}</td>
                 <td class="num">{{ $adjustment ? '' : ($sales ? $money((string) $line['unit_price']) : $cost((string) $line['unit_price'])) }}</td>
                 <td class="num">{{ $money((string) $line['line_total']) }}</td>
             </tr>

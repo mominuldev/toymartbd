@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Finance\Reports;
 
+use App\Domain\Finance\Enums\LedgerEntryType;
 use App\Domain\Finance\Services\OrderLedgerSources;
 use App\Support\Money;
 use Illuminate\Database\Query\Builder;
@@ -165,6 +166,33 @@ final readonly class LedgerTotals
             ->count('financial_transactions.source_id');
 
         return ['orders' => $orders, 'other' => $other, 'order_count' => $count];
+    }
+
+    /**
+     * How many times each recognised type happened in the period: entries in the type's
+     * natural direction only (a charge, not its reversal), so "5 parcels" is five courier
+     * charges even when one was later reversed. Counts, never money.
+     *
+     * @return array<string, int> type => entries
+     */
+    public function recognisedOccurrences(ReportPeriod $period): array
+    {
+        $rows = $this->base($period)
+            ->where('financial_transactions.is_recognised_revenue', true)
+            ->groupBy('financial_transactions.type', 'financial_transactions.direction')
+            ->select('financial_transactions.type', 'financial_transactions.direction')
+            ->selectRaw('COUNT(*) as entries')
+            ->get();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $type = LedgerEntryType::tryFrom((string) $row->type);
+            if ($type !== null && $type->naturalDirection()->value === $row->direction) {
+                $counts[$type->value] = ($counts[$type->value] ?? 0) + (int) $row->entries;
+            }
+        }
+
+        return $counts;
     }
 
     /**

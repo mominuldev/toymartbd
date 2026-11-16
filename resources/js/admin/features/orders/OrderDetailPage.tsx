@@ -84,7 +84,7 @@ export function OrderDetailPage() {
             />
 
             {o.status === 'cancelled' && o.cancel_reason && (
-                <p className="flex items-start gap-2 rounded-md border-l-3 border-feedback-danger bg-subtle px-4 py-3 t-admin-body text-fg-primary">
+                <p className="flex items-start gap-2 rounded-sm bg-danger-subtle px-4 py-3 t-admin-body text-fg-primary">
                     <WarningIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
                     <span>
                         {t('orders.detail.cancelledBecause', { reason: t(`orders.cancelReason.${o.cancel_reason}` as MessageKey) })}
@@ -638,9 +638,9 @@ function PhoneProfileLine({ order }: { order: Order }) {
 
 function RiskLevelChip({ level, score }: { level: RiskLevel; score: number }) {
     const { t } = useI18n();
-    const { icon: Icon, edge, tint } = riskTint(level);
+    const { icon: Icon, fill, tint } = riskTint(level);
     return (
-        <span className={`inline-flex h-7 items-center gap-2 rounded-sm border-l-2 bg-subtle px-3 t-admin-body-strong whitespace-nowrap text-fg-primary ${edge}`}>
+        <span className={`inline-flex h-7 items-center gap-2 rounded-sm px-3 t-admin-body-strong whitespace-nowrap text-fg-primary ${fill}`}>
             <Icon size={16} aria-hidden className={tint} />
             {t(`orders.risk.chip.${level}` as MessageKey, { score })}
         </span>

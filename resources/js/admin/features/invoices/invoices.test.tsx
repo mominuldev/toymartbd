@@ -4,7 +4,7 @@ import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
 import type { CreditNoteListItem, InvoiceListItem, InvoiceSettings } from './api';
 import { creditNotesPath, invoicesPath as invoicesPathFor } from './api';
-import { formatMoney } from './parts';
+import { formatMoney } from '@/lib/money';
 
 afterEach(() => {
     cleanup();
@@ -156,7 +156,7 @@ describe('invoices', () => {
         const urls = calls.mock.calls.map(([url]) => String(url)).filter((u) => u.includes('/invoices?'));
         expect(urls.some((u) => u.includes('filter%5Btype%5D=purchase') && u.includes('filter%5Bissued_from%5D=2026-11-01') && u.includes('filter%5Bissued_to%5D=2026-11-13') && u.includes('filter%5Bsearch%5D=INV-26'))).toBe(true);
         expect(invoicesPathFor({ type: '', search: ' ', from: '', to: '' }, null)).toBe('/invoices');
-        expect(formatMoney('1250000.50')).toBe('1,250,000.5');
+        expect(formatMoney('1250000.50')).toBe('12,50,000.5');
     });
 
     it('shows what an invoice has been credited and prints its credit note', async () => {

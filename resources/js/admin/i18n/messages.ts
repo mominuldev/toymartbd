@@ -20,6 +20,7 @@ import { returnsBn, returnsEn } from './messages.returns';
 import { purchasingBn, purchasingEn } from './messages.purchasing';
 import { reportsBn, reportsEn } from './messages.reports';
 import { financeBn, financeEn } from './messages.finance';
+import { capitalBn, capitalEn } from './messages.capital';
 import { fulfilmentBn, fulfilmentEn } from './messages.fulfilment';
 import { courierReportBn, courierReportEn } from './messages.courierReport';
 import { courierLocationsBn, courierLocationsEn } from './messages.courierLocations';
@@ -27,6 +28,7 @@ import { integrationsBn, integrationsEn } from './messages.integrations';
 import { couriersBn, couriersEn } from './messages.couriers';
 import { riskBn, riskEn } from './messages.risk';
 import { settlementsBn, settlementsEn } from './messages.settlements';
+import { financePagesBn, financePagesEn } from './messages.financePages';
 import { seoBn, seoEn } from './messages.seo';
 import { marketingBn, marketingEn } from './messages.marketing';
 import { contentBn, contentEn } from './messages.content';
@@ -62,6 +64,7 @@ export const en = {
     ...returnsEn,
     ...reportsEn,
     ...financeEn,
+    ...capitalEn,
     ...fulfilmentEn,
     ...courierReportEn,
     ...courierLocationsEn,
@@ -69,6 +72,7 @@ export const en = {
     ...couriersEn,
     ...riskEn,
     ...settlementsEn,
+    ...financePagesEn,
     ...seoEn,
     ...marketingEn,
     ...contentEn,
@@ -375,6 +379,7 @@ export const bn: Messages = {
     ...returnsBn,
     ...reportsBn,
     ...financeBn,
+    ...capitalBn,
     ...fulfilmentBn,
     ...courierReportBn,
     ...courierLocationsBn,
@@ -382,6 +387,7 @@ export const bn: Messages = {
     ...couriersBn,
     ...riskBn,
     ...settlementsBn,
+    ...financePagesBn,
     ...seoBn,
     ...marketingBn,
     ...contentBn,

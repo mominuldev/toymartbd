@@ -121,7 +121,7 @@ function ShipmentBody({ shipment: s, canPrint, canRetry, canRecordRider }: { shi
     return (
         <>
             {s.status === 'failed' && (
-                <div role="alert" className="flex flex-col gap-2 rounded-sm border-l-3 border-feedback-danger bg-subtle px-4 py-3">
+                <div role="alert" className="flex flex-col gap-2 rounded-sm bg-danger-subtle px-4 py-3">
                     <p className="flex items-start gap-2 t-admin-body text-fg-primary">
                         <WarningIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
                         <span>

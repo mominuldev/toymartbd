@@ -8,7 +8,9 @@ use App\Domain\Catalog\Services\MediaUrls;
 use App\Domain\Finance\Actions\ConfirmCourierSettlement;
 use App\Domain\Finance\Actions\ImportCourierSettlement;
 use App\Domain\Finance\Actions\ReviewSettlementLine;
+use App\Domain\Finance\Enums\SettlementReview;
 use App\Domain\Finance\Enums\SettlementStatus;
+use App\Domain\Finance\Enums\SettlementVariance;
 use App\Domain\Finance\Models\CourierSettlement;
 use App\Domain\Finance\Models\CourierSettlementItem;
 use App\Domain\Finance\Settlement\StatementReader;
@@ -17,12 +19,15 @@ use App\Http\Requests\Admin\Finance\ConfirmSettlementRequest;
 use App\Http\Requests\Admin\Finance\ImportSettlementRequest;
 use App\Http\Requests\Admin\Finance\ReviewSettlementLineRequest;
 use App\Http\Resources\Admin\CourierSettlementResource;
+use Closure;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilderContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -37,39 +42,61 @@ final class CourierSettlementController extends ApiController
 {
     public const int PER_PAGE = 25;
 
-    /** `GET /finance/settlements` — newest first; `meta.providers` lists the couriers (code, name) for the import form. `filter[status]` (received|reconciled), `filter[provider]` (code). Needs finance.view. */
-    #[QueryParameter('filter[status]', 'received|reconciled', type: 'string')]
-    #[QueryParameter('filter[provider]', 'Courier code (steadfast, pathao…).', type: 'string')]
-    #[OpenApiResponse(400, 'Unlisted filter or an invalid value (`bad-request`)')]
+    /**
+     * `GET /finance/settlements` — newest first; needs finance.view. `filter[status]` is the
+     * statement's review state as the list shows it: `received` (to confirm — every line matches
+     * or has a decision), `disputed` (a line that does not match still waits for a decision) or
+     * `reconciled`. `filter[provider]` is a courier code from `meta.providers`; an unknown code is
+     * a 400. `meta.providers` lists the couriers (code, name) for the import form and the filter;
+     * `meta.disputed_count` is how many statements wait for a decision (all couriers, unfiltered).
+     */
+    #[QueryParameter('filter[status]', 'received (to confirm) | disputed (needs a decision) | reconciled', type: "'received'|'disputed'|'reconciled'")]
+    #[QueryParameter('filter[provider]', 'Courier code (steadfast, pathao…), one of `meta.providers`.', type: 'string')]
+    #[OpenApiResponse(400, 'Unlisted filter, an unknown status or an unknown courier code (`bad-request`)')]
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', CourierSettlement::class);
 
+        // The couriers a statement can come from, for the import form and the filter (finance staff cannot read courier settings).
+        $providers = DB::table('courier_providers')->orderBy('position')->orderBy('id')->get(['code', 'name', 'name_bn'])
+            ->map(static fn (object $p): array => ['code' => (string) $p->code, 'name' => (string) $p->name, 'name_bn' => is_string($p->name_bn) ? $p->name_bn : null])->all();
+        $codes = array_column($providers, 'code');
+
         $page = QueryBuilder::for(CourierSettlement::class, $request)
             ->allowedFilters(
                 AllowedFilter::callback('status', static function (Builder $q, mixed $v): void {
-                    $status = is_string($v) ? SettlementStatus::tryFrom($v) : null;
-                    if ($status === null) {
-                        throw new BadRequestHttpException('filter[status] must be one of: received, reconciled.');
-                    }
-                    $q->where('status', $status->value);
+                    match ($v) {
+                        'reconciled' => $q->where('status', SettlementStatus::Reconciled->value),
+                        'disputed' => $q->where('status', '!=', SettlementStatus::Reconciled->value)->whereExists(self::unresolvedLines()),
+                        'received' => $q->where('status', '!=', SettlementStatus::Reconciled->value)->whereNotExists(self::unresolvedLines()),
+                        default => throw new BadRequestHttpException('filter[status] must be one of: received, disputed, reconciled.'),
+                    };
                 }),
-                AllowedFilter::callback('provider', static function (Builder $q, mixed $v): void {
-                    if (! is_string($v)) {
-                        throw new BadRequestHttpException('filter[provider] must be a courier code.');
+                AllowedFilter::callback('provider', static function (Builder $q, mixed $v) use ($codes): void {
+                    if (! is_string($v) || ! in_array($v, $codes, true)) {
+                        throw new BadRequestHttpException('filter[provider] must be one of: '.implode(', ', $codes).'.');
                     }
-                    $q->whereIn('provider_id', \Illuminate\Support\Facades\DB::table('courier_providers')->where('code', $v)->select('id'));
+                    $q->whereIn('provider_id', DB::table('courier_providers')->where('code', $v)->select('id'));
                 }),
             )
             ->orderByDesc('received_at')->orderByDesc('id')
             ->cursorPaginate(self::PER_PAGE)
             ->withQueryString();
 
-        // The couriers a statement can come from, for the import form (finance staff cannot read courier settings).
-        $providers = \Illuminate\Support\Facades\DB::table('courier_providers')->orderBy('position')->orderBy('id')->get(['code', 'name', 'name_bn'])
-            ->map(static fn (object $p): array => ['code' => (string) $p->code, 'name' => (string) $p->name, 'name_bn' => is_string($p->name_bn) ? $p->name_bn : null])->all();
+        $disputed = CourierSettlement::query()->where('status', '!=', SettlementStatus::Reconciled->value)->whereExists(self::unresolvedLines())->count();
 
-        return CourierSettlementResource::collection($page)->additional(['meta' => ['providers' => $providers]]);
+        return CourierSettlementResource::collection($page)->additional(['meta' => ['providers' => $providers, 'disputed_count' => $disputed]]);
+    }
+
+    /** A line of the outer settlement that does not match and has no decision yet (as `CourierSettlement::unresolvedCount`). */
+    private static function unresolvedLines(): Closure
+    {
+        return static function (QueryBuilderContract $q): void {
+            $q->selectRaw('1')->from('courier_settlement_items')
+                ->whereColumn('courier_settlement_items.settlement_id', 'courier_settlements.id')
+                ->where('variance_type', '!=', SettlementVariance::None->value)
+                ->where('review_status', SettlementReview::Pending->value);
+        };
     }
 
     /** `GET /finance/settlements/{settlement}` — with every line. Needs finance.view. */

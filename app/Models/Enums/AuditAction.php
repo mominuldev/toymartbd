@@ -19,9 +19,15 @@ enum AuditAction: string
     case ShipmentRiderRecorded = 'shipment_rider_recorded';
     /** A failed scheduled report email sent again by staff (P9) — financial data leaving the admin. */
     case ScheduledReportResent = 'scheduled_report_resent';
+    /** Owner capital put in or a drawing taken out (P10) — money moving between the owner and the business. */
+    case CapitalEntryRecorded = 'capital_entry_recorded';
+    /** An owner-capital entry reversed by a mirror entry (P10); the reason is in the payload. */
+    case CapitalEntryReversed = 'capital_entry_reversed';
+    /** A capital holder (owner / partner) added or changed (P10). */
+    case CapitalHolderSaved = 'capital_holder_saved';
 
     /** The activity-log areas (Figma B · 39 "Area" filter), in display order. */
-    public const array AREAS = ['catalog', 'refunds', 'staff', 'integrations', 'fulfilment', 'reports'];
+    public const array AREAS = ['catalog', 'refunds', 'staff', 'integrations', 'fulfilment', 'reports', 'finance'];
 
     /**
      * Which part of the admin a row belongs to. A credential change is a staff matter when
@@ -37,6 +43,7 @@ enum AuditAction: string
             self::CredentialChanged => $staffSubject ? 'staff' : 'integrations',
             self::ShipmentRiderRecorded => 'fulfilment',
             self::ScheduledReportResent => 'reports',
+            self::CapitalEntryRecorded, self::CapitalEntryReversed, self::CapitalHolderSaved => 'finance',
         };
     }
 

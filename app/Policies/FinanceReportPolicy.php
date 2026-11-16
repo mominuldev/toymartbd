@@ -26,6 +26,15 @@ final class FinanceReportPolicy extends Policy
         return $this->allows($user, Permission::FinanceView);
     }
 
+    /**
+     * The P&L's item-cost line (cost of goods sold) and the block total it makes. Without
+     * catalog.view_cost the statement still shows gross profit, but not the line itself.
+     */
+    public function viewPnlItemCosts(User $user): bool
+    {
+        return $this->viewPnl($user) && $this->allows($user, Permission::CatalogViewCost);
+    }
+
     public function viewProfitability(User $user): bool
     {
         return $this->allows($user, Permission::FinanceView) && $this->allows($user, Permission::CatalogViewCost);

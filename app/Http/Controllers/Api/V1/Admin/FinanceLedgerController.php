@@ -17,6 +17,7 @@ use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The ledger browser and the receivables card (P5 finance). Read-only: the ledger is
@@ -81,6 +82,15 @@ final class FinanceLedgerController extends ApiController
             ->orderBy('id', $f->descending ? 'desc' : 'asc')
             ->cursorPaginate(self::PER_PAGE)
             ->withQueryString();
+
+        // "From: Order #TM-…": the order number for an order's own entries, one query per page
+        // (a transient attribute for the resource; the ledger row itself is never written).
+        $entries = collect($page->items())->filter(static fn (FinancialTransaction $e): bool => in_array($e->source_type, FinanceLedgerEntryResource::ORDER_SOURCES, true));
+        $numbers = $entries->isEmpty() ? collect() : DB::table('orders')->whereIn('id', $entries->pluck('source_id')->unique()->values()->all())->pluck('number', 'id');
+        $entries->each(static function (FinancialTransaction $e) use ($numbers): void {
+            $number = $numbers->get($e->source_id);
+            $e->setAttribute('order_number', is_string($number) ? $number : null);
+        });
 
         return FinanceLedgerEntryResource::collection($page);
     }

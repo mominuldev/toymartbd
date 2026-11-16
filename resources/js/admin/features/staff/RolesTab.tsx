@@ -109,12 +109,12 @@ function Matrix({ matrix, editable }: { matrix: RoleMatrix; editable: boolean })
         <div className="flex flex-col gap-4">
             <div className={dataTable.card}>
                 {warnings.map(({ role, a, b }) => (
-                    <p key={`${role.key}-${a}-${b}`} className="flex items-start gap-2.5 border-s-2 border-feedback-warning px-4 py-3 t-admin-body text-fg-primary">
+                    <p key={`${role.key}-${a}-${b}`} className="flex items-start gap-2.5 bg-warning-subtle px-4 py-3 t-admin-body text-fg-primary">
                         <WarningIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />
                         {t('roles.sodWarning', { role: t(`role.${role.key}` as MessageKey), a: t(`perm.${a}` as MessageKey), b: t(`perm.${b}` as MessageKey) })}
                     </p>
                 ))}
-                <p className="flex items-start gap-2.5 border-s-2 border-feedback-info px-4 py-3 t-admin-body text-fg-primary">
+                <p className="flex items-start gap-2.5 bg-info-subtle px-4 py-3 t-admin-body text-fg-primary">
                     <InfoIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-info" />
                     {t(editable ? 'roles.editHelp' : 'roles.viewOnly')}
                 </p>

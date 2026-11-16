@@ -8,22 +8,19 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import { dataTable } from '@/components/ui/DataTable';
+import { takaText } from '@/lib/money';
 import { scopeTypes, usePick, useScopeNames, type Coupon, type PickItem, type PickKind, type PromotionStatus, type ScopeType, type UsageRow, type UsageSummary } from './api';
 
 type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-export const TAKA = '৳';
+export { TAKA } from '@/lib/money';
 
 /** Card surface: Figma B · 20 cards (radius/md, border/default, bg/surface, e1, 20 padding). */
 export const card = 'flex flex-col gap-4 rounded-md border border-line-default bg-surface p-5 shadow-e1';
 
-/** "6260.00" → "৳6,260": groups the server's decimal string; never computes (rule 1). */
+/** "6260.00" → "৳6,260" (lib/money, lakh grouping), a dash for no amount; never computes (rule 1). */
 export function taka(decimal: string | null | undefined): string {
-    if (decimal === null || decimal === undefined || decimal === '') return '—';
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${TAKA}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
+    return decimal === null || decimal === undefined || decimal === '' ? '—' : takaText(decimal);
 }
 
 /** "15 Jun 2026, 12:00 am" in Dhaka time, Western digits (rules 11, 36). */

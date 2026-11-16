@@ -142,7 +142,7 @@ export function InboxChannelsSection() {
 
     if (settings.isError) {
         return (
-            <div className="w-full max-w-4xl">
+            <div className="w-full">
                 <QueryError error={settings.error} onRetry={() => void settings.refetch()} />
             </div>
         );
@@ -192,14 +192,15 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
     );
 
     return (
-        <form id={FORM_ID} onSubmit={submit} noValidate aria-labelledby={`${FORM_ID}-title`} className="flex w-full min-w-0 max-w-4xl flex-col gap-6">
+        <form id={FORM_ID} onSubmit={submit} noValidate aria-labelledby={`${FORM_ID}-title`} className="flex w-full min-w-0 flex-col gap-6">
             <div className="flex flex-col gap-0.5">
                 <h2 id={`${FORM_ID}-title`} className="t-admin-section text-fg-primary">
                     {t('messaging.inbox.title')}
                 </h2>
                 <p className="t-admin-caption text-fg-tertiary">{t('messaging.inbox.description')}</p>
             </div>
-            <fieldset disabled={save.isPending} className="flex min-w-0 flex-col gap-6">
+            {/* The channel cards sit side by side at xl, filling the content width (spec rule 4b). */}
+            <fieldset disabled={save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
                 {CHANNELS.map((channel) => (
                     <ChannelCard key={channel} channel={channel} data={settings[channel]} form={form} dirty={form.formState.isDirty} />
                 ))}

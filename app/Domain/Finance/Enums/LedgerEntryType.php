@@ -35,6 +35,16 @@ enum LedgerEntryType: string
      * Not a P&L line (PnlLayout), so it cannot count cash as profit.
      */
     case PosReceipt = 'pos_receipt';
+    /**
+     * Money the owner or a partner put into the business (P10 owner capital): a cash movement,
+     * never revenue (rule 10). Equity, not income — not a P&L line (PnlLayout).
+     */
+    case OwnerCapitalIn = 'owner_capital_in';
+    /**
+     * Money the owner or a partner took out of the business (a drawing): a cash movement,
+     * never an expense — not a P&L line, so a drawing never lowers profit.
+     */
+    case OwnerDrawing = 'owner_drawing';
 
     /**
      * The direction an entry of this type normally takes. A per-type figure is reported
@@ -44,7 +54,7 @@ enum LedgerEntryType: string
     public function naturalDirection(): Direction
     {
         return match ($this) {
-            self::SaleRevenue, self::ShippingRevenue, self::CodReceived, self::OtherIncome, self::PosReceipt => Direction::In,
+            self::SaleRevenue, self::ShippingRevenue, self::CodReceived, self::OtherIncome, self::PosReceipt, self::OwnerCapitalIn => Direction::In,
             default => Direction::Out,
         };
     }

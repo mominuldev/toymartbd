@@ -81,7 +81,7 @@ enum Role: string
                 P::InventoryView,
                 P::PurchasingView,
                 P::FinanceView, P::FinanceManageExpenses, P::FinanceReconcileCod,
-                P::FinanceRecordSupplierPayments, P::FinanceExport,
+                P::FinanceRecordSupplierPayments, P::FinanceExport, P::FinanceManageCapital,
                 P::ReportsView, P::ReportsExport,
                 P::AuditView,
             ],

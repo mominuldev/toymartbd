@@ -19,7 +19,7 @@
         'subtle' => '#EEF1F5',    // color/bg/subtle
         'brand' => '#4F46E5',     // color/bg/brand
     ];
-    $money = static fn (\App\Support\Money|string $m): string => \App\Support\Locale\Formatter::money($m);
+    $money = static fn (\App\Support\Money|string $m): string => \App\Support\Locale\Formatter::lakhMoney($m);
 @endphp
 <!doctype html>
 <html>
@@ -122,7 +122,7 @@
                 </td>
                 @php $adjustment = ($line['kind'] ?? 'item') === 'adjustment'; @endphp
                 <td class="muted">{{ $line['sku'] ?? '' }}</td>
-                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::quantity((int) $line['quantity']) }}</td>
+                <td class="num">{{ $adjustment ? '' : \App\Support\Locale\Formatter::lakhQuantity((int) $line['quantity']) }}</td>
                 <td class="num">{{ $adjustment ? '' : $money((string) $line['unit_price']) }}</td>
                 <td class="num">{{ $money((string) $line['amount']) }}</td>
             </tr>

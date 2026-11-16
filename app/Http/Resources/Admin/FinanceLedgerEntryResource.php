@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
 #[SchemaName('FinanceLedgerEntry')]
 final class FinanceLedgerEntryResource extends ApiResource
 {
+    /** Sources whose id IS the order id — their rows carry `order_number`. */
+    public const array ORDER_SOURCES = ['order', 'order_reversal'];
+
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
@@ -26,7 +29,7 @@ final class FinanceLedgerEntryResource extends ApiResource
 
         return [
             'id' => $e->id,
-            /** @var 'sale_revenue'|'cogs'|'discount_given'|'shipping_revenue'|'courier_charge'|'courier_cod_fee'|'courier_return_charge'|'gateway_fee'|'packaging'|'marketing'|'salary'|'rent'|'utility'|'refund'|'inventory_write_off'|'supplier_payment'|'cod_received'|'other_income'|'other_expense' */
+            /** @var 'sale_revenue'|'cogs'|'discount_given'|'shipping_revenue'|'courier_charge'|'courier_cod_fee'|'courier_return_charge'|'gateway_fee'|'packaging'|'marketing'|'salary'|'rent'|'utility'|'refund'|'inventory_write_off'|'supplier_payment'|'cod_received'|'other_income'|'other_expense'|'pos_receipt'|'owner_capital_in'|'owner_drawing' */
             'type' => $e->type->value,
             /** @var 'in'|'out' */
             'direction' => $e->direction->value,
@@ -36,6 +39,13 @@ final class FinanceLedgerEntryResource extends ApiResource
             'occurred_on' => $e->occurred_on->toDateString(),
             'source_type' => $e->source_type,
             'source_id' => $e->source_id,
+            /**
+             * The order's number when the source is the order itself (`order`, `order_reversal`), so the
+             * screen can say "Order #TM-…" rather than an internal id; null for every other source.
+             *
+             * @var string|null
+             */
+            'order_number' => is_string($n = $e->getAttributes()['order_number'] ?? null) ? $n : null,
             'category_id' => $e->category_id,
             /** @var string|null */
             'category_name' => $e->category?->name,

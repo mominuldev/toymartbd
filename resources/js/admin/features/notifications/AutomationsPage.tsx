@@ -129,7 +129,7 @@ export function AutomationsPage() {
     );
 }
 
-/** List card (223:16049): lightning, title, switch; When / Then / segment line. Selected: brand-subtle, 2px brand edge. */
+/** List card (223:16049): lightning, title, switch; When / Then / segment line. Selected: brand-subtle, 2px brand border all round. */
 function EventCard({ group, selected, onSelect }: { group: Group; selected: boolean; onSelect: () => void }) {
     const { t } = useI18n();
     const { data: me } = useMe();

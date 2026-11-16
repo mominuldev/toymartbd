@@ -1,32 +1,20 @@
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { TAKA, formatCount, formatMoney, takaText } from '@/lib/money';
 
-/**
- * "24380.00" → "24,380", "1050.50" → "1,050.5". Groups and trims the server's decimal
- * string; never parses it into a float, never computes (rule 1).
- */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
-
-/** "৳24,380" as plain text, for sentences and labels. */
-export const takaText = (decimal: string): string => `${TAKA}${formatMoney(decimal)}`;
+/* Money and counts: the admin's one formatter (lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney, takaText };
 
 /** A taka amount as Figma sets it: the sign in the currency face, figures in the surrounding style. */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
     return (
         <span className="tabular whitespace-nowrap">
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
+            <TakaAmount amount={amount} signClass={signClass} />
         </span>
     );
 }
 
-/** Western digits with grouping in both locales (rule 36). */
-export const count = (n: number): string => new Intl.NumberFormat('en-US').format(n);
+/** A count, lakh-grouped with Western digits in both locales (rule 36). */
+export const count = formatCount;
 
 /** A server percentage string ("66.67") as "66.67%"; trailing zeros dropped ("100.00" → "100%"). */
 export function percentText(value: string): string {

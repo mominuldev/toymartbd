@@ -1,38 +1,13 @@
 import type { MessageKey } from '@/i18n/messages';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { TAKA, formatMoney, isZeroAmount, takaText } from '@/lib/money';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-
-/**
- * "1250.00" → "1,250", "1050.50" → "1,050.5". Groups and trims the server's decimal string;
- * never parses it into a float, never computes (rule 1).
- */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
-
-/** True for "0", "0.00", "-0.00" — a display decision on the server's string, not arithmetic. */
-export function isZeroAmount(decimal: string): boolean {
-    return /^-?0*(\.0*)?$/.test(decimal);
-}
+/* Money: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney, isZeroAmount, takaText };
 
 /** A taka amount as Figma sets it: the sign in the currency face, figures in the surrounding style. */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
-}
-
-/** "৳1,250" as plain text, for sentences and aria labels. */
-export function takaText(amount: string): string {
-    return `${TAKA}${formatMoney(amount)}`;
+    return <TakaAmount amount={amount} signClass={signClass} />;
 }
 
 const tag = (locale: string) => (locale === 'bn' ? 'bn-BD' : 'en-GB');

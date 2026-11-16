@@ -32,7 +32,7 @@ it('defines every ledger type of DATABASE-DESIGN §3.7', function (): void {
         'sale_revenue', 'cogs', 'discount_given', 'shipping_revenue', 'courier_charge', 'courier_cod_fee',
         'courier_return_charge', 'gateway_fee', 'packaging', 'marketing', 'salary', 'rent', 'utility', 'refund',
         'inventory_write_off', 'supplier_payment', 'cod_received', 'other_income', 'other_expense',
-        'pos_receipt',
+        'pos_receipt', 'owner_capital_in', 'owner_drawing',
     ])->and(Direction::values())->toBe(['in', 'out']);
 });
 

@@ -257,11 +257,21 @@ export function ShipmentsPage() {
     );
 }
 
-/** Figma StatCard 189:360 as in B · 08: overline, large figure, caption; `warn` adds the 2px warning left edge. */
+/**
+ * Figma StatCard 189:360 as in B · 08: overline, large figure, caption; `warn` adds a warning-tinted
+ * icon tile beside the label (no coloured left edge, owner 2026-11-16) — the caption states why.
+ */
 function Tile({ label, value, hint, warn = false }: { label: string; value: ReactNode; hint: ReactNode; warn?: boolean }) {
     return (
-        <div className={`flex min-w-0 flex-col gap-1.5 rounded-md border border-line-default bg-surface p-4 shadow-e1 ${warn ? 'border-l-3 border-l-feedback-warning' : ''}`}>
-            <p className="t-admin-overline text-fg-secondary">{label}</p>
+        <div className="flex min-w-0 flex-col gap-1.5 rounded-md border border-line-default bg-surface p-4 shadow-e1">
+            <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 t-admin-overline text-fg-secondary">{label}</p>
+                {warn && (
+                    <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-sm bg-warning-subtle text-feedback-warning">
+                        <WarningIcon size={14} weight="fill" />
+                    </span>
+                )}
+            </div>
             <p className="t-admin-num-lg text-fg-primary tabular">{value}</p>
             <p className="t-admin-caption text-fg-tertiary tabular">{hint}</p>
         </div>

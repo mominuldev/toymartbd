@@ -1,10 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { DotsThreeIcon } from '@phosphor-icons/react';
 
-/** Western digits with grouping in both locales (rule 36). */
-export function formatCount(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-}
+/** Counts, lakh-grouped with Western digits in both locales (lib/money, rule 36). */
+export { formatCount } from '@/lib/money';
 
 /** `value`, settled for `ms` — the SERP preview asks the server once typing pauses. */
 export function useDebouncedValue<T>(value: T, ms = 300): T {

@@ -390,7 +390,7 @@ export function VariantMatrixEditor({ attributes, value, combos, onChange, error
                                     const label = bn ? combo.labelBn : combo.label;
                                     return (
                                         <MatrixRows key={combo.key} errors={rowErrors} columns={columnCount} labels={{ sku: t('products.field.sku'), barcode: t('products.field.barcode'), price: t('products.field.price'), compare_at_price: t('products.field.compareAt'), cost_price: t('products.field.cost'), wholesale_price: t('products.field.wholesale'), weight_grams: t('products.field.weight'), opening_stock: t('products.field.openingStock') }}>
-                                            <td className={`w-10 px-3 py-2 ${rowErrors ? 'border-l-2 border-line-danger' : ''}`}>
+                                            <td className="w-10 px-3 py-2">
                                                 <input type="checkbox" checked={selected.has(combo.key)} onChange={() => toggleOne(combo.key)} aria-label={t('products.matrix.select', { variant: label })} className="size-4 accent-brand" />
                                             </td>
                                             <td className="px-3 py-2">
@@ -459,10 +459,10 @@ function MatrixRows({ children, errors, columns, labels }: { children: ReactNode
     const messages = errors ? Object.entries(errors).map(([field, message]) => (field === 'row' ? message : `${labels[field as keyof VariantFields]}: ${message}`)) : [];
     return (
         <>
-            <tr className={messages.length > 0 ? '' : 'border-b border-line-default'}>{children}</tr>
+            <tr className={messages.length > 0 ? 'bg-danger-subtle' : 'border-b border-line-default'}>{children}</tr>
             {messages.length > 0 && (
-                <tr className="border-b border-line-default bg-subtle">
-                    <td colSpan={columns} className="border-l-2 border-line-danger px-3 py-1.5">
+                <tr className="border-b border-line-default bg-danger-subtle">
+                    <td colSpan={columns} className="px-3 py-1.5">
                         {messages.map((message) => (
                             <p key={message} className="flex items-center gap-1.5 t-admin-caption-strong text-fg-primary">
                                 <WarningCircleIcon size={14} weight="fill" aria-hidden className="shrink-0 text-feedback-danger" />

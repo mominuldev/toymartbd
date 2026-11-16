@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Locale;
 
 use App\Support\Money;
+use Closure;
 use DateTimeInterface;
 use IntlDateFormatter;
 use InvalidArgumentException;
@@ -14,11 +15,15 @@ use RuntimeException;
  * Locale-aware display formatting with Western digits in BOTH locales (CLAUDE.md rule 36).
  *
  * Numbers and money are formatted by hand on decimal strings, not through
- * NumberFormatter: ICU's `bn` locale yields Bengali digits AND lakh grouping
- * (১২,৫০,০০০), and even `bn@numbers=latn` keeps the lakh grouping (12,50,000).
- * The design system wants three-digit grouping everywhere
- * (docs/_design/02-primitives-spec.md §19.3), so number output is identical
- * in `en` and `bn`; only month names and day periods are localised.
+ * NumberFormatter: ICU's `bn` locale yields Bengali digits, so number output is
+ * identical in `en` and `bn`; only month names and day periods are localised.
+ *
+ * Two groupings, never mixed on one surface:
+ * - three-digit (`money`, `number`, `quantity`) for customer-facing text — storefront,
+ *   messages, labels (docs/_design/02-primitives-spec.md §19.3);
+ * - South Asian lakh (`lakhMoney`, `lakhNumber`, `lakhQuantity`) for the admin's
+ *   documents — sales invoices, credit notes, purchase invoices — matching the admin
+ *   screens (owner decision 2026-11-16): ৳1,24,300, ৳12,34,56,789.
  *
  * Dates go through IntlDateFormatter with `@numbers=latn`, then through a
  * Bengali→Western digit safety net in case an ICU build ignores the keyword.
@@ -26,6 +31,7 @@ use RuntimeException;
  * Examples (docs/_design/05-content-and-assets-spec.md §0.4):
  *   money('2450')        ৳2,450          money('0.45')    ৳0.45
  *   money('-450')        −৳450 (U+2212)  price('2450.50') ৳2,451
+ *   lakhMoney('1234567.89')  ৳12,34,567.89
  *   smsMoney('2450.00')  BDT 2450
  *   date(…, 'en')        8 Nov 2026      date(…, 'bn')    8 নভেম্বর 2026
  *   time(…, 'en')        4:30 PM         time(…, 'bn')    বিকাল 4:30
@@ -53,6 +59,19 @@ final class Formatter
         [$negative, $integer, $fraction] = self::split(self::decimal($amount));
 
         $body = self::group($integer).($fraction === '00' ? '' : '.'.$fraction);
+
+        return self::signed($negative, $body);
+    }
+
+    /**
+     * Money on an admin document (invoice, credit note, purchase invoice): as money(), with
+     * lakh grouping — `৳1,24,300`, `৳12,34,567.89`, `−৳1,675.50`.
+     */
+    public static function lakhMoney(Money|string|int $amount): string
+    {
+        [$negative, $integer, $fraction] = self::split(self::decimal($amount));
+
+        $body = self::groupLakh($integer).($fraction === '00' ? '' : '.'.$fraction);
 
         return self::signed($negative, $body);
     }
@@ -86,6 +105,24 @@ final class Formatter
     /** A grouped number with a fixed number of decimals: number('1250000.5', 2) → 1,250,000.50. */
     public static function number(int|string $value, int $decimals = 0, ?string $locale = null): string
     {
+        return self::fixed($value, $decimals, self::group(...));
+    }
+
+    /** As number(), with lakh grouping: lakhNumber('1250000.5', 2) → 12,50,000.50. */
+    public static function lakhNumber(int|string $value, int $decimals = 0): string
+    {
+        return self::fixed($value, $decimals, self::groupLakh(...));
+    }
+
+    /** A count of items on an admin document: lakhQuantity(120000) → 1,20,000. */
+    public static function lakhQuantity(int $quantity): string
+    {
+        return self::lakhNumber($quantity);
+    }
+
+    /** @param  Closure(string): string  $group */
+    private static function fixed(int|string $value, int $decimals, Closure $group): string
+    {
         $decimal = is_int($value) ? (string) $value : trim($value);
 
         if (preg_match('/^-?\d+(\.\d+)?$/', $decimal) !== 1) {
@@ -98,7 +135,7 @@ final class Formatter
 
         $isZero = trim($integer.$fraction, '0') === '';
 
-        return ($negative && ! $isZero ? '-' : '').self::group($integer).($fraction === '' ? '' : '.'.$fraction);
+        return ($negative && ! $isZero ? '-' : '').$group($integer).($fraction === '' ? '' : '.'.$fraction);
     }
 
     /** A count of items: quantity(1200) → 1,200. */
@@ -202,6 +239,21 @@ final class Formatter
         }
 
         return strrev(implode(',', str_split(strrev($digits), 3)));
+    }
+
+    /** South Asian grouping on an unsigned digit string: the last three, then pairs — 1250000 → 12,50,000. */
+    private static function groupLakh(string $digits): string
+    {
+        $digits = ltrim($digits, '0');
+
+        if (strlen($digits) <= 3) {
+            return $digits === '' ? '0' : $digits;
+        }
+
+        $head = substr($digits, 0, -3);
+        $pairs = strrev(implode(',', str_split(strrev($head), 2)));
+
+        return $pairs.','.substr($digits, -3);
     }
 
     private static function roundHalfAwayFromZero(string $decimal, int $scale): string

@@ -10,30 +10,22 @@ import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { formatCount } from '@/lib/money';
 import { AnalyticsTabs } from '@/features/analytics/AnalyticsTabs';
 import { courierReportExportUrl, useCourierPerformance, type CourierFilters, type Metrics } from './api';
 
-const TAKA = '৳';
-const MINUS = '−';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** "13910.00" → "13,910": groups the server's decimal string, never parses it into a float (rule 1). */
-export function formatAmount(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? MINUS : ''}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
+/** Counts, lakh-grouped with Western digits (lib/money, rule 36). */
+const count = formatCount;
 
-/** Western digits with grouping in both locales (rule 36). */
-const count = (n: number) => new Intl.NumberFormat('en-US').format(n);
-
+/** "13910.00" → "৳13,910" — the admin's one formatter (lib/money, lakh grouping); a dash for null. */
 function Money({ amount, signClass = 't-admin-currency-num' }: { amount: string | null; signClass?: string }) {
     if (amount === null) return <span className="text-fg-tertiary">—</span>;
     return (
         <span className="tabular whitespace-nowrap">
-            <span className={signClass}>{TAKA}</span>
-            {formatAmount(amount)}
+            <TakaAmount amount={amount} signClass={signClass} />
         </span>
     );
 }

@@ -17,53 +17,25 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { Button, type ButtonSize, type ButtonVariant } from '@/components/ui/Button';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { TAKA, formatCount, formatMoney as formatLakh, takaText } from '@/lib/money';
 import type { InventoryLocation, MovementType, StockRow } from './api';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-
-/** "0995" → "0996", "999" → "1000": a decimal-string increment for display rounding, never a float. */
-function increment(digits: string): string {
-    const chars = digits.split('');
-    for (let i = chars.length - 1; i >= 0; i--) {
-        if (chars[i] !== '9') {
-            chars[i] = String(Number(chars[i]) + 1);
-            return chars.join('');
-        }
-        chars[i] = '0';
-    }
-    return `1${chars.join('')}`;
-}
-
-const group = (whole: string): string => whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA };
 
 /**
- * "1250" → "1,250.00", "2937.7371" → "2,937.74", "-100.5" → "-100.50". Money always shows two
- * decimals (04-admin-spec: unit cost 4 dp in the tooltip, 2 dp displayed). The server's decimal
- * string is rounded half-up on its digits for display; it is never parsed into a float and no
- * figure is computed (rule 1).
+ * "1250" → "1,250.00", "2937.7371" → "2,937.74", "-100.5" → "−100.50". Money always shows two
+ * decimals (04-admin-spec: unit cost 4 dp in the tooltip, 2 dp displayed), rounded half-up on
+ * the server string's digits (lib/money `round`); never a float, never computed (rule 1).
  */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    let cents = `${whole}${fraction.padEnd(2, '0').slice(0, 2)}`;
-    if ((fraction[2] ?? '0') >= '5') cents = increment(cents);
-    cents = cents.replace(/^0+/, '').padStart(3, '0');
-    const zero = /^0+$/.test(cents);
-    return `${negative && !zero ? '-' : ''}${group(cents.slice(0, -2))}.${cents.slice(-2)}`;
-}
+export const formatMoney = (decimal: string): string => formatLakh(decimal, 'round');
 
-/** The server's figure in full ("2,937.7371"): the tooltip behind a rounded amount. */
-export function exactMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    return `${negative ? '-' : ''}${group(whole.replace(/^0+(?=\d)/, '') || '0')}.${fraction.replace(/0+$/, '').padEnd(2, '0')}`;
-}
+/** The server's figure in full ("2,937.7371"): the tooltip behind a rounded amount (lib/money `fixed`). */
+export const exactMoney = (decimal: string): string => formatLakh(decimal, 'fixed');
 
-/** Western digits with grouping in both locales (rule 36). */
-export function formatUnits(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-}
+/** Units, lakh-grouped with Western digits in both locales (lib/money, rule 36). */
+export const formatUnits = formatCount;
 
 /** "+3" / "−2" (a real minus sign, U+2212) / "0". */
 export function signed(value: number): string {
@@ -88,12 +60,10 @@ export function dhakaWhen(iso: string | number, locale: string): { day: string; 
  * full figure is the tooltip.
  */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    const shown = formatMoney(amount);
-    const exact = exactMoney(amount);
+    const exact = takaText(amount, 'fixed');
     return (
-        <span title={exact !== shown ? `${TAKA}${exact}` : undefined}>
-            <span className={signClass}>{TAKA}</span>
-            {shown}
+        <span title={exact !== takaText(amount, 'round') ? exact : undefined}>
+            <TakaAmount amount={amount} places="round" signClass={signClass} />
         </span>
     );
 }

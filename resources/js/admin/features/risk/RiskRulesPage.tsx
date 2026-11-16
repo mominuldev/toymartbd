@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { CheckCircleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
@@ -67,8 +68,11 @@ export function RiskRulesPage() {
         <div className="flex flex-col gap-6">
             <ContentHeader title={t('risk.rules.title')} breadcrumb={crumbs(t, 'risk.tab.rules')} subtitle={t('risk.rules.subtitle')} />
             <RiskTabs />
-            <p className="rounded-sm border border-line-default border-l-2 border-l-feedback-success bg-subtle px-3 py-2 t-admin-caption text-fg-primary">
-                {t('risk.rules.provisional')} {!editable && rules.data ? t('risk.rules.readOnly') : ''}
+            <p className="flex items-start gap-2 rounded-sm bg-success-subtle px-3 py-2 t-admin-caption text-fg-primary">
+                <CheckCircleIcon size={14} aria-hidden className="mt-0.5 shrink-0 text-feedback-success" />
+                <span>
+                    {t('risk.rules.provisional')} {!editable && rules.data ? t('risk.rules.readOnly') : ''}
+                </span>
             </p>
             <form
                 className="flex flex-col gap-6"

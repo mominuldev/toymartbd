@@ -7,7 +7,7 @@ export type AuditArea = AuditEntry['area'];
 export type AuditKind = AuditEntry['kind'];
 
 /** The server's areas (App\Models\Enums\AuditAction::AREAS), in display order. */
-export const auditAreas: AuditArea[] = ['catalog', 'refunds', 'staff', 'integrations', 'fulfilment', 'reports'];
+export const auditAreas: AuditArea[] = ['catalog', 'refunds', 'staff', 'integrations', 'fulfilment', 'reports', 'finance'];
 
 export type RangePreset = 'today' | '7d' | '30d' | '90d' | 'custom';
 export const rangePresets: RangePreset[] = ['today', '7d', '30d', '90d', 'custom'];

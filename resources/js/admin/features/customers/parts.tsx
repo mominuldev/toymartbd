@@ -31,18 +31,18 @@ export function RiskStatusTag({ status }: { status: RiskStatus }) {
     return <Tag label={t(`customers.riskStatus.${status}` as MessageKey)} tone={status === 'whitelist' ? 'mint' : 'pink'} />;
 }
 
-const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; edge: string; tint: string }> = {
-    low: { icon: ShieldCheckIcon, edge: 'border-feedback-success', tint: 'text-feedback-success' },
-    medium: { icon: ShieldWarningIcon, edge: 'border-status-low-stock', tint: 'text-status-low-stock' },
-    high: { icon: ShieldWarningIcon, edge: 'border-feedback-danger', tint: 'text-feedback-danger' },
+const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; fill: string; tint: string }> = {
+    low: { icon: ShieldCheckIcon, fill: 'bg-success-subtle', tint: 'text-feedback-success' },
+    medium: { icon: ShieldWarningIcon, fill: 'bg-warning-subtle', tint: 'text-status-low-stock' },
+    high: { icon: ShieldWarningIcon, fill: 'bg-danger-subtle', tint: 'text-feedback-danger' },
 };
 
-/** Figma RiskPill 190:405 — level word + OUR score, a 2px level edge; never colour alone (rule 24). */
+/** Figma RiskPill 190:405 — level word + OUR score on the level's tinted fill with the shield shape; no left edge, never colour alone (rule 24). */
 export function RiskPill({ level, score }: { level: RiskLevel; score: number }) {
     const { t } = useI18n();
-    const { icon: Icon, edge, tint } = riskLook[level];
+    const { icon: Icon, fill, tint } = riskLook[level];
     return (
-        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs border-l-2 bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${edge}`}>
+        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs ps-1.5 pe-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${fill}`}>
             <Icon size={14} aria-hidden className={`shrink-0 ${tint}`} />
             {t(`customers.risk.pill.${level}` as MessageKey, { score })}
         </span>

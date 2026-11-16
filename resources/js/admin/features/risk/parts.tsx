@@ -10,6 +10,7 @@ import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
+import { takaText } from '@/lib/money';
 import { ApiError } from '@/lib/api';
 import { factorCodes, useSetPhoneStatus, type CourierRecord, type ListStatus, type ListStatusValue, type OurScore, type RiskFactorRow, type RiskLevel } from './api';
 
@@ -26,33 +27,25 @@ export function dhakaTime(iso: string, locale: string): string {
     }).format(new Date(iso));
 }
 
-/** "6260.00" → "৳6,260": groups the server's decimal string; never computes (rule 1). */
-export function taka(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}৳${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
+/** "6260.00" → "৳6,260" — the admin's one formatter (lib/money, lakh grouping). */
+export const taka = (decimal: string): string => takaText(decimal);
 
 export function asLevel(level: string | null | undefined): RiskLevel {
     return level === 'high' || level === 'medium' ? level : 'low';
 }
 
-const levelLook: Record<RiskLevel, { edge: string; icon: string }> = {
-    low: { edge: 'border-l-feedback-success', icon: 'text-feedback-success' },
-    medium: {
-        edge: 'border-l-status-low-stock',
-        icon: 'text-status-low-stock',
-    },
-    high: { edge: 'border-l-feedback-danger', icon: 'text-feedback-danger' },
+const levelLook: Record<RiskLevel, { fill: string; icon: string }> = {
+    low: { fill: 'bg-success-subtle', icon: 'text-feedback-success' },
+    medium: { fill: 'bg-warning-subtle', icon: 'text-status-low-stock' },
+    high: { fill: 'bg-danger-subtle', icon: 'text-feedback-danger' },
 };
 
-/** Figma RiskPill 190:405: shield + level word + number; the colour only reinforces. */
+/** Figma RiskPill 190:405: shield + level word + number on the level's tinted fill (no left edge); the colour only reinforces. */
 export function RiskPill({ level, score }: { level: RiskLevel; score: number }) {
     const { t } = useI18n();
     const look = levelLook[level];
     return (
-        <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-sm border border-line-default border-l-2 ${look.edge} bg-subtle px-2 t-admin-caption-strong text-fg-primary`}>
+        <span className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-sm ${look.fill} px-2 t-admin-caption-strong text-fg-primary`}>
             <ShieldWarningIcon size={14} aria-hidden className={look.icon} />
             {t(`risk.level.${level}` as MessageKey, { score })}
         </span>
@@ -128,7 +121,7 @@ export function OurScoreCard({ ours, title, provenance }: { ours: OurScore; titl
                 <Gauge score={ours.internal_score} level={level} />
                 <div className="flex min-w-0 flex-col items-start gap-2">
                     <span
-                        className={`inline-flex items-center gap-1.5 rounded-sm border border-line-default border-l-2 ${levelLook[level].edge} bg-subtle px-2.5 py-1 t-admin-body-strong text-fg-primary`}
+                        className={`inline-flex items-center gap-1.5 rounded-sm ${levelLook[level].fill} px-2.5 py-1 t-admin-body-strong text-fg-primary`}
                     >
                         <ShieldWarningIcon size={16} aria-hidden className={levelLook[level].icon} />
                         {t('risk.ours.chip', {

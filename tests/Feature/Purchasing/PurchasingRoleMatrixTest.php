@@ -36,7 +36,7 @@ it('guards the purchase reads with purchasing.view', function (string $uri): voi
     $po = Kit::purchase([[$this->variant, 2, '10']], $this->supplier);
 
     RoleMatrix::assert($this, Permission::PurchasingView, fn () => $this->getJson(str_replace('{id}', (string) $po->id, '/api/v1/admin/'.$uri)));
-})->with(['purchases', 'purchases/counts', 'purchases/{id}']);
+})->with(['purchases', 'purchases/counts', 'purchases/summary', 'purchases/{id}']);
 
 it('guards supplier writes with purchasing.manage_suppliers', function (): void {
     RoleMatrix::assert($this, Permission::PurchasingManageSuppliers, fn () => $this->postJson('/api/v1/admin/suppliers', ['name' => 'Dhaka Plush House']), 201);
@@ -65,6 +65,13 @@ it('guards PO writes with purchasing.create', function (): void {
 
         return $this->postJson("/api/v1/admin/purchases/{$ordered->id}/cancel");
     });
+});
+
+it('guards the PO preview quote with purchasing.create', function (): void {
+    RoleMatrix::assert($this, Permission::PurchasingCreate, fn () => $this->postJson('/api/v1/admin/purchases/quote', [
+        'supplier_id' => $this->supplier->id,
+        'lines' => [['variant_id' => $this->variant->id, 'quantity' => 3, 'unit_cost' => '99.50']],
+    ]));
 });
 
 it('guards the receipt quote and the receipt with purchasing.receive', function (): void {
@@ -114,6 +121,6 @@ it('refuses a guest with 401 on every purchasing endpoint', function (string $me
 })->with([
     ['GET', 'suppliers'], ['POST', 'suppliers'], ['GET', 'suppliers/{s}'], ['PATCH', 'suppliers/{s}'], ['DELETE', 'suppliers/{s}'],
     ['GET', 'suppliers/{s}/payments'], ['POST', 'suppliers/{s}/payments'],
-    ['GET', 'purchases'], ['GET', 'purchases/counts'], ['POST', 'purchases'], ['GET', 'purchases/{p}'], ['PUT', 'purchases/{p}'],
+    ['GET', 'purchases'], ['GET', 'purchases/counts'], ['GET', 'purchases/summary'], ['POST', 'purchases/quote'], ['POST', 'purchases'], ['GET', 'purchases/{p}'], ['PUT', 'purchases/{p}'],
     ['POST', 'purchases/{p}/order'], ['POST', 'purchases/{p}/cancel'], ['POST', 'purchases/{p}/close'], ['POST', 'purchases/{p}/receipts/quote'], ['POST', 'purchases/{p}/receipts'],
 ]);

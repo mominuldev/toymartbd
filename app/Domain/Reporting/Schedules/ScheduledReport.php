@@ -13,6 +13,7 @@ use App\Domain\Reporting\Queries\Sales\SalesAnalytics;
 use App\Domain\Reporting\Support\DateRange;
 use App\Models\Enums\Permission;
 use App\Models\User;
+use App\Support\Locale\Formatter;
 
 /**
  * Builds one scheduled report for one recipient from the SAME query classes the admin
@@ -80,24 +81,20 @@ final readonly class ScheduledReport
         };
     }
 
-    /** "৳12,345.5" — Western digits in both locales (rule 36), the server's figure (rule 1). */
+    /**
+     * "৳1,23,456.50" — the admin's lakh grouping (owner decision 2026-11-16), Western digits in
+     * both locales (rule 36), the server's figure (rule 1).
+     */
     public static function taka(mixed $amount): string
     {
         $decimal = ReportSheets::cell($amount);
-        if ($decimal === '') {
-            return '—';
-        }
-        $negative = str_starts_with($decimal, '-');
-        [$whole, $fraction] = array_pad(explode('.', ltrim($decimal, '-')), 2, '');
-        $grouped = (string) preg_replace('/\B(?=(\d{3})+(?!\d))/', ',', $whole);
-        $fraction = rtrim($fraction, '0');
 
-        return ($negative ? '−' : '').'৳'.$grouped.($fraction !== '' ? '.'.$fraction : '');
+        return $decimal === '' ? '—' : Formatter::lakhMoney($decimal);
     }
 
     public static function count(int $value): string
     {
-        return number_format($value);
+        return Formatter::lakhQuantity($value);
     }
 
     public static function percent(mixed $value): string

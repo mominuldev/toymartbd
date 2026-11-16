@@ -31,16 +31,14 @@ import { buttonClass } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { dashboardExportUrl, rangePresets, type ActivityEvent, type AttentionItem, type Dashboard, type DashboardRange, type DashboardRangePreset } from './api';
-import { TAKA, MINUS, deltaText, formatCount, groupDecimal, isNegative, minutesSince, dhakaTime } from './format';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { deltaText, formatCount, isNegative, minutesSince, dhakaTime } from './format';
 
 /** A taka amount as Figma sets it: true minus, ৳ in the currency face, figures in the surrounding style. */
 export function Money({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    const negative = isNegative(amount);
     return (
         <span className="tabular whitespace-nowrap">
-            {negative ? MINUS : ''}
-            <span className={signClass}>{TAKA}</span>
-            {groupDecimal(amount.replace(/^-/, ''))}
+            <TakaAmount amount={amount} signClass={signClass} />
         </span>
     );
 }
@@ -285,15 +283,19 @@ export function ExportMenu({ range }: { range: DashboardRange }) {
 
 type AttentionKey = AttentionItem['key'];
 
-const ATTENTION: Record<AttentionKey, { icon: Icon; edge: string; to: string; primary?: boolean }> = {
-    verification: { icon: ShieldWarningIcon, edge: 'border-l-feedback-danger', to: '/risk/queue', primary: true },
-    failed_bookings: { icon: WarningCircleIcon, edge: 'border-l-feedback-danger', to: '/shipments/failed' },
-    unmapped_areas: { icon: MapPinIcon, edge: 'border-l-status-low-stock', to: '/shipments/locations' },
-    submitted: { icon: GaugeIcon, edge: 'border-l-status-low-stock', to: '/orders?tab=ready_to_ship' },
-    cod_variances: { icon: ScalesIcon, edge: 'border-l-status-low-stock', to: '/finance/settlements' },
-    expenses: { icon: ReceiptIcon, edge: 'border-l-status-low-stock', to: '/finance/expenses?status=pending' },
-    refunds: { icon: ArrowUUpLeftIcon, edge: 'border-l-status-low-stock', to: '/returns' },
-    low_stock: { icon: StackIcon, edge: 'border-l-status-low-stock', to: '/inventory?state=low' },
+/* The tone is carried by the tinted icon tile (owner, 2026-11-16: no coloured left edges). */
+const DANGER_TILE = 'bg-danger-subtle text-feedback-danger';
+const WARNING_TILE = 'bg-warning-subtle text-feedback-warning';
+
+const ATTENTION: Record<AttentionKey, { icon: Icon; tile: string; to: string; primary?: boolean }> = {
+    verification: { icon: ShieldWarningIcon, tile: DANGER_TILE, to: '/risk/queue', primary: true },
+    failed_bookings: { icon: WarningCircleIcon, tile: DANGER_TILE, to: '/shipments/failed' },
+    unmapped_areas: { icon: MapPinIcon, tile: WARNING_TILE, to: '/shipments/locations' },
+    submitted: { icon: GaugeIcon, tile: WARNING_TILE, to: '/orders?tab=ready_to_ship' },
+    cod_variances: { icon: ScalesIcon, tile: WARNING_TILE, to: '/finance/settlements' },
+    expenses: { icon: ReceiptIcon, tile: WARNING_TILE, to: '/finance/expenses?status=pending' },
+    refunds: { icon: ArrowUUpLeftIcon, tile: WARNING_TILE, to: '/returns' },
+    low_stock: { icon: StackIcon, tile: WARNING_TILE, to: '/inventory?state=low' },
 };
 
 function useAge() {
@@ -307,8 +309,9 @@ function useAge() {
 }
 
 /**
- * Needs-attention stack (241:30076): one card per non-empty queue — a 3px coloured left edge,
- * icon + Admin/body-strong title, an Admin/caption age line, and a sm button to the queue.
+ * Needs-attention stack (241:30076): one card per non-empty queue — a hairline card (no coloured
+ * left edge, owner 2026-11-16), a tinted 32px icon tile carrying the tone + Admin/body-strong title that
+ * states the count (never colour alone), an Admin/caption age line, and a sm button to the queue.
  * `compact` is the 768 layout (229:21176): button on the right.
  */
 export function AttentionStack({ items, compact = false }: { items: AttentionItem[]; compact?: boolean }) {
@@ -333,13 +336,15 @@ export function AttentionStack({ items, compact = false }: { items: AttentionIte
                         </Link>
                     );
                     return (
-                        <article key={item.key} className={`flex gap-2 rounded-md border-l-3 bg-surface px-4 py-3.5 ${meta.edge} ${compact ? 'items-center' : 'flex-col'}`}>
-                            <div className="flex min-w-0 flex-1 flex-col gap-2">
-                                <h3 className="flex items-center gap-2 t-admin-body-strong text-fg-primary">
-                                    <AttentionIcon size={16} aria-hidden className="shrink-0" />
-                                    {t(`dash.attention.${item.key}` as MessageKey, { count: formatCount(item.count) })}
-                                </h3>
-                                {item.oldest_at !== null && <p className="t-admin-caption text-fg-secondary">{t('dash.attention.oldest', { age: age(item.oldest_at) })}</p>}
+                        <article key={item.key} className={`flex gap-3 rounded-md border border-line-default bg-surface px-4 py-3.5 ${compact ? 'items-center' : 'flex-col'}`}>
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                                <span aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-sm ${meta.tile}`}>
+                                    <AttentionIcon size={16} weight="fill" />
+                                </span>
+                                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                    <h3 className="t-admin-body-strong text-fg-primary">{t(`dash.attention.${item.key}` as MessageKey, { count: formatCount(item.count) })}</h3>
+                                    {item.oldest_at !== null && <p className="t-admin-caption text-fg-secondary">{t('dash.attention.oldest', { age: age(item.oldest_at) })}</p>}
+                                </div>
                             </div>
                             {button}
                         </article>

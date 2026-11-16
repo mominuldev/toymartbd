@@ -254,7 +254,7 @@ function FilterSelect({ label, all, value, onChange, children }: { label: string
     );
 }
 
-/** One destination's health: StatCard 189:360 ×4, a danger edge on open failures. */
+/** One destination's health: StatCard 189:360 ×4, a danger-tinted icon on open failures. */
 function HealthRow({ health }: { health: DestinationHealth }) {
     const { t, locale } = useI18n();
     const name = t(`tracking.${health.destination}.title` as MessageKey);
@@ -276,7 +276,7 @@ function HealthRow({ health }: { health: DestinationHealth }) {
                 </Stat>
                 <Stat
                     label={t('tracking.diag.failed')}
-                    edge={d.failed > 0}
+                    alert={d.failed > 0}
                     hint={health.last_error ? t('tracking.diag.lastError', { ago: health.last_error_at ? timeAgo(health.last_error_at, locale) : '—', error: health.last_error }) : t('tracking.diag.failedHint', { week: w.failed })}
                 >
                     {d.failed}

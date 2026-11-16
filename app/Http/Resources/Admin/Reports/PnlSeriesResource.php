@@ -30,13 +30,17 @@ final class PnlSeriesResource extends ReportResource
             'to' => $s['to'],
             /** @var 'ledger'|'summaries'|'mixed' */
             'source' => $s['source'],
+            /** @var bool False when the reader lacks catalog.view_cost. */
+            'item_costs_visible' => $s['item_costs_visible'] ?? true,
             /**
-             * One bucket per period, oldest first, including empty ones.
+             * One bucket per period, oldest first, including empty ones. Without catalog.view_cost
+             * the `cogs` line and the gross profit / profit after delivery / profit after losses
+             * subtotals are null (cost of goods could be backed out of them).
              *
-             * @var list<array{key: string, from: string, to: string, days: int, totals: array{gross_revenue: string, net_revenue: string, gross_profit: string, profit_after_delivery: string, profit_after_losses: string, net_profit: string}, lines: array<string, string>, net_margin_percent: string|null}>
+             * @var list<array{key: string, from: string, to: string, days: int, totals: array{gross_revenue: string, net_revenue: string, gross_profit: string|null, profit_after_delivery: string|null, profit_after_losses: string|null, net_profit: string}, lines: array<string, string|null>, net_margin_percent: string|null}>
              */
             'buckets' => self::plain($s['buckets']),
-            /** @var array{gross_revenue: string, net_revenue: string, gross_profit: string, profit_after_delivery: string, profit_after_losses: string, net_profit: string} */
+            /** @var array{gross_revenue: string, net_revenue: string, gross_profit: string|null, profit_after_delivery: string|null, profit_after_losses: string|null, net_profit: string} */
             'totals' => self::plain($s['totals']),
         ];
     }

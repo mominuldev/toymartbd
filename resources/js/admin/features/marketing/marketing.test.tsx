@@ -323,7 +323,7 @@ describe('abandoned carts', () => {
         marketingApi(marketer);
         renderApp('/marketing/abandoned-carts');
         expect(await screen.findByText('46')).toBeTruthy();
-        expect(screen.getByText('৳142,800 left in carts')).toBeTruthy();
+        expect(screen.getByText('৳1,42,800 left in carts')).toBeTruthy();
         expect(screen.getByText('৳24,610 delivered · 6 delivered orders')).toBeTruthy();
         expect(screen.getByText('৳15.08')).toBeTruthy();
         expect(await screen.findByText('নাদিয়া রহমান')).toBeTruthy();
@@ -343,6 +343,6 @@ describe('abandoned carts', () => {
     it('renders in Bangla with Western digits', async () => {
         marketingApi(marketer);
         renderApp('/marketing/abandoned-carts', { locale: 'bn' });
-        expect(await screen.findByText('কার্টে ৳142,800 রয়ে গেছে')).toBeTruthy();
+        expect(await screen.findByText('কার্টে ৳1,42,800 রয়ে গেছে')).toBeTruthy();
     });
 });

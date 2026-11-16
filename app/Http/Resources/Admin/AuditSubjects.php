@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Resources\Admin;
 
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Finance\Models\CapitalEntry;
+use App\Domain\Finance\Models\CapitalHolder;
 use App\Domain\Fulfilment\Models\CourierProvider;
 use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Payment\Models\Refund;
@@ -33,6 +35,8 @@ final class AuditSubjects
         Shipment::class => 'shipment',
         CourierProvider::class => 'courier',
         ReportScheduleRun::class => 'report_run',
+        CapitalEntry::class => 'capital_entry',
+        CapitalHolder::class => 'capital_holder',
     ];
 
     /** @var array<string, array<int, string>> type → id → label */
@@ -128,6 +132,14 @@ final class AuditSubjects
             case 'report_run':
                 $labels = DB::table('report_schedule_runs')->join('report_schedules', 'report_schedules.id', '=', 'report_schedule_runs.report_schedule_id')
                     ->whereIn('report_schedule_runs.id', $ids)->pluck('report_schedules.name', 'report_schedule_runs.id')->all();
+                break;
+            case 'capital_entry':
+                // An entry is known by its holder — never by its amount.
+                $labels = DB::table('capital_entries')->join('capital_holders', 'capital_holders.id', '=', 'capital_entries.holder_id')
+                    ->whereIn('capital_entries.id', $ids)->pluck('capital_holders.name', 'capital_entries.id')->all();
+                break;
+            case 'capital_holder':
+                $labels = CapitalHolder::query()->whereIn('id', $ids)->pluck('name', 'id')->all();
                 break;
         }
 

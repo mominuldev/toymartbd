@@ -15,7 +15,9 @@ Eleven rules. They resolve most of the decisions that would otherwise come back 
 1. **Radius is `radius/md` (10px) everywhere a control is interactive** — buttons, inputs, selects, chips, tabs. `radius/sm` (6px) for status chips, table-internal pills and code/mono fields. `radius/lg` (14px) for cards and panels. `radius/xl` (20px) for modals and drawers. **`radius/full` appears nowhere in the admin** except avatars, the notification count dot, and the risk-score gauge arc. A pill button in this product is a defect.
 2. **Surfaces.** Page = `color/bg/canvas`. Cards, panels, table bodies, modals = `color/bg/surface`. Popovers, dropdowns, command palette, date-picker panel, tooltips = `color/bg/surface-raised`. Table zebra rows, inert fills, status-chip fills, disabled inputs = `color/bg/subtle`.
 3. **Elevation is for layering, not decoration.** Cards get `e1`. Sticky topbar and sticky save bar get `e2`. Popovers/dropdowns `e3`. Modals and drawers `e4`. In dark mode `e1` and `e2` are replaced by a 1px `color/border/default` stroke, per §3.3 — a shadow on a dark surface is invisible and the border is what actually separates the layers.
-4. **Colour never carries meaning alone.** Every status, risk level and delta is **text + icon shape + colour**, in that order of load-bearing. Status chips fill with `color/bg/subtle` and label in `color/text/primary` (16.9:1 light, 15.1:1 dark); the feedback token tints only the 14px icon and, for anomalies, a 2px left border. This is deliberate: `color/feedback/success` (#12A150) is 3.4:1 on white and `color/feedback/warning` (#E07C02) is 2.9:1 — **neither may ever carry 12–14px text, as a fill or as a foreground.** Do not "improve" these chips into a contrast failure.
+4. **Colour never carries meaning alone.** Every status, risk level and delta is **text + icon shape + colour**, in that order of load-bearing. Status chips fill with `color/bg/subtle` and label in `color/text/primary` (16.9:1 light, 15.1:1 dark); the feedback token tints only the 14px icon, and an anomaly chip sits on the `color/feedback/warning-subtle` fill. This is deliberate: `color/feedback/success` (#12A150) is 3.4:1 on white and `color/feedback/warning` (#E07C02) is 2.9:1 — **neither may ever carry 12–14px text, as a fill or as a foreground.** Do not "improve" these chips into a contrast failure.
+4b. **Pages fill the content width at every size** (owner decision, 2026-11-16 — "remove the right white space on screens bigger than 1440px, don't make this mistake again"). No page column, card stack or form is capped with a `max-w-*` that leaves an empty band on the right at ≥1440px: the main column is `flex-1 min-w-0` beside a fixed-width rail; tables use percentage column widths; forms fill the width and lay fields out in two or three columns at `xl` instead of being capped. `max-w` is only for dialogs, drawers, popovers, toasts and the text measure of a paragraph inside a card. Every screen is checked at 1920 as well as 1440/768/390; `e2e/admin-a11y/wide.spec.ts` fails CI on an empty right band.
+4a. **No coloured left edges, anywhere** (owner decision, 2026-11-16 — supersedes every "2px/3px … left edge / left border" in this spec and in the Figma frames). Cards, stat cards, notices, alerts, acknowledgement labels, chips, pills, selected rows and invalid rows never carry a coloured start-side border. Status moves to: **cards and stat cards** — the normal 1px `color/border/default` hairline all round, the tone carried by a tinted icon tile (`*-subtle` fill + feedback-tinted icon, as `KpiCard`); **notices, alerts and acknowledgements** — `radius/sm`, a tinted fill (`warning-subtle` for warnings and low stock, `danger-subtle` for danger, `info-subtle` for info, `success-subtle` for confirmed) and a tinted leading icon; **chips and pills** — the `StatusChip` look (hairline + tinted icon) or a tinted fill + tinted icon; **selected rows** — `color/bg/brand-subtle` only; **invalid rows** — the `danger-subtle` tint, with `aria-invalid` and the error text kept. Text that states the status is never dropped (rule 4). Typographic rules that are not status marks (a blockquote rule, a quoted reply) and layout dividers are unaffected.
 5. **Admin type overrides** the storefront scale, because 32px page titles waste a working screen:
 
 | Admin token | Size / weight / line-height | Use |
@@ -31,9 +33,9 @@ Eleven rules. They resolve most of the decisions that would otherwise come back 
 | `admin/overline` | 11 / 700 / 1.3, +0.08em, uppercase | Panel eyebrows, column groups |
 | `admin/mono` | 13 / 500 / 1.4 | SKU, consignment ID, slug, ledger reference |
 
-6. **Money is always `tabular-nums`, right-aligned, with the `৳` prefix and a thousands comma.** `৳5,060`. Negative money is `−৳300` with a true minus (U+2212), never parentheses and never red-only. Quantities right-aligned. Dates and phone numbers left-aligned and `tabular-nums`.
+6. **Money is always `tabular-nums`, right-aligned, with the `৳` prefix and South Asian (lakh) grouping** (owner decision, 2026-11-16 — supersedes the thousands comma): `৳5,060`, `৳1,24,300.00`, `৳12,34,56,789.00` — the last three digits, then pairs — with Western digits 0–9 in English and Bangla (rule 36). Negative money is `−৳300` with a true minus (U+2212) before the `৳`, never parentheses and never red-only. Counts (units, orders, customers) group the same way (`1,20,000`). One formatter, `resources/js/admin/lib/money.ts`, for every screen; invoices, credit notes and purchase invoices match it (`Formatter::lakhMoney`). CSV/XLSX exports carry plain ungrouped numbers. Quantities right-aligned. Dates and phone numbers left-aligned and `tabular-nums`.
 7. **Every date, time and date-range in the admin is Asia/Dhaka.** Timestamps render `08 Nov 2026, 2:30 pm`; in dense tables `08 Nov · 2:30 pm`; within 24 hours, relative (`5h 25m ago`) with the absolute value in the tooltip. The timezone is stated once in the topbar, not on every field.
-8. **Focus is visible and uniform:** 2px `color/border/focus` ring, 2px offset, `radius` matching the element +2. Never removed. Hover on rows and list items = `color/bg/subtle`; selected = `color/bg/brand-subtle` with a 2px `color/bg/brand` left border.
+8. **Focus is visible and uniform:** 2px `color/border/focus` ring, 2px offset, `radius` matching the element +2. Never removed. Hover on rows and list items = `color/bg/subtle`; selected = `color/bg/brand-subtle` (no left border, 4a).
 9. **Grid.** 1440: sidebar 248 expanded / 64 collapsed, topbar 56, content padding `spacing/6` (24), content width **1144**, 12 columns, gutter `spacing/6`. 1024: sidebar locked to the 64 icon rail, content padding `spacing/5` (20), content width **920**, 12 columns, gutter `spacing/5`. 768: sidebar off-canvas (0 in flow), content padding `spacing/4` (16), content width **736**, 6 columns, gutter `spacing/4`. Every width in Part B sums to these numbers; if your frame doesn't add up, a column is wrong.
 10. **Density toggle** is a two-state global preference persisted per user: `comfortable` (row 56, cell padding 12/16) and `compact` (row 40, cell padding 6/12). It changes row height, cell padding and `StatCard` padding only — never font size, never column widths.
 11. **Loading never reflows.** Every table, card and chart has a skeleton at its final dimensions. Numbers animate in; boxes do not grow.
@@ -104,7 +106,7 @@ The workhorse. Everything in Part B except the P&L is an instance of it.
 | Body row `comfortable` | H 56 | Horizontal | bottom border 1px `color/border/default`; odd rows `color/bg/surface`, even `color/bg/subtle` |
 | Body row `compact` | H 40 | — | same |
 | Body row `hover` | — | — | bg `color/bg/subtle` (light) / `color/bg/surface-raised` (dark) |
-| Body row `selected` | — | — | bg `color/bg/brand-subtle`, 2px `color/bg/brand` left border inset |
+| Body row `selected` | — | — | bg `color/bg/brand-subtle` (no left border, 4a) |
 | Checkbox cell | W 40 | centred | `Checkbox`; header checkbox is tri-state |
 | Row focus | — | — | 2px `color/border/focus` inset ring on the whole row, keyboard only |
 | Footer | H 52, Fill×Hug | Horizontal, space-between, padding `spacing/3` `spacing/4` | top border 1px `color/border/default` |
@@ -216,7 +218,7 @@ A `StatCard` whose number drills through is a real link (`<a>`), not a click han
 | Element | Geometry (1440) | Auto-layout | Tokens |
 |---|---|---|---|
 | Root | Fill × Hug | Vertical, gap 0 | `color/bg/surface`, `radius/lg`, 1px `color/border/default`, `e1` |
-| Root `error` | — | — | border 1px `color/feedback/danger` + a 3px `color/feedback/danger` left edge; header shows `alert-circle` 16 + "2 problems" in `admin/caption` `color/text/primary` |
+| Root `error` | — | — | border 1px `color/feedback/danger` (no left edge, 4a); header shows `alert-circle` 16 + "2 problems" in `admin/caption` `color/text/primary` |
 | Header | Fill × Hug | Horizontal, space-between, padding `spacing/5` | title `admin/section`; description `admin/caption` `color/text/secondary`, max-W 560, line 2 |
 | Header `collapsible` | — | — | whole header is a `button`, `aria-expanded`; trailing `chevron-down` 20 rotates 180° over `motion/fast` |
 | Body `two-column` | Fill × Hug | Horizontal, gap `spacing/6`, padding 0 `spacing/5` `spacing/5` | left label column W 240 (Hug×Fill, top-aligned), right control column Fill |
@@ -304,8 +306,8 @@ Alt text in **both** languages per image is the spec, because the storefront shi
 | — Weight (g) | W 104 | right | `Input xs` `admin/num` |
 | — Barcode | W 152 | — | `Input xs` `admin/mono`, optional |
 | Bulk-edit bar | Fill × 52 | Horizontal, gap `spacing/3`, padding `spacing/2` `spacing/4` | appears when ≥1 row is selected; "Set [NativeSelect: Price / Cost / Weight] to [Input] for 4 selected" + `Button primary sm` Apply |
-| Row `edited` | — | — | 2px `color/bg/brand` left border + a 6px `color/bg/brand` dot in the Enabled cell's top-right corner |
-| Row `invalid` | — | — | 2px `color/feedback/danger` left border; the offending cell gets the border and the message appears in a row-spanning 32-high strip beneath it, bg `color/bg/subtle` |
+| Row `edited` | — | — | a 6px `color/bg/brand` dot in the Enabled cell's top-right corner |
+| Row `invalid` | — | — | the row and a row-spanning 32-high message strip beneath it on `color/feedback/danger-subtle` (no left border, 4a); the offending cell gets the border and `aria-invalid` |
 | Footer summary | Fill × 44 | Horizontal, gap `spacing/6`, padding `spacing/2` `spacing/4` | `admin/caption` `color/text/secondary`: "6 combinations · 5 enabled · total stock 118 · stock value ৳34,220 · lowest margin 22.4%" |
 
 **Regeneration safety.** Adding an attribute value appends rows and never touches existing ones. Removing a value shows a `ConfirmDialog` listing the exact SKUs that will be disabled and their current stock; variants with stock or order history are **disabled, never deleted**, because `order_items.variant_id` is `ON DELETE SET NULL` and deleting one silently orphans order history.
@@ -329,7 +331,7 @@ Alt text in **both** languages per image is the spec, because the storefront shi
 | "Edit" affordance | Hug × 40 | — | when `isPublished` and not `editing`, the field is read-only with a trailing `Button ghost sm` "Edit URL" — a published URL should take one deliberate act to change |
 | Status line `available` | Fill × Hug | Horizontal, gap `spacing/1` | `admin/caption` `color/text/secondary` "Available" |
 | Status line `taken` | — | — | `alert-circle` 14 tinted `color/feedback/danger` + `admin/caption` `color/text/primary` "Already used by *Brick Box 500 — 1000 pcs*" + `Button ghost sm` "Open that product" |
-| **Redirect warning panel** | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | bg `color/bg/subtle`, 1px `color/feedback/warning`, 3px `color/feedback/warning` left edge, `radius/md`; icon `corner-down-right` 20 tinted `color/feedback/warning` |
+| **Redirect warning panel** | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | bg `color/feedback/warning-subtle`, `radius/sm` (no left edge, 4a); icon `corner-down-right` 20 tinted `color/feedback/warning` |
 | — Headline | — | — | `admin/body-strong` `color/text/primary` "Changing this URL creates a 301 redirect" |
 | — Body | max-W 600 | — | `admin/caption` `color/text/secondary`, with the two URLs stacked in `admin/mono`: old `…/products/brick-box-500-pcs` → new `…/products/classic-brick-box-500`. Then: "The old URL has been live since 14 Jul 2026 and is linked from 2 blog posts and the homepage 'Best sellers' block. The redirect will be added automatically and will appear in **SEO → Redirect manager**." |
 | — Checkbox | — | — | `Checkbox` "I understand the old URL will redirect" — **required** to leave the field when `isPublished` and the value changed. This is the one piece of friction in the product form and it is there because an un-noticed slug change is an SEO loss that surfaces weeks later. |
@@ -410,7 +412,7 @@ Then the move that makes it quiet: **define the expected pairing for each workfl
 |---|---|---|---|
 | `expected` | actual == expected | full chip | **plain text, `admin/caption`, `color/text/tertiary`, no fill, no border, no icon tint** |
 | `notable` | a benign, trackable divergence | full chip | chip with `color/bg/subtle` fill, 14px icon tinted `color/feedback/info`, leading `info` glyph, label `color/text/primary` |
-| `anomaly` | a combination that should not exist | full chip | chip with `color/bg/subtle` fill, 2px `color/feedback/warning` (or `danger`) left border, 14px `alert-triangle`, label `color/text/primary`, plus the plain-language reason |
+| `anomaly` | a combination that should not exist | full chip | chip with the `warning-subtle` fill and 1px `color/border/default` hairline (no left border, 4a), 14px `alert-triangle`, label `color/text/primary`, plus the plain-language reason |
 
 `notable` list: COD paid but unsettled ("with courier") · advance received before dispatch · `partially_refunded` on a delivered order · `on_hold` under 48 h.
 `anomaly` list: `delivered`/`completed` with `payment_status != paid` ("Delivered, not paid") · `cancelled` with `paid_total > refunded_total` ("Cancelled — refund pending, 3 days") · any pre-ship status with `fulfillment_status != unfulfilled` ("Goods sent before confirmation") · `shipped` with `fulfillment_status = unfulfilled` ("Shipped, nothing fulfilled") · `returned` with `payment_status = paid` and `refunded_total = 0` · `payment_status = failed` · `on_hold` over 48 h.
@@ -427,7 +429,7 @@ The result on the Part C board: **11 of 12 rows show one coloured chip and two l
 | Slot 1 chip | Hug × 22 | Horizontal, gap `spacing/1`, padding `spacing/1` `spacing/2`, `radius/sm` | bg `color/bg/subtle`, 1px `color/border/default`, label `admin/caption` 600 `color/text/primary`, icon 14 tinted per state below |
 | Slot 2/3 `expected` | Hug × 16 | Horizontal, gap `spacing/1` | no fill, no border; label `admin/caption` `color/text/tertiary`; 12px icon also `color/text/tertiary` |
 | Slot 2/3 `notable` | Hug × 20 | padding `spacing/1` `spacing/2`, `radius/sm` | bg `color/bg/subtle`, label `admin/caption` `color/text/primary`, icon 14 tinted `color/feedback/info` |
-| Slot 2/3 `anomaly` | Hug × 20 | padding `spacing/1` `spacing/2`, `radius/sm`, left border 2px | bg `color/bg/subtle`, left border `color/feedback/warning` \| `color/feedback/danger`, icon 14 `alert-triangle`, label `admin/caption` `color/text/primary` |
+| Slot 2/3 `anomaly` | Hug × 20 | padding `spacing/1` `spacing/2`, `radius/sm`, 1px hairline | bg `color/feedback/warning-subtle` (no left border, 4a), icon 14 `alert-triangle`, label `admin/caption` `color/text/primary` |
 | Root `triad-inline` | Hug × 28 | Horizontal, gap `spacing/2` | all three as full chips H 28 separated by a 1px × 16 `color/border/default` rule; used in the order-detail header where there is room |
 | Tooltip (any slot) | max-W 300 | Vertical, gap `spacing/1`, padding `spacing/3` | `color/bg/surface-raised`, `e3`, `radius/md`; line 1 the dimension name, line 2 the raw enum in `admin/mono`, line 3 the source column, line 4 "Changed 04 Nov, 3:12 pm by Rina" |
 
@@ -526,7 +528,7 @@ Used on the order-detail screen and nowhere else. It answers "where is this orde
 | Score block | Fill × 96 | Horizontal, gap `spacing/5` | — |
 | Gauge | 96 × 96 | — | 220° arc, R 44, track 8px `color/bg/subtle`; value arc 8px, `radius/full` caps; **arc colour is reinforcement only** — `color/feedback/success` 0–39, `color/status/low-stock` 40–69, `color/feedback/danger` 70–100 |
 | Gauge centre | — | — | number `admin/num-lg` `color/text/primary` "80"; below it `admin/caption` `color/text/tertiary` "of 100" |
-| Level chip | Hug × 28 | Horizontal, gap `spacing/2`, padding `spacing/1` `spacing/3`, `radius/sm` | bg `color/bg/subtle`, 2px left border in the level token, icon `shield-check` (low) / `shield-alert` (medium) / `shield-x` (high) tinted with the level token, label `admin/body-strong` `color/text/primary` **"High risk · 80 / 100"** — number and word together, so colour is never load-bearing |
+| Level chip | Hug × 28 | Horizontal, gap `spacing/2`, padding `spacing/1` `spacing/3`, `radius/sm` | bg the level's `*-subtle` fill (no left border, 4a), icon `shield-check` (low) / `shield-alert` (medium) / `shield-x` (high) tinted with the level token, label `admin/body-strong` `color/text/primary` **"High risk · 80 / 100"** — number and word together, so colour is never load-bearing |
 | Verdict line | Fill × Hug | — | `admin/body` `color/text/primary`, one plain sentence: "Phone before booking. 4 of this phone's 7 previous orders were cancelled and 2 came back from the courier." |
 | Policy line | Fill × Hug | Horizontal, gap `spacing/2` | `admin/caption` `color/text/secondary` + 14px `info`: "High risk requires phone verification before courier booking (`verification_status = pending`). The score never cancels an order by itself." |
 | **Breakdown list** | Fill × Hug | Vertical, gap `spacing/2` | the required element — the number alone is not auditable |
@@ -611,7 +613,7 @@ A manual `blacklist` or `whitelist` **overrides** the booking gate and says so i
 |---|---|---|---|
 | Drawer root | W 480 × Fill | Vertical, gap 0 | `color/bg/surface`, `e4`, `radius/xl` left corners, slides from the right over a 50% `color/text/primary` scrim |
 | Header | Fill × 64 | Horizontal, space-between, padding `spacing/4` `spacing/5` | bottom border 1px `color/border/default`; title `admin/section` "Book courier — TMB-26-00125" or "Bulk book — 2 orders"; `IconButton ghost` `x` |
-| **Unverified-provider banner** | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` `spacing/5` | bg `color/bg/subtle`, 3px `color/status/low-stock` left edge, 1px `color/border/default`; icon `flask-conical` 20 tinted `color/status/low-stock`; `admin/body-strong` `color/text/primary` "Steadfast driver has never been tested against a live account"; `admin/caption` `color/text/secondary` "Credentials are not configured, so no booking has ever succeeded through this driver. Field names, charge rounding and the response shape are implemented from the published docs and are unverified. Book one low-value order first and confirm the consignment ID appears."; `Button ghost sm` "Open courier settings". Shown whenever `courier_providers.credentials` is empty **or** the provider has zero successful bookings on record. |
+| **Unverified-provider banner** | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` `spacing/5` | bg `color/feedback/warning-subtle`, `radius/sm` (no left edge, 4a); icon `flask-conical` 20 tinted `color/status/low-stock`; `admin/body-strong` `color/text/primary` "Steadfast driver has never been tested against a live account"; `admin/caption` `color/text/secondary` "Credentials are not configured, so no booking has ever succeeded through this driver. Field names, charge rounding and the response shape are implemented from the published docs and are unverified. Book one low-value order first and confirm the consignment ID appears."; `Button ghost sm` "Open courier settings". Shown whenever `courier_providers.credentials` is empty **or** the provider has zero successful bookings on record. |
 | Provider select | Fill × Hug | Vertical, gap `spacing/2`, padding `spacing/5` | radio cards, not a dropdown — the charge differs per provider and must be comparable at a glance |
 | Provider card | Fill × 76 | Horizontal, gap `spacing/3`, padding `spacing/4`, `radius/md` | 1px `color/border/default`; `selected` → 2px `color/bg/brand` + bg `color/bg/brand-subtle` |
 | — Content | Fill | Vertical, gap `spacing/1` | name `admin/body-strong`; `admin/caption` `color/text/secondary` "Dhaka ৳60 · suburb ৳110 · outside ৳140 · +৳20/kg over 1 kg · COD 1% · return ৳70"; trust chip |
@@ -643,7 +645,7 @@ Verified: **Pathao's bulk endpoint responds `202` with no consignment IDs, and S
 |---|---|---|
 | Icon | `clock-arrow-up` 20, tinted `color/status/low-stock` | `circle-check` 20, tinted `color/feedback/success` |
 | Chip label | **"Submitted — awaiting confirmation"** | **"Booked"** |
-| Chip tokens | bg `color/bg/subtle`, **2px `color/status/low-stock` left border**, 1px dashed `color/border/strong` on the rest | bg `color/bg/subtle`, 1px solid `color/border/default` |
+| Chip tokens | bg `color/feedback/warning-subtle`, **1px dashed `color/border/strong` all round** (no left border, 4a), clock glyph | bg `color/bg/subtle`, 1px solid `color/border/default` |
 | Consignment ID | `admin/mono` `color/text/tertiary` **"Not issued yet"** — never a dash, never blank | `admin/mono` `color/text/primary` `DT261107FJ2D9Q` with a `copy` button |
 | Elapsed timer | `admin/num` `color/text/primary` "5h 25m since 9:05 am" — crosses to a 14px `alert-triangle` tinted `color/feedback/warning` past 6 h with "Overdue — chase Pathao support" | — |
 | Actions | `Button outline sm` "Poll for consignment ID" · `Button ghost sm` "View submitted payload" · `Button ghost sm` "Mark as failed and re-book" | `Button outline sm` "Print label" · `Button outline sm` "Track" · `Button ghost sm` "Cancel booking" |
@@ -654,7 +656,7 @@ A `submitted` shipment surfaces in three places so it cannot be forgotten: the "
 
 #### `bulk` mode
 
-Header becomes "Bulk book — 2 orders · ৳4,450 COD". A W 480 list of per-order mini-rows (H 64: order number + customer + zone + weight + computed charge), each with a `Checkbox` and an inline-editable weight. A totals strip: "2 parcels · 4,320 g · COD ৳4,450 · estimated cost **৳180**". Then a **required** acknowledgement, bg `color/bg/subtle`, 3px `color/status/low-stock` left edge: a `Checkbox` labelled "I understand bulk booking returns no consignment IDs. These 2 orders will show **Submitted — awaiting confirmation** until Pathao confirms them." The primary button reads "Submit 2 orders to Pathao" — **the word "book" is not used in bulk mode at all.** On `202`, the drawer swaps to a result panel: a `check` icon, "2 orders submitted at 9:05 am", a batch reference `BULK-2026-1108-01`, per-order `submitted` rows, and `Button primary md` "Go to Submitted queue".
+Header becomes "Bulk book — 2 orders · ৳4,450 COD". A W 480 list of per-order mini-rows (H 64: order number + customer + zone + weight + computed charge), each with a `Checkbox` and an inline-editable weight. A totals strip: "2 parcels · 4,320 g · COD ৳4,450 · estimated cost **৳180**". Then a **required** acknowledgement, bg `color/feedback/warning-subtle`, `radius/sm` (no left edge, 4a): a `Checkbox` labelled "I understand bulk booking returns no consignment IDs. These 2 orders will show **Submitted — awaiting confirmation** until Pathao confirms them." The primary button reads "Submit 2 orders to Pathao" — **the word "book" is not used in bulk mode at all.** On `202`, the drawer swaps to a result panel: a `check` icon, "2 orders submitted at 9:05 am", a batch reference `BULK-2026-1108-01`, per-order `submitted` rows, and `Button primary md` "Go to Submitted queue".
 
 `failed` — per-order rows with the literal provider error and a `Button outline sm` "Retry". Failures are never silently dropped; they land in **Fulfilment → Failed bookings retry** with their payload.
 
@@ -683,7 +685,7 @@ Header becomes "Bulk book — 2 orders · ৳4,450 COD". A W 480 list of per-ord
 | — Source chip | Hug × 18 | padding `spacing/1`, `radius/sm` | bg `color/bg/subtle`, `admin/caption` `color/text/tertiary`: "webhook" / "poll" / "manual — Rina". **Every event states how we learned it**, because a manually-entered delivery and a webhook-confirmed delivery are different kinds of fact. |
 | — Raw payload | Hug | — | `Button ghost xs` "Raw" → `Popover` `color/bg/surface-raised` W 420, `admin/mono` 12, max-H 240 scroll |
 | `awaiting-first-event` | Fill × 140 | Vertical, centred | `EmptyState`: `clock-arrow-up` 24 tinted `color/status/low-stock`, "Submitted at 9:05 am — no tracking events yet", `admin/caption` "Pathao has not confirmed this consignment. Events appear here once it does." |
-| Divergence banner | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | shown when `provider_status_raw` has no mapping: bg `color/bg/subtle`, 3px `color/status/low-stock` left edge, "Pathao sent `hold_by_merchant`, which we do not recognise. The shipment status is unchanged. Logged for mapping." |
+| Divergence banner | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | shown when `provider_status_raw` has no mapping: bg `color/feedback/warning-subtle`, `radius/sm`, a tinted `alert-triangle` (no left edge, 4a), "Pathao sent `hold_by_merchant`, which we do not recognise. The shipment status is unchanged. Logged for mapping." |
 | Partial-delivery block | Fill × Hug | Vertical, gap `spacing/2`, padding `spacing/4` | `partially_delivered` only; bg `color/bg/subtle`, `radius/md`; two labelled lists: **Delivered (1)** — Plush Teddy Bear 45cm × 1, ৳1,200; **Came back (1)** — Foam Blaster X2 × 1, ৳1,750, restocked via `courier_return_in` on 08 Nov at a written-down cost of ৳790 |
 
 **Responsive** — **1024:** facts grid 3-up. **768:** facts grid 2-up; the time column moves above the body as a single `admin/caption` line; the Raw button becomes a long-press.
@@ -833,8 +835,8 @@ Fill × Hug, padding `spacing/5`, bg `color/bg/subtle`, `radius/lg`, Vertical ga
 | Cell `inherited` | — | — | `Checkbox` checked and `disabled` with a 12px `arrow-down-right` beside it; tooltip "Granted by *manager* role inheritance" |
 | Cell `locked` | — | — | 16px `lock` in `color/text/tertiary`, `aria-disabled`; `super_admin` holds everything and cannot be edited |
 | Cell `mixed` | — | — | `Checkbox` indeterminate (group headers only) |
-| Sensitive-permission row | — | — | the 7 permissions covered by `audit_sensitive` (price, cost, refund, role, credential, blacklist, P&L) get a 3px `color/status/low-stock` left edge on the label cell and a 14px `history` icon with the tooltip "Every change to this permission is written to the immutable audit log" |
-| Danger pairing warning | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | appears above the matrix when a combination is granted that should be questioned: bg `color/bg/subtle`, 3px `color/feedback/warning` left edge, `alert-triangle` 16, "**order_operator** would be able to issue refunds and approve them. Separate those two." |
+| Sensitive-permission row | — | — | the 7 permissions covered by `audit_sensitive` (price, cost, refund, role, credential, blacklist, P&L) get a 14px `history` icon (no left edge, 4a) with the tooltip "Every change to this permission is written to the immutable audit log" |
+| Danger pairing warning | Fill × Hug | Horizontal, gap `spacing/3`, padding `spacing/4` | appears above the matrix when a combination is granted that should be questioned: bg `color/feedback/warning-subtle` (no left edge, 4a), `alert-triangle` 16, "**order_operator** would be able to issue refunds and approve them. Separate those two." |
 | Search | W 320 × 36 | — | above the matrix, filters permission rows live, keeping group headers that still have matches |
 
 Column widths: 368 + 7 × 108 = 1124, plus a 20px right scroll affordance = 1144.
@@ -1012,12 +1014,12 @@ Footer: `admin/caption` `color/text/secondary` "23 units across 10 products · �
 | Fashion Doll Deluxe Set | **5** | 6 | 5 on hand − 0 reserved |
 | Kids Tricycle with Push Handle | **3** | 4 | 4 on hand − 1 reserved |
 
-Available renders as a `color/bg/subtle` chip with a 2px `color/status/low-stock` left border, the number, and the word "low"; the reserved breakdown sits beneath in `admin/caption` `color/text/tertiary`. Action column: `Button outline sm` "Create PO". Footer: "0 out of stock" with a `check-circle` 14 tinted `color/feedback/success`.
+Available renders as a `color/feedback/warning-subtle` chip (no left border, 4a), the number, and the word "low"; the reserved breakdown sits beneath in `admin/caption` `color/text/tertiary`. Action column: `Button outline sm` "Create PO". Footer: "0 out of stock" with a `check-circle` 14 tinted `color/feedback/success`.
 
-**R6b — exception stack, W 376.** Three cards, gap `spacing/4`, each H Hug, `color/bg/surface`, `radius/lg`, 1px `color/border/default`, 3px left edge:
-1. `color/feedback/danger` edge — "1 order needs phone verification" · TMB-26-00126 · Shahriar Kabir · risk **80 / 100** · ৳6,260 · `Button primary sm` "Open risk screen".
-2. `color/status/low-stock` edge — "2 shipments submitted, not confirmed" · 5h 25m since 9:05 am · batch `BULK-2026-1108-01` · `Button outline sm` "Open submitted queue".
-3. `color/status/low-stock` edge — "1 refund pending 3 days" · TMB-26-00128 · ৳200 to Tanzila Akter · `Button outline sm` "Approve refund".
+**R6b — exception stack, W 376.** Three cards, gap `spacing/4`, each H Hug, `color/bg/surface`, `radius/lg`, 1px `color/border/default` all round (no left edge, 4a); the tone rides on a 32px tinted icon tile beside the title:
+1. `danger-subtle` tile — "1 order needs phone verification" · TMB-26-00126 · Shahriar Kabir · risk **80 / 100** · ৳6,260 · `Button primary sm` "Open risk screen".
+2. `warning-subtle` tile — "2 shipments submitted, not confirmed" · 5h 25m since 9:05 am · batch `BULK-2026-1108-01` · `Button outline sm` "Open submitted queue".
+3. `warning-subtle` tile — "1 refund pending 3 days" · TMB-26-00128 · ৳200 to Tanzila Akter · `Button outline sm` "Approve refund".
 
 **768.** Content header stacks (title, then a Fill-width `DateRangePicker`). `StatCard`s become 2-up `size: sm`, 4 rows. The status strip becomes a horizontally scrollable chip row of 10 chips, Pending first. Charts go full width at `height` 200, the donut's legend moving to `top`. Best sellers and Low stock become card lists of 3 and 3 rows. The exception stack moves **above** the stat cards — on a phone the operator is checking what needs doing, not reading totals.
 
@@ -1039,7 +1041,7 @@ Available renders as a `color/bg/subtle` chip with a 2px `color/status/low-stock
 | `BulkActionBar` | 64 | `floating`, appears on selection |
 
 **Tabs with live counts** — counts poll every 30 s and animate only the digit:
-`Pending 2` · `Confirmed 0` · `Processing 0` · `Ready to ship 3` · `Shipped 1` · `Delivered 3` · `Completed 0` · `Part. returned 1` · `Returned 1` · `Cancelled 1` · `On hold 0` · `All 12` · **`⚠ Anomalies 1`** (pinned right, 2px `color/feedback/warning` left border, always visible).
+`Pending 2` · `Confirmed 0` · `Processing 0` · `Ready to ship 3` · `Shipped 1` · `Delivered 3` · `Completed 0` · `Part. returned 1` · `Returned 1` · `Cancelled 1` · `On hold 0` · `All 12` · **`⚠ Anomalies 1`** (pinned right, warning-tinted, no left border (4a), always visible).
 Active tab: bg `color/bg/brand-subtle`, label 600 `color/text/primary`, 2px `color/bg/brand` bottom edge. Count badge: H 18, `radius/sm`, bg `color/bg/subtle`, `admin/caption`; zero counts in `color/text/tertiary`. At 1024 the strip scrolls horizontally with the active tab scrolled into view.
 
 **Columns (sum 1144):**
@@ -1054,7 +1056,7 @@ Active tab: bg `color/bg/brand-subtle`, label 600 `color/text/primary`, 2px `col
 | 6 | Total | 104 | right | `admin/num` `৳6,260`; line 2 `admin/caption` `color/text/tertiary` due if any (`due ৳2,310`) |
 | 7 | Payment | 92 | left | method chip: `cod` `banknote` / `bkash` `smartphone` / `sslcommerz` `credit-card`; bg `color/bg/subtle`, label `color/text/primary` |
 | 8 | Status | 188 | left | `OrderStatusBadge triad-stacked` (A12) |
-| 9 | Risk | 88 | left | risk pill: bg `color/bg/subtle`, 2px left border in the level token, 14px shield icon, label **word + number** (`High 80`) |
+| 9 | Risk | 88 | left | risk pill: bg the level's `*-subtle` fill (no left border, 4a), 14px shield icon, label **word + number** (`High 80`) |
 | 10 | Courier | 144 | left | provider + state: `Booked DT261107FJ2D9Q`, `Submitted 5h 25m`, `Not booked`, `Returned`; `admin/mono` 12 for the ID with a `copy` button |
 
 **All twelve rows, exactly as they render** (the `All` tab; every row of Part C has a specified rendering):
@@ -1076,7 +1078,7 @@ Active tab: bg `color/bg/brand-subtle`, label 600 `color/text/primary`, 2px `col
 
 Reading convention: **bold** = full chip, *italic* = plain `color/text/tertiary` text with no fill (the `expected` severity), ℹ = `notable`, ⚠ = `anomaly`. Eleven of twelve rows carry exactly one chip of visual weight in the Status column. The one that does not is TMB-26-00128, and it is the one that needs a human.
 
-Row 00126 additionally carries a 2px `color/feedback/danger` left border on the whole row because `verification_status = pending` — the only row-level emphasis on the board, reserved for "this cannot be booked until someone makes a phone call".
+Row 00126 additionally carries the "Verify first" warning chip (no row left border, 4a) because `verification_status = pending` — the only row-level emphasis on the board, reserved for "this cannot be booked until someone makes a phone call".
 
 **Bulk actions.** `BulkActionBar` offers, in order: **Confirm** · **Mark packed** · **Book courier** · **Print invoices** · overflow (Assign to me · Add internal note · Change status · Export selected · **Cancel orders**, as `Button danger`). The context block shows "Total ৳12,580 · 2 outside Dhaka · 1 high risk". Selecting an order with `verification_status = pending` disables **Book courier** with the reason "1 of 4 selected orders needs phone verification first" and a `Button ghost sm` "Drop it from the selection".
 
@@ -1271,7 +1273,7 @@ These seven prior orders fall **outside** the 02–08 Nov window, so none of the
 | `BulkActionBar` | 52 | `docked-toolbar` (a floating bar would cover the drawer's footer) |
 | `CourierBookingPanel` | — | right drawer W 480 on row action |
 
-**Provider trust banner**, Fill × Hug, bg `color/bg/subtle`, 3px `color/status/low-stock` left edge, 1px `color/border/default`, `radius/md`, padding `spacing/4` `spacing/5`, icon `flask-conical` 20 tinted `color/status/low-stock`:
+**Provider trust banner**, Fill × Hug, bg `color/feedback/warning-subtle`, `radius/sm` (no left edge, 4a), padding `spacing/4` `spacing/5`, icon `flask-conical` 20 tinted `color/status/low-stock`:
 > **"Steadfast driver has never been tested against a live account."** No Steadfast merchant credentials are configured, so no booking, charge calculation or fraud check has ever succeeded through this driver. Field names, charge rounding and the response shape are implemented from the published documentation and are unverified. Book one low-value order through it first and confirm the consignment ID appears. — `Button ghost sm` "Open courier settings"
 
 Pathao carries the `verified` trust chip ("Live · 47 bookings") and is pre-selected everywhere.
@@ -1293,7 +1295,7 @@ The COD cell shows `admin/num` **৳2,310** with `admin/caption` `color/text/ter
 | TMB-26-00124 | Sumaiya Islam · Dhaka (Mirpur) | Inside Dhaka metro | 1,400 g | ৳1,930 | ৳99 | 08 Nov 8:35 am | **Submitted — awaiting confirmation** · `Not issued yet` · **5h 25m** since 9:05 am |
 | TMB-26-00129 | Mehedi Hasan · Dhaka (Mohammadpur) | Inside Dhaka metro | 2,920 g | ৳2,520 | ৳125 | 08 Nov 8:40 am | **Submitted — awaiting confirmation** · `Not issued yet` · **5h 25m** since 9:05 am |
 
-Both state cells use the A16 `submitted` treatment: `clock-arrow-up` tinted `color/status/low-stock`, 2px `color/status/low-stock` left border, 1px dashed border on the remaining three sides, consignment rendered as **`Not issued yet`** in `admin/mono` `color/text/tertiary` — never a dash and never blank. The elapsed timer is `admin/num` and crosses to a `color/feedback/warning` `alert-triangle` with "Overdue — chase Pathao support" past 6 h, which these two rows reach at 3:05 pm. A batch chip above the table reads `BULK-2026-1108-01 · submitted 08 Nov 9:05 am · 2 orders · Pathao` with `Button ghost sm` "View submitted payload". Row actions: `Button outline sm` "Poll for consignment ID" · overflow (View payload · Mark as failed and re-book). **Print label is disabled on both rows**, tooltip "A label cannot be printed before the consignment ID arrives".
+Both state cells use the A16 `submitted` treatment: `clock-arrow-up` tinted `color/status/low-stock`, `warning-subtle` fill, 1px dashed border all round (no left border, 4a), consignment rendered as **`Not issued yet`** in `admin/mono` `color/text/tertiary` — never a dash and never blank. The elapsed timer is `admin/num` and crosses to a `color/feedback/warning` `alert-triangle` with "Overdue — chase Pathao support" past 6 h, which these two rows reach at 3:05 pm. A batch chip above the table reads `BULK-2026-1108-01 · submitted 08 Nov 9:05 am · 2 orders · Pathao` with `Button ghost sm` "View submitted payload". Row actions: `Button outline sm` "Poll for consignment ID" · overflow (View payload · Mark as failed and re-book). **Print label is disabled on both rows**, tooltip "A label cannot be printed before the consignment ID arrives".
 
 Charge check: 1,400 g → ৳60 + ৳20 = ৳80 delivery, COD fee 1% of ৳1,930 = ৳19, total ৳99. 2,920 g → ৳60 + ৳40 = ৳100 delivery, COD fee 1% of ৳2,520 = ৳25, total ৳125. Batch estimate ৳180 delivery on ৳4,450 of COD across 4,320 g.
 
@@ -1647,7 +1649,7 @@ Reconciling cash to the ৳717 accrual profit: + ৳8,210 COGS (goods paid for i
 ## Open questions for the lead
 
 1. **`spacing/7` does not exist** in the token set (the scale skips 7, 9, 11, 13–15, 17–19, 21–23). Every geometry above uses only `spacing/1`–`spacing/6`, `spacing/8` and `spacing/12`. If Figma variables are created for the missing steps, nothing here needs to change; if not, do not interpolate.
-2. **`color/feedback/*` have no `-subtle` companions.** Every status treatment above therefore fills with `color/bg/subtle` and tints only icons and 2px edges. Adding `color/feedback/success-subtle` etc. would let chips carry tinted fills and would simplify A12; it is a token-set decision, not a component one.
+2. ~~`color/feedback/*` have no `-subtle` companions.~~ Resolved: `success-subtle`, `warning-subtle`, `danger-subtle` and `info-subtle` exist, and since the owner decision of 2026-11-16 (rule 4a) they replace every coloured left edge.
 3. **The admin type tokens in Part 0 §5 are new** (`admin/page-title` … `admin/mono`). They are overrides of §3.2, not replacements. They need to exist as Figma text styles bound to the same families before A1 is built.
 4. **Steadfast credentials.** Everything in A14 Panel B and the B6 banner is written for the state the business is actually in. When a merchant account exists, Panel B's `fresh` / `stale` / `scoring-disabled` states activate and the B6 banner disappears on its own; no redesign is needed.
 5. ~~**Media library video limits**~~ — **Resolved 2026-11-12 (owner): no video in v1.** Video is deferred past v1; the Videos filter, the `MediaTile` Video variants and the sample video tile were removed from Figma. Revisit formats, size and duration caps when video is scheduled.

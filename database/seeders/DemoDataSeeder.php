@@ -39,6 +39,7 @@ class DemoDataSeeder extends Seeder
             DemoMarketingSeeder::class,
             DemoPurchasingSeeder::class,
             DemoOrdersSeeder::class,
+            DemoCapitalSeeder::class,
             DemoFinanceSeeder::class,
             DemoReviewsSeeder::class,
             DemoContentSeeder::class,

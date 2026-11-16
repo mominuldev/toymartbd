@@ -108,11 +108,11 @@ export function CourierCard({ courier }: { courier: BookingCourier }) {
     );
 }
 
-/** The honest rule-24d notice under the ready table: 3px low-stock edge, caption body. */
+/** The honest rule-24d notice under the ready table: warning tint + tinted info icon (no left edge), caption body. */
 export function BulkNotice() {
     const { t } = useI18n();
     return (
-        <p role="note" className="flex items-start gap-3 rounded-sm border-l-3 border-l-status-low-stock bg-subtle px-4 py-3 t-admin-body text-fg-primary">
+        <p role="note" className="flex items-start gap-3 rounded-sm bg-warning-subtle px-4 py-3 t-admin-body text-fg-primary">
             <InfoIcon size={18} aria-hidden className="mt-0.5 shrink-0 text-status-low-stock" />
             {t('bookingQueue.notice')}
         </p>

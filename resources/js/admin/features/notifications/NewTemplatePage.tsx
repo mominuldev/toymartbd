@@ -108,8 +108,9 @@ export function NewTemplatePage() {
                 title={t('notif.tpl.newTitle')}
                 subtitle={t('notif.tpl.newSubtitle')}
             />
-            <form onSubmit={submit} noValidate className="flex max-w-240 flex-col gap-4">
-                <fieldset disabled={create.isPending} className="flex min-w-0 flex-col gap-4">
+            <form onSubmit={submit} noValidate className="flex min-w-0 flex-col gap-4">
+                {/* Fills the content width (spec rule 4b): basics beside the copy at xl. */}
+                <fieldset disabled={create.isPending} className="grid min-w-0 items-start gap-4 xl:grid-cols-2">
                     <Panel title={t('notif.tpl.basics')}>
                         <div className={pair}>
                             <Field label={t('notif.tpl.nameEn')} error={errorOf('name_en')} required>

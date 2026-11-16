@@ -123,7 +123,8 @@ export function BlogTermsPage({ kind }: { kind: TermKind }) {
                 }
             />
 
-            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,620fr)_minmax(0,500fr)]">
+            {/* The editor column exists only while editing; otherwise the list fills the width (spec rule 4b). */}
+            <div className={`grid items-start gap-6 ${editing !== null && manage ? 'xl:grid-cols-[minmax(0,620fr)_minmax(0,500fr)]' : ''}`}>
                 <div className={`${cardClass} gap-1`}>
                     <h2 className="pb-2 t-admin-section text-fg-primary">{t(titles[kind])}</h2>
                     {terms.isError ? (
@@ -208,7 +209,7 @@ export function BlogTermsPage({ kind }: { kind: TermKind }) {
 
             {/* Search & social for the archive page (P7 SEO module): its own form, saved separately. */}
             {editing !== null && editing !== 'new' && can(me, 'seo.view') && (
-                <div className={`${cardClass} w-full min-w-0 max-w-3xl`}>
+                <div className={`${cardClass} w-full min-w-0`}>
                     <SeoPanel type={seoTypes[kind]} id={editing.id} />
                 </div>
             )}

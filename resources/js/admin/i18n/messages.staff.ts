@@ -129,6 +129,7 @@ export const staffEn = {
     'perm.finance.reconcile_cod': 'Reconcile COD',
     'perm.finance.record_supplier_payments': 'Record supplier payments',
     'perm.finance.export': 'Export finance',
+    'perm.finance.manage_capital': 'Record owner capital & drawings',
     'perm.reports.view': 'View reports',
     'perm.reports.export': 'Export reports',
     'perm.marketing.view': 'View marketing',
@@ -149,6 +150,7 @@ export const staffEn = {
     'perm.audit.view': 'View audit log',
     'perm.pos.use': 'Sell at the POS counter',
     'perm.pos.manage': 'Manage every POS drawer',
+    'perm.pos.sell_on_due': 'Sell on due at the POS',
 
     'staff.col.twoFactor': 'Two-factor',
     'staff.twoFactor.on': 'On',
@@ -342,6 +344,7 @@ export const staffBn: Record<keyof typeof staffEn, string> = {
     'perm.finance.reconcile_cod': 'COD মেলানো',
     'perm.finance.record_supplier_payments': 'সরবরাহকারীর পেমেন্ট লেখা',
     'perm.finance.export': 'হিসাব এক্সপোর্ট',
+    'perm.finance.manage_capital': 'মালিকের মূলধন ও উত্তোলন লেখা',
     'perm.reports.view': 'রিপোর্ট দেখা',
     'perm.reports.export': 'রিপোর্ট এক্সপোর্ট',
     'perm.marketing.view': 'মার্কেটিং দেখা',
@@ -362,6 +365,7 @@ export const staffBn: Record<keyof typeof staffEn, string> = {
     'perm.audit.view': 'অডিট লগ দেখা',
     'perm.pos.use': 'POS কাউন্টারে বিক্রি',
     'perm.pos.manage': 'সব POS ড্রয়ার পরিচালনা',
+    'perm.pos.sell_on_due': 'POS-এ বাকিতে বিক্রি',
 
     'staff.col.twoFactor': 'টু-ফ্যাক্টর',
     'staff.twoFactor.on': 'চালু',

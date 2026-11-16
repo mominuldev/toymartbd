@@ -1,4 +1,5 @@
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
+import { TAKA } from '@/lib/money';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { ProductStatus } from './api';
 
@@ -7,8 +8,8 @@ import type { ProductStatus } from './api';
  * (StatusChip with this screen's three states) and the matrix "On" toggle.
  */
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
+/** The taka sign — a currency symbol, not translatable copy (lib/money). */
+export { TAKA };
 
 /**
  * A taka amount as Figma sets it (DataTable price cells, B · 11 Products 241:37251): the sign in

@@ -159,9 +159,7 @@ function ConversationRow({ row, selected }: { row: Conversation; selected: boole
             <Link
                 to={`/inbox/${row.id}`}
                 aria-current={selected ? 'page' : undefined}
-                className={`flex gap-3 border-b border-s-2 border-b-line-default px-4 py-3 transition-colors duration-150 ${
-                    selected ? 'border-s-brand bg-brand-subtle' : 'border-s-transparent hover:bg-subtle'
-                }`}
+                className={`flex gap-3 border-b border-line-default px-4 py-3 transition-colors duration-150 ${selected ? 'bg-brand-subtle' : 'hover:bg-subtle'}`}
             >
                 <ContactAvatar name={name} />
                 <span className="flex min-w-0 flex-1 flex-col gap-1">

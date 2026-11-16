@@ -191,6 +191,9 @@ export const financeEn = {
     'finLedger.type.cod_received': 'COD received',
     'finLedger.type.other_income': 'Other income',
     'finLedger.type.other_expense': 'Other expense',
+    'finLedger.type.pos_receipt': 'POS receipt',
+    'finLedger.type.owner_capital_in': 'Owner capital in',
+    'finLedger.type.owner_drawing': 'Owner drawing',
 
     'finCod.title': 'COD receivables',
     'finCod.hint': 'Recognised on delivery minus cash received from couriers',
@@ -402,6 +405,9 @@ export const financeBn: Record<keyof typeof financeEn, string> = {
     'finLedger.type.cod_received': 'COD প্রাপ্ত',
     'finLedger.type.other_income': 'অন্যান্য আয়',
     'finLedger.type.other_expense': 'অন্যান্য খরচ',
+    'finLedger.type.pos_receipt': 'POS আদায়',
+    'finLedger.type.owner_capital_in': 'মালিকের মূলধন জমা',
+    'finLedger.type.owner_drawing': 'মালিকের উত্তোলন',
 
     'finCod.title': 'COD পাওনা',
     'finCod.hint': 'ডেলিভারিতে স্বীকৃত বিয়োগ কুরিয়ার থেকে পাওয়া নগদ',

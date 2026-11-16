@@ -11,12 +11,18 @@ use App\Domain\Purchasing\Actions\PlacePurchaseOrder;
 use App\Domain\Purchasing\Actions\UpdatePurchase;
 use App\Domain\Purchasing\Enums\PurchaseStatus;
 use App\Domain\Purchasing\Models\Purchase;
+use App\Domain\Purchasing\Services\PurchaseQuoter;
+use App\Domain\Purchasing\Services\PurchasingSummary;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Purchasing\ClosePurchaseRequest;
+use App\Http\Requests\Admin\Purchasing\QuotePurchaseRequest;
 use App\Http\Requests\Admin\Purchasing\StorePurchaseRequest;
 use App\Http\Requests\Admin\Purchasing\UpdatePurchaseRequest;
 use App\Http\Resources\Admin\PurchaseListItemResource;
+use App\Http\Resources\Admin\PurchaseQuoteResource;
 use App\Http\Resources\Admin\PurchaseResource;
+use App\Http\Resources\Admin\PurchaseSummaryResource;
+use App\Support\DhakaDate;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,11 +45,14 @@ final class PurchaseController extends ApiController
     /**
      * `GET /purchases` — cursor-paginated, newest first; needs purchasing.view.
      *
-     * Filters: `filter[status]` (one PurchaseStatus), `filter[supplier_id]`, `filter[search]`
-     * (PO number, supplier invoice number or supplier name contains). Sorts: `created_at`,
-     * `-created_at` (default), `expected_date`, `-expected_date`. Anything else is a 400.
+     * Filters: `filter[status]` (one PurchaseStatus, or a group: `open` = ordered + partly
+     * received, `closed` = closed short + cancelled), `filter[expected]` (`late` / `this_week`,
+     * open POs only, Dhaka dates), `filter[supplier_id]`, `filter[search]` (PO number, supplier
+     * invoice number or supplier name contains). Sorts: `created_at`, `-created_at` (default),
+     * `expected_date`, `-expected_date`. Anything else is a 400.
      */
-    #[QueryParameter('filter[status]', 'One PO status.', type: "'draft'|'ordered'|'partially_received'|'received'|'cancelled'|'closed_short'")]
+    #[QueryParameter('filter[status]', 'One PO status, or the group `open` (ordered + partially_received) or `closed` (closed_short + cancelled).', type: "'draft'|'ordered'|'partially_received'|'received'|'cancelled'|'closed_short'|'open'|'closed'")]
+    #[QueryParameter('filter[expected]', 'Open POs past their expected date (`late`) or expected from today to the end of this Saturday–Friday week (`this_week`).', type: "'late'|'this_week'")]
     #[QueryParameter('filter[supplier_id]', 'Only this supplier\'s POs.', type: 'int')]
     #[QueryParameter('filter[search]', 'PO number, supplier invoice number or supplier name contains.', type: 'string')]
     #[QueryParameter('sort', 'Sort field; prefix `-` for descending.', type: "'created_at'|'-created_at'|'expected_date'|'-expected_date'", default: '-created_at')]
@@ -56,14 +65,33 @@ final class PurchaseController extends ApiController
         $sort = $request->query('sort', '-created_at');
         $descending = is_string($sort) && str_starts_with($sort, '-');
 
-        $purchases = QueryBuilder::for(Purchase::query()->with('supplier')->withCount('items'), $request)
+        $purchases = QueryBuilder::for(Purchase::query()->with('supplier')->withCount('items')->withSum('items', 'quantity_ordered')->withSum('items', 'quantity_received'), $request)
             ->allowedFilters(
                 AllowedFilter::callback('status', static function (Builder $query, mixed $value): void {
+                    if ($value === 'open' || $value === 'closed') {
+                        $query->whereIn('status', $value === 'open'
+                            ? PurchasingSummary::openStatuses()
+                            : [PurchaseStatus::ClosedShort->value, PurchaseStatus::Cancelled->value]);
+
+                        return;
+                    }
                     $status = is_string($value) ? PurchaseStatus::tryFrom($value) : null;
                     if ($status === null) {
-                        throw new BadRequestHttpException('filter[status] must be one of: '.implode(', ', PurchaseStatus::values()).'.');
+                        throw new BadRequestHttpException('filter[status] must be one of: '.implode(', ', [...PurchaseStatus::values(), 'open', 'closed']).'.');
                     }
                     $query->where('status', $status->value);
+                }),
+                AllowedFilter::callback('expected', static function (Builder $query, mixed $value): void {
+                    if ($value !== 'late' && $value !== 'this_week') {
+                        throw new BadRequestHttpException('filter[expected] must be one of: late, this_week.');
+                    }
+                    $today = DhakaDate::today();
+                    $query->whereIn('status', PurchasingSummary::openStatuses());
+                    if ($value === 'late') {
+                        PurchasingSummary::late($query, $today);
+                    } else {
+                        PurchasingSummary::arriving($query, $today, PurchasingSummary::weekEnds($today));
+                    }
                 }),
                 AllowedFilter::callback('supplier_id', static function (Builder $query, mixed $value): void {
                     if (! is_string($value) || ! ctype_digit($value)) {
@@ -90,8 +118,9 @@ final class PurchaseController extends ApiController
 
     /**
      * `GET /purchases/counts` — POs per status, for the list's tabs; needs purchasing.view.
+     * `all` and `closed` (closed short + cancelled) are the grouped tabs.
      *
-     * @return array{draft: int, ordered: int, partially_received: int, received: int, cancelled: int, closed_short: int}
+     * @return array{draft: int, ordered: int, partially_received: int, received: int, cancelled: int, closed_short: int, all: int, closed: int}
      */
     public function counts(): array
     {
@@ -106,7 +135,31 @@ final class PurchaseController extends ApiController
             'received' => (int) ($counts['received'] ?? 0),
             'cancelled' => (int) ($counts['cancelled'] ?? 0),
             'closed_short' => (int) ($counts['closed_short'] ?? 0),
+            'all' => (int) $counts->sum(),
+            'closed' => (int) ($counts['closed_short'] ?? 0) + (int) ($counts['cancelled'] ?? 0),
         ];
+    }
+
+    /**
+     * `GET /purchases/summary` — the list's KPI row: open orders and their value, arriving this
+     * Saturday–Friday week, late, and what we owe suppliers (Dhaka dates). Needs purchasing.view;
+     * the open value needs catalog.view_cost and the amount owed finance.view (else null).
+     */
+    public function summary(PurchasingSummary $summary): PurchaseSummaryResource
+    {
+        $this->authorize('viewAny', Purchase::class);
+
+        return new PurchaseSummaryResource($summary->compute());
+    }
+
+    /**
+     * `POST /purchases/quote` — prices PO lines before saving: each line total, the order
+     * total and (with `supplier_id`) the last unit cost this supplier charged. Writes nothing.
+     * Needs purchasing.create. 422 on a line discount above its value.
+     */
+    public function quote(QuotePurchaseRequest $request, PurchaseQuoter $quoter): PurchaseQuoteResource
+    {
+        return new PurchaseQuoteResource($quoter->quote($request->lines(), $request->supplierId()));
     }
 
     /** `POST /purchases` — raises a draft PO; needs purchasing.create. */

@@ -1665,9 +1665,11 @@ export interface paths {
         };
         /**
          * `GET /purchases` — cursor-paginated, newest first; needs purchasing.view
-         * @description Filters: `filter[status]` (one PurchaseStatus), `filter[supplier_id]`, `filter[search]`
-         *     (PO number, supplier invoice number or supplier name contains). Sorts: `created_at`,
-         *     `-created_at` (default), `expected_date`, `-expected_date`. Anything else is a 400.
+         * @description Filters: `filter[status]` (one PurchaseStatus, or a group: `open` = ordered + partly
+         *     received, `closed` = closed short + cancelled), `filter[expected]` (`late` / `this_week`,
+         *     open POs only, Dhaka dates), `filter[supplier_id]`, `filter[search]` (PO number, supplier
+         *     invoice number or supplier name contains). Sorts: `created_at`, `-created_at` (default),
+         *     `expected_date`, `-expected_date`. Anything else is a 400.
          */
         get: operations["v1.admin.purchases.index"];
         put?: never;
@@ -1686,10 +1688,55 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /purchases/counts` — POs per status, for the list's tabs; needs purchasing.view */
+        /**
+         * `GET /purchases/counts` — POs per status, for the list's tabs; needs purchasing.view.
+         *     `all` and `closed` (closed short + cancelled) are the grouped tabs
+         */
         get: operations["v1.admin.purchases.counts"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /purchases/summary` — the list's KPI row: open orders and their value, arriving this
+         *     Saturday–Friday week, late, and what we owe suppliers (Dhaka dates). Needs purchasing.view;
+         *     the open value needs catalog.view_cost and the amount owed finance.view (else null)
+         */
+        get: operations["v1.admin.purchases.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/purchases/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /purchases/quote` — prices PO lines before saving: each line total, the order
+         *     total and (with `supplier_id`) the last unit cost this supplier charged. Writes nothing.
+         *     Needs purchasing.create. 422 on a line discount above its value
+         */
+        post: operations["v1.admin.purchases.quote"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3780,6 +3827,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/finance/capital": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/capital` — per holder: put in, taken out, net, latest entry; and the totals */
+        get: operations["v1.admin.finance.capital.summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/capital/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/capital/entries` — entries, cursor-paginated, newest Dhaka date first; `meta.total` counts every match */
+        get: operations["v1.admin.finance.capital.entries.index"];
+        put?: never;
+        /** `POST /finance/capital/entries` — record money put in or taken out. Needs an `Idempotency-Key` */
+        post: operations["v1.admin.finance.capital.entries.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/capital/entries/{entry}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /finance/capital/entries/{entry}/reverse` — the mirror entry, dated today (Dhaka). Returns the reversal. Needs an `Idempotency-Key` */
+        post: operations["v1.admin.finance.capital.entries.reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/capital/holders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /finance/capital/holders` — every holder with its entry count; needs finance.view */
+        get: operations["v1.admin.finance.capital.holders.index"];
+        put?: never;
+        /** `POST /finance/capital/holders` — needs finance.manage_capital */
+        post: operations["v1.admin.finance.capital.holders.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/capital/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /finance/capital/staff` — active staff accounts a holder may be linked to ("has a staff
+         *          * login"): id and name only, never an email or phone, and not already linked to a holder.
+         *     Needs finance.manage_capital (it serves the add/edit holder form)
+         */
+        get: operations["v1.admin.finance.capital.staff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/finance/capital/holders/{holder}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** `PATCH /finance/capital/holders/{holder}` — needs finance.manage_capital */
+        patch: operations["v1.admin.finance.capital.holders.update"];
+        trace?: never;
+    };
     "/admin/finance/settlements": {
         parameters: {
             query?: never;
@@ -3787,7 +3942,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /finance/settlements` — newest first; `meta.providers` lists the couriers (code, name) for the import form. `filter[status]` (received|reconciled), `filter[provider]` (code). Needs finance.view */
+        /**
+         * `GET /finance/settlements` — newest first; needs finance.view. `filter[status]` is the
+         *     statement's review state as the list shows it: `received` (to confirm — every line matches
+         *     or has a decision), `disputed` (a line that does not match still waits for a decision) or
+         *     `reconciled`. `filter[provider]` is a courier code from `meta.providers`; an unknown code is
+         *     a 400. `meta.providers` lists the couriers (code, name) for the import form and the filter;
+         *     `meta.disputed_count` is how many statements wait for a decision (all couriers, unfiltered)
+         */
         get: operations["v1.admin.finance.settlements.index"];
         put?: never;
         /** `POST /finance/settlements` — import (file or typed lines) and match. Books nothing. Needs finance.reconcile_cod */
@@ -3856,7 +4018,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** `GET /finance/expense-categories` — every category with its expense count; needs finance.view */
+        /**
+         * `GET /finance/expense-categories` — every category with its expense count; needs finance.view.
+         *     `meta.category_count` / `meta.active_count` / `meta.expense_count` are the server's counts for
+         *     the list caption ("8 categories · 141 expenses filed"), so the screen never adds them up
+         */
         get: operations["v1.admin.finance.expense-categories.index"];
         put?: never;
         /** `POST /finance/expense-categories` — needs finance.manage_expenses */
@@ -7891,9 +8057,9 @@ export interface components {
             /** @description `App\Models\Enums\AuditAction` */
             action: string;
             /** @enum {string} */
-            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
+            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "capital_drawing_recorded" | "capital_contribution_recorded" | "capital_entry_reversed" | "capital_holder_added" | "capital_holder_changed" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
             /** @enum {string} */
-            area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports";
+            area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports" | "finance";
             actor: {
                 id: number;
                 name: string;
@@ -8445,6 +8611,133 @@ export interface components {
          * @enum {string}
          */
         CancellationReason: "customer_request" | "customer_unreachable" | "fake_order" | "duplicate_order" | "out_of_stock" | "pricing_error" | "address_unserviceable" | "payment_failed" | "other";
+        /** CapitalEntry */
+        CapitalEntry: {
+            id: number;
+            /** @enum {string} */
+            kind: "contribution" | "drawing";
+            holder: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                /** @enum {string} */
+                role: "owner" | "partner";
+                is_active: boolean;
+            } | null;
+            amount: string;
+            net_effect: string;
+            occurred_on: string;
+            /** @enum {string} */
+            method: "cash" | "bank_transfer" | "bkash" | "nagad" | "card" | "cheque";
+            reference: string | null;
+            note: string | null;
+            /** @enum {string} */
+            ledger_type: "owner_capital_in" | "owner_drawing";
+            is_reversal: boolean;
+            reversal_of_id: number | null;
+            reversed_by_id: number | null;
+            /** @description When the reversal was recorded (ISO 8601 UTC); the reversal's own date is its `occurred_on`. */
+            reversed_at: string | null;
+            /** @description The reversal's Dhaka date. */
+            reversed_on: string | null;
+            recorded_by: {
+                id: number;
+                name: string;
+            } | null;
+            created_at: string | null;
+            can: {
+                reverse: boolean;
+            };
+        };
+        /**
+         * CapitalEntryKind
+         * @description `capital_entries.kind` (P10 owner capital): money the owner or a partner put in, or took out. Each kind posts its own ledger type; both are cash, never revenue (rule 10).
+         * @enum {string}
+         */
+        CapitalEntryKind: "contribution" | "drawing";
+        /** CapitalHolder */
+        CapitalHolder: {
+            id: number;
+            name: string;
+            name_bn: string | null;
+            /** @enum {string} */
+            role: "owner" | "partner";
+            user: {
+                id: number;
+                name: string;
+            } | null;
+            is_active: boolean;
+            entries_count: number | null;
+            can: {
+                update: boolean;
+            };
+        };
+        /**
+         * CapitalHolderRequest
+         * @description A capital holder, for `POST /finance/capital/holders` and `PATCH …/{holder}`: `name`
+         *     (unique), optional `name_bn`, `role` (`owner`|`partner`, default owner), optional `user_id` (a staff account, one holder per account)
+         *     and `is_active`. Needs finance.manage_capital.
+         */
+        CapitalHolderRequest: {
+            name: string;
+            name_bn?: string | null;
+            role?: components["schemas"]["CapitalHolderRole"];
+            user_id?: number | null;
+            is_active?: boolean;
+        };
+        /**
+         * CapitalHolderRole
+         * @description `capital_holders.role` (P10): what the person is to the business. A label only — no shares, no profit split.
+         * @enum {string}
+         */
+        CapitalHolderRole: "owner" | "partner";
+        /** CapitalSummary */
+        CapitalSummary: {
+            from: string | null;
+            to: string | null;
+            holders: {
+                holder: {
+                    id: number;
+                    name: string;
+                    name_bn: string | null;
+                    /** @enum {string} */
+                    role: "owner" | "partner";
+                    is_active: boolean;
+                    has_staff_login: boolean;
+                };
+                put_in: string;
+                taken_out: string;
+                net: string;
+                entries_count: number;
+                last_entry: {
+                    id: number;
+                    /** @enum {string} */
+                    kind: "contribution" | "drawing";
+                    amount: string;
+                    net_effect: string;
+                    occurred_on: string;
+                    is_reversal: boolean;
+                } | null;
+            }[];
+            totals: {
+                put_in: string;
+                taken_out: string;
+                net: string;
+                entries_count: number;
+                last_entry: {
+                    id: number;
+                    /** @enum {string} */
+                    kind: "contribution" | "drawing";
+                    amount: string;
+                    net_effect: string;
+                    occurred_on: string;
+                    is_reversal: boolean;
+                    holder_id: number;
+                    holder_name: string;
+                    holder_name_bn: string | null;
+                } | null;
+            };
+        };
         /** Cart */
         Cart: {
             /** @description Opaque cart token: store it in an httpOnly cookie and send it back as `X-Cart-Token`. */
@@ -9234,6 +9527,17 @@ export interface components {
             confirmed_at: string | null;
             created_at: string | null;
             can_reconcile: boolean;
+            /** @description Detail only: how many lines the statement has ("14 parcels on this statement"). */
+            line_count?: number;
+            /**
+             * @description Detail only: the lines still waiting for a decision, per variance type — how many and the
+             *     size of the gap (Σ |variance|, a decimal string), for "Short ৳100.00 · 1 not ours · 1 missing".
+             */
+            pending_by_type?: {
+                variance_type: string;
+                count: number;
+                amount: string;
+            }[];
             items?: {
                 id: number;
                 line_no: number | null;
@@ -10142,13 +10446,18 @@ export interface components {
         FinanceLedgerEntry: {
             id: number;
             /** @enum {string} */
-            type: "sale_revenue" | "cogs" | "discount_given" | "shipping_revenue" | "courier_charge" | "courier_cod_fee" | "courier_return_charge" | "gateway_fee" | "packaging" | "marketing" | "salary" | "rent" | "utility" | "refund" | "inventory_write_off" | "supplier_payment" | "cod_received" | "other_income" | "other_expense";
+            type: "sale_revenue" | "cogs" | "discount_given" | "shipping_revenue" | "courier_charge" | "courier_cod_fee" | "courier_return_charge" | "gateway_fee" | "packaging" | "marketing" | "salary" | "rent" | "utility" | "refund" | "inventory_write_off" | "supplier_payment" | "cod_received" | "other_income" | "other_expense" | "pos_receipt" | "owner_capital_in" | "owner_drawing";
             /** @enum {string} */
             direction: "in" | "out";
             amount: string;
             occurred_on: string;
             source_type: string;
             source_id: number;
+            /**
+             * @description The order's number when the source is the order itself (`order`, `order_reversal`), so the
+             *     screen can say "Order #TM-…" rather than an internal id; null for every other source.
+             */
+            order_number: string | null;
             category_id: number | null;
             category_name: string | null;
             category_name_bn: string | null;
@@ -12224,7 +12533,7 @@ export interface components {
         /** PermissionInfoResource */
         PermissionInfoResource: {
             /** @enum {string} */
-            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due";
+            key: "dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "finance.manage_capital" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "staff.manage" | "roles.manage" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due";
             owner_only: boolean;
             reveals_money: boolean;
         };
@@ -12331,7 +12640,13 @@ export interface components {
             to: string;
             /** @enum {string} */
             source: "ledger" | "summaries" | "mixed";
-            /** @description One bucket per period, oldest first, including empty ones. */
+            /** @description False when the reader lacks catalog.view_cost. */
+            item_costs_visible: boolean;
+            /**
+             * @description One bucket per period, oldest first, including empty ones. Without catalog.view_cost
+             *     the `cogs` line and the gross profit / profit after delivery / profit after losses
+             *     subtotals are null (cost of goods could be backed out of them).
+             */
             buckets: {
                 key: string;
                 from: string;
@@ -12340,22 +12655,22 @@ export interface components {
                 totals: {
                     gross_revenue: string;
                     net_revenue: string;
-                    gross_profit: string;
-                    profit_after_delivery: string;
-                    profit_after_losses: string;
+                    gross_profit: string | null;
+                    profit_after_delivery: string | null;
+                    profit_after_losses: string | null;
                     net_profit: string;
                 };
                 lines: {
-                    [key: string]: string;
+                    [key: string]: string | null;
                 };
                 net_margin_percent: string | null;
             }[];
             totals: {
                 gross_revenue: string;
                 net_revenue: string;
-                gross_profit: string;
-                profit_after_delivery: string;
-                profit_after_losses: string;
+                gross_profit: string | null;
+                profit_after_delivery: string | null;
+                profit_after_losses: string | null;
                 net_profit: string;
             };
         };
@@ -12366,31 +12681,59 @@ export interface components {
             /** @description Last Dhaka day, inclusive. */
             to: string;
             days: number;
+            /** @description When the figures were read (ISO 8601) — the page's "figures as of". */
+            generated_at: string;
             /**
-             * @description The five blocks in order. A `line` carries the ledger types it sums; a
-             *     `subtotal` is the running total after the lines above it.
+             * @description The five blocks in order. A `line` carries the ledger types it sums and how many
+             *     times they happened (entries in the natural direction, reversals not counted);
+             *     a `subtotal` is the running total after the lines above it. `percent_of_revenue`
+             *     is the row's (or block total's) signed share of net revenue, 2 dp, null without
+             *     revenue. `total` is the sum of the block's lines. Without catalog.view_cost the
+             *     cost-of-goods line's amount, share and occurrences, block 2's total, and
+             *     the gross profit / profit after delivery / profit after losses subtotals are null.
              */
             blocks: {
                 /** @enum {string} */
                 key: "revenue" | "goods" | "delivery" | "losses" | "running";
                 number: number;
+                total: string | null;
+                percent_of_revenue: string | null;
                 rows: {
                     /** @enum {string} */
                     kind: "line" | "subtotal";
                     key: string;
                     types?: string[];
-                    amount: string;
+                    occurrences?: number | null;
+                    amount: string | null;
+                    percent_of_revenue: string | null;
                 }[];
             }[];
+            /** @description False when the reader lacks catalog.view_cost (cost of goods and every figure it can be backed out of are withheld). */
+            item_costs_visible: boolean;
+            /**
+             * @description Up to four lines in blocks 3–5 that took the most off profit, largest first, as
+             *     positive costs; `relative_percent` is each cost as a % of the largest (100.00 for it).
+             */
+            biggest_costs: {
+                key: string;
+                /** @enum {string} */
+                block: "delivery" | "losses" | "running";
+                cost: string;
+                relative_percent: string;
+            }[];
+            /**
+             * @description Running subtotals. Without catalog.view_cost, gross_profit, profit_after_delivery and
+             *     profit_after_losses are null (cost of goods could be backed out of them).
+             */
             totals: {
                 gross_revenue: string;
                 net_revenue: string;
-                gross_profit: string;
-                profit_after_delivery: string;
-                profit_after_losses: string;
+                gross_profit: string | null;
+                profit_after_delivery: string | null;
+                profit_after_losses: string | null;
                 net_profit: string;
             };
-            /** @description Gross profit as % of net revenue, 2 dp; null without revenue. */
+            /** @description Gross profit as % of net revenue, 2 dp; null without revenue or without catalog.view_cost. */
             gross_margin_percent: string | null;
             /** @description Net profit as % of net revenue, 2 dp; null without revenue. */
             net_margin_percent: string | null;
@@ -12424,22 +12767,29 @@ export interface components {
             };
             /**
              * @description Recognised net split by whether the entry belongs to an order. `reconciled` is
-             *     true when the two parts add up to the statement's net profit.
+             *     true when the two parts add up to the statement's net profit. `difference` is the statement's net profit minus that rebuild (0.00 when it ties up).
              */
             reconciliation: {
                 orders: string;
                 order_count: number;
                 other: string;
                 total: string;
+                difference: string;
                 reconciled: boolean;
             };
             /**
              * @description Orders placed and not yet delivered, cancelled or returned — current, not per
-             *     period. Not in the statement.
+             *     period. Not in the statement. `by_status` splits them by order status (pipeline order), counts and order values.
              */
             open_orders: {
                 count: number;
                 value: string;
+                by_status: {
+                    /** @enum {string} */
+                    status: "pending" | "on_hold" | "confirmed" | "processing" | "ready_to_ship" | "shipped";
+                    count: number;
+                    value: string;
+                }[];
             };
             /** @description Inventory on hand at cost, now; only with catalog.view_cost. Not in the statement. */
             inventory_at_cost: string | null;
@@ -12452,9 +12802,9 @@ export interface components {
                 totals: {
                     gross_revenue: string;
                     net_revenue: string;
-                    gross_profit: string;
-                    profit_after_delivery: string;
-                    profit_after_losses: string;
+                    gross_profit: string | null;
+                    profit_after_delivery: string | null;
+                    profit_after_losses: string | null;
                     net_profit: string;
                 };
                 deltas: {
@@ -13403,14 +13753,47 @@ export interface components {
             note: string | null;
             subtotal?: string;
             discount?: string;
+            /** @description Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`. */
             shipping_cost?: string;
+            /** @description Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`. */
             customs_duty?: string;
+            /** @description Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`. */
             other_cost?: string;
             tax?: string;
+            /**
+             * @description The order total: what was ordered (goods less discounts, plus tax). Extra costs entered
+             *     at receipt are never in it — see `extra_costs`.
+             */
             total?: string;
+            /**
+             * @description Extra costs entered at receipt, summed from the receipts: each kind, their total, the part
+             *     the supplier charged (in what is owed) and the part paid to someone else (never owed to it).
+             */
+            extra_costs?: {
+                freight: string;
+                customs_duty: string;
+                other: string;
+                total: string;
+                charged_by_supplier: string;
+                paid_elsewhere: string;
+            };
+            /** @description Goods received so far at the supplier's price (Σ receipts' goods value). */
+            received_goods?: string;
+            /** @description What the supplier is owed for so far: received goods + extra costs it charged. `due_amount` = this − `paid_amount`. */
+            payable_total?: string;
+            /** @description Same as `payable_total` (kept for existing clients). */
             received_value?: string;
             paid_amount?: string;
             due_amount?: string;
+            /** @description Waiting for stock and past its expected date (Dhaka today). */
+            is_late: boolean;
+            /** @description Something was received and paid, and nothing is owed on it. catalog.view_cost only. */
+            is_paid?: boolean;
+            /**
+             * @description When what is owed falls due: the first delivery's Dhaka date plus the supplier's
+             *     payment terms; null while nothing is owed. catalog.view_cost only.
+             */
+            payment_due_date?: string | null;
             units_ordered: number;
             units_received: number;
             can: {
@@ -13463,6 +13846,15 @@ export interface components {
             order_date: string;
             expected_date: string | null;
             lines_count: number;
+            /** @description Units ordered over every line. */
+            units_ordered: number;
+            /** @description Units received so far over every line. */
+            units_received: number;
+            /** @description Waiting for stock and past its expected date (Dhaka today). */
+            is_late: boolean;
+            /** @description Something was received and paid, and nothing is owed on it. catalog.view_cost only. */
+            is_paid?: boolean;
+            /** @description The order total: what was ordered (goods), never a receipt's extra costs. */
             total?: string;
             due_amount?: string;
             /**
@@ -13470,6 +13862,22 @@ export interface components {
              * @description ISO 8601, UTC.
              */
             created_at: string;
+        };
+        /** PurchaseQuote */
+        PurchaseQuote: {
+            products: number;
+            units: number;
+            subtotal: string;
+            discount: string;
+            total: string;
+            /** @description True when a supplier was named, so a null `last_unit_cost` means "new to this supplier". */
+            supplier_known: boolean;
+            lines: {
+                variant_id: number;
+                quantity: number;
+                line_total: string;
+                last_unit_cost: string | null;
+            }[];
         };
         /** PurchaseReceipt */
         PurchaseReceipt: {
@@ -13532,6 +13940,25 @@ export interface components {
                 avg_cost_before: string;
                 avg_cost_after: string;
             }[];
+        };
+        /** PurchaseSummary */
+        PurchaseSummary: {
+            /** @description Today in Dhaka, Y-m-d. */
+            today: string;
+            /** @description The Friday ending this Saturday–Friday week, Y-m-d. */
+            week_ends: string;
+            /** @description POs waiting for stock (ordered or partly received). */
+            open_count: number;
+            /** @description Their order value. catalog.view_cost only. */
+            open_value: string | null;
+            /** @description Open POs expected from today to `week_ends`. */
+            arriving_count: number;
+            /** @description Open POs past their expected date. */
+            late_count: number;
+            /** @description What we owe suppliers for stock received: the sum of positive supplier balances. finance.view only. */
+            owed: string | null;
+            /** @description How many suppliers we owe. finance.view only. */
+            owed_suppliers: number | null;
         };
         /**
          * PurchaseTrigger
@@ -13596,6 +14023,24 @@ export interface components {
             customer_name?: string | null;
         };
         /**
+         * QuotePurchaseRequest
+         * @description `POST /purchases/quote` — the New / edit purchase order form's lines, priced by the
+         *     server before anything is saved (rule 1). Same line rules as the PO itself; the supplier
+         *     is optional and only adds "last bought at". Needs purchasing.create.
+         */
+        QuotePurchaseRequest: {
+            /** @description Adds each line's `last_unit_cost` from this supplier's earlier purchase orders. */
+            supplier_id?: number | null;
+            lines: {
+                variant_id: number;
+                quantity: number;
+                /** @description The supplier's price per unit, up to 4 decimals. */
+                unit_cost: string;
+                /** @description Discount on the whole line, in taka. */
+                discount?: string | null;
+            }[];
+        };
+        /**
          * ReceivePurchaseRequest
          * @description `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per
          *     PO line, where they go, and the landed costs to split across them. The quote takes
@@ -13633,6 +14078,24 @@ export interface components {
          * @enum {string}
          */
         RecommendationPlacement: "pdp_upsell" | "pdp_cross_sell" | "pdp_fbt" | "pdp_age_progression" | "cart_cross_sell" | "confirmation_cross_sell";
+        /**
+         * RecordCapitalEntryRequest
+         * @description `POST /finance/capital/entries` — owner capital put in (`contribution`, "New investment")
+         *     or taken out (`drawing`): `kind`, `holder_id` (an active holder), `amount` (decimal string,
+         *     > 0), `occurred_on` (a Dhaka date, not in the future), `method` (the expense payment
+         *     methods), optional `reference` and `note`. Needs finance.manage_capital and an
+         *     `Idempotency-Key` (it moves money).
+         */
+        RecordCapitalEntryRequest: {
+            kind: components["schemas"]["CapitalEntryKind"];
+            holder_id: number;
+            amount: string;
+            /** Format: date */
+            occurred_on: string;
+            method: components["schemas"]["ExpensePaymentMethod"];
+            reference?: string | null;
+            note?: string | null;
+        };
         /**
          * RecordCodReceiptRequest
          * @description `POST /finance/orders/{order}/cod-receipts` — cash received from the courier for one
@@ -13974,6 +14437,14 @@ export interface components {
          * @enum {string}
          */
         ReturnReason: "damaged_in_transit" | "defective" | "wrong_item" | "missing_parts" | "not_as_described" | "changed_mind" | "other";
+        /**
+         * ReverseCapitalEntryRequest
+         * @description `POST /finance/capital/entries/{entry}/reverse` — `reason` (required, 3–500 characters; kept
+         *     as the reversal's note). Needs finance.manage_capital and an `Idempotency-Key`.
+         */
+        ReverseCapitalEntryRequest: {
+            reason: string;
+        };
         /**
          * RevertCmsLayoutRequest
          * @description `POST /content/home/versions/{version}/revert` — `publish` (default true) puts the old
@@ -17798,7 +18269,7 @@ export interface components {
          *     the owner role itself is not editable (409 from the Action).
          */
         UpdateRolePermissionsRequest: {
-            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due")[];
+            permissions: ("dashboard.view" | "orders.view" | "orders.create" | "orders.update" | "orders.confirm" | "orders.cancel" | "orders.export" | "returns.view" | "returns.manage" | "refunds.view" | "refunds.create" | "refunds.approve" | "shipments.view" | "shipments.book" | "shipments.cancel" | "shipments.manage_locations" | "shipments.manage_rates" | "risk.view" | "risk.verify" | "risk.manage_lists" | "risk.manage_rules" | "customers.view" | "customers.create" | "customers.update" | "customers.view_pii" | "customers.export" | "inbox.view" | "inbox.reply" | "catalog.view" | "catalog.create" | "catalog.update" | "catalog.archive" | "catalog.import" | "catalog.update_price" | "catalog.view_cost" | "reviews.moderate" | "inventory.view" | "inventory.adjust" | "inventory.transfer" | "inventory.approve_adjustments" | "purchasing.view" | "purchasing.create" | "purchasing.receive" | "purchasing.manage_suppliers" | "finance.view" | "finance.manage_expenses" | "finance.reconcile_cod" | "finance.record_supplier_payments" | "finance.export" | "finance.manage_capital" | "marketing.view" | "marketing.manage" | "marketing.send_campaigns" | "content.view" | "content.manage" | "media.manage" | "media.delete" | "seo.view" | "seo.manage" | "reports.view" | "reports.export" | "settings.view" | "settings.update" | "settings.manage_integrations" | "staff.view" | "audit.view" | "pos.use" | "pos.manage" | "pos.sell_on_due")[];
         };
         /**
          * UpdateShipmentRiderRequest
@@ -22486,8 +22957,10 @@ export interface operations {
     "v1.admin.purchases.index": {
         parameters: {
             query?: {
-                /** @description One PO status. */
-                "filter[status]"?: "draft" | "ordered" | "partially_received" | "received" | "cancelled" | "closed_short";
+                /** @description One PO status, or the group `open` (ordered + partially_received) or `closed` (closed_short + cancelled). */
+                "filter[status]"?: "draft" | "ordered" | "partially_received" | "received" | "cancelled" | "closed_short" | "open" | "closed";
+                /** @description Open POs past their expected date (`late`) or expected from today to the end of this Saturday–Friday week (`this_week`). */
+                "filter[expected]"?: "late" | "this_week";
                 /** @description Only this supplier's POs. */
                 "filter[supplier_id]"?: number;
                 /** @description PO number, supplier invoice number or supplier name contains. */
@@ -22591,11 +23064,62 @@ export interface operations {
                         received: number;
                         cancelled: number;
                         closed_short: number;
+                        all: number;
+                        closed: number;
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.purchases.summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PurchaseSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseSummary"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.purchases.quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuotePurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description `PurchaseQuote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseQuote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.purchases.show": {
@@ -27594,12 +28118,351 @@ export interface operations {
             };
         };
     };
+    "v1.admin.finance.capital.summary": {
+        parameters: {
+            query?: {
+                /** @description One capital holder. */
+                "filter[holder_id]"?: number;
+                /** @description `contribution` or `drawing`. */
+                "filter[kind]"?: "contribution" | "drawing";
+                /** @description First Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CapitalSummary` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalSummary"];
+                };
+            };
+            /** @description Unlisted filter or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.capital.entries.index": {
+        parameters: {
+            query?: {
+                /** @description One capital holder. */
+                "filter[holder_id]"?: number;
+                /** @description `contribution` or `drawing`. */
+                "filter[kind]"?: "contribution" | "drawing";
+                /** @description First Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[from]"?: string;
+                /** @description Last Dhaka date, YYYY-MM-DD (inclusive). */
+                "filter[to]"?: string;
+                /** @description Sort field; prefix `-` for descending. */
+                sort?: "occurred_on" | "-occurred_on" | "amount" | "-amount";
+                /** @description Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `CapitalEntry` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CapitalEntry"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description The "cursor" that points to the next set of items. */
+                            next_cursor: string | null;
+                            /** @description The "cursor" that points to the previous set of items. */
+                            prev_cursor: string | null;
+                            total: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted filter or sort, or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.capital.entries.store": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordCapitalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description `CapitalEntry` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalEntry"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The holder was deactivated meanwhile (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.capital.entries.reverse": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description The entry ID */
+                entry: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseCapitalEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description `CapitalEntry` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalEntry"];
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already reversed, or the entry is itself a reversal (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.finance.capital.holders.index": {
+        parameters: {
+            query?: {
+                /** @description Only active (true) or only inactive (false) holders. */
+                "filter[active]"?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `CapitalHolder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CapitalHolder"][];
+                    };
+                };
+            };
+            /** @description Unlisted filter or an invalid filter value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.capital.holders.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapitalHolderRequest"];
+            };
+        };
+        responses: {
+            /** @description `CapitalHolder` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalHolder"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.finance.capital.staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.finance.capital.holders.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The holder ID */
+                holder: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapitalHolderRequest"];
+            };
+        };
+        responses: {
+            /** @description `CapitalHolder` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalHolder"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.finance.settlements.index": {
         parameters: {
             query?: {
-                /** @description received|reconciled */
-                "filter[status]"?: string;
-                /** @description Courier code (steadfast, pathao…). */
+                /** @description received (to confirm) | disputed (needs a decision) | reconciled */
+                "filter[status]"?: "received" | "disputed" | "reconciled";
+                /** @description Courier code (steadfast, pathao…), one of `meta.providers`. */
                 "filter[provider]"?: string;
             };
             header?: never;
@@ -27636,11 +28499,12 @@ export interface operations {
                                 name: string;
                                 name_bn: string | null;
                             }[];
+                            disputed_count: number;
                         };
                     };
                 };
             };
-            /** @description Unlisted filter or an invalid value (`bad-request`) */
+            /** @description Unlisted filter, an unknown status or an unknown courier code (`bad-request`) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -27850,6 +28714,11 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["ExpenseCategory"][];
+                        meta: {
+                            category_count: number;
+                            active_count: number;
+                            expense_count: number;
+                        };
                     };
                 };
             };

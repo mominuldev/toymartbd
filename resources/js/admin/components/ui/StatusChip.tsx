@@ -36,16 +36,16 @@ type StatusChipProps = {
 
 /**
  * Figma StatusChip 185:79 — label + icon shape + tint, never colour alone. Fill is always
- * bg/subtle with a border/default hairline and a text/primary label; anomaly swaps the
- * hairline for a 2px warning left edge.
+ * bg/subtle with a border/default hairline and a text/primary label; anomaly keeps the hairline
+ * on a warning-subtle fill (owner, 2026-11-16: no coloured left edges).
  */
 export function StatusChip({ label, tone, active, showIcon = true, icon }: StatusChipProps) {
     const resolved: StatusTone = tone ?? (active === undefined ? 'neutral' : active ? 'success' : 'neutral');
     const Icon = icon ?? icons[resolved];
-    const edge = resolved === 'anomaly' ? 'border-l-2 border-feedback-warning' : 'border border-line-default';
+    const fill = resolved === 'anomaly' ? 'bg-warning-subtle' : 'bg-subtle';
 
     return (
-        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${edge}`}>
+        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs border border-line-default px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${fill}`}>
             {showIcon && <Icon size={14} aria-hidden className={`shrink-0 ${iconTone[resolved]}`} />}
             {label}
         </span>

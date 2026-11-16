@@ -183,3 +183,29 @@ test('sidebar branch switcher: open, move, choose and close by keyboard', async 
     await expect(menu).toBeHidden();
     await expect(button).toBeFocused();
 });
+
+// Phase 10 purchasing premium pass: the Receive stock drawer opens from the PO's primary action by
+// keyboard, traps focus, takes the units without a pointer, and Escape returns focus to the trigger.
+test('purchasing: the Receive stock drawer by keyboard', async ({ page }) => {
+    await signInOwner(page);
+    await page.goto('/admin/purchasing?status=partially_received');
+    const po = page.getByRole('table').getByRole('link', { name: /^PO-/ }).first();
+    await expect(po).toBeVisible();
+    await tabTo(page, po);
+    await page.keyboard.press('Enter');
+
+    const receive = page.getByRole('button', { name: 'Receive stock' });
+    await tabTo(page, receive);
+    await page.keyboard.press('Enter');
+    const drawer = page.getByRole('dialog', { name: 'Receive stock' });
+    await expect(drawer).toBeVisible();
+    await assertTrapped(page, drawer);
+    const units = drawer.getByRole('textbox', { name: /^Units received for / }).first();
+    await tabTo(page, units, 40);
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('1');
+    await expect(units).toHaveValue('1');
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    await expect(receive).toBeFocused();
+});

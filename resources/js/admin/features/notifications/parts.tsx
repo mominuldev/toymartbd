@@ -3,27 +3,18 @@ import { ChatTextIcon, EnvelopeSimpleIcon, WhatsappLogoIcon, type Icon } from '@
 import { useI18n } from '@/i18n/I18nProvider';
 import { en as enMessages, type MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { formatMoney as formatLakh } from '@/lib/money';
 import type { Channel, LogStatus, NotificationTemplate } from './api';
 
-export const TAKA = '৳';
+export { TAKA } from '@/lib/money';
 
-/** "1.2800" → "1.28", "1250.00" → "1,250". Formats the server's decimal string; never computes (rule 1). */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '-' : ''}${grouped}${trimmed ? `.${trimmed.padEnd(2, '0')}` : ''}`;
-}
+/** "1.2800" → "1.28", "1250.00" → "1,250" — the admin's one formatter (lib/money, `auto` places). */
+export const formatMoney = (decimal: string): string => formatLakh(decimal, 'auto');
 
 /** ৳ set in the currency face (Hanken has no ৳ — 06-admin-feature-checklist §0). */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
+    return <TakaAmount amount={amount} places="auto" signClass={signClass} />;
 }
 
 export const channelIcon: Record<Channel, Icon> = { whatsapp: WhatsappLogoIcon, sms: ChatTextIcon, email: EnvelopeSimpleIcon };

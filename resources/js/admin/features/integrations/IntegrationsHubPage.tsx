@@ -223,13 +223,11 @@ function IntegrationCard({ item }: { item: Integration }) {
     return (
         <li
             aria-label={name}
-            className={`flex flex-col gap-4 rounded-lg border bg-surface p-4 shadow-e1 ${
-                attention ? 'border-line-default border-l-2 border-l-feedback-danger' : 'border-line-default'
-            }`}
+            className="flex flex-col gap-4 rounded-lg border border-line-default bg-surface p-4 shadow-e1"
         >
             <div className="flex items-center gap-3">
-                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-sm bg-subtle">
-                    <Icon size={18} className="text-fg-primary" />
+                <span aria-hidden className={`grid size-9 shrink-0 place-items-center rounded-sm ${attention ? 'bg-danger-subtle text-feedback-danger' : 'bg-subtle text-fg-primary'}`}>
+                    <Icon size={18} />
                 </span>
                 <h3 className="min-w-0 flex-1 truncate t-admin-body-strong text-fg-primary">{name}</h3>
                 <CardSwitch item={item} name={name} />

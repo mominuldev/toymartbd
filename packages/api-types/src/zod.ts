@@ -16,6 +16,12 @@ export type BlockType = z.infer<typeof blockTypeSchema>;
 export const cancellationReasonSchema = z.enum(["customer_request","customer_unreachable","fake_order","duplicate_order","out_of_stock","pricing_error","address_unserviceable","payment_failed","other"]);
 export type CancellationReason = z.infer<typeof cancellationReasonSchema>;
 
+export const capitalEntryKindSchema = z.enum(["contribution","drawing"]);
+export type CapitalEntryKind = z.infer<typeof capitalEntryKindSchema>;
+
+export const capitalHolderRoleSchema = z.enum(["owner","partner"]);
+export type CapitalHolderRole = z.infer<typeof capitalHolderRoleSchema>;
+
 export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
 export type CouponType = z.infer<typeof couponTypeSchema>;
 
@@ -300,6 +306,16 @@ export const cancelShipmentRequestSchema = z.object({
     "reason": z.string().max(255).nullable().optional(),
 });
 export type CancelShipmentRequestInput = z.input<typeof cancelShipmentRequestSchema>;
+
+/** A capital holder, for `POST /finance/capital/holders` and `PATCH …/{holder}`: `name` */
+export const capitalHolderRequestSchema = z.object({
+    "name": z.string().min(2).max(120),
+    "name_bn": z.string().max(120).nullable().optional(),
+    "role": capitalHolderRoleSchema.optional(),
+    "user_id": z.number().int().nullable().optional(),
+    "is_active": z.boolean().optional(),
+});
+export type CapitalHolderRequestInput = z.input<typeof capitalHolderRequestSchema>;
 
 /** `POST /pos/sessions/{session}/sales` — Charge. Requires an `Idempotency-Key` (rule 17). */
 export const chargePosSaleRequestSchema = z.object({
@@ -745,6 +761,18 @@ export const quotePosSaleRequestSchema = z.object({
 });
 export type QuotePosSaleRequestInput = z.input<typeof quotePosSaleRequestSchema>;
 
+/** `POST /purchases/quote` — the New / edit purchase order form's lines, priced by the */
+export const quotePurchaseRequestSchema = z.object({
+    "supplier_id": z.number().int().nullable().optional(),
+    "lines": z.array(z.object({
+    "variant_id": z.number().int(),
+    "quantity": z.number().int().min(1).max(1000000),
+    "unit_cost": z.string().min(1).regex(new RegExp("^\\d{1,10}(\\.\\d{1,4})?$")),
+    "discount": z.string().regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")).nullable().optional(),
+})).min(1).max(200),
+});
+export type QuotePurchaseRequestInput = z.input<typeof quotePurchaseRequestSchema>;
+
 /** `POST /purchases/{purchase}/receipts` and `…/receipts/quote` — the units arriving per */
 export const receivePurchaseRequestSchema = z.object({
     "location_id": z.number().int().nullable().optional(),
@@ -763,6 +791,18 @@ export const receivePurchaseRequestSchema = z.object({
     "costs_payment_method": expensePaymentMethodSchema.nullable().optional(),
 });
 export type ReceivePurchaseRequestInput = z.input<typeof receivePurchaseRequestSchema>;
+
+/** `POST /finance/capital/entries` — owner capital put in (`contribution`, "New investment") */
+export const recordCapitalEntryRequestSchema = z.object({
+    "kind": capitalEntryKindSchema,
+    "holder_id": z.number().int(),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "occurred_on": z.string().min(1),
+    "method": expensePaymentMethodSchema,
+    "reference": z.string().max(120).nullable().optional(),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type RecordCapitalEntryRequestInput = z.input<typeof recordCapitalEntryRequestSchema>;
 
 /** `POST /finance/orders/{order}/cod-receipts` — cash received from the courier for one */
 export const recordCodReceiptRequestSchema = z.object({
@@ -879,6 +919,12 @@ export const restoreCartRequestSchema = z.object({
     "token": z.string().min(16).max(64).regex(new RegExp("^[A-Za-z0-9]+$")),
 });
 export type RestoreCartRequestInput = z.input<typeof restoreCartRequestSchema>;
+
+/** `POST /finance/capital/entries/{entry}/reverse` — `reason` (required, 3–500 characters; kept */
+export const reverseCapitalEntryRequestSchema = z.object({
+    "reason": z.string().min(3).max(500),
+});
+export type ReverseCapitalEntryRequestInput = z.input<typeof reverseCapitalEntryRequestSchema>;
 
 /** `POST /content/home/versions/{version}/revert` — `publish` (default true) puts the old */
 export const revertCmsLayoutRequestSchema = z.object({
@@ -2048,7 +2094,7 @@ export type UpdateRobotsRequestInput = z.input<typeof updateRobotsRequestSchema>
 
 /** `PUT /staff/roles/{role}` — `{ permissions: string[] }`, the role's complete new list; */
 export const updateRolePermissionsRequestSchema = z.object({
-    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view","pos.use","pos.manage","pos.sell_on_due"])).max(70),
+    "permissions": z.array(z.enum(["dashboard.view","orders.view","orders.create","orders.update","orders.confirm","orders.cancel","orders.export","returns.view","returns.manage","refunds.view","refunds.create","refunds.approve","shipments.view","shipments.book","shipments.cancel","shipments.manage_locations","shipments.manage_rates","risk.view","risk.verify","risk.manage_lists","risk.manage_rules","customers.view","customers.create","customers.update","customers.view_pii","customers.export","inbox.view","inbox.reply","catalog.view","catalog.create","catalog.update","catalog.archive","catalog.import","catalog.update_price","catalog.view_cost","reviews.moderate","inventory.view","inventory.adjust","inventory.transfer","inventory.approve_adjustments","purchasing.view","purchasing.create","purchasing.receive","purchasing.manage_suppliers","finance.view","finance.manage_expenses","finance.reconcile_cod","finance.record_supplier_payments","finance.export","finance.manage_capital","marketing.view","marketing.manage","marketing.send_campaigns","content.view","content.manage","media.manage","media.delete","seo.view","seo.manage","reports.view","reports.export","settings.view","settings.update","settings.manage_integrations","staff.view","audit.view","pos.use","pos.manage","pos.sell_on_due"])).max(71),
 });
 export type UpdateRolePermissionsRequestInput = z.input<typeof updateRolePermissionsRequestSchema>;
 

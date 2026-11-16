@@ -53,7 +53,7 @@ return [
     'expected_date' => 'প্রত্যাশিত',
     'unit_cost' => 'একক খরচ',
     'shipping_cost' => 'পরিবহন',
-    'customs_duty' => 'শুল্ক',
+    'customs_duty' => 'কাস্টমস ও শুল্ক',
     'other_cost' => 'অন্যান্য খরচ',
     'po_total' => 'PO মোট',
     'balance_due' => 'বকেয়া',

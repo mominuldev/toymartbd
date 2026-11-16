@@ -11,6 +11,7 @@ use App\Domain\Finance\Models\CourierSettlement;
 use App\Domain\Finance\Models\CourierSettlementItem;
 use App\Http\Resources\ApiResource;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,6 +69,26 @@ final class CourierSettlementResource extends ApiResource
             /** @var string|null */
             'created_at' => $s->created_at?->toIso8601String(),
             'can_reconcile' => $request->user()?->can('reconcile', CourierSettlement::class) === true,
+            /**
+             * Detail only: how many lines the statement has ("14 parcels on this statement").
+             *
+             * @var int
+             */
+            'line_count' => $this->whenLoaded('items', fn (): int => $s->items->count()),
+            /**
+             * Detail only: the lines still waiting for a decision, per variance type — how many and the
+             * size of the gap (Σ |variance|, a decimal string), for "Short ৳100.00 · 1 not ours · 1 missing".
+             *
+             * @var list<array{variance_type: string, count: int, amount: string}>
+             */
+            'pending_by_type' => $this->whenLoaded('items', fn (): array => $s->status === SettlementStatus::Reconciled ? [] : $s->items
+                ->filter(static fn (CourierSettlementItem $i): bool => $i->variance_type !== SettlementVariance::None && $i->review_status === SettlementReview::Pending)
+                ->groupBy(static fn (CourierSettlementItem $i): string => $i->variance_type->value)
+                ->map(static fn ($lines, string $type): array => [
+                    'variance_type' => $type,
+                    'count' => $lines->count(),
+                    'amount' => $lines->reduce(static fn (Money $sum, CourierSettlementItem $i): Money => $sum->plus($i->variance->isNegative() ? $i->variance->negate() : $i->variance), Money::zero())->toDecimal(),
+                ])->values()->all()),
             'items' => $this->whenLoaded('items', fn (): array => $s->items->map(static function (CourierSettlementItem $i): array {
                 $orderNumber = $i->order_id !== null ? DB::table('orders')->where('id', $i->order_id)->value('number') : null;
 

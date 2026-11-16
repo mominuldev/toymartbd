@@ -10,25 +10,17 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ExportMenu } from '@/components/ui/ExportMenu';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { formatCount } from '@/lib/money';
 import { useValuation, valuationExportUrl, valuationSorts, type InventoryValuation, type ValuationSort } from './api';
 
-const TAKA = '৳';
-
-/** "5680.00" → "5,680", "355.0000" → "355": groups the server's decimal string, never parses it (rule 1). */
-function formatAmount(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
-
-const count = (n: number) => new Intl.NumberFormat('en-US').format(n);
+/** Counts and "5680.00" → "৳5,680", "355.0000" → "৳355" — the admin's one formatter (lib/money, lakh grouping). */
+const count = formatCount;
 
 function Money({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
     return (
         <span className="tabular whitespace-nowrap">
-            <span className={signClass}>{TAKA}</span>
-            {formatAmount(amount)}
+            <TakaAmount amount={amount} signClass={signClass} />
         </span>
     );
 }

@@ -51,6 +51,18 @@ function PHASE10_SCREENS(): Array<[string, string]> {
         ['settings-branding', '/admin/settings/branding'],
         ['settings-branches', '/admin/settings/branches'],
         ['settings-checkout', '/admin/settings/checkout'],
+        // Purchasing premium pass: the list and a partly received PO (demo PO-2026-0008).
+        ['purchasing', '/admin/purchasing'],
+        ['purchase-order', '/admin/purchasing/8'],
+        // Finance › Owner capital (Figma B · 32), on DemoCapitalSeeder's holders and entries.
+        ['finance-capital', '/admin/finance/capital'],
+        // Finance premium pass (Figma B · 32): expenses, categories, ledger, COD settlements, reports.
+        ['finance-expenses', '/admin/finance/expenses'],
+        ['finance-expense-categories', '/admin/finance/expenses/categories'],
+        ['finance-ledger', '/admin/finance/ledger'],
+        ['finance-settlements', '/admin/finance/settlements'],
+        ['finance-daily', '/admin/finance/reports'],
+        ['finance-profitability', '/admin/finance/profitability'],
     ];
 }
 
@@ -192,6 +204,35 @@ test.describe('admin axe', () => {
             await page.goto('/admin/settings/checkout');
             await page.getByRole('switch').first().click();
             await audit(page, testInfo, label('checkout-toggled'));
+
+            // Owner capital: New investment (with its errors), Owner drawing, Reverse entry, Add a person.
+            await page.goto('/admin/finance/capital');
+            await page.getByRole('button', { name: m(locale, 'capital.newInvestment') }).click();
+            const invest = page.getByRole('dialog', { name: m(locale, 'capital.in.title') });
+            await expect(invest).toBeVisible();
+            await audit(page, testInfo, label('capital-invest'));
+            await invest.getByRole('button', { name: m(locale, 'capital.in.submitEmpty') }).click();
+            await audit(page, testInfo, label('capital-invest-errors'));
+            await page.keyboard.press('Escape');
+            await expect(invest).toBeHidden();
+            await page.getByRole('button', { name: m(locale, 'capital.ownerDrawing') }).click();
+            const draw = page.getByRole('dialog', { name: m(locale, 'capital.out.title') });
+            await expect(draw).toBeVisible();
+            await audit(page, testInfo, label('capital-drawing'));
+            await page.keyboard.press('Escape');
+            await expect(draw).toBeHidden();
+            await page.getByRole('table').locator('summary').first().click();
+            await page.getByRole('table').getByRole('button', { name: m(locale, 'capital.reverse') }).first().click();
+            const reverse = page.getByRole('dialog', { name: m(locale, 'capital.reverse.title') });
+            await expect(reverse).toBeVisible();
+            await audit(page, testInfo, label('capital-reverse'));
+            await page.keyboard.press('Escape');
+            await expect(reverse).toBeHidden();
+            await page.getByRole('button', { name: m(locale, 'capital.addHolder') }).click();
+            const person = page.getByRole('dialog', { name: m(locale, 'capital.holderDialog.title') });
+            await expect(person).toBeVisible();
+            await audit(page, testInfo, label('capital-add-person'));
+            await page.keyboard.press('Escape');
         });
     }
 
