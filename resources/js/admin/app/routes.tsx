@@ -40,6 +40,7 @@ import { ActivityLogPage } from '@/features/audit/ActivityLogPage';
 import { IntegrationsHubPage } from '@/features/integrations/IntegrationsHubPage';
 import { SettingsLayout } from '@/features/storeSettings/SettingsLayout';
 import { BusinessSection } from '@/features/storeSettings/BusinessSection';
+import { SiteBrandingSection } from '@/features/storeSettings/SiteBrandingSection';
 import { BranchesSection } from '@/features/storeSettings/BranchesSection';
 import { CheckoutSection } from '@/features/storeSettings/CheckoutSection';
 import { PosSection } from '@/features/storeSettings/PosSection';
@@ -256,6 +257,7 @@ export const routes: RouteObject[] = [
                         children: [
                             { index: true, element: <Navigate to="/settings/business" replace /> },
                             { path: 'business', element: <BusinessSection /> },
+                            { path: 'branding', element: <SiteBrandingSection /> },
                             { path: 'branches', element: <BranchesSection /> },
                             { path: 'checkout', element: <CheckoutSection /> },
                             { path: 'delivery', element: <DeliveryAreasSection /> },

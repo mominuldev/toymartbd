@@ -9,8 +9,11 @@ use App\Domain\Customer\Models\Upazila;
 use App\Domain\Inventory\Enums\StockLocationType;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Models\StockLocation;
+use App\Domain\Inventory\Services\BranchMode;
 use App\Models\Enums\Permission;
 use App\Models\Enums\Role;
+use App\Models\Enums\SettingGroup;
+use App\Models\Setting;
 use Tests\Feature\Orders\Support;
 use Tests\Support\RoleMatrix;
 
@@ -22,6 +25,9 @@ use Tests\Support\RoleMatrix;
  */
 
 const LOCATIONS_URL = '/api/v1/admin/settings/locations';
+
+// These tests add branches, so the store runs with multiple branches (single mode: BranchModeTest).
+beforeEach(fn () => Setting::put(BranchMode::KEY, true, SettingGroup::Store));
 
 /** @return array{District, Upazila, District} */
 function locationPlaces(): array

@@ -5,7 +5,6 @@ import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
 import { Field, controlHeight, inputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/Input';
@@ -14,7 +13,19 @@ import { useToast } from '@/components/ui/Toast';
 import { useLocationDistricts, type LocationDistrict } from './api';
 import { deliveryZones, useDeliveryAreas, useSaveDeliveryAreas, type DeliveryAreas, type DeliveryAreasInput, type DeliveryZone } from './deliveryAreasApi';
 import { AreaPicker, type PickerGroup } from './deliveryAreasPicker';
-import { Note, SaveRow, useSettingsAccess } from './parts';
+import { Note, StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash, useSettingsAccess } from './parts';
+
+const FORM_ID = 'delivery-areas-form';
+
+/** The save bar's "what changed" parts, one per request field. */
+const changedParts: [keyof DeliveryAreasInput, MessageKey][] = [
+    ['cutoff_time', 'storeSettings.changed.cutoff'],
+    ['eta_days', 'storeSettings.changed.eta'],
+    ['metro_district_ids', 'storeSettings.changed.metro'],
+    ['suburb_district_ids', 'storeSettings.changed.suburb'],
+    ['not_serviced_upazila_ids', 'storeSettings.changed.notServiced'],
+    ['cod_advance', 'storeSettings.changed.codAdvance'],
+];
 
 /** `PUT /settings/delivery-areas` needs settings.update AND shipments.manage_rates on the server. */
 const RATES = 'shipments.manage_rates';
@@ -119,7 +130,16 @@ function DeliveryAreasForm({ settings, districts, editable, needsRates }: { sett
     }, [settings]);
 
     const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
-    const dirty = JSON.stringify(toInput(draft)) !== JSON.stringify(toInput(toDraft(settings)));
+    const [justSaved, flashSaved] = useSavedFlash();
+    const current = toInput(draft);
+    const original = toInput(toDraft(settings));
+    const changed = changedParts.filter(([field]) => JSON.stringify(current[field]) !== JSON.stringify(original[field]));
+    const dirty = changed.length > 0;
+    const summary = useChangeSummary(changed.map(([, key]) => t(key)));
+    const discard = () => {
+        setDraft(toDraft(settings));
+        setErrors({});
+    };
     const locked = !editable || save.isPending;
     const zoneLabel = (z: DeliveryZone) => t(`checkoutSettings.zone.${z}` as MessageKey);
 
@@ -173,7 +193,11 @@ function DeliveryAreasForm({ settings, districts, editable, needsRates }: { sett
         }
         setErrors({});
         save.mutate(parsed.data, {
-            onSuccess: () => notify(t('deliverySettings.saved')),
+            onSuccess: (next) => {
+                // Show what the server stored, even when the cache kept the same object.
+                setDraft(toDraft(next));
+                flashSaved();
+            },
             onError: (e) => {
                 if (e instanceof ApiError && e.status === 422) {
                     const next: Errors = {};
@@ -187,7 +211,11 @@ function DeliveryAreasForm({ settings, districts, editable, needsRates }: { sett
     };
 
     return (
-        <form onSubmit={submit} noValidate aria-label={t('deliverySettings.title')} className="flex min-w-0 flex-col gap-6">
+        <form id={FORM_ID} onSubmit={submit} noValidate aria-label={t('deliverySettings.title')} className="flex min-w-0 flex-col gap-6">
+            {editable && <UnsavedChangesGuard when={dirty} />}
+            {editable && (
+                <StickySaveBar section={t('deliverySettings.nav')} dirty={dirty} saved={justSaved} savedLabel={t('deliverySettings.saved')} summary={summary} saving={save.isPending} onDiscard={discard} form={FORM_ID} />
+            )}
             <Note>{t('deliverySettings.placeholders')}</Note>
             {needsRates && <Note>{t('deliverySettings.needsRates')}</Note>}
 
@@ -318,13 +346,6 @@ function DeliveryAreasForm({ settings, districts, editable, needsRates }: { sett
                     </fieldset>
                 ) : (
                     <p className="t-admin-caption text-fg-secondary">{t('deliverySettings.cod.off')}</p>
-                )}
-                {editable && (
-                    <SaveRow>
-                        <Button type="submit" disabled={!dirty || save.isPending}>
-                            {save.isPending ? t('storeSettings.saving') : t('storeSettings.save')}
-                        </Button>
-                    </SaveRow>
                 )}
             </FormSection>
         </form>

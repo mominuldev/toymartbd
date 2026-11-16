@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale } = await params;
     if (!isLocale(locale)) return {};
     const draft = await draftPageLayout('about', locale);
-    if (draft) return { ...cmsPageMetadata(draft.page, locale, PATH, null), robots: { index: false, follow: false } };
+    if (draft) return { ...(await cmsPageMetadata(draft.page, locale, PATH, null)), robots: { index: false, follow: false } };
     const page = await findPage('about');
     // Both branches go through the lib/seo builder: canonical, hreflang en/bn/x-default, OG.
     if (page) return cmsPageMetadata(page, locale, PATH, await getSeo('page', 'about'));

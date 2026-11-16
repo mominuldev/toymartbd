@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router';
 import { XIcon } from '@phosphor-icons/react';
 import { Sidebar } from '@/components/shell/Sidebar';
 import { useInboxBadge } from '@/components/shell/useInboxBadge';
+import { useWorkingBranch } from '@/components/shell/workingBranch';
 import { Topbar } from '@/components/shell/Topbar';
 import { can, useLogout, useMe } from '@/features/auth/api';
 import { useLowStockCount } from '@/features/inventory/api';
@@ -41,6 +42,8 @@ export function Shell() {
     // Nav count badges (Figma CountBadge 185:43 on SidebarItem): each a cheap server count.
     const lowStock = useLowStockCount(can(me, 'inventory.view'));
     const inbox = useInboxBadge(can(me, 'inbox.view'));
+    // The working branch (sidebar switcher): a per-device default for POS, purchases and stock screens.
+    const working = useWorkingBranch();
     const counts: Record<string, number | undefined> = { '/inventory': lowStock.data?.count, '/inbox': inbox.data?.count };
 
     const toggleCollapsed = useCallback(() => {
@@ -89,6 +92,13 @@ export function Shell() {
     const roleKey = `role.${me.roles[0] ?? ''}`;
     const roleLabel = roleKey in en ? t(roleKey as MessageKey) : (me.roles[0] ?? '');
     const user = { name: me.name, role: roleLabel };
+    const branches = {
+        multi: working.multi,
+        locations: working.locations,
+        current: working.current,
+        onSelect: working.select,
+        manageHref: can(me, 'settings.view') ? '/settings/branches' : null,
+    };
 
     return (
         <div className="flex min-h-dvh bg-canvas text-fg-primary">
@@ -97,7 +107,7 @@ export function Shell() {
             </a>
 
             <aside data-theme="admin-dark" className={`sticky top-0 hidden h-dvh shrink-0 lg:block lg:w-16 ${collapsed ? '' : 'xl:w-62'}`}>
-                <Sidebar permissions={me.permissions} counts={counts} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} user={user} />
+                <Sidebar permissions={me.permissions} counts={counts} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} user={user} branches={branches} />
             </aside>
 
             {drawerOpen && (
@@ -105,7 +115,7 @@ export function Shell() {
                     <button type="button" tabIndex={-1} aria-hidden onClick={closeDrawer} className="absolute inset-0 bg-overlay" />
                     <div ref={drawer} role="dialog" aria-modal="true" aria-label={t('nav.primary')} onKeyDown={trapFocus} className="absolute inset-y-0 left-0 flex">
                         <div data-theme="admin-dark" className="h-full w-62 shadow-e4">
-                            <Sidebar permissions={me.permissions} counts={counts} collapsed={false} variant="drawer" onNavigate={closeDrawer} user={user} />
+                            <Sidebar permissions={me.permissions} counts={counts} collapsed={false} variant="drawer" onNavigate={closeDrawer} user={user} branches={branches} />
                         </div>
                         <IconButton variant="outline" onClick={closeDrawer} aria-label={t('shell.closeMenu')} className="ms-3 mt-3">
                             <XIcon size={18} aria-hidden />

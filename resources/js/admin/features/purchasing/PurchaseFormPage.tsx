@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { TrashIcon } from '@phosphor-icons/react';
 import { storePurchaseRequestSchema } from '@toymart/api-types/zod';
@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { usePurchase, useSavePurchase, useStockLocations, useSuppliers, useVariantSearch, type Purchase, type PurchaseInput, type VariantOption } from './api';
 import { LineProduct, TAKA, dhakaToday, formatMoney } from './parts';
+import { useWorkingBranchIn } from '@/components/shell/workingBranch';
 
 type Line = Pick<VariantOption, 'image_url' | 'product_name' | 'product_name_bn' | 'variant_name' | 'variant_name_bn' | 'sku'> & {
     variant_id: number;
@@ -89,6 +90,12 @@ function PurchaseForm({ id, purchase }: { id: number | null; purchase?: Purchase
     const [header, setHeader] = useState<Header>(initial.header);
     const [lines, setLines] = useState<Line[]>(initial.lines);
     const [term, setTerm] = useState(search.get('sku') ?? '');
+    // A new purchase is received at the sidebar's working branch by default (multiple branches only).
+    const working = useWorkingBranchIn(locations.data && locations.data.length > 1 ? locations.data.map((l) => l.id) : []);
+    useEffect(() => {
+        if (purchase || working === null) return;
+        setHeader((h) => (h.location_id === '' ? { ...h, location_id: String(working) } : h));
+    }, [purchase, working]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const results = useVariantSearch(term.trim());
     const options = (results.data?.data ?? []).filter((o) => !lines.some((l) => l.variant_id === o.variant_id)).slice(0, 8);

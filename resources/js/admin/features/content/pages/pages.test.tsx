@@ -226,7 +226,8 @@ describe('pages', () => {
         fireEvent.change(await screen.findByLabelText('Title (English)', {}, { timeout: 5000 }), { target: { value: 'Returns' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save' }));
         expect(await screen.findByRole('link', { name: 'Page settings' }, { timeout: 5000 })).toBeTruthy();
-        expect(calls.mock.calls.some(([url]) => String(url).endsWith('/content/pages/9/layout'))).toBe(true);
+        // The builder's layout read can still be in flight when the link renders (slow CI runners).
+        await waitFor(() => expect(calls.mock.calls.some(([url]) => String(url).endsWith('/content/pages/9/layout'))).toBe(true));
     });
 
     it('page builder works on the page’s own layout, never the homepage', { timeout: 20_000 }, async () => {

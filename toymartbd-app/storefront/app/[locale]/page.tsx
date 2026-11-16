@@ -67,7 +67,7 @@ export default async function HomePage({ params }: Props) {
         home = token ? await fetchHomePreview(locale, token) : null;
     }
     home ??= await fetchHome(locale);
-    const { contact } = await getStoreInfo();
+    const { contact, branding } = await getStoreInfo();
 
     return (
         <PageShell locale={locale} path="/" announcement mobileSearch top="tight" bleed>
@@ -77,7 +77,7 @@ export default async function HomePage({ params }: Props) {
                     <PreviewBridge adminOrigin={adminOrigin({ ADMIN_URL: process.env.ADMIN_URL, API_URL: process.env.API_URL })} />
                 </>
             ) : null}
-            <JsonLd data={[organizationJsonLd(locale, contact), websiteJsonLd(locale)]} />
+            <JsonLd data={[organizationJsonLd(locale, contact, branding), websiteJsonLd(locale, branding)]} />
             {home && home.blocks.length > 0 ? <HomeBlocks blocks={home.blocks} locale={locale} editable={home.preview === true} hotline={contact.hotline.display} /> : <BuiltInHome locale={locale} />}
         </PageShell>
     );

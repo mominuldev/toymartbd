@@ -38,6 +38,8 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
 const port = Number(process.env.MOCK_API_PORT ?? 4010);
+/** Absolute media URLs, as Laravel sends them (the media disk's own origin). */
+const MEDIA_BASE = `http://127.0.0.1:${port}`;
 const expectedToken = process.env.EXPECTED_TOKEN;
 if (!expectedToken) throw new Error('EXPECTED_TOKEN is required');
 
@@ -865,6 +867,16 @@ createServer(async (req, res) => {
         return problem(res, 404, 'Not Found', url.pathname);
     }
 
+    // Public media (like Laravel's media disk: no token). Site & branding renditions for the
+    // store-info fixture below. SVG here only to keep the fixture tiny and dependency-free — the
+    // real API serves raster renditions (the admin does not accept SVG uploads).
+    const brandingMedia = url.pathname.match(/^\/media\/branding\/([a-z-]+)-(\d+)x(\d+)\.svg$/);
+    if (brandingMedia) {
+        const [, , w, h] = brandingMedia;
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=31536000, immutable' });
+        return res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" rx="${Math.round(h / 4)}" fill="#ff6b4a"/></svg>`);
+    }
+
     // The customer's own token (account pages); sign-in itself uses the server token.
     if (url.pathname.startsWith('/api/v1/storefront/account')) {
         hits[url.pathname] = (hits[url.pathname] ?? 0) + 1;
@@ -955,6 +967,22 @@ createServer(async (req, res) => {
             whatsapp: '+8801812345678', whatsapp_display: '01812-345678', messenger: 'toymartbd',
             email: null, address_en: null, address_bn: null,
             trade_licence: 'TRAD/DNCC/012345/2026', bin: '004567891-0101',
+            // Site & branding (additive fields): site names equal the business name so every <title>
+            // assertion keeps its suffix; tagline, description, logo, share image and the rendered
+            // PNG icons are set in both languages. `logo_dark` stays unset (null).
+            site_name_en: 'Toy Mart BD', site_name_bn: 'টয় মার্ট বিডি',
+            tagline_en: 'Toys that grow with your child', tagline_bn: 'শিশুর সাথে বেড়ে ওঠা খেলনা',
+            description_en: 'Original toys and learning kits for every age, cash on delivery across Bangladesh.',
+            description_bn: 'সব বয়সের আসল খেলনা ও শেখার কিট, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
+            logo: { url: `${MEDIA_BASE}/media/branding/logo-480x120.svg`, width: 480, height: 120 },
+            logo_dark: null,
+            share_image: { url: `${MEDIA_BASE}/media/branding/share-1200x630.svg`, width: 1200, height: 630 },
+            icons: {
+                png32: `${MEDIA_BASE}/media/branding/icon-32x32.svg`,
+                png180: `${MEDIA_BASE}/media/branding/icon-180x180.svg`,
+                png192: `${MEDIA_BASE}/media/branding/icon-192x192.svg`,
+                png512: `${MEDIA_BASE}/media/branding/icon-512x512.svg`,
+            },
         });
     }
     if (url.pathname === '/api/v1/storefront/robots') return raw(res, 200, 'User-agent: *\nDisallow: /checkout\n', 'text/plain; charset=utf-8');

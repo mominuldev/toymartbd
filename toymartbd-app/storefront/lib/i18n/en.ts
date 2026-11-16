@@ -18,6 +18,8 @@ export const en = {
         home: 'Home',
         brands: 'Brands',
         logoAria: 'ToyMart BD — home', // nav.logo.aria
+        // The uploaded logo (Site & branding): {name} is the store name, also the image's alt.
+        logoAriaNamed: '{name} — home',
         categoriesMenu: 'Shop by category',
         allCategories: 'All categories', // nav.link.all_categories
         more: 'More',

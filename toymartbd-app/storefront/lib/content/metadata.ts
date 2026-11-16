@@ -11,7 +11,7 @@ import { localised, type CmsPage } from './types';
  * Graph and the admin's SEO document overlay. The page payload's own `seo` block gives the
  * defaults; the SEO document (GET /storefront/seo/page/{slug}) wins where it is set.
  */
-export function cmsPageMetadata(page: CmsPage, locale: Locale, path: string, seo: SeoDocument | null): Metadata {
+export async function cmsPageMetadata(page: CmsPage, locale: Locale, path: string, seo: SeoDocument | null): Promise<Metadata> {
     const title = (locale === 'bn' ? page.seo.title_bn : page.seo.title) || localised(locale, page.title, page.title_bn).text;
     const description = (locale === 'bn' ? page.seo.description_bn : page.seo.description) || null;
     return contentMetadata({

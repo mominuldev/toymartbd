@@ -41,6 +41,39 @@ export interface StoreLegal {
     bin: string | null;
 }
 
+/** An uploaded brand image (absolute URL on the media host, intrinsic size of that rendition). */
+export interface BrandImage {
+    url: string;
+    width: number;
+    height: number;
+}
+
+/** PNG favicons Laravel renders from the store icon (absolute URLs); each null until the job ran. */
+export interface StoreIcons {
+    png32: string | null;
+    png180: string | null;
+    png192: string | null;
+    png512: string | null;
+}
+
+/**
+ * Site & branding (Admin → Settings → Store → Site & branding). `siteName` is always set: the
+ * owner's site name, else the business name, else the catalog name. Everything else is null while
+ * unset, and the storefront keeps today's look (wordmark, catalog tagline, no share image).
+ */
+export interface StoreBranding {
+    siteName: { en: string; bn: string };
+    tagline: { en: string | null; bn: string | null };
+    description: { en: string | null; bn: string | null };
+    /** For light backgrounds: the header. */
+    logo: BrandImage | null;
+    /** For dark backgrounds. Unused today: no storefront surface is dark (the footer is `bg-surface`). */
+    logoDark: BrandImage | null;
+    /** 1200 × 630 Open Graph / WhatsApp card image. */
+    shareImage: BrandImage | null;
+    icons: StoreIcons | null;
+}
+
 /** What the storefront chrome shows about the business (lib/store-info.ts builds it from the API). */
 export interface StoreInfo {
     name: { en: string; bn: string };
@@ -51,6 +84,7 @@ export interface StoreInfo {
      * catalog copy `footer.contact.address` (also a sample). Nothing renders an address today.
      */
     address: { en: string | null; bn: string | null };
+    branding: StoreBranding;
 }
 
 /** The design-file samples, each marked `placeholder: true`. */
@@ -65,11 +99,25 @@ export const sampleContact = {
 export const pendingLegal: StoreLegal = { tradeLicence: null, bin: null };
 
 /** Everything unset: the fallback when the API cannot be reached, and for client error boundaries. */
+const sampleName = { en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' } as const;
+
+/** No branding set: the catalog name, and nothing else (wordmark, catalog tagline, no images). */
+export const unsetBranding: StoreBranding = {
+    siteName: sampleName,
+    tagline: { en: null, bn: null },
+    description: { en: null, bn: null },
+    logo: null,
+    logoDark: null,
+    shareImage: null,
+    icons: null,
+};
+
 export const sampleStoreInfo: StoreInfo = {
-    name: { en: 'Toy Mart BD', bn: 'টয় মার্ট বিডি' },
+    name: sampleName,
     contact: sampleContact,
     legal: pendingLegal,
     address: { en: null, bn: null },
+    branding: unsetBranding,
 };
 
 /**

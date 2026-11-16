@@ -21,6 +21,7 @@ export const bn: Messages = {
         home: 'হোম',
         brands: 'ব্র্যান্ড',
         logoAria: 'ToyMart BD — হোম',
+        logoAriaNamed: '{name} — হোম',
         categoriesMenu: 'ক্যাটাগরি অনুযায়ী কিনুন',
         allCategories: 'সব ক্যাটাগরি',
         more: 'আরও',

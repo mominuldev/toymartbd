@@ -46,7 +46,7 @@ it('signs in, returns the /me body and stamps last_login_at', function (): void 
     $response = $this->postJson(ADMIN_LOGIN_URI, ['email' => 'rahim@toymartbd.test', 'password' => 'correct-horse-battery']);
 
     $response->assertOk()
-        ->assertExactJsonStructure(['id', 'name', 'email', 'locale', 'roles', 'permissions', 'two_factor' => ['enabled', 'required']])
+        ->assertExactJsonStructure(['id', 'name', 'email', 'locale', 'roles', 'permissions', 'two_factor' => ['enabled', 'required'], 'branches' => ['multi_branch', 'locations']])
         ->assertJsonPath('id', $user->id)
         ->assertJsonPath('email', 'rahim@toymartbd.test')
         ->assertJsonPath('locale', null)

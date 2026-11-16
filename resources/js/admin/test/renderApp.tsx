@@ -51,4 +51,6 @@ export const viewer: Me = {
     roles: ['viewer'],
     permissions: ['dashboard.view', 'orders.view', 'catalog.view'],
     two_factor: { enabled: false, required: false },
+    // A single shop by default; branch-switcher tests override it.
+    branches: { multi_branch: false, locations: [{ id: 1, name: 'Dhaka HQ', name_bn: 'ঢাকা এইচকিউ', area: 'Mirpur', type: 'warehouse', is_default: true }] },
 };

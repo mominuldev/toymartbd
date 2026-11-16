@@ -2,8 +2,8 @@ import { Icon } from '@/components/icons/Icon';
 import type { IconName } from '@/components/icons/paths';
 import { LocaleToggle } from '@/components/LocaleToggle';
 import type { MenuItem } from '@/lib/category-tree';
-import { getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
-import type { ContactValue } from '@/lib/site-config';
+import { format, getMessages, localizedPath, otherLocale, type Locale } from '@/lib/i18n';
+import type { ContactValue, StoreBranding } from '@/lib/site-config';
 import { CartLink } from './CartLink';
 import { MegaMenu } from './MegaMenu';
 import { SearchBar } from './SearchBar';
@@ -21,6 +21,11 @@ interface Props {
     mobileSearch?: boolean;
     /** The store hotline (lib/store-info.ts on the server; the sample in a client error boundary). */
     hotline: ContactValue;
+    /**
+     * Site & branding (lib/store-info.ts): the uploaded logo replaces the placeholder wordmark,
+     * with the store name as its alt. Left out (client error boundary) or unset → the wordmark.
+     */
+    branding?: Pick<StoreBranding, 'logo' | 'siteName'>;
 }
 
 const iconButton =
@@ -42,9 +47,11 @@ function IconLink({ href, label, icon, className = 'inline-flex text-fg-primary'
 // Desktop 72 (content 1280): wordmark · 560 search · EN/বাং locale pill · hotline · wishlist ·
 // account · cart with count badge; the MegaMenuBar (123:1833) sits directly under it (sticky 120).
 // Every control is a plain link or a GET form, so the header is fully usable without JavaScript.
-export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false, hotline }: Props) {
+export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mobileSearch = false, hotline, branding }: Props) {
     const t = getMessages(locale);
     const target = otherLocale(locale);
+    const logo = branding?.logo ?? null;
+    const storeName = branding?.siteName[locale] ?? t.site.name;
 
     return (
         <div className="sticky top-0 z-30">
@@ -54,10 +61,29 @@ export function SiteHeader({ locale, path, menu, searchQuery, cartCount = 0, mob
                     <IconLink href={localizedPath(locale, '/categories')} label={t.nav.menu} icon="list" className="inline-flex text-fg-primary lg:hidden" />
                     <a
                         href={localizedPath(locale, '/')}
-                        aria-label={t.nav.logoAria}
+                        aria-label={logo ? format(t.nav.logoAriaNamed, { name: storeName }) : t.nav.logoAria}
                         className="mx-auto inline-flex min-h-touch-min min-w-0 shrink-0 items-center rounded-xs lg:mx-0"
                     >
-                        <Wordmark locale={locale} />
+                        {logo ? (
+                            // A plain <img>, not next/image: no remotePatterns are configured for the media
+                            // host. width/height are the rendition's intrinsic size, so the browser reserves
+                            // the box from the aspect ratio before the file arrives (no layout shift, §7);
+                            // CSS fixes the height to the wordmark's (28 / 36) and caps the width.
+                            // fetchPriority="low": React SSR would otherwise emit a <link rel=preload> for
+                            // it, competing with the hero — the LCP element and the one preload (§7).
+                            <img
+                                src={logo.url}
+                                alt={storeName}
+                                width={logo.width}
+                                height={logo.height}
+                                decoding="async"
+                                fetchPriority="low"
+                                data-store-logo=""
+                                className="h-7 w-auto max-w-40 object-contain lg:h-9 lg:max-w-60"
+                            />
+                        ) : (
+                            <Wordmark locale={locale} />
+                        )}
                     </a>
                     <div className="hidden w-140 shrink lg:mx-auto lg:block">
                         <SearchBar locale={locale} id="search-desktop" defaultValue={searchQuery} />

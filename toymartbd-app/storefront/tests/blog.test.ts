@@ -14,6 +14,12 @@ import { postPath, type BlogCard as Card, type BlogPost } from '@/lib/blog/types
 import { validateJsonLd } from '@/lib/seo/validate';
 import { articleJsonLd } from '@/lib/seo/jsonld';
 
+// The metadata builders read Site & branding through getStoreInfo(); here: nothing set (no fetch).
+vi.mock('@/lib/store-info', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/store-info')>()),
+    getStoreInfo: async () => (await import('@/lib/site-config')).sampleStoreInfo,
+}));
+
 // Phase 7 blog — storefront side: fetch tags (ISR), pagination, locale fallbacks, sanitisation,
 // guide picks, metadata and Article schema.
 
@@ -192,16 +198,16 @@ describe('blog rendering', () => {
 describe('blog metadata and schema', () => {
     beforeEach(() => vi.stubEnv('SITE_URL', 'https://toymartbd.com'));
 
-    it('builds per-locale metadata with the seo override, canonical and hreflang', () => {
-        const bn = postMetadata(post, 'bn');
+    it('builds per-locale metadata with the seo override, canonical and hreflang', async () => {
+        const bn = await postMetadata(post, 'bn');
         // The stored SEO title is complete: the layout template must not append the site name (P9 SEO audit).
         expect(bn.title).toEqual({ absolute: 'সেরা খেলনা' });
         expect(bn.alternates?.canonical).toBe('/bn/guides/best-toys-3-5');
         expect(bn.alternates?.languages).toMatchObject({ en: '/guides/best-toys-3-5', bn: '/bn/guides/best-toys-3-5', 'x-default': '/guides/best-toys-3-5' });
-        expect(postMetadata(post, 'en').title).toBe('Best toys for 3–5 year olds');
+        expect((await postMetadata(post, 'en')).title).toBe('Best toys for 3–5 year olds');
         const suffixed = { ...post, seo: { ...post.seo, title: 'Best toys by age | Toy Mart BD' } } as BlogPost;
-        expect(postMetadata(suffixed, 'en').title).toEqual({ absolute: 'Best toys by age | Toy Mart BD' });
-        expect(postMetadata(post, 'en', { preview: true }).robots).toEqual({ index: false, follow: false });
+        expect((await postMetadata(suffixed, 'en')).title).toEqual({ absolute: 'Best toys by age | Toy Mart BD' });
+        expect((await postMetadata(post, 'en', { preview: true })).robots).toEqual({ index: false, follow: false });
     });
 
     it('overlays a blog archive SEO document on page 1 only, keeping hreflang both ways', async () => {

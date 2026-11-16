@@ -45,6 +45,22 @@ for (const locale of ['en', 'bn'] as const) {
         expect(h.robots).toBeNull(); // index,follow is the default: no robots meta
         expect(h.ogLocale).toBe(locale === 'bn' ? 'bn_BD' : 'en_US');
         expect(await jsonLdTypes(page)).toEqual(expect.arrayContaining(['Organization', 'WebSite']));
+
+        // Site & branding (GET /storefront/store-info): title, description, share image, icons, logo.
+        const meta = (selector: string, name = 'content') => page.locator(`head ${selector}`).first().getAttribute(name);
+        expect(h.title).toBe(locale === 'bn' ? 'টয় মার্ট বিডি | শিশুর সাথে বেড়ে ওঠা খেলনা' : 'Toy Mart BD | Toys that grow with your child');
+        expect(await meta('meta[name="description"]')).toBe(
+            locale === 'bn' ? 'সব বয়সের আসল খেলনা ও শেখার কিট, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।' : 'Original toys and learning kits for every age, cash on delivery across Bangladesh.',
+        );
+        expect(await meta('meta[property="og:image"]')).toBe(`${MOCK_API_URL}/media/branding/share-1200x630.svg`);
+        expect(await meta('meta[property="og:image:width"]')).toBe('1200');
+        expect(await meta('meta[property="og:site_name"]')).toBe(locale === 'bn' ? 'টয় মার্ট বিডি' : 'Toy Mart BD');
+        expect(h.twitter).toBe('summary_large_image');
+        expect(await meta('link[rel="icon"][sizes="32x32"]', 'href')).toBe(`${MOCK_API_URL}/media/branding/icon-32x32.svg`);
+        expect(await meta('link[rel="apple-touch-icon"]', 'href')).toBe(`${MOCK_API_URL}/media/branding/icon-180x180.svg`);
+        const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+        const org = blocks.map((b) => JSON.parse(b) as Record<string, unknown>).find((b) => b['@type'] === 'Organization')!;
+        expect(org.logo).toBe(`${MOCK_API_URL}/media/branding/logo-480x120.svg`);
     });
 
     test(`category head, facet noindex, BreadcrumbList (${locale})`, async ({ page }) => {
@@ -81,6 +97,10 @@ for (const locale of ['en', 'bn'] as const) {
         const cart = await head(page);
         expect(cart.robots).toBe('noindex, follow');
         expect(cart.xDefault).toBe(abs('/cart'));
+        // Every page, not just Home: a page with no image of its own shares the Site & branding image
+        // under the branded site name.
+        expect(await page.locator('head meta[property="og:image"]').first().getAttribute('content')).toBe(`${MOCK_API_URL}/media/branding/share-1200x630.svg`);
+        expect(await page.locator('head meta[property="og:site_name"]').first().getAttribute('content')).toBe(locale === 'bn' ? 'টয় মার্ট বিডি' : 'Toy Mart BD');
     });
 
     test(`an old product slug 301s to the current one (${locale})`, async ({ request }) => {

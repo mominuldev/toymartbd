@@ -151,3 +151,35 @@ test('Phase 10: staff and branch dialogs, and the permission matrix, by keyboard
     await page.keyboard.press('Escape');
     await expect(edit).toBeFocused();
 });
+
+test('sidebar branch switcher: open, move, choose and close by keyboard', async ({ page }) => {
+    await signInOwner(page);
+    await page.goto('/admin');
+
+    // The demo seed runs three branches, so the switcher is a menu button.
+    const button = page.getByRole('button', { name: /^Working branch:/ }).first();
+    await tabTo(page, button);
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('ArrowDown');
+    const menu = page.getByRole('menu', { name: 'Working branch' });
+    await expect(menu).toBeVisible();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(menu.getByRole('menuitemradio').first()).toBeFocused();
+
+    await page.keyboard.press('ArrowDown');
+    const second = menu.getByRole('menuitemradio').nth(1);
+    await expect(second).toBeFocused();
+    const name = ((await second.locator('span span').first().textContent()) ?? '').trim();
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeHidden();
+    await expect(button).toBeFocused();
+    await expect(button).toHaveAccessibleName(new RegExp(`^Working branch:\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    expect(await page.evaluate(() => localStorage.getItem('tm-admin-working-branch'))).toMatch(/^\d+$/);
+
+    await page.keyboard.press('Enter');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('menuitemradio', { checked: true })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(button).toBeFocused();
+});

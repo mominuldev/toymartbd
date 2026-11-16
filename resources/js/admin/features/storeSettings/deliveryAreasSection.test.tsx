@@ -82,7 +82,8 @@ describe('store settings → delivery areas & timing', () => {
         expect(screen.getByRole('switch', { name: 'Require a COD advance' }).getAttribute('aria-checked')).toBe('true');
         expect((screen.getByLabelText('Order subtotal above') as HTMLInputElement).value).toBe('5000');
         expect((screen.getByLabelText('Advance amount') as HTMLInputElement).value).toBe('200');
-        expect((screen.getByRole('button', { name: 'Save changes' }) as HTMLButtonElement).disabled).toBe(true);
+        // Clean: the save bar is not rendered.
+        expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
     });
 
     it('shows Bangla place names in Bangla and finds them by either script', async () => {

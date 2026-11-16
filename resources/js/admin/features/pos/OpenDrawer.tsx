@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useOpenSession, type PosContext } from './api';
 import { TAKA } from './format';
+import { useWorkingBranchIn } from '@/components/shell/workingBranch';
 
 /**
  * No open drawer: pick the branch, name the register, enter the float counted into the
@@ -20,7 +21,9 @@ export function OpenDrawer({ context }: { context: PosContext }) {
     const { t, locale } = useI18n();
     const open = useOpenSession();
     const headingId = useId();
-    const [locationId, setLocationId] = useState(String(context.locations[0]?.id ?? ''));
+    // The sidebar's working branch is the default branch for a new drawer (else the first one).
+    const working = useWorkingBranchIn(context.locations.map((l) => l.id));
+    const [locationId, setLocationId] = useState(String(working ?? context.locations[0]?.id ?? ''));
     const [register, setRegister] = useState(t('pos.open.registerDefault'));
     const [float, setFloat] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,17 +72,20 @@ export function OpenDrawer({ context }: { context: PosContext }) {
                         <p className="t-admin-body text-fg-secondary">{t('pos.open.body')}</p>
                     </div>
                 </div>
-                <Field label={t('pos.open.branch')} error={errors.location_id}>
-                    {({ id, describedBy, invalid }) => (
-                        <Select id={id} aria-describedby={describedBy} aria-invalid={invalid} value={locationId} onChange={(e) => setLocationId(e.target.value)}>
-                            {context.locations.map((l) => (
-                                <option key={l.id} value={l.id}>
-                                    {locale === 'bn' && l.name_bn ? l.name_bn : l.name}
-                                </option>
-                            ))}
-                        </Select>
-                    )}
-                </Field>
+                {/* One shop (Branch setup: single shop, or one active location): no branch to pick. */}
+                {context.locations.length > 1 && (
+                    <Field label={t('pos.open.branch')} error={errors.location_id}>
+                        {({ id, describedBy, invalid }) => (
+                            <Select id={id} aria-describedby={describedBy} aria-invalid={invalid} value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+                                {context.locations.map((l) => (
+                                    <option key={l.id} value={l.id}>
+                                        {locale === 'bn' && l.name_bn ? l.name_bn : l.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        )}
+                    </Field>
+                )}
                 <Field label={t('pos.open.register')} error={errors.register}>
                     {({ id, describedBy, invalid }) => (
                         <Input id={id} aria-describedby={describedBy} aria-invalid={invalid} value={register} maxLength={40} onChange={(e) => setRegister(e.target.value)} />

@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Settings\BranchModeController;
 use App\Http\Controllers\Api\V1\Admin\Settings\BusinessDetailsController;
+use App\Http\Controllers\Api\V1\Admin\Settings\StoreBrandingController;
 use App\Http\Controllers\Api\V1\Admin\Settings\StoreLocationController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Store settings (Figma B · 38): Business details and Branches & warehouses.
+| Store settings (Figma B · 38): Business details, Site & branding and Branches & warehouses.
 |--------------------------------------------------------------------------
 | Required from routes/api_v1_admin.php inside its auth:sanctum + EnsureActiveStaffSession
 | + EnsureTwoFactorEnrolled group; names are prefixed api.v1.admin. Every route needs a 403
@@ -20,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/settings/business', [BusinessDetailsController::class, 'show'])->name('settings.business.show');
 Route::put('/settings/business', [BusinessDetailsController::class, 'update'])->name('settings.business.update');
+
+Route::get('/settings/branding', [StoreBrandingController::class, 'show'])->name('settings.branding.show');
+Route::put('/settings/branding', [StoreBrandingController::class, 'update'])->name('settings.branding.update');
+
+Route::get('/settings/branch-mode', [BranchModeController::class, 'show'])->name('settings.branch-mode.show');
+Route::put('/settings/branch-mode', [BranchModeController::class, 'update'])->name('settings.branch-mode.update');
 
 Route::get('/settings/locations', [StoreLocationController::class, 'index'])->name('settings.locations.index');
 Route::get('/settings/locations/districts', [StoreLocationController::class, 'districts'])->name('settings.locations.districts');

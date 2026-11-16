@@ -17,7 +17,16 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
     test('English: header controls, mega-menu links from the API, footer, tab bar', async ({ page }) => {
         await page.goto('/');
         const header = page.locator('header').first();
-        await expect(header.getByRole('link', { name: 'ToyMart BD — home' })).toHaveAttribute('href', '/');
+        // Site & branding: the uploaded logo replaces the wordmark — a plain <img> with its intrinsic
+        // size (no layout shift) and the store name as alt.
+        await expect(header.getByRole('link', { name: 'Toy Mart BD — home' })).toHaveAttribute('href', '/');
+        const logo = header.locator('img[data-store-logo]');
+        await expect(logo).toHaveAttribute('src', `${MOCK_API_URL}/media/branding/logo-480x120.svg`);
+        await expect(logo).toHaveAttribute('alt', 'Toy Mart BD');
+        await expect(logo).toHaveAttribute('width', '480');
+        await expect(logo).toHaveAttribute('height', '120');
+        await expect(logo).toBeVisible();
+        expect(await logo.evaluate((img: HTMLImageElement) => [img.getBoundingClientRect().height, img.naturalWidth > 0])).toEqual([36, true]);
         await expect(header.locator('form[role="search"]').first()).toHaveAttribute('action', '/search');
         await expect(header.locator('a[hreflang="bn"]')).toHaveAttribute('href', '/bn');
         await expect(header.getByRole('link', { name: 'Wishlist' })).toHaveAttribute('href', '/account/wishlist');
@@ -62,6 +71,8 @@ test.describe('header, mega menu, footer and tab bar (server-rendered)', () => {
         await expect(page.locator('html')).toHaveAttribute('lang', 'bn');
         await expect(page.locator('body')).toHaveClass(/lang-bn/);
         const header = page.locator('header').first();
+        await expect(header.getByRole('link', { name: 'টয় মার্ট বিডি — হোম' })).toHaveAttribute('href', '/bn');
+        await expect(header.locator('img[data-store-logo]')).toHaveAttribute('alt', 'টয় মার্ট বিডি');
         await expect(header.locator('form[role="search"]').first()).toHaveAttribute('action', '/bn/search');
         await expect(header.locator('a[hreflang="en"]')).toHaveAttribute('href', '/brands');
 

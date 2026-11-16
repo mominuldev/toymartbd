@@ -105,11 +105,114 @@ test('owner sets the discount cap and the due limit under Point of sale', async 
     const due = page.getByLabel('Due limit per customer');
     await expect(due).toHaveValue('5000');
     await due.fill('8000');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Point of sale settings saved')).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/pos-settings.png` });
 
     await page.reload();
     await expect(page.getByLabel('Maximum cashier discount')).toHaveValue('15');
     await expect(page.getByLabel('Due limit per customer')).toHaveValue('8000');
+});
+
+test('owner edits the tagline under Site & branding through the sticky save bar', async ({ page }) => {
+    await signIn(page);
+    const nav = page.getByRole('navigation', { name: 'Store settings sections' });
+    await nav.getByRole('link', { name: /Site & branding/ }).click();
+    await expect(page.getByRole('heading', { name: 'Site & branding' })).toBeVisible();
+
+    // Nothing changed yet: no save bar.
+    await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+
+    const tagline = page.getByLabel('Tagline', { exact: true });
+    await tagline.fill('Toys & learning for every age');
+    await page.getByLabel('Tagline · বাংলা').fill('সব বয়সের খেলনা ও শেখা');
+    await expect(page.getByText(/Unsaved changes in Site & branding/)).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/site-branding.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByLabel('Tagline', { exact: true })).toHaveValue('Toys & learning for every age');
+    await expect(page.getByLabel('Tagline · বাংলা')).toHaveValue('সব বয়সের খেলনা ও শেখা');
+
+    // Discard puts the saved value back.
+    await page.getByLabel('Tagline', { exact: true }).fill('Something else');
+    await page.getByRole('button', { name: 'Discard' }).click();
+    await expect(page.getByLabel('Tagline', { exact: true })).toHaveValue('Toys & learning for every age');
+});
+
+test('a single shop is refused while the demo branches are active, and names them', async ({ page }) => {
+    await signIn(page);
+    const nav = page.getByRole('navigation', { name: 'Store settings sections' });
+    await nav.getByRole('link', { name: 'Branches & warehouses' }).click();
+
+    const setup = page.getByRole('group', { name: 'Branch setup' });
+    await expect(setup.getByRole('radio', { name: /Multiple branches/ })).toBeChecked();
+    if (shots) await page.screenshot({ path: `${shots}/branch-setup-multi.png`, fullPage: true });
+
+    // The radio is visually replaced (Figma Radio · on/off): choose it through its card, as a pointer user does.
+    await setup.getByText('Single shop', { exact: true }).click();
+    await expect(setup.getByRole('radio', { name: /Single shop/ })).toBeChecked();
+    await expect(page.getByText('Unsaved changes in Branches & warehouses')).toBeVisible();
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    const alert = page.getByRole('alert').filter({ hasText: 'Switch off the other branches first' });
+    await expect(alert).toBeVisible();
+    await expect(alert.getByText(/^Chattogram · Agrabad — \d+ units$/)).toBeVisible();
+    await expect(alert.getByRole('link', { name: 'Transfer stock' })).toHaveAttribute('href', /\/admin\/inventory(\?transfer=\d+)?$/);
+    if (shots) await page.screenshot({ path: `${shots}/branch-setup-blocked.png`, fullPage: true });
+
+    // Nothing was saved: "Keep multiple branches" puts the choice back, and the store still runs its branches.
+    await alert.getByRole('button', { name: 'Keep multiple branches' }).click();
+    await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole('group', { name: 'Branch setup' }).getByRole('radio', { name: /Multiple branches/ })).toBeChecked();
+    await expect(page.getByRole('button', { name: 'Add branch' })).toBeVisible();
+});
+
+test('sidebar branch switcher: the working branch is chosen from the menu and kept on this device', async ({ page }) => {
+    await signIn(page);
+    const button = page.getByRole('button', { name: /^Working branch:/ }).first();
+    await button.click();
+    const menu = page.getByRole('menu', { name: 'Working branch' });
+    await expect(menu.getByRole('menuitemradio')).toHaveCount(3);
+    await expect(menu.getByRole('menuitem', { name: 'Manage branches' })).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/branch-switcher-open.png`, clip: { x: 0, y: 0, width: 260, height: 640 } });
+    await menu.getByRole('menuitemradio', { name: /Chattogram/ }).click();
+    await expect(button).toHaveAccessibleName(/^Working branch:\s*Chattogram/);
+    await page.reload();
+    await expect(page.getByRole('button', { name: /^Working branch:\s*Chattogram/ }).first()).toBeVisible();
+
+    // Collapsed rail: an icon button; its menu opens beside the rail.
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    const rail = page.getByRole('button', { name: /^Working branch:/ }).first();
+    await rail.click();
+    await expect(menu).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/branch-switcher-rail.png`, clip: { x: 0, y: 0, width: 360, height: 560 } });
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Expand sidebar' }).click();
+
+    // A single shop (the API answer rewritten): no branch block at all — the nav follows the brand row.
+    await page.route('**/api/v1/admin/auth/me', async (route) => {
+        const response = await route.fetch();
+        const body = (await response.json()) as { branches: { multi_branch: boolean; locations: { is_default: boolean }[] } };
+        body.branches = { multi_branch: false, locations: body.branches.locations.filter((l) => l.is_default) };
+        await route.fulfill({ response, json: body });
+    });
+    await page.reload();
+    await expect(page.getByRole('navigation', { name: 'Main navigation' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Working branch:/ })).toHaveCount(0);
+    await expect(page.getByRole('complementary').first().getByText('Dhaka HQ · Mirpur')).toHaveCount(0);
+    if (shots) await page.screenshot({ path: `${shots}/branch-switcher-single.png`, clip: { x: 0, y: 0, width: 260, height: 240 } });
+
+    if (shots) {
+        // The single-shop Branches section, for the Figma check (410:69706).
+        await page.route('**/api/v1/admin/settings/branch-mode', async (route) => {
+            const response = await route.fetch();
+            const body = (await response.json()) as Record<string, unknown>;
+            await route.fulfill({ response, json: { ...body, multi_branch: false, saved: true } });
+        });
+        await page.goto('/admin/settings/branches');
+        await expect(page.getByRole('heading', { name: 'Shop & warehouse' })).toBeVisible();
+        await page.screenshot({ path: `${shots}/branch-setup-single.png`, fullPage: true });
+    }
 });
