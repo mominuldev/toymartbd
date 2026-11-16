@@ -13,6 +13,7 @@ use App\Domain\Invoicing\Services\InvoiceNumberGenerator;
 use App\Domain\Purchasing\Enums\PurchaseStatus;
 use App\Domain\Purchasing\Models\Purchase;
 use App\Domain\Purchasing\Models\PurchaseItem;
+use App\Domain\Purchasing\Services\PurchaseTotals;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,8 +23,16 @@ use Illuminate\Support\Facades\DB;
  * be issued; the first print issues it.
  *
  * Lines are copied from the PO: product + variant names and SKU as they are now, ordered
- * quantity, unit cost (4 decimals, as Purchasing stores it), discount and line total; the
- * totals from the PO header. Nothing is recomputed (rule 1).
+ * quantity, unit cost (4 decimals, as Purchasing stores it), discount and line total. Nothing
+ * is recomputed here (rule 1): the figures are Purchasing's own (PurchaseTotals).
+ *
+ * Totals (owner decision 2026-11-16, matching the PO page): the goods ordered
+ * (PurchaseTotals::ordered), then the extra costs THE SUPPLIER CHARGED on its bill, by kind
+ * (freight / customs & duty / other, from the receipts — PurchaseTotals::supplierCharged), and
+ * total = goods + those extras. Extras a third party was paid for (a forwarder, a C&F agent)
+ * never appear: the supplier is not owed them. Snapshot keys are unchanged (`costs.shipping_cost`
+ * etc.), so the one invoice template prints old and new snapshots alike; an invoice issued
+ * before the decision keeps its snapshot (immutable — a reprint never recomputes).
  */
 final readonly class IssuePurchaseInvoice
 {
@@ -51,13 +60,15 @@ final readonly class IssuePurchaseInvoice
             }
 
             /** @var Purchase $fresh */
-            $fresh = Purchase::query()->with(['items.variant.product', 'supplier'])->findOrFail($purchase->id);
+            $fresh = Purchase::query()->with(['items.variant.product', 'supplier', 'receipts'])->findOrFail($purchase->id);
             if ($fresh->number === null || in_array($fresh->status, [PurchaseStatus::Draft, PurchaseStatus::Cancelled], true)) {
                 throw InvoiceNotIssuable::purchaseNotOrdered($fresh->number ?? '#'.$fresh->id, $fresh->status->value);
             }
 
             $number = $this->numbers->take(InvoiceType::Purchase, $counter['year'], $counter['next']);
             $supplier = $fresh->supplier;
+            $extras = PurchaseTotals::supplierCharged($fresh);
+            $total = PurchaseTotals::ordered($fresh)->plus($extras['total']);
 
             return Invoice::query()->create([
                 'type' => InvoiceType::Purchase,
@@ -80,11 +91,11 @@ final readonly class IssuePurchaseInvoice
                     'order_date' => $fresh->order_date->toDateString(),
                     'expected_date' => $fresh->expected_date?->toDateString(),
                     'note' => $fresh->note,
-                    // `shipping` below is these three together; kept apart for the PDF breakdown.
+                    // The supplier-charged extras by kind; `shipping` below is these three together.
                     'costs' => [
-                        'shipping_cost' => $fresh->shipping_cost->toDecimal(),
-                        'customs_duty' => $fresh->customs_duty->toDecimal(),
-                        'other_cost' => $fresh->other_cost->toDecimal(),
+                        'shipping_cost' => $extras['freight']->toDecimal(),
+                        'customs_duty' => $extras['customs_duty']->toDecimal(),
+                        'other_cost' => $extras['other']->toDecimal(),
                     ],
                 ],
                 'lines' => $fresh->items->map(static fn (PurchaseItem $item): array => [
@@ -99,13 +110,13 @@ final readonly class IssuePurchaseInvoice
                 ])->values()->all(),
                 'subtotal' => $fresh->subtotal,
                 'discount' => $fresh->discount,
-                'shipping' => $fresh->shipping_cost->plus($fresh->customs_duty)->plus($fresh->other_cost),
+                'shipping' => $extras['total'],
                 'tax' => $fresh->tax,
-                'total' => $fresh->total,
+                'total' => $total,
                 'paid' => $fresh->paid_amount,
                 'due' => $fresh->due_amount,
-                'amount_in_words' => AmountInWords::english($fresh->total),
-                'amount_in_words_bn' => AmountInWords::bangla($fresh->total),
+                'amount_in_words' => AmountInWords::english($total),
+                'amount_in_words_bn' => AmountInWords::bangla($total),
                 'issued_at' => now(),
                 'due_at' => $supplier->payment_terms_days > 0 ? $fresh->order_date->copy()->addDays($supplier->payment_terms_days) : null,
                 'template' => Invoice::TEMPLATE_STANDARD,

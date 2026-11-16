@@ -407,7 +407,7 @@ export function OrderComposer({ mode }: { mode: Mode }) {
                             <CustomerCard loading={lookup.isFetching && !lookup.data} customer={lookup.data?.customer ?? null} phone={phoneDigits} />
                         )}
                         {mode.kind === 'create' && open && (
-                            <div className="flex flex-wrap items-center gap-3 rounded-md border-l-3 border-feedback-warning bg-subtle px-4 py-3">
+                            <div className="flex flex-wrap items-center gap-3 rounded-sm bg-warning-subtle px-4 py-3">
                                 <WarningIcon size={18} aria-hidden className="shrink-0 text-status-low-stock" />
                                 <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
                                     <p className="t-admin-body-strong text-fg-primary">{t('orders.compose.openOrder')}</p>

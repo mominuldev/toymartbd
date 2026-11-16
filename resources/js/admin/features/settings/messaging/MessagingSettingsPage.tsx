@@ -178,8 +178,9 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
                 }
             />
 
-            <form id={FORM_ID} onSubmit={submit} noValidate className="flex w-full min-w-0 max-w-4xl flex-col gap-6">
-                <fieldset disabled={save.isPending} className="flex min-w-0 flex-col gap-6">
+            <form id={FORM_ID} onSubmit={submit} noValidate className="flex w-full min-w-0 flex-col gap-6">
+                {/* Fills the content width (spec rule 4b): the sections pair up at xl instead of one column stretched to 1600px. */}
+                <fieldset disabled={save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
                     <FormSection title={t('messaging.sms.title')} description={t('messaging.sms.description')}>
                         <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                             <Field label={t('messaging.field.driver')} hint={fromEnv('sms_driver')} error={errorOf('sms_driver')}>
@@ -268,7 +269,7 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
                         </FormSection>
                     )}
 
-                    <FormSection title={t('messaging.whatsapp.title')}>
+                    <FormSection title={t('messaging.whatsapp.title')} className={driver === 'reve' ? 'xl:col-span-2' : ''}>
                         <div className="flex items-start gap-4">
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                                 <p className="t-admin-body text-fg-primary">{t('messaging.whatsapp.toggle')}</p>
@@ -346,8 +347,8 @@ function TestSmsCard({ dirty }: { dirty: boolean }) {
     };
 
     return (
-        <FormSection title={t('messaging.test.title')} description={t('messaging.test.description')} className="w-full max-w-4xl">
-            <div className="grid items-start gap-x-4 gap-y-3.5 md:grid-cols-2">
+        <FormSection title={t('messaging.test.title')} description={t('messaging.test.description')} className="w-full">
+            <div className="grid items-start gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-4">
                 <Field label={t('messaging.test.phone')} hint={t('messaging.test.phoneHint')} error={phoneError}>
                     {({ id, describedBy, invalid }) => (
                         <input

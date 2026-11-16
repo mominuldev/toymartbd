@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { CheckIcon, PackageIcon, WarningIcon, XIcon } from '@phosphor-icons/react';
+import { CheckIcon, PackageIcon, WarningCircleIcon, WarningIcon, XIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
@@ -61,7 +61,7 @@ export function ReturnDetail({ id }: { id: number }) {
             </Link>
             {r.reason_note && <p className="t-admin-body text-fg-secondary">“{r.reason_note}”</p>}
             {r.within_window === false && (
-                <p className="flex items-center gap-2 rounded-sm border-l-2 border-feedback-warning bg-warning-subtle px-3 py-2 t-admin-body text-fg-primary">
+                <p className="flex items-center gap-2 rounded-sm bg-warning-subtle px-3 py-2 t-admin-body text-fg-primary">
                     <WarningIcon size={16} aria-hidden className="shrink-0 text-feedback-warning" />
                     {t('returns.window.outside', { days: r.window_days })}
                 </p>
@@ -168,8 +168,11 @@ function Inspection({ r }: { r: OrderReturn }) {
                         {({ id }) => <Input id={id} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />}
                     </Field>
                     {rejecting ? (
-                        <div className="flex flex-col gap-2 rounded-sm border-l-2 border-feedback-danger bg-subtle px-3.5 py-3">
-                            <p className="t-admin-body-strong text-fg-primary">{t('returns.action.rejectTitle', { number: r.number })}</p>
+                        <div className="flex flex-col gap-2 rounded-sm bg-danger-subtle px-3.5 py-3">
+                            <p className="flex items-start gap-2 t-admin-body-strong text-fg-primary">
+                                <WarningCircleIcon size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
+                                {t('returns.action.rejectTitle', { number: r.number })}
+                            </p>
                             <p className="t-admin-caption text-fg-secondary">{t('returns.action.rejectBody')}</p>
                             <Field label={t('returns.action.reason')} required>
                                 {({ id }) => <textarea id={id} rows={2} maxLength={500} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} className={`${inputClass} py-2`} />}
@@ -286,7 +289,7 @@ export function RefundBlock({ refund }: { refund: Refund }) {
             )}
             {refund.note && <p className="py-1.5 t-admin-caption text-fg-secondary">{refund.note}</p>}
             {refund.status === 'requested' && refund.needs_manager && (
-                <p className="mt-1 flex items-start gap-2 rounded-sm border-l-2 border-feedback-warning bg-warning-subtle px-3 py-2 t-admin-body text-fg-primary">
+                <p className="mt-1 flex items-start gap-2 rounded-sm bg-warning-subtle px-3 py-2 t-admin-body text-fg-primary">
                     <WarningIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />
                     {t('refunds.needsManager', { threshold: formatMoney(refund.approval_threshold) })}
                 </p>
@@ -294,8 +297,11 @@ export function RefundBlock({ refund }: { refund: Refund }) {
 
             {refund.can.approve &&
                 (rejecting ? (
-                    <div className="mt-2 flex flex-col gap-2 rounded-sm border-l-2 border-feedback-danger bg-subtle px-3.5 py-3">
-                        <p className="t-admin-body-strong text-fg-primary">{t('refunds.action.rejectTitle')}</p>
+                    <div className="mt-2 flex flex-col gap-2 rounded-sm bg-danger-subtle px-3.5 py-3">
+                        <p className="flex items-start gap-2 t-admin-body-strong text-fg-primary">
+                            <WarningCircleIcon size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
+                            {t('refunds.action.rejectTitle')}
+                        </p>
                         <p className="t-admin-caption text-fg-secondary">{t('refunds.action.rejectBody')}</p>
                         <Field label={t('returns.action.reason')} required>
                             {({ id }) => <textarea id={id} rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} className={`${inputClass} py-2`} />}

@@ -3,34 +3,15 @@
  * these functions group digits and pick a sign, they never compute money.
  */
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-/** A true minus (U+2212), as the admin spec sets money (04-admin-spec Part 0). */
-export const MINUS = '−';
+import { MINUS, TAKA, formatCount, isNegativeAmount, takaText } from '@/lib/money';
 
-/** "13910.00" → "13,910"; "-602.50" → "-602.5". Groups the server's decimal string without parsing it into a float. */
-export function groupDecimal(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '-' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { MINUS, TAKA, formatCount };
 
-export function isNegative(decimal: string): boolean {
-    return decimal.startsWith('-') && !/^-0(\.0+)?$/.test(decimal);
-}
+export const isNegative = isNegativeAmount;
 
 /** "-602.50" → "−৳602.5" as plain text (labels, aria). */
-export function moneyText(decimal: string): string {
-    const negative = isNegative(decimal);
-    return `${negative ? MINUS : ''}${TAKA}${groupDecimal(decimal.replace(/^-/, ''))}`;
-}
-
-/** Western digits with grouping in both locales (rule 36). */
-export function formatCount(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-}
+export const moneyText = (decimal: string): string => takaText(decimal);
 
 /** A server percent string ("37.78") as Figma sets a delta, to one place: "+37.8%", "−4%". */
 export function deltaText(percent: string): string {

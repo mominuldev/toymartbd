@@ -4,37 +4,17 @@ import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
 import { TabLink, TabList } from '@/components/ui/Tabs';
 import { Button } from '@/components/ui/Button';
-import { DotsThreeIcon } from '@phosphor-icons/react';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { TAKA, formatCount, formatMoney, takaText } from '@/lib/money';
+import { CheckCircleIcon, DotsThreeIcon, InfoIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import type { ExpenseStatus, LedgerType, PaymentMethod } from './api';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-
-/**
- * "25000.00" → "25,000", "1050.50" → "1,050.5". Groups and trims the server's decimal string;
- * never parses it into a float and never computes (rule 1).
- */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatCount, formatMoney };
 
 /** A taka amount: the sign in the currency face, the figures in the surrounding style. */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
-}
-
-/** Western digits with grouping in both locales (rule 36). */
-export function formatCount(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
+    return <TakaAmount amount={amount} signClass={signClass} />;
 }
 
 /** Today's Dhaka calendar date minus `daysBack`, as YYYY-MM-DD — the API buckets by Dhaka day (rule 11). */
@@ -68,9 +48,11 @@ export const methodLabel = (method: PaymentMethod): MessageKey => `expenses.meth
 export const ledgerTypeLabel = (type: LedgerType): MessageKey => `finLedger.type.${type}` as MessageKey;
 
 /**
- * The finance section's one tab strip (IA §1: P&L · Daily reports · Expenses · Ledger & COD
- * receivables · Profitability), shared by these screens and the reports screens. Expense and
- * ledger tabs show only with finance.view; the report tabs follow the reports' own guard.
+ * The finance section's one tab strip (Figma B · 32 FinanceTabs 422:71915): P&L · Daily reports ·
+ * Expenses · Expense categories · Ledger · COD settlements · Profitability · Capital — shared by
+ * every finance screen and the reports screens. The money-book tabs (expenses, categories,
+ * ledger, settlements, capital) show only with finance.view; the report tabs follow the
+ * reports' own guard.
  */
 export function FinanceTabs() {
     const { t } = useI18n();
@@ -85,7 +67,55 @@ export function FinanceTabs() {
             {finance && <TabLink to="/finance/ledger" label={t('finNav.ledger')} />}
             {finance && <TabLink to="/finance/settlements" label={t('settlements.tab')} />}
             <TabLink to="/finance/profitability" label={t('reports.tab.profitability')} />
+            {finance && <TabLink to="/finance/capital" label={t('finUi.tab.capital')} />}
         </TabList>
+    );
+}
+
+export type NoticeTone = 'info' | 'warning' | 'success' | 'danger';
+
+const noticeTones: Record<NoticeTone, { fill: string; icon: string; Icon: typeof InfoIcon }> = {
+    info: { fill: 'bg-info-subtle', icon: 'text-feedback-info', Icon: InfoIcon },
+    warning: { fill: 'bg-warning-subtle', icon: 'text-feedback-warning', Icon: WarningCircleIcon },
+    success: { fill: 'bg-success-subtle', icon: 'text-feedback-success', Icon: CheckCircleIcon },
+    danger: { fill: 'bg-danger-subtle', icon: 'text-feedback-danger', Icon: WarningCircleIcon },
+};
+
+/**
+ * Figma "Notice · info" (Finance 422:71411): radius/sm, a tinted fill and a tinted 18px leading
+ * icon, body-strong title over a caption — no coloured edge (04-admin-spec rule 4a). The words
+ * carry the meaning; the tint only supports them.
+ */
+export function Notice({ tone = 'info', title, children, role }: { tone?: NoticeTone; title: ReactNode; children?: ReactNode; role?: 'status' | 'alert' }) {
+    const { fill, icon, Icon } = noticeTones[tone];
+    return (
+        <div role={role} className={`flex items-start gap-2.5 rounded-sm px-3.5 py-3 ${fill}`}>
+            <Icon size={18} aria-hidden className={`mt-px shrink-0 ${icon}`} />
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <p className="t-admin-body-strong text-fg-primary">{title}</p>
+                {children && <p className="t-admin-caption text-fg-secondary">{children}</p>}
+            </div>
+        </div>
+    );
+}
+
+/** A KPI figure in Figma's Admin/num-lg (26px bold), the ৳ in its currency face. */
+export function KpiMoney({ amount }: { amount: string }) {
+    return <span className="t-admin-currency-num-lg">{takaText(amount, 'fixed')}</span>;
+}
+
+/**
+ * Figma B · 32 sets every finance taka figure with two places and lakh grouping: "186400.00" →
+ * "1,86,400.00", "-120.00" → "−120.00" — the admin's one formatter (lib/money `fixed`).
+ */
+export const formatFixed = (decimal: string): string => formatMoney(decimal, 'fixed');
+
+/** A taka amount with two places ("৳12,500.00"); a negative carries a true minus before the sign. */
+export function TakaFixed({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
+    return (
+        <span className="tabular whitespace-nowrap">
+            <TakaAmount amount={amount} places="fixed" signClass={signClass} />
+        </span>
     );
 }
 
@@ -219,7 +249,7 @@ export function RowMenu({ label, children }: { label: string; children: ReactNod
     }, []);
     return (
         <details ref={ref} className="relative">
-            <summary aria-label={label} title={label} className="inline-grid size-8 cursor-pointer list-none place-items-center rounded-sm text-fg-primary hover:bg-subtle [&::-webkit-details-marker]:hidden">
+            <summary aria-label={label} title={label} className="inline-grid size-8 cursor-pointer list-none place-items-center rounded-sm border border-line-default bg-surface text-fg-primary hover:bg-subtle [&::-webkit-details-marker]:hidden">
                 <DotsThreeIcon size={16} aria-hidden />
             </summary>
             <div className="absolute end-0 top-full z-20 mt-1 flex min-w-40 flex-col rounded-md border border-line-default bg-surface p-1 shadow-e2" onClick={() => ref.current?.removeAttribute('open')}>

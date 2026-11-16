@@ -1,5 +1,6 @@
 import type { Attribute } from '../attributes/api';
 import type { Gender, Product, ProductInput, ProductStatus, ProductType, ProductVariant, RelationType, RobotsDirective, TwitterCard } from './api';
+import { formatMoney as formatLakh } from '@/lib/money';
 
 /**
  * The product document as the form edits it, and its translation to the API payload.
@@ -537,11 +538,7 @@ export function ageParts(months: string): { years: number; months: number } | nu
 }
 
 /**
- * Thousands separators on a decimal string, without turning it into a number:
- * "1850.00" → "1,850", "1250.50" → "1,250.50". Formatting only — never arithmetic.
+ * A price for display, without turning it into a number: "1850.00" → "1,850", "1250.50" →
+ * "1,250.50", "125000" → "1,25,000" — the admin's one formatter (lib/money, lakh grouping).
  */
-export function formatMoney(decimal: string): string {
-    const [whole = '', fraction = ''] = decimal.split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return fraction === '' || /^0+$/.test(fraction) ? grouped : `${grouped}.${fraction}`;
-}
+export const formatMoney = (decimal: string): string => formatLakh(decimal, 'auto');

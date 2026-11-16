@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type { ImportSettlementRequestInput, ReviewSettlementLineRequestInput } from '@toymart/api-types/zod';
 import { ApiError, api, apiLocale, csrfToken, isProblem } from '@/lib/api';
@@ -16,8 +16,22 @@ export type ImportInput = Omit<ImportSettlementRequestInput, 'file' | 'lines'>;
 
 type Page = {
     data: Settlement[];
-    meta: { next_cursor?: string | null; providers?: Provider[] };
+    meta: { next_cursor?: string | null; providers?: Provider[]; disputed_count?: number };
 };
+
+/** The list's review-state view (`filter[status]`, allowlisted on the server) and courier. */
+export const settlementViews = ['', 'received', 'disputed', 'reconciled'] as const;
+export type SettlementView = (typeof settlementViews)[number];
+export type SettlementFilters = { status: SettlementView; provider: string };
+
+export function settlementsPath(f: SettlementFilters, cursor: string | null): string {
+    const params = new URLSearchParams();
+    if (f.status) params.set('filter[status]', f.status);
+    if (f.provider) params.set('filter[provider]', f.provider);
+    if (cursor) params.set('cursor', cursor);
+    const text = params.toString();
+    return `/finance/settlements${text ? `?${text}` : ''}`;
+}
 
 const keys = {
     all: ['finance'] as const,
@@ -25,10 +39,11 @@ const keys = {
     one: (id: number) => ['finance', 'settlements', id] as const,
 };
 
-export function useSettlements() {
+export function useSettlements(filters: SettlementFilters = { status: '', provider: '' }) {
     return useInfiniteQuery({
-        queryKey: keys.list,
-        queryFn: ({ pageParam }) => api<Page>(`/finance/settlements${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`),
+        queryKey: [...keys.list, filters],
+        queryFn: ({ pageParam }) => api<Page>(settlementsPath(filters, pageParam)),
+        placeholderData: keepPreviousData,
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.meta.next_cursor ?? null,
     });

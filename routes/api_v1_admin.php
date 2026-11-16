@@ -238,6 +238,8 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::post('/suppliers/{supplier}/payments', [SupplierPaymentController::class, 'store'])->whereNumber('supplier')->middleware('idempotent')->name('suppliers.payments.store');
     Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
     Route::get('/purchases/counts', [PurchaseController::class, 'counts'])->name('purchases.counts');
+    Route::get('/purchases/summary', [PurchaseController::class, 'summary'])->name('purchases.summary');
+    Route::post('/purchases/quote', [PurchaseController::class, 'quote'])->name('purchases.quote');
     Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
     Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
     Route::put('/purchases/{purchase}', [PurchaseController::class, 'update'])->whereNumber('purchase')->name('purchases.update');
@@ -434,6 +436,17 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::get('/finance/ledger', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'index'])->name('finance.ledger.index');
     Route::get('/finance/receivables', [App\Http\Controllers\Api\V1\Admin\FinanceLedgerController::class, 'receivables'])->name('finance.receivables');
     Route::post('/finance/orders/{order}/cod-receipts', [App\Http\Controllers\Api\V1\Admin\CodReceiptController::class, 'store'])->middleware('idempotent')->name('finance.cod-receipts.store');
+    // Owner capital (P10): money put in ("New investment") and drawings taken out — cash, never
+    // revenue (rule 10). Entries are insert-only; a mistake is reversed. Moving money, so both
+    // writes need an Idempotency-Key. Read with finance.view, write with finance.manage_capital.
+    Route::get('/finance/capital', [App\Http\Controllers\Api\V1\Admin\CapitalController::class, 'summary'])->name('finance.capital.summary');
+    Route::get('/finance/capital/entries', [App\Http\Controllers\Api\V1\Admin\CapitalController::class, 'entries'])->name('finance.capital.entries.index');
+    Route::post('/finance/capital/entries', [App\Http\Controllers\Api\V1\Admin\CapitalController::class, 'store'])->middleware('idempotent')->name('finance.capital.entries.store');
+    Route::post('/finance/capital/entries/{entry}/reverse', [App\Http\Controllers\Api\V1\Admin\CapitalController::class, 'reverse'])->whereNumber('entry')->middleware('idempotent')->name('finance.capital.entries.reverse');
+    Route::get('/finance/capital/holders', [App\Http\Controllers\Api\V1\Admin\CapitalHolderController::class, 'index'])->name('finance.capital.holders.index');
+    Route::post('/finance/capital/holders', [App\Http\Controllers\Api\V1\Admin\CapitalHolderController::class, 'store'])->name('finance.capital.holders.store');
+    Route::get('/finance/capital/staff', [App\Http\Controllers\Api\V1\Admin\CapitalHolderController::class, 'staff'])->name('finance.capital.staff');
+    Route::patch('/finance/capital/holders/{holder}', [App\Http\Controllers\Api\V1\Admin\CapitalHolderController::class, 'update'])->whereNumber('holder')->name('finance.capital.holders.update');
     // Courier COD settlements (P6, §4.5): import a remittance (file or typed), review each
     // variance, confirm → ledger. Moving money, so import and confirm replay on a double submit.
     Route::get('/finance/settlements', [App\Http\Controllers\Api\V1\Admin\CourierSettlementController::class, 'index'])->name('finance.settlements.index');

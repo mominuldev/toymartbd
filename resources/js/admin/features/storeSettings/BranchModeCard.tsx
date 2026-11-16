@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import { BrandingCard } from './brandingParts';
 import { blockersOf, useSaveBranchMode, type BranchMode, type BranchModeLocation } from './branchModeApi';
 import { StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash } from './parts';
+import { formatCount } from '@/lib/money';
 
 const FORM_ID = 'branch-mode-form';
 
@@ -20,8 +21,8 @@ const options: readonly { value: Mode; icon: Icon; title: MessageKey; body: Mess
     { value: 'multi', icon: BuildingsIcon, title: 'branchMode.multi.title', body: 'branchMode.multi.body' },
 ];
 
-/** `n` units in the reader's numerals-free format (rule 36: Western digits in both locales). */
-const units = (n: number) => n.toLocaleString('en-US');
+/** `n` units, lakh-grouped with Western digits in both locales (lib/money, rule 36). */
+const units = formatCount;
 
 /**
  * Store settings › Branches & warehouses › Branch setup (Figma 410:69597 multi, 410:69706

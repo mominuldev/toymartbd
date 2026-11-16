@@ -18,10 +18,8 @@ export function zoneLabel(row: { zone_name: string; area_name: string | null }):
     return row.area_name ? `${row.zone_name} › ${row.area_name}` : row.zone_name;
 }
 
-/** Western digits with grouping in both locales (rule 36). */
-export function formatUnits(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-}
+/** Counts, lakh-grouped with Western digits in both locales (lib/money, rule 36). */
+export { formatCount as formatUnits } from '@/lib/money';
 
 /** A Dhaka date-time, "13 Nov 2026, 5:37 pm", Western digits. */
 export function formatDhakaTime(iso: string, locale: Locale): string {

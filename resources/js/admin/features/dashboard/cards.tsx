@@ -217,7 +217,7 @@ export function BestSellersCard({ best, range }: { best: NonNullable<Dashboard['
     );
 }
 
-/** Low stock (Card 241:30038): available chip with a low-stock edge, the on-hand − reserved breakdown, Create PO. */
+/** Low stock (Card 241:30038): available chip (warning tint, no edge), the on-hand − reserved breakdown, Create PO. */
 export function LowStockCard({ low }: { low: NonNullable<Dashboard['low_stock']> }) {
     const { t, locale } = useI18n();
     return (
@@ -238,7 +238,7 @@ export function LowStockCard({ low }: { low: NonNullable<Dashboard['low_stock']>
                                     {t('dash.low.breakdown', { onHand: formatCount(row.on_hand), reserved: formatCount(row.reserved), point: formatCount(row.reorder_point) })}
                                 </p>
                             </div>
-                            <span className="flex items-baseline gap-1 rounded-sm border-l-2 border-l-status-low-stock bg-subtle px-2 py-0.5">
+                            <span className="flex items-baseline gap-1 rounded-sm bg-warning-subtle px-2 py-0.5">
                                 <span className="t-admin-num text-fg-primary">{formatCount(row.available)}</span>
                                 <span className="t-admin-caption text-fg-secondary">{t('dash.low.chip')}</span>
                             </span>

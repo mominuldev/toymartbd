@@ -1,35 +1,20 @@
 import { TrendDownIcon, TrendUpIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-/** A true minus (U+2212), as the admin spec sets money (04-admin-spec Part 0). */
-export const MINUS = '−';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { MINUS, TAKA, formatCount, formatMoney, isNegativeAmount, takaText } from '@/lib/money';
 
-/** "13910.50" → "13,910.5": groups the server's decimal string, never parses it into a float (rule 1). */
-export function formatAmount(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? MINUS : ''}${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
-
-/** Western digits with grouping in both locales (rule 36). */
-export const formatCount = (n: number) => new Intl.NumberFormat('en-US').format(n);
-
-export function isNegative(decimal: string): boolean {
-    return decimal.startsWith('-') && !/^-0(\.0+)?$/.test(decimal);
-}
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { MINUS, TAKA, formatCount, takaText };
+export const formatAmount = formatMoney;
+export const isNegative = isNegativeAmount;
 
 /** ৳ in the currency face (Hanken has no ৳ — 06-admin-feature-checklist §0); a dash for null. */
 export function Money({ amount, signClass = 't-admin-currency-num' }: { amount: string | null | undefined; signClass?: string }) {
     if (amount === null || amount === undefined) return <span className="text-fg-tertiary">—</span>;
-    const negative = isNegative(amount);
     return (
         <span className="tabular whitespace-nowrap">
-            {negative ? MINUS : ''}
-            <span className={signClass}>{TAKA}</span>
-            {formatAmount(negative ? amount.slice(1) : amount.replace(/^-/, ''))}
+            <TakaAmount amount={amount} signClass={signClass} />
         </span>
     );
 }

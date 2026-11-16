@@ -413,13 +413,13 @@ describe('movement ledger', () => {
 
     it('formats money to two decimals on the string, and signs, without computing', () => {
         expect(formatMoney('1050.4000')).toBe('1,050.40');
-        expect(formatMoney('136741.00')).toBe('136,741.00');
+        expect(formatMoney('136741.00')).toBe('1,36,741.00');
         expect(formatMoney('2937.7371')).toBe('2,937.74');
         expect(formatMoney('2244.6306')).toBe('2,244.63');
         expect(formatMoney('999.995')).toBe('1,000.00');
         expect(formatMoney('0.0049')).toBe('0.00');
         expect(formatMoney('-0.004')).toBe('0.00');
-        expect(formatMoney('-100.5')).toBe('-100.50');
+        expect(formatMoney('-100.5')).toBe('−100.50');
         expect(formatMoney('1250')).toBe('1,250.00');
         expect(exactMoney('2937.7371')).toBe('2,937.7371');
         expect(exactMoney('1015.0000')).toBe('1,015.00');

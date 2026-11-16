@@ -11,14 +11,14 @@ const ToastContext = createContext<ToastApi | null>(null);
 let nextId = 1;
 
 const looks = {
-    success: { icon: CheckCircleIcon, edge: 'border-feedback-success', tint: 'text-feedback-success' },
-    danger: { icon: WarningCircleIcon, edge: 'border-feedback-danger', tint: 'text-feedback-danger' },
-    info: { icon: InfoIcon, edge: 'border-feedback-info', tint: 'text-feedback-info' },
+    success: { icon: CheckCircleIcon, tint: 'text-feedback-success' },
+    danger: { icon: WarningCircleIcon, tint: 'text-feedback-danger' },
+    info: { icon: InfoIcon, tint: 'text-feedback-info' },
 } as const;
 
 /**
- * Figma AdminToast 203:2315 — bottom-right, 420 wide, surface-raised, radius/sm, e3, a 3px
- * feedback-coloured left edge, 18px icon, Admin/body text, ghost close. One polite live
+ * Figma AdminToast 203:2315 — bottom-right, 420 wide, surface-raised, radius/sm, e3, a border/default
+ * hairline all round (no coloured left edge, owner 2026-11-16), 18px feedback-tinted icon, Admin/body text, ghost close. One polite live
  * region; success and info dismiss after 5s, errors persist until closed.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -40,12 +40,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             {children}
             <div aria-live="polite" className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-[min(100%-2rem,26.25rem)] flex-col gap-2">
                 {toasts.map((toast) => {
-                    const { icon: Icon, edge, tint } = looks[toast.tone];
+                    const { icon: Icon, tint } = looks[toast.tone];
                     return (
                         <div
                             key={toast.id}
                             role="status"
-                            className={`pointer-events-auto flex items-center gap-2.5 rounded-sm border-l-3 bg-surface-raised py-3 ps-3.5 pe-2 shadow-e3 ${edge}`}
+                            className={`pointer-events-auto flex items-center gap-2.5 rounded-sm border border-line-default bg-surface-raised py-3 ps-3.5 pe-2 shadow-e3`}
                         >
                             <Icon size={18} aria-hidden className={`shrink-0 ${tint}`} />
                             <p className="flex-1 t-admin-body text-fg-primary">{toast.message}</p>

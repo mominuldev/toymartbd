@@ -78,7 +78,7 @@ function SupplierDetail({ supplier }: { supplier: Supplier }) {
                             [advance ? 'suppliers.advance' : 'suppliers.balance', advance ? balance.balance.slice(1) : balance.balance],
                         ] as [MessageKey, string][]
                     ).map(([label, amount], index) => (
-                        <div key={label} className={`flex min-w-0 flex-col gap-1.5 rounded-md bg-surface p-4 shadow-e1 ${index === 3 ? 'border-l-3 border-brand' : 'border border-line-default'}`}>
+                        <div key={label} className={`flex min-w-0 flex-col gap-1.5 rounded-md border border-line-default p-4 shadow-e1 ${index === 3 ? 'bg-brand-subtle' : 'bg-surface'}`}>
                             <p className="t-admin-overline text-fg-secondary">{t(label)}</p>
                             <p className="t-admin-num-lg tabular text-fg-primary">
                                 <Taka amount={amount} signClass="t-admin-currency-num-lg" />

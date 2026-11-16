@@ -123,8 +123,9 @@ function AttributeForm({ id, attribute }: { id: number | null; attribute?: Attri
             />
 
             <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 max-w-4xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
-                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+                    {/* Fills the content width (spec rule 4b): the four short fields run across at xl. */}
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-4">
                         <Field label={t('attributes.field.name')} error={errorOf('name')}>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name')} />
@@ -135,8 +136,6 @@ function AttributeForm({ id, attribute }: { id: number | null; attribute?: Attri
                                 <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name_bn')} />
                             )}
                         </Field>
-                    </div>
-                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('attributes.field.slug')} hint={t('attributes.field.slugHint')} error={errorOf('slug')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <input

@@ -3,28 +3,15 @@ import { ArrowUUpLeftIcon } from '@phosphor-icons/react';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
 import type { StatusTone } from '@/components/ui/StatusChip';
+import { TakaAmount } from '@/components/ui/TakaAmount';
 import type { RefundStatus, ReturnReason, ReturnStatus } from './api';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-
-/** "1250.00" → "1,250". Groups the server's decimal string; never parses or computes (rule 1). */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/* Money: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney } from '@/lib/money';
 
 /** A taka amount as Figma sets it: the sign in the currency face, figures in the surrounding style. */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
+    return <TakaAmount amount={amount} signClass={signClass} />;
 }
 
 export const reasonLabel = (reason: ReturnReason): MessageKey => `returns.reason.${reason}` as MessageKey;

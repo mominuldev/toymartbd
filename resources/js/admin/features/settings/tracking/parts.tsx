@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
+import { formatMoney as formatLakh, takaText } from '@/lib/money';
 import type { DispatchStatus } from './api';
 
 export const TRACKING_PATH = '/integrations/tracking';
@@ -50,15 +51,14 @@ type DestinationCardProps = {
 
 /**
  * One destination tile (Figma B · 25 grid 241:31099, IntegrationCard 203:2257 family): title
- * + switch, the mono id, a StatusChip, a caption; "Needs attention" swaps the hairline for a
- * 3px danger edge (241:31120). The footer action ("Settings") is IntegrationCard's.
+ * + switch, the mono id, a StatusChip, a caption; "Needs attention" is carried by the chip's label and danger
+ * icon (241:31120) — the hairline stays all round (owner, 2026-11-16: no coloured left edges). The footer action ("Settings") is IntegrationCard's.
  */
 export function DestinationCard({ title, id, state, caption, toggle, action }: DestinationCardProps) {
     const { t } = useI18n();
     const chip = cardChip[state];
-    const frame = state === 'attention' ? 'border-l-3 border-feedback-danger' : 'border border-line-default';
     return (
-        <section aria-label={title} className={`flex min-w-0 flex-col gap-2 overflow-hidden rounded-md bg-surface p-4 ${frame}`}>
+        <section aria-label={title} className="flex min-w-0 flex-col gap-2 overflow-hidden rounded-md border border-line-default bg-surface p-4">
             <div className="flex items-center gap-2">
                 <h2 className="min-w-0 flex-1 truncate t-admin-body-strong text-fg-primary">{title}</h2>
                 {toggle}
@@ -89,11 +89,21 @@ export function DispatchChip({ status }: { status: DispatchStatus }) {
     return <StatusChip tone={statusTone[status]} label={t(`tracking.status.${status}` as MessageKey)} showIcon={status !== 'not_applicable'} />;
 }
 
-/** StatCard 189:360: overline label, value, caption; `edge` = the 3px danger edge for an open problem. */
-export function Stat({ label, hint, edge, children }: { label: string; hint: ReactNode; edge?: boolean; children: ReactNode }) {
+/**
+ * StatCard 189:360: overline label, value, caption; `alert` = an open problem, shown as a danger-tinted
+ * icon tile beside the label (no coloured left edge, owner 2026-11-16); the label and caption state it.
+ */
+export function Stat({ label, hint, alert, children }: { label: string; hint: ReactNode; alert?: boolean; children: ReactNode }) {
     return (
-        <div className={`flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md bg-surface p-4 shadow-e1 ${edge ? 'border-l-3 border-feedback-danger' : 'border border-line-default'}`}>
-            <p className="t-admin-overline text-fg-secondary">{label}</p>
+        <div className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md border border-line-default bg-surface p-4 shadow-e1">
+            <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 t-admin-overline text-fg-secondary">{label}</p>
+                {alert && (
+                    <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-sm bg-danger-subtle text-feedback-danger">
+                        <WarningCircleIcon size={14} weight="fill" />
+                    </span>
+                )}
+            </div>
             <p className="t-admin-num-lg tabular text-fg-primary">{children}</p>
             <p className="t-admin-caption text-fg-tertiary">{hint}</p>
         </div>
@@ -123,12 +133,7 @@ export function dhakaToday(): string {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
-export const TAKA = '৳';
-
-/** Display only — groups the server's decimal string: "1250.00" → "1,250.00" (rule 1: no arithmetic). */
+/** Display only — "1250.00" → "৳1,250.00", lakh-grouped by the admin's one formatter (lib/money); rule 1: no arithmetic. */
 export function formatMoney(decimal: string, currency: string | null): string {
-    const [whole = '', fraction = ''] = decimal.split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const amount = fraction ? `${grouped}.${fraction}` : grouped;
-    return currency === null || currency === 'BDT' ? `${TAKA}${amount}` : `${currency} ${amount}`;
+    return currency === null || currency === 'BDT' ? takaText(decimal, 'fixed') : `${currency} ${formatLakh(decimal, 'fixed')}`;
 }

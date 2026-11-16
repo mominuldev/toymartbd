@@ -381,3 +381,203 @@ it('exports the P&L statement and series as XLSX equal to the JSON, with Bangla 
     }
     expect(Xlsx::single($this->actingAs($user)->get("/api/v1/admin/finance/reports/pnl/series/export?{$range}&group=day&format=xlsx&locale=bn"))['name'])->toBe('দৈনিক লাভ-ক্ষতি');
 });
+
+/*
+ * Premium P&L (B · 31 premium, Phase 10): block totals and shares, line occurrences, the
+ * biggest costs, the reconciliation difference, the open pipeline by status and the
+ * item-cost lock. Every new figure reconciles with financial_transactions to the poisha.
+ */
+
+/** Σ in − Σ out over recognised entries of the given types in the week, straight from the table. */
+function pnlLedgerNet(array $types, string $from = '2026-11-02', string $to = '2026-11-08'): string
+{
+    $sum = static fn (string $direction): string => (string) (DB::table('financial_transactions')
+        ->where('is_recognised_revenue', true)
+        ->whereIn('type', $types)
+        ->where('direction', $direction)
+        ->whereBetween('occurred_on', [$from, $to])
+        ->sum('amount') ?: '0');
+
+    return App\Domain\Finance\Reports\ReportMoney::of($sum('in'))->minus(App\Domain\Finance\Reports\ReportMoney::of($sum('out')))->toDecimal();
+}
+
+it('gives every block a total and every row a share of net revenue, reconciled with the ledger to the poisha', function (): void {
+    pnlScenario();
+
+    $statement = app(ProfitAndLoss::class)->statement(ReportPeriod::of('2026-11-02', '2026-11-08'), 'none');
+    $blocks = collect($statement['blocks'])->keyBy('key');
+
+    expect($blocks->map(fn (array $b): string => $b['total']->toDecimal())->all())->toBe([
+        'revenue' => '9510.00', 'goods' => '-5800.00', 'delivery' => '-832.00', 'losses' => '-1580.00', 'running' => '-1900.00',
+    ])->and($blocks->map(fn (array $b): ?string => $b['percent_of_revenue'])->all())->toBe([
+        'revenue' => '100.00', 'goods' => '-60.99', 'delivery' => '-8.75', 'losses' => '-16.61', 'running' => '-19.98',
+    ]);
+
+    // Each block total is the ledger's own net over that block's types, to the poisha…
+    $sum = Money::zero();
+    foreach (App\Domain\Finance\Reports\PnlLayout::blocks() as $layout) {
+        $types = [];
+        foreach ($layout['rows'] as $row) {
+            if ($row['kind'] === 'line') {
+                array_push($types, ...array_map(fn (T $t): string => $t->value, $row['types']));
+            }
+        }
+        expect($blocks[$layout['key']]['total']->toDecimal())->toBe(pnlLedgerNet($types));
+        $sum = $sum->plus($blocks[$layout['key']]['total']);
+    }
+    // …and the five add up to net profit, which is the ledger's net over every P&L type.
+    expect($sum->toDecimal())->toBe('-602.00')
+        ->and($statement['totals']['net_profit']->toDecimal())->toBe(pnlLedgerNet(App\Domain\Finance\Reports\PnlLayout::pnlTypeValues()));
+
+    $rows = collect($statement['blocks'])->flatMap(fn (array $b) => $b['rows'])->keyBy('key');
+    expect($rows['product_revenue']['percent_of_revenue'])->toBe('97.27')
+        ->and($rows['cogs']['percent_of_revenue'])->toBe('-60.99')
+        ->and($rows['net_revenue']['percent_of_revenue'])->toBe('100.00')
+        ->and($rows['net_profit']['percent_of_revenue'])->toBe('-6.33')
+        // Occurrences count charges, not their reversals: order 4's sale and COGS each count once.
+        ->and($rows->filter(fn (array $r) => $r['kind'] === 'line')->map(fn (array $r): int => $r['occurrences'])->all())->toBe([
+            'product_revenue' => 3, 'delivery_revenue' => 2, 'discounts' => 1, 'cogs' => 3,
+            'courier_charges' => 3, 'cod_fees' => 2, 'return_charges' => 1, 'gateway_fees' => 0, 'packaging' => 3,
+            'refunds' => 1, 'write_offs' => 1,
+            'marketing' => 1, 'salaries' => 0, 'rent' => 0, 'utilities' => 0, 'other_expenses' => 1, 'other_income' => 0,
+        ]);
+
+    expect(array_map(fn (array $c): array => [$c['key'], $c['block'], $c['cost']->toDecimal(), $c['relative_percent']], $statement['biggest_costs']))->toBe([
+        ['marketing', 'running', '1400.00', '100.00'],
+        ['write_offs', 'losses', '1280.00', '91.43'],
+        ['courier_charges', 'delivery', '540.00', '38.57'],
+        ['other_expenses', 'running', '500.00', '35.71'],
+    ])->and($statement['reconciliation']['difference']->toDecimal())->toBe('0.00');
+});
+
+it('reports by how much the statement and the ledger rebuild differ when they do not tie up', function (): void {
+    pnlScenario();
+    app(DailySummaryRollup::class)->run('2026-08-01', '2026-11-06');
+    // Written after the nightly rollup ran: in the ledger, not in the rolled-up day.
+    pnlEntry(T::OtherIncome, Direction::In, '55.00', '2026-11-02', 'other', 1);
+
+    $statement = app(ProfitAndLoss::class)->statement(ReportPeriod::of('2026-08-01', '2026-11-08'), 'none');
+
+    expect($statement['reconciliation']['reconciled'])->toBeFalse()
+        ->and($statement['totals']['net_profit']->toDecimal())->toBe('397.00')
+        ->and($statement['reconciliation']['total']->toDecimal())->toBe(pnlLedgerNet(App\Domain\Finance\Reports\PnlLayout::pnlTypeValues(), '2026-08-01'))
+        ->and($statement['reconciliation']['difference']->toDecimal())->toBe('-55.00');
+});
+
+it('splits the open pipeline by status with order values', function (): void {
+    App\Domain\Ordering\Models\Order::factory()->status(App\Domain\Ordering\Enums\OrderStatus::Pending)->total('1000.00')->create();
+    App\Domain\Ordering\Models\Order::factory()->status(App\Domain\Ordering\Enums\OrderStatus::Pending)->total('7170.00')->create();
+    App\Domain\Ordering\Models\Order::factory()->status(App\Domain\Ordering\Enums\OrderStatus::Shipped)->total('2570.00')->create();
+    App\Domain\Ordering\Models\Order::factory()->status(App\Domain\Ordering\Enums\OrderStatus::Delivered)->total('999.00')->create();
+
+    $open = app(ProfitAndLoss::class)->statement(ReportPeriod::of('2026-11-02', '2026-11-08'), 'none')['open_orders'];
+
+    expect($open['count'])->toBe(3)
+        ->and($open['value']->toDecimal())->toBe('10740.00')
+        ->and(array_map(fn (array $s): array => [$s['status'], $s['count'], $s['value']->toDecimal()], $open['by_status']))->toBe([
+            ['pending', 2, '8170.00'],
+            ['shipped', 1, '2570.00'],
+        ]);
+});
+
+it('serves the premium fields and withholds the cost-of-goods line without catalog.view_cost', function (): void {
+    pnlScenario();
+    $url = '/api/v1/admin/finance/reports/pnl?filter[from]=2026-11-02&filter[to]=2026-11-08&compare=none';
+
+    $this->actingAs(pnlStaff())->getJson($url)
+        ->assertOk()
+        ->assertJsonPath('item_costs_visible', true)
+        ->assertJsonPath('blocks.1.rows.0.amount', '-5800.00')
+        ->assertJsonPath('blocks.1.total', '-5800.00')
+        ->assertJsonPath('blocks.1.percent_of_revenue', '-60.99')
+        ->assertJsonPath('blocks.0.rows.0.occurrences', 3)
+        ->assertJsonPath('biggest_costs.0.cost', '1400.00')
+        ->assertJsonPath('reconciliation.difference', '0.00')
+        ->assertJsonPath('open_orders.by_status', []);
+
+    // Roles are editable (rule 20b): finance.view without catalog.view_cost. Owner decision
+    // 2026-11-16: cost of goods and every subtotal it can be backed out of are withheld.
+    $clerk = User::factory()->create()->refresh();
+    $clerk->givePermissionTo(App\Models\Enums\Permission::FinanceView->value);
+    $json = $this->actingAs($clerk)->getJson(str_replace('compare=none', 'compare=previous_period', $url))
+        ->assertOk()
+        ->assertJsonPath('item_costs_visible', false)
+        ->assertJsonPath('blocks.1.rows.0.key', 'cogs')
+        ->assertJsonPath('blocks.1.rows.0.amount', null)
+        ->assertJsonPath('blocks.1.rows.0.percent_of_revenue', null)
+        ->assertJsonPath('blocks.1.rows.0.occurrences', null)
+        ->assertJsonPath('blocks.1.total', null)
+        ->assertJsonPath('blocks.1.percent_of_revenue', null)
+        ->assertJsonPath('blocks.1.rows.1.amount', null)
+        ->assertJsonPath('blocks.1.rows.1.percent_of_revenue', null)
+        ->assertJsonPath('blocks.2.rows.5.key', 'profit_after_delivery')
+        ->assertJsonPath('blocks.2.rows.5.amount', null)
+        ->assertJsonPath('blocks.3.rows.2.amount', null)
+        ->assertJsonPath('totals.gross_profit', null)
+        ->assertJsonPath('totals.profit_after_delivery', null)
+        ->assertJsonPath('totals.profit_after_losses', null)
+        ->assertJsonPath('gross_margin_percent', null)
+        ->assertJsonPath('comparison.totals.gross_profit', null)
+        ->assertJsonPath('comparison.deltas.gross_profit', null)
+        // Net revenue, the other lines and net profit stay exact.
+        ->assertJsonPath('totals.net_revenue', '9510.00')
+        ->assertJsonPath('blocks.2.total', '-832.00')
+        ->assertJsonPath('totals.net_profit', '-602.00')
+        ->assertJsonPath('inventory_at_cost', null)
+        ->json();
+    // (The reconciliation's order-by-order sum is 3,710 here only because this scenario's
+    // order-scoped entries happen to be revenue and COGS; it carries no more than net profit.)
+    unset($json['reconciliation']);
+    $body = json_encode($json);
+    foreach (['5800', '3710', '2878', '1298', '39.01'] as $withheld) {
+        expect($body)->not->toContain($withheld);
+    }
+
+    // The series follows the same rule.
+    $series = $this->actingAs($clerk)->getJson('/api/v1/admin/finance/reports/pnl/series?filter[from]=2026-11-02&filter[to]=2026-11-08&group=week')
+        ->assertOk()
+        ->assertJsonPath('item_costs_visible', false)
+        ->assertJsonPath('totals.gross_profit', null)
+        ->assertJsonPath('buckets.0.lines.cogs', null)
+        ->assertJsonPath('buckets.0.totals.profit_after_losses', null)
+        ->assertJsonPath('totals.net_profit', '-602.00')
+        ->json();
+    expect(json_encode($series))->not->toContain('3710')->not->toContain('-5800');
+
+    // No finance.view at all: still 403.
+    $none = User::factory()->create()->refresh();
+    $none->givePermissionTo(App\Models\Enums\Permission::CatalogViewCost->value);
+    $this->actingAs($none)->getJson($url)->assertForbidden();
+});
+
+it('leaves the withheld rows and columns out of the P&L files for a reader without catalog.view_cost', function (): void {
+    ['ads' => $ads, 'sms' => $sms] = pnlScenario();
+    (new RolesAndPermissionsSeeder)->run();
+    $clerk = User::factory()->create()->refresh();
+    $clerk->givePermissionTo([App\Models\Enums\Permission::FinanceView->value, App\Models\Enums\Permission::FinanceExport->value]);
+    $range = 'filter[from]=2026-11-02&filter[to]=2026-11-08';
+
+    $block = static fn (int $n, string $name, array $lines): string => implode('', array_map(static fn (string $line): string => "{$n},{$name},{$line}\n", $lines));
+    $expected = "\u{FEFF}block,block_name,kind,key,label,ledger_types,amount\n"
+        .$block(1, '"What customers owed us"', ['line,product_revenue,"Product revenue",sale_revenue,9250.00', 'line,delivery_revenue,"Delivery charges collected",shipping_revenue,360.00', 'subtotal,gross_revenue,"Gross revenue",,9610.00', 'line,discounts,"Discounts and coupons",discount_given,-100.00', 'subtotal,net_revenue,"Net revenue",,9510.00'])
+        .$block(3, '"What it cost to deliver and get paid"', ['line,courier_charges,"Courier delivery charges",courier_charge,-540.00', 'line,cod_fees,"COD collection fees",courier_cod_fee,-97.00', 'line,return_charges,"Courier return charges",courier_return_charge,-70.00', 'line,gateway_fees,"Payment gateway fees",gateway_fee,0.00', 'line,packaging,Packaging,packaging,-125.00'])
+        .$block(4, '"What went wrong"', ['line,refunds,"Refunds to customers",refund,-300.00', 'line,write_offs,"Damaged stock written off",inventory_write_off,-1280.00'])
+        .$block(5, '"What it cost to run the shop"', ['line,marketing,Advertising,marketing,-1400.00', 'line,salaries,Salaries,salary,0.00', 'line,rent,Rent,rent,0.00', 'line,utilities,Utilities,utility,0.00', 'line,other_expenses,"Other running costs",other_expense,-500.00', 'line,other_income,"Other income",other_income,0.00', 'subtotal,net_profit,"Net profit",,-602.00'])
+        .",\"Expenses by category\",category,{$ads->id},\"Facebook ads\",marketing,-1400.00\n"
+        .",\"Expenses by category\",category,{$sms->id},\"SMS credit\",operating,-500.00\n"
+        .",\"Cash, not profit\",cash,cash_in,Received,,9153.00\n"
+        .",\"Cash, not profit\",cash,cash_out,\"Paid out\",,-7200.00\n"
+        .",\"Cash, not profit\",cash,cash_net,\"Net cash movement\",,1953.00\n";
+
+    expect($this->actingAs($clerk)->get("/api/v1/admin/finance/reports/pnl/export?{$range}")->assertOk()->streamedContent())->toBe($expected);
+
+    $sheet = Xlsx::single($this->actingAs($clerk)->get("/api/v1/admin/finance/reports/pnl/export?{$range}&format=xlsx&locale=en"));
+    expect(array_column($sheet['rows'], 'key'))->not->toContain('cogs')->not->toContain('gross_profit')->not->toContain('profit_after_delivery')->not->toContain('profit_after_losses');
+
+    $series = $this->actingAs($clerk)->get("/api/v1/admin/finance/reports/pnl/series/export?{$range}&group=week")->assertOk()->streamedContent();
+    expect($series)->toBe(
+        "\u{FEFF}from,to,days,product_revenue,delivery_revenue,discounts,courier_charges,cod_fees,return_charges,gateway_fees,packaging,refunds,write_offs,marketing,salaries,rent,utilities,other_expenses,other_income,gross_revenue,net_revenue,net_profit,net_margin_percent\n"
+        ."2026-11-02,2026-11-06,5,10450.00,360.00,-100.00,-540.00,-97.00,-70.00,0.00,-125.00,-300.00,-1280.00,0.00,0.00,0.00,0.00,-500.00,0.00,10810.00,10710.00,1358.00,12.68\n"
+        ."2026-11-07,2026-11-08,2,-1200.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,-1400.00,0.00,0.00,0.00,0.00,0.00,-1200.00,-1200.00,-1960.00,163.33\n",
+    );
+});

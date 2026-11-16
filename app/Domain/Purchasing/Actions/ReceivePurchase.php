@@ -32,7 +32,8 @@ use Illuminate\Validation\ValidationException;
  *   4. ReceivePurchasedStock: lock stock levels in ascending variant id (rule 9), step
  *      the weighted-average cost, append `purchase_in` movements at the landed unit cost,
  *      and set each variant's cost_price to its new average
- *   5. receipt lines, PO lines (quantity_received, landed_unit_cost), PO totals and status
+ *   5. receipt lines, PO lines (quantity_received, landed_unit_cost), what is owed and the status
+ *      (the PO's order total is never changed by a receipt: extra costs live on the receipt)
  *
  * The PO lock is always taken before any stock-level lock, and no stock writer takes a
  * PO lock, so the two orders cannot deadlock.
@@ -134,9 +135,9 @@ final readonly class ReceivePurchase
             $from = $locked->status;
             $to = $outstanding === 0 ? PurchaseStatus::Received : PurchaseStatus::PartiallyReceived;
 
-            $locked->shipping_cost = $locked->shipping_cost->plus($quote->freight);
-            $locked->customs_duty = $locked->customs_duty->plus($quote->customsDuty);
-            $locked->other_cost = $locked->other_cost->plus($quote->otherCost);
+            // Extra costs stay on the receipt (owner decision 2026-11-16): the PO's order total is
+            // what was ordered, and the extras are read from the receipts (PurchaseTotals::extras).
+            // They still reach the landed cost above and, when the supplier charged them, what is owed.
             $locked->received_value = $locked->received_value->plus($quote->payableAmount());
             $locked->status = $to;
             if ($to === PurchaseStatus::Received) {

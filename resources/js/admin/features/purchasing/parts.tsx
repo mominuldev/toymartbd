@@ -1,70 +1,91 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { CircleDashedIcon, ImageIcon, TruckIcon, type Icon } from '@phosphor-icons/react';
+import { ImageIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import { dataTable } from '@/components/ui/DataTable';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { TAKA, formatCount, formatMoney, isZeroAmount, takaText as takaTextOf } from '@/lib/money';
 import type { PurchaseLine, PurchaseStatus } from './api';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney, isZeroAmount };
 
 /**
- * "48600.00" → "48,600", "312.5000" → "312.5". Groups and trims the server's decimal string;
- * never parses it into a float and never computes (rule 1).
+ * A taka amount at exactly 2 decimals ("23400" → "23,400.00", "832.1429" → "832.14") — the
+ * premium screens show every taka figure to the poisha, never 4 dp (lib/money `round`).
  */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    // A true minus sign (U+2212) for money, per the admin number rules.
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
+export const formatTaka = (decimal: string): string => formatMoney(decimal, 'round');
+
+/** "৳23,400.00" as plain text, for sentences and aria labels. */
+export const takaText = (decimal: string): string => takaTextOf(decimal, 'round');
+
+/** A taka amount at 2 decimals, the sign in the currency face (Figma's premium tables and rails). */
+export function Money({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
+    return <TakaAmount amount={amount} places="round" signClass={signClass} />;
 }
 
-/** Western digits with grouping in both locales (rule 36). */
-export function formatUnits(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
+/**
+ * Received progress (Figma "18 of 40 units" + a 4px bar): units, never money. Brand while
+ * stock is still to come, success once everything is in. The bar is drawing only — the
+ * caption carries the figures, and role=progressbar gives them to a screen reader.
+ */
+export function ReceivedBar({ received, ordered, label }: { received: number; ordered: number; label: string }) {
+    const done = ordered > 0 && received >= ordered;
+    return (
+        <div
+            role="progressbar"
+            aria-label={label}
+            aria-valuemin={0}
+            aria-valuemax={ordered}
+            aria-valuenow={received}
+            className="h-1 w-full max-w-33 overflow-hidden rounded-full bg-line-default"
+        >
+            <div className={`h-full rounded-full ${done ? 'bg-feedback-success' : 'bg-brand'}`} style={{ width: ordered > 0 ? `${Math.min(received, ordered) * (100 / ordered)}%` : '0%' }} />
+        </div>
+    );
 }
+
+/** Units, lakh-grouped with Western digits in both locales (lib/money, rule 36). */
+export const formatUnits = formatCount;
 
 /** A Y-m-d calendar date as "12 Nov" (Dhaka dates are already calendar dates; no zone shift). */
-export function formatDay(ymd: string, locale: string, withYear = false): string {
+export function formatDay(ymd: string, locale: string, withYear = false, withWeekday = false): string {
     const [y, m, d] = ymd.split('-').map(Number);
     return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', {
         timeZone: 'UTC',
         day: 'numeric',
         month: 'short',
         ...(withYear ? { year: 'numeric' } : {}),
+        ...(withWeekday ? { weekday: 'short' } : {}),
         numberingSystem: 'latn',
     }).format(new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1)));
 }
 
 /** A taka amount as Figma sets it: the sign in the currency face, the figures in the surrounding style. */
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
+    return <TakaAmount amount={amount} signClass={signClass} />;
 }
 
+/**
+ * Figma "Purchasing · Premium" 414:70079: Draft plain, Waiting for stock ⓘ info, Partly
+ * received ⚠ warning, Received ✓ success, Closed short plain, Cancelled ✕ danger.
+ */
 const statusTone: Record<PurchaseStatus, StatusTone> = {
     draft: 'neutral',
     ordered: 'info',
     partially_received: 'warning',
     received: 'success',
     cancelled: 'danger',
-    closed_short: 'anomaly',
+    closed_short: 'neutral',
 };
 
-/** Figma B · 16 draws "Ordered" with a truck and "Partly received" with a dashed circle. */
-const statusIcon: Partial<Record<PurchaseStatus, Icon>> = { ordered: TruckIcon, partially_received: CircleDashedIcon };
+const plain: PurchaseStatus[] = ['draft', 'closed_short'];
 
 /** PO status: text + icon shape + tint (Figma StatusChip 185:79), never colour alone. */
 export function PurchaseStatusChip({ status }: { status: PurchaseStatus }) {
     const { t } = useI18n();
-    return <StatusChip label={t(`purchasing.status.${status}` as MessageKey)} tone={statusTone[status]} icon={statusIcon[status]} />;
+    return <StatusChip label={t(`purchasing.status.${status}` as MessageKey)} tone={statusTone[status]} showIcon={!plain.includes(status)} />;
 }
 
 export function supplierTerms(days: number, t: (key: MessageKey, values?: Record<string, string | number>) => string): string {

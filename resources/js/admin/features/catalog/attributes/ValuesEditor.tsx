@@ -95,7 +95,7 @@ export function ValuesEditor({ attribute }: { attribute: Attribute }) {
     };
 
     return (
-        <section aria-labelledby="values-heading" className="flex w-full max-w-4xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+        <section aria-labelledby="values-heading" className="flex w-full flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
             <div>
                 <h2 id="values-heading" className="t-admin-section text-fg-primary">
                     {t('attributes.values.title')}

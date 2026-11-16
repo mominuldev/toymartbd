@@ -86,6 +86,11 @@ enum Permission: string
     case FinanceReconcileCod = 'finance.reconcile_cod';
     case FinanceRecordSupplierPayments = 'finance.record_supplier_payments';
     case FinanceExport = 'finance.export';
+    /**
+     * Record owner capital put in and drawings taken out, reverse an entry, manage the capital
+     * holders (P10). Reading the capital page needs only finance.view.
+     */
+    case FinanceManageCapital = 'finance.manage_capital';
 
     // Marketing
     case MarketingView = 'marketing.view';
@@ -151,7 +156,7 @@ enum Permission: string
         return match ($this) {
             self::CatalogViewCost, self::RefundsApprove,
             self::FinanceView, self::FinanceManageExpenses, self::FinanceReconcileCod,
-            self::FinanceRecordSupplierPayments, self::FinanceExport,
+            self::FinanceRecordSupplierPayments, self::FinanceExport, self::FinanceManageCapital,
             self::ReportsView, self::ReportsExport => true,
             default => false,
         };

@@ -344,7 +344,7 @@ function AreaBlock({ provider, quote, locationId, onChange }: { provider: QuoteP
 
     if (quote.location_status === 'unmapped') {
         return (
-            <div role="alert" className="flex flex-col gap-2 rounded-sm border-l-3 border-feedback-danger bg-subtle px-4 py-3">
+            <div role="alert" className="flex flex-col gap-2 rounded-sm bg-danger-subtle px-4 py-3">
                 <p className="flex items-start gap-2 t-admin-body text-fg-primary">
                     <WarningCircleIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
                     {t('couriers.area.unmapped', { name: provider.name })}
@@ -548,7 +548,7 @@ function BulkPanel({ orderIds, titleId, onClose, onDone }: { orderIds: number[];
                                 {t('couriers.bulk.totals', { parcels: totals.parcels, weight: grams(totals.weight_grams), cod: takaText(totals.cod_amount), cost: takaText(totals.total_if_delivered) })}
                             </p>
                         )}
-                        <label className="m-5 flex items-start gap-3 border-l-3 border-status-low-stock bg-subtle px-4 py-3">
+                        <label className="m-5 flex items-start gap-3 rounded-sm bg-warning-subtle px-4 py-3">
                             <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1 size-4 shrink-0 accent-brand" />
                             <span className="t-admin-body text-fg-primary">{t('couriers.bulk.ack', { count: orderIds.length, name: provider?.name ?? '' })}</span>
                         </label>

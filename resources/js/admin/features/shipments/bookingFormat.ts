@@ -4,21 +4,18 @@
  * digits in both locales (rule 36).
  */
 
-/** The taka sign and gram unit — symbols, not translatable copy. */
-export const TAKA = '৳';
+import { TAKA, formatCount, takaText } from '@/lib/money';
+
+/** The taka sign (lib/money) and the gram unit — symbols, not translatable copy. */
+export { TAKA };
 export const GRAM = 'g';
 
-/** "1250.00" → "৳1,250"; "23.10" → "৳23.1". */
-export function taka(decimal: string): string {
-    const [whole = '', fraction = ''] = decimal.replace(/^-/, '').split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${decimal.startsWith('-') ? '−' : ''}${TAKA}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/** "1250.00" → "৳1,250"; "23.10" → "৳23.1" — lakh-grouped (lib/money). */
+export const taka = (decimal: string): string => takaText(decimal);
 
 /** "1,200 g". */
 export function grams(value: number): string {
-    return `${value.toLocaleString('en-US')} ${GRAM}`;
+    return `${formatCount(value)} ${GRAM}`;
 }
 
 const tag = (locale: string) => (locale === 'bn' ? 'bn-BD' : 'en-GB');

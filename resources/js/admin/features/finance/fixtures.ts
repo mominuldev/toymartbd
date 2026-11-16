@@ -81,6 +81,7 @@ export const saleRevenue: LedgerEntry = {
     occurred_on: '2026-11-07',
     source_type: 'order',
     source_id: 1042,
+    order_number: 'TMB-26-01042',
     category_id: null,
     category_name: null,
     category_name_bn: null,
@@ -90,7 +91,7 @@ export const saleRevenue: LedgerEntry = {
     created_at: '2026-11-07T10:00:00Z',
 };
 
-export const codReceived: LedgerEntry = { ...saleRevenue, id: 502, type: 'cod_received', amount: '1000.00', source_type: 'manual_cod_receipt', source_id: 3, is_cash_movement: true, is_recognised_revenue: false, description: 'Remitted by Steadfast' };
+export const codReceived: LedgerEntry = { ...saleRevenue, id: 502, type: 'cod_received', amount: '1000.00', source_type: 'manual_cod_receipt', source_id: 3, order_number: null, is_cash_movement: true, is_recognised_revenue: false, description: 'Remitted by Steadfast' };
 
 export const receivables: Receivables = {
     as_of: '2026-11-08',
@@ -109,7 +110,7 @@ export function financeApi(me: Me, handler?: (url: string, init?: RequestInit) =
         if (custom) return custom;
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
         if (url.includes('/finance/expenses/summary')) return { status: 200, body: summary };
-        if (url.includes('/finance/expense-categories')) return { status: 200, body: { data: [rent, ads] } };
+        if (url.includes('/finance/expense-categories')) return { status: 200, body: { data: [rent, ads], meta: { category_count: 2, active_count: 2, expense_count: 141 } } };
         if (url.match(/\/finance\/expenses\/\d+\/approve$/)) return { status: 200, body: { ...pendingRent, status: 'approved' } };
         if (url.match(/\/finance\/expenses\/\d+\/reject$/)) return { status: 200, body: { ...pendingRent, status: 'rejected' } };
         if (url.endsWith('/finance/expenses') && init?.method === 'POST') return { status: 201, body: pendingRent };

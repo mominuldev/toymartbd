@@ -4,44 +4,27 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { MINUS, TAKA, formatCount, formatMoney, isNegativeAmount } from '@/lib/money';
 import { FinanceTabs } from '../parts';
 import type { Range } from './api';
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-/** A true minus (U+2212), as the admin spec sets money (04-admin-spec Part 0). */
-export const MINUS = '−';
+/* Money and counts: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { MINUS, TAKA, formatCount };
 
-/** "13910.00" → "13,910", "-602.50" → "-602.5": groups the server's decimal string; never parses it into a float (rule 1). */
-export function formatAmount(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '-' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/** "13910.00" → "13,910", "-602.50" → "−602.50": whole taka drop the ".00"; anything else shows two places (lib/money `auto`). */
+export const formatAmount = (decimal: string): string => formatMoney(decimal, 'auto');
 
-/** Western digits with grouping in both locales (rule 36). */
-export function formatCount(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-}
-
-export function isNegative(decimal: string): boolean {
-    return decimal.startsWith('-') && !/^-0(\.0+)?$/.test(decimal);
-}
+export const isNegative = isNegativeAmount;
 
 /**
  * A taka amount as Figma sets it: a true minus before the sign, the ৳ in the currency
  * face, the figures in the surrounding style. `plus` prefixes "+" on a positive amount.
  */
 export function Money({ amount, signClass = 't-admin-currency-num', plus = false }: { amount: string; signClass?: string; plus?: boolean }) {
-    const negative = isNegative(amount);
-    const digits = formatAmount(negative ? amount.slice(1) : amount.replace(/^-/, ''));
     return (
         <span className="tabular whitespace-nowrap">
-            {negative ? MINUS : plus && digits !== '0' ? '+' : ''}
-            <span className={signClass}>{TAKA}</span>
-            {digits}
+            <TakaAmount amount={amount} places="auto" signClass={signClass} plus={plus} />
         </span>
     );
 }

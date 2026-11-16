@@ -6,6 +6,7 @@ namespace App\Domain\Finance\Reports;
 
 use App\Domain\Finance\Reports\Enums\ReportGranularity;
 use App\Support\Money;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -63,12 +64,16 @@ final readonly class ProfitAndLoss
         }
 
         $split = $this->ledger->orderSplit($period);
+        $blocks = self::withShares($statement['blocks'], $statement['totals']['net_revenue'], $this->ledger->recognisedOccurrences($period));
+        $ledgerNet = $split['orders']->plus($split['other']);
 
         return [
             'from' => $period->fromDate(),
             'to' => $period->toDate(),
             'days' => $period->days(),
-            'blocks' => $statement['blocks'],
+            'generated_at' => CarbonImmutable::now()->toIso8601String(),
+            'blocks' => $blocks,
+            'biggest_costs' => self::biggestCosts($blocks),
             'totals' => $statement['totals'],
             'gross_margin_percent' => ReportMoney::percent($statement['totals']['gross_profit'], $statement['totals']['net_revenue']),
             'net_margin_percent' => ReportMoney::percent($statement['totals']['net_profit'], $statement['totals']['net_revenue']),
@@ -88,8 +93,10 @@ final readonly class ProfitAndLoss
                 'orders' => $split['orders'],
                 'order_count' => $split['order_count'],
                 'other' => $split['other'],
-                'total' => $split['orders']->plus($split['other']),
-                'reconciled' => $split['orders']->plus($split['other'])->equals($statement['totals']['net_profit']),
+                'total' => $ledgerNet,
+                // Statement minus the order-by-order rebuild: zero when it ties up.
+                'difference' => $statement['totals']['net_profit']->minus($ledgerNet),
+                'reconciled' => $ledgerNet->equals($statement['totals']['net_profit']),
             ],
             'open_orders' => $this->openOrders(),
             'comparison' => $comparison,
@@ -211,18 +218,160 @@ final readonly class ProfitAndLoss
     }
 
     /**
+     * Subtotals from which cost of goods sold can be backed out with one subtraction
+     * (net revenue − gross profit, or a later subtotal plus the visible lines between).
+     */
+    public const array COST_REVEALING_TOTALS = ['gross_profit', 'profit_after_delivery', 'profit_after_losses'];
+
+    /**
+     * The statement for a reader without catalog.view_cost (owner decision 2026-11-16, B · 31
+     * premium state A): the cost-of-goods line, block 2's total, the gross profit / profit after
+     * delivery / profit after losses subtotals with their shares, the gross margin, and the
+     * same figures of the comparison are withheld (null — never in the JSON). Net revenue, the
+     * other lines, net profit and cash stay.
+     *
+     * @param  array<string, mixed>  $statement
+     * @return array<string, mixed>
+     */
+    public static function withoutItemCosts(array $statement): array
+    {
+        foreach ($statement['blocks'] as $b => $block) {
+            foreach ($block['rows'] as $r => $row) {
+                $hidden = ($row['kind'] === 'line' && $block['key'] === 'goods')
+                    || ($row['kind'] === 'subtotal' && in_array($row['key'], self::COST_REVEALING_TOTALS, true));
+                if (! $hidden) {
+                    continue;
+                }
+                $statement['blocks'][$b]['rows'][$r] = [...$row, 'amount' => null, 'percent_of_revenue' => null];
+                if ($row['kind'] === 'line') {
+                    $statement['blocks'][$b]['rows'][$r]['occurrences'] = null;
+                }
+            }
+            if ($block['key'] === 'goods') {
+                $statement['blocks'][$b]['total'] = null;
+                $statement['blocks'][$b]['percent_of_revenue'] = null;
+            }
+        }
+        foreach (self::COST_REVEALING_TOTALS as $key) {
+            $statement['totals'][$key] = null;
+            if (is_array($statement['comparison'] ?? null)) {
+                $statement['comparison']['totals'][$key] = null;
+                $statement['comparison']['deltas'][$key] = null;
+            }
+        }
+        $statement['gross_margin_percent'] = null;
+        $statement['biggest_costs'] = array_values(array_filter($statement['biggest_costs'] ?? [], static fn (array $c): bool => $c['block'] !== 'goods'));
+
+        return $statement;
+    }
+
+    /**
+     * The day/week/month/year series under the same rule: each bucket's and the overall
+     * cost-of-goods line and cost-revealing subtotals are null.
+     *
+     * @param  array<string, mixed>  $series
+     * @return array<string, mixed>
+     */
+    public static function seriesWithoutItemCosts(array $series): array
+    {
+        foreach ($series['buckets'] as $i => $bucket) {
+            foreach (self::COST_REVEALING_TOTALS as $key) {
+                $series['buckets'][$i]['totals'][$key] = null;
+            }
+            $series['buckets'][$i]['lines']['cogs'] = null;
+        }
+        foreach (self::COST_REVEALING_TOTALS as $key) {
+            $series['totals'][$key] = null;
+        }
+
+        return $series;
+    }
+
+    /**
+     * Adds what the premium statement draws next to each figure (B · 31 premium): every row's
+     * and every block's share of net revenue (signed, 2 dp, null without revenue), each
+     * block's total (the sum of its lines — the step down in the "revenue → net profit"
+     * journey), and each line's occurrence count for its caption.
+     *
+     * @param  list<array<string, mixed>>  $blocks
+     * @param  array<string, int>  $occurrences
+     * @return list<array<string, mixed>>
+     */
+    private static function withShares(array $blocks, Money $netRevenue, array $occurrences): array
+    {
+        foreach ($blocks as $b => $block) {
+            $total = Money::zero();
+            foreach ($block['rows'] as $r => $row) {
+                $blocks[$b]['rows'][$r]['percent_of_revenue'] = ReportMoney::percent($row['amount'], $netRevenue);
+                if ($row['kind'] === 'line') {
+                    $total = $total->plus($row['amount']);
+                    $blocks[$b]['rows'][$r]['occurrences'] = array_sum(array_map(static fn (string $t): int => $occurrences[$t] ?? 0, $row['types']));
+                }
+            }
+            $blocks[$b]['total'] = $total;
+            $blocks[$b]['percent_of_revenue'] = ReportMoney::percent($total, $netRevenue);
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * "Biggest costs after the toys": the four lines in blocks 3–5 that took the most off
+     * profit, as positive costs, each with its size relative to the largest (100 = largest).
+     *
+     * @param  list<array<string, mixed>>  $blocks
+     * @return list<array{key: string, block: string, cost: Money, relative_percent: string}>
+     */
+    private static function biggestCosts(array $blocks): array
+    {
+        $costs = [];
+        foreach ($blocks as $block) {
+            // Revenue-side reductions (discounts) are not costs; block 2 is "the toys" itself.
+            if ($block['key'] === 'goods' || $block['key'] === 'revenue') {
+                continue;
+            }
+            foreach ($block['rows'] as $row) {
+                if ($row['kind'] === 'line' && $row['amount']->isNegative()) {
+                    $costs[] = ['key' => $row['key'], 'block' => $block['key'], 'cost' => $row['amount']->negate()];
+                }
+            }
+        }
+        usort($costs, static fn (array $a, array $b): int => $b['cost']->compareTo($a['cost']));
+        $costs = array_slice($costs, 0, 4);
+        $largest = $costs[0]['cost'] ?? Money::zero();
+
+        return array_map(static fn (array $c): array => [...$c, 'relative_percent' => ReportMoney::percent($c['cost'], $largest) ?? '0.00'], $costs);
+    }
+
+    /**
      * "Not in this statement": orders placed and not yet delivered, at their order value
      * — what a reader might wrongly assume the profit includes. Current, not per period.
      *
-     * @return array{count: int, value: Money}
+     * @return array{count: int, value: Money, by_status: list<array{status: string, count: int, value: Money}>}
      */
     private function openOrders(): array
     {
-        $row = DB::table('orders')
+        $rows = DB::table('orders')
             ->whereIn('status', self::OPEN_STATUSES)
+            ->groupBy('status')
+            ->select('status')
             ->selectRaw('COUNT(*) as orders, SUM(grand_total) as value')
-            ->first();
+            ->get();
 
-        return ['count' => (int) ($row->orders ?? 0), 'value' => ReportMoney::of($row->value ?? null)];
+        $count = 0;
+        $value = Money::zero();
+        $byStatus = [];
+        foreach (self::OPEN_STATUSES as $status) {
+            $row = $rows->firstWhere('status', $status);
+            if ($row === null) {
+                continue;
+            }
+            $amount = ReportMoney::of($row->value ?? null);
+            $count += (int) $row->orders;
+            $value = $value->plus($amount);
+            $byStatus[] = ['status' => $status, 'count' => (int) $row->orders, 'value' => $amount];
+        }
+
+        return ['count' => $count, 'value' => $value, 'by_status' => $byStatus];
     }
 }

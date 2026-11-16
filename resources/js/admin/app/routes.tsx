@@ -73,6 +73,8 @@ import { LocationMappingPage } from '@/features/couriers/locations/LocationMappi
 import { CourierSettingsPage, FailedBookingsPage } from '@/features/couriers';
 import { PhoneLookupPage, RiskRulesPage, VerificationQueuePage } from '@/features/risk';
 import { SettlementsPage } from '@/features/finance/settlements/SettlementsPage';
+import { SettlementDetailPage } from '@/features/finance/settlements/SettlementDetailPage';
+import { CapitalPage } from '@/features/finance/capital/CapitalPage';
 import { AbandonedCartsPage, CouponFormPage, CouponsPage, PromotionFormPage, PromotionsPage } from '@/features/marketing';
 import { PagesPage } from '@/features/content/pages/PagesPage';
 import { PageFormPage } from '@/features/content/pages/PageFormPage';
@@ -171,6 +173,10 @@ export const routes: RouteObject[] = [
                     { path: 'finance/ledger', element: <LedgerPage /> },
                     // P6 COD settlements (Figma B · 09 241:35325): courier remittances matched line by line.
                     { path: 'finance/settlements', element: <SettlementsPage /> },
+                    // P10 finance premium pass: one statement line by line (Figma B · 32 COD settlement detail 426:73739).
+                    { path: 'finance/settlements/:id', element: <SettlementDetailPage /> },
+                    // P10 owner capital (Figma B · 32 Finance › Capital 428:74277).
+                    { path: 'finance/capital', element: <CapitalPage /> },
                     // Order board (Figma 205:681) and order detail (206:1475).
                     { path: 'orders', element: <OrdersPage /> },
                     // Create order (207:2243) and edit after placement (P4-ORD-06/07).

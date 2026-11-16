@@ -163,10 +163,10 @@ export function OrderStatusBadge({ order, form = 'stacked', extra }: { order: Tr
     );
 }
 
-const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; edge: string; tint: string; fill: string }> = {
-    low: { icon: ShieldCheckIcon, edge: 'border-feedback-success', tint: 'text-feedback-success', fill: 'bg-success-subtle' },
-    medium: { icon: ShieldWarningIcon, edge: 'border-status-low-stock', tint: 'text-status-low-stock', fill: 'bg-warning-subtle' },
-    high: { icon: ShieldWarningIcon, edge: 'border-feedback-danger', tint: 'text-feedback-danger', fill: 'bg-danger-subtle' },
+const riskLook: Record<RiskLevel, { icon: ComponentType<IconProps>; tint: string; fill: string }> = {
+    low: { icon: ShieldCheckIcon, tint: 'text-feedback-success', fill: 'bg-success-subtle' },
+    medium: { icon: ShieldWarningIcon, tint: 'text-status-low-stock', fill: 'bg-warning-subtle' },
+    high: { icon: ShieldWarningIcon, tint: 'text-feedback-danger', fill: 'bg-danger-subtle' },
 };
 
 /**

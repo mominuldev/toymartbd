@@ -154,8 +154,9 @@ function SupplierForm({ id, supplier }: { id: number | null; supplier?: Supplier
                 }}
                 className="flex flex-col gap-6"
             >
-                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 max-w-3xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
-                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+                    {/* Fills the content width (spec rule 4b): short fields run four across at xl. */}
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-4">
                         {text('name', 'suppliers.field.name')}
                         {text('contact_person', 'suppliers.field.contact', { optional: true })}
                         {text('phone', 'suppliers.field.phone', { optional: true, mono: true, inputMode: 'tel', hint: 'suppliers.field.phoneHint' })}
@@ -165,16 +166,18 @@ function SupplierForm({ id, supplier }: { id: number | null; supplier?: Supplier
                         {text('payment_terms_days', 'suppliers.field.terms', { inputMode: 'numeric', hint: 'suppliers.field.termsHint' })}
                         {showOpening && text('opening_balance', 'suppliers.field.opening', { inputMode: 'decimal', prefix: true, hint: 'suppliers.field.openingHint' })}
                     </div>
-                    <Field label={t('suppliers.field.address')} error={errors.address} optional>
-                        {({ id: fid, describedBy, invalid }) => (
-                            <textarea id={fid} rows={2} maxLength={500} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} value={values.address} onChange={(e) => set('address', e.target.value)} />
-                        )}
-                    </Field>
-                    <Field label={t('suppliers.field.note')} error={errors.note} optional>
-                        {({ id: fid, describedBy, invalid }) => (
-                            <textarea id={fid} rows={2} maxLength={1000} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} value={values.note} onChange={(e) => set('note', e.target.value)} />
-                        )}
-                    </Field>
+                    <div className="grid gap-x-4 gap-y-3.5 xl:grid-cols-2">
+                        <Field label={t('suppliers.field.address')} error={errors.address} optional>
+                            {({ id: fid, describedBy, invalid }) => (
+                                <textarea id={fid} rows={2} maxLength={500} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} value={values.address} onChange={(e) => set('address', e.target.value)} />
+                            )}
+                        </Field>
+                        <Field label={t('suppliers.field.note')} error={errors.note} optional>
+                            {({ id: fid, describedBy, invalid }) => (
+                                <textarea id={fid} rows={2} maxLength={1000} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} value={values.note} onChange={(e) => set('note', e.target.value)} />
+                            )}
+                        </Field>
+                    </div>
                     {id !== null && (
                         <label className="flex min-h-touch-min items-center gap-3 t-admin-body text-fg-primary">
                             <input type="checkbox" className="size-4 accent-brand" checked={values.active} onChange={(e) => set('active', e.target.checked)} />

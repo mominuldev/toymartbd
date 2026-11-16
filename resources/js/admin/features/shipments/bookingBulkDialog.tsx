@@ -117,7 +117,7 @@ function BulkForm({ titleId, groups, onClose, onDone }: { titleId: string; group
                         </li>
                     ))}
                 </ul>
-                <label className="flex items-start gap-3 border-l-3 border-l-status-low-stock bg-subtle px-4 py-3">
+                <label className="flex items-start gap-3 rounded-sm bg-warning-subtle px-4 py-3">
                     <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1 size-4 shrink-0 accent-brand" />
                     <span className="t-admin-body text-fg-primary">{t('bookingQueue.bulk.ack')}</span>
                 </label>

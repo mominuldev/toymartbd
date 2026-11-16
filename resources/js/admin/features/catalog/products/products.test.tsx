@@ -69,7 +69,7 @@ describe('products list', () => {
 
     it('formats money strings without turning them into numbers', () => {
         expect(formatMoney('1250.00')).toBe('1,250');
-        expect(formatMoney('1234567.5')).toBe('1,234,567.5');
+        expect(formatMoney('1234567.5')).toBe('12,34,567.50');
         expect(formatMoney('99')).toBe('99');
     });
 });

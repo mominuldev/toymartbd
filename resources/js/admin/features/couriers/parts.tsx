@@ -50,14 +50,14 @@ export function TrustChip({ trust, bookings }: { trust: Trust; bookings?: number
 }
 
 /**
- * Figma UnverifiedBanner (CourierBookingPanel I241:34192;196:754, 04-admin-spec A16): bg/subtle,
- * 3px status/low-stock left edge, flask 20 tinted, body-strong title and caption body.
+ * Figma UnverifiedBanner (CourierBookingPanel I241:34192;196:754, 04-admin-spec A16): warning-subtle
+ * tint, rounded (no left edge, owner 2026-11-16), flask 20 tinted, body-strong title and caption body.
  * Shown while a courier has no credentials or no booking has ever succeeded through it.
  */
 export function UnverifiedBanner({ name, settingsLink = true, className = '' }: { name: string; settingsLink?: boolean; className?: string }) {
     const { t } = useI18n();
     return (
-        <div role="note" className={`flex items-start gap-3 border-l-3 border-l-status-low-stock bg-subtle px-5 py-3.5 ${className}`}>
+        <div role="note" className={`flex items-start gap-3 rounded-sm bg-warning-subtle px-5 py-3.5 ${className}`}>
             <FlaskIcon size={20} aria-hidden className="shrink-0 text-status-low-stock" />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="t-admin-body-strong text-fg-primary">{t('couriers.unverified.title', { name })}</p>
@@ -93,20 +93,21 @@ export function shipmentIcon(status: ShipmentStatus) {
 
 /**
  * Booking state chip (04-admin-spec A16 table). `submitted` and `booked` look nothing alike:
- * submitted has a 2px status/low-stock left edge and a dashed border/strong elsewhere, and
- * reads "Submitted — awaiting confirmation" (rule 24d).
+ * submitted keeps a dashed border/strong all round on a warning-subtle fill with its clock glyph,
+ * and reads "Submitted — awaiting confirmation" (rule 24d); failed sits on danger-subtle. No
+ * coloured left edge (owner, 2026-11-16).
  */
 export function ShipmentStateChip({ status }: { status: ShipmentStatus }) {
     const { t } = useI18n();
     const { icon: Icon, tint } = shipmentIcon(status);
-    const edge =
+    const frame =
         status === 'submitted'
-            ? 'border border-dashed border-line-strong border-l-2 border-l-status-low-stock [border-left-style:solid]'
+            ? 'border border-dashed border-line-strong bg-warning-subtle'
             : status === 'failed'
-              ? 'border border-line-default border-l-2 border-l-feedback-danger'
-              : 'border border-line-default';
+              ? 'border border-line-default bg-danger-subtle'
+              : 'border border-line-default bg-subtle';
     return (
-        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs bg-subtle px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${edge}`}>
+        <span className={`inline-flex h-5.5 items-center gap-1 rounded-xs px-2 t-admin-caption-strong whitespace-nowrap text-fg-primary ${frame}`}>
             <Icon size={14} aria-hidden className={`shrink-0 ${tint}`} />
             {t(`couriers.status.${status}` as MessageKey)}
         </span>

@@ -6,7 +6,10 @@ namespace App\Http\Resources\Admin;
 
 use App\Domain\Purchasing\Enums\PurchaseStatus;
 use App\Domain\Purchasing\Models\Purchase;
+use App\Domain\Purchasing\Services\PurchaseTotals;
 use App\Http\Resources\ApiResource;
+use App\Support\DhakaDate;
+use App\Support\Money;
 use Closure;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
@@ -85,22 +88,73 @@ final class PurchaseResource extends ApiResource
             'subtotal' => $this->when($viewCost, $money('subtotal')),
             /** @var string */
             'discount' => $this->when($viewCost, $money('discount')),
-            /** @var string */
+            /**
+             * Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`.
+             *
+             * @var string
+             */
             'shipping_cost' => $this->when($viewCost, $money('shipping_cost')),
-            /** @var string */
+            /**
+             * Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`.
+             *
+             * @var string
+             */
             'customs_duty' => $this->when($viewCost, $money('customs_duty')),
-            /** @var string */
+            /**
+             * Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`.
+             *
+             * @var string
+             */
             'other_cost' => $this->when($viewCost, $money('other_cost')),
             /** @var string */
             'tax' => $this->when($viewCost, $money('tax')),
-            /** @var string */
-            'total' => $this->when($viewCost, $money('total')),
-            /** @var string */
+            /**
+             * The order total: what was ordered (goods less discounts, plus tax). Extra costs entered
+             * at receipt are never in it — see `extra_costs`.
+             *
+             * @var string
+             */
+            'total' => $this->when($viewCost, fn (): string => PurchaseTotals::ordered($purchase)->toDecimal()),
+            /**
+             * Extra costs entered at receipt, summed from the receipts: each kind, their total, the part
+             * the supplier charged (in what is owed) and the part paid to someone else (never owed to it).
+             *
+             * @var array{freight: string, customs_duty: string, other: string, total: string, charged_by_supplier: string, paid_elsewhere: string}
+             */
+            'extra_costs' => $this->when($viewCost, fn (): array => array_map(static fn (Money $m): string => $m->toDecimal(), PurchaseTotals::extras($purchase))),
+            /**
+             * Goods received so far at the supplier's price (Σ receipts' goods value).
+             *
+             * @var string
+             */
+            'received_goods' => $this->when($viewCost, fn (): string => PurchaseTotals::receivedGoods($purchase)->toDecimal()),
+            /**
+             * What the supplier is owed for so far: received goods + extra costs it charged. `due_amount` = this − `paid_amount`.
+             *
+             * @var string
+             */
+            'payable_total' => $this->when($viewCost, $money('received_value')),
+            /**
+             * Same as `payable_total` (kept for existing clients).
+             *
+             * @var string
+             */
             'received_value' => $this->when($viewCost, $money('received_value')),
             /** @var string */
             'paid_amount' => $this->when($viewCost, $money('paid_amount')),
             /** @var string */
             'due_amount' => $this->when($viewCost, $money('due_amount')),
+            /** Waiting for stock and past its expected date (Dhaka today). */
+            'is_late' => $purchase->isLate(DhakaDate::today()),
+            /** Something was received and paid, and nothing is owed on it. catalog.view_cost only. */
+            'is_paid' => $this->when($viewCost, fn (): bool => $purchase->isPaid()),
+            /**
+             * When what is owed falls due: the first delivery's Dhaka date plus the supplier's
+             * payment terms; null while nothing is owed. catalog.view_cost only.
+             *
+             * @var string|null
+             */
+            'payment_due_date' => $this->when($viewCost, fn (): ?string => self::dueDate($purchase)),
             'units_ordered' => (int) $purchase->items->sum('quantity_ordered'),
             'units_received' => (int) $received,
             /** @var array{edit: bool, place: bool, cancel: bool, receive: bool, close: bool} */
@@ -120,5 +174,15 @@ final class PurchaseResource extends ApiResource
              */
             'created_at' => ProductResource::utcIso($purchase->created_at),
         ];
+    }
+
+    private static function dueDate(Purchase $purchase): ?string
+    {
+        $first = $purchase->receipts->first();
+        if ($first === null || ! $purchase->due_amount->greaterThan(Money::zero())) {
+            return null;
+        }
+
+        return DhakaDate::local($first->received_at)->startOfDay()->addDays($purchase->supplier->payment_terms_days)->toDateString();
     }
 }

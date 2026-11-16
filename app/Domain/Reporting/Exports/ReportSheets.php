@@ -107,6 +107,10 @@ final class ReportSheets
         $rows = [];
         foreach ($statement['blocks'] as $block) {
             foreach ($block['rows'] as $row) {
+                // A figure withheld from this reader (no catalog.view_cost) is left out, as on screen.
+                if ($row['amount'] === null) {
+                    continue;
+                }
                 $rows[] = [(string) $block['number'], $t('block.'.$block['key']), $row['kind'], $row['key'], $t('line.'.$row['key']), implode(' ', $row['types'] ?? []), self::cell($row['amount'])];
             }
         }
@@ -133,8 +137,9 @@ final class ReportSheets
      */
     public static function pnlSeries(array $series, string $locale): array
     {
-        $lineKeys = array_keys($series['buckets'][0]['lines'] ?? []);
-        $totalKeys = ['gross_revenue', 'net_revenue', 'gross_profit', 'profit_after_delivery', 'profit_after_losses', 'net_profit'];
+        // Columns withheld from this reader (no catalog.view_cost: null throughout) are left out.
+        $lineKeys = array_values(array_filter(array_keys($series['buckets'][0]['lines'] ?? []), static fn (string $k): bool => ($series['buckets'][0]['lines'][$k] ?? null) !== null));
+        $totalKeys = array_values(array_filter(['gross_revenue', 'net_revenue', 'gross_profit', 'profit_after_delivery', 'profit_after_losses', 'net_profit'], static fn (string $k): bool => $series['totals'][$k] !== null));
         $rows = array_map(static fn (array $b): array => [
             $b['from'], $b['to'], (string) $b['days'],
             ...array_map(static fn (string $k): string => self::cell($b['lines'][$k]), $lineKeys),

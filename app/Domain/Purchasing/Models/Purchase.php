@@ -82,6 +82,26 @@ final class Purchase extends Model
         return sprintf('PO-%s-%04d', $at->format('Y'), $id);
     }
 
+    /**
+     * Still waiting for stock (ordered / partly received) and past its expected date.
+     *
+     * @param  string  $today  the Dhaka calendar date, Y-m-d (rule 11)
+     */
+    public function isLate(string $today): bool
+    {
+        return $this->status->canReceive()
+            && $this->expected_date !== null
+            && $this->expected_date->toDateString() < $today;
+    }
+
+    /** Something was received and paid, and nothing is owed on it any more. */
+    public function isPaid(): bool
+    {
+        return $this->received_value->greaterThan(Money::zero())
+            && $this->paid_amount->greaterThan(Money::zero())
+            && ! $this->due_amount->greaterThan(Money::zero());
+    }
+
     /** @return BelongsTo<Supplier, $this> */
     public function supplier(): BelongsTo
     {

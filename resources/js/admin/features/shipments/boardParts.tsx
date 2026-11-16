@@ -16,6 +16,8 @@ import {
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
+import { TakaAmount } from '@/components/ui/TakaAmount';
+import { formatCount } from '@/lib/money';
 import type { BoardStatus } from './boardApi';
 
 /*
@@ -23,30 +25,16 @@ import type { BoardStatus } from './boardApi';
  * and format the server's instants in Dhaka time; they never compute money (rule 1).
  */
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
-
-/** "1250.00" → "1,250"; "23.10" → "23.1". */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
+/* Money: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney } from '@/lib/money';
 
 export function Taka({ amount, signClass = 't-admin-currency-num' }: { amount: string; signClass?: string }) {
-    return (
-        <>
-            <span className={signClass}>{TAKA}</span>
-            {formatMoney(amount)}
-        </>
-    );
+    return <TakaAmount amount={amount} signClass={signClass} />;
 }
 
 /** "1,600 g" — Western digits in both locales (rule 36). */
 export function grams(value: number): string {
-    return `${value.toLocaleString('en-US')} g`;
+    return `${formatCount(value)} g`;
 }
 
 const tag = (locale: string) => (locale === 'bn' ? 'bn-BD' : 'en-GB');
@@ -139,8 +127,8 @@ export function statusKey(status: string): MessageKey {
 }
 
 /**
- * Figma StatusChip with the status's own glyph. `submitted` takes the anomaly look — the 2px
- * warning left edge — so a parcel without a consignment id never reads as booked (rule 24d).
+ * Figma StatusChip with the status's own glyph. `submitted` takes the anomaly look — warning
+ * tint + warning glyph, "Submitted — awaiting ID" — so a parcel without a consignment id never reads as booked (rule 24d).
  */
 export function BoardStatusChip({ status }: { status: BoardStatus }) {
     const { t } = useI18n();

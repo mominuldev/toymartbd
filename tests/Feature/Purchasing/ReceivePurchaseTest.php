@@ -74,7 +74,10 @@ it('receives a partial delivery, splits freight by value and steps the weighted 
     expect($po->status)->toBe(PurchaseStatus::PartiallyReceived)
         ->and($po->items[1]->quantity_received)->toBe(10)
         ->and($po->items[1]->quantityOutstanding())->toBe(2)
-        ->and($po->shipping_cost->toDecimal())->toBe('2400.00')
+        // The order total stays what was ordered; the freight lives on the receipt (owner, 2026-11-16).
+        ->and($po->shipping_cost->toDecimal())->toBe('0.00')
+        ->and($po->total->toDecimal())->toBe('25980.00')
+        ->and($receipt->freight->toDecimal())->toBe('2400.00')
         ->and($po->received_value->toDecimal())->toBe('25540.00')
         ->and($po->due_amount->toDecimal())->toBe('25540.00')
         ->and(Kit::ledgerBalanced())->toBeTrue();

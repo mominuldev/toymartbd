@@ -3,27 +3,10 @@
  * never parse money into a number or compute anything (rule 1).
  */
 
-/** The taka sign — a currency symbol, not translatable copy. */
-export const TAKA = '৳';
+import { TAKA, formatMoney, isZeroAmount, takaText } from '@/lib/money';
 
-/** "1250.00" → "1,250"; "23.10" → "23.1". Western digits in both locales (rule 36). */
-export function formatMoney(decimal: string): string {
-    const negative = decimal.startsWith('-');
-    const [whole = '', fraction = ''] = (negative ? decimal.slice(1) : decimal).split('.');
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${negative ? '−' : ''}${grouped}${trimmed ? `.${trimmed}` : ''}`;
-}
-
-export function takaText(amount: string): string {
-    const negative = amount.startsWith('-');
-    return `${negative ? '−' : ''}${TAKA}${formatMoney(negative ? amount.slice(1) : amount)}`;
-}
-
-/** True for "0", "0.00" — a display decision on the server's string. */
-export function isZeroAmount(decimal: string): boolean {
-    return /^-?0*(\.0*)?$/.test(decimal);
-}
+/* Money: the admin's one formatter (lib/money — lakh grouping, owner decision 2026-11-16). */
+export { TAKA, formatMoney, isZeroAmount, takaText };
 
 /** A typed money amount the API accepts ("4000", "4000.5"); anything else is not sent. */
 export function isMoneyInput(value: string): boolean {

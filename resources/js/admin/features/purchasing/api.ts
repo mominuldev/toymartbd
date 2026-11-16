@@ -1,6 +1,7 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type {
+    QuotePurchaseRequestInput,
     ReceivePurchaseRequestInput,
     StorePurchaseRequestInput,
     StoreSupplierPaymentRequestInput,
@@ -22,7 +23,15 @@ export type ApportionMethod = ReceiptQuote['apportion_method'];
 /** Stock rows double as the PO form's variant search (name, SKU, current cost basis). */
 export type VariantOption = Schema<'InventoryStockRow'>;
 export type StockLocation = Schema<'InventorySummary'>['locations'][number];
-export type PurchaseCounts = Record<PurchaseStatus, number>;
+export type PurchaseCounts = Record<PurchaseStatus | 'all' | 'closed', number>;
+export type PurchaseSummary = Schema<'PurchaseSummary'>;
+export type PurchaseQuote = Schema<'PurchaseQuote'>;
+export type PurchaseQuoteInput = QuotePurchaseRequestInput;
+/** The list's tabs: one status, or a server-side group (`closed` = closed short + cancelled). */
+export type PurchaseTab = 'all' | 'draft' | 'ordered' | 'partially_received' | 'received' | 'closed';
+export const purchaseTabs: PurchaseTab[] = ['all', 'draft', 'ordered', 'partially_received', 'received', 'closed'];
+/** The KPI shortcuts: open POs late, or expected by the end of this Saturday–Friday week. */
+export type PurchaseExpected = 'late' | 'this_week';
 
 /** Request bodies are the generated types, never hand-written copies (rule 27). */
 export type PurchaseInput = StorePurchaseRequestInput;
@@ -43,6 +52,8 @@ const keys = {
     all: ['purchasing'] as const,
     purchases: (filters: PurchaseFilters) => ['purchasing', 'purchases', filters] as const,
     counts: ['purchasing', 'counts'] as const,
+    summary: ['purchasing', 'summary'] as const,
+    poQuote: (input: PurchaseQuoteInput) => ['purchasing', 'po-quote', input] as const,
     purchase: (id: number) => ['purchasing', 'purchase', id] as const,
     suppliers: (filters: SupplierFilters) => ['purchasing', 'suppliers', filters] as const,
     supplier: (id: number) => ['purchasing', 'supplier', id] as const,
@@ -52,7 +63,7 @@ const keys = {
     locations: ['purchasing', 'locations'] as const,
 };
 
-export type PurchaseFilters = { status: PurchaseStatus | ''; supplier: string; search: string };
+export type PurchaseFilters = { status: PurchaseStatus | 'open' | 'closed' | ''; supplier: string; search: string; expected?: PurchaseExpected | '' };
 export type SupplierFilters = { status: 'active' | 'archived' | ''; search: string };
 
 function query(entries: Record<string, string | null | undefined>): string {
@@ -68,7 +79,7 @@ export function usePurchases(filters: PurchaseFilters, enabled = true) {
         queryKey: keys.purchases(filters),
         queryFn: ({ pageParam }) =>
             api<Page<PurchaseListItem>>(
-                `/purchases${query({ 'filter[status]': filters.status, 'filter[supplier_id]': filters.supplier, 'filter[search]': filters.search, cursor: pageParam })}`,
+                `/purchases${query({ 'filter[status]': filters.status, 'filter[expected]': filters.expected, 'filter[supplier_id]': filters.supplier, 'filter[search]': filters.search, cursor: pageParam })}`,
             ),
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.meta.next_cursor ?? null,
@@ -79,6 +90,25 @@ export function usePurchases(filters: PurchaseFilters, enabled = true) {
 
 export function usePurchaseCounts() {
     return useQuery({ queryKey: keys.counts, queryFn: () => api<PurchaseCounts>('/purchases/counts') });
+}
+
+/** The list's KPI row: every figure (open value, owed) is the server's (rule 1). */
+export function usePurchaseSummary() {
+    return useQuery({ queryKey: keys.summary, queryFn: () => api<PurchaseSummary>('/purchases/summary') });
+}
+
+/**
+ * The New / edit PO preview: line totals, the order total and "last bought at" all come from
+ * `POST /purchases/quote` (rule 1: the browser never multiplies a quantity by a cost).
+ */
+export function usePurchaseQuote(input: PurchaseQuoteInput | null) {
+    return useQuery({
+        queryKey: keys.poQuote(input ?? { lines: [] }),
+        queryFn: () => api<PurchaseQuote>('/purchases/quote', { method: 'POST', body: JSON.stringify(input) }),
+        enabled: input !== null,
+        placeholderData: keepPreviousData,
+        retry: false,
+    });
 }
 
 export function usePurchase(id: number | null) {
@@ -156,6 +186,27 @@ export function useSavePurchase(id: number | null) {
     return useMutation({
         mutationFn: (input: PurchaseInput) => api<Purchase>(id === null ? '/purchases' : `/purchases/${id}`, { method: id === null ? 'POST' : 'PUT', body: JSON.stringify(input) }),
         onSuccess: invalidate,
+    });
+}
+
+/**
+ * The New / edit PO form's two buttons: Save as draft (create or replace the draft) and Place
+ * order (the same save, then `POST …/order`). Two server calls; the second is the state move.
+ */
+export function useSubmitPurchase(id: number | null) {
+    const invalidate = useInvalidate();
+    return useMutation({
+        mutationFn: async ({ input, place }: { input: PurchaseInput; place: boolean }): Promise<{ purchase: Purchase; placeError: unknown }> => {
+            const saved = await api<Purchase>(id === null ? '/purchases' : `/purchases/${id}`, { method: id === null ? 'POST' : 'PUT', body: JSON.stringify(input) });
+            if (!place) return { purchase: saved, placeError: null };
+            // Saved but not placed (e.g. a conflict): the draft exists, so the form still moves on to it.
+            try {
+                return { purchase: await api<Purchase>(`/purchases/${saved.id}/order`, { method: 'POST' }), placeError: null };
+            } catch (error) {
+                return { purchase: saved, placeError: error };
+            }
+        },
+        onSettled: invalidate,
     });
 }
 

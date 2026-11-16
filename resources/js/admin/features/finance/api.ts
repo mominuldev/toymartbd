@@ -41,6 +41,9 @@ export const ledgerTypes: LedgerType[] = [
     'cod_received',
     'other_income',
     'other_expense',
+    'pos_receipt',
+    'owner_capital_in',
+    'owner_drawing',
 ];
 export const categoryTypes: ExpenseCategory['type'][] = ['operating', 'marketing', 'logistics', 'cogs', 'other'];
 export const categoryLedgerTypes = ['rent', 'salary', 'utility', 'packaging', 'marketing', 'courier_charge', 'gateway_fee', 'inventory_write_off', 'cogs', 'other_expense'] as const;
@@ -114,12 +117,18 @@ export function useExpenseSummary(from: string, to: string) {
     });
 }
 
+/** The categories list with the server's counts (`meta`: categories, active, expenses filed). */
+export type CategoryList = { data: ExpenseCategory[]; meta: { category_count: number; active_count: number; expense_count: number } };
+
+const fetchCategories = () => api<CategoryList>('/finance/expense-categories');
+
 export function useExpenseCategories() {
-    return useQuery({
-        queryKey: keys.categories,
-        queryFn: () => api<{ data: ExpenseCategory[] }>('/finance/expense-categories').then((r) => r.data),
-        staleTime: 60_000,
-    });
+    return useQuery({ queryKey: keys.categories, queryFn: fetchCategories, staleTime: 60_000, select: (r) => r.data });
+}
+
+/** The same request as `useExpenseCategories`, keeping `meta` for the categories caption. */
+export function useExpenseCategoryList() {
+    return useQuery({ queryKey: keys.categories, queryFn: fetchCategories, staleTime: 60_000 });
 }
 
 export function useLedger(filters: LedgerFilters) {

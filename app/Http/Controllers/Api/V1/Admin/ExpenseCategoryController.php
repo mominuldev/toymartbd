@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Finance\Actions\SaveExpenseCategory;
+use App\Domain\Finance\Models\Expense;
 use App\Domain\Finance\Models\ExpenseCategory;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Admin\Finance\ExpenseCategoryRequest;
@@ -18,14 +19,25 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  */
 final class ExpenseCategoryController extends ApiController
 {
-    /** `GET /finance/expense-categories` — every category with its expense count; needs finance.view. */
+    /**
+     * `GET /finance/expense-categories` — every category with its expense count; needs finance.view.
+     * `meta.category_count` / `meta.active_count` / `meta.expense_count` are the server's counts for
+     * the list caption ("8 categories · 141 expenses filed"), so the screen never adds them up.
+     */
     public function index(): AnonymousResourceCollection
     {
         $this->authorize('viewAny', ExpenseCategory::class);
 
-        return ExpenseCategoryResource::collection(
-            ExpenseCategory::query()->withCount('expenses')->orderByRaw('COALESCE(parent_id, id)')->orderByRaw('parent_id IS NOT NULL')->orderBy('name')->get(),
-        );
+        $categories = ExpenseCategory::query()->withCount('expenses')->orderByRaw('COALESCE(parent_id, id)')->orderByRaw('parent_id IS NOT NULL')->orderBy('name')->get();
+
+        return ExpenseCategoryResource::collection($categories)->additional(['meta' => [
+            /** @var int */
+            'category_count' => $categories->count(),
+            /** @var int */
+            'active_count' => $categories->where('is_active', true)->count(),
+            /** @var int */
+            'expense_count' => Expense::query()->count(),
+        ]]);
     }
 
     /** `POST /finance/expense-categories` — needs finance.manage_expenses. */

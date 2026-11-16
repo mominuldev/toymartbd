@@ -17,10 +17,8 @@ export function formatBytes(bytes: number): string {
     return `${whole.format(bytes)} B`;
 }
 
-/** 1,262 — grouped, Western digits. */
-export function formatCount(n: number): string {
-    return whole.format(n);
-}
+/** 1,262 — lakh-grouped, Western digits (lib/money). */
+export { formatCount } from '@/lib/money';
 
 /** 1600×1600 */
 export function formatDimensions(width: number | null | undefined, height: number | null | undefined): string | null {

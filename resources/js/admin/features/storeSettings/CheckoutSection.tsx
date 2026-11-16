@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
+import { TAKA, formatMoney } from '@/lib/money';
 import { useCheckoutSettings, useSaveFreeDelivery, type CheckoutSettings } from './checkoutApi';
 import { StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash } from './parts';
 
@@ -22,16 +23,6 @@ const UPDATE = 'settings.update';
 /** `PUT /settings/delivery` is guarded by shipments.manage_rates on the server. */
 const RATES = 'shipments.manage_rates';
 const COURIER_SETTINGS = ['shipments.manage_rates', 'settings.manage_integrations'];
-
-/** The taka sign — a currency symbol, not translatable copy. */
-const TAKA = '৳';
-
-/** "3000.00" → "3,000"; display only, never arithmetic (rule 1). */
-function formatMoney(decimal: string): string {
-    const [whole = '', fraction = ''] = decimal.split('.');
-    const trimmed = fraction.replace(/0+$/, '');
-    return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${trimmed ? `.${trimmed}` : ''}`;
-}
 
 const draftOf = (value: string | null) => (value ?? '').replace(/\.00$/, '');
 

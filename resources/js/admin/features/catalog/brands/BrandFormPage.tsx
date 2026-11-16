@@ -127,8 +127,9 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
             />
 
             <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 max-w-3xl flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
-                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                <fieldset disabled={!editable || save.isPending} className="flex w-full min-w-0 flex-col gap-3.5 rounded-md border border-line-default bg-surface p-5 shadow-e1">
+                    {/* Fills the content width (spec rule 4b): name, Bangla name and slug run three across at xl. */}
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2 xl:grid-cols-3">
                         <Field label={t('brands.field.name')} error={errorOf('name')}>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <input id={fieldId} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name')} />
@@ -139,21 +140,22 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
                                 <input id={fieldId} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('name_bn')} />
                             )}
                         </Field>
+                        <div className="md:col-span-2 xl:col-span-1">
+                            <Field label={t('brands.field.slug')} hint={t('brands.field.slugHint')} error={errorOf('slug')} optional>
+                                {({ id: fieldId, describedBy, invalid }) => (
+                                    <input
+                                        id={fieldId}
+                                        spellCheck={false}
+                                        autoCapitalize="none"
+                                        aria-describedby={describedBy}
+                                        aria-invalid={invalid || undefined}
+                                        className={`h-10 ${monoInputClass}`}
+                                        {...register('slug')}
+                                    />
+                                )}
+                            </Field>
+                        </div>
                     </div>
-
-                    <Field label={t('brands.field.slug')} hint={t('brands.field.slugHint')} error={errorOf('slug')} optional>
-                        {({ id: fieldId, describedBy, invalid }) => (
-                            <input
-                                id={fieldId}
-                                spellCheck={false}
-                                autoCapitalize="none"
-                                aria-describedby={describedBy}
-                                aria-invalid={invalid || undefined}
-                                className={`h-10 ${monoInputClass}`}
-                                {...register('slug')}
-                            />
-                        )}
-                    </Field>
 
                     <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                         <Field label={t('brands.field.description')} error={errorOf('description')} optional>
@@ -198,7 +200,7 @@ function BrandForm({ id, brand }: { id: number | null; brand?: Brand }) {
 
             {/* Search & social (P7 SEO module): its own form, saved separately. */}
             {brand && (
-                <div className="mt-4 w-full min-w-0 max-w-3xl md:mt-10">
+                <div className="mt-4 w-full min-w-0 md:mt-10">
                     <SeoPanel type="brand" id={brand.id} />
                 </div>
             )}

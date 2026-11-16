@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
 import type { Dashboard } from './api';
-import { deltaText, groupDecimal, onePlace, rangeText } from './format';
+import { formatMoney } from '@/lib/money';
+import { deltaText, onePlace, rangeText } from './format';
 
 afterEach(() => {
     cleanup();
@@ -113,7 +114,8 @@ const spanText = (value: string) => (_: string, el: Element | null) => el?.tagNa
 
 describe('dashboard formatting', () => {
     it('groups server decimals and sets deltas as Figma does, without computing money', () => {
-        expect(groupDecimal('37820.00')).toBe('37,820');
+        expect(formatMoney('37820.00')).toBe('37,820');
+        expect(formatMoney('378200.00')).toBe('3,78,200');
         expect(deltaText('37.78')).toBe('+37.8%');
         expect(deltaText('-4.00')).toBe('−4%');
         expect(onePlace('5.15')).toBe('5.2');

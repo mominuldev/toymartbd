@@ -23,7 +23,8 @@ export function ContentHeader({ title, breadcrumb, subtitle, actions, titleAddon
     const { t } = useI18n();
 
     return (
-        <div className="flex flex-wrap items-center gap-4">
+        // data-page-header: e2e/admin-a11y/wide.spec.ts measures the page body, not this row (its actions always reach the right edge).
+        <div data-page-header className="flex flex-wrap items-center gap-4">
             <div className="flex min-w-0 flex-1 basis-64 flex-col gap-1">
                 {breadcrumb && breadcrumb.length > 0 && (
                     <nav aria-label={t('shell.breadcrumb')}>

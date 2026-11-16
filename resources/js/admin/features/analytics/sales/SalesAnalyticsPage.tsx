@@ -16,7 +16,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { AnalyticsTabs } from '../AnalyticsTabs';
 import { groups, rangePresets, salesExportUrl, useSalesAnalytics, type Group, type PerformanceRow, type RangePreset, type SalesAnalytics, type SalesFilters, type TrendRow } from './api';
-import { Delta, Money, Percent, TAKA, dhakaToday, formatAmount, formatCount, formatDay } from './format';
+import { Delta, Money, Percent, TAKA, dhakaToday, formatAmount, formatCount, formatDay, takaText } from './format';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -125,8 +125,8 @@ export function SalesAnalyticsPage() {
             ) : (
                 <>
                     <Stats data={data} />
-                    <p className="flex items-start gap-2 rounded-sm border-s-2 border-line-brand bg-subtle px-3.5 py-2.5 t-admin-body text-fg-primary">
-                        <InfoIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-fg-brand" />
+                    <p className="flex items-start gap-2 rounded-sm bg-info-subtle px-3.5 py-2.5 t-admin-body text-fg-primary">
+                        <InfoIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-info" />
                         {t('sales.conversionNote')}
                     </p>
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_376px]">
@@ -161,7 +161,7 @@ export function SalesAnalyticsPage() {
                     </div>
                     <p className="t-admin-caption text-fg-secondary">
                         {t('sales.note')}
-                        {data.reconciliation.difference !== '0.00' && <> {t('sales.reconciliation', { amount: `${TAKA}${formatAmount(data.reconciliation.difference)}` })}</>}
+                        {data.reconciliation.difference !== '0.00' && <> {t('sales.reconciliation', { amount: takaText(data.reconciliation.difference) })}</>}
                         {!data.profit_visible && <> {t('sales.profitHidden')}</>}
                     </p>
                 </>
@@ -251,15 +251,15 @@ function TrendCard({ data, range, onGroup }: { data: SalesAnalytics; range: stri
     const pick = (row: TrendRow, previous: boolean): { text: string; plot: number | null } => {
         if (metric === 'value') {
             const v = previous ? row.previous_placed_value : row.placed_value;
-            return { text: v === null ? '—' : `${TAKA}${formatAmount(v)}`, plot: v === null ? null : Number(v) };
+            return { text: v === null ? '—' : takaText(v), plot: v === null ? null : Number(v) };
         }
         const v = previous ? (metric === 'orders' ? row.previous_placed_orders : row.previous_units) : metric === 'orders' ? row.placed_orders : row.units;
         return { text: v === null ? '—' : formatCount(v), plot: v };
     };
     // Plot coordinates only — every displayed figure is the server's string.
     const points = data.trend.map((row) => ({ key: row.key, short: axisLabel(row.from, group, locale), row, now: pick(row, false).plot, before: pick(row, true).plot }));
-    const total = metric === 'value' ? `${TAKA}${formatAmount(data.summary.placed.net_value)}` : formatCount(metric === 'orders' ? data.summary.placed.net_orders : data.summary.placed.units);
-    const previousTotal = metric === 'value' ? `${TAKA}${formatAmount(data.previous.placed.net_value)}` : formatCount(metric === 'orders' ? data.previous.placed.net_orders : data.previous.placed.units);
+    const total = metric === 'value' ? takaText(data.summary.placed.net_value) : formatCount(metric === 'orders' ? data.summary.placed.net_orders : data.summary.placed.units);
+    const previousTotal = metric === 'value' ? takaText(data.previous.placed.net_value) : formatCount(metric === 'orders' ? data.previous.placed.net_orders : data.previous.placed.units);
 
     return (
         <Card

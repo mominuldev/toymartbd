@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
@@ -48,9 +49,16 @@ export function BoardIssues() {
 
 function Callout({ tone, title, body }: { tone: 'danger' | 'warning'; title: string; body: ReactNode }) {
     return (
-        <li className={`flex flex-col gap-1 rounded-sm border-l-2 bg-subtle px-3.5 py-3 ${tone === 'danger' ? 'border-l-feedback-danger' : 'border-l-feedback-warning'}`}>
-            <p className="t-admin-body-strong text-fg-primary">{title}</p>
-            <p className="t-admin-caption text-fg-secondary">{body}</p>
+        <li className={`flex items-start gap-2.5 rounded-sm px-3.5 py-3 ${tone === 'danger' ? 'bg-danger-subtle' : 'bg-warning-subtle'}`}>
+            {tone === 'danger' ? (
+                <WarningCircleIcon size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
+            ) : (
+                <WarningIcon size={16} weight="fill" aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />
+            )}
+            <div className="flex min-w-0 flex-col gap-1">
+                <p className="t-admin-body-strong text-fg-primary">{title}</p>
+                <p className="t-admin-caption text-fg-secondary">{body}</p>
+            </div>
         </li>
     );
 }

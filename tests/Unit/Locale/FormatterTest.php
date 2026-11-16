@@ -55,6 +55,34 @@ it('never uses lakh grouping or Bengali digits in bn', function (): void {
     expect($samples[0])->toBe('৳1,234,567.89');
 });
 
+it('formats admin-document money with lakh grouping, Western digits in both locales', function (Money|string|int $in, string $out): void {
+    expect(Formatter::lakhMoney($in))->toBe($out);
+    App::setLocale('bn');
+    expect(Formatter::lakhMoney($in))->toBe($out)->not->toMatch('/[০-৯]/u');
+})->with([
+    ['0', '৳0'],
+    ['999', '৳999'],
+    ['1000', '৳1,000'],
+    ['99999', '৳99,999'],
+    ['100000', '৳1,00,000'],
+    ['124300.00', '৳1,24,300'],
+    ['1234567.89', '৳12,34,567.89'],
+    ['123456789.00', '৳12,34,56,789'],
+    ['999999999999.99', '৳9,99,99,99,99,999.99'],
+    ['2450.5', '৳2,450.50'],
+    ['-1675.50', "\u{2212}৳1,675.50"],
+    [Money::of('6260.00'), '৳6,260'],
+]);
+
+it('formats admin-document numbers and quantities with lakh grouping', function (): void {
+    expect(Formatter::lakhNumber('1234.5678', 4))->toBe('1,234.5678')
+        ->and(Formatter::lakhNumber('1250000.5', 2))->toBe('12,50,000.50')
+        ->and(Formatter::lakhNumber('-123456.785', 2))->toBe('-1,23,456.79')
+        ->and(Formatter::lakhNumber('-0.001', 2))->toBe('0.00')
+        ->and(Formatter::lakhQuantity(120000))->toBe('1,20,000')
+        ->and(Formatter::lakhQuantity(12))->toBe('12');
+});
+
 it('formats numbers and quantities', function (): void {
     expect(Formatter::number('1250000.5', 2))->toBe('1,250,000.50')
         ->and(Formatter::number('2.345', 2))->toBe('2.35')

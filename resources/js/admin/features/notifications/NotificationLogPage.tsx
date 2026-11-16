@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { ArrowClockwiseIcon, XIcon } from '@phosphor-icons/react';
+import { ArrowClockwiseIcon, WarningIcon, XIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ApiError } from '@/lib/api';
@@ -73,7 +73,7 @@ export function NotificationLogPage() {
                                 </Stat>
                             );
                         })}
-                        <Stat label={t('notif.log.stat.dead')} hint={t('notif.log.stat.deadHint')} edge={s.dead_lettered > 0}>
+                        <Stat label={t('notif.log.stat.dead')} hint={t('notif.log.stat.deadHint')} alert={s.dead_lettered > 0}>
                             {s.dead_lettered}
                         </Stat>
                     </div>
@@ -234,11 +234,21 @@ function LogRow({ row }: { row: NotificationLog }) {
     );
 }
 
-/** StatCard 189:360: overline label, value, caption; `edge` = the 3px warning edge for an open problem. */
-function Stat({ label, hint, edge, children }: { label: string; hint: string; edge?: boolean; children: ReactNode }) {
+/**
+ * StatCard 189:360: overline label, value, caption; `alert` = an open problem, shown as a warning-tinted
+ * icon tile beside the label (no coloured left edge, owner 2026-11-16); the label and caption state it.
+ */
+function Stat({ label, hint, alert, children }: { label: string; hint: string; alert?: boolean; children: ReactNode }) {
     return (
-        <div className={`flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md bg-surface p-4 shadow-e1 ${edge ? 'border-l-3 border-feedback-warning' : 'border border-line-default'}`}>
-            <p className="t-admin-overline text-fg-secondary">{label}</p>
+        <div className="flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-md border border-line-default bg-surface p-4 shadow-e1">
+            <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 t-admin-overline text-fg-secondary">{label}</p>
+                {alert && (
+                    <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-sm bg-warning-subtle text-feedback-warning">
+                        <WarningIcon size={14} weight="fill" />
+                    </span>
+                )}
+            </div>
             <p className="t-admin-num-lg tabular text-fg-primary">{children}</p>
             <p className="t-admin-caption text-fg-tertiary">{hint}</p>
         </div>

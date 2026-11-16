@@ -51,6 +51,10 @@ final class FinanceReportController extends ApiController
         $statement['inventory_at_cost'] = $request->user()?->can('viewValuation', FinanceReport::class)
             ? $valuation->report()['totals']['value']
             : null;
+        $statement['item_costs_visible'] = (bool) $request->user()?->can('viewPnlItemCosts', FinanceReport::class);
+        if (! $statement['item_costs_visible']) {
+            $statement = ProfitAndLoss::withoutItemCosts($statement);
+        }
 
         return new PnlStatementResource($statement);
     }
@@ -70,7 +74,10 @@ final class FinanceReportController extends ApiController
         $query = ReportQuery::from($request, ['from', 'to'], ['group']);
         $period = $query->period();
 
-        return new PnlSeriesResource($pnl->series($period, $query->granularity($period)));
+        $series = $pnl->series($period, $query->granularity($period));
+        $series['item_costs_visible'] = (bool) $request->user()?->can('viewPnlItemCosts', FinanceReport::class);
+
+        return new PnlSeriesResource($series['item_costs_visible'] ? $series : ProfitAndLoss::seriesWithoutItemCosts($series));
     }
 
     /**
@@ -108,6 +115,10 @@ final class FinanceReportController extends ApiController
         [$format, $locale] = $query->exportOptions();
         $period = $query->period();
         $statement = $pnl->statement($period, 'none');
+        // The file follows the screen: without catalog.view_cost the withheld rows are left out.
+        if (! $request->user()?->can('viewPnlItemCosts', FinanceReport::class)) {
+            $statement = ProfitAndLoss::withoutItemCosts($statement);
+        }
 
         return Spreadsheet::downloadSheet(
             "profit-and-loss-{$period->fromDate()}-to-{$period->toDate()}",
@@ -131,6 +142,9 @@ final class FinanceReportController extends ApiController
         [$format, $locale] = $query->exportOptions();
         $period = $query->period();
         $series = $pnl->series($period, $query->granularity($period));
+        if (! $request->user()?->can('viewPnlItemCosts', FinanceReport::class)) {
+            $series = ProfitAndLoss::seriesWithoutItemCosts($series);
+        }
 
         return Spreadsheet::downloadSheet(
             "profit-and-loss-by-{$series['granularity']}-{$period->fromDate()}-to-{$period->toDate()}",

@@ -8257,7 +8257,7 @@
         "/admin/purchases": {
             "get": {
                 "operationId": "v1.admin.purchases.index",
-                "description": "Filters: `filter[status]` (one PurchaseStatus), `filter[supplier_id]`, `filter[search]`\n(PO number, supplier invoice number or supplier name contains). Sorts: `created_at`,\n`-created_at` (default), `expected_date`, `-expected_date`. Anything else is a 400.",
+                "description": "Filters: `filter[status]` (one PurchaseStatus, or a group: `open` = ordered + partly\nreceived, `closed` = closed short + cancelled), `filter[expected]` (`late` / `this_week`,\nopen POs only, Dhaka dates), `filter[supplier_id]`, `filter[search]` (PO number, supplier\ninvoice number or supplier name contains). Sorts: `created_at`, `-created_at` (default),\n`expected_date`, `-expected_date`. Anything else is a 400.",
                 "summary": "`GET /purchases` \u2014 cursor-paginated, newest first; needs purchasing.view",
                 "tags": [
                     "Admin"
@@ -8266,7 +8266,7 @@
                     {
                         "name": "filter[status]",
                         "in": "query",
-                        "description": "One PO status.",
+                        "description": "One PO status, or the group `open` (ordered + partially_received) or `closed` (closed_short + cancelled).",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -8275,7 +8275,21 @@
                                 "partially_received",
                                 "received",
                                 "cancelled",
-                                "closed_short"
+                                "closed_short",
+                                "open",
+                                "closed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[expected]",
+                        "in": "query",
+                        "description": "Open POs past their expected date (`late`) or expected from today to the end of this Saturday\u2013Friday week (`this_week`).",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "late",
+                                "this_week"
                             ]
                         }
                     },
@@ -8475,7 +8489,7 @@
         "/admin/purchases/counts": {
             "get": {
                 "operationId": "v1.admin.purchases.counts",
-                "summary": "`GET /purchases/counts` \u2014 POs per status, for the list's tabs; needs purchasing.view",
+                "summary": "`GET /purchases/counts` \u2014 POs per status, for the list's tabs; needs purchasing.view.\n`all` and `closed` (closed short + cancelled) are the grouped tabs",
                 "tags": [
                     "Admin"
                 ],
@@ -8504,6 +8518,12 @@
                                         },
                                         "closed_short": {
                                             "type": "integer"
+                                        },
+                                        "all": {
+                                            "type": "integer"
+                                        },
+                                        "closed": {
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -8512,7 +8532,9 @@
                                         "partially_received",
                                         "received",
                                         "cancelled",
-                                        "closed_short"
+                                        "closed_short",
+                                        "all",
+                                        "closed"
                                     ]
                                 }
                             }
@@ -8523,6 +8545,73 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/purchases/summary": {
+            "get": {
+                "operationId": "v1.admin.purchases.summary",
+                "summary": "`GET /purchases/summary` \u2014 the list's KPI row: open orders and their value, arriving this\nSaturday\u2013Friday week, late, and what we owe suppliers (Dhaka dates). Needs purchasing.view;\nthe open value needs catalog.view_cost and the amount owed finance.view (else null)",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PurchaseSummary`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseSummary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/purchases/quote": {
+            "post": {
+                "operationId": "v1.admin.purchases.quote",
+                "summary": "`POST /purchases/quote` \u2014 prices PO lines before saving: each line total, the order\ntotal and (with `supplier_id`) the last unit cost this supplier charged. Writes nothing.\nNeeds purchasing.create. 422 on a line discount above its value",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/QuotePurchaseRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PurchaseQuote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PurchaseQuote"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -17908,10 +17997,631 @@
                 }
             }
         },
+        "/admin/finance/capital": {
+            "get": {
+                "operationId": "v1.admin.finance.capital.summary",
+                "summary": "`GET /finance/capital` \u2014 per holder: put in, taken out, net, latest entry; and the totals",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[holder_id]",
+                        "in": "query",
+                        "description": "One capital holder.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[kind]",
+                        "in": "query",
+                        "description": "`contribution` or `drawing`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "contribution",
+                                "drawing"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka date, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka date, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CapitalSummary`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapitalSummary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/finance/capital/entries": {
+            "get": {
+                "operationId": "v1.admin.finance.capital.entries.index",
+                "summary": "`GET /finance/capital/entries` \u2014 entries, cursor-paginated, newest Dhaka date first; `meta.total` counts every match",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[holder_id]",
+                        "in": "query",
+                        "description": "One capital holder.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "filter[kind]",
+                        "in": "query",
+                        "description": "`contribution` or `drawing`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "contribution",
+                                "drawing"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "First Dhaka date, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Last Dhaka date, YYYY-MM-DD (inclusive).",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort field; prefix `-` for descending.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "occurred_on",
+                                "-occurred_on",
+                                "amount",
+                                "-amount"
+                            ],
+                            "default": "-occurred_on"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque cursor from `meta.next_cursor` / `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `CapitalEntry`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CapitalEntry"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the next set of items."
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "The \"cursor\" that points to the previous set of items."
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted filter or sort, or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.finance.capital.entries.store",
+                "summary": "`POST /finance/capital/entries` \u2014 record money put in or taken out. Needs an `Idempotency-Key`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecordCapitalEntryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`CapitalEntry`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapitalEntry"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The holder was deactivated meanwhile (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Key reused with a different body, or validation failed",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/finance/capital/entries/{entry}/reverse": {
+            "post": {
+                "operationId": "v1.admin.finance.capital.entries.reverse",
+                "summary": "`POST /finance/capital/entries/{entry}/reverse` \u2014 the mirror entry, dated today (Dhaka). Returns the reversal. Needs an `Idempotency-Key`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "entry",
+                        "in": "path",
+                        "required": true,
+                        "description": "The entry ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReverseCapitalEntryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`CapitalEntry`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapitalEntry"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Already reversed, or the entry is itself a reversal (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Key reused with a different body, or validation failed",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/finance/capital/holders": {
+            "get": {
+                "operationId": "v1.admin.finance.capital.holders.index",
+                "summary": "`GET /finance/capital/holders` \u2014 every holder with its entry count; needs finance.view",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "filter[active]",
+                        "in": "query",
+                        "description": "Only active (true) or only inactive (false) holders.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `CapitalHolder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CapitalHolder"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted filter or an invalid filter value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.finance.capital.holders.store",
+                "summary": "`POST /finance/capital/holders` \u2014 needs finance.manage_capital",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CapitalHolderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`CapitalHolder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapitalHolder"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/finance/capital/staff": {
+            "get": {
+                "operationId": "v1.admin.finance.capital.staff",
+                "summary": "`GET /finance/capital/staff` \u2014 active staff accounts a holder may be linked to (\"has a staff\n     * login\"): id and name only, never an email or phone, and not already linked to a holder.\nNeeds finance.manage_capital (it serves the add/edit holder form)",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "name"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/finance/capital/holders/{holder}": {
+            "patch": {
+                "operationId": "v1.admin.finance.capital.holders.update",
+                "summary": "`PATCH /finance/capital/holders/{holder}` \u2014 needs finance.manage_capital",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "holder",
+                        "in": "path",
+                        "required": true,
+                        "description": "The holder ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CapitalHolderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CapitalHolder`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapitalHolder"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/finance/settlements": {
             "get": {
                 "operationId": "v1.admin.finance.settlements.index",
-                "summary": "`GET /finance/settlements` \u2014 newest first; `meta.providers` lists the couriers (code, name) for the import form. `filter[status]` (received|reconciled), `filter[provider]` (code). Needs finance.view",
+                "summary": "`GET /finance/settlements` \u2014 newest first; needs finance.view. `filter[status]` is the\nstatement's review state as the list shows it: `received` (to confirm \u2014 every line matches\nor has a decision), `disputed` (a line that does not match still waits for a decision) or\n`reconciled`. `filter[provider]` is a courier code from `meta.providers`; an unknown code is\na 400. `meta.providers` lists the couriers (code, name) for the import form and the filter;\n`meta.disputed_count` is how many statements wait for a decision (all couriers, unfiltered)",
                 "tags": [
                     "Admin"
                 ],
@@ -17919,15 +18629,20 @@
                     {
                         "name": "filter[status]",
                         "in": "query",
-                        "description": "received|reconciled",
+                        "description": "received (to confirm) | disputed (needs a decision) | reconciled",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "received",
+                                "disputed",
+                                "reconciled"
+                            ]
                         }
                     },
                     {
                         "name": "filter[provider]",
                         "in": "query",
-                        "description": "Courier code (steadfast, pathao\u2026).",
+                        "description": "Courier code (steadfast, pathao\u2026), one of `meta.providers`.",
                         "schema": {
                             "type": "string"
                         }
@@ -18035,6 +18750,10 @@
                                                             "name_bn"
                                                         ]
                                                     }
+                                                },
+                                                "disputed_count": {
+                                                    "type": "integer",
+                                                    "minimum": 0
                                                 }
                                             },
                                             "required": [
@@ -18042,7 +18761,8 @@
                                                 "per_page",
                                                 "next_cursor",
                                                 "prev_cursor",
-                                                "providers"
+                                                "providers",
+                                                "disputed_count"
                                             ]
                                         }
                                     },
@@ -18062,7 +18782,7 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     },
                     "400": {
-                        "description": "Unlisted filter or an invalid value (`bad-request`)",
+                        "description": "Unlisted filter, an unknown status or an unknown courier code (`bad-request`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -18107,6 +18827,8 @@
                                         {
                                             "type": "object",
                                             "required": [
+                                                "line_count",
+                                                "pending_by_type",
                                                 "items"
                                             ]
                                         }
@@ -18185,6 +18907,8 @@
                                         {
                                             "type": "object",
                                             "required": [
+                                                "line_count",
+                                                "pending_by_type",
                                                 "items"
                                             ]
                                         }
@@ -18255,6 +18979,8 @@
                                         {
                                             "type": "object",
                                             "required": [
+                                                "line_count",
+                                                "pending_by_type",
                                                 "items"
                                             ]
                                         }
@@ -18322,6 +19048,8 @@
                                         {
                                             "type": "object",
                                             "required": [
+                                                "line_count",
+                                                "pending_by_type",
                                                 "items"
                                             ]
                                         }
@@ -18375,7 +19103,7 @@
         "/admin/finance/expense-categories": {
             "get": {
                 "operationId": "v1.admin.finance.expense-categories.index",
-                "summary": "`GET /finance/expense-categories` \u2014 every category with its expense count; needs finance.view",
+                "summary": "`GET /finance/expense-categories` \u2014 every category with its expense count; needs finance.view.\n`meta.category_count` / `meta.active_count` / `meta.expense_count` are the server's counts for\nthe list caption (\"8 categories \u00b7 141 expenses filed\"), so the screen never adds them up",
                 "tags": [
                     "Admin"
                 ],
@@ -18392,10 +19120,30 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/ExpenseCategory"
                                             }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "category_count": {
+                                                    "type": "integer"
+                                                },
+                                                "active_count": {
+                                                    "type": "integer"
+                                                },
+                                                "expense_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "category_count",
+                                                "active_count",
+                                                "expense_count"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "data"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
@@ -36533,6 +37281,11 @@
                             "permissions_changed",
                             "rider_recorded",
                             "report_resent",
+                            "capital_drawing_recorded",
+                            "capital_contribution_recorded",
+                            "capital_entry_reversed",
+                            "capital_holder_added",
+                            "capital_holder_changed",
                             "password_reset",
                             "two_factor_enabled",
                             "two_factor_disabled",
@@ -36555,7 +37308,8 @@
                             "staff",
                             "integrations",
                             "fulfilment",
-                            "reports"
+                            "reports",
+                            "finance"
                         ]
                     },
                     "actor": {
@@ -38563,6 +39317,512 @@
                     "other"
                 ],
                 "title": "CancellationReason"
+            },
+            "CapitalEntry": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "contribution",
+                            "drawing"
+                        ]
+                    },
+                    "holder": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "role": {
+                                "type": "string",
+                                "enum": [
+                                    "owner",
+                                    "partner"
+                                ]
+                            },
+                            "is_active": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn",
+                            "role",
+                            "is_active"
+                        ]
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "net_effect": {
+                        "type": "string"
+                    },
+                    "occurred_on": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "cash",
+                            "bank_transfer",
+                            "bkash",
+                            "nagad",
+                            "card",
+                            "cheque"
+                        ]
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ledger_type": {
+                        "type": "string",
+                        "enum": [
+                            "owner_capital_in",
+                            "owner_drawing"
+                        ]
+                    },
+                    "is_reversal": {
+                        "type": "boolean"
+                    },
+                    "reversal_of_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "reversed_by_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "reversed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When the reversal was recorded (ISO 8601 UTC); the reversal's own date is its `occurred_on`."
+                    },
+                    "reversed_on": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The reversal's Dhaka date."
+                    },
+                    "recorded_by": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "can": {
+                        "type": "object",
+                        "properties": {
+                            "reverse": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "reverse"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "kind",
+                    "holder",
+                    "amount",
+                    "net_effect",
+                    "occurred_on",
+                    "method",
+                    "reference",
+                    "note",
+                    "ledger_type",
+                    "is_reversal",
+                    "reversal_of_id",
+                    "reversed_by_id",
+                    "reversed_at",
+                    "reversed_on",
+                    "recorded_by",
+                    "created_at",
+                    "can"
+                ],
+                "title": "CapitalEntry"
+            },
+            "CapitalEntryKind": {
+                "type": "string",
+                "description": "`capital_entries.kind` (P10 owner capital): money the owner or a partner put in, or took out. Each kind posts its own ledger type; both are cash, never revenue (rule 10).\n",
+                "enum": [
+                    "contribution",
+                    "drawing"
+                ],
+                "title": "CapitalEntryKind"
+            },
+            "CapitalHolder": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "owner",
+                            "partner"
+                        ]
+                    },
+                    "user": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "entries_count": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "can": {
+                        "type": "object",
+                        "properties": {
+                            "update": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "update"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "name_bn",
+                    "role",
+                    "user",
+                    "is_active",
+                    "entries_count",
+                    "can"
+                ],
+                "title": "CapitalHolder"
+            },
+            "CapitalHolderRequest": {
+                "type": "object",
+                "description": "A capital holder, for `POST /finance/capital/holders` and `PATCH \u2026/{holder}`: `name`\n(unique), optional `name_bn`, `role` (`owner`|`partner`, default owner), optional `user_id` (a staff account, one holder per account)\nand `is_active`. Needs finance.manage_capital.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 120
+                    },
+                    "name_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/CapitalHolderRole"
+                    },
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "CapitalHolderRequest"
+            },
+            "CapitalHolderRole": {
+                "type": "string",
+                "description": "`capital_holders.role` (P10): what the person is to the business. A label only \u2014 no shares, no profit split.\n",
+                "enum": [
+                    "owner",
+                    "partner"
+                ],
+                "title": "CapitalHolderRole"
+            },
+            "CapitalSummary": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "holders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "holder": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "enum": [
+                                                "owner",
+                                                "partner"
+                                            ]
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        },
+                                        "has_staff_login": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "name_bn",
+                                        "role",
+                                        "is_active",
+                                        "has_staff_login"
+                                    ]
+                                },
+                                "put_in": {
+                                    "type": "string"
+                                },
+                                "taken_out": {
+                                    "type": "string"
+                                },
+                                "net": {
+                                    "type": "string"
+                                },
+                                "entries_count": {
+                                    "type": "integer"
+                                },
+                                "last_entry": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                                "contribution",
+                                                "drawing"
+                                            ]
+                                        },
+                                        "amount": {
+                                            "type": "string"
+                                        },
+                                        "net_effect": {
+                                            "type": "string"
+                                        },
+                                        "occurred_on": {
+                                            "type": "string"
+                                        },
+                                        "is_reversal": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "kind",
+                                        "amount",
+                                        "net_effect",
+                                        "occurred_on",
+                                        "is_reversal"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "holder",
+                                "put_in",
+                                "taken_out",
+                                "net",
+                                "entries_count",
+                                "last_entry"
+                            ]
+                        }
+                    },
+                    "totals": {
+                        "type": "object",
+                        "properties": {
+                            "put_in": {
+                                "type": "string"
+                            },
+                            "taken_out": {
+                                "type": "string"
+                            },
+                            "net": {
+                                "type": "string"
+                            },
+                            "entries_count": {
+                                "type": "integer"
+                            },
+                            "last_entry": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                            "contribution",
+                                            "drawing"
+                                        ]
+                                    },
+                                    "amount": {
+                                        "type": "string"
+                                    },
+                                    "net_effect": {
+                                        "type": "string"
+                                    },
+                                    "occurred_on": {
+                                        "type": "string"
+                                    },
+                                    "is_reversal": {
+                                        "type": "boolean"
+                                    },
+                                    "holder_id": {
+                                        "type": "integer"
+                                    },
+                                    "holder_name": {
+                                        "type": "string"
+                                    },
+                                    "holder_name_bn": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "kind",
+                                    "amount",
+                                    "net_effect",
+                                    "occurred_on",
+                                    "is_reversal",
+                                    "holder_id",
+                                    "holder_name",
+                                    "holder_name_bn"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "put_in",
+                            "taken_out",
+                            "net",
+                            "entries_count",
+                            "last_entry"
+                        ]
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "holders",
+                    "totals"
+                ],
+                "title": "CapitalSummary"
             },
             "Cart": {
                 "type": "object",
@@ -41637,6 +42897,33 @@
                     },
                     "can_reconcile": {
                         "type": "boolean"
+                    },
+                    "line_count": {
+                        "type": "integer",
+                        "description": "Detail only: how many lines the statement has (\"14 parcels on this statement\")."
+                    },
+                    "pending_by_type": {
+                        "type": "array",
+                        "description": "Detail only: the lines still waiting for a decision, per variance type \u2014 how many and the\nsize of the gap (\u03a3 |variance|, a decimal string), for \"Short \u09f3100.00 \u00b7 1 not ours \u00b7 1 missing\".",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variance_type": {
+                                    "type": "string"
+                                },
+                                "count": {
+                                    "type": "integer"
+                                },
+                                "amount": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "variance_type",
+                                "count",
+                                "amount"
+                            ]
+                        }
                     },
                     "items": {
                         "type": "array",
@@ -45401,7 +46688,10 @@
                             "supplier_payment",
                             "cod_received",
                             "other_income",
-                            "other_expense"
+                            "other_expense",
+                            "pos_receipt",
+                            "owner_capital_in",
+                            "owner_drawing"
                         ]
                     },
                     "direction": {
@@ -45422,6 +46712,13 @@
                     },
                     "source_id": {
                         "type": "integer"
+                    },
+                    "order_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The order's number when the source is the order itself (`order`, `order_reversal`), so the\nscreen can say \"Order #TM-\u2026\" rather than an internal id; null for every other source."
                     },
                     "category_id": {
                         "type": [
@@ -45468,6 +46765,7 @@
                     "occurred_on",
                     "source_type",
                     "source_id",
+                    "order_number",
                     "category_id",
                     "category_name",
                     "category_name_bn",
@@ -53750,6 +55048,7 @@
                             "finance.reconcile_cod",
                             "finance.record_supplier_payments",
                             "finance.export",
+                            "finance.manage_capital",
                             "marketing.view",
                             "marketing.manage",
                             "marketing.send_campaigns",
@@ -54199,9 +55498,13 @@
                             "mixed"
                         ]
                     },
+                    "item_costs_visible": {
+                        "type": "boolean",
+                        "description": "False when the reader lacks catalog.view_cost."
+                    },
                     "buckets": {
                         "type": "array",
-                        "description": "One bucket per period, oldest first, including empty ones.",
+                        "description": "One bucket per period, oldest first, including empty ones. Without catalog.view_cost\nthe `cogs` line and the gross profit / profit after delivery / profit after losses\nsubtotals are null (cost of goods could be backed out of them).",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -54227,13 +55530,22 @@
                                             "type": "string"
                                         },
                                         "gross_profit": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "profit_after_delivery": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "profit_after_losses": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "net_profit": {
                                             "type": "string"
@@ -54251,7 +55563,10 @@
                                 "lines": {
                                     "type": "object",
                                     "additionalProperties": {
-                                        "type": "string"
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     }
                                 },
                                 "net_margin_percent": {
@@ -54282,13 +55597,22 @@
                                 "type": "string"
                             },
                             "gross_profit": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "profit_after_delivery": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "profit_after_losses": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "net_profit": {
                                 "type": "string"
@@ -54309,6 +55633,7 @@
                     "from",
                     "to",
                     "source",
+                    "item_costs_visible",
                     "buckets",
                     "totals"
                 ],
@@ -54328,9 +55653,13 @@
                     "days": {
                         "type": "integer"
                     },
+                    "generated_at": {
+                        "type": "string",
+                        "description": "When the figures were read (ISO 8601) \u2014 the page's \"figures as of\"."
+                    },
                     "blocks": {
                         "type": "array",
-                        "description": "The five blocks in order. A `line` carries the ledger types it sums; a\n`subtotal` is the running total after the lines above it.",
+                        "description": "The five blocks in order. A `line` carries the ledger types it sums and how many\ntimes they happened (entries in the natural direction, reversals not counted);\na `subtotal` is the running total after the lines above it. `percent_of_revenue`\nis the row's (or block total's) signed share of net revenue, 2 dp, null without\nrevenue. `total` is the sum of the block's lines. Without catalog.view_cost the\ncost-of-goods line's amount, share and occurrences, block 2's total, and\nthe gross profit / profit after delivery / profit after losses subtotals are null.",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -54346,6 +55675,18 @@
                                 },
                                 "number": {
                                     "type": "integer"
+                                },
+                                "total": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "percent_of_revenue": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
                                 },
                                 "rows": {
                                     "type": "array",
@@ -54368,14 +55709,30 @@
                                                     "type": "string"
                                                 }
                                             },
+                                            "occurrences": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
                                             "amount": {
-                                                "type": "string"
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "percent_of_revenue": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
                                             }
                                         },
                                         "required": [
                                             "kind",
                                             "key",
-                                            "amount"
+                                            "amount",
+                                            "percent_of_revenue"
                                         ]
                                     }
                                 }
@@ -54383,12 +55740,51 @@
                             "required": [
                                 "key",
                                 "number",
+                                "total",
+                                "percent_of_revenue",
                                 "rows"
+                            ]
+                        }
+                    },
+                    "item_costs_visible": {
+                        "type": "boolean",
+                        "description": "False when the reader lacks catalog.view_cost (cost of goods and every figure it can be backed out of are withheld)."
+                    },
+                    "biggest_costs": {
+                        "type": "array",
+                        "description": "Up to four lines in blocks 3\u20135 that took the most off profit, largest first, as\npositive costs; `relative_percent` is each cost as a % of the largest (100.00 for it).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "block": {
+                                    "type": "string",
+                                    "enum": [
+                                        "delivery",
+                                        "losses",
+                                        "running"
+                                    ]
+                                },
+                                "cost": {
+                                    "type": "string"
+                                },
+                                "relative_percent": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "block",
+                                "cost",
+                                "relative_percent"
                             ]
                         }
                     },
                     "totals": {
                         "type": "object",
+                        "description": "Running subtotals. Without catalog.view_cost, gross_profit, profit_after_delivery and\nprofit_after_losses are null (cost of goods could be backed out of them).",
                         "properties": {
                             "gross_revenue": {
                                 "type": "string"
@@ -54397,13 +55793,22 @@
                                 "type": "string"
                             },
                             "gross_profit": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "profit_after_delivery": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "profit_after_losses": {
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "net_profit": {
                                 "type": "string"
@@ -54423,7 +55828,7 @@
                             "string",
                             "null"
                         ],
-                        "description": "Gross profit as % of net revenue, 2 dp; null without revenue."
+                        "description": "Gross profit as % of net revenue, 2 dp; null without revenue or without catalog.view_cost."
                     },
                     "net_margin_percent": {
                         "type": [
@@ -54537,7 +55942,7 @@
                     },
                     "reconciliation": {
                         "type": "object",
-                        "description": "Recognised net split by whether the entry belongs to an order. `reconciled` is\ntrue when the two parts add up to the statement's net profit.",
+                        "description": "Recognised net split by whether the entry belongs to an order. `reconciled` is\ntrue when the two parts add up to the statement's net profit. `difference` is the statement's net profit minus that rebuild (0.00 when it ties up).",
                         "properties": {
                             "orders": {
                                 "type": "string"
@@ -54551,6 +55956,9 @@
                             "total": {
                                 "type": "string"
                             },
+                            "difference": {
+                                "type": "string"
+                            },
                             "reconciled": {
                                 "type": "boolean"
                             }
@@ -54560,23 +55968,55 @@
                             "order_count",
                             "other",
                             "total",
+                            "difference",
                             "reconciled"
                         ]
                     },
                     "open_orders": {
                         "type": "object",
-                        "description": "Orders placed and not yet delivered, cancelled or returned \u2014 current, not per\nperiod. Not in the statement.",
+                        "description": "Orders placed and not yet delivered, cancelled or returned \u2014 current, not per\nperiod. Not in the statement. `by_status` splits them by order status (pipeline order), counts and order values.",
                         "properties": {
                             "count": {
                                 "type": "integer"
                             },
                             "value": {
                                 "type": "string"
+                            },
+                            "by_status": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "pending",
+                                                "on_hold",
+                                                "confirmed",
+                                                "processing",
+                                                "ready_to_ship",
+                                                "shipped"
+                                            ]
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "count",
+                                        "value"
+                                    ]
+                                }
                             }
                         },
                         "required": [
                             "count",
-                            "value"
+                            "value",
+                            "by_status"
                         ]
                     },
                     "inventory_at_cost": {
@@ -54616,13 +56056,22 @@
                                         "type": "string"
                                     },
                                     "gross_profit": {
-                                        "type": "string"
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     },
                                     "profit_after_delivery": {
-                                        "type": "string"
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     },
                                     "profit_after_losses": {
-                                        "type": "string"
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     },
                                     "net_profit": {
                                         "type": "string"
@@ -54709,7 +56158,10 @@
                     "from",
                     "to",
                     "days",
+                    "generated_at",
                     "blocks",
+                    "item_costs_visible",
+                    "biggest_costs",
                     "totals",
                     "gross_margin_percent",
                     "net_margin_percent",
@@ -58174,28 +59626,88 @@
                         "type": "string"
                     },
                     "shipping_cost": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`."
                     },
                     "customs_duty": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`."
                     },
                     "other_cost": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Header column, legacy: receipts before 2026-11-16 added their extras here. Read `extra_costs`."
                     },
                     "tax": {
                         "type": "string"
                     },
                     "total": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The order total: what was ordered (goods less discounts, plus tax). Extra costs entered\nat receipt are never in it \u2014 see `extra_costs`."
+                    },
+                    "extra_costs": {
+                        "type": "object",
+                        "description": "Extra costs entered at receipt, summed from the receipts: each kind, their total, the part\nthe supplier charged (in what is owed) and the part paid to someone else (never owed to it).",
+                        "properties": {
+                            "freight": {
+                                "type": "string"
+                            },
+                            "customs_duty": {
+                                "type": "string"
+                            },
+                            "other": {
+                                "type": "string"
+                            },
+                            "total": {
+                                "type": "string"
+                            },
+                            "charged_by_supplier": {
+                                "type": "string"
+                            },
+                            "paid_elsewhere": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "freight",
+                            "customs_duty",
+                            "other",
+                            "total",
+                            "charged_by_supplier",
+                            "paid_elsewhere"
+                        ]
+                    },
+                    "received_goods": {
+                        "type": "string",
+                        "description": "Goods received so far at the supplier's price (\u03a3 receipts' goods value)."
+                    },
+                    "payable_total": {
+                        "type": "string",
+                        "description": "What the supplier is owed for so far: received goods + extra costs it charged. `due_amount` = this \u2212 `paid_amount`."
                     },
                     "received_value": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Same as `payable_total` (kept for existing clients)."
                     },
                     "paid_amount": {
                         "type": "string"
                     },
                     "due_amount": {
                         "type": "string"
+                    },
+                    "is_late": {
+                        "type": "boolean",
+                        "description": "Waiting for stock and past its expected date (Dhaka today)."
+                    },
+                    "is_paid": {
+                        "type": "boolean",
+                        "description": "Something was received and paid, and nothing is owed on it. catalog.view_cost only."
+                    },
+                    "payment_due_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When what is owed falls due: the first delivery's Dhaka date plus the supplier's\npayment terms; null while nothing is owed. catalog.view_cost only."
                     },
                     "units_ordered": {
                         "type": "integer"
@@ -58263,6 +59775,7 @@
                     "close_reason",
                     "supplier_invoice_no",
                     "note",
+                    "is_late",
                     "units_ordered",
                     "units_received",
                     "can",
@@ -58413,8 +59926,25 @@
                     "lines_count": {
                         "type": "integer"
                     },
+                    "units_ordered": {
+                        "type": "integer",
+                        "description": "Units ordered over every line."
+                    },
+                    "units_received": {
+                        "type": "integer",
+                        "description": "Units received so far over every line."
+                    },
+                    "is_late": {
+                        "type": "boolean",
+                        "description": "Waiting for stock and past its expected date (Dhaka today)."
+                    },
+                    "is_paid": {
+                        "type": "boolean",
+                        "description": "Something was received and paid, and nothing is owed on it. catalog.view_cost only."
+                    },
                     "total": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The order total: what was ordered (goods), never a receipt's extra costs."
                     },
                     "due_amount": {
                         "type": "string"
@@ -58434,9 +59964,75 @@
                     "order_date",
                     "expected_date",
                     "lines_count",
+                    "units_ordered",
+                    "units_received",
+                    "is_late",
                     "created_at"
                 ],
                 "title": "PurchaseListItem"
+            },
+            "PurchaseQuote": {
+                "type": "object",
+                "properties": {
+                    "products": {
+                        "type": "integer"
+                    },
+                    "units": {
+                        "type": "integer"
+                    },
+                    "subtotal": {
+                        "type": "string"
+                    },
+                    "discount": {
+                        "type": "string"
+                    },
+                    "total": {
+                        "type": "string"
+                    },
+                    "supplier_known": {
+                        "type": "boolean",
+                        "description": "True when a supplier was named, so a null `last_unit_cost` means \"new to this supplier\"."
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "line_total": {
+                                    "type": "string"
+                                },
+                                "last_unit_cost": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity",
+                                "line_total",
+                                "last_unit_cost"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "products",
+                    "units",
+                    "subtotal",
+                    "discount",
+                    "total",
+                    "supplier_known",
+                    "lines"
+                ],
+                "title": "PurchaseQuote"
             },
             "PurchaseReceipt": {
                 "type": "object",
@@ -58662,6 +60258,63 @@
                 ],
                 "title": "PurchaseReceiptQuote"
             },
+            "PurchaseSummary": {
+                "type": "object",
+                "properties": {
+                    "today": {
+                        "type": "string",
+                        "description": "Today in Dhaka, Y-m-d."
+                    },
+                    "week_ends": {
+                        "type": "string",
+                        "description": "The Friday ending this Saturday\u2013Friday week, Y-m-d."
+                    },
+                    "open_count": {
+                        "type": "integer",
+                        "description": "POs waiting for stock (ordered or partly received)."
+                    },
+                    "open_value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Their order value. catalog.view_cost only."
+                    },
+                    "arriving_count": {
+                        "type": "integer",
+                        "description": "Open POs expected from today to `week_ends`."
+                    },
+                    "late_count": {
+                        "type": "integer",
+                        "description": "Open POs past their expected date."
+                    },
+                    "owed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What we owe suppliers for stock received: the sum of positive supplier balances. finance.view only."
+                    },
+                    "owed_suppliers": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "How many suppliers we owe. finance.view only."
+                    }
+                },
+                "required": [
+                    "today",
+                    "week_ends",
+                    "open_count",
+                    "open_value",
+                    "arriving_count",
+                    "late_count",
+                    "owed",
+                    "owed_suppliers"
+                ],
+                "title": "PurchaseSummary"
+            },
             "PurchaseTrigger": {
                 "type": "string",
                 "description": "Which order event fires the `purchase` conversion (PRD K-02). Exactly one of them, never both: `order_placed` counts every order the moment it is placed (fast feedback for ad optimisation, includes COD orders that later fail); `order_delivered` counts only orders the customer accepted and paid for (truer in a COD market, but days late and server-only: the browser is gone by then).\n",
@@ -58842,6 +60495,60 @@
                 ],
                 "title": "QuotePosSaleRequest"
             },
+            "QuotePurchaseRequest": {
+                "type": "object",
+                "description": "`POST /purchases/quote` \u2014 the New / edit purchase order form's lines, priced by the\nserver before anything is saved (rule 1). Same line rules as the PO itself; the supplier\nis optional and only adds \"last bought at\". Needs purchasing.create.",
+                "properties": {
+                    "supplier_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Adds each line's `last_unit_cost` from this supplier's earlier purchase orders."
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 1000000
+                                },
+                                "unit_cost": {
+                                    "type": "string",
+                                    "description": "The supplier's price per unit, up to 4 decimals.",
+                                    "pattern": "^\\d{1,10}(\\.\\d{1,4})?$"
+                                },
+                                "discount": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Discount on the whole line, in taka.",
+                                    "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "quantity",
+                                "unit_cost"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 200,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "lines"
+                ],
+                "title": "QuotePurchaseRequest"
+            },
             "ReceivePurchaseRequest": {
                 "type": "object",
                 "description": "`POST /purchases/{purchase}/receipts` and `\u2026/receipts/quote` \u2014 the units arriving per\nPO line, where they go, and the landed costs to split across them. The quote takes\nthe same body and returns every figure the receipt would write; needs\npurchasing.receive. Over-receipt and unknown lines are 422s from ReceiptCalculator.",
@@ -58960,6 +60667,51 @@
                     "confirmation_cross_sell"
                 ],
                 "title": "RecommendationPlacement"
+            },
+            "RecordCapitalEntryRequest": {
+                "type": "object",
+                "description": "`POST /finance/capital/entries` \u2014 owner capital put in (`contribution`, \"New investment\")\nor taken out (`drawing`): `kind`, `holder_id` (an active holder), `amount` (decimal string,\n> 0), `occurred_on` (a Dhaka date, not in the future), `method` (the expense payment\nmethods), optional `reference` and `note`. Needs finance.manage_capital and an\n`Idempotency-Key` (it moves money).",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/CapitalEntryKind"
+                    },
+                    "holder_id": {
+                        "type": "integer"
+                    },
+                    "amount": {
+                        "type": "string",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "occurred_on": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "method": {
+                        "$ref": "#/components/schemas/ExpensePaymentMethod"
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "kind",
+                    "holder_id",
+                    "amount",
+                    "occurred_on",
+                    "method"
+                ],
+                "title": "RecordCapitalEntryRequest"
             },
             "RecordCodReceiptRequest": {
                 "type": "object",
@@ -60067,6 +61819,21 @@
                     "other"
                 ],
                 "title": "ReturnReason"
+            },
+            "ReverseCapitalEntryRequest": {
+                "type": "object",
+                "description": "`POST /finance/capital/entries/{entry}/reverse` \u2014 `reason` (required, 3\u2013500 characters; kept\nas the reversal's note). Needs finance.manage_capital and an `Idempotency-Key`.",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
+                "title": "ReverseCapitalEntryRequest"
             },
             "RevertCmsLayoutRequest": {
                 "type": "object",
@@ -75030,6 +76797,7 @@
                                 "finance.reconcile_cod",
                                 "finance.record_supplier_payments",
                                 "finance.export",
+                                "finance.manage_capital",
                                 "marketing.view",
                                 "marketing.manage",
                                 "marketing.send_campaigns",
@@ -75051,7 +76819,7 @@
                                 "pos.sell_on_due"
                             ]
                         },
-                        "maxItems": 70,
+                        "maxItems": 71,
                         "uniqueItems": true
                     }
                 },
