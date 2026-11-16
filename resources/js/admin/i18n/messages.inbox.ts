@@ -30,6 +30,7 @@ export const inboxEn = {
     'inbox.channel.whatsapp': 'WhatsApp',
     'inbox.channel.messenger': 'Messenger',
     'inbox.channel.live_chat': 'Live chat',
+    'inbox.channel.web_form': 'Website form',
     'inbox.status.open': 'Open',
     'inbox.status.resolved': 'Resolved',
     'inbox.needsHuman': 'Needs human',
@@ -89,6 +90,8 @@ export const inboxEn = {
     'inbox.humanAgent.notice': 'More than 24 hours have passed since the customer’s last message. This reply goes with Meta’s human-agent tag: use it only to answer the customer personally, not for promotions.',
     'inbox.closed.messenger': 'Messenger allows a reply only within 24 hours of the customer’s last message, and the human-agent tag (up to 7 days) is switched off. Add a note, or wait for the customer to write again.',
     'inbox.closed.tooOld': 'More than 7 days have passed since the customer’s last message, so Messenger allows no reply. Add a note, or wait for the customer to write again.',
+    'inbox.closed.webForm': 'Sent from the website contact form. Reply by WhatsApp or call {phone}.',
+    'inbox.closed.webFormNoPhone': 'Sent from the website contact form, which cannot carry a reply. Reply by WhatsApp or a call.',
 
     'inbox.template.title': 'Send a template',
     'inbox.template.intro': 'The 24-hour window closed {time}. WhatsApp lets you restart the conversation only with an approved template.',
@@ -137,6 +140,7 @@ export const inboxEn = {
     'inbox.quick.trackingReason': 'Needs a linked customer with an order.',
     'inbox.quick.createOrder': 'Create order from chat',
     'inbox.quick.windowReason': 'The 24-hour window is closed.',
+    'inbox.quick.webFormReason': 'A website-form message cannot be answered here.',
     'inbox.quick.cancel': 'Cancel',
 
     'inbox.toast.sent': 'Reply queued',
@@ -173,6 +177,7 @@ export const inboxBn: Record<keyof typeof inboxEn, string> = {
     'inbox.channel.whatsapp': 'WhatsApp',
     'inbox.channel.messenger': 'Messenger',
     'inbox.channel.live_chat': 'লাইভ চ্যাট',
+    'inbox.channel.web_form': 'ওয়েবসাইট ফর্ম',
     'inbox.status.open': 'খোলা',
     'inbox.status.resolved': 'সমাধান হয়েছে',
     'inbox.needsHuman': 'মানুষ দরকার',
@@ -232,6 +237,8 @@ export const inboxBn: Record<keyof typeof inboxEn, string> = {
     'inbox.humanAgent.notice': 'কাস্টমারের শেষ মেসেজের পর 24 ঘণ্টার বেশি পেরিয়ে গেছে। এই উত্তর Meta-র হিউম্যান-এজেন্ট ট্যাগসহ যাবে: শুধু কাস্টমারকে ব্যক্তিগতভাবে উত্তর দিতে ব্যবহার করুন, প্রচারের জন্য নয়।',
     'inbox.closed.messenger': 'Messenger-এ কাস্টমারের শেষ মেসেজের 24 ঘণ্টার মধ্যে উত্তর দেওয়া যায়, আর হিউম্যান-এজেন্ট ট্যাগ (7 দিন পর্যন্ত) বন্ধ আছে। নোট লিখুন, বা কাস্টমার আবার লেখা পর্যন্ত অপেক্ষা করুন।',
     'inbox.closed.tooOld': 'কাস্টমারের শেষ মেসেজের পর 7 দিনের বেশি পেরিয়ে গেছে, তাই Messenger-এ আর উত্তর দেওয়া যায় না। নোট লিখুন, বা কাস্টমার আবার লেখা পর্যন্ত অপেক্ষা করুন।',
+    'inbox.closed.webForm': 'ওয়েবসাইটের যোগাযোগ ফর্ম থেকে পাঠানো। WhatsApp-এ উত্তর দিন বা {phone} নম্বরে কল করুন।',
+    'inbox.closed.webFormNoPhone': 'ওয়েবসাইটের যোগাযোগ ফর্ম থেকে পাঠানো, এখান থেকে উত্তর যায় না। WhatsApp-এ উত্তর দিন বা কল করুন।',
 
     'inbox.template.title': 'টেমপ্লেট পাঠান',
     'inbox.template.intro': '24 ঘণ্টার উইন্ডো {time}-এ বন্ধ হয়েছে। WhatsApp-এ এখন শুধু অনুমোদিত টেমপ্লেট দিয়ে আবার কথা শুরু করা যায়।',
@@ -280,6 +287,7 @@ export const inboxBn: Record<keyof typeof inboxEn, string> = {
     'inbox.quick.trackingReason': 'অর্ডারসহ যুক্ত কাস্টমার দরকার।',
     'inbox.quick.createOrder': 'চ্যাট থেকে অর্ডার তৈরি করুন',
     'inbox.quick.windowReason': '24 ঘণ্টার উইন্ডো বন্ধ।',
+    'inbox.quick.webFormReason': 'ওয়েবসাইট ফর্মের মেসেজের উত্তর এখান থেকে দেওয়া যায় না।',
     'inbox.quick.cancel': 'বাতিল',
 
     'inbox.toast.sent': 'উত্তর পাঠানোর সারিতে',

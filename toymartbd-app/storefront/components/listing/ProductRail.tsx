@@ -63,8 +63,12 @@ interface Props {
     slider?: boolean;
 }
 
-const ROW =
-    "relative -mx-gutter-mobile flex snap-x snap-mandatory scroll-px-gutter-mobile gap-3 overflow-x-auto px-gutter-mobile pt-2 pb-6 md:-mx-gutter-tablet md:scroll-px-gutter-tablet md:px-gutter-tablet lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:p-0 *:w-37 *:shrink-0 *:snap-start lg:*:w-auto";
+const ROW_BASE =
+    "relative -mx-gutter-mobile flex snap-x snap-mandatory scroll-px-gutter-mobile gap-3 overflow-x-auto px-gutter-mobile pt-2 pb-6 md:-mx-gutter-tablet md:scroll-px-gutter-tablet md:px-gutter-tablet lg:mx-0 lg:grid lg:gap-6 lg:overflow-visible lg:p-0 *:w-37 *:shrink-0 *:snap-start lg:*:w-auto";
+const ROW = `${ROW_BASE} lg:grid-cols-4`;
+
+/** The rail's row (swipe row below 1024, a grid from 1024): 4-up, or 5-up for the Home flash-sale band (Figma 133:452). */
+export const railRowClass = (columns: 4 | 5 = 4): string => `${ROW_BASE} ${columns === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`;
 
 export function ProductRail({
     id,

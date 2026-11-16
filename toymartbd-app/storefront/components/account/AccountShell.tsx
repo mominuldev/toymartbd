@@ -11,18 +11,25 @@ import { localizedPath, type Locale } from '@/lib/i18n';
 
 // The signed-in account frame (Figma desktop page 06: 280px account menu + content, e.g. Home
 // 239:11547; mobile page 05: a back button + title above the content, the menu lives on the account
-// home tiles). AccountNavItem 236:2112: 40 tall, radius xs, icon 16 + label; Active = brand-subtle
-// fill. Sign out is a POST form, so it works without JavaScript.
+// home tiles). AccountMenu 239:12215: radius md, 12/16 inset, "me" row (48 Bloom-sky avatar, name +
+// phone); AccountNavItem 236:2112: 44 tall, radius sm, 14 inset, icon 20 + body-sm label; Active =
+// brand-subtle fill + semibold. The breadcrumb is one caption line, "Home / My account / …" (239:12213).
+// Sign out is a POST form, so it works without JavaScript. The menu's "Rewards & credit" and "Returns"
+// have no backend yet (loyalty rates are owner-pending), so they are not shown.
 
 export type AccountSection = 'overview' | 'orders' | 'wishlist' | 'addresses' | 'profile';
 
-const ITEMS: Array<{ key: AccountSection; path: string; icon: IconName }> = [
+// "My kids" is a section of the profile page (KidsCard, #kids), so it is never the active item.
+const ITEMS: Array<{ key: AccountSection | 'kids'; path: string; icon: IconName }> = [
     { key: 'overview', path: '/account', icon: 'house' },
     { key: 'orders', path: '/account/orders', icon: 'cube' },
     { key: 'wishlist', path: '/account/wishlist', icon: 'heartFill' },
     { key: 'addresses', path: '/account/addresses', icon: 'mapPin' },
+    { key: 'kids', path: '/account/profile#kids', icon: 'smiley' },
     { key: 'profile', path: '/account/profile', icon: 'user' },
 ];
+
+const navItem = 't-body-sm flex h-11 w-full items-center gap-3 rounded-sm px-3.5 text-fg-primary';
 
 interface Props {
     locale: Locale;
@@ -47,30 +54,28 @@ export function AccountShell({ locale, path, account, section, title, back, head
 
     return (
         <PageShell locale={locale} path={path} top="crumb">
-            <div className="flex flex-col gap-4 pt-3 pb-8 lg:gap-6 lg:pt-0 lg:pb-20">{/* 390: body starts 20 below the header (8 + 12) */}
+            <div className="flex flex-col gap-4 pt-3 pb-8 lg:gap-6 lg:pt-2 lg:pb-20">{/* 390: body starts 20 below the header (8 + 12); 1440: crumb 32 below the menu bar */}
                 <nav aria-label={m.nav.myAccount} className="hidden lg:block">
-                    <ol className="t-body-sm flex items-center gap-2 whitespace-nowrap">
+                    <ol className="t-caption flex items-center gap-1 whitespace-nowrap text-fg-tertiary">
                         <li>
-                            <a href={localizedPath(locale, '/')} className="text-fg-link underline-offset-2 hover:underline">
+                            <a href={localizedPath(locale, '/')} className="underline-offset-2 hover:underline">
                                 {m.nav.home}
                             </a>
                         </li>
-                        <li className="flex items-center gap-2">
-                            <Icon name="caretRight" className="size-3.5 text-fg-tertiary" />
+                        <li className="flex items-center gap-1">
+                            <span aria-hidden="true">/</span>
                             {section === 'overview' ? (
-                                <span aria-current="page" className="t-body-sm-strong text-fg-secondary">
-                                    {m.nav.myAccount}
-                                </span>
+                                <span aria-current="page">{m.nav.myAccount}</span>
                             ) : (
-                                <a href={localizedPath(locale, '/account')} className="text-fg-link underline-offset-2 hover:underline">
+                                <a href={localizedPath(locale, '/account')} className="underline-offset-2 hover:underline">
                                     {m.nav.myAccount}
                                 </a>
                             )}
                         </li>
                         {section !== 'overview' ? (
-                            <li className="flex items-center gap-2">
-                                <Icon name="caretRight" className="size-3.5 text-fg-tertiary" />
-                                <span aria-current="page" className="t-body-sm-strong text-fg-secondary">
+                            <li className="flex items-center gap-1">
+                                <span aria-hidden="true">/</span>
+                                <span aria-current="page" className="tabular-nums">
                                     {title}
                                 </span>
                             </li>
@@ -79,14 +84,14 @@ export function AccountShell({ locale, path, account, section, title, back, head
                 </nav>
 
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-                    <aside className="hidden w-70 shrink-0 flex-col gap-1 rounded-sm border border-line-default bg-surface p-3 lg:flex">
-                        <div className="flex items-center gap-3 px-2 pt-1 pb-3">
-                            <span aria-hidden="true" className="t-body-sm-strong flex size-10 shrink-0 items-center justify-center rounded-full bg-grape-subtle text-fg-brand">
-                                {mark ?? <Icon name="user" className="size-icon-sm" />}
+                    <aside className="hidden w-70 shrink-0 flex-col gap-1 rounded-md border border-line-default bg-surface px-3 py-4 lg:flex">
+                        <div className="flex items-center gap-3 px-2 pt-2 pb-4">
+                            <span aria-hidden="true" className="t-h4 flex size-12 shrink-0 items-center justify-center rounded-full bg-(image:--tm-gradient-bloom-sky) text-fg-brand">
+                                {mark ?? <Icon name="user" className="size-icon-md" />}
                             </span>
                             <span className="flex min-w-0 flex-col">
-                                <span className="t-body-sm-strong truncate text-fg-primary">{account.name || displayPhone(account.phone)}</span>
-                                <span className="t-caption text-fg-tertiary tabular-nums">{account.name ? displayPhone(account.phone) : m.nav.verified}</span>
+                                <span className="t-body-strong truncate text-fg-primary">{account.name || displayPhone(account.phone)}</span>
+                                <span className="t-caption text-fg-secondary tabular-nums">{account.name ? displayPhone(account.phone) : m.nav.verified}</span>
                             </span>
                         </div>
                         <nav aria-label={m.nav.label}>
@@ -98,16 +103,16 @@ export function AccountShell({ locale, path, account, section, title, back, head
                                             <a
                                                 href={localizedPath(locale, item.path)}
                                                 aria-current={active ? 'page' : undefined}
-                                                className={`t-body-sm flex h-10 items-center gap-3 rounded-xs px-3 text-fg-primary ${active ? 'bg-brand-subtle font-semibold' : 'hover:bg-subtle'}`}
+                                                className={`${navItem} ${active ? 'bg-brand-subtle font-semibold' : 'hover:bg-subtle'}`}
                                             >
-                                                <Icon name={item.icon} className={`size-4 ${active ? 'text-fg-brand' : 'text-fg-secondary'}`} />
+                                                <Icon name={item.icon} className={`size-5 shrink-0 ${active ? 'text-fg-brand' : 'text-fg-primary'}`} />
                                                 {m.nav[item.key]}
                                             </a>
                                         </li>
                                     );
                                 })}
                                 <li>
-                                    <SignOutButton locale={locale} label={m.nav.signOut} className="t-body-sm flex h-10 w-full items-center gap-3 rounded-xs px-3 text-fg-primary hover:bg-subtle" />
+                                    <SignOutButton locale={locale} label={m.nav.signOut} className={`${navItem} hover:bg-subtle [&>svg]:size-5 [&>svg]:text-fg-primary`} />
                                 </li>
                             </ul>
                         </nav>
@@ -147,7 +152,7 @@ export function SignOutButton({ locale, label, className }: { locale: Locale; la
         <form method="post" action="/api/account/logout">
             <input type="hidden" name="locale" value={locale} />
             <button type="submit" className={className}>
-                <Icon name="arrowRight" className="size-4 text-fg-secondary" />
+                <Icon name="signOut" className="size-4 text-fg-secondary" />
                 {label}
             </button>
         </form>

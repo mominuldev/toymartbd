@@ -7322,6 +7322,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/contact-messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /contact-messages` — opens or extends the sender's `web_form` conversation in the
+         *     admin Inbox (one thread per phone). Answers 202 `{status: "received"}`. Limited to 5 an
+         *     hour per phone and 10 an hour per client IP
+         */
+        post: operations["v1.storefront.contact-messages.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/payment-methods": {
         parameters: {
             query?: never;
@@ -8278,9 +8299,11 @@ export interface components {
          *     | `feature_tiles` <br/> Two to four pastel tiles, each an icon, a title and a sentence. |
          *     | `numbered_cards` <br/> A heading and one to six numbered cards (01, 02…), each a title and a sentence. |
          *     | `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |
+         *     | `contact_hero` <br/> Contact hero (Contact us): overline, the page headline, a lead, a status pill and up to four chat bubbles. |
+         *     | `contact_form` <br/> "Send us a message" (→ the admin Inbox) beside an optional visit card with hours and a quick-links card. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -9085,7 +9108,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form";
             label: string | null;
             content: {
                 [key: string]: unknown;
@@ -9265,6 +9288,30 @@ export interface components {
          * @enum {string}
          */
         ConsentConfirmationMethod: "phone_call" | "in_person" | "written" | "other";
+        /**
+         * ContactMessageRequest
+         * @description `POST /storefront/contact-messages` — the Contact page's "Send us a message" form (owner
+         *     decision 2026-11-16). The phone is a Bangladeshi mobile, 013–019 only (rule 30), and is
+         *     stored as E.164. The order number is optional and as forgiving as order tracking's
+         *     ("26-00042", Bengali digits), stored in its canonical form.
+         */
+        ContactMessageRequest: {
+            name: string;
+            /** @description A Bangladeshi mobile, 013–019 (rule 30), e.g. "01712345678" or "+8801712345678". */
+            phone: string;
+            topic: components["schemas"]["ContactTopic"];
+            /** @description e.g. "TMB-26-00042" (also "26-00042"). */
+            order_number?: string | null;
+            message: string;
+            /** @enum {string|null} */
+            locale?: "en" | "bn" | null;
+        };
+        /**
+         * ContactTopic
+         * @description What a storefront contact-form message is about (Contact page, owner decision 2026-11-16).
+         * @enum {string}
+         */
+        ContactTopic: "choosing_toy" | "order" | "delivery" | "returns" | "gifts_bulk" | "other";
         /** Coupon */
         Coupon: {
             id: number;
@@ -10925,7 +10972,7 @@ export interface components {
         InboxConversation: {
             id: number;
             /** @enum {string} */
-            channel: "whatsapp" | "messenger" | "live_chat";
+            channel: "whatsapp" | "messenger" | "live_chat" | "web_form";
             /** @enum {string} */
             status: "open" | "resolved";
             /** @description Full phone only with customers.view_pii. */
@@ -10960,7 +11007,7 @@ export interface components {
         InboxConversationDetail: {
             id: number;
             /** @enum {string} */
-            channel: "whatsapp" | "messenger" | "live_chat";
+            channel: "whatsapp" | "messenger" | "live_chat" | "web_form";
             /** @enum {string} */
             status: "open" | "resolved";
             /** @description Full phone only with customers.view_pii. */
@@ -31682,7 +31729,7 @@ export interface operations {
             query?: {
                 /** @description all|mine|needs_human (the tabs). */
                 "filter[view]"?: string;
-                /** @description whatsapp|messenger|live_chat */
+                /** @description whatsapp|messenger|live_chat|web_form */
                 "filter[channel]"?: string;
                 /** @description open|resolved (both when absent). */
                 "filter[status]"?: string;
@@ -37127,6 +37174,51 @@ export interface operations {
             };
             422: components["responses"]["ValidationException"];
             /** @description Too many lookups */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.contact-messages.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactMessageRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        status: "received";
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Invalid name, phone (rule 30), topic, order number or message (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many messages from this phone or client (`too-many-requests`) */
             429: {
                 headers: {
                     [name: string]: unknown;

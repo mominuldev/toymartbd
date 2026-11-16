@@ -228,6 +228,10 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                     <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
                     <Bilingual content={content} keyName="sub" set={set} ctx={ctx} multiline />
                     <Bilingual content={content} keyName="hours" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="whatsapp_note" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="email_note" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="address_label" set={set} ctx={ctx} hint={t('homeBuilder.f.address_labelHint')} />
+                    <Bilingual content={content} keyName="address_note" set={set} ctx={ctx} />
                     <TextField label={t('homeBuilder.f.map_href')} hint={t('homeBuilder.f.map_hrefHint')} value={str(content.map_href)} onChange={(v) => set('map_href', v)} path="map_href" ctx={ctx} mono />
                     <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactSource')}</p>
                 </>
@@ -332,6 +336,82 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                     ))}
                 </>
             );
+        case 'contact_hero': {
+            const bubbles = rows(content.bubbles);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.storyHeading')} />
+                    <Bilingual content={content} keyName="overline" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="lead" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="status" set={set} ctx={ctx} hint={t('homeBuilder.f.statusHint')} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.bubblesHint')}</p>
+                    {bubbles.map((bubble, i) => {
+                        const setBubble = (key: string, value: unknown) => setRow('bubbles', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.bubble', { n: i + 1 })} index={i} count={bubbles.length} min={0} disabled={ctx.disabled} {...listOps('bubbles')}>
+                                <SelectField
+                                    label={t('homeBuilder.f.bubbleFrom')}
+                                    value={str(bubble.from) || 'customer'}
+                                    options={(['customer', 'store'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.bubbleFrom.${v}`) }))}
+                                    onChange={(v) => setBubble('from', v)}
+                                    path={`bubbles.${i}.from`}
+                                    ctx={ctx}
+                                />
+                                <Bilingual content={bubble} prefix={`bubbles.${i}.`} keyName="label" labelKey="bubbleLabel" set={setBubble} ctx={ctx} />
+                                <Bilingual content={bubble} prefix={`bubbles.${i}.`} keyName="text" labelKey="bubbleText" set={setBubble} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || bubbles.length >= 4} onClick={() => set('bubbles', [...bubbles, { from: bubbles.length % 2 ? 'store' : 'customer', text: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addBubble')}
+                    </Button>
+                </>
+            );
+        }
+        case 'contact_form': {
+            const hours = rows(content.hours);
+            const links = rows(content.links);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="intro" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="privacy" set={set} ctx={ctx} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactFormFields')}</p>
+                    <Bilingual content={content} keyName="visit_title" set={set} ctx={ctx} hint={t('homeBuilder.f.sideCardHint')} />
+                    <Bilingual content={content} keyName="visit_body" set={set} ctx={ctx} multiline />
+                    <TextField label={t('homeBuilder.f.visit_map_href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content.visit_map_href)} onChange={(v) => set('visit_map_href', v)} path="visit_map_href" ctx={ctx} mono />
+                    {hours.map((row, i) => {
+                        const setHour = (key: string, value: unknown) => setRow('hours', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.hoursRow', { n: i + 1 })} index={i} count={hours.length} min={0} disabled={ctx.disabled} {...listOps('hours')}>
+                                <Bilingual content={row} prefix={`hours.${i}.`} keyName="label" labelKey="hoursLabel" set={setHour} ctx={ctx} />
+                                <Bilingual content={row} prefix={`hours.${i}.`} keyName="value" labelKey="hoursValue" set={setHour} ctx={ctx} />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || hours.length >= 6} onClick={() => set('hours', [...hours, { label: '', value: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addHoursRow')}
+                    </Button>
+                    <Bilingual content={content} keyName="links_title" set={set} ctx={ctx} hint={t('homeBuilder.f.sideCardHint')} />
+                    {links.map((row, i) => {
+                        const setLink = (key: string, value: unknown) => setRow('links', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.linkRow', { n: i + 1 })} index={i} count={links.length} min={0} disabled={ctx.disabled} {...listOps('links')}>
+                                <SelectField label={t('homeBuilder.f.icon')} value={str(row.icon) || 'check_circle'} options={tileIconOptions(t)} onChange={(v) => setLink('icon', v)} path={`links.${i}.icon`} ctx={ctx} />
+                                <Bilingual content={row} prefix={`links.${i}.`} keyName="label" labelKey="linkLabel" set={setLink} ctx={ctx} />
+                                <TextField label={t('homeBuilder.f.linkHref')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(row.href)} onChange={(v) => setLink('href', v)} path={`links.${i}.href`} ctx={ctx} mono />
+                            </Repeater>
+                        );
+                    })}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || links.length >= 6} onClick={() => set('links', [...links, { icon: 'check_circle', label: '', href: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addLink')}
+                    </Button>
+                </>
+            );
+        }
     }
 }
 

@@ -405,3 +405,51 @@ describe('Inbox Messenger after 24 hours', () => {
         expect(await screen.findByText(/More than 7 days have passed/)).toBeTruthy();
     });
 });
+
+// The storefront Contact page form (2026-11-16): inbound only, so the reply state is always `closed`.
+const webForm: Conversation = {
+    ...nusrat,
+    id: 4,
+    channel: 'web_form',
+    customer_id: null,
+    contact: { name: 'Sadia Rahman', phone_masked: '017****5678', phone: '+8801712345678' },
+    last_message_preview: 'Topic: Delivery · Order: TMB-26-00042',
+    window: { applies: false, open: false, expires_at: null },
+    reply: { state: 'closed', window_closes_at: null },
+};
+
+describe('Inbox website form', () => {
+    it('shows the Website form chip in the list', async () => {
+        inboxApi(operator, {
+            'GET /inbox/conversations': { status: 200, body: { data: [nusrat, webForm], links: {}, meta: { next_cursor: null, prev_cursor: null, per_page: 30, counts: { all: 2, mine: 0, needs_human: 2 } } } },
+        });
+        renderApp('/inbox');
+
+        const list = await screen.findByRole('region', { name: 'Conversations' });
+        await within(list).findByText('Sadia Rahman');
+        expect(within(list).getAllByText('Website form').length).toBeGreaterThan(0);
+    });
+
+    it('says to reply by WhatsApp or a call, disables the reply, and still allows a note', async () => {
+        const fetchMock = inboxApi(operator, { 'GET /inbox/conversations/4': { status: 200, body: detail(webForm) }, 'POST /inbox/conversations/4/read': { status: 200, body: detail({ ...webForm, unread_count: 0 }) } });
+        renderApp('/inbox/4');
+
+        expect(await screen.findByText('Sent from the website contact form. Reply by WhatsApp or call 01712 345 678.')).toBeTruthy();
+        expect(screen.queryByText(/The customer has not written in yet/)).toBeNull();
+        expect(screen.getByRole('textbox', { name: 'Reply' })).toHaveProperty('disabled', true);
+
+        fireEvent.click(screen.getByRole('radio', { name: 'Internal note' }));
+        const box = screen.getByRole('textbox', { name: 'Internal note' });
+        fireEvent.change(box, { target: { value: 'Called her on WhatsApp' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
+        await waitFor(() => expect(calls(fetchMock, 'POST', '/inbox/conversations/4/notes')).toHaveLength(1));
+        expect(calls(fetchMock, 'POST', '/inbox/conversations/4/messages')).toHaveLength(0);
+    });
+
+    it('renders the notice in Bangla', async () => {
+        inboxApi(operator, { 'GET /inbox/conversations/4': { status: 200, body: detail(webForm) }, 'POST /inbox/conversations/4/read': { status: 200, body: detail({ ...webForm, unread_count: 0 }) } });
+        renderApp('/inbox/4', { locale: 'bn' });
+
+        expect(await screen.findByText(/ওয়েবসাইটের যোগাযোগ ফর্ম থেকে পাঠানো। WhatsApp-এ উত্তর দিন বা 01712 345 678 নম্বরে কল করুন।/)).toBeTruthy();
+    });
+});

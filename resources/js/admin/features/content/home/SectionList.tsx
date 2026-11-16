@@ -2,8 +2,10 @@ import { useState, type DragEvent, type KeyboardEvent } from 'react';
 import {
     ArticleIcon,
     ChatsCircleIcon,
+    ChatTeardropTextIcon,
     ClockIcon,
     DotsSixVerticalIcon,
+    EnvelopeSimpleIcon,
     EyeIcon,
     EyeSlashIcon,
     GridFourIcon,
@@ -50,6 +52,8 @@ export const typeIcons: Record<BlockType, Icon> = {
     feature_tiles: GridFourIcon,
     numbered_cards: ListNumbersIcon,
     cta_band: MegaphoneSimpleIcon,
+    contact_hero: ChatTeardropTextIcon,
+    contact_form: EnvelopeSimpleIcon,
 };
 
 type Props = {

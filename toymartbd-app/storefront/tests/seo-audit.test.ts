@@ -43,7 +43,7 @@ function seededCmsSlugs(): string[] {
 }
 
 function resolves(path: string): boolean {
-    const pathname = path.split('?')[0]!;
+    const pathname = path.split(/[?#]/)[0]!;
     if (staticRoutes().includes(pathname)) return true;
     const cms = /^\/([a-z0-9-]+)$/.exec(pathname);
     return cms !== null && seededCmsSlugs().includes(cms[1]!);

@@ -9,6 +9,8 @@ use App\Domain\Content\Blocks\Schemas\BlockSchema;
 use App\Domain\Content\Blocks\Schemas\BlogTeaserSchema;
 use App\Domain\Content\Blocks\Schemas\BrandStripSchema;
 use App\Domain\Content\Blocks\Schemas\CategoryTilesSchema;
+use App\Domain\Content\Blocks\Schemas\ContactFormSchema;
+use App\Domain\Content\Blocks\Schemas\ContactHeroSchema;
 use App\Domain\Content\Blocks\Schemas\ContactInfoSchema;
 use App\Domain\Content\Blocks\Schemas\CtaBandSchema;
 use App\Domain\Content\Blocks\Schemas\FaqSchema;
@@ -62,6 +64,10 @@ enum BlockType: string
     case NumberedCards = 'numbered_cards';
     /** A gradient band with a title, a line of copy and up to two buttons. */
     case CtaBand = 'cta_band';
+    /** Contact hero (Contact us): overline, the page headline, a lead, a status pill and up to four chat bubbles. */
+    case ContactHero = 'contact_hero';
+    /** "Send us a message" (→ the admin Inbox) beside an optional visit card with hours and a quick-links card. */
+    case ContactForm = 'contact_form';
 
     public function schema(): BlockSchema
     {
@@ -84,6 +90,8 @@ enum BlockType: string
             self::FeatureTiles => new FeatureTilesSchema,
             self::NumberedCards => new NumberedCardsSchema,
             self::CtaBand => new CtaBandSchema,
+            self::ContactHero => new ContactHeroSchema,
+            self::ContactForm => new ContactFormSchema,
         };
     }
 

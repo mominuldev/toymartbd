@@ -12,7 +12,8 @@ import { getStoreInfo } from '@/lib/store-info';
 // tracking 132:2899 / 161:16502, OrderStep 121:1557, OrderTimeline 121:1558). Server components;
 // every figure is the API's.
 
-const card = 'rounded-sm border border-line-default bg-surface p-4 lg:p-4';
+// Figma 161:16502 / 132:2899: every card is hairline-bordered surface, radius sm, 24 padding at 1440 and 16 at 390.
+const card = 'rounded-sm border border-line-default bg-surface p-4 lg:p-6';
 
 const badgeTone: Record<StorefrontOrder['stage'], string> = {
     placed: 'bg-info-subtle text-feedback-info',
@@ -32,7 +33,7 @@ export function OrderHeaderCard({ order, t }: { order: StorefrontOrder; t: Messa
         <section aria-labelledby="order-number" className={`${card} flex flex-col gap-3`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <h2 id="order-number" className="t-h4 text-fg-primary tabular-nums">
+                    <h2 id="order-number" className="t-h3 lg:t-h4 text-fg-primary tabular-nums">
                         {format(o.number, { number: order.number })}
                     </h2>
                     <p className="t-caption text-fg-secondary tabular-nums">
@@ -43,7 +44,7 @@ export function OrderHeaderCard({ order, t }: { order: StorefrontOrder; t: Messa
                         })}
                     </p>
                 </div>
-                <span className={`t-badge shrink-0 rounded-full px-2 py-0.5 ${badgeTone[order.stage]}`}>{o.badges[order.stage]}</span>
+                <span className={`t-caption-strong shrink-0 rounded-full px-2.5 py-1 ${badgeTone[order.stage]}`}>{o.badges[order.stage]}</span>
             </div>
         </section>
     );
@@ -56,10 +57,11 @@ export function OrderHeaderCard({ order, t }: { order: StorefrontOrder; t: Messa
  *  carries the Detail row (121:1518: courier · consignment, body-sm secondary, + "Track" body-sm-strong brand)
  *  and, below it, the courier's picked-up / in-transit times (captions; not drawn in Figma). Out for delivery
  *  is the courier's own milestone (P6). */
+/* The timeline card keeps a 16 inset at both widths (Figma 161:16906: markers sit 16 from the card edge). */
 export function OrderTimeline({ order, locale, t }: { order: StorefrontOrder; locale: Locale; t: Messages }) {
     const steps = timelineSteps(order);
     return (
-        <section aria-labelledby="order-timeline" className={card}>
+        <section aria-labelledby="order-timeline" className="rounded-sm border border-line-default bg-surface p-4">
             <h2 id="order-timeline" className="sr-only">
                 {t.order.timelineTitle}
             </h2>
@@ -130,14 +132,14 @@ export function DeliveryDetails({ order, locale, t }: { order: StorefrontOrder; 
     const s = order.shipping;
     const places = [s.area, s.upazila ? placeName(s.upazila, bn) : null, s.district ? placeName(s.district, bn) : null].filter(Boolean).join(', ');
     const cod = order.payment.method === 'cod';
-    const label = 't-overline text-fg-tertiary';
+    const label = 't-detail-label mb-1.5 uppercase text-fg-secondary';
     return (
-        <section aria-labelledby="order-delivery" className={`${card} flex flex-col gap-4 lg:p-5`}>
-            <h2 id="order-delivery" className="t-h4 text-fg-primary">
+        <section aria-labelledby="order-delivery" className={`${card} flex flex-col gap-4`}>
+            <h2 id="order-delivery" className="t-h3 lg:t-h4 text-fg-primary">
                 {o.deliveryDetails}
             </h2>
-            <dl className="t-body-sm grid gap-4 text-fg-primary lg:grid-cols-3">
-                <div className="flex flex-col gap-1">
+            <dl className="t-body-sm grid gap-4 text-fg-primary lg:grid-cols-3 lg:gap-6">
+                <div className="flex flex-col">
                     <dt className={label}>{o.deliverTo}</dt>
                     <dd>{s.name}</dd>
                     {s.address_line ? <dd>{s.address_line}</dd> : null}
@@ -147,12 +149,12 @@ export function DeliveryDetails({ order, locale, t }: { order: StorefrontOrder; 
                         {s.postcode ? ` ${s.postcode}` : ''} · <span className="tabular-nums">{s.phone_masked}</span>
                     </dd>
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col">
                     <dt className={label}>{o.payment}</dt>
                     <dd>{cod ? o.cod : order.payment.status === 'paid' ? `${t.payment.onlineShort} · ${o.paid}` : t.payment.onlineShort}</dd>
                     <dd className="tabular-nums">{cod && !isZero(order.totals.due_total) ? format(o.codDue, { amount: formatPrice(order.totals.due_total) }) : o.paid}</dd>
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col">
                     <dt className={label}>{o.courier}</dt>
                     {order.shipment ? (
                         <dd>
@@ -173,7 +175,7 @@ export function OrderItems({ order, locale, t, totals = false }: { order: Storef
     const row = 't-body-sm flex items-center justify-between gap-3';
     return (
         <section aria-labelledby="order-items" className={`${card} flex flex-col gap-3`}>
-            <h2 id="order-items" className="t-h4 text-fg-primary">
+            <h2 id="order-items" className="t-h3 lg:t-h4 text-fg-primary">
                 {o.itemsTitle}
             </h2>
             <ul className="flex flex-col gap-3">
@@ -186,7 +188,8 @@ export function OrderItems({ order, locale, t, totals = false }: { order: Storef
                     );
                     return (
                         <li key={item.variant_id} className="flex items-center gap-3">
-                            <span className="size-12 shrink-0 overflow-hidden rounded-xs border border-line-default bg-tile-pink">
+                            {/* Figma 161:16967: the photo on its bg/image ground; with no photo the box keeps a visible bg/subtle ground. */}
+                            <span className={`size-12 shrink-0 overflow-hidden rounded-xs ${item.image ? 'bg-image' : 'bg-subtle'}`}>
                                 {item.image ? <img src={item.image.url} alt="" width={48} height={48} loading="lazy" className="size-full object-cover" /> : null}
                             </span>
                             <span className="flex min-w-0 grow flex-col">
@@ -240,12 +243,13 @@ export function OrderItems({ order, locale, t, totals = false }: { order: Storef
 export async function OrderHelp({ locale, t }: { locale: Locale; t: Messages }) {
     const { contact } = await getStoreInfo();
     return (
-        <a href={whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact))} className="flex items-center gap-3 rounded-sm bg-tile-pink p-4 hover:shadow-e1">
-            <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-status-in-stock text-fg-inverse">
-                <Icon name="whatsappLogo" className="size-icon-md" />
+        <a href={whatsappHref(contact.whatsapp, localizedPath(locale, cmsPaths.contact))} className="flex items-center gap-3 rounded-sm bg-brand-subtle p-4 hover:shadow-e1 lg:p-6">
+            {/* 03-storefront-spec B7.3: on-brand glyph on a feedback/success disc (44 at 1440, 40 at 390). */}
+            <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-feedback-success text-fg-on-brand lg:size-11">
+                <Icon name="whatsappLogo" className="size-5.5 lg:size-icon-lg" />
             </span>
             <span className="flex flex-col">
-                <span className="t-body-sm-strong text-fg-primary">{t.order.helpTitle}</span>
+                <span className="t-body-strong text-fg-primary">{t.order.helpTitle}</span>
                 <span className="t-caption text-fg-secondary">{t.order.helpBody}</span>
             </span>
         </a>

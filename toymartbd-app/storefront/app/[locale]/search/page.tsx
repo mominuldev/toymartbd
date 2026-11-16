@@ -157,7 +157,8 @@ export default async function SearchPage({ params, searchParams }: Props) {
         );
     }
 
-    const listingT = { ...t.listing, countOf: t.search.countOf };
+    // The sidebar's live count reads "37 results" on search (Figma 161:15289 FilterSidebar).
+    const listingT = { ...t.listing, countOf: t.search.countOf, products: t.search.countHead };
     const mobileHead = (
         <p className="flex flex-wrap items-baseline gap-x-1.5" aria-live="polite">
             <span className="t-h2 text-fg-primary">{total === 1 ? t.search.countHeadOne : format(t.search.countHead, { count: String(total) })}</span>

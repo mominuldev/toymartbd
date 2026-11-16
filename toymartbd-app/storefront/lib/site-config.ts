@@ -151,8 +151,11 @@ export const footerColumns = [
         title: 'shop',
         links: [
             { label: 'allToys', path: '/toys' },
+            { label: 'byAge', path: '/#shop-by-age' },
             { label: 'flashSale', path: '/flash-sale' },
             { label: 'newArrivals', path: '/toys?sort=newest' },
+            // No best-seller sort on listings; `featured` is what the home Best sellers rail ranks first.
+            { label: 'bestSellers', path: '/toys?sort=featured' },
             { label: 'brands', path: '/brands' },
         ],
     },

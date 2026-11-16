@@ -4,6 +4,8 @@ import { AgeTilesBlock } from '@/components/content/blocks/AgeTilesBlock';
 import { BlogTeaserBlock } from '@/components/content/blocks/BlogTeaserBlock';
 import { BrandStripBlock } from '@/components/content/blocks/BrandStripBlock';
 import { CategoryTilesBlock } from '@/components/content/blocks/CategoryTilesBlock';
+import { ContactFormBlock } from '@/components/content/blocks/ContactFormBlock';
+import { ContactHeroBlock } from '@/components/content/blocks/ContactHeroBlock';
 import { ContactInfoBlock } from '@/components/content/blocks/ContactInfoBlock';
 import { CtaBandBlock } from '@/components/content/blocks/CtaBandBlock';
 import { FaqBlock } from '@/components/content/blocks/FaqBlock';
@@ -68,6 +70,10 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: s
             return <NumberedCardsBlock id={block.id} title={block.content.title} items={block.content.items} locale={locale} />;
         case 'cta_band':
             return <CtaBandBlock id={block.id} content={block.content} locale={locale} />;
+        case 'contact_hero':
+            return <ContactHeroBlock content={block.content} locale={locale} heading={pageHeading || opensPage ? 'h1' : 'h2'} />;
+        case 'contact_form':
+            return <ContactFormBlock id={block.id || 'form'} content={block.content} locale={locale} />;
     }
 }
 
@@ -76,9 +82,9 @@ function render(block: HomeBlock, locale: Locale, firstHero: boolean, hotline: s
  * live editor (PreviewBridge) uses to outline and select it. The live page carries no ids.
  * `hotline` is the store hotline for `{phone}` in USP items (lib/store-info.ts, display form).
  * `pageHeading={false}` on a static page built from sections (CmsSectionsPage): the page title is
- * the H1 there, so a hero headline renders as an h2 — unless the page opens with a story hero
- * (`storyOpensPage`): then the page has no header, that hero's title is the H1 and its photos
- * are the LCP. `gap` overrides the space between sections (static pages use the 64 of their Figma frames).
+ * the H1 there, so a hero headline renders as an h2 — unless the page opens with a story or
+ * contact hero (`storyOpensPage`, see opensPage()): then the page has no header, that hero's title
+ * is the H1 (and a story hero's photos are the LCP). `gap` overrides the space between sections (static pages use the 64 of their Figma frames).
  */
 export function HomeBlocks({
     blocks,
@@ -104,10 +110,10 @@ export function HomeBlocks({
         <div className={`flex flex-col ${gap}`}>
             {faqs.length > 0 ? <JsonLd data={[faqPageJsonLd(faqs)]} /> : null}
             {blocks.map((block, i) => {
-                const node = render(block, locale, i === firstHero, hotline, pageHeading, storyOpensPage && i === 0 && block.type === 'story_hero');
+                const node = render(block, locale, i === firstHero, hotline, pageHeading, storyOpensPage && i === 0 && opensPage(block));
                 const device = deviceClass(block);
                 const blockId = editable && block.id ? block.id : undefined;
-                return block.type === 'usp_band' ? (
+                return block.type === 'usp_band' || block.type === 'flash_sale' ? (
                     <div key={block.id || i} data-block={block.type} data-block-id={blockId} className={device}>
                         {node}
                     </div>
@@ -121,6 +127,11 @@ export function HomeBlocks({
             })}
         </div>
     );
+}
+
+/** Hero sections that, placed first on a page built from sections, are that page's header. */
+export function opensPage(block: HomeBlock | undefined): boolean {
+    return block?.type === 'story_hero' || block?.type === 'contact_hero';
 }
 
 /** The thin bar shown over a draft preview, with a way out (`page`: a static page's draft). */

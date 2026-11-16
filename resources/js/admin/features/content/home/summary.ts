@@ -35,6 +35,12 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
         case 'image':
             parts.push(typeof c.media_id === 'number' ? t(`homeBuilder.summary.image.${str(c.width) === 'wide' ? 'wide' : 'content'}`) : t('homeBuilder.summary.noImage'));
             break;
+        case 'contact_hero':
+            parts.push(t('homeBuilder.summary.bubbles', { count: rows(c.bubbles).length }));
+            break;
+        case 'contact_form':
+            parts.push(t('homeBuilder.summary.contactForm'));
+            break;
         case 'story_hero':
             parts.push(ids(c.media_ids).length ? t('homeBuilder.summary.photos', { count: ids(c.media_ids).length }) : t('homeBuilder.summary.noImage'));
             break;

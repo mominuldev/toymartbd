@@ -1,5 +1,6 @@
 import Image from 'next/image';
 
+import { buttonClass } from '@/components/layout/button-styles';
 import type { Messages } from '@/lib/i18n';
 import { localizedPath, type Locale } from '@/lib/i18n';
 import { AGE_BANDS } from '@/lib/listing/state';
@@ -13,10 +14,11 @@ import hero from '@/public/images/home/hero.jpg';
 // The photograph is the route's LCP element (storefront spec §B1.0): the only image on Home that
 // is preloaded (`preload`, Next 16's replacement for `priority`), never lazy, served AVIF/WebP at
 // the rendered width. The art is the Figma mock `hero/home` (126:2) until studio photography.
-// "See the flash sale" is left out: there is no flash-sale data yet, and a section with no sale is
-// removed, not left pointing at nothing (§B1.3).
+// "See the flash sale" (Outline, Figma 133:308) shows only while a sale is running (`flashSale`) — a
+// section with no sale is removed, not left pointing at nothing (§B1.3) — and only from 1024: the
+// 390 hero (126:101) carries the one CTA.
 
-export function HomeHero({ locale, t }: { locale: Locale; t: Messages['home'] }) {
+export function HomeHero({ locale, t, flashSale = false }: { locale: Locale; t: Messages['home']; flashSale?: boolean }) {
     const pills = t.agePills as Record<string, string>;
     return (
         <section aria-labelledby="home-hero-title" className="flex flex-col gap-2 overflow-hidden rounded-md bg-(image:--tm-gradient-bloom-candy) p-5 lg:h-120 lg:flex-row lg:items-center lg:gap-12 lg:px-12 lg:py-0">
@@ -40,12 +42,19 @@ export function HomeHero({ locale, t }: { locale: Locale; t: Messages['home'] })
                         ))}
                     </ul>
                 </nav>
-                <a
-                    href={localizedPath(locale, '/toys')}
-                    className="t-button flex h-control-lg items-center justify-center rounded-full bg-(image:--tm-gradient-button-primary) px-6 text-fg-on-brand shadow-gloss-button max-lg:order-3 lg:min-w-32 lg:self-start"
-                >
-                    {t.browseAll}
-                </a>
+                <div className="flex gap-3 max-lg:order-3">
+                    <a
+                        href={localizedPath(locale, '/toys')}
+                        className="t-button flex h-control-lg grow items-center justify-center rounded-full bg-(image:--tm-gradient-button-primary) px-6 text-fg-on-brand shadow-gloss-button lg:min-w-32 lg:grow-0"
+                    >
+                        {t.browseAll}
+                    </a>
+                    {flashSale ? (
+                        <a href={localizedPath(locale, '/flash-sale')} className={`${buttonClass('outline', 'lg')} max-lg:hidden`}>
+                            {t.seeFlashSale}
+                        </a>
+                    ) : null}
+                </div>
             </div>
             <div className="relative h-42.5 w-full shrink-0 overflow-hidden rounded-sm bg-image max-lg:order-1 lg:h-100 lg:w-152">
                 <Image src={hero} alt={t.heroAlt} preload sizes="(min-width: 64rem) 38rem, calc(100vw - 4.5rem)" className="size-full object-cover" />

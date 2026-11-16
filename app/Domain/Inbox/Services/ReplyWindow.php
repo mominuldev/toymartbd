@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * the API resource, the Actions (before queueing and again under the row lock) and the send
  * job (once more before the provider call).
  *
+ *  - Web form: always `closed` — inbound only, there is no channel to reply through.
  *  - Live chat: always `open`.
  *  - WhatsApp: `open` within the 24-hour window, `template_only` after it (Meta: outside the
  *    window only an approved template may be sent).
@@ -39,6 +40,10 @@ final class ReplyWindow
     public function for(Conversation $conversation, ?Carbon $now = null): ReplyAllowance
     {
         $now ??= now();
+
+        if (! $conversation->channel->canSend()) {
+            return new ReplyAllowance(ReplyState::Closed, null);
+        }
 
         if (! $conversation->channel->hasServiceWindow()) {
             return new ReplyAllowance(ReplyState::Open, null);

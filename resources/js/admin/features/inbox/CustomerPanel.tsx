@@ -10,7 +10,7 @@ import { SearchField } from '@/components/ui/SearchField';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
 import { ApiError } from '@/lib/api';
-import { canReplyFreely, useProductOptions, useQuickReply, type ConversationDetail, type InboxCustomer } from './api';
+import { canReplyFreely, isWebForm, useProductOptions, useQuickReply, type ConversationDetail, type InboxCustomer } from './api';
 import { langProps } from './parts';
 
 const orderTone: Record<string, StatusTone> = {
@@ -137,7 +137,7 @@ function QuickActions({ detail }: { detail: ConversationDetail }) {
     const canReply = can(me, 'inbox.reply');
     if (!canReply) return null;
 
-    const windowReason = canReplyFreely(detail.reply.state) ? null : t('inbox.quick.windowReason');
+    const windowReason = canReplyFreely(detail.reply.state) ? null : t(isWebForm(detail.channel) ? 'inbox.quick.webFormReason' : 'inbox.quick.windowReason');
     const lastOrder = detail.customer?.last_order ?? null;
     const send = (kind: 'product_card' | 'tracking_link', targetId: number) =>
         quick.mutate(

@@ -47,7 +47,7 @@ interface Props {
 const BOX: Record<CountdownSize, string> = {
     xs: 'h-5.5 w-24 rounded-full px-2 gap-1 t-caption-strong',
     sm: 'h-8 w-35 rounded-full px-3 gap-2 t-body-sm-strong',
-    md: 'h-16 w-72 rounded-md px-4 gap-2 t-body-sm-strong',
+    md: 'h-16 w-72 rounded-sm px-4 gap-1.5 t-body-sm-strong',
 };
 
 const FILL_BOX = 'h-5.5 w-full px-2 gap-1 t-caption-strong';
@@ -106,14 +106,14 @@ export function CountdownTimer({ endsAt, size, t, renderedAt, onEnded, fill = fa
     } else if (size === 'md') {
         const units = [t.days, t.hours, t.minutes, t.seconds];
         body = (
-            <span aria-hidden="true" className="flex items-center gap-2 tabular-nums">
+            <span aria-hidden="true" className="flex items-center gap-1.5 tabular-nums">
                 {tiles(left).map((digits, i) => (
-                    <span key={units[i]} className="flex items-center gap-2">
+                    <span key={units[i]} className="flex items-center gap-1.5">
                         {i > 0 ? <span className="opacity-60">:</span> : null}
                         <span
-                            className={`flex size-10 flex-col items-center justify-center rounded-sm leading-none ${state === 'urgent' ? 'border-(length:--tm-border-width-control) border-fg-on-brand' : 'bg-surface/20'}`}
+                            className={`flex size-12 flex-col items-center justify-center rounded-xs ${state === 'urgent' ? 'border-(length:--tm-border-width-control) border-fg-on-brand' : 'bg-accent-tile'}`}
                         >
-                            <span className="t-price-current-compact">{digits}</span>
+                            <span className="t-price-current-card">{digits}</span>
                             <span className="t-caption">{units[i]}</span>
                         </span>
                     </span>

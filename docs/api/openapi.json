@@ -24248,7 +24248,7 @@
                     {
                         "name": "filter[channel]",
                         "in": "query",
-                        "description": "whatsapp|messenger|live_chat",
+                        "description": "whatsapp|messenger|live_chat|web_form",
                         "schema": {
                             "type": "string"
                         }
@@ -33979,6 +33979,69 @@
                 }
             }
         },
+        "/storefront/contact-messages": {
+            "post": {
+                "operationId": "v1.storefront.contact-messages.store",
+                "summary": "`POST /contact-messages` \u2014 opens or extends the sender's `web_form` conversation in the\nadmin Inbox (one thread per phone). Answers 202 `{status: \"received\"}`. Limited to 5 an\nhour per phone and 10 an hour per client IP",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactMessageRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "received"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Invalid name, phone (rule 30), topic, order number or message (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many messages from this phone or client (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/payment-methods": {
             "get": {
                 "operationId": "v1.storefront.payment-methods.index",
@@ -38070,7 +38133,7 @@
             },
             "BlockType": {
                 "type": "string",
-                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |\n| `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings \u203a Store, plus hours. |\n| `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |\n| `story_hero` <br/> Story hero (About us): overline, the page headline, two paragraphs, a collage of up to three library photos, a badge. |\n| `feature_tiles` <br/> Two to four pastel tiles, each an icon, a title and a sentence. |\n| `numbered_cards` <br/> A heading and one to six numbered cards (01, 02\u2026), each a title and a sentence. |\n| `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |",
+                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |\n| `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings \u203a Store, plus hours. |\n| `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |\n| `story_hero` <br/> Story hero (About us): overline, the page headline, two paragraphs, a collage of up to three library photos, a badge. |\n| `feature_tiles` <br/> Two to four pastel tiles, each an icon, a title and a sentence. |\n| `numbered_cards` <br/> A heading and one to six numbered cards (01, 02\u2026), each a title and a sentence. |\n| `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |\n| `contact_hero` <br/> Contact hero (Contact us): overline, the page headline, a lead, a status pill and up to four chat bubbles. |\n| `contact_form` <br/> \"Send us a message\" (\u2192 the admin Inbox) beside an optional visit card with hours and a quick-links card. |",
                 "enum": [
                     "hero",
                     "category_tiles",
@@ -38089,7 +38152,9 @@
                     "story_hero",
                     "feature_tiles",
                     "numbered_cards",
-                    "cta_band"
+                    "cta_band",
+                    "contact_hero",
+                    "contact_form"
                 ],
                 "title": "BlockType"
             },
@@ -41026,7 +41091,9 @@
                             "story_hero",
                             "feature_tiles",
                             "numbered_cards",
-                            "cta_band"
+                            "cta_band",
+                            "contact_hero",
+                            "contact_form"
                         ]
                     },
                     "label": {
@@ -41782,6 +41849,68 @@
                     "other"
                 ],
                 "title": "ConsentConfirmationMethod"
+            },
+            "ContactMessageRequest": {
+                "type": "object",
+                "description": "`POST /storefront/contact-messages` \u2014 the Contact page's \"Send us a message\" form (owner\ndecision 2026-11-16). The phone is a Bangladeshi mobile, 013\u2013019 only (rule 30), and is\nstored as E.164. The order number is optional and as forgiving as order tracking's\n(\"26-00042\", Bengali digits), stored in its canonical form.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "A Bangladeshi mobile, 013\u2013019 (rule 30), e.g. \"01712345678\" or \"+8801712345678\".",
+                        "maxLength": 32
+                    },
+                    "topic": {
+                        "$ref": "#/components/schemas/ContactTopic"
+                    },
+                    "order_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "e.g. \"TMB-26-00042\" (also \"26-00042\").",
+                        "maxLength": 32
+                    },
+                    "message": {
+                        "type": "string",
+                        "minLength": 10,
+                        "maxLength": 500
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "en",
+                            "bn",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "phone",
+                    "topic",
+                    "message"
+                ],
+                "title": "ContactMessageRequest"
+            },
+            "ContactTopic": {
+                "type": "string",
+                "description": "What a storefront contact-form message is about (Contact page, owner decision 2026-11-16).\n",
+                "enum": [
+                    "choosing_toy",
+                    "order",
+                    "delivery",
+                    "returns",
+                    "gifts_bulk",
+                    "other"
+                ],
+                "title": "ContactTopic"
             },
             "Coupon": {
                 "type": "object",
@@ -48492,7 +48621,8 @@
                         "enum": [
                             "whatsapp",
                             "messenger",
-                            "live_chat"
+                            "live_chat",
+                            "web_form"
                         ]
                     },
                     "status": {
@@ -48659,7 +48789,8 @@
                         "enum": [
                             "whatsapp",
                             "messenger",
-                            "live_chat"
+                            "live_chat",
+                            "web_form"
                         ]
                     },
                     "status": {

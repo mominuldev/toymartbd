@@ -68,4 +68,5 @@ export const tileIcons: Record<TileIconKey, IconName> = {
     heart: 'heartFill',
     puzzle: 'puzzlePiece',
     books: 'books',
+    clock: 'clock',
 };

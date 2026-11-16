@@ -104,9 +104,15 @@ final class Conversation extends Model
         return $this->last_inbound_at->copy()->addHours(is_int($hours) ? $hours : 24);
     }
 
-    /** May a free-form reply be sent now? Always on live chat; within the window on Meta channels. */
+    /**
+     * May a free-form reply be sent now? Always on live chat; within the window on Meta channels;
+     * never on the web form (no sending channel).
+     */
     public function windowOpen(?Carbon $now = null): bool
     {
+        if (! $this->channel->canSend()) {
+            return false;
+        }
         if (! $this->channel->hasServiceWindow()) {
             return true;
         }

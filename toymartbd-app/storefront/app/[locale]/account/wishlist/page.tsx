@@ -58,6 +58,20 @@ export default async function WishlistPage({ params }: Props) {
 
             <AccountNotice kind={flash?.kind ?? 'success'} text={noticeText(flash?.message, m, hotline)} />
 
+            {shareHref ? (
+                // 1440 (239:13228): one line above the grid — the birthday prompt, then a small Primary
+                // "Share on WhatsApp". The frame's "Copy link" needs a public wishlist page, which does not exist.
+                <section aria-labelledby="share-desktop" className="hidden items-center justify-between gap-4 lg:flex">
+                    <p className="t-body-sm text-fg-secondary">
+                        <span id="share-desktop">{m.wishlist.shareTitle}</span> {m.wishlist.shareBody}
+                    </p>
+                    <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`${smallButton.primary} shrink-0`}>
+                        <Icon name="whatsappLogo" className="size-4" />
+                        {m.wishlist.shareCta}
+                    </a>
+                </section>
+            ) : null}
+
             {items.length === 0 ? (
                 <section className="flex flex-col items-center gap-3 rounded-sm border border-line-default bg-surface px-6 py-10 text-center">
                     <span className="flex size-16 items-center justify-center rounded-full bg-tile-pink text-fg-brand">
@@ -96,11 +110,11 @@ export default async function WishlistPage({ params }: Props) {
             )}
 
             {shareHref ? (
-                // "Birthday coming up?" (238:10450): butter card, share the list with family over WhatsApp.
-                <section className="flex flex-col gap-2 rounded-sm bg-tile-butter p-4 lg:max-w-136">
+                // 390 "Birthday coming up?" (238:10450): butter card below the grid, share the list over WhatsApp.
+                <section className="flex flex-col gap-2 rounded-sm bg-tile-butter p-4 lg:hidden">
                     <h2 className="t-h4 text-fg-primary">{m.wishlist.shareTitle}</h2>
                     <p className="t-body-sm text-fg-secondary">{m.wishlist.shareBody}</p>
-                    <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`${buttonClass('primary')} mt-1 w-full lg:w-fit`}>
+                    <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`${buttonClass('primary')} mt-1 w-full`}>
                         <Icon name="whatsappLogo" className={buttonIconClass.lg} />
                         {m.wishlist.shareCta}
                     </a>

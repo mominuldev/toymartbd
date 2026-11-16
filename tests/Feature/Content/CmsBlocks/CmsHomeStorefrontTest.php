@@ -65,6 +65,29 @@ it('renders the About blocks: collage photos with renditions, copy in the locale
         ->and($bn->json('blocks.1.content.items.0.title'))->toBe('বয়স যাচাই');
 });
 
+it('renders the Contact blocks with copy in the locale', function (): void {
+    CmsKit::block('contact_hero', ['title' => 'Contact us', 'lead' => 'Ask us.', 'status' => 'Online now', 'bubbles' => [
+        ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Is it OK for 2?'],
+        ['from' => 'store', 'label' => 'Toy Mart', 'text' => 'Yes.'],
+    ]]);
+    CmsKit::block('contact_info', ['title' => null, 'whatsapp_note' => 'Fastest', 'address_label' => 'Dhanmondi, Dhaka']);
+    CmsKit::block('contact_form', ['hours' => [['label' => 'Friday', 'label_bn' => 'শুক্রবার', 'value' => 'Closed']], 'visit_title' => 'Visit our shop',
+        'links_title' => 'Quicker than a message', 'links' => [['icon' => 'clock', 'label' => 'Delivery', 'href' => '/delivery-policy']]]);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    expect(CmsKit::types($en))->toBe(['contact_hero', 'contact_info', 'contact_form'])
+        ->and($en->json('blocks.0.content.bubbles.1.from'))->toBe('store')
+        ->and($en->json('blocks.1.content.title'))->toBeNull()
+        ->and($en->json('blocks.1.content.whatsapp_note'))->toBe('Fastest')
+        ->and($en->json('blocks.2.content.links.0.href'))->toBe('/delivery-policy');
+
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($bn->json('blocks.0.content.bubbles.0.label'))->toBe('অভিভাবক')
+        ->and($bn->json('blocks.0.content.bubbles.1.label'))->toBe('Toy Mart')
+        ->and($bn->json('blocks.2.content.hours.0.label'))->toBe('শুক্রবার');
+});
+
 it('requires the storefront token and an allowlisted locale', function (): void {
     $this->getJson(CmsKit::STOREFRONT.'?locale=en')->assertUnauthorized();
     CmsKit::home('fr')->assertStatus(400);

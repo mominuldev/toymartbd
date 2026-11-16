@@ -87,7 +87,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
                         <OrderTimeline order={order} locale={locale} t={t} />
                         <DeliveryDetails order={order} locale={locale} t={t} />
                     </div>
-                    <aside className="flex flex-col gap-4 lg:w-100 lg:shrink-0">
+                    <aside className="flex flex-col gap-4 lg:w-110 lg:shrink-0">
                         <OrderItems order={order} locale={locale} t={t} totals />
                         <div className="flex flex-col gap-3">
                             {/* An unpaid online order: its payment page re-reads the status and offers a retry (P4-PAY-04). */}

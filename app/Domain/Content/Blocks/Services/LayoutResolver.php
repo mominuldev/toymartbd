@@ -174,6 +174,8 @@ final class LayoutResolver
             case BlockType::FeatureTiles:
             case BlockType::NumberedCards:
             case BlockType::CtaBand:
+            case BlockType::ContactHero:
+            case BlockType::ContactForm:
             case BlockType::UspBand:
             case BlockType::ContactInfo: // values come from GET /storefront/store-info
             case BlockType::FlashSale:

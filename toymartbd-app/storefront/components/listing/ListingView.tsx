@@ -101,7 +101,7 @@ export function ListingView({ locale, t, path, scope, state, listing, title, tit
             <h1 className={`t-h1 mt-2.5 text-fg-primary lg:mt-5 ${mobileHead ? 'max-lg:sr-only' : ''}`} lang={titleLang}>
                 {title}
             </h1>
-            {intro ? <p className={`t-body-sm mt-2.5 max-w-210 text-fg-secondary lg:mt-5 ${head}`}>{intro}</p> : null}
+            {intro ? <p className={`t-body-sm mt-2.5 max-w-210 text-fg-secondary lg:t-body lg:mt-5 ${head}`}>{intro}</p> : null}
             {subLinks.length > 0 ? (
                 <nav aria-label={mobileHead ? t.relatedSearches : t.subcategories} className={`-mx-gutter-mobile mt-2.5 overflow-x-auto px-gutter-mobile md:mx-0 md:px-0 lg:mt-5 ${head}`}>
                     <ul className="flex gap-2 pb-1 lg:flex-wrap lg:gap-3">

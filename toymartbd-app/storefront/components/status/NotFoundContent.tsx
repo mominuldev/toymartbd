@@ -2,19 +2,21 @@ import { CategoryTile } from '@/components/CategoryTile';
 import { Icon } from '@/components/icons/Icon';
 import { buttonClass, buttonIconClass } from '@/components/layout/button-styles';
 import { SearchBar } from '@/components/layout/SearchBar';
+import { ProductRail } from '@/components/listing/ProductRail';
 import { getCategoryTree } from '@/lib/categories';
-import { getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { fetchRail } from '@/lib/products';
 import { NotFoundIllustration } from './NotFoundIllustration';
 
 // The 404 body — Figma 163:9166 (1440) / 163:17451 (390), storefront spec §B8, content spec §C.7:
 // a Bloom-candy hero with the "4 · ball · 4" illustration, a search bar and two ways back, then
-// category tiles so a dead link is still a working entry point. Used by both the route-level
-// not-found and app/global-not-found.tsx.
-// Not built yet: the design's "Loved by kids this week" best-sellers row. It needs a
-// best-sellers endpoint and the shared ProductCard (P4-STO-03/05); add it under the tiles then.
+// category tiles and the "Loved by kids this week" best-sellers row (the Home rail's source:
+// GET /storefront/products sorted `featured`), so a dead link is still a working entry point.
+// Used by both the route-level not-found and app/global-not-found.tsx.
 export async function NotFoundContent({ locale }: { locale: Locale }) {
     const t = getMessages(locale);
-    const categories = (await getCategoryTree()).slice(0, 8);
+    const [tree, best] = await Promise.all([getCategoryTree(), fetchRail('featured', locale)]);
+    const categories = tree.slice(0, 8);
 
     return (
         <div className="flex flex-col gap-10 lg:gap-20">
@@ -58,6 +60,18 @@ export async function NotFoundContent({ locale }: { locale: Locale }) {
                         ))}
                     </ul>
                 </section>
+            ) : null}
+
+            {best && best.products.length > 0 ? (
+                <ProductRail
+                    id="nf-best"
+                    title={t.notFound.bestSellersTitle}
+                    products={best.products.slice(0, 8)}
+                    locale={locale}
+                    t={t.listing}
+                    action={{ href: localizedPath(locale, '/toys'), label: t.notFound.seeAll, ariaLabel: format(t.home.seeAllLabel, { section: t.notFound.bestSellersTitle }) }}
+                    slider
+                />
             ) : null}
         </div>
     );

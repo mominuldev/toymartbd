@@ -10,7 +10,7 @@ export type AttributeType = z.infer<typeof attributeTypeSchema>;
 export const bannerPlacementSchema = z.enum(["announcement_bar","category_page","info_strip","popup"]);
 export type BannerPlacement = z.infer<typeof bannerPlacementSchema>;
 
-export const blockTypeSchema = z.enum(["hero","category_tiles","age_tiles","product_rail","flash_sale","brand_strip","usp_band","promo_split","testimonials","blog_teaser","rich_text","faq","contact_info","image","story_hero","feature_tiles","numbered_cards","cta_band"]);
+export const blockTypeSchema = z.enum(["hero","category_tiles","age_tiles","product_rail","flash_sale","brand_strip","usp_band","promo_split","testimonials","blog_teaser","rich_text","faq","contact_info","image","story_hero","feature_tiles","numbered_cards","cta_band","contact_hero","contact_form"]);
 export type BlockType = z.infer<typeof blockTypeSchema>;
 
 export const cancellationReasonSchema = z.enum(["customer_request","customer_unreachable","fake_order","duplicate_order","out_of_stock","pricing_error","address_unserviceable","payment_failed","other"]);
@@ -21,6 +21,9 @@ export type CapitalEntryKind = z.infer<typeof capitalEntryKindSchema>;
 
 export const capitalHolderRoleSchema = z.enum(["owner","partner"]);
 export type CapitalHolderRole = z.infer<typeof capitalHolderRoleSchema>;
+
+export const contactTopicSchema = z.enum(["choosing_toy","order","delivery","returns","gifts_bulk","other"]);
+export type ContactTopic = z.infer<typeof contactTopicSchema>;
 
 export const couponTypeSchema = z.enum(["fixed","percent","free_shipping"]);
 export type CouponType = z.infer<typeof couponTypeSchema>;
@@ -442,6 +445,17 @@ export const confirmOrderRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type ConfirmOrderRequestInput = z.input<typeof confirmOrderRequestSchema>;
+
+/** `POST /storefront/contact-messages` — the Contact page's "Send us a message" form (owner */
+export const contactMessageRequestSchema = z.object({
+    "name": z.string().min(1).max(80),
+    "phone": z.string().min(1).max(32),
+    "topic": contactTopicSchema,
+    "order_number": z.string().max(32).nullable().optional(),
+    "message": z.string().min(10).max(500),
+    "locale": z.enum(["en","bn"]).nullable().optional(),
+});
+export type ContactMessageRequestInput = z.input<typeof contactMessageRequestSchema>;
 
 /** `POST /products/{product}/images/{image}/crop` — `{ x, y, width, height }` in the */
 export const cropProductImageRequestSchema = z.object({

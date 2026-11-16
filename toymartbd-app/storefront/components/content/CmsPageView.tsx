@@ -1,5 +1,9 @@
-import { getMessages, localizedPath, type Locale } from '@/lib/i18n';
-import { localised, pageBody, pageTemplate, splitSections, withHeadingIds, type CmsPage, type CmsPageSummary } from '@/lib/content/types';
+import { RichTextBlock } from '@/components/content/blocks/RichTextBlock';
+import { Icon } from '@/components/icons/Icon';
+import { postDate } from '@/lib/blog/format';
+import type { TocEntry } from '@/lib/content/page-toc';
+import { format, getMessages, localizedPath, type Locale } from '@/lib/i18n';
+import { localised, pageBody, pageTemplate, withHeadingIds, type CmsPage, type CmsPageSummary } from '@/lib/content/types';
 import { descriptionContext, sanitizeDescription } from '@/lib/product/description';
 
 interface Props {
@@ -73,46 +77,21 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
         ) : null;
 
     const more = otherPages.filter((p) => p.slug !== page.slug);
-    const sections = sanitised ? splitSections(sanitised) : { intro: '', sections: [] };
+    const toc: TocEntry[] = headings.map((h, i) => ({ id: h.id, label: h.text, number: i + 1, count: null }));
 
     return (
-        <article className="flex flex-col gap-8">
-            <CmsPageHeader locale={locale} page={page} englishOnly={body.lang === 'en'} />
+        <article className="flex flex-col gap-8 lg:gap-10">
+            <CmsPageHeader locale={locale} page={page} englishOnly={body.lang === 'en'} updated={template === 'sidebar'} />
 
             {template === 'sidebar' ? (
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-8">
-                    {/* Figma Privacy 166:9992: a sticky "On this page" card (300) beside numbered section cards. */}
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
+                    {/* Figma Privacy 166:9992: a sticky "On this page" card (300) beside the numbered sections. */}
                     <aside className="flex flex-col gap-4 lg:sticky lg:top-36 lg:w-75 lg:shrink-0">
-                        {headings.length > 0 ? (
-                            <nav aria-label={t.content.onThisPage} className="flex flex-col gap-1 rounded-lg bg-surface p-3 shadow-e1">
-                                <p className="t-overline px-3 py-2 text-fg-tertiary">{t.content.onThisPage}</p>
-                                <ol className="flex flex-col">
-                                    {headings.map((h, i) => (
-                                        <li key={h.id}>
-                                            <a href={`#${h.id}`} className="t-body-sm flex min-h-touch-min items-center gap-3 rounded-sm px-3 text-fg-secondary hover:bg-brand-subtle hover:text-fg-primary">
-                                                <span className="t-caption font-semibold text-fg-brand tabular-nums">{String(i + 1).padStart(2, '0')}</span>
-                                                {h.text}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </nav>
-                        ) : null}
+                        <PageContents locale={locale} entries={toc} />
                         <MorePagesNav locale={locale} pages={more} />
                     </aside>
-                    <div lang={body.lang} className={`flex min-w-0 grow flex-col gap-4 ${bnClass(body.lang)}`}>
-                        {sections.intro ? <div className={bodyClass} dangerouslySetInnerHTML={{ __html: sections.intro }} /> : null}
-                        {sections.sections.map((section, i) => (
-                            <section key={section.id} id={section.id} aria-labelledby={`${section.id}-h`} className="flex scroll-mt-32 flex-col gap-3 rounded-lg bg-surface p-5 shadow-e1 lg:p-7">
-                                <h2 id={`${section.id}-h`} className="t-h3 flex items-center gap-3 text-fg-primary">
-                                    <span aria-hidden="true" className="t-caption inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-brand-subtle font-semibold text-fg-brand tabular-nums">
-                                        {String(i + 1).padStart(2, '0')}
-                                    </span>
-                                    {section.heading}
-                                </h2>
-                                {section.html ? <div className={bodyClass} dangerouslySetInnerHTML={{ __html: section.html }} /> : null}
-                            </section>
-                        ))}
+                    <div lang={body.lang} className="min-w-0 grow">
+                        {sanitised ? <RichTextBlock html={sanitised} locale={body.lang ?? locale} numberFrom={1} /> : null}
                     </div>
                 </div>
             ) : (
@@ -125,15 +104,40 @@ export function CmsPageView({ locale, page, otherPages = [] }: Props) {
     );
 }
 
+// Page-header tones (storefront spec §B8): Privacy = Bloom-mint, Returns = Bloom-candy, About =
+// Bloom-sunrise; Contact, Terms, FAQ and every other page = Bloom-sky. Keyed by the seeded slugs
+// (StaticPagesSeeder) — the page document carries no tone of its own yet.
+const tones: Record<string, string> = {
+    'privacy-policy': 'bg-(image:--tm-gradient-bloom-mint)',
+    'returns-policy': 'bg-(image:--tm-gradient-bloom-candy)',
+    about: 'bg-(image:--tm-gradient-bloom-sunrise)',
+};
+const defaultTone = 'bg-(image:--tm-gradient-bloom-sky)';
+
 /**
- * The page's Bloom-sky header with its title as the page's only H1 — shared by the legacy
- * templates above and pages built from sections (CmsSectionsPage).
+ * The page header (Figma Privacy 166:10226, FAQ 171:10981): the page's Bloom gradient, radius
+ * xl-plus (lg-plus at 390), 72 × 48 inset at 1440; an optional white pill (the policy pages' "last
+ * updated" date, from the page's own `updated_at`), then the title as the page's only H1. Shared by
+ * the legacy templates above and pages built from sections (CmsSectionsPage).
  */
-export function CmsPageHeader({ locale, page, englishOnly = false }: { locale: Locale; page: Pick<CmsPage, 'title' | 'title_bn'>; englishOnly?: boolean }) {
+export function CmsPageHeader({
+    locale,
+    page,
+    englishOnly = false,
+    updated = false,
+}: {
+    locale: Locale;
+    page: Pick<CmsPage, 'title' | 'title_bn'> & Partial<Pick<CmsPage, 'slug' | 'updated_at'>>;
+    englishOnly?: boolean;
+    /** Show "Last updated {date}" (pages with an "On this page" list: the policy look). */
+    updated?: boolean;
+}) {
     const t = getMessages(locale);
     const title = localised(locale, page.title, page.title_bn);
+    const date = updated ? postDate(page.updated_at, locale) : '';
     return (
-        <header className="flex flex-col gap-3 rounded-lg-plus bg-(image:--tm-gradient-bloom-sky) p-6 lg:rounded-xl-plus lg:p-10">
+        <header className={`flex flex-col items-start gap-3 rounded-lg-plus p-6 lg:gap-4 lg:rounded-xl-plus lg:px-18 lg:py-12 ${(page.slug && tones[page.slug]) || defaultTone}`}>
+            {date ? <p className={`t-overline rounded-full bg-surface px-3.5 py-1.5 text-fg-brand ${locale === 'bn' ? 'lang-bn' : ''}`}>{format(t.content.updated, { date })}</p> : null}
             <h1 lang={title.lang} className={`t-display-2 text-fg-primary lg:t-display-1 ${locale === 'bn' && !title.lang ? 'lang-bn' : ''}`}>
                 {title.text}
             </h1>
@@ -142,13 +146,53 @@ export function CmsPageHeader({ locale, page, englishOnly = false }: { locale: L
     );
 }
 
+/**
+ * "On this page" (Figma 166:10232 / FAQ topics 171:10994): a surface card, hairline border,
+ * radius lg; an overline label, then one 46-tall row per entry — the number (body-sm, secondary)
+ * or, for an FAQ group, its question count at the end. At 390 the same list folds into a native
+ * <details> "Jump to a section" control (Figma 168:7799 draws a select; a disclosure works without
+ * JavaScript). Nothing renders for fewer than two entries.
+ */
+export function PageContents({ locale, entries }: { locale: Locale; entries: TocEntry[] }) {
+    if (entries.length < 2) return null;
+    const t = getMessages(locale);
+    const list = (
+        <ol className="flex flex-col gap-1">
+            {entries.map((entry) => (
+                <li key={entry.id}>
+                    <a href={`#${entry.id}`} className="t-body flex min-h-touch-min items-center gap-2.5 rounded-sm-plus px-3 py-2.5 text-fg-primary hover:bg-brand-subtle hover:text-fg-brand">
+                        {entry.number !== null ? <span className="t-body-sm shrink-0 text-fg-secondary tabular-nums">{String(entry.number).padStart(2, '0')}</span> : null}
+                        <span className="min-w-0 grow">{entry.label}</span>
+                        {entry.count !== null ? <span className="t-body-sm shrink-0 text-fg-secondary tabular-nums">{entry.count}</span> : null}
+                    </a>
+                </li>
+            ))}
+        </ol>
+    );
+    return (
+        <nav aria-label={t.content.onThisPage} className={locale === 'bn' ? 'lang-bn' : ''}>
+            <details className="group rounded-md border border-line-default bg-surface lg:hidden">
+                <summary className="t-body flex min-h-control-md cursor-pointer list-none items-center justify-between gap-3 px-4 text-fg-primary [&::-webkit-details-marker]:hidden">
+                    {t.content.jumpTo}
+                    <Icon name="caretDown" className="size-icon-sm shrink-0 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="border-t border-line-default p-2">{list}</div>
+            </details>
+            <div className="hidden flex-col gap-1 rounded-lg border border-line-default bg-surface px-4 py-6 lg:flex">
+                <p className="t-overline px-3 pb-2 text-fg-secondary">{t.content.onThisPage}</p>
+                {list}
+            </div>
+        </nav>
+    );
+}
+
 /** The sidebar template's links to the other live store pages (nothing when there are none). */
 export function MorePagesNav({ locale, pages, className = '' }: { locale: Locale; pages: CmsPageSummary[]; className?: string }) {
     if (pages.length === 0) return null;
     const t = getMessages(locale);
     return (
-        <nav aria-label={t.content.morePages} className={`flex flex-col gap-1 rounded-lg bg-surface p-3 shadow-e1 ${className}`}>
-            <p className="t-overline px-3 py-2 text-fg-tertiary">{t.content.morePages}</p>
+        <nav aria-label={t.content.morePages} className={`flex flex-col gap-1 rounded-lg border border-line-default bg-surface px-4 py-6 ${className}`}>
+            <p className="t-overline px-3 pb-2 text-fg-secondary">{t.content.morePages}</p>
             <ul className="flex flex-col">
                 {pages.map((p) => {
                     const label = localised(locale, p.title, p.title_bn);

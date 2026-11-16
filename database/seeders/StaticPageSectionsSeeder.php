@@ -27,8 +27,8 @@ use Illuminate\Support\Facades\Event;
  *
  * - about           — as designed (Figma 170:10502): story hero with the photo collage, promise
  *                     tiles, "What we believe" numbered cards and the visit band;
- * - contact         — the Contact details section (values from Settings › Store › Business),
- *                     "before you write" shortcuts and a short FAQ;
+ * - contact         — as designed (Figma 165:9657): contact hero, channel tiles (values from
+ *                     Settings › Store › Business), message form (→ Inbox) with visit card and links;
  * - delivery-policy — charges, times, cut-off, cash-on-delivery rules, and a delivery FAQ;
  * - returns-policy  — the 7-day window, conditions, how to return, refunds, and a FAQ;
  * - privacy-policy, terms — the policy text;
@@ -224,34 +224,60 @@ final class StaticPageSectionsSeeder extends Seeder
         return $ids;
     }
 
-    /** @return list<array{BlockType, string, array<string, mixed>, array<string, bool>}> */
+    /**
+     * Contact us as designed (Figma 165:9657 / 167:7500): the contact hero with its chat bubbles,
+     * the four channel tiles (values from Settings › Store › Business), and the message form (→ the
+     * admin Inbox) beside the visit card and quick links. The shop address and opening hours are
+     * the design's PROVISIONAL values (UI-UX-DESIGN-SPEC §10) — the owner confirms or removes them
+     * (an empty visit heading hides the card; the address switch hides the tile). No map link is
+     * seeded: the address is not confirmed.
+     *
+     * @return list<array{BlockType, string, array<string, mixed>, array<string, bool>}>
+     */
     private function contact(): array
     {
         return [
-            [BlockType::ContactInfo, 'Contact details', [], []],
-            [BlockType::RichText, 'Before you write', [
-                'html' => '<h2>Quick answers</h2>'
-                    .'<ul><li><strong>Where is my order?</strong> <a href="/track">Track it here</a> with your order number and the phone number you ordered with.</li>'
-                    .'<li><strong>Want to return something?</strong> Read our <a href="/returns-policy">returns policy</a>, then call or WhatsApp us within 7 days of delivery.</li>'
-                    .'<li><strong>Delivery charges and times?</strong> Everything is on our <a href="/delivery-policy">delivery page</a>.</li>'
-                    .'</ul>'
-                    .'<p>Please include your order number when you write about an order. We never ask for your bKash or Nagad PIN, an OTP or a card number — if anyone does in our name, do not share it.</p>',
-                'html_bn' => '<h2>দ্রুত উত্তর</h2>'
-                    .'<ul><li><strong>আমার অর্ডার কোথায়?</strong> অর্ডার নম্বর আর যে ফোন নম্বরে অর্ডার করেছেন তা দিয়ে <a href="/bn/track">এখানে ট্র্যাক করুন</a>।</li>'
-                    .'<li><strong>কিছু ফেরত দিতে চান?</strong> আমাদের <a href="/bn/returns-policy">রিটার্ন নীতি</a> পড়ুন, তারপর ডেলিভারির 7 দিনের মধ্যে কল বা হোয়াটসঅ্যাপ করুন।</li>'
-                    .'<li><strong>ডেলিভারি চার্জ ও সময়?</strong> সব তথ্য আমাদের <a href="/bn/delivery-policy">ডেলিভারি পাতায়</a> আছে।</li>'
-                    .'</ul>'
-                    .'<p>অর্ডার নিয়ে লিখলে অর্ডার নম্বরটি দিন। আমরা কখনো আপনার বিকাশ বা নগদ পিন, ওটিপি বা কার্ড নম্বর চাই না — আমাদের নামে কেউ চাইলে দেবেন না।</p>',
+            [BlockType::ContactHero, "We're here to help", [
+                'overline' => "We're here to help", 'overline_bn' => 'আমরা সাহায্য করতে আছি',
+                'title' => 'Contact us', 'title_bn' => 'যোগাযোগ করুন',
+                'lead' => 'Real people in our Dhaka shop answer every message, 9 am to 9 pm, Saturday to Thursday. Not sure which toy fits your child? Ask us. That is what we are here for.',
+                'lead_bn' => 'আমাদের ঢাকার দোকানের সত্যিকারের মানুষেরা শনিবার থেকে বৃহস্পতিবার সকাল 9টা থেকে রাত 9টা পর্যন্ত প্রতিটি মেসেজের উত্তর দেন। কোন খেলনা আপনার সন্তানের জন্য ঠিক, বুঝতে পারছেন না? আমাদের জিজ্ঞেস করুন। এজন্যই আমরা আছি।',
+                'status' => 'Online now · WhatsApp replies in about 15 minutes', 'status_bn' => 'এখন অনলাইনে · হোয়াটসঅ্যাপে প্রায় 15 মিনিটে উত্তর',
+                'bubbles' => [
+                    ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Is the shape sorter OK for a 2-year-old?', 'text_bn' => 'শেপ সর্টারটা কি 2 বছরের বাচ্চার জন্য ঠিক আছে?'],
+                    ['from' => 'store', 'label' => 'Toy Mart', 'label_bn' => 'টয় মার্ট', 'text' => 'Yes. It is made for ages 1½ to 4, with chunky pieces too big to swallow.', 'text_bn' => 'হ্যাঁ। এটি দেড় থেকে 4 বছরের জন্য বানানো, টুকরোগুলো গিলে ফেলার মতো ছোট নয়।'],
+                    ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Perfect, can it reach Mirpur by tomorrow?', 'text_bn' => 'চমৎকার, কাল মিরপুরে পৌঁছাবে?'],
+                ],
             ], []],
-            [BlockType::Faq, 'Contact questions', [
-                'title' => 'Before you call', 'title_bn' => 'কল করার আগে',
-                'items' => [
-                    $this->qa('When can I reach you?', 'Our team answers calls and WhatsApp from 9 AM to 9 PM, Saturday to Thursday. Messages sent on Friday or after hours are answered the next working morning.',
-                        'কখন যোগাযোগ করতে পারব?', 'শনিবার থেকে বৃহস্পতিবার সকাল 9টা থেকে রাত 9টা পর্যন্ত আমাদের টিম কল ও হোয়াটসঅ্যাপের উত্তর দেয়। শুক্রবার বা সময়ের পরে পাঠানো মেসেজের উত্তর পরের কর্মদিবসের সকালে দিই।'),
-                    $this->qa('Can I visit and see the toys?', 'We are an online shop and do not have a showroom yet. Every product page shows real photos, the box contents and the size, and you can open the parcel in front of the rider before you pay.',
-                        'দোকানে এসে খেলনা দেখা যাবে?', 'আমরা অনলাইন দোকান, এখনো শোরুম নেই। প্রতিটি পণ্যের পাতায় আসল ছবি, বাক্সে কী আছে আর আকার দেওয়া থাকে, আর টাকা দেওয়ার আগে রাইডারের সামনে পার্সেল খুলে দেখতে পারেন।'),
-                    $this->qa('How fast do you reply to email?', 'Within one working day. For anything urgent about an order on its way, call or WhatsApp us instead.',
-                        'ইমেইলের উত্তর কত দ্রুত দেন?', 'এক কর্মদিবসের মধ্যে। পথে থাকা অর্ডার নিয়ে জরুরি কিছু হলে কল বা হোয়াটসঅ্যাপ করুন।'),
+            [BlockType::ContactInfo, 'Ways to reach us', [
+                'title' => null, 'title_bn' => null, 'sub' => null, 'sub_bn' => null,
+                'hours' => '9 am – 9 pm, Sat – Thu', 'hours_bn' => 'সকাল 9টা – রাত 9টা, শনি – বৃহস্পতি',
+                'whatsapp_note' => 'Fastest: replies in minutes', 'whatsapp_note_bn' => 'সবচেয়ে দ্রুত: কয়েক মিনিটে উত্তর',
+                'email_note' => 'Replies within 1 working day', 'email_note_bn' => '1 কর্মদিবসের মধ্যে উত্তর',
+                'address_label' => 'Dhanmondi, Dhaka', 'address_label_bn' => 'ধানমন্ডি, ঢাকা',
+                'address_note' => 'House 12, Road 7 · 10 am – 8 pm', 'address_note_bn' => 'বাসা 12, রোড 7 · সকাল 10টা – রাত 8টা',
+                'show_messenger' => false,
+            ], []],
+            [BlockType::ContactForm, 'Send us a message', [
+                'title' => 'Send us a message', 'title_bn' => 'আমাদের মেসেজ পাঠান',
+                'intro' => 'Tell us what you need and we will call or WhatsApp you back. For an order, add the order number so we can find it straight away.',
+                'intro_bn' => 'কী দরকার জানান, আমরা কল বা হোয়াটসঅ্যাপে আপনাকে উত্তর দেব। অর্ডারের বিষয়ে হলে অর্ডার নম্বরটি দিন, যাতে সঙ্গে সঙ্গে খুঁজে পাই।',
+                'privacy' => 'We use your number only to reply to this message.', 'privacy_bn' => 'এই মেসেজের উত্তর দিতেই শুধু আপনার নম্বর ব্যবহার করি।',
+                'visit_title' => 'Visit our shop', 'visit_title_bn' => 'আমাদের দোকানে আসুন',
+                'visit_body' => 'House 12, Road 7, Dhanmondi, Dhaka 1205. Come and see the toys before you buy. Kids are welcome to play.',
+                'visit_body_bn' => 'বাসা 12, রোড 7, ধানমন্ডি, ঢাকা 1205। কেনার আগে এসে খেলনা দেখে যান। বাচ্চারা এখানে খেলতে পারে।',
+                'visit_map_href' => null,
+                'hours' => [
+                    ['label' => 'Saturday – Thursday', 'label_bn' => 'শনিবার – বৃহস্পতিবার', 'value' => '10 am – 8 pm', 'value_bn' => 'সকাল 10টা – রাত 8টা'],
+                    ['label' => 'Friday', 'label_bn' => 'শুক্রবার', 'value' => 'Closed', 'value_bn' => 'বন্ধ'],
+                    ['label' => 'Phone & WhatsApp', 'label_bn' => 'ফোন ও হোয়াটসঅ্যাপ', 'value' => '9 am – 9 pm', 'value_bn' => 'সকাল 9টা – রাত 9টা'],
+                ],
+                'links_title' => 'Quicker than a message', 'links_title_bn' => 'মেসেজের চেয়েও দ্রুত',
+                'links' => [
+                    ['icon' => 'check_circle', 'label' => 'Track your order', 'label_bn' => 'অর্ডার ট্র্যাক করুন', 'href' => '/track'],
+                    ['icon' => 'clock', 'label' => 'Delivery charges and times', 'label_bn' => 'ডেলিভারি চার্জ ও সময়', 'href' => '/delivery-policy'],
+                    ['icon' => 'shield_check', 'label' => 'Returns and refunds', 'label_bn' => 'রিটার্ন ও টাকা ফেরত', 'href' => '/returns-policy'],
+                    ['icon' => 'chat', 'label' => 'Common questions', 'label_bn' => 'সাধারণ প্রশ্ন', 'href' => '/faq'],
                 ],
             ], []],
         ];

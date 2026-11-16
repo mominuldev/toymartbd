@@ -67,11 +67,12 @@ export default async function CartPage({ params }: Props) {
 
     return (
         <PageShell locale={locale} path={PATH} top="tight" cartCount={count} bottomBar={!empty}>
-            <div className="flex flex-col gap-4 pb-8 lg:gap-6 lg:pb-20">
-                <header className="-mx-gutter-mobile flex flex-col gap-0.5 bg-subtle px-gutter-mobile pb-4 md:mx-0 md:bg-transparent md:px-0 lg:flex-row lg:items-baseline lg:gap-3 lg:pb-0">
+            <div className="flex flex-col gap-3 pb-8 lg:gap-6 lg:pb-20">
+                {/* Figma Head 130:2337 / 137:3308: on the page ground (no band), body-sm under the title at 390, beside it at 1440. */}
+                <header className="flex flex-col gap-1 lg:flex-row lg:items-baseline lg:gap-3">
                     <h1 className="t-h1 text-fg-primary">{c.title}</h1>
                     {!empty ? (
-                        <p className="t-body text-fg-secondary">
+                        <p className="t-body-sm text-fg-secondary lg:t-body">
                             {itemsLabel(count, c)}
                             {place ? ` · ${format(c.deliveryTo, { place })}` : ''}
                         </p>

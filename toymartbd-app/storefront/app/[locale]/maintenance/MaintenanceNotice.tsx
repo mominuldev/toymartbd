@@ -29,7 +29,7 @@ export function MaintenanceNotice({ locale, onRetry }: Props) {
                     <Icon name="clock" className="size-8" />
                 </span>
                 <h1 className="t-display-2 text-fg-primary">{t.maintenance.title}</h1>
-                <ul aria-label={t.serverError.reassureLabel} className="flex flex-col gap-2.5 rounded-md bg-success-subtle px-4 py-3.5 text-left lg:px-5 lg:py-4">
+                <ul aria-label={t.serverError.reassureLabel} className="flex flex-col gap-2.5 rounded-md-minus bg-success-subtle px-4 py-3.5 text-left lg:px-5 lg:py-4">
                     {reassurances.map((line) => (
                         <li key={line} className="t-body flex items-center gap-2.5 font-semibold text-fg-primary">
                             <Icon name="checkCircle" className="size-icon-md text-feedback-success" />

@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { ChatCircleIcon, ChatsCircleIcon, CheckCircleIcon, HeadsetIcon, MessengerLogoIcon, WhatsappLogoIcon, type IconProps } from '@phosphor-icons/react';
+import { ChatCircleIcon, ChatsCircleIcon, CheckCircleIcon, EnvelopeSimpleIcon, HeadsetIcon, MessengerLogoIcon, WhatsappLogoIcon, type IconProps } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import type { Channel, Conversation } from './api';
@@ -30,6 +30,7 @@ const channelLook: Record<Channel, { icon: ComponentType<IconProps>; tile: strin
     whatsapp: { icon: WhatsappLogoIcon, tile: 'bg-tile-mint', tint: 'text-feedback-success' },
     messenger: { icon: MessengerLogoIcon, tile: 'bg-tile-sky', tint: 'text-feedback-info' },
     live_chat: { icon: ChatCircleIcon, tile: 'bg-tile-lavender', tint: 'text-fg-brand' },
+    web_form: { icon: EnvelopeSimpleIcon, tile: 'bg-tile-butter', tint: 'text-feedback-warning' },
 };
 
 export const channelLabel = (channel: Channel): MessageKey => `inbox.channel.${channel}` as MessageKey;

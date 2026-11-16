@@ -75,7 +75,8 @@ it('rejects invalid content per type', function (string $type, array $content, s
     'image unknown media' => ['image', ['media_id' => 999999], 'media_id'],
     'image javascript link' => ['image', ['href' => 'javascript:alert(1)'], 'href'],
     'image bad width' => ['image', ['width' => 'giant'], 'width'],
-    'contact without title' => ['contact_info', ['title' => ''], 'title'],
+    'contact title too long' => ['contact_info', ['title' => str_repeat('x', 121)], 'title'],
+    'contact note too long' => ['contact_info', ['whatsapp_note' => str_repeat('x', 121)], 'whatsapp_note'],
     'contact javascript map link' => ['contact_info', ['title' => 'x', 'map_href' => 'javascript:alert(1)'], 'map_href'],
     'contact bad switch' => ['contact_info', ['title' => 'x', 'show_email' => 'perhaps'], 'show_email'],
     'story hero without lead' => ['story_hero', ['title' => 'x', 'lead' => ''], 'lead'],
@@ -89,6 +90,13 @@ it('rejects invalid content per type', function (string $type, array $content, s
     'cta label without link' => ['cta_band', ['title' => 'x', 'primary_label' => 'Go', 'primary_href' => null], 'primary_href'],
     'cta javascript link' => ['cta_band', ['title' => 'x', 'secondary_label' => 'Go', 'secondary_href' => 'javascript:alert(1)'], 'secondary_href'],
     'cta unknown icon' => ['cta_band', ['title' => 'x', 'primary_icon' => 'rocket'], 'primary_icon'],
+    'contact hero without lead' => ['contact_hero', ['title' => 'x', 'lead' => ''], 'lead'],
+    'contact hero five bubbles' => ['contact_hero', ['title' => 'x', 'lead' => 'y', 'bubbles' => array_fill(0, 5, ['from' => 'customer', 'text' => 'Hi'])], 'bubbles'],
+    'contact hero bubble from nobody' => ['contact_hero', ['title' => 'x', 'lead' => 'y', 'bubbles' => [['from' => 'bot', 'text' => 'Hi']]], 'bubbles.0.from'],
+    'contact form without title' => ['contact_form', ['title' => ''], 'title'],
+    'contact form hours row without value' => ['contact_form', ['hours' => [['label' => 'Friday']]], 'hours.0.value'],
+    'contact form link without href' => ['contact_form', ['links' => [['icon' => 'clock', 'label' => 'Track']]], 'links.0.href'],
+    'contact form javascript map' => ['contact_form', ['visit_map_href' => 'javascript:alert(1)'], 'visit_map_href'],
 ]);
 
 it('accepts a document media id only when it is an image', function (): void {

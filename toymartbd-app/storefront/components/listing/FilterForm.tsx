@@ -47,8 +47,10 @@ function Section({ title, open, children }: { title: string; open: boolean; chil
     );
 }
 
+// Checkbox/Bare 44:305: a 20 box centred in its 44 × 44 frame (the row's label sits 12 past the frame).
 function Checkbox({ name, value, checked, disabled, type = 'checkbox' }: { name: string; value: string; checked: boolean; disabled: boolean; type?: 'checkbox' | 'radio' }) {
     return (
+        <span className="-my-0.5 flex size-touch-min shrink-0 items-center justify-center">
         <span className="relative flex size-5 shrink-0 items-center justify-center">
             <input
                 type={type}
@@ -59,6 +61,7 @@ function Checkbox({ name, value, checked, disabled, type = 'checkbox' }: { name:
                 className="peer absolute inset-0 m-0 cursor-pointer appearance-none rounded-xs border-(length:--tm-border-width-control) border-line-strong bg-surface checked:border-brand checked:bg-brand disabled:cursor-not-allowed disabled:border-line-default disabled:bg-disabled"
             />
             <Icon name="check" className="pointer-events-none relative size-3.5 text-fg-on-brand opacity-0 peer-checked:opacity-100" />
+        </span>
         </span>
     );
 }

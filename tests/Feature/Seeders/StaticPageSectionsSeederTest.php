@@ -37,7 +37,7 @@ it('builds and publishes every static page from sections', function (): void {
     $this->seed(StaticPageSectionsSeeder::class);
 
     expect(seededTypes('about'))->toBe(['story_hero', 'feature_tiles', 'numbered_cards', 'cta_band'])
-        ->and(seededTypes('contact'))->toBe(['contact_info', 'rich_text', 'faq'])
+        ->and(seededTypes('contact'))->toBe(['contact_hero', 'contact_info', 'contact_form'])
         ->and(seededTypes('delivery-policy'))->toBe(['rich_text', 'faq'])
         ->and(seededTypes('returns-policy'))->toBe(['rich_text', 'faq'])
         ->and(seededTypes('privacy-policy'))->toBe(['rich_text'])

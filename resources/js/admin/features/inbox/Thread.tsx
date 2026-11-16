@@ -5,6 +5,7 @@ import {
     ArrowLeftIcon,
     CheckIcon,
     ClockIcon,
+    EnvelopeSimpleIcon,
     EyeSlashIcon,
     InfoIcon,
     PaperPlaneRightIcon,
@@ -20,7 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
-import { canReplyFreely, useAddNote, useAssign, useAssignees, useMessages, useResolve, useSendReply, type ConversationDetail, type InboxMessage } from './api';
+import { canReplyFreely, isWebForm, useAddNote, useAssign, useAssignees, useMessages, useResolve, useSendReply, type ConversationDetail, type InboxMessage } from './api';
 import { TemplatePanel } from './TemplatePanel';
 import { ChannelIcon, ContactAvatar, channelLabel, dhakaDayTime, dhakaTime, displayPhone, langProps, useContactName } from './parts';
 
@@ -258,7 +259,8 @@ function closedReason(detail: ConversationDetail): MessageKey {
  * Reply / Internal note. The server's reply state decides the reply side: `open` is a normal
  * reply; `human_agent` (Messenger 24 h – 7 days, switch on) is a normal reply with a notice that
  * it goes with Meta's human-agent tag; `template_only` (WhatsApp after the window) replaces the
- * reply box with {@see TemplatePanel}; `closed` disables it with the reason. A note is always allowed.
+ * reply box with {@see TemplatePanel}; `closed` disables it with the reason — on the web form
+ * (inbound only) that is "reply by WhatsApp or call {phone}". A note is always allowed.
  */
 export function Composer({ detail }: { detail: ConversationDetail }) {
     const { t, locale } = useI18n();
@@ -298,6 +300,7 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
     };
 
     const closesAt = detail.reply.window_closes_at;
+    const webFormPhone = displayPhone(detail.contact);
     const notice =
         mode === 'reply' && state === 'human_agent' && closesAt
             ? t('inbox.window.humanAgent', { time: dhakaDayTime(closesAt, locale) })
@@ -325,7 +328,13 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
                 <TemplatePanel detail={detail} />
             ) : (
                 <form onSubmit={submit} className="flex flex-col gap-2">
-                    {mode === 'reply' && state === 'closed' && (
+                    {mode === 'reply' && state === 'closed' && isWebForm(detail.channel) && (
+                        <p role="status" className="flex items-start gap-2 rounded-sm bg-info-subtle px-3 py-2 t-admin-caption text-fg-primary">
+                            <EnvelopeSimpleIcon size={16} aria-hidden className="mt-px shrink-0 text-feedback-info" />
+                            {webFormPhone ? t('inbox.closed.webForm', { phone: webFormPhone }) : t('inbox.closed.webFormNoPhone')}
+                        </p>
+                    )}
+                    {mode === 'reply' && state === 'closed' && !isWebForm(detail.channel) && (
                         <p role="status" className="flex items-start gap-2 rounded-sm bg-warning-subtle px-3 py-2 t-admin-caption text-fg-primary">
                             <ClockIcon size={16} aria-hidden className="mt-px shrink-0 text-feedback-warning" />
                             {t(closedReason(detail))}

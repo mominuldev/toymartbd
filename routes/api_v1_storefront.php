@@ -109,6 +109,12 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/orders/{number}', [OrderController::class, 'show'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
 });
 
+// Contact page "Send us a message" (owner decision 2026-11-16) — docs/api/inbox.md. Lands in the
+// admin Inbox on the `web_form` channel; 5 an hour per phone and 10 an hour per shopper IP.
+Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->group(function (): void {
+    Route::post('/contact-messages', [App\Http\Controllers\Api\V1\Storefront\ContactMessageController::class, 'store'])->middleware('throttle:contact-message')->name('contact-messages.store');
+});
+
 // Online payment (P4-PAY-02/03/04) — docs/api/checkout.md "Online payment". COD needs none of
 // it. Starting/retrying a payment needs the placing cart's token and an Idempotency-Key
 // (rule 17); the browser-return POST is signature-verified and re-queried, never trusted.

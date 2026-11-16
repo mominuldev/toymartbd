@@ -137,7 +137,35 @@ export type HomeBlock = Base &
               };
           }
         | { type: "cta_band"; content: CtaBandContent }
+        | { type: "contact_hero"; content: ContactHeroContent }
+        | { type: "contact_form"; content: ContactFormContent }
     );
+
+/** Contact hero (Contact us 165:9891): copy, a status pill and up to four chat bubbles. */
+export interface ContactHeroContent {
+    overline: string | null;
+    title: string;
+    lead: string;
+    status: string | null;
+    bubbles: Array<{ from: "customer" | "store"; label: string | null; text: string }>;
+}
+
+/** "Send us a message" plus the optional visit and quick-links cards (Contact us 165:9974). */
+export interface ContactFormContent {
+    title: string;
+    intro: string | null;
+    privacy: string | null;
+    visit: {
+        title: string;
+        body: string | null;
+        map_href: string | null;
+        hours: Array<{ label: string; value: string }>;
+    } | null;
+    links: {
+        title: string;
+        items: Array<{ icon: TileIconKey; label: string; href: string }>;
+    } | null;
+}
 
 /** The glyphs of feature tiles and call-to-action buttons (TileIcon on the API). */
 export type TileIconKey =
@@ -152,7 +180,8 @@ export type TileIconKey =
     | "star"
     | "heart"
     | "puzzle"
-    | "books";
+    | "books"
+    | "clock";
 
 const TILE_ICONS: readonly TileIconKey[] = [
     "shield_check",
@@ -167,6 +196,7 @@ const TILE_ICONS: readonly TileIconKey[] = [
     "heart",
     "puzzle",
     "books",
+    "clock",
 ];
 
 const tileIcon = (v: unknown): TileIconKey | null =>
@@ -228,9 +258,15 @@ export type ContactChannelKey =
 
 /** The Contact block: copy and switches only — the values come from lib/store-info.ts. */
 export interface ContactInfoContent {
-    title: string;
+    /** Optional (2026-11-16): the Contact page shows the tiles without a heading. */
+    title: string | null;
     sub: string | null;
     hours: string | null;
+    whatsapp_note: string | null;
+    email_note: string | null;
+    /** The Visit tile's value instead of the full store address. */
+    address_label: string | null;
+    address_note: string | null;
     map_href: string | null;
     channels: ContactChannelKey[];
 }
@@ -548,19 +584,21 @@ function block(raw: unknown): HomeBlock | null {
                 (ch) => c[`show_${ch}`] !== false
             );
             const map = safeHref(c.map_href);
-            return title
-                ? {
-                      ...base,
-                      type: "contact_info",
-                      content: {
-                          title,
-                          sub: str(c.sub),
-                          hours: str(c.hours),
-                          map_href: map,
-                          channels,
-                      },
-                  }
-                : null;
+            return {
+                ...base,
+                type: "contact_info",
+                content: {
+                    title,
+                    sub: str(c.sub),
+                    hours: str(c.hours),
+                    whatsapp_note: str(c.whatsapp_note),
+                    email_note: str(c.email_note),
+                    address_label: str(c.address_label),
+                    address_note: str(c.address_note),
+                    map_href: map,
+                    channels,
+                },
+            };
         }
         case "story_hero": {
             const lead = str(c.lead);
@@ -641,6 +679,81 @@ function block(raw: unknown): HomeBlock | null {
                       },
                   }
                 : null;
+        }
+        case "contact_hero": {
+            const lead = str(c.lead);
+            const bubbles = nonEmpty(
+                list(c.bubbles).map((b) =>
+                    isObj(b) && str(b.text)
+                        ? {
+                              from:
+                                  b.from === "store"
+                                      ? ("store" as const)
+                                      : ("customer" as const),
+                              label: str(b.label),
+                              text: str(b.text)!,
+                          }
+                        : null
+                )
+            ).slice(0, 4);
+            return title && lead
+                ? {
+                      ...base,
+                      type: "contact_hero",
+                      content: {
+                          overline: str(c.overline),
+                          title,
+                          lead,
+                          status: str(c.status),
+                          bubbles,
+                      },
+                  }
+                : null;
+        }
+        case "contact_form": {
+            if (!title) return null;
+            const hours = nonEmpty(
+                list(c.hours).map((h) =>
+                    isObj(h) && str(h.label) && str(h.value)
+                        ? { label: str(h.label)!, value: str(h.value)! }
+                        : null
+                )
+            ).slice(0, 6);
+            const links = nonEmpty(
+                list(c.links).map((l) => {
+                    const href = isObj(l) ? safeHref(l.href) : null;
+                    return isObj(l) && str(l.label) && href
+                        ? {
+                              icon: tileIcon(l.icon) ?? "check_circle",
+                              label: str(l.label)!,
+                              href,
+                          }
+                        : null;
+                })
+            ).slice(0, 6);
+            const visitTitle = str(c.visit_title);
+            const linksTitle = str(c.links_title);
+            return {
+                ...base,
+                type: "contact_form",
+                content: {
+                    title,
+                    intro: str(c.intro),
+                    privacy: str(c.privacy),
+                    visit: visitTitle
+                        ? {
+                              title: visitTitle,
+                              body: str(c.visit_body),
+                              map_href: safeHref(c.visit_map_href),
+                              hours,
+                          }
+                        : null,
+                    links:
+                        linksTitle && links.length
+                            ? { title: linksTitle, items: links }
+                            : null,
+                },
+            };
         }
         default:
             return null;

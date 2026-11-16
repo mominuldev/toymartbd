@@ -18,6 +18,7 @@ export const integrationsHubEn = {
     'integrationsHub.name.cod': 'Cash on delivery',
     'integrationsHub.name.sms': 'SMS gateway',
     'integrationsHub.name.live_chat': 'Live chat',
+    'integrationsHub.name.web_form': 'Website form',
 
     'integrationsHub.status.connected_live': 'Connected · live',
     'integrationsHub.status.test_mode': 'Test mode',
@@ -85,6 +86,7 @@ export const integrationsHubBn: Record<keyof typeof integrationsHubEn, string> =
     'integrationsHub.name.cod': 'ক্যাশ অন ডেলিভারি',
     'integrationsHub.name.sms': 'এসএমএস গেটওয়ে',
     'integrationsHub.name.live_chat': 'লাইভ চ্যাট',
+    'integrationsHub.name.web_form': 'ওয়েবসাইট ফর্ম',
 
     'integrationsHub.status.connected_live': 'সংযুক্ত · লাইভ',
     'integrationsHub.status.test_mode': 'টেস্ট মোড',

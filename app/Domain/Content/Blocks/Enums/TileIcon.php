@@ -22,6 +22,7 @@ enum TileIcon: string
     case Heart = 'heart';
     case Puzzle = 'puzzle';
     case Books = 'books';
+    case Clock = 'clock';
 
     /** @return list<string> */
     public static function values(): array

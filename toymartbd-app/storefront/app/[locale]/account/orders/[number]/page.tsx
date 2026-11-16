@@ -78,23 +78,23 @@ export default async function AccountOrderPage({ params }: Props) {
             heading={{ sub: placed ?? meta, subDesktop: placed ? `${placed} · ${meta}` : meta }}
         >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-                <div className="flex min-w-0 flex-col gap-4 lg:grow">
-                    {/* Status card (237:10143): stage-tinted tile, icon + h3 stage, what happens next. The
+                <div className="flex min-w-0 flex-col gap-4 lg:grow lg:gap-6">
+                    {/* Status card (237:10143 at 390: 16 inset, body-sm; 239:12882 at 1440: radius md, 20 inset, body): stage-tinted tile, icon + h3 stage, what happens next. The
                         design's "Pay now with bKash" / "Track on Pathao" need a gateway retry from the account
                         and courier tracking links, which the API does not offer yet — not shown. */}
-                    <section aria-labelledby="order-status" className={`flex flex-col gap-1.5 rounded-sm p-4 ${STATUS[order.stage].tone}`}>
-                        <h2 id="order-status" className="t-h3 flex items-center gap-2 text-fg-primary">
-                            <Icon name={STATUS[order.stage].icon} className="size-5.5 shrink-0" />
+                    <section aria-labelledby="order-status" className={`flex flex-col gap-1.5 rounded-sm p-4 lg:gap-2 lg:rounded-md lg:p-5 ${STATUS[order.stage].tone}`}>
+                        <h2 id="order-status" className="t-h3 flex items-center gap-2 text-fg-primary lg:gap-2.5">
+                            <Icon name={STATUS[order.stage].icon} className="size-5.5 shrink-0 lg:size-icon-lg" />
                             {t.order.badges[order.stage]}
                         </h2>
-                        <p className="t-body-sm text-fg-primary tabular-nums">
+                        <p className="t-body-sm lg:t-body text-fg-primary tabular-nums">
                             {m.orders.status[order.stage]}
                             {due ? ` ${due}` : ''}
                         </p>
                     </section>
                     <OrderTimeline order={order} locale={locale} t={t} />
                 </div>
-                <aside className="flex flex-col gap-4 lg:w-104 lg:shrink-0">
+                <aside className="flex flex-col gap-4 lg:w-95 lg:shrink-0 lg:gap-6">
                     <OrderItems order={order} locale={locale} t={t} totals />
                     <OrderAddressCard order={order} locale={locale} t={t} m={m} />
                     {/* "Need help? WhatsApp us" — Button Secondary Size=lg, full width (237:10066). Invoice PDF and

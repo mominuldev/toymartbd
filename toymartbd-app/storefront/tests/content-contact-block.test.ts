@@ -47,7 +47,8 @@ describe("contact_info block", () => {
                 channels: ["hotline", "whatsapp", "messenger", "address"],
             },
         });
-        expect(raw({ title: "" })).toBeUndefined();
+        // Since 2026-11-16 the title is optional (the Contact page shows the tiles without one).
+        expect(raw({ title: "" })).toMatchObject({ type: "contact_info", content: { title: null } });
     });
 
     it("renders the store values as links, and samples as marked plain text", async () => {
@@ -71,6 +72,10 @@ describe("contact_info block", () => {
             title: "Talk to us",
             sub: "We answer every day.",
             hours: "Saturday to Thursday",
+            whatsapp_note: null,
+            email_note: null,
+            address_label: null,
+            address_note: null,
             map_href: "https://maps.google.com/?q=toymart",
             channels: [
                 "hotline",
@@ -95,6 +100,11 @@ describe("contact_info block", () => {
         expect(html).toContain("House 1, Road 2, Dhanmondi, Dhaka");
         expect(html).toContain('href="https://maps.google.com/?q=toymart"');
         expect(html).toContain('data-contact="hours"');
+        // Figma 165:9913 order, whatever order the switches arrive in: WhatsApp, Call, Email, Visit.
+        const at = (key: string) => html.indexOf(`data-contact="${key}"`);
+        expect(at("whatsapp")).toBeLessThan(at("hotline"));
+        expect(at("hotline")).toBeLessThan(at("email"));
+        expect(at("email")).toBeLessThan(at("address"));
 
         const bn = renderToStaticMarkup(
             await ContactInfoBlock({
