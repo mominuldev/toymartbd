@@ -15,6 +15,18 @@ The business value is split roughly evenly between winning organic search traffi
 
 **Phase 3 — Technical Foundation, started 2026-11-11.** Gate 1 (roadmap) and Gate 2 (design sign-off) are cleared. The Figma design is complete and approved; the admin uses **Theme B** (slate & indigo, dark sidebar). Design tokens are exported to `packages/tokens` and wired into the admin's Tailwind. The foundation is built and tested end to end (auth, roles, i18n, API contract, observability, backups), with brands as the first full CRUD through admin, API and storefront. **Phase 4 — Core E-commerce, started 2026-11-11:** catalog schema, product/variant API, categories and attributes admin, and the storefront layout are in. Phase 3 items still open need owner infrastructure (staging, backup bucket). Follow `docs/IMPLEMENTATION-PLAN.md` §2 progress and Phase 4.
 
+### `global-site` branch (this branch) — storefront themes
+
+- **`global-site` is never merged into `main`.** No PR from it targets `main`. Merging `main` → `global-site` to stay current is fine.
+- The initiative is **WordPress-style storefront themes on one store**: one database, one admin, and the owner picks a built-in theme in *Admin › Store › Themes*. Content never changes. It is not multi-brand and has no `storefront_id`.
+- **Docs only for now (owner, 2026-11-17).** Keep `docs/global-site/` current. **Do not implement any of it in code until the owner says so.**
+- Owner decisions:
+  - built-in themes only
+  - no demo content
+  - a `themes.manage` permission for owner and managers
+- Admin design changes for this initiative go on **new Figma pages only** (e.g. *Admin — Themes (proposal)*). Never edit the original admin pages.
+- Start with `docs/global-site/README.md`.
+
 ## Read before working
 
 | Need | Document |
