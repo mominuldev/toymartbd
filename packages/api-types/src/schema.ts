@@ -8274,9 +8274,13 @@ export interface components {
          *     | `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |
          *     | `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings › Store, plus hours. |
          *     | `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |
+         *     | `story_hero` <br/> Story hero (About us): overline, the page headline, two paragraphs, a collage of up to three library photos, a badge. |
+         *     | `feature_tiles` <br/> Two to four pastel tiles, each an icon, a title and a sentence. |
+         *     | `numbered_cards` <br/> A heading and one to six numbered cards (01, 02…), each a title and a sentence. |
+         *     | `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -9081,7 +9085,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band";
             label: string | null;
             content: {
                 [key: string]: unknown;

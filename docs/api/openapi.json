@@ -38070,7 +38070,7 @@
             },
             "BlockType": {
                 "type": "string",
-                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |\n| `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings \u203a Store, plus hours. |\n| `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |",
+                "description": "Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its defaults for a freshly added block, and its normaliser (sanitising rich text, dropping unknown keys). The storefront has one component per type (components/content/blocks/**).\n| |\n|---|\n| `hero` <br/> Hero / banner carousel: 1\u20135 slides; the first slide's image is the page's LCP. |\n| `category_tiles` <br/>  |\n| `age_tiles` <br/> \"Shop by age\" tiles with live counts from the catalogue. |\n| `product_rail` <br/> Product rail by rule: new, best sellers, category, brand or a manual pick. |\n| `flash_sale` <br/> Slot for the running flash sale (Marketing); the storefront fills it and hides it when none runs. |\n| `brand_strip` <br/>  |\n| `usp_band` <br/>  |\n| `promo_split` <br/>  |\n| `testimonials` <br/> Slot filled from the testimonials table (Content testimonials). |\n| `blog_teaser` <br/> Slot filled from the latest live blog posts (Content blog). |\n| `rich_text` <br/>  |\n| `faq` <br/> Questions and answers; the storefront emits FAQPage JSON-LD for it. |\n| `contact_info` <br/> Store contact details (hotline, WhatsApp, Messenger, email, address) from Settings \u203a Store, plus hours. |\n| `image` <br/> One media-library image: alt text, optional caption and link, text width or wide. |\n| `story_hero` <br/> Story hero (About us): overline, the page headline, two paragraphs, a collage of up to three library photos, a badge. |\n| `feature_tiles` <br/> Two to four pastel tiles, each an icon, a title and a sentence. |\n| `numbered_cards` <br/> A heading and one to six numbered cards (01, 02\u2026), each a title and a sentence. |\n| `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |",
                 "enum": [
                     "hero",
                     "category_tiles",
@@ -38085,7 +38085,11 @@
                     "rich_text",
                     "faq",
                     "contact_info",
-                    "image"
+                    "image",
+                    "story_hero",
+                    "feature_tiles",
+                    "numbered_cards",
+                    "cta_band"
                 ],
                 "title": "BlockType"
             },
@@ -41018,7 +41022,11 @@
                             "rich_text",
                             "faq",
                             "contact_info",
-                            "image"
+                            "image",
+                            "story_hero",
+                            "feature_tiles",
+                            "numbered_cards",
+                            "cta_band"
                         ]
                     },
                     "label": {

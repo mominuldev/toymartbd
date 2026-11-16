@@ -123,6 +123,7 @@ final class LayoutResolver
                 return $slides === [] ? null : [$content, ['media' => $media]];
 
             case BlockType::PromoSplit:
+            case BlockType::StoryHero: // the collage keeps only the photos that still exist (the resource)
                 return [$content, ['media' => $media]];
 
             case BlockType::Image:
@@ -170,6 +171,9 @@ final class LayoutResolver
 
                 return $items === [] ? null : [$content, []];
 
+            case BlockType::FeatureTiles:
+            case BlockType::NumberedCards:
+            case BlockType::CtaBand:
             case BlockType::UspBand:
             case BlockType::ContactInfo: // values come from GET /storefront/store-info
             case BlockType::FlashSale:
@@ -186,15 +190,7 @@ final class LayoutResolver
     {
         $ids = [];
         foreach ($blocks as $block) {
-            $content = is_array($block['content'] ?? null) ? $block['content'] : [];
-            if (is_numeric($content['media_id'] ?? null)) {
-                $ids[] = (int) $content['media_id'];
-            }
-            foreach (is_array($content['slides'] ?? null) ? $content['slides'] : [] as $slide) {
-                if (is_array($slide) && is_numeric($slide['media_id'] ?? null)) {
-                    $ids[] = (int) $slide['media_id'];
-                }
-            }
+            $ids = [...$ids, ...CmsBlockMedia::mediaIds(is_array($block['content'] ?? null) ? $block['content'] : [])];
         }
 
         return $ids === [] ? collect() : Media::query()->whereIn('id', array_unique($ids))->get()->keyBy('id');

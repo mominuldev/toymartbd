@@ -42,6 +42,29 @@ it('answers an empty home before the first publish, so the storefront keeps its 
     CmsKit::home()->assertOk()->assertExactJson(['version' => null, 'published_at' => null, 'preview' => false, 'blocks' => []]);
 });
 
+it('renders the About blocks: collage photos with renditions, copy in the locale', function (): void {
+    [$a, $b] = [Media::factory()->create(['alt_text' => 'Shape sorter']), Media::factory()->create()];
+    CmsKit::block('story_hero', ['overline' => 'Our story', 'title' => 'About', 'title_bn' => 'আমাদের কথা', 'lead' => 'Why.', 'lead_bn' => '', 'media_ids' => [$a->id, $b->id], 'badge' => 'Ages', 'badge_sub' => '0–12']);
+    CmsKit::block('feature_tiles', ['items' => [['icon' => 'shield_check', 'title' => 'Age-checked', 'title_bn' => 'বয়স যাচাই'], ['icon' => 'map_pin', 'title' => 'Nationwide']]]);
+    CmsKit::block('numbered_cards', ['title' => 'What we believe', 'items' => [['title' => 'Play', 'body' => 'Learn.']]]);
+    CmsKit::block('cta_band', ['title' => 'Visit', 'primary_label' => 'Directions', 'primary_href' => 'https://maps.example/x', 'primary_icon' => 'map_pin']);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    expect(CmsKit::types($en))->toBe(['story_hero', 'feature_tiles', 'numbered_cards', 'cta_band'])
+        ->and($en->json('blocks.0.content.images'))->toHaveCount(2)
+        ->and($en->json('blocks.0.content.images.0.alt'))->toBe('Shape sorter')
+        ->and($en->json('blocks.0.content'))->not->toHaveKey('media_ids')
+        ->and($en->json('blocks.0.content.badge_sub'))->toBe('0–12')
+        ->and($en->json('blocks.1.content.items.1.icon'))->toBe('map_pin')
+        ->and($en->json('blocks.3.content.primary_icon'))->toBe('map_pin');
+
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($bn->json('blocks.0.content.title'))->toBe('আমাদের কথা')
+        ->and($bn->json('blocks.0.content.lead'))->toBe('Why.')
+        ->and($bn->json('blocks.1.content.items.0.title'))->toBe('বয়স যাচাই');
+});
+
 it('requires the storefront token and an allowlisted locale', function (): void {
     $this->getJson(CmsKit::STOREFRONT.'?locale=en')->assertUnauthorized();
     CmsKit::home('fr')->assertStatus(400);

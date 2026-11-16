@@ -10,13 +10,17 @@ use App\Domain\Content\Blocks\Schemas\BlogTeaserSchema;
 use App\Domain\Content\Blocks\Schemas\BrandStripSchema;
 use App\Domain\Content\Blocks\Schemas\CategoryTilesSchema;
 use App\Domain\Content\Blocks\Schemas\ContactInfoSchema;
+use App\Domain\Content\Blocks\Schemas\CtaBandSchema;
 use App\Domain\Content\Blocks\Schemas\FaqSchema;
+use App\Domain\Content\Blocks\Schemas\FeatureTilesSchema;
 use App\Domain\Content\Blocks\Schemas\FlashSaleSchema;
 use App\Domain\Content\Blocks\Schemas\HeroSchema;
 use App\Domain\Content\Blocks\Schemas\ImageSchema;
+use App\Domain\Content\Blocks\Schemas\NumberedCardsSchema;
 use App\Domain\Content\Blocks\Schemas\ProductRailSchema;
 use App\Domain\Content\Blocks\Schemas\PromoSplitSchema;
 use App\Domain\Content\Blocks\Schemas\RichTextSchema;
+use App\Domain\Content\Blocks\Schemas\StoryHeroSchema;
 use App\Domain\Content\Blocks\Schemas\TestimonialsSchema;
 use App\Domain\Content\Blocks\Schemas\UspBandSchema;
 
@@ -50,6 +54,14 @@ enum BlockType: string
     case ContactInfo = 'contact_info';
     /** One media-library image: alt text, optional caption and link, text width or wide. */
     case Image = 'image';
+    /** Story hero (About us): overline, the page headline, two paragraphs, a collage of up to three library photos, a badge. */
+    case StoryHero = 'story_hero';
+    /** Two to four pastel tiles, each an icon, a title and a sentence. */
+    case FeatureTiles = 'feature_tiles';
+    /** A heading and one to six numbered cards (01, 02…), each a title and a sentence. */
+    case NumberedCards = 'numbered_cards';
+    /** A gradient band with a title, a line of copy and up to two buttons. */
+    case CtaBand = 'cta_band';
 
     public function schema(): BlockSchema
     {
@@ -68,6 +80,10 @@ enum BlockType: string
             self::Faq => new FaqSchema,
             self::ContactInfo => new ContactInfoSchema,
             self::Image => new ImageSchema,
+            self::StoryHero => new StoryHeroSchema,
+            self::FeatureTiles => new FeatureTilesSchema,
+            self::NumberedCards => new NumberedCardsSchema,
+            self::CtaBand => new CtaBandSchema,
         };
     }
 

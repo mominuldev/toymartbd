@@ -4,7 +4,7 @@ import type { MessageKey } from '@/i18n/messages';
 import { Button } from '@/components/ui/Button';
 import { MediaField, type PickedImage } from '@/features/content/shared/MediaField';
 import type { CmsBlock } from './api';
-import { bool, CONTACT_CHANNELS, ids, num, rows, str, type Content } from './content';
+import { BLOOM_TONES, bool, CONTACT_CHANNELS, ids, num, rows, str, TILE_ICONS, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
 
@@ -27,6 +27,13 @@ type Props = {
 };
 
 const USP_ICONS = ['cod', 'return', 'authentic', 'support', 'delivery', 'gift', 'educational'] as const;
+
+const tileIconOptions = (t: (key: MessageKey) => string) => TILE_ICONS.map((icon) => ({ value: icon, label: t(`homeBuilder.tileIcon.${icon}` as MessageKey) }));
+
+function pickedValue(id: number | null, media: ReadonlyMap<number, MediaThumb>, picked: Map<number, PickedImage>): PickedImage | null {
+    if (id === null) return null;
+    return picked.get(id) ?? { media_id: id, url: media.get(id)?.thumb_url ?? null, alt: media.get(id)?.alt_text ?? null };
+}
 
 function imageValue(content: Content, media: ReadonlyMap<number, MediaThumb>, picked: Map<number, PickedImage>): PickedImage | null {
     const id = typeof content.media_id === 'number' ? content.media_id : null;
@@ -225,6 +232,106 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                     <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.contactSource')}</p>
                 </>
             );
+        case 'story_hero': {
+            const photos = ids(content.media_ids);
+            // Three fixed slots; clearing one closes the gap so the collage keeps its order.
+            const setPhoto = (slot: number, id: number | null) => {
+                const next = [...photos];
+                if (id === null) next.splice(slot, 1);
+                else next[slot] = id;
+                set('media_ids', next.filter((v, i, all) => all.indexOf(v) === i));
+            };
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.storyHeading')} />
+                    <Bilingual content={content} keyName="overline" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="lead" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.photosHint')}</p>
+                    {[0, 1, 2].slice(0, Math.min(photos.length + 1, 3)).map((slot) => (
+                        <MediaField
+                            key={slot}
+                            label={t('homeBuilder.f.photo', { n: slot + 1 })}
+                            pickerTitle="homeBuilder.f.pickImage"
+                            ratio={[1, 1]}
+                            value={pickedValue(photos[slot] ?? null, media, pickedThisSession)}
+                            onChange={pickImage((id) => setPhoto(slot, id))}
+                            disabled={ctx.disabled}
+                            error={ctx.errors[`content.media_ids.${slot}`] ?? (slot === 0 ? ctx.errors['content.media_ids'] : undefined)}
+                        />
+                    ))}
+                    <Bilingual content={content} keyName="badge" set={set} ctx={ctx} hint={t('homeBuilder.f.badgeHint')} />
+                    <Bilingual content={content} keyName="badge_sub" set={set} ctx={ctx} />
+                </>
+            );
+        }
+        case 'feature_tiles': {
+            const items = rows(content.items);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.tilesTitleHint')} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.tilesColours')}</p>
+                    {items.map((item, i) => {
+                        const setItem = (key: string, value: unknown) => setRow('items', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.item', { n: i + 1 })} index={i} count={items.length} min={2} disabled={ctx.disabled} {...listOps('items')}>
+                                <SelectField label={t('homeBuilder.f.icon')} value={str(item.icon) || 'check_circle'} options={tileIconOptions(t)} onChange={(v) => setItem('icon', v)} path={`items.${i}.icon`} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="title" labelKey="itemTitle" set={setItem} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="body" set={setItem} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    {ctx.errors['content.items'] && <p className="t-admin-caption text-fg-primary">{ctx.errors['content.items']}</p>}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || items.length >= 4} onClick={() => set('items', [...items, { icon: 'check_circle', title: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addItem')}
+                    </Button>
+                </>
+            );
+        }
+        case 'numbered_cards': {
+            const items = rows(content.items);
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    {items.map((item, i) => {
+                        const setItem = (key: string, value: unknown) => setRow('items', i, key, value);
+                        return (
+                            <Repeater key={i} title={t('homeBuilder.f.card', { n: i + 1 })} index={i} count={items.length} min={1} disabled={ctx.disabled} {...listOps('items')}>
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="title" labelKey="itemTitle" set={setItem} ctx={ctx} />
+                                <Bilingual content={item} prefix={`items.${i}.`} keyName="body" set={setItem} ctx={ctx} multiline />
+                            </Repeater>
+                        );
+                    })}
+                    {ctx.errors['content.items'] && <p className="t-admin-caption text-fg-primary">{ctx.errors['content.items']}</p>}
+                    <Button variant="outline" size="sm" className="self-start" disabled={ctx.disabled || items.length >= 6} onClick={() => set('items', [...items, { title: '' }])}>
+                        <PlusIcon size={16} aria-hidden />
+                        {t('homeBuilder.f.addCard')}
+                    </Button>
+                </>
+            );
+        }
+        case 'cta_band':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
+                    {(['primary', 'secondary'] as const).map((button) => (
+                        <div key={button} className="flex flex-col gap-4">
+                            <Bilingual content={content} keyName={`${button}_label`} set={set} ctx={ctx} />
+                            <TextField label={t(`homeBuilder.f.${button}_href`)} hint={t('homeBuilder.f.cta_hrefHint')} value={str(content[`${button}_href`])} onChange={(v) => set(`${button}_href`, v)} path={`${button}_href`} ctx={ctx} mono />
+                            <SelectField
+                                label={t(`homeBuilder.f.${button}_icon`)}
+                                value={str(content[`${button}_icon`])}
+                                options={[{ value: '', label: t('homeBuilder.f.noIcon') }, ...tileIconOptions(t)]}
+                                onChange={(v) => set(`${button}_icon`, v === '' ? null : v)}
+                                path={`${button}_icon`}
+                                ctx={ctx}
+                            />
+                        </div>
+                    ))}
+                </>
+            );
     }
 }
 
@@ -350,6 +457,18 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                         <SwitchRow key={channel} label={t(`homeBuilder.f.show_${channel}`)} checked={bool(content[`show_${channel}`], true)} onChange={(v) => set(`show_${channel}`, v)} disabled={ctx.disabled} />
                     ))}
                 </>
+            );
+        case 'story_hero':
+        case 'cta_band':
+            return (
+                <SelectField
+                    label={t('homeBuilder.f.tone')}
+                    value={str(content.tone) || (block.type === 'cta_band' ? 'candy' : 'sunrise')}
+                    options={BLOOM_TONES.map((v) => ({ value: v, label: t(`homeBuilder.f.tone.${v}`) }))}
+                    onChange={(v) => set('tone', v)}
+                    path="tone"
+                    ctx={ctx}
+                />
             );
         default:
             return null;

@@ -39,7 +39,8 @@ final class CmsBlockMedia
     }
 
     /**
-     * Media ids in one block's content: `content.media_id` and `content.slides[].media_id`.
+     * Media ids in one block's content: `content.media_id`, `content.slides[].media_id` and
+     * `content.media_ids[]` (the story hero's collage).
      *
      * @param  array<string, mixed>  $content
      * @return list<int>
@@ -53,6 +54,11 @@ final class CmsBlockMedia
         foreach (is_array($content['slides'] ?? null) ? $content['slides'] : [] as $slide) {
             if (is_array($slide) && is_numeric($slide['media_id'] ?? null)) {
                 $ids[] = (int) $slide['media_id'];
+            }
+        }
+        foreach (is_array($content['media_ids'] ?? null) ? $content['media_ids'] : [] as $id) {
+            if (is_numeric($id)) {
+                $ids[] = (int) $id;
             }
         }
 

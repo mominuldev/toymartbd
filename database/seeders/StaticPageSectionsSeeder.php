@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Catalog\Media\Actions\UploadMedia;
 use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Content\Blocks\Actions\CreateBlock;
 use App\Domain\Content\Blocks\Actions\PublishLayout;
@@ -15,6 +16,7 @@ use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use App\Domain\Content\Enums\PageStatus;
 use App\Domain\Content\Events\CmsLayoutPublished;
 use App\Domain\Content\Models\CmsPage;
+use Closure;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Event;
 
@@ -23,8 +25,8 @@ use Illuminate\Support\Facades\Event;
  * from sections, like the homepage — CLAUDE.md rule 34a). Builds each page that StaticPagesSeeder
  * created out of the block library and publishes it as layout version 1:
  *
- * - about           — our story (rich text), the promise band, a promo card when the media
- *                     library has a photo, testimonials (hidden until some are published);
+ * - about           — as designed (Figma 170:10502): story hero with the photo collage, promise
+ *                     tiles, "What we believe" numbered cards and the visit band;
  * - contact         — the Contact details section (values from Settings › Store › Business),
  *                     "before you write" shortcuts and a short FAQ;
  * - delivery-policy — charges, times, cut-off, cash-on-delivery rules, and a delivery FAQ;
@@ -54,9 +56,7 @@ final class StaticPageSectionsSeeder extends Seeder
 
     public function run(): void
     {
-        $image = Media::query()->where('kind', 'image')->orderBy('id')->value('id');
-
-        foreach ($this->pages(is_int($image) ? $image : null) as $slug => $sections) {
+        foreach ($this->pages() as $slug => $build) {
             $page = CmsPage::query()->where('slug', $slug)->first();
             if ($page === null) {
                 continue;
@@ -66,6 +66,8 @@ final class StaticPageSectionsSeeder extends Seeder
                 continue;
             }
 
+            // Built only now: a page the owner has edited never triggers its side effects (About's photo upload).
+            $sections = $build();
             CmsBlock::query()->where('placement', $key->value)->delete();
             foreach ($sections as [$type, $label, $content, $settings]) {
                 $schema = $type->schema();
@@ -108,66 +110,118 @@ final class StaticPageSectionsSeeder extends Seeder
     }
 
     /**
-     * slug → ordered sections: [type, internal label, content (merged over the type's defaults), settings].
+     * slug → a builder of its ordered sections: [type, internal label, content (merged over the
+     * type's defaults), settings].
      *
-     * @return array<string, list<array{BlockType, string, array<string, mixed>, array<string, bool>}>>
+     * @return array<string, Closure(): list<array{BlockType, string, array<string, mixed>, array<string, bool>}>>
      */
-    private function pages(?int $image): array
+    private function pages(): array
     {
         return [
-            'about' => $this->about($image),
-            'contact' => $this->contact(),
-            'delivery-policy' => $this->delivery(),
-            'returns-policy' => $this->returns(),
-            'privacy-policy' => $this->privacy(),
-            'terms' => $this->terms(),
-            'faq' => $this->faq(),
+            'about' => $this->about(...),
+            'contact' => $this->contact(...),
+            'delivery-policy' => $this->delivery(...),
+            'returns-policy' => $this->returns(...),
+            'privacy-policy' => $this->privacy(...),
+            'terms' => $this->terms(...),
+            'faq' => $this->faq(...),
         ];
     }
 
-    /** @return list<array{BlockType, string, array<string, mixed>, array<string, bool>}> */
-    private function about(?int $image): array
+    /**
+     * About us as designed (Figma 170:10502 / 174:8244): the story hero with its photo collage, the
+     * four promise tiles, "What we believe" and the visit band. The shop address and hours in the
+     * visit band are the design's PROVISIONAL values (UI-UX-DESIGN-SPEC §10) — the owner edits them.
+     *
+     * @return list<array{BlockType, string, array<string, mixed>, array<string, bool>}>
+     */
+    private function about(): array
     {
-        $sections = [
-            [BlockType::RichText, 'Our story', [
-                'html' => '<h2>Toys that teach, from people who care</h2>'
-                    .'<p>Toy Mart BD started with a simple frustration: finding a genuine, safe, age-right toy in Bangladesh meant guessing at a market stall or paying for a parcel that never looked like the photo. We are parents and educators who wanted better for our own children — so we built the shop we wished existed.</p>'
-                    .'<p>Every toy we sell is chosen for what it helps a child do: grasp and stack, count and sort, build and imagine, ask why and find out. We buy from authorised distributors and brands we trust, check every batch, and describe each toy honestly — age, size, what is in the box.</p>'
-                    .'<h2>What we promise</h2>'
-                    .'<ul><li><strong>Genuine brands only.</strong> No copies, no grey-market stock.</li>'
-                    .'<li><strong>Age guidance you can trust.</strong> Every product carries the maker\'s age label and our own note on how children actually play with it.</li>'
-                    .'<li><strong>Pay when it arrives.</strong> Cash on delivery anywhere in Bangladesh — open the parcel in front of the rider before you pay.</li>'
-                    .'<li><strong>Real people to talk to.</strong> Our team answers calls and WhatsApp messages every day we are open.</li></ul>'
-                    .'<h2>Where we are going</h2>'
-                    .'<p>We want every child in Bangladesh — in Dhaka or in a district town — to have toys that make learning feel like play. That means fair prices, fast delivery to every district, and books, puzzles and STEM kits that grow with your child.</p>',
-                'html_bn' => '<h2>খেলনা যা শেখায়, মানুষ যারা যত্ন করে</h2>'
-                    .'<p>টয় মার্ট বিডির শুরু একটা সাধারণ বিরক্তি থেকে: বাংলাদেশে আসল, নিরাপদ, বয়স-উপযোগী খেলনা খুঁজতে হলে হয় বাজারে আন্দাজে কিনতে হতো, নয়তো এমন পার্সেলের জন্য টাকা দিতে হতো যা ছবির সঙ্গে মেলে না। আমরা অভিভাবক ও শিক্ষক — নিজের সন্তানদের জন্য ভালো কিছু চেয়েছিলাম, তাই যে দোকানটা খুঁজছিলাম সেটাই বানিয়েছি।</p>'
-                    .'<p>প্রতিটি খেলনা আমরা বেছে নিই সেটা শিশুকে কী করতে সাহায্য করে তা দেখে: ধরা ও সাজানো, গোনা ও বাছাই, বানানো ও কল্পনা, প্রশ্ন করা ও উত্তর খোঁজা। আমরা অনুমোদিত পরিবেশক ও বিশ্বস্ত ব্র্যান্ড থেকে কিনি, প্রতিটি চালান যাচাই করি, আর প্রতিটি খেলনার সৎ বর্ণনা দিই — বয়স, আকার, বাক্সে কী আছে।</p>'
-                    .'<h2>আমাদের প্রতিশ্রুতি</h2>'
-                    .'<ul><li><strong>শুধু আসল ব্র্যান্ড।</strong> কোনো নকল নয়, কোনো অননুমোদিত মাল নয়।</li>'
-                    .'<li><strong>ভরসাযোগ্য বয়স নির্দেশনা।</strong> প্রতিটি পণ্যে প্রস্তুতকারকের বয়সের লেবেল, আর শিশুরা আসলে কীভাবে খেলে সে বিষয়ে আমাদের নিজস্ব নোট।</li>'
-                    .'<li><strong>হাতে পেয়ে টাকা দিন।</strong> বাংলাদেশের যেকোনো জায়গায় ক্যাশ অন ডেলিভারি — টাকা দেওয়ার আগে রাইডারের সামনে পার্সেল খুলে দেখুন।</li>'
-                    .'<li><strong>কথা বলার জন্য সত্যিকারের মানুষ।</strong> খোলা থাকার প্রতিদিন আমাদের টিম কল ও হোয়াটসঅ্যাপ মেসেজের উত্তর দেয়।</li></ul>'
-                    .'<h2>আমরা কোথায় যেতে চাই</h2>'
-                    .'<p>আমরা চাই বাংলাদেশের প্রতিটি শিশু — ঢাকায় হোক বা জেলা শহরে — এমন খেলনা পাক যা শেখাকে খেলার মতো আনন্দের করে। মানে ন্যায্য দাম, প্রতিটি জেলায় দ্রুত ডেলিভারি, আর এমন বই, পাজল ও স্টেম কিট যা আপনার সন্তানের সঙ্গে বড় হয়।</p>',
+        return [
+            [BlockType::StoryHero, 'Our story', [
+                'overline' => 'Our story', 'overline_bn' => 'আমাদের গল্প',
+                'title' => 'About Toy Mart BD', 'title_bn' => 'টয় মার্ট বিডি সম্পর্কে',
+                'lead' => 'We started Toy Mart BD in Dhanmondi because buying a good toy in Bangladesh was harder than it should be: unclear age ranges, copies sold as originals, and no way to send anything back.',
+                'lead_bn' => 'ধানমন্ডিতে টয় মার্ট বিডি শুরু করেছিলাম, কারণ বাংলাদেশে একটা ভালো খেলনা কেনা যতটা সহজ হওয়ার কথা, ততটা ছিল না: বয়সসীমা অস্পষ্ট, নকল জিনিস আসল বলে বিক্রি, আর ফেরত দেওয়ার কোনো উপায় নেই।',
+                'body' => 'So we built the shop we wanted as parents: every toy checked for age and safety, honest prices, and a 7-day return if something is not right.',
+                'body_bn' => 'তাই বাবা-মা হিসেবে যে দোকানটা চেয়েছিলাম, সেটাই বানিয়েছি: প্রতিটি খেলনা বয়স ও নিরাপত্তার জন্য যাচাই করা, সৎ দাম, আর কিছু ঠিক না থাকলে 7 দিনে ফেরত।',
+                'media_ids' => $this->aboutPhotos(),
+                'badge' => 'Ages', 'badge_bn' => 'বয়স', 'badge_sub' => '0–12', 'badge_sub_bn' => '0–12',
+                'tone' => 'sunrise',
             ], []],
-            [BlockType::UspBand, 'Promise band', [], []],
+            [BlockType::FeatureTiles, 'Our promises', [
+                'title' => null, 'title_bn' => null,
+                'items' => [
+                    ['icon' => 'shield_check', 'title' => 'Age-checked toys', 'title_bn' => 'বয়স যাচাই করা খেলনা',
+                        'body' => 'Every toy is labelled with a real age range and choking-hazard warnings.', 'body_bn' => 'প্রতিটি খেলনায় আসল বয়সসীমা আর গলায় আটকানোর ঝুঁকির সতর্কতা লেখা থাকে।'],
+                    ['icon' => 'check_circle', 'title' => '7-day returns', 'title_bn' => '7 দিনে ফেরত',
+                        'body' => 'Wrong, broken or missing a part? Tell us within 7 days and we take it back.', 'body_bn' => 'ভুল, ভাঙা বা কোনো অংশ নেই? 7 দিনের মধ্যে জানান, আমরা ফেরত নেব।'],
+                    ['icon' => 'gift', 'title' => 'Cash on delivery', 'title_bn' => 'ক্যাশ অন ডেলিভারি',
+                        'body' => 'Pay when the parcel is in your hands, anywhere we deliver.', 'body_bn' => 'পার্সেল হাতে পেয়ে টাকা দিন, যেখানেই আমরা ডেলিভারি দিই।'],
+                    ['icon' => 'map_pin', 'title' => 'Delivered nationwide', 'title_bn' => 'সারা দেশে ডেলিভারি',
+                        'body' => 'Toys reach Dhaka addresses in 24 hours, and we deliver across Bangladesh.', 'body_bn' => 'ঢাকার ঠিকানায় 24 ঘণ্টায় খেলনা পৌঁছায়, আর সারা বাংলাদেশে ডেলিভারি দিই।'],
+                ],
+            ], []],
+            [BlockType::NumberedCards, 'What we believe', [
+                'title' => 'What we believe', 'title_bn' => 'আমরা যা বিশ্বাস করি',
+                'items' => [
+                    ['title' => 'Play is how children learn', 'title_bn' => 'খেলাই শিশুর শেখার পথ',
+                        'body' => 'We pick toys that build hands, words and imagination, not just toys that flash.', 'body_bn' => 'আমরা এমন খেলনা বাছি যা হাত, ভাষা আর কল্পনা গড়ে — শুধু ঝলমলে খেলনা নয়।'],
+                    ['title' => 'Parents deserve the truth', 'title_bn' => 'বাবা-মায়ের সত্যিটা জানার অধিকার আছে',
+                        'body' => 'Real photos, real age ranges and prices that do not change at checkout.', 'body_bn' => 'আসল ছবি, আসল বয়সসীমা, আর চেকআউটে না বদলানো দাম।'],
+                    ['title' => 'A real shop, real people', 'title_bn' => 'সত্যিকারের দোকান, সত্যিকারের মানুষ',
+                        'body' => 'Visit us in Dhanmondi, or WhatsApp a person who knows the toys.', 'body_bn' => 'ধানমন্ডিতে চলে আসুন, অথবা খেলনা চেনেন এমন একজন মানুষকে হোয়াটসঅ্যাপ করুন।'],
+                ],
+            ], []],
+            [BlockType::CtaBand, 'Visit our shop', [
+                'title' => 'Come and play at our shop', 'title_bn' => 'আমাদের দোকানে খেলতে আসুন',
+                'body' => 'House 12, Road 7, Dhanmondi, Dhaka · Saturday to Thursday, 10 am – 8 pm',
+                'body_bn' => 'বাসা 12, রোড 7, ধানমন্ডি, ঢাকা · শনি থেকে বৃহস্পতি, সকাল 10টা – রাত 8টা',
+                'primary_label' => 'Get directions', 'primary_label_bn' => 'পথ দেখুন', 'primary_href' => '/contact', 'primary_icon' => 'map_pin',
+                'secondary_label' => 'Contact us', 'secondary_label_bn' => 'যোগাযোগ করুন', 'secondary_href' => '/contact', 'secondary_icon' => 'chat',
+                'tone' => 'candy',
+            ], []],
         ];
+    }
 
-        if ($image !== null) {
-            $sections[] = [BlockType::PromoSplit, 'Shop by age', [
-                'overline' => 'Not sure where to start?', 'overline_bn' => 'কোথা থেকে শুরু করবেন বুঝছেন না?',
-                'headline' => 'Find the right toy for every age', 'headline_bn' => 'প্রতিটি বয়সের জন্য সঠিক খেলনা খুঁজুন',
-                'body' => 'From the first rattle to the first robot kit — browse toys grouped by age, each picked for how children really play.',
-                'body_bn' => 'প্রথম ঝুনঝুনি থেকে প্রথম রোবট কিট — বয়স অনুযায়ী সাজানো খেলনা দেখুন, প্রতিটি বাছাই করা শিশুরা আসলে যেভাবে খেলে সেভাবে।',
-                'cta_label' => 'Shop by age', 'cta_label_bn' => 'বয়স অনুযায়ী কিনুন', 'cta_href' => '/toys',
-                'media_id' => $image, 'image_side' => 'right',
-            ], []];
+    /**
+     * The About collage photos. On a developer machine the design's mock photos (unbranded AI
+     * images from the Figma file, toymartbd-app/storefront/public/mock/about) are added to the
+     * media library once, so the page renders as designed; anywhere else the hero starts without
+     * photos and the owner picks licensed ones in the builder.
+     *
+     * @return list<int>
+     */
+    private function aboutPhotos(): array
+    {
+        if (! app()->environment('local')) {
+            return [];
         }
 
-        $sections[] = [BlockType::Testimonials, 'Testimonials', ['title' => 'What parents tell us', 'title_bn' => 'অভিভাবকেরা যা বলেন'], []];
+        $ids = [];
+        foreach (['shape-sorter' => 'A shape-sorter puzzle', 'slide' => 'A child on a garden slide', 'blocks' => 'A child building with bricks'] as $name => $alt) {
+            $filename = 'about-'.$name.'.jpg';
+            $id = Media::query()->where('filename', $filename)->where('kind', 'image')->value('id');
+            $source = base_path('toymartbd-app/storefront/public/mock/about/'.$name.'.jpg');
+            if ($id === null && is_file($source)) {
+                $copy = (string) tempnam(sys_get_temp_dir(), 'about');
+                copy($source, $copy);
+                $previous = config('queue.default');
+                config(['queue.default' => 'sync']); // renditions now, so the page has them
 
-        return $sections;
+                try {
+                    $id = app(UploadMedia::class)->handle($copy, $filename, ['alt_text' => $alt])->id;
+                } finally {
+                    config(['queue.default' => $previous]);
+                    @unlink($copy);
+                }
+            }
+            if (is_numeric($id)) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        return $ids;
     }
 
     /** @return list<array{BlockType, string, array<string, mixed>, array<string, bool>}> */

@@ -37,6 +37,10 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `faq` | `title`*, `items[1..20]`: `question`*, `answer`* (plain text; the storefront adds FAQPage JSON-LD) |
 | `image` | `media_id` (library image; a block without one is removed on the storefront), `alt`, `caption`, `href` (store path or https), `width` content\|wide |
 | `contact_info` | `title`*, `sub`, `hours`, `map_href`, `show_hotline`, `show_whatsapp`, `show_messenger`, `show_email`, `show_address` (default true) — the values come from Settings › Store › Business via `GET /storefront/store-info`, never from the block; an unset value renders as the marked sample, never as a link |
+| `story_hero` | `overline`, `title`*, `lead`*, `body`, `media_ids[0..3]` (library images, the sticker collage; the storefront gets `images[]` with only those that still exist), `badge`, `badge_sub`, `tone` sunrise\|sky\|mint\|candy — placed first on a page built from sections it replaces the page header and its title is the page's H1 (About us 170:10502) |
+| `feature_tiles` | `title`, `items[2..4]`: `icon`* (shield_check, check_circle, gift, map_pin, truck, money, chat, phone, star, heart, puzzle, books), `title`*, `body` — tile colours follow the position (mint, sky, butter, lavender) |
+| `numbered_cards` | `title`*, `items[1..6]`: `title`*, `body` — numbered 01, 02… by position |
+| `cta_band` | `title`*, `body`, `primary_label`/`primary_href`/`primary_icon`, `secondary_label`/`secondary_href`/`secondary_icon` (a label needs a store path or https link; icons as feature_tiles), `tone` candy\|sunrise\|sky\|mint |
 
 ## Admin API (`/api/v1/admin`, content.view to read, content.manage to change)
 

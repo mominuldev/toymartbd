@@ -28,10 +28,15 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
             break;
         case 'usp_band':
         case 'faq':
+        case 'feature_tiles':
+        case 'numbered_cards':
             parts.push(t('homeBuilder.summary.items', { count: rows(c.items).length }));
             break;
         case 'image':
             parts.push(typeof c.media_id === 'number' ? t(`homeBuilder.summary.image.${str(c.width) === 'wide' ? 'wide' : 'content'}`) : t('homeBuilder.summary.noImage'));
+            break;
+        case 'story_hero':
+            parts.push(ids(c.media_ids).length ? t('homeBuilder.summary.photos', { count: ids(c.media_ids).length }) : t('homeBuilder.summary.noImage'));
             break;
         case 'contact_info':
             parts.push(t('homeBuilder.summary.channels', { count: CONTACT_CHANNELS.filter((ch) => bool(c[`show_${ch}`], true)).length }));

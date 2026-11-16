@@ -17,6 +17,9 @@ import { getStoreInfo } from '@/lib/store-info';
 export async function CmsSectionsPage({ locale, layout, otherPages = [] }: { locale: Locale; layout: PageLayout; otherPages?: CmsPageSummary[] }) {
     const { contact } = await getStoreInfo();
     const more = otherPages.filter((p) => p.slug !== layout.page.slug);
+    // A page that opens with a story hero (About us 170:10502) has no separate header: the hero is
+    // the header and its title the H1.
+    const storyOpensPage = layout.blocks[0]?.type === 'story_hero';
 
     return (
         <>
@@ -27,10 +30,22 @@ export async function CmsSectionsPage({ locale, layout, otherPages = [] }: { loc
                 </>
             ) : null}
             <article className="flex flex-col gap-8 lg:gap-12">
-                <Band>
-                    <CmsPageHeader locale={locale} page={layout.page} />
-                </Band>
-                {layout.blocks.length > 0 ? <HomeBlocks blocks={layout.blocks} locale={locale} editable={layout.preview} hotline={contact.hotline.display} pageHeading={false} /> : null}
+                {storyOpensPage ? null : (
+                    <Band>
+                        <CmsPageHeader locale={locale} page={layout.page} />
+                    </Band>
+                )}
+                {layout.blocks.length > 0 ? (
+                    <HomeBlocks
+                        blocks={layout.blocks}
+                        locale={locale}
+                        editable={layout.preview}
+                        hotline={contact.hotline.display}
+                        pageHeading={false}
+                        storyOpensPage={storyOpensPage}
+                        gap={storyOpensPage ? 'gap-10 lg:gap-16' : undefined}
+                    />
+                ) : null}
                 {more.length > 0 ? (
                     <Band>
                         <MorePagesNav locale={locale} pages={more} className="lg:max-w-75" />

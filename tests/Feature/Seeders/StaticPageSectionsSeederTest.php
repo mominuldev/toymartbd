@@ -36,7 +36,7 @@ function seededTypes(string $slug): array
 it('builds and publishes every static page from sections', function (): void {
     $this->seed(StaticPageSectionsSeeder::class);
 
-    expect(seededTypes('about'))->toBe(['rich_text', 'usp_band', 'testimonials'])
+    expect(seededTypes('about'))->toBe(['story_hero', 'feature_tiles', 'numbered_cards', 'cta_band'])
         ->and(seededTypes('contact'))->toBe(['contact_info', 'rich_text', 'faq'])
         ->and(seededTypes('delivery-policy'))->toBe(['rich_text', 'faq'])
         ->and(seededTypes('returns-policy'))->toBe(['rich_text', 'faq'])
@@ -68,7 +68,7 @@ it('replaces the migrated placeholder layout but never an edited one', function 
     $this->seed(StaticPageSectionsSeeder::class);
     $this->seed(StaticPageSectionsSeeder::class); // idempotent
 
-    expect(seededTypes('about'))->toBe(['rich_text', 'usp_band', 'testimonials'])
+    expect(seededTypes('about'))->toBe(['story_hero', 'feature_tiles', 'numbered_cards', 'cta_band'])
         ->and(CmsLayoutVersion::query()->where('placement', LayoutKey::page($about->id)->value)->count())->toBe(2)
         ->and(CmsBlock::query()->where('placement', LayoutKey::page($terms->id)->value)->value('content')['html'])->toBe('<p>Our own terms.</p>');
 });

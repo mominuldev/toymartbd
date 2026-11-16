@@ -78,6 +78,17 @@ it('rejects invalid content per type', function (string $type, array $content, s
     'contact without title' => ['contact_info', ['title' => ''], 'title'],
     'contact javascript map link' => ['contact_info', ['title' => 'x', 'map_href' => 'javascript:alert(1)'], 'map_href'],
     'contact bad switch' => ['contact_info', ['title' => 'x', 'show_email' => 'perhaps'], 'show_email'],
+    'story hero without lead' => ['story_hero', ['title' => 'x', 'lead' => ''], 'lead'],
+    'story hero four photos' => ['story_hero', ['title' => 'x', 'lead' => 'y', 'media_ids' => [1, 2, 3, 4]], 'media_ids'],
+    'story hero unknown photo' => ['story_hero', ['title' => 'x', 'lead' => 'y', 'media_ids' => [999999]], 'media_ids.0'],
+    'story hero bad tone' => ['story_hero', ['title' => 'x', 'lead' => 'y', 'tone' => 'neon'], 'tone'],
+    'tiles one item' => ['feature_tiles', ['items' => [['icon' => 'gift', 'title' => 'x']]], 'items'],
+    'tiles unknown icon' => ['feature_tiles', ['items' => [['icon' => 'rocket', 'title' => 'x'], ['icon' => 'gift', 'title' => 'y']]], 'items.0.icon'],
+    'numbered seven items' => ['numbered_cards', ['title' => 'x', 'items' => array_fill(0, 7, ['title' => 'y'])], 'items'],
+    'numbered item without title' => ['numbered_cards', ['title' => 'x', 'items' => [['body' => 'y']]], 'items.0.title'],
+    'cta label without link' => ['cta_band', ['title' => 'x', 'primary_label' => 'Go', 'primary_href' => null], 'primary_href'],
+    'cta javascript link' => ['cta_band', ['title' => 'x', 'secondary_label' => 'Go', 'secondary_href' => 'javascript:alert(1)'], 'secondary_href'],
+    'cta unknown icon' => ['cta_band', ['title' => 'x', 'primary_icon' => 'rocket'], 'primary_icon'],
 ]);
 
 it('accepts a document media id only when it is an image', function (): void {

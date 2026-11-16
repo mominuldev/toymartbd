@@ -124,7 +124,92 @@ export type HomeBlock = Base &
           }
         | { type: "contact_info"; content: ContactInfoContent }
         | { type: "image"; content: ImageBlockContent }
+        | { type: "story_hero"; content: StoryHeroContent }
+        | {
+              type: "feature_tiles";
+              content: { title: string | null; items: FeatureTile[] };
+          }
+        | {
+              type: "numbered_cards";
+              content: {
+                  title: string;
+                  items: Array<{ title: string; body: string | null }>;
+              };
+          }
+        | { type: "cta_band"; content: CtaBandContent }
     );
+
+/** The glyphs of feature tiles and call-to-action buttons (TileIcon on the API). */
+export type TileIconKey =
+    | "shield_check"
+    | "check_circle"
+    | "gift"
+    | "map_pin"
+    | "truck"
+    | "money"
+    | "chat"
+    | "phone"
+    | "star"
+    | "heart"
+    | "puzzle"
+    | "books";
+
+const TILE_ICONS: readonly TileIconKey[] = [
+    "shield_check",
+    "check_circle",
+    "gift",
+    "map_pin",
+    "truck",
+    "money",
+    "chat",
+    "phone",
+    "star",
+    "heart",
+    "puzzle",
+    "books",
+];
+
+const tileIcon = (v: unknown): TileIconKey | null =>
+    TILE_ICONS.includes(v as TileIconKey) ? (v as TileIconKey) : null;
+
+export type BloomTone = "sunrise" | "sky" | "mint" | "candy";
+
+const TONES: readonly BloomTone[] = ["sunrise", "sky", "mint", "candy"];
+
+const tone = (v: unknown, fallback: BloomTone): BloomTone =>
+    TONES.includes(v as BloomTone) ? (v as BloomTone) : fallback;
+
+/** Story hero (About us 170:10502): copy beside a collage of 0–3 photos. */
+export interface StoryHeroContent {
+    overline: string | null;
+    title: string;
+    lead: string;
+    body: string | null;
+    images: BlockImage[];
+    badge: string | null;
+    badge_sub: string | null;
+    tone: BloomTone;
+}
+
+export interface FeatureTile {
+    icon: TileIconKey;
+    title: string;
+    body: string | null;
+}
+
+export interface CtaButton {
+    label: string;
+    href: string;
+    icon: TileIconKey | null;
+}
+
+export interface CtaBandContent {
+    title: string;
+    body: string | null;
+    primary: CtaButton | null;
+    secondary: CtaButton | null;
+    tone: BloomTone;
+}
 
 /** The Image block: never without an image (the API drops one without, and so does this guard). */
 export interface ImageBlockContent {
@@ -473,6 +558,86 @@ function block(raw: unknown): HomeBlock | null {
                           hours: str(c.hours),
                           map_href: map,
                           channels,
+                      },
+                  }
+                : null;
+        }
+        case "story_hero": {
+            const lead = str(c.lead);
+            return title && lead
+                ? {
+                      ...base,
+                      type: "story_hero",
+                      content: {
+                          overline: str(c.overline),
+                          title,
+                          lead,
+                          body: str(c.body),
+                          images: nonEmpty(list(c.images).map(image)).slice(
+                              0,
+                              3
+                          ),
+                          badge: str(c.badge),
+                          badge_sub: str(c.badge_sub),
+                          tone: tone(c.tone, "sunrise"),
+                      },
+                  }
+                : null;
+        }
+        case "feature_tiles": {
+            const items = nonEmpty(
+                list(c.items).map((i) =>
+                    isObj(i) && str(i.title)
+                        ? {
+                              icon: tileIcon(i.icon) ?? "check_circle",
+                              title: str(i.title)!,
+                              body: str(i.body),
+                          }
+                        : null
+                )
+            ).slice(0, 4);
+            return items.length
+                ? {
+                      ...base,
+                      type: "feature_tiles",
+                      content: { title, items },
+                  }
+                : null;
+        }
+        case "numbered_cards": {
+            const items = nonEmpty(
+                list(c.items).map((i) =>
+                    isObj(i) && str(i.title)
+                        ? { title: str(i.title)!, body: str(i.body) }
+                        : null
+                )
+            ).slice(0, 6);
+            return title && items.length
+                ? {
+                      ...base,
+                      type: "numbered_cards",
+                      content: { title, items },
+                  }
+                : null;
+        }
+        case "cta_band": {
+            const button = (key: string): CtaButton | null => {
+                const label = str(c[`${key}_label`]);
+                const href = safeHref(c[`${key}_href`]);
+                return label && href
+                    ? { label, href, icon: tileIcon(c[`${key}_icon`]) }
+                    : null;
+            };
+            return title
+                ? {
+                      ...base,
+                      type: "cta_band",
+                      content: {
+                          title,
+                          body: str(c.body),
+                          primary: button("primary"),
+                          secondary: button("secondary"),
+                          tone: tone(c.tone, "candy"),
                       },
                   }
                 : null;
