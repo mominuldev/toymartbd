@@ -784,26 +784,26 @@ Rules that govern all of them:
 
 #### A.17.2 WhatsApp utility templates
 
-Meta requires pre-approved templates with positional variables `{{1}}`, `{{2}}`…, submitted per language (`en` and `bn_BD`). Bangla templates must be submitted separately and approved separately — budget two weeks. No marketing language may appear in a utility template or Meta will reject or reclassify it, which is why none of these contain an offer. Each gets a **Track order** URL button rather than an inline link.
+Meta requires pre-approved templates with positional variables `{{1}}`, `{{2}}`…, submitted per language (`en` and `bn` — Meta's code for Bengali; `bn_BD` is not on its list, owner decision 2026-11-16). Bangla templates must be submitted separately and approved separately — budget two weeks. No marketing language may appear in a utility template or Meta will reject or reclassify it, which is why none of these contain an offer. Each gets a **Track order** URL button rather than an inline link.
 
 | template name | lang | body | variables |
 |---|---|---|---|
 | `order_placed` | en | Hello {{1}}, we have your Toy Mart BD order *{{2}}*. {{3}} items, total BDT {{4}}, cash on delivery. We will call this number within 2 hours on working days to confirm. Keep BDT {{4}} ready for the rider on delivery day. | 1 name, 2 order_no, 3 item_count, 4 total |
-| `order_placed` | bn_BD | {{1}}, আপনার টয় মার্ট বিডি অর্ডার *{{2}}* আমাদের কাছে পৌঁছেছে। {{3}}টি পণ্য, সর্বমোট BDT {{4}}, ক্যাশ অন ডেলিভারি। কর্মদিবসে 2 ঘণ্টার মধ্যে এই নম্বরে ফোন করে কনফার্ম করব। ডেলিভারির দিন রাইডারের জন্য BDT {{4}} হাতে রাখুন। | same |
+| `order_placed` | bn | {{1}}, আপনার টয় মার্ট বিডি অর্ডার *{{2}}* আমাদের কাছে পৌঁছেছে। {{3}}টি পণ্য, সর্বমোট BDT {{4}}, ক্যাশ অন ডেলিভারি। কর্মদিবসে 2 ঘণ্টার মধ্যে এই নম্বরে ফোন করে কনফার্ম করব। ডেলিভারির দিন রাইডারের জন্য BDT {{4}} হাতে রাখুন। | same |
 | `order_confirmed` | en | Your order *{{1}}* is confirmed and being packed. Expected delivery {{2}}. If you need to change the address or anything else, reply here or call 09600-123456 today. | 1 order_no, 2 date_range |
-| `order_confirmed` | bn_BD | আপনার অর্ডার *{{1}}* কনফার্ম হয়েছে, প্যাক করা হচ্ছে। ডেলিভারি হবে {{2}}। ঠিকানা বা অন্য কিছু বদলাতে হলে আজই এখানে উত্তর দিন বা 09600-123456 নম্বরে ফোন করুন। | same |
+| `order_confirmed` | bn | আপনার অর্ডার *{{1}}* কনফার্ম হয়েছে, প্যাক করা হচ্ছে। ডেলিভারি হবে {{2}}। ঠিকানা বা অন্য কিছু বদলাতে হলে আজই এখানে উত্তর দিন বা 09600-123456 নম্বরে ফোন করুন। | same |
 | `order_shipped` | en | Order *{{1}}* has been handed to {{2}}. Tracking number {{3}}. The rider will call before delivery, usually in {{4}}. | 1 order_no, 2 courier, 3 consignment, 4 eta |
-| `order_shipped` | bn_BD | অর্ডার *{{1}}* {{2}}-কে দিয়ে দেওয়া হয়েছে। ট্র্যাকিং নম্বর {{3}}। ডেলিভারির আগে রাইডার ফোন করবে, সাধারণত {{4}}-এর মধ্যে। | same |
+| `order_shipped` | bn | অর্ডার *{{1}}* {{2}}-কে দিয়ে দেওয়া হয়েছে। ট্র্যাকিং নম্বর {{3}}। ডেলিভারির আগে রাইডার ফোন করবে, সাধারণত {{4}}-এর মধ্যে। | same |
 | `order_out_for_delivery` | en | Order *{{1}}* is out for delivery today. Please keep BDT {{2}} ready. The rider's number is {{3}}. If nobody will be home, reply here and we will reschedule. | 1 order_no, 2 cod_amount, 3 rider_phone |
-| `order_out_for_delivery` | bn_BD | অর্ডার *{{1}}* আজ ডেলিভারি হবে। BDT {{2}} হাতে রাখুন। রাইডারের নম্বর {{3}}। বাসায় কেউ না থাকলে এখানে উত্তর দিন, আমরা অন্যদিন পাঠাব। | same |
+| `order_out_for_delivery` | bn | অর্ডার *{{1}}* আজ ডেলিভারি হবে। BDT {{2}} হাতে রাখুন। রাইডারের নম্বর {{3}}। বাসায় কেউ না থাকলে এখানে উত্তর দিন, আমরা অন্যদিন পাঠাব। | same |
 | `order_delivered` | en | Order *{{1}}* was delivered on {{2}}. Thank you. If anything is wrong — wrong item, damage, missing part — tell us within 7 days and we will take it back. | 1 order_no, 2 date |
-| `order_delivered` | bn_BD | অর্ডার *{{1}}* {{2}}-এ ডেলিভারি হয়েছে। ধন্যবাদ। কিছু ভুল হলে — ভুল পণ্য, ভাঙা, অংশ কম — 7 দিনের মধ্যে জানান, আমরা ফেরত নেব। | same |
+| `order_delivered` | bn | অর্ডার *{{1}}* {{2}}-এ ডেলিভারি হয়েছে। ধন্যবাদ। কিছু ভুল হলে — ভুল পণ্য, ভাঙা, অংশ কম — 7 দিনের মধ্যে জানান, আমরা ফেরত নেব। | same |
 | `order_cancelled` | en | Order *{{1}}* has been cancelled. Nothing is owed. {{2}} If this was not you, call 09600-123456 today. | 1 order_no, 2 refund_sentence (empty when nothing was paid) |
-| `order_cancelled` | bn_BD | অর্ডার *{{1}}* বাতিল করা হয়েছে। কোনো টাকা দিতে হবে না। {{2}} আপনি না করলে আজই 09600-123456 নম্বরে ফোন করুন। | same |
+| `order_cancelled` | bn | অর্ডার *{{1}}* বাতিল করা হয়েছে। কোনো টাকা দিতে হবে না। {{2}} আপনি না করলে আজই 09600-123456 নম্বরে ফোন করুন। | same |
 | `cart_reminder` | en | Hello {{1}}, the {{2}} toys in your Toy Mart BD cart are still saved, total BDT {{3}}. They are not reserved — stock moves. Open your cart to finish. | 1 name, 2 item_count, 3 total |
-| `cart_reminder` | bn_BD | {{1}}, আপনার টয় মার্ট বিডি কার্টে {{2}}টি খেলনা এখনো রাখা আছে, সর্বমোট BDT {{3}}। এগুলো আটকে রাখা নেই — স্টক শেষ হয়ে যেতে পারে। কার্ট খুলে অর্ডার শেষ করুন। | same |
+| `cart_reminder` | bn | {{1}}, আপনার টয় মার্ট বিডি কার্টে {{2}}টি খেলনা এখনো রাখা আছে, সর্বমোট BDT {{3}}। এগুলো আটকে রাখা নেই — স্টক শেষ হয়ে যেতে পারে। কার্ট খুলে অর্ডার শেষ করুন। | same |
 | `review_request` | en | How was the {{1}} from order *{{2}}*? Two lines from you helps the next parent decide — especially the age it actually suited. | 1 product, 2 order_no |
-| `review_request` | bn_BD | অর্ডার *{{2}}*-এর {{1}} কেমন লাগল? আপনার দুই লাইন পরের অভিভাবককে সিদ্ধান্ত নিতে সাহায্য করবে — বিশেষ করে কত বছরের বাচ্চার জন্য ঠিক হলো সেটা। | same |
+| `review_request` | bn | অর্ডার *{{2}}*-এর {{1}} কেমন লাগল? আপনার দুই লাইন পরের অভিভাবককে সিদ্ধান্ত নিতে সাহায্য করবে — বিশেষ করে কত বছরের বাচ্চার জন্য ঠিক হলো সেটা। | same |
 
 `cart_reminder` and `review_request` sit at the boundary of Meta's utility category. Submit both as **utility** with the copy above; if either is reclassified as marketing, send it over SMS instead and accept the Bangla two-segment cost, rather than rewriting it into something that sounds like an advertisement.
 

@@ -304,7 +304,7 @@ describe('Inbox customer panel', () => {
 const confirmed: InboxTemplate = {
     key: 'order.confirmed',
     template: 'order_confirmed',
-    language: 'bn_BD',
+    language: 'bn',
     locale: 'bn',
     name: null,
     body: 'আপনার অর্ডার *{{1}}* কনফার্ম হয়েছে, প্যাক করা হচ্ছে। ডেলিভারি হবে {{2}}। ঠিকানা বদলাতে 09600123456 নম্বরে ফোন করুন।',
@@ -348,7 +348,7 @@ describe('Inbox restart with a template', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Send template' }));
         await waitFor(() => expect(calls(fetchMock, 'POST', '/inbox/conversations/1/template')).toHaveLength(1));
-        expect(JSON.parse(String(calls(fetchMock, 'POST', '/template')[0]![1]!.body))).toEqual({ template: 'order_confirmed', language: 'bn_BD', parameters: ['TMB-26-00121', 'আগামীকাল'] });
+        expect(JSON.parse(String(calls(fetchMock, 'POST', '/template')[0]![1]!.body))).toEqual({ template: 'order_confirmed', language: 'bn', parameters: ['TMB-26-00121', 'আগামীকাল'] });
         expect(await screen.findByText('Template queued')).toBeTruthy();
         await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('combobox', { name: 'Template' })));
     });

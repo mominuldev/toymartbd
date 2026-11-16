@@ -10651,7 +10651,7 @@ export interface components {
             /** @description Meta's template name. */
             template: string;
             /** @enum {string} */
-            language: "en" | "bn_BD";
+            language: "en" | "bn";
             /** @enum {string} */
             locale: "en" | "bn";
             /** @description A staff-made template's own name; null for a system template. */
@@ -14355,7 +14355,7 @@ export interface components {
         SendInboxTemplateRequest: {
             template: string;
             /** @enum {string} */
-            language: "en" | "bn_BD";
+            language: "en" | "bn";
             parameters: string[];
         };
         /**

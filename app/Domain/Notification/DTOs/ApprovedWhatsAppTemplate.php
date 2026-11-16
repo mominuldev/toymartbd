@@ -30,10 +30,10 @@ final readonly class ApprovedWhatsAppTemplate
         public array $examples,
     ) {}
 
-    /** Meta's language code for a locale: `en`, or `bn_BD` (the code the order notifications send with). */
+    /** Meta's language code for a locale: `en` or `bn` (Meta's code for Bengali; `bn_BD` is not on its supported-languages list). */
     public static function languageFor(string $locale): string
     {
-        return $locale === 'en' ? 'en' : 'bn_BD';
+        return $locale === 'en' ? 'en' : 'bn';
     }
 
     /** @param  list<string>  $values  positional, {{1}} first; a missing value leaves its placeholder */

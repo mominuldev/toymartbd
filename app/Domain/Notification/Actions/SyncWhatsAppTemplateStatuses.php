@@ -17,8 +17,8 @@ use App\Domain\Notification\Services\WhatsAppTemplateDirectory;
  * (and the same `updated_by` trail) as setting it by hand.
  *
  * Matching: our `provider_template` = Meta's `name`, per language — `en`, and Bengali as `bn`
- * (Meta's supported-languages list) or `bn_BD` (the code the order notifications send with
- * today). A template needs BOTH languages: the combined status is the less sendable of the two
+ * (Meta's supported-languages list; what we send with since 2026-11-16) or `bn_BD` (accepted for
+ * a template approved under the old code). A template needs BOTH languages: the combined status is the less sendable of the two
  * ({@see WhatsAppApprovalStatus::sendability()}), and a language Meta does not have reads as
  * `draft`. A Meta status we do not recognise leaves the template untouched.
  *

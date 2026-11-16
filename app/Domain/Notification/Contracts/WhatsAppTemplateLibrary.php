@@ -26,6 +26,6 @@ interface WhatsAppTemplateLibrary
      */
     public function approved(string $locale): array;
 
-    /** One sendable template by its Meta name and Meta language code (`en`, `bn_BD`); null when not sendable now. */
+    /** One sendable template by its Meta name and Meta language code (`en`, `bn`); null when not sendable now. */
     public function find(string $providerTemplate, string $language): ?ApprovedWhatsAppTemplate;
 }

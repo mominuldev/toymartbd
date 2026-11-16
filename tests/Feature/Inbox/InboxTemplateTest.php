@@ -86,7 +86,7 @@ describe('role matrix', function (): void {
 
         RoleMatrix::assert($this, Permission::InboxReply, fn () => $this->getJson(TPL_INBOX.$c->id.'/templates'));
         RoleMatrix::assert($this, Permission::InboxReply, fn () => $this->postJson(TPL_INBOX.$c->id.'/template', [
-            'template' => 'order_confirmed', 'language' => 'bn_BD', 'parameters' => ['TMB-26-00482', '2-3 days'],
+            'template' => 'order_confirmed', 'language' => 'bn', 'parameters' => ['TMB-26-00482', '2-3 days'],
         ]), 202);
     });
 });
@@ -156,7 +156,7 @@ describe('listing templates', function (): void {
         expect(array_column($response->json('data'), 'template'))->toBe(['order_confirmed']);
         $response->assertJsonPath('meta.locale', 'bn')
             ->assertJsonPath('data.0.key', 'order.confirmed')
-            ->assertJsonPath('data.0.language', 'bn_BD')
+            ->assertJsonPath('data.0.language', 'bn')
             ->assertJsonPath('data.0.parameters.0.position', 1)
             ->assertJsonPath('data.0.parameters.0.name', 'order_number')
             ->assertJsonPath('data.0.parameters.1.name', 'date_range');
@@ -203,19 +203,19 @@ describe('sending a template', function (): void {
         approveWhatsApp('order.confirmed');
         $c = closedWhatsApp();
 
-        $this->postJson(TPL_INBOX.$c->id.'/template', ['template' => 'order_confirmed', 'language' => 'bn_BD', 'parameters' => ['TMB-26-00482', ' 2-3 দিন ']])
+        $this->postJson(TPL_INBOX.$c->id.'/template', ['template' => 'order_confirmed', 'language' => 'bn', 'parameters' => ['TMB-26-00482', ' 2-3 দিন ']])
             ->assertStatus(202)
             ->assertJsonPath('kind', 'template')
             ->assertJsonPath('direction', 'out')
             ->assertJsonPath('delivery_status', 'queued')
             ->assertJsonPath('template.name', 'order_confirmed')
-            ->assertJsonPath('template.language', 'bn_BD')
+            ->assertJsonPath('template.language', 'bn')
             ->assertJsonPath('sender.id', $me->id)
             ->assertJsonPath('body', fn (string $b): bool => str_contains($b, '*TMB-26-00482*') && str_contains($b, '2-3 দিন') && ! str_contains($b, '{{'));
 
         Queue::assertPushed(SendInboxMessage::class, fn (SendInboxMessage $job): bool => $job->afterCommit === true);
         $message = ConversationMessage::query()->sole();
-        expect($message->meta)->toMatchArray(['template' => 'order_confirmed', 'language' => 'bn_BD', 'parameters' => ['TMB-26-00482', '2-3 দিন']]);
+        expect($message->meta)->toMatchArray(['template' => 'order_confirmed', 'language' => 'bn', 'parameters' => ['TMB-26-00482', '2-3 দিন']]);
         $c->refresh();
         expect($c->needs_human)->toBeFalse()->and($c->last_message_direction)->toBe('out')->and($c->last_message_preview)->toContain('TMB-26-00482');
     });
@@ -224,7 +224,7 @@ describe('sending a template', function (): void {
         Queue::fake();
         templateStaff();
         approveWhatsApp('order.confirmed');
-        $body = ['template' => 'order_confirmed', 'language' => 'bn_BD', 'parameters' => ['TMB-26-00482', '2-3 days']];
+        $body = ['template' => 'order_confirmed', 'language' => 'bn', 'parameters' => ['TMB-26-00482', '2-3 days']];
 
         $this->postJson(TPL_INBOX.InboxFixtures::conversation()->id.'/template', $body)->assertStatus(409)->assertJsonPath('type', 'https://toymartbd.com/problems/conflict');
         $this->postJson(TPL_INBOX.messenger(30)->id.'/template', $body)->assertStatus(409);
@@ -243,8 +243,8 @@ describe('sending a template', function (): void {
         $this->postJson(TPL_INBOX.closedWhatsApp()->id.'/template', $body)->assertStatus(422)->assertJsonPath('errors.0.field', $field);
         Queue::assertNothingPushed();
     })->with([
-        'draft' => [['template' => 'order_shipped', 'language' => 'bn_BD', 'parameters' => ['a', 'b', 'c', 'd']], 'template'],
-        'marketing' => [['template' => 'review_request', 'language' => 'bn_BD', 'parameters' => ['a', 'b', 'c']], 'template'],
+        'draft' => [['template' => 'order_shipped', 'language' => 'bn', 'parameters' => ['a', 'b', 'c', 'd']], 'template'],
+        'marketing' => [['template' => 'review_request', 'language' => 'bn', 'parameters' => ['a', 'b', 'c']], 'template'],
         'unknown' => [['template' => 'nope', 'language' => 'en', 'parameters' => []], 'template'],
         'language' => [['template' => 'order_confirmed', 'language' => 'fr', 'parameters' => ['a', 'b']], 'language'],
         'too few' => [['template' => 'order_confirmed', 'language' => 'en', 'parameters' => ['a']], 'parameters'],

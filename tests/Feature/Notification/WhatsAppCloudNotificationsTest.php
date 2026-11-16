@@ -102,7 +102,7 @@ it('sends an approved utility template with the Inbox number and keeps Meta\'s m
             && $request['type'] === 'template'
             && $request['to'] === ltrim((string) App\Support\PhoneNumber::parse($order->shipping_phone)->e164(), '+')
             && $template['name'] === 'order_placed'
-            && $template['language'] === ['code' => 'bn_BD']
+            && $template['language'] === ['code' => 'bn']
             && $template['components'][0]['type'] === 'body'
             && $template['components'][0]['parameters'][0] === ['type' => 'text', 'text' => 'নুসরাত জাহান']
             && $template['components'][0]['parameters'][1] === ['type' => 'text', 'text' => $order->number];

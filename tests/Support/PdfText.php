@@ -22,9 +22,8 @@ final class PdfText
 {
     public static function extract(string $pdf): string
     {
-        preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $streams);
         $text = '';
-        foreach ($streams[1] as $raw) {
+        foreach (self::streams($pdf) as $raw) {
             $data = @gzuncompress($raw);
             $data = $data === false ? $raw : $data;
             if (! str_contains($data, 'BT')) {
@@ -42,6 +41,45 @@ final class PdfText
         }
 
         return $text;
+    }
+
+    /**
+     * Every `stream … endstream` body, found with strpos. A single lazy regex over the whole
+     * binary PDF can exceed PCRE's backtrack/JIT limits when an embedded font is large, and then
+     * preg_match_all() returns false — the text came back empty and a test failed intermittently.
+     *
+     * @return list<string>
+     */
+    private static function streams(string $pdf): array
+    {
+        $out = [];
+        $offset = 0;
+        while (($start = strpos($pdf, 'stream', $offset)) !== false) {
+            // Skip the "stream" inside "endstream".
+            if ($start >= 3 && substr($pdf, $start - 3, 3) === 'end') {
+                $offset = $start + 6;
+
+                continue;
+            }
+            $body = $start + 6;
+            if (substr($pdf, $body, 2) === "\r\n") {
+                $body += 2;
+            } elseif (($pdf[$body] ?? '') === "\n") {
+                $body += 1;
+            } else {
+                $offset = $body;
+
+                continue;
+            }
+            $end = strpos($pdf, 'endstream', $body);
+            if ($end === false) {
+                break;
+            }
+            $out[] = rtrim(substr($pdf, $body, $end - $body), "\r\n");
+            $offset = $end + 9;
+        }
+
+        return $out;
     }
 
     /** Bangla consonants and independent vowels only (no signs, no hasant, no PUA, no spaces). */

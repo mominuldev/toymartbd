@@ -44,7 +44,7 @@ final class ApprovedWhatsAppTemplates implements WhatsAppTemplateLibrary
     {
         $locale = match ($language) {
             'en' => 'en',
-            'bn_BD' => 'bn',
+            'bn' => 'bn',
             default => null,
         };
         if ($locale === null || $providerTemplate === '') {

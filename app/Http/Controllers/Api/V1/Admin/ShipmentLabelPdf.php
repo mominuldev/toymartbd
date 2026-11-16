@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Domain\Fulfilment\Models\Shipment;
 use App\Domain\Ordering\Models\Order;
-use Illuminate\Support\Facades\File;
+use App\Support\MpdfCache;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
@@ -25,8 +25,13 @@ final class ShipmentLabelPdf
     /** @param  list<array{shipment: Shipment, order: Order}>  $labels */
     public function render(array $labels, string $locale): string
     {
-        $tempDir = storage_path('framework/cache/mpdf');
-        File::ensureDirectoryExists($tempDir);
+        return MpdfCache::exclusive(fn (): string => $this->renderLocked($labels, $locale));
+    }
+
+    /** @param  list<array{shipment: Shipment, order: Order}>  $labels */
+    private function renderLocked(array $labels, string $locale): string
+    {
+        $tempDir = MpdfCache::path();
 
         $defaults = (new ConfigVariables)->getDefaults();
         $fonts = (new FontVariables)->getDefaults();
