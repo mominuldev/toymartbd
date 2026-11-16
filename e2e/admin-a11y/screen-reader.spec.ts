@@ -57,6 +57,7 @@ async function expectShell(page: Page, h1: string | RegExp) {
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - link "Skip to content"
       - complementary:
+        - button /Working branch/
         - navigation "Main navigation"
       - banner:
         - searchbox

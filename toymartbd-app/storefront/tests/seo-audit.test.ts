@@ -10,6 +10,12 @@ import { listingPageMetadata } from '@/lib/seo/metadata';
 import { validateAll } from '@/lib/seo/validate';
 import { cmsPaths, footerColumns } from '@/lib/site-config';
 
+// The metadata builders read Site & branding through getStoreInfo(); here: nothing set (no fetch).
+vi.mock('@/lib/store-info', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/store-info')>()),
+    getStoreInfo: async () => (await import('@/lib/site-config')).sampleStoreInfo,
+}));
+
 // Phase 9 SEO audit (docs/audits/SEO-AND-COVERAGE.md). A crawl of every reachable URL against a
 // DemoDataSeeder API found sitewide links that 404: the header wishlist (`/wishlist`), the footer
 // legal bar and consent banner (`/privacy` — the seeded slug is `privacy-policy`) and ten
@@ -121,20 +127,20 @@ describe('listing cursor pages', () => {
         expect(normalizeListing({ data: [], meta: { next_cursor: null, prev_cursor: null } }).prevCursor).toBeNull();
     });
 
-    it('keeps a real later page indexable and self-canonical', () => {
-        const page = meta({ cursor: 'eyJvZmZzZXQiOjR9' }, 'eyJvZmZzZXQiOjB9');
+    it('keeps a real later page indexable and self-canonical', async () => {
+        const page = await meta({ cursor: 'eyJvZmZzZXQiOjR9' }, 'eyJvZmZzZXQiOjB9');
         expect(page.alternates?.canonical).toBe('/bn/categories/building-blocks?cursor=eyJvZmZzZXQiOjR9');
         expect(page.robots).toBeUndefined();
     });
 
-    it('canonicalises a cursor the API resolved to page 1 (junk or stale) to the bare listing, noindex', () => {
-        const page = meta({ cursor: 'zzz' }, null);
+    it('canonicalises a cursor the API resolved to page 1 (junk or stale) to the bare listing, noindex', async () => {
+        const page = await meta({ cursor: 'zzz' }, null);
         expect(page.alternates?.canonical).toBe('/bn/categories/building-blocks');
         expect(page.alternates?.languages).toMatchObject({ en: '/categories/building-blocks', bn: '/bn/categories/building-blocks', 'x-default': '/categories/building-blocks' });
         expect(page.robots).toEqual({ index: false, follow: true });
 
         // A single facet survives: the canonical is the facet view without the cursor.
-        const facet = meta({ age: '24-48', cursor: 'zzz' }, null);
+        const facet = await meta({ age: '24-48', cursor: 'zzz' }, null);
         expect(facet.alternates?.canonical).toBe('/bn/categories/building-blocks?age=24-48');
         expect(facet.robots).toEqual({ index: false, follow: true });
     });

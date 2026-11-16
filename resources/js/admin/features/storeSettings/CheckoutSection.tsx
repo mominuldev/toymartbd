@@ -6,7 +6,6 @@ import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/Input';
@@ -14,6 +13,9 @@ import { QueryError } from '@/components/ui/QueryError';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
 import { useCheckoutSettings, useSaveFreeDelivery, type CheckoutSettings } from './checkoutApi';
+import { StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash } from './parts';
+
+const FORM_ID = 'checkout-settings-form';
 
 const VIEW = 'settings.view';
 const UPDATE = 'settings.update';
@@ -73,6 +75,7 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
     const [freeOn, setFreeOn] = useState(settings.free_shipping_threshold !== null);
     const [amount, setAmount] = useState(draftOf(settings.free_shipping_threshold));
     const [error, setError] = useState<string | undefined>();
+    const [justSaved, flashSaved] = useSavedFlash();
 
     useEffect(() => {
         setFreeOn(settings.free_shipping_threshold !== null);
@@ -82,6 +85,13 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
     const saved = draftOf(settings.free_shipping_threshold);
     const dirty = freeOn !== (settings.free_shipping_threshold !== null) || (freeOn && amount.trim() !== saved);
     const locked = !editable || save.isPending;
+    const summary = useChangeSummary(dirty ? [t('storeSettings.changed.freeDelivery')] : []);
+
+    const discard = () => {
+        setFreeOn(settings.free_shipping_threshold !== null);
+        setAmount(draftOf(settings.free_shipping_threshold));
+        setError(undefined);
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -94,7 +104,7 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
         }
         setError(undefined);
         save.mutate(parsed.data, {
-            onSuccess: () => notify(t('checkoutSettings.saved')),
+            onSuccess: () => flashSaved(),
             onError: (e) => {
                 if (e instanceof ApiError && e.status === 422) {
                     setError(e.fieldError('free_shipping_threshold') ?? t('checkoutSettings.free.invalid'));
@@ -110,17 +120,12 @@ function CheckoutCard({ settings, editable, courierLink }: { settings: CheckoutS
     const courier = settings.delivery_courier;
 
     return (
-        <form onSubmit={submit} noValidate aria-label={t('checkoutSettings.title')}>
-            <FormSection
-                title={t('checkoutSettings.title')}
-                aside={
-                    editable ? (
-                        <Button type="submit" size="sm" disabled={!dirty || save.isPending}>
-                            {save.isPending ? t('checkoutSettings.saving') : t('checkoutSettings.save')}
-                        </Button>
-                    ) : undefined
-                }
-            >
+        <form id={FORM_ID} onSubmit={submit} noValidate aria-label={t('checkoutSettings.title')}>
+            {editable && <UnsavedChangesGuard when={dirty} />}
+            {editable && (
+                <StickySaveBar section={t('storeSettings.nav.checkout')} dirty={dirty} saved={justSaved} savedLabel={t('checkoutSettings.saved')} summary={summary} saving={save.isPending} onDiscard={discard} form={FORM_ID} />
+            )}
+            <FormSection title={t('checkoutSettings.title')}>
                 <ul className="flex flex-col gap-3">
                     <Row label={t('checkoutSettings.guest.label')} caption={t('checkoutSettings.guest.caption')}>
                         <StatusChip tone="success" label={t('checkoutSettings.alwaysOn')} />

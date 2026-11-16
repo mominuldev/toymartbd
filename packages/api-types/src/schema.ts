@@ -4594,6 +4594,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/branding` */
+        get: operations["v1.admin.settings.branding.show"];
+        /** `PUT /settings/branding` — the whole section; null or blank clears a field */
+        put: operations["v1.admin.settings.branding.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/branch-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/branch-mode` */
+        get: operations["v1.admin.settings.branch-mode.show"];
+        /** `PUT /settings/branch-mode` */
+        put: operations["v1.admin.settings.branch-mode.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/locations": {
         parameters: {
             query?: never;
@@ -7905,6 +7941,24 @@ export interface components {
                 enabled: boolean;
                 required: boolean;
             };
+            /**
+             * @description Single shop or multiple branches, and the active locations the sidebar's branch
+             *     switcher offers (every staff member gets them: the working branch is only the
+             *     default for POS, purchases, adjustments and transfers). Names and area only — no
+             *     address or contact details.
+             */
+            branches: {
+                multi_branch: boolean;
+                locations: {
+                    id: number;
+                    name: string;
+                    name_bn: string | null;
+                    area: string | null;
+                    /** @enum {string|null} */
+                    type: "warehouse" | "retail" | "pickup" | null;
+                    is_default: boolean;
+                }[];
+            };
         };
         /** AutomationSettings */
         AutomationSettings: {
@@ -8235,6 +8289,29 @@ export interface components {
             orders_count: number;
             /** @description Up to five order numbers. */
             order_numbers: string[];
+        };
+        /** BranchMode */
+        BranchMode: {
+            /** @description True: multiple branches (per-branch stock, transfers, a branch on purchases and the till). False: a single shop. */
+            multi_branch: boolean;
+            /** @description False while the owner has not chosen: the mode then follows the data (more than one active location = multi). */
+            saved: boolean;
+            active_locations: number;
+            default_location: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+            } | null;
+            /**
+             * @description Active locations other than the default: what stops switching to a single shop, with
+             *     the units still on hand there (to move with a transfer before switching it off).
+             */
+            blockers: {
+                id: number;
+                name: string;
+                name_bn: string | null;
+                units: number;
+            }[];
         };
         /** Brand */
         Brand: {
@@ -15016,6 +15093,69 @@ export interface components {
             description_bn?: string | null;
             is_active?: boolean;
         };
+        /** StoreBranding */
+        StoreBranding: {
+            /** @description Saved values, null when unset. */
+            values: {
+                site_name_en: string | null;
+                site_name_bn: string | null;
+                tagline_en: string | null;
+                tagline_bn: string | null;
+                description_en: string | null;
+                description_bn: string | null;
+                logo_media_id: number | null;
+                logo_dark_media_id: number | null;
+                icon_media_id: number | null;
+                share_image_media_id: number | null;
+            };
+            /** @description The chosen images (null when none, or the media row is gone). `url` is a ~320 px rendition. */
+            media: {
+                logo: {
+                    id: number;
+                    filename: string;
+                    width: number | null;
+                    height: number | null;
+                    url: string | null;
+                } | null;
+                logo_dark: {
+                    id: number;
+                    filename: string;
+                    width: number | null;
+                    height: number | null;
+                    url: string | null;
+                } | null;
+                icon: {
+                    id: number;
+                    filename: string;
+                    width: number | null;
+                    height: number | null;
+                    url: string | null;
+                } | null;
+                share_image: {
+                    id: number;
+                    filename: string;
+                    width: number | null;
+                    height: number | null;
+                    url: string | null;
+                } | null;
+            };
+            /**
+             * @description What the storefront shows while a site name is blank: the business name (Store
+             *     settings › Business), or the brand name while that is unset too.
+             */
+            fallbacks: {
+                site_name_en: string;
+                site_name_bn: string;
+            };
+            /** @description The storefront's host for the preview's address bar, e.g. `toymartbd.com`. */
+            storefront_host: string | null;
+            /** @description Character limits for the counters. */
+            limits: {
+                site_name: number;
+                tagline: number;
+                description: number;
+            };
+        };
         /**
          * StoreCategoryRequest
          * @description `POST /categories`. Appended as the last child of `parent_id` (omit or null for a
@@ -15129,6 +15269,39 @@ export interface components {
             address_bn: string;
             trade_licence: string;
             bin: string;
+            /** @description Site & branding (additive, P10). The storefront falls back to `name_en` while blank. */
+            site_name_en: string | null;
+            site_name_bn: string | null;
+            tagline_en: string | null;
+            tagline_bn: string | null;
+            /** @description The search and social description (meta description, Open Graph). */
+            description_en: string | null;
+            description_bn: string | null;
+            /** @description Logo for light backgrounds: a ~480 px rendition with its pixel size. */
+            logo: {
+                url: string;
+                width: number;
+                height: number;
+            } | null;
+            /** @description Logo for dark backgrounds: a ~480 px rendition with its pixel size. */
+            logo_dark: {
+                url: string;
+                width: number;
+                height: number;
+            } | null;
+            /** @description The default Open Graph image: the 1200 px rendition (smaller if the source is). */
+            share_image: {
+                url: string;
+                width: number;
+                height: number;
+            } | null;
+            /** @description Absolute URLs of the PNG favicons rendered from the store icon; null until rendered. */
+            icons: {
+                png32: string;
+                png180: string;
+                png192: string;
+                png512: string;
+            } | null;
         };
         /** StoreLocation */
         StoreLocation: {
@@ -16945,6 +17118,15 @@ export interface components {
             };
         };
         /**
+         * UpdateBranchModeRequest
+         * @description `PUT /settings/branch-mode` — Store settings › Branches & warehouses › Branch setup; needs
+         *     settings.update. `multi_branch: false` runs the store as a single shop (refused while other
+         *     branches are active), `true` unlocks adding branches.
+         */
+        UpdateBranchModeRequest: {
+            multi_branch: boolean;
+        };
+        /**
          * UpdateBrandRequest
          * @description `PATCH /brands/{brand}` — every field optional; only the fields sent change.
          *     `slug: null` (or omitted) keeps the current slug: a rename never moves the URL.
@@ -17662,6 +17844,34 @@ export interface components {
             notes?: string | null;
             /** @description False switches the location off; refused (409) for the default one or one holding stock. */
             is_active: boolean;
+        };
+        /**
+         * UpdateStoreBrandingRequest
+         * @description `PUT /settings/branding` — Store settings › Site & branding; needs settings.update. The whole
+         *     section: a null or empty field removes the saved value (a blank site name falls back to the
+         *     business name). Every media id must be a ready image in the media library; the icon must be
+         *     square and at least 512 × 512, the share image at least 1200 wide at 1.91:1 (± 3%).
+         */
+        UpdateStoreBrandingRequest: {
+            /** @description Shown in the browser tab and search results. Blank uses the business name. */
+            site_name_en?: string | null;
+            site_name_bn?: string | null;
+            tagline_en?: string | null;
+            tagline_bn?: string | null;
+            /** @description The search and social description; Google shows about 155 characters. */
+            description_en?: string | null;
+            description_bn?: string | null;
+            /**
+             * @description The logo for light backgrounds (storefront header, invoices, emails). The same value
+             *     as `logo_media_id` on `/settings/invoice`.
+             */
+            logo_media_id?: number | null;
+            /** @description The logo for dark backgrounds (optional). */
+            logo_dark_media_id?: number | null;
+            /** @description Store icon and favicon: square (|w − h| ≤ 1%), at least 512 × 512. */
+            icon_media_id?: number | null;
+            /** @description Social share image: at least 1200 wide, 1.91:1 (± 3%). */
+            share_image_media_id?: number | null;
         };
         /**
          * UpdateSupplierRequest
@@ -29699,6 +29909,113 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.settings.branding.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StoreBranding` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreBranding"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.branding.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateStoreBrandingRequest"];
+            };
+        };
+        responses: {
+            /** @description `StoreBranding` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreBranding"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.branch-mode.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `BranchMode` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchMode"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.branch-mode.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBranchModeRequest"];
+            };
+        };
+        responses: {
+            /** @description `BranchMode` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchMode"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Other branches are still active (`branch-mode-blocked`, with a `blockers` list of {id, name, name_bn, units}) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.settings.locations.index": {
         parameters: {
             query?: never;
@@ -29747,6 +30064,15 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            /** @description The store runs as a single shop (`single-branch-mode`): turn on multiple branches first */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -29802,7 +30128,7 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
-            /** @description Switching off the default location, or one that still holds stock (`conflict`) */
+            /** @description Switching off the default location, or one that still holds stock (`conflict`); switching one on while the store runs as a single shop (`single-branch-mode`) */
             409: {
                 headers: {
                     [name: string]: unknown;

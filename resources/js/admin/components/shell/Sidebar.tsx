@@ -4,6 +4,8 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { CountBadge } from '@/components/ui/CountBadge';
 import { Avatar } from './Avatar';
+import { BranchSwitcher } from './BranchSwitcher';
+import type { WorkingBranchLocation } from './workingBranch';
 import { visibleNavigation } from './nav';
 
 type SidebarProps = {
@@ -19,6 +21,14 @@ type SidebarProps = {
     variant?: 'rail' | 'drawer';
     /** Signed-in user for the pinned footer. */
     user?: { name: string; role: string };
+    /** The branch switcher under the brand row (Figma BranchSwitcher 187:102); omitted, none is shown. */
+    branches?: {
+        multi: boolean;
+        locations: WorkingBranchLocation[];
+        current: WorkingBranchLocation | null;
+        onSelect: (id: number) => void;
+        manageHref: string | null;
+    };
 };
 
 /**
@@ -34,7 +44,7 @@ type SidebarProps = {
 /** Screen-reader wording for a nav item's count badge. */
 const badgeLabels: Partial<Record<string, MessageKey>> = { '/inventory': 'nav.inventoryBadge', '/inbox': 'nav.inboxBadge' };
 
-export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user }: SidebarProps) {
+export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed, onNavigate, variant = 'rail', user, branches }: SidebarProps) {
     const { t } = useI18n();
     const { pathname } = useLocation();
     const groups = visibleNavigation(permissions);
@@ -71,6 +81,8 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                 {/* The name for the rail only: where the caption above shows, it already says it. */}
                 <span className={`sr-only ${onlyRail}`}>{t('app.name')}</span>
             </div>
+
+            {branches && <BranchSwitcher {...branches} mode={mode} onNavigate={onNavigate} />}
 
             <nav aria-label={t('nav.primary')} className={`scrollbar-none flex min-h-0 flex-1 flex-col gap-px overflow-y-auto pt-1 pb-3 ${pick('px-3', 'px-2', 'px-2 xl:px-3')}`}>
                 {groups.map((group, index) => (

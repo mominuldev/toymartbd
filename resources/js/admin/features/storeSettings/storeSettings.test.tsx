@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
 import type { BusinessDetails, LocationDistrict, StoreLocation } from './api';
+import type { BranchMode } from './branchModeApi';
 import { formatMobile } from './parts';
 import { addressOf } from './BranchesSection';
 
@@ -72,6 +73,17 @@ const districts: LocationDistrict[] = [
     { id: 60, name: 'Sylhet', name_bn: 'সিলেট', division: place(7, 'Sylhet', 'সিলেট'), upazilas: [place(601, 'Sylhet Sadar', 'সিলেট সদর')] },
 ];
 
+/** The demo shape: two active locations, so the store runs with multiple branches. */
+const multiMode: BranchMode = {
+    multi_branch: true,
+    saved: false,
+    active_locations: 2,
+    default_location: { id: 1, name: dhaka.name, name_bn: dhaka.name_bn },
+    blockers: [{ id: 3, name: sylhet.name, name_bn: null, units: 19 }],
+};
+
+const singleMode: BranchMode = { ...multiMode, multi_branch: false, saved: true, active_locations: 1, blockers: [] };
+
 type Reply = { status: number; body?: unknown };
 
 function storeApi(me: Me, overrides: Partial<Record<string, Reply>> = {}) {
@@ -86,6 +98,11 @@ function storeApi(me: Me, overrides: Partial<Record<string, Reply>> = {}) {
             return { status: 200, body: { ...business, ...sent, whatsapp: '+8801911000222', placeholders: [] } };
         }
         if (path === '/settings/business') return { status: 200, body: business };
+        if (path === '/settings/branch-mode' && method === 'PUT') {
+            const body = JSON.parse(String(init?.body)) as { multi_branch: boolean };
+            return { status: 200, body: { ...multiMode, saved: true, multi_branch: body.multi_branch } };
+        }
+        if (path === '/settings/branch-mode') return { status: 200, body: multiMode };
         if (path === '/settings/locations/districts') return { status: 200, body: { data: districts } };
         if (path === '/settings/locations' && method === 'GET') return { status: 200, body: { data: [dhaka, sylhet] } };
         if (path === '/settings/locations' && method === 'POST') return { status: 201, body: { ...sylhet, id: 9, ...(JSON.parse(String(init?.body)) as object) } };
@@ -109,6 +126,7 @@ describe('store settings layout', () => {
         const links = within(nav).getAllByRole('link');
         expect(links.map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
             ['Business', '/settings/business'],
+            ['Site & brandingNew', '/settings/branding'],
             ['Branches & warehouses', '/settings/branches'],
             ['Checkout & delivery', '/settings/checkout'],
             ['Delivery areas & timing', '/settings/delivery'],
@@ -225,15 +243,13 @@ describe('branches & warehouses', () => {
         renderApp('/settings/branches');
 
         const row = (await screen.findByText('Dhaka HQ · Mirpur')).closest('li')!;
-        expect(within(row).getByText('Warehouse · online fulfilment')).toBeTruthy();
+        expect(within(row).getByText('Warehouse · online fulfilment · House 7, Road 2, Section 10, Mirpur, Dhaka')).toBeTruthy();
         expect(within(row).getByText('Default')).toBeTruthy();
-        expect(within(row).getByText('House 7, Road 2, Section 10, Mirpur, Dhaka')).toBeTruthy();
         expect(within(row).getByText('Near Behind Mirpur 10 circle')).toBeTruthy();
         expect(within(row).getByText('Pathao pickup 4–7 pm · 2 packers')).toBeTruthy();
 
         const empty = screen.getByText('Sylhet pickup point').closest('li')!;
-        expect(within(empty).getByText('Type not set')).toBeTruthy();
-        expect(within(empty).getByText(/No address yet/)).toBeTruthy();
+        expect(within(empty).getByText(/^Type not set · No address yet/)).toBeTruthy();
         expect(addressOf(dhaka, 'bn')).toBe('House 7, Road 2, Section 10, Mirpur, ঢাকা');
     });
 
@@ -242,7 +258,7 @@ describe('branches & warehouses', () => {
         renderApp('/settings/branches');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Add branch' }));
-        const dialog = screen.getByRole('dialog', { hidden: true });
+        const dialog = screen.getByRole('dialog', { hidden: true, name: 'Add branch' });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Add branch', hidden: true }));
         // The generated schema refuses the empty form before anything is sent.
         expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'POST')).toBe(false);
@@ -279,7 +295,7 @@ describe('branches & warehouses', () => {
         renderApp('/settings/branches');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Edit Dhaka HQ · Mirpur' }));
-        const dialog = screen.getByRole('dialog', { hidden: true });
+        const dialog = screen.getByRole('dialog', { hidden: true, name: 'Edit Dhaka HQ · Mirpur' });
         expect(within(dialog).queryByLabelText(/^Short code/)).toBeNull();
         expect((within(dialog).getByLabelText('Active') as HTMLInputElement).disabled).toBe(true);
         expect(within(dialog).getByText(/default location is always active/)).toBeTruthy();
@@ -299,7 +315,7 @@ describe('branches & warehouses', () => {
         renderApp('/settings/branches');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Edit Sylhet pickup point' }));
-        const dialog = screen.getByRole('dialog', { hidden: true });
+        const dialog = screen.getByRole('dialog', { hidden: true, name: 'Edit Sylhet pickup point' });
         await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Sylhet', hidden: true })).toBeTruthy());
         fireEvent.change(within(dialog).getByLabelText(/^Type/), { target: { value: 'pickup' } });
         fireEvent.change(within(dialog).getByLabelText(/^District/), { target: { value: '60' } });
@@ -313,5 +329,99 @@ describe('branches & warehouses', () => {
     it('formats an E.164 mobile for display only', () => {
         expect(formatMobile('+8801711000222')).toBe('+880 1711-000222');
         expect(formatMobile(null)).toBe('');
+    });
+});
+
+describe('branch setup', () => {
+    it('shows the current mode as a radio group and keeps the multi-branch screen', async () => {
+        storeApi(owner);
+        renderApp('/settings/branches');
+
+        const group = await screen.findByRole('group', { name: 'Branch setup' });
+        expect((within(group).getByRole('radio', { name: /Multiple branches/ }) as HTMLInputElement).checked).toBe(true);
+        expect((within(group).getByRole('radio', { name: /Single shop/ }) as HTMLInputElement).checked).toBe(false);
+        expect(screen.getByRole('button', { name: 'Add branch' })).toBeTruthy();
+        expect(screen.getByText('Sylhet pickup point')).toBeTruthy();
+        // Nothing changed: no save bar.
+        expect(screen.queryByRole('region', { name: /Save changes to Branch setup/ })).toBeNull();
+    });
+
+    it('saves a switch through the sticky save bar, and Discard puts the saved mode back', async () => {
+        storeApi(owner);
+        renderApp('/settings/branches');
+
+        fireEvent.click(await screen.findByRole('radio', { name: /Single shop/ }));
+        expect(await screen.findByText('Unsaved changes in Branches & warehouses')).toBeTruthy();
+        expect(screen.getByText('Branch setup changed')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+        expect((screen.getByRole('radio', { name: /Multiple branches/ }) as HTMLInputElement).checked).toBe(true);
+
+        const calls = storeApi(owner, { 'PUT /settings/branch-mode': { status: 200, body: singleMode }, 'GET /settings/branch-mode': { status: 200, body: multiMode } });
+        fireEvent.click(screen.getByRole('radio', { name: /Single shop/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
+        // The saved mode comes back from the server: the section turns into the single-shop view.
+        await waitFor(() => expect(screen.getByText('Shop & warehouse', { selector: 'h2' })).toBeTruthy());
+        expect(sent(calls, 'PUT', '/settings/branch-mode')).toEqual({ multi_branch: false });
+        expect(screen.queryByRole('button', { name: 'Add branch' })).toBeNull();
+    });
+
+    it('names the branches that block a single shop (409 branch-mode-blocked)', async () => {
+        const calls = storeApi(owner, {
+            'PUT /settings/branch-mode': {
+                status: 409,
+                body: {
+                    type: 'https://toymartbd.com/problems/branch-mode-blocked',
+                    title: 'Other branches are still active',
+                    status: 409,
+                    detail: 'Switch the other active branch off before running the store as a single shop.',
+                    blockers: [{ id: 3, name: 'Sylhet pickup point', name_bn: null, units: 19 }],
+                },
+            },
+        });
+        renderApp('/settings/branches');
+
+        fireEvent.click(await screen.findByRole('radio', { name: /Single shop/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
+
+        const alert = await screen.findByRole('alert');
+        expect(within(alert).getByText('Switch off the other branches first')).toBeTruthy();
+        expect(within(alert).getByText(/move their stock to Dhaka HQ · Mirpur with a transfer/)).toBeTruthy();
+        expect(within(alert).getByText('Sylhet pickup point — 19 units')).toBeTruthy();
+        // Transfer stock opens the inventory transfer from the first blocker that still holds stock.
+        expect(within(alert).getByRole('link', { name: 'Transfer stock' }).getAttribute('href')).toBe('/inventory?transfer=3');
+        expect(sent(calls, 'PUT', '/settings/branch-mode')).toEqual({ multi_branch: false });
+        // Still dirty: the owner can switch the branch off and save again, or discard.
+        expect(screen.getByRole('button', { name: 'Save changes' })).toBeTruthy();
+
+        // "Keep multiple branches" puts the choice back: the alert and the save bar go.
+        fireEvent.click(within(alert).getByRole('button', { name: 'Keep multiple branches' }));
+        expect((screen.getByRole('radio', { name: /Multiple branches/ }) as HTMLInputElement).checked).toBe(true);
+        expect(screen.queryByRole('alert')).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
+    });
+
+    it('as a single shop: the shop only, no Add branch, switched-off locations read-only, and the nav says Shop & warehouse', async () => {
+        storeApi(owner, { 'GET /settings/branch-mode': { status: 200, body: singleMode }, 'GET /settings/locations': { status: 200, body: { data: [dhaka, { ...sylhet, is_active: false }] } } });
+        renderApp('/settings/branches');
+
+        expect(await screen.findByText('Shop & warehouse', { selector: 'h2' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Add branch' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Edit Dhaka HQ · Mirpur' })).toBeTruthy();
+        expect(screen.getByText('Switched-off locations (1)')).toBeTruthy();
+        expect(screen.getByText('Read-only in single-shop mode')).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Edit Sylhet pickup point' })).toBeNull();
+
+        const nav = screen.getByRole('navigation', { name: 'Store settings sections' });
+        await waitFor(() => expect(within(nav).getByRole('link', { name: 'Shop & warehouse' })).toBeTruthy());
+        expect(within(nav).queryByRole('link', { name: 'Branches & warehouses' })).toBeNull();
+    });
+
+    it('is read-only without settings.update', async () => {
+        storeApi(readOnly);
+        renderApp('/settings/branches');
+
+        const single = await screen.findByRole('radio', { name: /Single shop/ });
+        expect((single as HTMLInputElement).disabled).toBe(true);
+        expect(screen.queryByRole('region', { name: /Save changes to/ })).toBeNull();
     });
 });

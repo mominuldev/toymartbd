@@ -479,3 +479,46 @@ describe('POS register', () => {
         expect(await screen.findByText('স্টকে 7')).toBeTruthy();
     });
 });
+
+describe('open drawer and the working branch', () => {
+    const twoBranches: Me['branches'] = {
+        multi_branch: true,
+        locations: [
+            { id: 1, name: 'Dhaka HQ · Mirpur', name_bn: null, area: 'Mirpur', type: 'warehouse', is_default: true },
+            { id: 2, name: 'Chattogram · Agrabad', name_bn: null, area: 'Agrabad', type: 'retail', is_default: false },
+        ],
+    };
+    const drawerApi = () =>
+        mockApi((url, init) => {
+            const path = new URL(url, 'http://x').pathname.replace('/api/v1/admin', '');
+            if (path === '/auth/me') return { status: 200, body: { ...cashier, branches: twoBranches } };
+            if (path === '/pos/context') {
+                const base = context(null);
+                return { status: 200, body: { ...base, locations: [{ id: 1, code: 'dhk', name: 'Dhaka HQ · Mirpur', name_bn: null, type: 'warehouse' }, ...base.locations] } };
+            }
+            if (path === '/pos/sessions' && (init?.method ?? 'GET') === 'POST') return { status: 201, body: session };
+            return { status: 404 };
+        });
+
+    it('opens at the sidebar working branch by default', async () => {
+        localStorage.setItem('tm-admin-working-branch', '2');
+        const calls = drawerApi();
+        renderApp('/pos');
+
+        expect(await screen.findByRole('heading', { name: 'Open a drawer' })).toBeTruthy();
+        await waitFor(() => expect((screen.getByLabelText('Branch') as HTMLSelectElement).value).toBe('2'));
+        fireEvent.change(screen.getByLabelText('Opening float'), { target: { value: '5000' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Open drawer' }));
+        await waitFor(() => expect(call(calls, 'POST', '/pos/sessions')).toBeTruthy());
+        expect(JSON.parse(String(call(calls, 'POST', '/pos/sessions')!.body))).toMatchObject({ location_id: 2 });
+    });
+
+    it('falls back to the first branch when the stored one is not offered', async () => {
+        localStorage.setItem('tm-admin-working-branch', '99');
+        drawerApi();
+        renderApp('/pos');
+
+        expect(await screen.findByRole('heading', { name: 'Open a drawer' })).toBeTruthy();
+        expect((screen.getByLabelText('Branch') as HTMLSelectElement).value).toBe('1');
+    });
+});

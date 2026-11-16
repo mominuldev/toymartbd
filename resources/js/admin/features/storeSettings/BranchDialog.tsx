@@ -62,6 +62,8 @@ type BranchDialogProps = {
     open: boolean;
     /** null adds a new location. */
     location: StoreLocation | null;
+    /** The store runs as a single shop: a switched-off location cannot be switched back on here. */
+    singleShop?: boolean;
     onClose: () => void;
 };
 
@@ -72,7 +74,7 @@ type BranchDialogProps = {
  * → upazila → area + line + landmark. Switching off is a checkbox here; the server refuses it
  * (409) for the default location or one that still holds stock, and the box says so up front.
  */
-export function BranchDialog({ open, location, onClose }: BranchDialogProps) {
+export function BranchDialog({ open, location, singleShop = false, onClose }: BranchDialogProps) {
     const { t, locale } = useI18n();
     const { notify } = useToast();
     const titleId = useId();
@@ -93,6 +95,8 @@ export function BranchDialog({ open, location, onClose }: BranchDialogProps) {
     const district = districts.data?.find((d) => String(d.id) === values.district_id) ?? null;
     const placeName = (p: { name: string; name_bn: string }) => (locale === 'bn' ? p.name_bn : p.name);
     const lockActive = location !== null && location.is_active && (location.is_default || location.holds_stock);
+    // Single shop: the server refuses a second active location (409 single-branch-mode).
+    const lockInactive = singleShop && location !== null && !location.is_active;
 
     function submit() {
         const shared = {
@@ -233,7 +237,7 @@ export function BranchDialog({ open, location, onClose }: BranchDialogProps) {
                                 type="checkbox"
                                 className="size-4 accent-brand"
                                 checked={values.is_active}
-                                disabled={lockActive}
+                                disabled={lockActive || lockInactive}
                                 aria-describedby={`${titleId}-active-hint${errors.is_active ? ` ${titleId}-active-error` : ''}`}
                                 aria-invalid={errors.is_active ? true : undefined}
                                 onChange={(e) => set('is_active', e.target.checked)}
@@ -243,7 +247,9 @@ export function BranchDialog({ open, location, onClose }: BranchDialogProps) {
                         <p id={`${titleId}-active-hint`} className="t-admin-caption text-fg-secondary">
                             {location?.is_default
                                 ? t('storeSettings.branches.field.defaultActive')
-                                : lockActive
+                                : lockInactive
+                                  ? t('branchMode.dialog.singleShop')
+                                  : lockActive
                                   ? t('storeSettings.branches.field.holdsStock')
                                   : t('storeSettings.branches.field.activeHint')}
                         </p>

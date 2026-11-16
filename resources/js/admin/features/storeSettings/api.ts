@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type { StoreStockLocationRequestInput, UpdateBusinessDetailsRequestInput, UpdateStockLocationRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
+import { meQueryKey } from '@/features/auth/api';
 
 export type BusinessDetails = Schema<'BusinessDetails'>;
 export type StoreLocation = Schema<'StoreLocation'>;
@@ -65,6 +66,10 @@ export function useSaveLocation() {
             void client.invalidateQueries({ queryKey: keys.locations, exact: true });
             // Inventory screens list the active locations too.
             void client.invalidateQueries({ queryKey: ['inventory'] });
+            // Branch setup lists the active branches that block a single shop.
+            void client.invalidateQueries({ queryKey: ['settings', 'branch-mode'] });
+            // The sidebar's branch switcher reads the active locations from /auth/me.
+            void client.invalidateQueries({ queryKey: meQueryKey });
         },
     });
 }

@@ -1579,6 +1579,12 @@ export const updateAutomationSettingsRequestSchema = z.object({
 });
 export type UpdateAutomationSettingsRequestInput = z.input<typeof updateAutomationSettingsRequestSchema>;
 
+/** `PUT /settings/branch-mode` — Store settings › Branches & warehouses › Branch setup; needs */
+export const updateBranchModeRequestSchema = z.object({
+    "multi_branch": z.boolean(),
+});
+export type UpdateBranchModeRequestInput = z.input<typeof updateBranchModeRequestSchema>;
+
 /** `PATCH /brands/{brand}` — every field optional; only the fields sent change. */
 export const updateBrandRequestSchema = z.object({
     "name": z.string().max(120).optional(),
@@ -2074,6 +2080,21 @@ export const updateStockLocationRequestSchema = z.object({
     "is_active": z.boolean(),
 });
 export type UpdateStockLocationRequestInput = z.input<typeof updateStockLocationRequestSchema>;
+
+/** `PUT /settings/branding` — Store settings › Site & branding; needs settings.update. The whole */
+export const updateStoreBrandingRequestSchema = z.object({
+    "site_name_en": z.string().max(60).nullable().optional(),
+    "site_name_bn": z.string().max(60).nullable().optional(),
+    "tagline_en": z.string().max(80).nullable().optional(),
+    "tagline_bn": z.string().max(80).nullable().optional(),
+    "description_en": z.string().max(160).nullable().optional(),
+    "description_bn": z.string().max(160).nullable().optional(),
+    "logo_media_id": z.number().int().nullable().optional(),
+    "logo_dark_media_id": z.number().int().nullable().optional(),
+    "icon_media_id": z.number().int().nullable().optional(),
+    "share_image_media_id": z.number().int().nullable().optional(),
+});
+export type UpdateStoreBrandingRequestInput = z.input<typeof updateStoreBrandingRequestSchema>;
 
 /** `PATCH /suppliers/{supplier}` — every field optional; only the fields sent change. */
 export const updateSupplierRequestSchema = z.object({

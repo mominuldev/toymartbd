@@ -2,7 +2,7 @@ import { variantFlash } from '../flash-sale/format';
 import { getMessages } from '../i18n';
 import { localizedPath, type Locale } from '../i18n/config';
 import type { StorefrontProduct } from '../product/variants';
-import { organization, social, type StoreContact } from '../site-config';
+import { organization, social, type StoreBranding, type StoreContact } from '../site-config';
 import { siteUrl } from './site';
 
 // schema.org builders for every template (docs/api/seo.md §4). Pure and client-safe. Each output
@@ -96,9 +96,10 @@ export function breadcrumbJsonLd(locale: Locale, crumbs: ReadonlyArray<{ name: s
 /**
  * The business. `contact` is the store's (lib/store-info.ts); a value still marked
  * `placeholder: true` (a site-config sample) is NOT emitted (a made-up number in structured data
- * is worse than none); socials only when confirmed.
+ * is worse than none); socials only when confirmed. With `branding` (Site & branding), the name is
+ * the owner's site name and the uploaded logo is the `logo`.
  */
-export function organizationJsonLd(locale: Locale, contact: StoreContact): JsonLdNode {
+export function organizationJsonLd(locale: Locale, contact: StoreContact, branding?: StoreBranding): JsonLdNode {
     const t = getMessages(locale);
     const sameAs = social.flatMap((s) => (s.href ? [s.href] : []));
     const contactPoint = [contact.hotline, contact.email].some((c) => !c.placeholder)
@@ -117,9 +118,9 @@ export function organizationJsonLd(locale: Locale, contact: StoreContact): JsonL
         '@context': CONTEXT,
         '@type': 'Organization',
         '@id': `${abs('/')}#organization`,
-        name: t.site.name,
+        name: branding?.siteName[locale] ?? t.site.name,
         url: abs('/'),
-        ...(organization.logo.placeholder ? {} : { logo: abs(organization.logo.path) }),
+        ...(branding?.logo ? { logo: branding.logo.url } : organization.logo.placeholder ? {} : { logo: abs(organization.logo.path) }),
         ...(organization.legalName.placeholder ? {} : { legalName: organization.legalName.value }),
         ...(sameAs.length > 0 ? { sameAs } : {}),
         ...(contactPoint.length > 0 ? { contactPoint } : {}),
@@ -127,13 +128,13 @@ export function organizationJsonLd(locale: Locale, contact: StoreContact): JsonL
 }
 
 /** The site with a sitelinks search box: SearchAction into the locale's search page. */
-export function websiteJsonLd(locale: Locale): JsonLdNode {
+export function websiteJsonLd(locale: Locale, branding?: StoreBranding): JsonLdNode {
     const t = getMessages(locale);
     return {
         '@context': CONTEXT,
         '@type': 'WebSite',
         '@id': `${pageUrl(locale, '/')}#website`,
-        name: t.site.name,
+        name: branding?.siteName[locale] ?? t.site.name,
         url: pageUrl(locale, '/'),
         inLanguage: locale,
         publisher: { '@id': `${abs('/')}#organization` },

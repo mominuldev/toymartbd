@@ -35,8 +35,9 @@ test('owner edits delivery areas & timing and checkout follows', async ({ browse
     await expect(form.getByRole('switch', { name: 'Require a COD advance' })).toHaveAttribute('aria-checked', 'true');
     if (shots) await form.screenshot({ path: `${shots}/delivery-areas.png` });
 
-    const save = form.getByRole('button', { name: 'Save changes' });
-    await expect(save).toBeDisabled();
+    // The sticky save bar sits outside the form and appears only once something changed.
+    const save = page.getByRole('button', { name: 'Save changes' });
+    await expect(save).toHaveCount(0);
 
     await form.getByLabel('Order cut-off').fill('16:00');
     await form.getByLabel('Outside Dhaka: slowest, in working days').fill('5');
@@ -58,7 +59,7 @@ test('owner edits delivery areas & timing and checkout follows', async ({ browse
     await form.getByLabel('Order cut-off').fill('17:00');
     await form.getByLabel('Outside Dhaka: slowest, in working days').fill('4');
     await form.getByLabel('Advance amount').fill('200');
-    await form.getByRole('button', { name: 'Save changes' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Delivery areas & timing saved')).toBeVisible();
 });
 
@@ -68,7 +69,7 @@ test('a server refusal is shown on its field', async ({ browser }) => {
 
     const form = page.getByRole('form', { name: 'Delivery areas & timing' });
     await form.getByLabel('Advance amount').fill('9000');
-    await form.getByRole('button', { name: 'Save changes' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(form.getByText('The advance must be less than the threshold.')).toBeVisible();
     await expect(form.getByLabel('Advance amount')).toHaveAttribute('aria-invalid', 'true');
 });

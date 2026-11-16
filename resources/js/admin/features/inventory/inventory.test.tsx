@@ -428,3 +428,49 @@ describe('movement ledger', () => {
         expect(signed(0)).toBe('0');
     });
 });
+
+describe('the sidebar working branch', () => {
+    const multiStaff = {
+        ...inventoryStaff,
+        branches: {
+            multi_branch: true,
+            locations: [
+                { id: 1, name: 'Dhaka HQ · Mirpur', name_bn: null, area: 'Mirpur', type: 'warehouse' as const, is_default: true },
+                { id: 2, name: 'Chattogram · Agrabad', name_bn: null, area: 'Agrabad', type: 'retail' as const, is_default: false },
+                { id: 3, name: 'Sylhet pickup point', name_bn: null, area: 'Zindabazar', type: 'pickup' as const, is_default: false },
+            ],
+        },
+    };
+
+    it('is the default location of the page and so of a new adjustment', async () => {
+        localStorage.setItem('tm-admin-working-branch', '2');
+        const calls = inventoryApi(multiStaff, (url) => {
+            if (url.includes('/inventory/summary')) return { status: 200, body: url.includes('location_id%5D=2') ? { ...branchSummary, location_id: 2 } : branchSummary };
+            if (url.includes('/inventory/stock')) return { status: 200, body: { data: branchRows, links: { next: null }, meta: { next_cursor: null } } };
+            return undefined;
+        });
+        renderApp('/inventory');
+        await screen.findByRole('table');
+
+        expect(urls(calls).some((u) => u.includes('/inventory/summary?filter%5Blocation_id%5D=2'))).toBe(true);
+        await waitFor(() => expect(screen.getByRole('button', { name: /^Chattogram · Agrabad\s*Retail/ }).getAttribute('aria-pressed')).toBe('true'));
+
+        fireEvent.click(screen.getByRole('button', { name: 'New adjustment' }));
+        const dialog = await screen.findByRole('dialog');
+        expect((within(dialog).getByLabelText('Location') as HTMLSelectElement).value).toBe('2');
+    });
+
+    it('never hides data: choosing the default branch card sets it explicitly in the URL', async () => {
+        localStorage.setItem('tm-admin-working-branch', '2');
+        inventoryApi(multiStaff, (url) => {
+            if (url.includes('/inventory/summary')) return { status: 200, body: url.includes('location_id%5D=2') ? { ...branchSummary, location_id: 2 } : branchSummary };
+            if (url.includes('/inventory/stock')) return { status: 200, body: { data: branchRows, links: { next: null }, meta: { next_cursor: null } } };
+            return undefined;
+        });
+        const { router } = renderApp('/inventory');
+        await screen.findByRole('table');
+
+        fireEvent.click(screen.getByRole('button', { name: /^Dhaka HQ · Mirpur\s*Main/ }));
+        await waitFor(() => expect(router.state.location.search).toBe('?location=1'));
+    });
+});

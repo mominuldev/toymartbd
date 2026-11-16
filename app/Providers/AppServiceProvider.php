@@ -68,6 +68,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->tag([ProductImageMediaUsages::class], MediaUsageProvider::TAG);
         // P9: the invoice logo chosen in Settings → Invoice details cannot be deleted while chosen.
         $this->app->tag([\App\Domain\Invoicing\Services\InvoiceLogoMediaUsages::class], MediaUsageProvider::TAG);
+        // P10: the dark logo, store icon and share image chosen in Settings → Site & branding.
+        $this->app->tag([\App\Domain\Invoicing\Services\BrandingMediaUsages::class], MediaUsageProvider::TAG);
         $this->app->bind(MediaUsages::class, static fn ($app): MediaUsages => new MediaUsages($app->tagged(MediaUsageProvider::TAG)));
 
         // Payment drivers (rule 5): a new gateway is a driver class plus one line here.

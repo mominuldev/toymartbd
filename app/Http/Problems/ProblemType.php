@@ -41,6 +41,10 @@ enum ProblemType: string
     case MediaInUse = 'media-in-use';
     /** Admin: the signed-in person can see money and has not set up two-factor yet (owner decision 2026-11-14). */
     case TwoFactorRequired = 'two-factor-required';
+    /** Store settings › Branch setup: switching to a single shop refused while other branches are active; `blockers[]` lists them. */
+    case BranchModeBlocked = 'branch-mode-blocked';
+    /** Adding or switching on a branch refused while the store runs as a single shop (Branch setup). */
+    case SingleBranchMode = 'single-branch-mode';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -68,7 +72,7 @@ enum ProblemType: string
             self::IdempotencyKeyMissing, self::IdempotencyKeyInvalid => 400,
             self::IdempotencyKeyReused => 422,
             self::RequestInProgress => 409,
-            self::PriceChanged, self::InsufficientStock, self::MediaInUse => 409,
+            self::PriceChanged, self::InsufficientStock, self::MediaInUse, self::BranchModeBlocked, self::SingleBranchMode => 409,
             self::ServerError, self::HttpError => 500,
         };
     }
@@ -95,6 +99,8 @@ enum ProblemType: string
             self::InsufficientStock => 'Insufficient stock',
             self::MediaInUse => 'Media in use',
             self::TwoFactorRequired => 'Two-factor sign-in required',
+            self::BranchModeBlocked => 'Other branches are still active',
+            self::SingleBranchMode => 'Single-shop mode',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -123,6 +129,8 @@ enum ProblemType: string
             self::InsufficientStock => 'Some items are no longer available in the quantity requested.',
             self::MediaInUse => 'This file is in use and cannot be deleted.',
             self::TwoFactorRequired => 'Your role can see money: set up two-factor sign-in before continuing.',
+            self::BranchModeBlocked => 'Switch the other branches off before running the store as a single shop.',
+            self::SingleBranchMode => 'The store runs as a single shop. Turn on multiple branches first.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

@@ -2,13 +2,14 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { updatePosSettingsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
-import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
-import { useSettingsAccess } from './parts';
+import { StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash, useSettingsAccess } from './parts';
+
+const FORM_ID = 'pos-settings-form';
 import { usePosSettings, useSavePosSettings, type PosSettings } from './posSettingsApi';
 
 /**
@@ -46,7 +47,17 @@ function PosCard({ settings, editable }: { settings: PosSettings; editable: bool
     useEffect(() => setCap(settings.discount_max_percent), [settings.discount_max_percent]);
     useEffect(() => setDue(dueDraft(settings.due_limit)), [settings.due_limit]);
 
-    const dirty = cap.trim() !== settings.discount_max_percent || due.trim() !== dueDraft(settings.due_limit);
+    const [justSaved, flashSaved] = useSavedFlash();
+    const capChanged = cap.trim() !== settings.discount_max_percent;
+    const dueChanged = due.trim() !== dueDraft(settings.due_limit);
+    const dirty = capChanged || dueChanged;
+    const summary = useChangeSummary([capChanged ? t('storeSettings.changed.posDiscount') : null, dueChanged ? t('storeSettings.changed.posDue') : null].filter((x): x is string => x !== null));
+
+    const discard = () => {
+        setCap(settings.discount_max_percent);
+        setDue(dueDraft(settings.due_limit));
+        setErrors({});
+    };
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -63,7 +74,7 @@ function PosCard({ settings, editable }: { settings: PosSettings; editable: bool
         }
         setErrors({});
         save.mutate(parsed.data, {
-            onSuccess: () => notify(t('posSettings.saved')),
+            onSuccess: () => flashSaved(),
             onError: (e) => {
                 if (e instanceof ApiError && e.status === 422) setErrors({ cap: e.fieldError('discount_max_percent'), due: e.fieldError('due_limit') });
                 else notify(e instanceof ApiError ? e.problem.title : t('error.title'), 'danger');
@@ -72,18 +83,12 @@ function PosCard({ settings, editable }: { settings: PosSettings; editable: bool
     };
 
     return (
-        <form onSubmit={submit} noValidate aria-label={t('posSettings.title')}>
-            <FormSection
-                title={t('posSettings.title')}
-                description={t('posSettings.description')}
-                aside={
-                    editable ? (
-                        <Button type="submit" size="sm" disabled={!dirty || save.isPending}>
-                            {save.isPending ? t('checkoutSettings.saving') : t('checkoutSettings.save')}
-                        </Button>
-                    ) : undefined
-                }
-            >
+        <form id={FORM_ID} onSubmit={submit} noValidate aria-label={t('posSettings.title')}>
+            {editable && <UnsavedChangesGuard when={dirty} />}
+            {editable && (
+                <StickySaveBar section={t('storeSettings.nav.pos')} dirty={dirty} saved={justSaved} savedLabel={t('posSettings.saved')} summary={summary} saving={save.isPending} onDiscard={discard} form={FORM_ID} />
+            )}
+            <FormSection title={t('posSettings.title')} description={t('posSettings.description')}>
                 <Field
                     label={t('posSettings.discount.label')}
                     hint={settings.discount_saved ? t('posSettings.discount.hint') : t('posSettings.discount.hintDefault', { percent: settings.discount_max_percent_default })}

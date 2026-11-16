@@ -31,6 +31,7 @@ import { stockStates, useAdjustments, useAlerts, useInventorySummary, useStock, 
 import { AdjustmentDialog } from './AdjustmentDialog';
 import { TransferDialog } from './TransferDialog';
 import { LocationCards, StockStatusChip, TAKA, Taka, VariantCell, dhakaWhen, formatMoney, formatUnits, variantLabel } from './parts';
+import { useWorkingBranch } from '@/components/shell/workingBranch';
 
 const tabs: { value: StockState | ''; label: MessageKey; count: 'all' | StockState }[] = [
     { value: '', label: 'inventory.tab.all', count: 'all' },
@@ -105,7 +106,10 @@ export function InventoryPage() {
     const { data: me } = useMe();
     const wide = useWide();
     const [params, setParams] = useSearchParams();
-    const location = /^\d+$/.test(params.get('location') ?? '') ? params.get('location')! : '';
+    // No ?location: the sidebar's working branch when it is not the default (multiple branches only).
+    const working = useWorkingBranch();
+    const fallback = working.multi && working.current && !working.current.is_default ? String(working.current.id) : '';
+    const location = /^\d+$/.test(params.get('location') ?? '') ? params.get('location')! : fallback;
     const stateParam = params.get('state');
     const state: StockState | '' = stockStates.includes(stateParam as StockState) ? (stateParam as StockState) : '';
     const q = (params.get('q') ?? '').trim();
@@ -171,6 +175,20 @@ export function InventoryPage() {
         if (from) setTransfer({ fromId: from.location_id, toId: data.location_id, variantId: row?.variant_id ?? null, quantity: from.available });
         else setTransfer({ fromId: data.location_id, toId: null, variantId: row?.variant_id ?? null, quantity: null });
     };
+
+    // `?transfer={id}` (Store settings › Branch setup, a branch blocking a single shop): open the
+    // transfer dialog from that branch to the default location, then drop the parameter.
+    const transferFrom = params.get('transfer');
+    useEffect(() => {
+        if (transferFrom === null || !data) return;
+        const fromId = /^\d+$/.test(transferFrom) ? Number(transferFrom) : null;
+        const home = locations.find((l) => l.is_default);
+        if (fromId !== null && canTransfer && multi && locations.some((l) => l.id === fromId)) {
+            setTransfer({ fromId, toId: home && home.id !== fromId ? home.id : null, variantId: null, quantity: null });
+        }
+        setParam('transfer', '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [transferFrom, data, canTransfer, multi]);
 
     const ledgerPath = (row: StockRow) => `/inventory/movements?variant=${row.variant_id}&sku=${encodeURIComponent(row.sku)}${location ? `&location=${location}` : ''}`;
 
@@ -364,7 +382,7 @@ export function InventoryPage() {
                         />
                     </div>
 
-                    {multi && <LocationCards locations={locations} selected={data.location_id} showValue={viewCost} onSelect={(id) => setParam('location', locations.find((l) => l.id === id)?.is_default ? '' : String(id))} />}
+                    {multi && <LocationCards locations={locations} selected={data.location_id} showValue={viewCost} onSelect={(id) => setParam('location', fallback === '' && locations.find((l) => l.id === id)?.is_default ? '' : String(id))} />}
                 </>
             ) : (
                 <div aria-hidden className="grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-4">

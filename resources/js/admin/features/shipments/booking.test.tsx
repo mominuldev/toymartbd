@@ -24,6 +24,7 @@ const owner: Me = {
     roles: ['super_admin'],
     permissions: ['dashboard.view', 'orders.view', 'orders.update', 'shipments.view', 'shipments.book'],
     two_factor: { enabled: true, required: true },
+    branches: { multi_branch: false, locations: [] },
 };
 const viewOnly: Me = {
     ...owner,

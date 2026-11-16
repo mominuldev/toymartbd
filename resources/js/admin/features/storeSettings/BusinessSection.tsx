@@ -6,14 +6,15 @@ import { updateBusinessDetailsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
-import { Button } from '@/components/ui/Button';
 import { Field, inputClass } from '@/components/ui/Field';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { useBusinessDetails, useSaveBusinessDetails, type BusinessDetails, type BusinessDetailsInput } from './api';
-import { Note, SaveRow, formatMobile, useSettingsAccess } from './parts';
+import { Note, StickySaveBar, UnsavedChangesGuard, formatMobile, useChangeSummary, useSavedFlash, useSettingsAccess } from './parts';
+
+const FORM_ID = 'business-details-form';
 
 const fields = ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline', 'whatsapp', 'messenger'] as const;
 type FieldName = (typeof fields)[number];
@@ -60,13 +61,18 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
         },
     });
     useEffect(() => reset(toForm(business)), [business, reset]);
+    const [justSaved, flashSaved] = useSavedFlash();
+    const label = (f: FieldName) => t(`storeSettings.business.field.${f}` as MessageKey);
+    const changed = fields.filter((f) => formState.dirtyFields[f]);
+    const dirty = changed.length > 0;
+    const summary = useChangeSummary(changed.map(label));
 
     const submit = handleSubmit((values) =>
         save.mutate(toInput(values), {
             onSuccess: (saved) => {
                 // Show what the server stored (WhatsApp normalised to E.164), even when the cache kept the same object.
                 reset(toForm(saved));
-                notify(t('storeSettings.business.saved'));
+                flashSaved();
             },
             onError: (error) => {
                 if (error instanceof ApiError && error.status === 422) {
@@ -81,7 +87,6 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
         }),
     );
 
-    const label = (f: FieldName) => t(`storeSettings.business.field.${f}` as MessageKey);
     const placeholder: Partial<Record<FieldName, string>> = {
         name_en: business.default_names.name_en,
         name_bn: business.default_names.name_bn,
@@ -136,7 +141,19 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
     );
 
     return (
-        <form onSubmit={submit} noValidate aria-label={t('storeSettings.business.title')} className="flex min-w-0 flex-col">
+        <form id={FORM_ID} onSubmit={submit} noValidate aria-label={t('storeSettings.business.title')} className="flex min-w-0 flex-col">
+            {editable && <UnsavedChangesGuard when={dirty} />}
+            {editable && (
+                <StickySaveBar
+                    section={t('storeSettings.nav.business')}
+                    dirty={dirty}
+                    saved={justSaved} savedLabel={t('storeSettings.business.saved')}
+                    summary={summary}
+                    saving={save.isPending}
+                    onDiscard={() => reset(toForm(business))}
+                    form={FORM_ID}
+                />
+            )}
             <FormSection title={t('storeSettings.business.title')}>
                 {business.placeholders.length > 0 && <Note>{t('storeSettings.business.placeholders', { list: business.placeholders.map((f) => label(f as FieldName)).join(', ') })}</Note>}
                 <fieldset disabled={!editable || save.isPending} className="grid min-w-0 gap-x-4 gap-y-3.5 md:grid-cols-2">
@@ -163,13 +180,6 @@ function BusinessForm({ business, editable }: { business: BusinessDetails; edita
                         )}
                     </Field>
                 </fieldset>
-                {editable && (
-                    <SaveRow>
-                        <Button type="submit" disabled={save.isPending}>
-                            {save.isPending ? t('storeSettings.saving') : t('storeSettings.save')}
-                        </Button>
-                    </SaveRow>
-                )}
             </FormSection>
         </form>
     );

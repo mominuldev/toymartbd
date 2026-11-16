@@ -6,8 +6,6 @@
  */
 export const checkoutSettingsEn = {
     'checkoutSettings.title': 'Checkout & delivery rules',
-    'checkoutSettings.save': 'Save',
-    'checkoutSettings.saving': 'Saving…',
     'checkoutSettings.saved': 'Checkout & delivery rules saved',
     'checkoutSettings.alwaysOn': 'Always on',
     'checkoutSettings.notAvailable': 'Not available yet',
@@ -45,8 +43,6 @@ export const checkoutSettingsEn = {
 
 export const checkoutSettingsBn: Record<keyof typeof checkoutSettingsEn, string> = {
     'checkoutSettings.title': 'চেকআউট ও ডেলিভারির নিয়ম',
-    'checkoutSettings.save': 'সংরক্ষণ',
-    'checkoutSettings.saving': 'সংরক্ষণ হচ্ছে…',
     'checkoutSettings.saved': 'চেকআউট ও ডেলিভারির নিয়ম সংরক্ষিত হয়েছে',
     'checkoutSettings.alwaysOn': 'সবসময় চালু',
     'checkoutSettings.notAvailable': 'এখনও চালু হয়নি',

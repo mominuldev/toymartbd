@@ -35,7 +35,7 @@ test('owner sees the checkout rules and changes the free-delivery threshold', as
     const amount = card.getByLabel('Free delivery from (৳)');
     await expect(amount).toHaveValue('3000');
     await amount.fill('3500');
-    await card.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Checkout & delivery rules saved')).toBeVisible();
     await expect(card.getByText('Free delivery on orders of ৳3,500 or more')).toBeVisible();
 
@@ -46,6 +46,6 @@ test('owner sees the checkout rules and changes the free-delivery threshold', as
     // Put it back so the run leaves the seed value.
     await page.goto('/admin/settings/checkout');
     await page.getByLabel('Free delivery from (৳)').fill('3000');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
     await expect(page.getByText('Checkout & delivery rules saved')).toBeVisible();
 });

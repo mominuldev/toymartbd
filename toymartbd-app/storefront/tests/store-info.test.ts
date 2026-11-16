@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { sampleContact, sampleStoreInfo, whatsappHref } from '@/lib/site-config';
+import { sampleContact, sampleStoreInfo, unsetBranding, whatsappHref } from '@/lib/site-config';
 import { getStoreInfo, STORE_INFO_TAG, toStoreInfo } from '@/lib/store-info';
 
 // Launch item F4: the storefront shows the contact and legal details the owner entered in
@@ -93,6 +93,71 @@ describe('toStoreInfo', () => {
     });
 });
 
+describe('toStoreInfo — Site & branding', () => {
+    const BRANDED = {
+        ...SET,
+        site_name_en: 'ToyMart',
+        site_name_bn: 'টয়মার্ট',
+        tagline_en: 'Toys that grow with your child',
+        tagline_bn: 'শিশুর সাথে বেড়ে ওঠা খেলনা',
+        description_en: 'Original toys, cash on delivery across Bangladesh.',
+        description_bn: 'আসল খেলনা, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
+        logo: { url: 'https://media.toymartbd.com/b/logo-480.webp', width: 480, height: 120 },
+        logo_dark: { url: 'https://media.toymartbd.com/b/logo-dark-480.webp', width: 480, height: 120 },
+        share_image: { url: 'https://media.toymartbd.com/b/share-1200.jpg', width: 1200, height: 630 },
+        icons: { png32: 'https://media.toymartbd.com/i/32.png', png180: 'https://media.toymartbd.com/i/180.png', png192: 'https://media.toymartbd.com/i/192.png', png512: 'https://media.toymartbd.com/i/512.png' },
+    };
+
+    it('an answer without the branding fields (an older API) is the unset branding with the business name', () => {
+        expect(toStoreInfo(UNSET).branding).toEqual(unsetBranding);
+        expect(toStoreInfo(SET).branding).toEqual({ ...unsetBranding, siteName: { en: 'Toy Mart BD Ltd', bn: 'টয় মার্ট বিডি লিমিটেড' } });
+    });
+
+    it('reads every field in both languages', () => {
+        const b = toStoreInfo(BRANDED).branding;
+        expect(b.siteName).toEqual({ en: 'ToyMart', bn: 'টয়মার্ট' });
+        expect(b.tagline).toEqual({ en: BRANDED.tagline_en, bn: BRANDED.tagline_bn });
+        expect(b.description).toEqual({ en: BRANDED.description_en, bn: BRANDED.description_bn });
+        expect(b.logo).toEqual(BRANDED.logo);
+        expect(b.logoDark).toEqual(BRANDED.logo_dark);
+        expect(b.shareImage).toEqual(BRANDED.share_image);
+        expect(b.icons).toEqual(BRANDED.icons);
+    });
+
+    it('a blank site name falls back to the business name, then the catalog name, per language', () => {
+        expect(toStoreInfo({ ...BRANDED, site_name_en: '  ', site_name_bn: null }).branding.siteName).toEqual({ en: 'Toy Mart BD Ltd', bn: 'টয় মার্ট বিডি লিমিটেড' });
+        expect(toStoreInfo({ site_name_bn: 'টয়মার্ট' }).branding.siteName).toEqual({ en: 'Toy Mart BD', bn: 'টয়মার্ট' });
+    });
+
+    it('drops an image without a usable URL or size (no reserved box, no unsafe scheme)', () => {
+        for (const bad of [
+            null,
+            'https://media.toymartbd.com/logo.png',
+            { url: 'https://media.toymartbd.com/logo.png' },
+            { url: 'https://media.toymartbd.com/logo.png', width: 0, height: 120 },
+            { url: 'https://media.toymartbd.com/logo.png', width: '480', height: 120 },
+            { url: 'https://media.toymartbd.com/logo.png', width: Number.NaN, height: 120 },
+            { url: 'javascript:alert(1)', width: 480, height: 120 },
+            { url: 'data:image/png;base64,AAAA', width: 480, height: 120 },
+            { url: '/relative/logo.png', width: 480, height: 120 },
+            { url: null, width: 480, height: 120 },
+        ]) {
+            const b = toStoreInfo({ ...UNSET, logo: bad, share_image: bad, logo_dark: bad }).branding;
+            expect([b.logo, b.shareImage, b.logoDark], JSON.stringify(bad)).toEqual([null, null, null]);
+        }
+    });
+
+    it('keeps the icons it can use, and is null when none is', () => {
+        expect(toStoreInfo({ icons: { png32: 'https://m.test/32.png', png180: 'javascript:x', png192: 7 } }).branding.icons).toEqual({ png32: 'https://m.test/32.png', png180: null, png192: null, png512: null });
+        for (const bad of [null, 'x', [], { png32: '' }, { png32: 'ftp://m.test/32.png' }]) expect(toStoreInfo({ icons: bad }).branding.icons).toBeNull();
+    });
+
+    it('never throws on a malformed answer', () => {
+        expect(() => toStoreInfo({ logo: 42, icons: 'yes', tagline_en: 7, description_bn: {}, site_name_en: [] } as never)).not.toThrow();
+        expect(toStoreInfo({ tagline_en: 7, description_bn: {} }).branding.tagline.en).toBeNull();
+    });
+});
+
 describe('whatsappHref', () => {
     it('sends a sample number to the fallback page, a confirmed one to wa.me', () => {
         expect(whatsappHref(sampleContact.whatsapp, '/contact')).toBe('/contact');
@@ -120,6 +185,11 @@ describe('getStoreInfo', () => {
         expect(url).toBe('https://api.test/api/v1/storefront/store-info');
         expect(init.next?.tags).toEqual([STORE_INFO_TAG]);
         expect(STORE_INFO_TAG).toBe('store-info');
+    });
+
+    it('never throws: a non-object body falls back to the samples', async () => {
+        fetchMock.mockResolvedValue(json(null));
+        await expect(getStoreInfo()).resolves.toEqual(sampleStoreInfo);
     });
 
     it('accepts a { data } envelope too', async () => {

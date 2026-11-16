@@ -41,12 +41,12 @@ describe('store settings → point of sale', () => {
         expect(due.value).toBe('5000');
         expect(screen.getByText('Not saved yet — the store default of ৳5000 applies. 0 stops new sales on due.')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Point of sale' })).toBeTruthy();
-        const save = screen.getByRole('button', { name: 'Save' });
-        expect(save).toHaveProperty('disabled', true);
+        expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
 
         fireEvent.change(input, { target: { value: '12.5' } });
         fireEvent.change(due, { target: { value: '7500' } });
-        fireEvent.click(save);
+        expect(screen.getByRole('region', { name: 'Save changes to Point of sale' }).textContent).toContain('Cashier discount limit and due limit changed');
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await waitFor(() => expect(screen.getByText('Point of sale settings saved')).toBeTruthy());
         const put = calls.mock.calls.find(([url, init]) => String(url).endsWith('/settings/pos') && (init as RequestInit | undefined)?.method === 'PUT');
         expect(JSON.parse(String((put?.[1] as RequestInit).body))).toEqual({ discount_max_percent: '12.5', due_limit: '7500' });
@@ -59,16 +59,16 @@ describe('store settings → point of sale', () => {
 
         const input = await screen.findByLabelText('Maximum cashier discount');
         fireEvent.change(input, { target: { value: 'ten' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         expect(await screen.findByText('Enter a percent from 0 to 100, at most two decimals.')).toBeTruthy();
         fireEvent.change(input, { target: { value: '10' } });
         fireEvent.change(screen.getByLabelText('Due limit per customer'), { target: { value: '5,000' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         expect(await screen.findByText('Enter an amount in taka, at most two decimals.')).toBeTruthy();
         fireEvent.change(screen.getByLabelText('Due limit per customer'), { target: { value: '5000' } });
 
         fireEvent.change(input, { target: { value: '150' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         expect(await screen.findByText('The discount max percent may not be greater than 100.')).toBeTruthy();
     });
 
@@ -78,6 +78,6 @@ describe('store settings → point of sale', () => {
 
         expect(((await screen.findByLabelText('Maximum cashier discount')) as HTMLInputElement).disabled).toBe(true);
         expect((screen.getByLabelText('Due limit per customer') as HTMLInputElement).disabled).toBe(true);
-        expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
     });
 });

@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { locale, slug } = await params;
     if (!isLocale(locale)) return {};
     const draft = await draftPageLayout(slug, locale);
-    if (draft) return { ...cmsPageMetadata(draft.page, locale, `/${draft.page.slug}`, null), robots: { index: false, follow: false } };
+    if (draft) return { ...(await cmsPageMetadata(draft.page, locale, `/${draft.page.slug}`, null)), robots: { index: false, follow: false } };
     const page = await getPage(slug).catch(() => null);
     if (!page) return {};
     return cmsPageMetadata(page, locale, `/${page.slug}`, await getSeo('page', page.slug));

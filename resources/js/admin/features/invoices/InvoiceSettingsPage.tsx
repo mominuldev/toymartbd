@@ -17,6 +17,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import type { Media } from '@/features/media';
 import { MediaPickerModal, type InsertFailure } from '@/features/media/picker';
+import { StickySaveBar, UnsavedChangesGuard, useChangeSummary, useSavedFlash } from '@/features/storeSettings/parts';
 import { useInvoiceSettings, useSaveInvoiceSettings, type InvoiceSettings, type InvoiceSettingsInput } from './api';
 
 const FORM_ID = 'invoice-settings';
@@ -54,8 +55,9 @@ function toInput(v: FormValues, logo: number | null): InvoiceSettingsInput {
  * Store settings › Taxes & invoices (P8, PRD N-13), rendered inside SettingsLayout (B · 38
  * 241:50827): what invoices print besides the business identity — address (EN + BN), email,
  * website, logo (P9) and footer. The identity (name, trade licence, BIN, hotline) is edited once,
- * under Business, and shown here read-only: one value for the store and invoices. The card
- * carries its own "Save changes", like every section. A save affects invoices issued from now
+ * under Business, and shown here read-only: one value for the store and invoices. It saves
+ * through the Store settings sticky save bar, like every section. The logo is the same setting
+ * as Site & branding's logo. A save affects invoices issued from now
  * on; every issued invoice keeps its own snapshot.
  */
 export function InvoiceSettingsPage() {
@@ -91,12 +93,27 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
         setLogo(toLogo(settings));
     }, [settings, reset]);
 
+    const [justSaved, flashSaved] = useSavedFlash();
+    const logoChanged = (logo?.id ?? null) !== settings.logo_media_id;
+    const changed = [
+        ...textFields.filter((f) => formState.dirtyFields[f]).map((f) => t(`invoiceSettings.field.${f}` as MessageKey)),
+        ...(logoChanged ? [t('invoiceSettings.logo')] : []),
+    ];
+    const dirty = changed.length > 0;
+    const summary = useChangeSummary(changed);
+    const discard = () => {
+        reset(toForm(settings));
+        setLogo(toLogo(settings));
+        setLogoError(null);
+    };
+
     const submit = handleSubmit((values) =>
         save.mutate(toInput(values, logo?.id ?? null), {
             onSuccess: () => {
-                notify(t('invoiceSettings.saved'));
-                // Store settings › Business shows the same rows.
+                flashSaved();
+                // Store settings › Business shows the same rows; Site & branding the same logo.
                 void client.invalidateQueries({ queryKey: ['settings', 'business'] });
+                void client.invalidateQueries({ queryKey: ['settings', 'branding'] });
             },
             onError: (error) => {
                 if (error instanceof ApiError && error.status === 422) {
@@ -129,6 +146,10 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
 
     return (
         <section className="flex min-w-0 flex-col gap-6">
+            {editable && <UnsavedChangesGuard when={dirty} />}
+            {editable && (
+                <StickySaveBar section={t('storeSettings.nav.invoice')} dirty={dirty} saved={justSaved} savedLabel={t('invoiceSettings.saved')} summary={summary} saving={save.isPending} onDiscard={discard} form={FORM_ID} />
+            )}
             {settings.placeholders.length > 0 && (
                 <p className="flex items-start gap-2 rounded-sm bg-subtle px-3.5 py-3 t-admin-caption text-fg-secondary" role="status">
                     <InfoIcon size={16} aria-hidden className="shrink-0 text-fg-brand" />
@@ -186,13 +207,6 @@ function InvoiceSettingsForm({ settings, editable }: { settings: InvoiceSettings
                         </div>
                     </FormSection>
                 </fieldset>
-                {editable && (
-                    <div className="flex justify-end">
-                        <Button type="submit" disabled={save.isPending}>
-                            {save.isPending ? t('invoiceSettings.saving') : t('invoiceSettings.save')}
-                        </Button>
-                    </div>
-                )}
             </form>
         </section>
     );

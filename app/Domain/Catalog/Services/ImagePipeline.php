@@ -8,6 +8,7 @@ use App\Domain\Catalog\Exceptions\InvalidImage;
 use finfo;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\AvifEncoder;
+use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
@@ -166,6 +167,25 @@ final class ImagePipeline
 
                 $out[$width][$format] = $resized->encode($encoder)->toString();
             }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Square PNGs of a master at each size (favicons, the store icon): centre-cropped to a
+     * square, then scaled to fit. `[size => bytes]`.
+     *
+     * @param  list<int>  $sizes
+     * @return array<int, string>
+     */
+    public function squarePngs(string $masterBytes, array $sizes): array
+    {
+        $source = $this->manager()->decodeBinary($masterBytes);
+        $out = [];
+
+        foreach ($sizes as $size) {
+            $out[$size] = (clone $source)->cover($size, $size)->encode(new PngEncoder(strip: true))->toString();
         }
 
         return $out;

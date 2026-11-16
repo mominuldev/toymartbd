@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
@@ -77,11 +77,13 @@ describe('store settings → checkout & delivery rules', () => {
 
         const amount = (await screen.findByLabelText('Free delivery from (৳)')) as HTMLInputElement;
         expect(amount.value).toBe('3000');
-        const save = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
-        expect(save.disabled).toBe(true);
+        // Clean: no save bar.
+        expect(screen.queryByRole('region', { name: 'Save changes to Checkout & delivery' })).toBeNull();
 
         fireEvent.change(amount, { target: { value: '2500' } });
-        fireEvent.click(save);
+        const bar = screen.getByRole('region', { name: 'Save changes to Checkout & delivery' });
+        expect(bar.textContent).toContain('Free delivery changed');
+        fireEvent.click(within(bar).getByRole('button', { name: 'Save changes' }));
         await waitFor(() => expect(putBodies(calls)).toEqual([{ free_shipping_threshold: '2500' }]));
         expect(await screen.findByText('Checkout & delivery rules saved')).toBeTruthy();
     });
@@ -92,7 +94,7 @@ describe('store settings → checkout & delivery rules', () => {
 
         fireEvent.click(await screen.findByRole('switch'));
         expect(screen.queryByLabelText('Free delivery from (৳)')).toBeNull();
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await waitFor(() => expect(putBodies(calls)).toEqual([{ free_shipping_threshold: null }]));
     });
 
@@ -101,7 +103,7 @@ describe('store settings → checkout & delivery rules', () => {
         renderApp('/settings/checkout');
 
         fireEvent.change(await screen.findByLabelText('Free delivery from (৳)'), { target: { value: '0' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         const alert = await screen.findByRole('alert');
         expect(alert.textContent).toBe('Enter an amount above 0, like 3000 or 2999.50.');
         // The error is tied to the field, so it is read with it, not only announced once.
@@ -114,7 +116,7 @@ describe('store settings → checkout & delivery rules', () => {
         renderApp('/settings/checkout');
 
         expect(await screen.findByText('Checkout & delivery rules')).toBeTruthy();
-        expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
         expect((screen.getByRole('switch') as HTMLButtonElement).disabled).toBe(true);
         expect((screen.getByLabelText('Free delivery from (৳)') as HTMLInputElement).disabled).toBe(true);
         expect(screen.queryByRole('link', { name: 'Edit in Courier settings' })).toBeNull();

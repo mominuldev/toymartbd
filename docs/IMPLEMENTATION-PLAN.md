@@ -355,6 +355,25 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10: Store settings premium pass, Site & branding, branch mode (2026-11-16, owner requests)
+
+**Done, with passing tests.** Full counts are in the PR. Figma: premium pass `366:65205`, Store settings `390:69035` / `396:69446`, Branch setup & switcher group `410:69594`.
+- **Store settings layout** (B · 38 Premium): the section nav is a card with icons and a "New" badge. Every section saves through one shared sticky save bar (owner: "use the save bar in every section"), with a change summary, Discard, and a shared leave-without-saving prompt. Dialogs keep their own buttons.
+- **Site & branding** (`GET/PUT /settings/branding`, `StoreBranding`):
+  - Fields: store name, tagline and description in EN and BN; logo (the same row as the invoice logo); dark logo; icon; share image. Each image's shape and size is checked server-side.
+  - Saving the icon queues `RenderStoreFavicons`, which writes PNG favicons at 32/180/192/512.
+  - `GET /storefront/store-info` gains the branding fields (additive).
+  - On the storefront: site name, description and icons in the metadata; the share image as the default og:image on every page; the uploaded logo in the header.
+- **Branch mode** (`GET/PUT /settings/branch-mode`, `store.multi_branch`):
+  - Single shop means exactly one active location. While single, adding a location or switching one back on is refused (`single-branch-mode`). Switching to single is refused while other locations are active (`branch-mode-blocked`, with blockers and their units). An unset mode follows the data.
+  - Single mode hides every multi-branch control (transfers, branch cards, branch pickers) and the sidebar branch block.
+- **Working branch:**
+  - In multi mode, the sidebar switcher sets a per-device working branch (localStorage).
+  - It is only the default branch for the POS drawer, new purchase orders and Inventory (adjustments and transfers follow Inventory's selection). It never filters data.
+  - Every staff member gets the branch list from `/auth/me.branches`, with no addresses.
+
+**Owner decisions open:** native-speaker review of the new Bangla strings; whether old favicon files are ever cleaned up; no static storefront favicon before the first icon upload; `logo_dark` has no storefront surface yet; the media host must be listed in `MEDIA_ORIGINS` in production.
+
 ### Progress — Phase 10 batch 5: shipments board, booking queue, metro districts, inbox badge and keys (2026-11-15, 4 parallel agents)
 
 **Owner decisions of 2026-11-15 (accepted):**

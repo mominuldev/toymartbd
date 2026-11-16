@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Admin\Settings;
 use App\Domain\Customer\Models\District;
 use App\Domain\Inventory\Actions\CreateStockLocation;
 use App\Domain\Inventory\Actions\UpdateStockLocation;
+use App\Domain\Inventory\Exceptions\BranchModeConflict;
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Http\Controllers\Api\V1\ApiController;
@@ -62,16 +63,25 @@ final class StoreLocationController extends ApiController
     }
 
     /** `POST /settings/locations` — 201 with the new location. */
+    #[OpenApiResponse(409, 'The store runs as a single shop (`single-branch-mode`): turn on multiple branches first')]
     public function store(StoreStockLocationRequest $request, CreateStockLocation $create): JsonResponse
     {
-        return self::resource($create->handle($request->toData()))->response()->setStatusCode(201);
+        try {
+            return self::resource($create->handle($request->toData()))->response()->setStatusCode(201);
+        } catch (BranchModeConflict $e) {
+            return BranchModeController::problem($request, $e);
+        }
     }
 
     /** `PUT /settings/locations/{location}` — edit, or switch off with `is_active: false`. */
-    #[OpenApiResponse(409, 'Switching off the default location, or one that still holds stock (`conflict`)')]
-    public function update(UpdateStockLocationRequest $request, StockLocation $location, UpdateStockLocation $update): StoreLocationResource
+    #[OpenApiResponse(409, 'Switching off the default location, or one that still holds stock (`conflict`); switching one on while the store runs as a single shop (`single-branch-mode`)')]
+    public function update(UpdateStockLocationRequest $request, StockLocation $location, UpdateStockLocation $update): StoreLocationResource|JsonResponse
     {
-        return self::resource($update->handle($location, $request->toData()));
+        try {
+            return self::resource($update->handle($location, $request->toData()));
+        } catch (BranchModeConflict $e) {
+            return BranchModeController::problem($request, $e);
+        }
     }
 
     private static function resource(StockLocation $location): StoreLocationResource

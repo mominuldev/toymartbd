@@ -30,6 +30,12 @@ import type { SeoDocument } from '@/lib/seo/types';
 import { sampleContact } from '@/lib/site-config';
 import { validateAll, validateJsonLd } from '@/lib/seo/validate';
 
+// The metadata builders read Site & branding through getStoreInfo(); here: nothing set (no fetch).
+vi.mock('@/lib/store-info', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/store-info')>()),
+    getStoreInfo: async () => (await import('@/lib/site-config')).sampleStoreInfo,
+}));
+
 const SITE = 'https://toymartbd.com';
 
 const { _related: _unused, ...raw } = JSON.parse(readFileSync(new URL('../e2e/fixtures/product-detail.json', import.meta.url), 'utf8')) as StorefrontProduct & { _related: string[] };
@@ -74,12 +80,12 @@ function expectHead(meta: Metadata, locale: Locale, path: string): void {
 describe.each(locales)('metadata templates (%s)', (locale) => {
     const t = getMessages(locale);
 
-    it('home: absolute title, indexable', () => {
-        const meta = homeMetadata(locale);
+    it('home: absolute title, indexable', async () => {
+        const meta = await homeMetadata(locale);
         expectHead(meta, locale, '/');
         expect(meta.title).toEqual({ absolute: `${t.site.name} | ${t.site.tagline}` });
         // The owner's separator (config/seo.php) replaces it everywhere, never doubled.
-        expect(homeMetadata(locale, ' · ').title).toEqual({ absolute: `${t.site.name} · ${t.site.tagline}` });
+        expect((await homeMetadata(locale, ' · ')).title).toEqual({ absolute: `${t.site.name} · ${t.site.tagline}` });
         expect(meta.description).toBe(t.home.metaDescription);
         expect(meta.robots).toBeUndefined(); // index,follow: no robots meta
     });
@@ -89,61 +95,61 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
         ['/brands', 'brands'],
         ['/about', 'about'],
         ['/delivery-charge', 'delivery'],
-    ])('static page %s', (path) => {
-        const meta = staticMetadata(locale, path, 'Title', 'Description');
+    ])('static page %s', async (path) => {
+        const meta = await staticMetadata(locale, path, 'Title', 'Description');
         expectHead(meta, locale, path);
         expect(meta.title).toBe('Title');
         expect(meta.robots).toBeUndefined(); // index,follow: no robots meta
     });
 
-    it('track: public, indexable', () => {
-        const meta = trackMetadata(locale, t.track.title, t.track.metaDescription);
+    it('track: public, indexable', async () => {
+        const meta = await trackMetadata(locale, t.track.title, t.track.metaDescription);
         expectHead(meta, locale, '/track');
         expect(meta.robots).toBeUndefined(); // index,follow: no robots meta
     });
 
-    it('category listing: bare, single facet, later page, facets, sort', () => {
+    it('category listing: bare, single facet, later page, facets, sort', async () => {
         const scope = { kind: 'category', slug: 'building-blocks' } as const;
         const base = { locale, path: '/categories/building-blocks', title: 'Building Blocks', description: 'd' };
-        expectHead(listingPageMetadata({ ...base, state: emptyState() }), locale, '/categories/building-blocks');
-        const single = listingPageMetadata({ ...base, state: parseListingState({ age: '24-48' }, scope) });
+        expectHead(await listingPageMetadata({ ...base, state: emptyState() }), locale, '/categories/building-blocks');
+        const single = await listingPageMetadata({ ...base, state: parseListingState({ age: '24-48' }, scope) });
         expectHead(single, locale, '/categories/building-blocks?age=24-48');
         expect(single.robots).toBeUndefined(); // index,follow: no robots meta
-        const page2 = listingPageMetadata({ ...base, state: parseListingState({ cursor: 'eyJpZCI6MX0' }, scope) });
+        const page2 = await listingPageMetadata({ ...base, state: parseListingState({ cursor: 'eyJpZCI6MX0' }, scope) });
         expectHead(page2, locale, '/categories/building-blocks?cursor=eyJpZCI6MX0');
         expect(page2.robots).toBeUndefined(); // index,follow: no robots meta
         for (const params of [{ age: '24-48', brand: 'lego' }, { sort: 'newest' }, { price: '0-500,500-1000' }]) {
-            const meta = listingPageMetadata({ ...base, state: parseListingState(params, scope) });
+            const meta = await listingPageMetadata({ ...base, state: parseListingState(params, scope) });
             expect(meta.robots).toEqual({ index: false, follow: true });
             expectHead(meta, locale, '/categories/building-blocks');
         }
     });
 
-    it('category listing with an SEO document: per-locale text, noindex wins, override canonical', () => {
+    it('category listing with an SEO document: per-locale text, noindex wins, override canonical', async () => {
         const scope = { kind: 'category', slug: 'building-blocks' } as const;
         const doc = seoDoc({ type: 'category', canonical_url: `${SITE}/categories/blocks`, robots: { index: false, follow: true } });
-        const meta = listingPageMetadata({ locale, path: '/categories/building-blocks', state: emptyState(), title: 'x', seo: doc });
+        const meta = await listingPageMetadata({ locale, path: '/categories/building-blocks', state: emptyState(), title: 'x', seo: doc });
         expect(meta.title).toEqual({ absolute: doc[locale].title });
         expect(meta.description).toBe(doc[locale].description);
         expect(meta.robots).toEqual({ index: false, follow: true });
         expect(meta.alternates?.canonical).toBe(locale === 'en' ? '/categories/blocks' : '/bn/categories/blocks');
         // A facet view never takes the bare listing's override.
-        const facet = listingPageMetadata({ locale, path: '/categories/building-blocks', state: parseListingState({ age: '24-48' }, scope), title: 'x', seo: doc });
+        const facet = await listingPageMetadata({ locale, path: '/categories/building-blocks', state: parseListingState({ age: '24-48' }, scope), title: 'x', seo: doc });
         expect(facet.alternates?.canonical).toBe(locale === 'en' ? '/categories/building-blocks?age=24-48' : '/bn/categories/building-blocks?age=24-48');
     });
 
-    it('brand and all-toys listings', () => {
-        expectHead(listingPageMetadata({ locale, path: '/brands/lego', state: emptyState(), title: 'LEGO' }), locale, '/brands/lego');
-        expectHead(listingPageMetadata({ locale, path: '/toys', state: emptyState(), title: t.listing.allToys }), locale, '/toys');
+    it('brand and all-toys listings', async () => {
+        expectHead(await listingPageMetadata({ locale, path: '/brands/lego', state: emptyState(), title: 'LEGO' }), locale, '/brands/lego');
+        expectHead(await listingPageMetadata({ locale, path: '/toys', state: emptyState(), title: t.listing.allToys }), locale, '/toys');
     });
 
-    it('product: entity defaults, then the SEO document overrides per locale', () => {
-        const plain = productMetadata({ locale, slug: product.slug, name: 'Bricks', description: 'Plain', image: { url: `${SITE}/i.webp`, width: 1200, height: 1200, alt: 'a' } });
+    it('product: entity defaults, then the SEO document overrides per locale', async () => {
+        const plain = await productMetadata({ locale, slug: product.slug, name: 'Bricks', description: 'Plain', image: { url: `${SITE}/i.webp`, width: 1200, height: 1200, alt: 'a' } });
         expectHead(plain, locale, `/products/${product.slug}`);
         expect(plain.title).toBe('Bricks');
         expect((plain.twitter as Record<string, unknown>).card).toBe('summary_large_image');
         const doc = seoDoc();
-        const meta = productMetadata({ locale, slug: product.slug, name: 'Bricks', description: 'Plain', seo: doc });
+        const meta = await productMetadata({ locale, slug: product.slug, name: 'Bricks', description: 'Plain', seo: doc });
         expectHead(meta, locale, `/products/${product.slug}`);
         expect(meta.title).toEqual({ absolute: doc[locale].title });
         const og = meta.openGraph as Record<string, unknown>;
@@ -152,39 +158,39 @@ describe.each(locales)('metadata templates (%s)', (locale) => {
         expect(og.images).toEqual([{ url: `${SITE}/media/og.webp` }]);
     });
 
-    it('content pages and articles', () => {
-        const page = contentMetadata({ locale, path: '/returns', title: 'Returns', description: 'd' });
+    it('content pages and articles', async () => {
+        const page = await contentMetadata({ locale, path: '/returns', title: 'Returns', description: 'd' });
         expectHead(page, locale, '/returns');
         expect((page.openGraph as Record<string, unknown>).type).toBe('website');
-        const post = contentMetadata({ locale, path: '/blog/best-toys', title: 'Best toys', kind: 'article', publishedTime: '2026-11-01T00:00:00+06:00' });
+        const post = await contentMetadata({ locale, path: '/blog/best-toys', title: 'Best toys', kind: 'article', publishedTime: '2026-11-01T00:00:00+06:00' });
         expectHead(post, locale, '/blog/best-toys');
         expect(post.openGraph).toMatchObject({ type: 'article', publishedTime: '2026-11-01T00:00:00+06:00' });
     });
 
-    it('search is noindex,follow with canonical /search', () => {
-        const meta = searchMetadata(locale, 'Results', 'd');
+    it('search is noindex,follow with canonical /search', async () => {
+        const meta = await searchMetadata(locale, 'Results', 'd');
         expectHead(meta, locale, '/search');
         expect(meta.robots).toEqual({ index: false, follow: true });
     });
 
-    it.each(['/cart', '/checkout', '/account', '/account/orders', '/orders/TMB-1001'])('private %s is noindex', (path) => {
-        const meta = privateMetadata(locale, path, 'Private', { follow: path === '/cart' });
+    it.each(['/cart', '/checkout', '/account', '/account/orders', '/orders/TMB-1001'])('private %s is noindex', async (path) => {
+        const meta = await privateMetadata(locale, path, 'Private', { follow: path === '/cart' });
         expectHead(meta, locale, path);
         expect(meta.robots).toEqual({ index: false, follow: path === '/cart' });
     });
 
-    it('404 / maintenance: noindex, no canonical', () => {
+    it('404 / maintenance: noindex, no canonical', async () => {
         expect(noindexMetadata('Not found')).toEqual({ title: 'Not found', robots: { index: false, follow: false } });
     });
 });
 
 describe('title separator (one value: config/seo.php via GET /storefront/seo/settings)', () => {
-    it('defaults to the API default, " | "', () => {
+    it('defaults to the API default, " | "', async () => {
         expect(DEFAULT_TITLE_SEPARATOR).toBe(' | ');
         expect(titleTemplate('Toy Mart BD')).toBe('%s | Toy Mart BD');
     });
 
-    it('uses the API value and falls back on anything malformed', () => {
+    it('uses the API value and falls back on anything malformed', async () => {
         expect(titleSeparatorOf({ site_name: 'Toy Mart BD', title_separator: ' · ' })).toBe(' · ');
         expect(titleTemplate('Toy Mart BD', titleSeparatorOf({ title_separator: ' · ' }))).toBe('%s · Toy Mart BD');
         for (const bad of [null, 'x', {}, { title_separator: '' }, { title_separator: '   ' }, { title_separator: 7 }, { title_separator: '<script>alert(1)</script>' }]) {
@@ -192,9 +198,9 @@ describe('title separator (one value: config/seo.php via GET /storefront/seo/set
         }
     });
 
-    it('matches the server default titles, so an SEO document title never gets a second suffix', () => {
+    it('matches the server default titles, so an SEO document title never gets a second suffix', async () => {
         // The SEO document's title is used as `title.absolute` (it already ends " | Toy Mart BD").
-        const meta = productMetadata({ locale: 'en', slug: 'lego', name: 'LEGO', description: 'd', seo: seoDoc() });
+        const meta = await productMetadata({ locale: 'en', slug: 'lego', name: 'LEGO', description: 'd', seo: seoDoc() });
         expect(meta.title).toEqual({ absolute: 'LEGO Classic Bricks | Toy Mart BD' });
     });
 });

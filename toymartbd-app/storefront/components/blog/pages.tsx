@@ -110,7 +110,7 @@ function robotsOf(value: string | null | undefined): Robots {
 }
 
 /** A post's metadata: its seo_meta overrides per locale, else title and excerpt; OG article dates. */
-export function postMetadata(post: BlogPost, locale: Locale, options: { preview?: boolean } = {}): Metadata {
+export async function postMetadata(post: BlogPost, locale: Locale, options: { preview?: boolean } = {}): Promise<Metadata> {
     const title = postTitle(post, locale).text;
     const seoTitle = pickOptional(locale, post.seo.title, post.seo.title_bn)?.trim() || null;
     const description = pickOptional(locale, post.seo.description, post.seo.description_bn) ?? pickOptional(locale, post.excerpt, post.excerpt_bn);
