@@ -18,13 +18,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', fn () => response()->json([
-    'name' => config('app.name'),
-    'api' => url('/api/v1'),
-    'docs' => url('/api/docs'),
-    'admin' => url('/admin'),
-    'health' => url('/up'),
-]));
+/*
+| The domain root opens the admin (owner decision 2026-11-17): signed out, the SPA's RequireAuth
+| sends the visitor on to /admin/login; signed in, they land on the dashboard. A 302, not a 301,
+| so a browser never caches it should the root later serve something else.
+*/
+Route::redirect('/', '/admin');
 
 /*
 | Stable public media URL (docs/api/media-library.md, decision 3): a short-cache 302 to
