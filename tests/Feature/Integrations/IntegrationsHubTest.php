@@ -291,9 +291,9 @@ it('shows an inbox channel with keys entered as test mode, never live while unve
 
 it('lists the AI providers: not connected, connected, or rejected on the last check', function (): void {
     hubOwner();
-    App\Models\Setting::put('ai.key.anthropic', 'sk-ant-0000000000000000', App\Models\Enums\SettingGroup::Ai, true);
-    App\Models\Setting::put('ai.key.openai', 'sk-0000000000000000', App\Models\Enums\SettingGroup::Ai, true);
-    App\Models\Setting::put('ai.key_meta.openai', ['last4' => '0000', 'checked_at' => now()->toIso8601String(), 'ok' => false], App\Models\Enums\SettingGroup::Ai);
+    Setting::put('ai.key.anthropic', 'sk-ant-0000000000000000', SettingGroup::Ai, true);
+    Setting::put('ai.key.openai', 'sk-0000000000000000', SettingGroup::Ai, true);
+    Setting::put('ai.key_meta.openai', ['last4' => '0000', 'checked_at' => now()->toIso8601String(), 'ok' => false], SettingGroup::Ai);
 
     $ai = collect($this->getJson(HUB_URL)->assertOk()->json('data'))->where('category', 'ai')->keyBy('key');
 
