@@ -40,7 +40,11 @@ final class PdfText
             }
         }
 
-        return $text;
+        // Always valid UTF-8: an odd-length string (or a binary stream that happens to hold "BT")
+        // passes through as raw bytes, and any caller's preg_*() with /u then returns null, which
+        // a (string) cast turns into "" — the same "Expected: (empty)" failure, seen in
+        // LakhGroupingTest.
+        return mb_scrub($text, 'UTF-8');
     }
 
     /**

@@ -392,6 +392,10 @@ it('rejects an unlisted filter, sort or parameter with a 400 problem', function 
 ]);
 
 it('loads a full page in a constant number of queries', function (): void {
+    // Sanctum saves the token's last_used_at on every request, but Eloquent only sends the
+    // UPDATE when the second changed — so a clock tick between the warm-up and the measured
+    // request added one query (18 vs 17) now and then. Frozen, the count is deterministic.
+    $this->freezeTime();
     $brand = Brand::factory()->create();
     $category = Category::factory()->create(['slug' => 'toys']);
     $makePage = function (int $count) use ($brand, $category): void {

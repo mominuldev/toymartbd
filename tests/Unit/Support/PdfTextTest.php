@@ -16,3 +16,14 @@ it('reads a compressed stream whose last byte is a newline', function (string $e
 
     expect(PdfText::extract($pdf))->toContain('INV-26-000001029');
 })->with(['LF' => "\n", 'CRLF' => "\r\n"]);
+
+it('returns valid UTF-8 even when a stream shows raw bytes, so a /u regex over it still works', function (): void {
+    // An odd-length string is passed through undecoded; "\xFF\xFE\xFD" is not UTF-8.
+    $text = mb_convert_encoding('৳62,150', 'UTF-16BE', 'UTF-8');
+    $pdf = "%PDF-1.4\n1 0 obj\n<< >>\nstream\nBT (\xFF\xFE\xFD) Tj ({$text}) Tj ET\nendstream\nendobj\n";
+
+    $extracted = PdfText::extract($pdf);
+
+    expect(mb_check_encoding($extracted, 'UTF-8'))->toBeTrue()
+        ->and((string) preg_replace('/\s+/u', ' ', $extracted))->toContain('৳62,150');
+});
