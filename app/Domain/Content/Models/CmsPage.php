@@ -46,7 +46,7 @@ final class CmsPage extends Model
 
     /**
      * A page lives at the site root (`/{slug}`), so its slug may not take a first path segment
-     * the storefront already routes (toymartbd-app/storefront/app/[locale]/…), the locale
+     * the storefront already routes (toymartbd-storefront/app/[locale]/…), the locale
      * prefixes, or the paths the proxy and Laravel own. `about` is not here: the storefront's
      * About route renders the CMS `about` page when one is live.
      */

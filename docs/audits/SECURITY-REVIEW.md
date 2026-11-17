@@ -110,12 +110,12 @@ These now have matrix tests in `tests/Feature/Security/RoleMatrixGapsTest.php`:
 
   `X-Frame-Options` is deliberately not sent, because it cannot allow the admin origin. `headers()` is evaluated at **build** time, so `ADMIN_URL` or `API_URL` must be set for `next build`.
   *Phase 10 update:* the CSP part moved — pages get the full policy from `proxy.ts` (S-11) and `headers()` sends the baseline CSP to `/api` route handlers only.
-- **Tests:** `tests/Feature/Security/SecurityHeadersTest.php` (API, problem responses, HSTS only on HTTPS, admin nonce CSP and nonce on the inline script, no `unsafe-inline` for scripts, headers kept when already set, CORS, secure cookie, no `/storage` routes); `toymartbd-app/storefront/tests/security-headers.test.ts`.
+- **Tests:** `tests/Feature/Security/SecurityHeadersTest.php` (API, problem responses, HSTS only on HTTPS, admin nonce CSP and nonce on the inline script, no `unsafe-inline` for scripts, headers kept when already set, CORS, secure cookie, no `/storage` routes); `toymartbd-storefront/tests/security-headers.test.ts`.
 - **Risk to watch:** the admin CSP is verified by Pest only. The admin Playwright E2E, which runs in CI, loads the real built bundle under it. If a third-party script is ever added to the admin, it must be added to `script-src`.
 
 ### S-11 — Storefront script CSP (fixed, Phase 10 prep)
 
-**What ships.** `toymartbd-app/storefront/lib/csp.ts`, set on every page response by `proxy.ts`. Two policies, chosen per route:
+**What ships.** `toymartbd-storefront/lib/csp.ts`, set on every page response by `proxy.ts`. Two policies, chosen per route:
 
 | | Per-request pages | Prerendered (ISR) pages |
 |---|---|---|

@@ -7,7 +7,7 @@
 - `database/seeders/PerformanceVolumeSeeder.php` builds the volume dataset. It is never part of `DatabaseSeeder`, refuses to run in production, and its sizes can be overridden with `PERF_PRODUCTS`, `PERF_CUSTOMERS` and `PERF_ORDERS`.
 - `scripts/perf/profile.php` profiles endpoints. It runs 36 storefront and admin GET endpoints in-process. For each one it reports the median time over N runs, the query count, repeated SQL, SQL time, **lazy loads on real volume** and the slowest statement. `--explain` adds the query plan.
 - `tests/TestCase.php` is the N+1 guard (see P-02).
-- `toymartbd-app/storefront/e2e/performance-budgets.spec.ts` is the budget gate (see "Budgets in CI").
+- `toymartbd-storefront/e2e/performance-budgets.spec.ts` is the budget gate (see "Budgets in CI").
 
 **Volume used:** `migrate --seed` plus the demo data, then the volume seeder on a private SQLite file:
 - 5,016 products and 6,028 variants;

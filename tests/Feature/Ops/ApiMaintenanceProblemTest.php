@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 /*
 | Gate 5 "should close": during planned downtime the shop shows its maintenance page, not errors.
 | The storefront tells `php artisan down` apart from any other 503 by the problem `type`, and
-| keeps the page up for as long as `Retry-After` says (toymartbd-app/storefront/lib/maintenance.ts).
+| keeps the page up for as long as `Retry-After` says (toymartbd-storefront/lib/maintenance.ts).
 */
 
 it('answers `maintenance` with the Retry-After from `artisan down --retry`', function (): void {

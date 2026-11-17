@@ -15,7 +15,7 @@
 // The catalogs are TypeScript; rolldown (Vite 8's bundler, already installed) bundles each one
 // in memory so this runs on plain Node with no build step.
 //
-// Usage: node scripts/i18n/check-keys.mjs [admin|storefront]   (no argument = both)
+// Usage: node scripts/i18n/check-keys.mjs [admin]
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,11 +29,7 @@ const apps = {
         catalog: 'resources/js/admin/i18n/messages.ts',
         sources: ['resources/js/admin'],
     },
-    storefront: {
-        catalog: 'toymartbd-app/storefront/lib/i18n/index.ts',
-        exports: (m) => ({ en: m.getMessages('en'), bn: m.getMessages('bn') }),
-        sources: [],
-    },
+    // The storefront has its own copy of this check in its repository (split 2026-11-17).
 };
 
 async function loadCatalog(entry) {

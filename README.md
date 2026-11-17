@@ -34,14 +34,17 @@ Working rules for contributors and AI agents: [`CLAUDE.md`](CLAUDE.md) and [`AGE
 app/ config/ routes/ database/     Laravel 13 at the repo root — all business logic
 resources/js/admin/                React 19 + Vite admin SPA, served by Laravel at /admin
 resources/views/admin.blade.php    the admin SPA shell
-toymartbd-app/storefront/          Next.js 16 — the customer-facing shop
 packages/tokens/                   design tokens exported from Figma
 packages/api-types/                TypeScript types generated from the OpenAPI document
+packages/observability/            Sentry PII scrubbing shared with the storefront
+scripts/sync-storefront.mjs        copies the shared packages into the storefront repo
 docs/                              research, design specs, roadmap
 e2e/                               Playwright
 ```
 
-The repo root is both the Laravel application and the single npm workspaces root, so one `composer install` and one `npm install` set up the whole project.
+The repo root is both the Laravel application and the npm workspaces root, so one `composer install` and one `npm install` set up the API and the admin.
+
+The customer storefront (Next.js 16) is its own repository since 2026-11-17: github.com/mominuldev/toymartbd-storefront, checked out next to this one as `../toymartbd-storefront`. It receives copies of `packages/*` through `npm run sync:storefront`.
 
 **Why the admin sits inside Laravel but the storefront does not.** The admin is a private tool behind a login, never indexed, and it shares Laravel's session for auth — hosting it in Laravel removes a deployment, a CORS boundary and a token-handling problem. The storefront has the opposite needs: it must serve cached HTML from a CDN edge to mid-range Android phones on 4G, which is what Next.js ISR does and a Laravel-hosted bundle cannot.
 

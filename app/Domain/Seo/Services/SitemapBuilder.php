@@ -39,7 +39,7 @@ final class SitemapBuilder
 
     /**
      * Indexable storefront routes that are not content entities (each renders `index,follow`
-     * with a self canonical — toymartbd-app/storefront/app/[locale]/…). `/about` is listed
+     * with a self canonical — toymartbd-storefront/app/[locale]/…). `/about` is listed
      * here only while no live CMS `about` page puts it in the `pages` partition.
      */
     public const array STATIC_PAGES = ['/delivery-charge', '/flash-sale', '/track', '/about'];

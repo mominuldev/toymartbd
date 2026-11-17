@@ -13,7 +13,7 @@
 | `ops/deploy/build-artifact.sh` | Packs the release tarball in CI |
 | `ops/deploy/rehearse-local.sh` | The local proof (§9) |
 | `.github/workflows/deploy.yml` | Deploy on green CI on `main`, or by hand; storefront to Vercel after the API |
-| `toymartbd-app/storefront/vercel.json` | Vercel build settings for the storefront |
+| `toymartbd-storefront/vercel.json` | Vercel build settings for the storefront |
 
 ---
 
@@ -171,7 +171,7 @@ A migration is **destructive** when the *old* code, still serving during the mig
 
 When a pending migration carries `@deploy:destructive`, the deploy puts the app in maintenance mode (503 with `Retry-After: 60`; the storefront's cached pages keep serving) for the migration window only. To force a window for one deploy without a marker, run it on the server with `DEPLOY_FORCE_MAINTENANCE=1`. A contract-phase drop of a column the live code no longer touches is **not** destructive and needs no marker.
 
-**What shoppers see during a maintenance window.** The API answers every call with a 503 problem of type `maintenance` plus `Retry-After` (`php artisan down --retry=60`; `ProblemType::Maintenance`, distinct from a feature-level `service-unavailable` such as "no courier rate card"), and the admin shows Laravel's maintenance page. **The storefront switches itself** (Gate 5, `toymartbd-app/storefront/lib/maintenance.ts`), without probing the API — it reacts to the 503s its real calls get:
+**What shoppers see during a maintenance window.** The API answers every call with a 503 problem of type `maintenance` plus `Retry-After` (`php artisan down --retry=60`; `ProblemType::Maintenance`, distinct from a feature-level `service-unavailable` such as "no courier rate card"), and the admin shows Laravel's maintenance page. **The storefront switches itself** (Gate 5, `toymartbd-storefront/lib/maintenance.ts`), without probing the API — it reacts to the 503s its real calls get:
 
 - the proxy's redirect-map refresh (`GET /storefront/redirects`, once a minute, every 10 s while failing) and every page or route-handler call through `lib/api.ts` arm a short **downtime signal** (`Retry-After`, bounded to 5–60 s); a fresh 2xx clears it;
 - while the signal is live, `proxy.ts` answers **every page** — cached or not — with the designed maintenance page in the visitor's language as **503 + the API's `Retry-After`** and `Cache-Control: no-store`, without calling the API;
@@ -210,8 +210,8 @@ Optional **variables**: `DEPLOY_APP_ROOT` (default `/var/www/toymartbd`), `SENTR
 
 ## 7. Storefront on Vercel
 
-1. Vercel → Add New → Project → import the GitHub repo. **Root Directory: `toymartbd-app/storefront`**, framework Next.js; leave "Include files outside the root directory" **on** (the app uses `packages/tokens` and `packages/api-types` from the repo root). Build settings come from `toymartbd-app/storefront/vercel.json`: install at the repo root (`npm ci`, one workspaces root), `npm run build`, region `sin1` (Singapore). **Change `regions` to the Vercel region nearest your VPS** — the storefront's server calls the API on every uncached request.
-2. **Environment variables** (Settings → Environment Variables). All are server-only; never add a `NEXT_PUBLIC_` copy. `next build` **fails** unless the first five are set — absolute `http(s)` URLs, secrets at least 16 characters (`toymartbd-app/storefront/lib/env.ts`); the deploy workflow checks for them right after `vercel pull` and names any that are missing.
+1. Vercel → Add New → Project → import **github.com/mominuldev/toymartbd-storefront** (its own repository since 2026-11-17). **Root Directory: the repository root**, framework Next.js. The shared tokens and API types are committed copies in its `shared/` folder, so nothing outside the repo is needed. Build settings come from its `vercel.json`. Deploys run from that repo's `.github/workflows/deploy.yml` (secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` on that repo); deploy a storefront change that needs a new API endpoint only after the API release is live.
+2. **Environment variables** (Settings → Environment Variables). All are server-only; never add a `NEXT_PUBLIC_` copy. `next build` **fails** unless the first five are set — absolute `http(s)` URLs, secrets at least 16 characters (`toymartbd-storefront/lib/env.ts`); the deploy workflow checks for them right after `vercel pull` and names any that are missing.
 
    | Variable | Production | Preview |
    |---|---|---|
@@ -301,3 +301,41 @@ Then `curl -s https://api.<domain>/api/v1/health`.
 9. **The first real run** — watch the warnings list `provision.sh` prints, and report anything that failed so the scripts can be corrected. Record `MEILI_SHA256` from that run.
 10. **Monthly**: the maintenance in §8 and the restore rehearsal (`backup-and-restore.md`).
 11. **Storefront maintenance switch** (§5): add `STOREFRONT_MAINTENANCE` to the Vercel project only when needed; it is off when absent.
+
+## 11. Hostinger (`.github/workflows/deploy-hostinger.yml`)
+
+An alternative to the VPS release swap above, for a Hostinger plan with SSH (added 2026-11-17, modelled on the uptms-ad project's deploy). It runs after CI is green on `main`, or by hand (Actions → Deploy to Hostinger → Run workflow, from `main`). With no `HOSTINGER_*` secrets set it skips with a notice and succeeds, like `deploy.yml`. Configure **one** of the two targets: with both configured, both deploy.
+
+What it does: builds `vendor/` (`--no-dev`) and `public/build` on the runner; rsyncs the tree with `--delete`, never sending or deleting `.env`, `storage/`, `public/storage`, the host's `.htaccess` or `.well-known/` (and leaving out `tests/`, `e2e/`, `docs/`); then on the host runs `migrate --force`, `RolesAndPermissionsSeeder` (every deploy — it never touches what the owner edited, rule 20b), the full `db:seed` only while there are no users (reference data only: demo data and accounts are seeded in local/testing alone), `storage:link`, the config/route/view/event caches and `queue:restart`. Never interrupt a run on `main`: between the rsync and the migrations the host serves new code against an old schema.
+
+Preferred layout — the framework outside the web root, only `public/` published into it (the deploy rewrites the published `index.php` to the absolute app path):
+
+```
+~/domains/<domain>/laravel/      HOSTINGER_DEPLOY_PATH  (artisan, .env, storage/)
+~/domains/<domain>/public_html/  HOSTINGER_PUBLIC_PATH  (document root)
+```
+
+Without `HOSTINGER_PUBLIC_PATH` the project root is assumed to be served directly; the deploy then restores `deploy/hostinger/document-root.htaccess` when the root `.htaccess` is missing.
+
+| Secret / variable | Value |
+|---|---|
+| `HOSTINGER_SSH_HOST` (secret) | Host or IP; a pasted `ssh -p 65002 u123@1.2.3.4` is parsed too |
+| `HOSTINGER_SSH_USER` (secret) | SSH user (`u123…`) |
+| `HOSTINGER_SSH_PORT` (secret) | Defaults to `65002` |
+| `HOSTINGER_SSH_KEY` (secret) | Private key whose public half is in hPanel → SSH Access |
+| `HOSTINGER_DEPLOY_PATH` (secret) | Absolute Laravel root on the host |
+| `HOSTINGER_PUBLIC_PATH` (secret or variable) | Absolute document root, for the split layout |
+| `HOSTINGER_PHP_BIN` (variable) | CLI PHP 8.4 when not under `/opt/alt/php84/usr/bin/php` |
+| `HOSTINGER_APP_URL` (variable) | API origin; enables the `GET /up` smoke test |
+
+First deploy:
+
+1. hPanel: set the domain's PHP to **8.4**, create the MySQL database, enable SSH and add the deploy key's public half.
+2. Create `HOSTINGER_DEPLOY_PATH/.env` by hand from `.env.example`: `APP_ENV=production`, `APP_DEBUG=false`, a fresh `APP_KEY` (`php artisan key:generate --show` — **never change it**: it decrypts gateway, courier and AI credentials), `APP_URL` (https), `DB_*`, `SESSION_SECURE_COOKIE=true`, `SANCTUM_STATEFUL_DOMAINS`, the storefront URL and revalidation secret, `MAIL_*`. **Shared hosting has no Redis or Meilisearch:** set `CACHE_STORE`, `SESSION_DRIVER` and `QUEUE_CONNECTION` to `database`. For search, either point `MEILISEARCH_HOST`/`MEILISEARCH_KEY` at a hosted Meilisearch (recommended) or set `SCOUT_DRIVER=null`: product search then runs on the app's database engine, which works but loses the Banglish misspelling tolerance (`toymart:launch:check` B4 reports it). The deploy refuses to run without `.env` and warns on debug on, a non-https `APP_URL`, Redis drivers or Meilisearch.
+3. Push to `main` (or run the workflow). The first run seeds the reference data.
+4. Over SSH, create the owner's super admin account as in `STAGING.md` §4, then `php artisan toymart:launch:check`.
+5. hPanel → Cron Jobs, both every minute, with the 8.4 binary the deploy log printed (Horizon needs Redis and a long-running process, so on shared hosting the queue runs from cron):
+   `cd <deploy path> && php artisan schedule:run` and
+   `cd <deploy path> && php artisan queue:work --queue=critical,courier,notify,index,reports --stop-when-empty --max-time=55`.
+
+`reset_database` (manual run only) drops and re-migrates every table for first-deploy recovery; it refuses once any order, customer, product or staff user exists (rule 12: orders are never deleted).

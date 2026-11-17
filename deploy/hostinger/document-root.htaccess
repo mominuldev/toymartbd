@@ -1,0 +1,29 @@
+# Toy Mart BD — document-root .htaccess
+#
+# Needed only when HOSTINGER_DEPLOY_PATH is the document root itself
+# (…/public_html) and HOSTINGER_PUBLIC_PATH is unset. Laravel's front
+# controller lives in public/, so without this file every request lands on the
+# project root and the framework is served instead of the site.
+#
+# It is not tracked as `.htaccess` because it belongs one level above
+# everything the deploy uploads. rsync's `--filter='protect .htaccess'` stops
+# the deploy deleting a copy already there; the deploy writes this one only
+# when the file is missing, so a hand-tuned host copy (an hPanel PHP handler
+# block, extra rules) survives untouched.
+#
+# The split layout (docs/ops/DEPLOYMENT.md §11, Hostinger) is preferred: there the Laravel tree is
+# outside the web root entirely and this file is never used.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # A per-directory substitution restarts the ruleset with the new path, so
+    # without this the rule below would rewrite its own output forever.
+    RewriteRule ^public/ - [L]
+
+    # Everything is served out of public/ — /admin, /api, /build/… and the
+    # /storage/… symlink. A path with no counterpart there (composer.json,
+    # artisan, vendor/, .env) reaches public/.htaccess, which hands it to
+    # index.php, and Laravel answers 404.
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

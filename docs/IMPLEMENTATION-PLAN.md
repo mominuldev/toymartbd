@@ -34,7 +34,7 @@ toymartbd/
 ├── packages/
 │   ├── tokens/           Figma export → tokens.css, Tailwind theme, tokens.json (see its README)
 │   └── api-types/        generated from OpenAPI — never hand-edited
-├── toymartbd-app/storefront/   Next.js 16 App Router
+├── toymartbd-storefront/   Next.js 16 App Router
 ├── tests/{Arch,Unit,Feature}/  Pest; MySQL-only tests in group "mysql"
 ├── docker-compose.yml · Makefile   local services and one-command setup
 ├── docs/{_research,_design}/
@@ -64,7 +64,7 @@ One repository, because the API and both frontends share a contract and must cha
 | P3-SUP-04 | Slug generator with Bangla transliteration and uniqueness | S | P3-SET-04 | Bangla name yields a usable ASCII slug; collisions suffix correctly; **one slug serves both locales** |
 | P3-I18N-01 | Laravel locale resolution, lang files, explicit-locale API contract (`?locale=` plus `Accept-Language` fallback), locale-aware date/number formatters pinned to Western digits | M | P3-SET-03 | a request resolves the right locale from each source; an unknown locale falls back to `en` without erroring |
 | P3-I18N-02 | Next.js locale routing — English at `/`, Bangla at `/bn/`; `hreflang` pair plus `x-default` emitted on every page; persisted toggle; Bangla suggested (never force-redirected) on a first BD visit | L | P3-STO-01, P3-I18N-01 | both locale trees render; `hreflang` is reciprocal on every template; a crawler is never redirected |
-| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `resources/js/admin` and `toymartbd-app/storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
+| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `resources/js/admin` and `toymartbd-storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
 
 ### Data foundation
 | ID | Task | Size | Depends | Tests |
@@ -151,7 +151,7 @@ One repository, because the API and both frontends share a contract and must cha
 - **P3-DAT-04** — `DemoCatalogSeeder`: 13 products with Bangla names, 3 with variants (local/testing only).
 - Verified on the real app: product and category APIs, the mega menu rendering seeded categories in both locales, and a category rename revalidating the storefront.
 
-**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details were placeholders in `toymartbd-app/storefront/lib/site-config.ts`; since Phase 10 batch 3 they come from Admin → Settings → Store → Business via `GET /storefront/store-info` (samples remain for unset values).
+**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details were placeholders in `toymartbd-storefront/lib/site-config.ts`; since Phase 10 batch 3 they come from Admin → Settings → Store → Business via `GET /storefront/store-info` (samples remain for unset values).
 
 ### Progress — Phase 4 batch 2 (PR #6, 2026-11-12)
 
