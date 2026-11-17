@@ -168,6 +168,16 @@ export function ordersApi(me: Me, override?: Override) {
         const custom = override?.(url, init);
         if (custom) return custom;
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
+        if (url.endsWith('/courier-record'))
+            return {
+                status: 200,
+                body: {
+                    checked_at: '2026-11-17T08:18:00Z',
+                    providers: [
+                        { provider: 'steadfast', name: 'Steadfast', name_bn: 'স্টেডফাস্ট', connected: false, reason: 'no_merchant_account', total_parcels: null, total_delivered: null, total_cancelled: null, total_fraud_reports: null, delivery_ratio: null, cancellation_ratio: null, volume: null, fetched_at: null },
+                    ],
+                },
+            };
         if (url.includes('/orders/bulk/confirm')) {
             const results: BulkResult[] = [
                 { order_id: 126, number: 'TMB-26-00126', outcome: 'done', status: 'confirmed', detail: null },

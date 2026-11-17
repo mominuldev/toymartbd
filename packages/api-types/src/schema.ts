@@ -2160,6 +2160,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/orders/{order}/courier-record": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /orders/{order}/courier-record` — what the couriers officially report about this
+         *     order's phone (the order detail's external-evidence panel). Kept apart from our score
+         *     (rule 24); a courier that cannot answer says why, never a zero (rule 33b). Asked on demand
+         *     and cached per phone for a day by CourierHistoryLookup; never inside a transaction (rule 4)
+         */
+        get: operations["v1.admin.orders.courier-record"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/orders/bulk/confirm": {
         parameters: {
             query?: never;
@@ -3588,6 +3610,28 @@ export interface paths {
         /** `PUT /settings/couriers/{provider}/credentials` — write-only; blank keeps the saved value */
         put: operations["v1.admin.settings.couriers.credentials"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/couriers/{provider}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/couriers/{provider}/check` — "Check connection": one read-only call to the
+         *     courier with the SAVED credentials (Steadfast: balance; Pathao: store list). Books nothing,
+         *     never verifies the provider (rule 33a). Same permission as the credentials; throttled,
+         *     because Steadfast locks a key after ten auth failures in five minutes
+         */
+        post: operations["v1.admin.settings.couriers.check"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9873,6 +9917,20 @@ export interface components {
          * @enum {string}
          */
         CouponType: "fixed" | "percent" | "free_shipping";
+        /** CourierConnectionCheck */
+        CourierConnectionCheck: {
+            /** @description The courier accepted the saved credentials. */
+            ok: boolean;
+            /** @enum {string} */
+            reason: "connected" | "no_credentials" | "credentials_rejected" | "unreachable" | "store_missing" | "store_not_found" | "unsupported";
+            checked_at: string;
+            /** @description Steadfast: the balance it reported (can be negative). */
+            balance: string | null;
+            /** @description Pathao: the pickup store the saved id points at. */
+            store_name: string | null;
+            /** @description Pathao: the check ran against Pathao's test server. */
+            sandbox: boolean;
+        };
         /** CourierLocation */
         CourierLocation: {
             id: number;
@@ -10084,6 +10142,25 @@ export interface components {
                 update_rates: boolean;
                 update_credentials: boolean;
             };
+        };
+        /** CourierRecord */
+        CourierRecord: {
+            checked_at: string;
+            providers: {
+                provider: string;
+                name: string;
+                name_bn: string | null;
+                connected: boolean;
+                reason: string | null;
+                total_parcels: number | null;
+                total_delivered: number | null;
+                total_cancelled: number | null;
+                total_fraud_reports: number | null;
+                delivery_ratio: string | null;
+                cancellation_ratio: string | null;
+                volume: string | null;
+                fetched_at: string | null;
+            }[];
         };
         /** CourierSettlementResource */
         CourierSettlementResource: {
@@ -25708,6 +25785,32 @@ export interface operations {
             };
         };
     };
+    "v1.admin.orders.courier-record": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The order ID */
+                order: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierRecord` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierRecord"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "v1.admin.orders.bulk.confirm": {
         parameters: {
             query?: never;
@@ -29015,6 +29118,32 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.couriers.check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The provider ID */
+                provider: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `CourierConnectionCheck` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierConnectionCheck"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "v1.admin.settings.delivery.show": {

@@ -21,6 +21,7 @@ import { api, csrfToken, apiLocale } from '@/lib/api';
 
 export type CourierProvider = Schema<'CourierProviderSettings'>;
 export type DeliverySettings = Schema<'DeliverySettings'>;
+export type ConnectionCheck = Schema<'CourierConnectionCheck'>;
 export type ShipmentQuote = Schema<'ShipmentQuote'>;
 export type QuoteProvider = ShipmentQuote['providers'][number];
 export type QuoteOrder = ShipmentQuote['orders'][number];
@@ -104,6 +105,19 @@ function useProviderWrite<TInput>(path: (id: number) => string, method: 'PUT' | 
 export const useSaveRates = () => useProviderWrite<RatesInput>((id) => `/settings/couriers/${id}/rates`, 'PUT');
 export const useSaveCredentials = () => useProviderWrite<CredentialsInput>((id) => `/settings/couriers/${id}/credentials`, 'PUT');
 export const useUpdateProvider = () => useProviderWrite<ProviderInput>((id) => `/settings/couriers/${id}`, 'PATCH');
+
+/**
+ * "Check connection": one read-only call to the courier with the SAVED credentials (Steadfast's
+ * balance, Pathao's store list). A Steadfast balance it reads is kept on the provider, so the
+ * list is re-read afterwards.
+ */
+export function useCheckConnection() {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => api<ConnectionCheck>(`/settings/couriers/${id}/check`, { method: 'POST' }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: courierKeys.settings }),
+    });
+}
 
 export function useSaveDelivery() {
     const client = useQueryClient();

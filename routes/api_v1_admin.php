@@ -280,6 +280,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/courier-record', [OrderController::class, 'courierRecord'])->whereNumber('order')->name('orders.courier-record');
 
     // Order workflow (P4-ORD-04/05 write side): each move goes through TransitionOrder /
     // CancelOrder; a move the state machine refuses is a 409. Bulk confirm reports per order.
@@ -415,6 +416,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::patch('/settings/couriers/{provider}', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'update'])->whereNumber('provider')->name('settings.couriers.update');
     Route::put('/settings/couriers/{provider}/rates', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'rates'])->whereNumber('provider')->name('settings.couriers.rates');
     Route::put('/settings/couriers/{provider}/credentials', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'credentials'])->whereNumber('provider')->name('settings.couriers.credentials');
+    Route::post('/settings/couriers/{provider}/check', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'check'])->whereNumber('provider')->middleware('throttle:6,1')->name('settings.couriers.check');
     Route::get('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'delivery'])->name('settings.delivery.show');
     Route::put('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'updateDelivery'])->name('settings.delivery.update');
     // Booking panel charge preview (P6): read-only, from stored rate cards; orders.update + shipments.book.

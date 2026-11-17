@@ -10953,6 +10953,47 @@
                 }
             }
         },
+        "/admin/orders/{order}/courier-record": {
+            "get": {
+                "operationId": "v1.admin.orders.courier-record",
+                "summary": "`GET /orders/{order}/courier-record` \u2014 what the couriers officially report about this\norder's phone (the order detail's external-evidence panel). Kept apart from our score\n(rule 24); a courier that cannot answer says why, never a zero (rule 33b). Asked on demand\nand cached per phone for a day by CourierHistoryLookup; never inside a transaction (rule 4)",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "description": "The order ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CourierRecord`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourierRecord"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/orders/bulk/confirm": {
             "post": {
                 "operationId": "v1.admin.orders.bulk.confirm",
@@ -16936,6 +16977,47 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/couriers/{provider}/check": {
+            "post": {
+                "operationId": "v1.admin.settings.couriers.check",
+                "summary": "`POST /settings/couriers/{provider}/check` \u2014 \"Check connection\": one read-only call to the\ncourier with the SAVED credentials (Steadfast: balance; Pathao: store list). Books nothing,\nnever verifies the provider (rule 33a). Same permission as the credentials; throttled,\nbecause Steadfast locks a key after ten auth failures in five minutes",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "description": "The provider ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`CourierConnectionCheck`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourierConnectionCheck"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -44098,6 +44180,57 @@
                 ],
                 "title": "CouponType"
             },
+            "CourierConnectionCheck": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean",
+                        "description": "The courier accepted the saved credentials."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "connected",
+                            "no_credentials",
+                            "credentials_rejected",
+                            "unreachable",
+                            "store_missing",
+                            "store_not_found",
+                            "unsupported"
+                        ]
+                    },
+                    "checked_at": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Steadfast: the balance it reported (can be negative)."
+                    },
+                    "store_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Pathao: the pickup store the saved id points at."
+                    },
+                    "sandbox": {
+                        "type": "boolean",
+                        "description": "Pathao: the check ran against Pathao's test server."
+                    }
+                },
+                "required": [
+                    "ok",
+                    "reason",
+                    "checked_at",
+                    "balance",
+                    "store_name",
+                    "sandbox"
+                ],
+                "title": "CourierConnectionCheck"
+            },
             "CourierLocation": {
                 "type": "object",
                 "properties": {
@@ -45007,6 +45140,111 @@
                     "can"
                 ],
                 "title": "CourierProviderSettings"
+            },
+            "CourierRecord": {
+                "type": "object",
+                "properties": {
+                    "checked_at": {
+                        "type": "string"
+                    },
+                    "providers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "provider": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "connected": {
+                                    "type": "boolean"
+                                },
+                                "reason": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "total_parcels": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "total_delivered": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "total_cancelled": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "total_fraud_reports": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "delivery_ratio": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "cancellation_ratio": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "volume": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "fetched_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "provider",
+                                "name",
+                                "name_bn",
+                                "connected",
+                                "reason",
+                                "total_parcels",
+                                "total_delivered",
+                                "total_cancelled",
+                                "total_fraud_reports",
+                                "delivery_ratio",
+                                "cancellation_ratio",
+                                "volume",
+                                "fetched_at"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "checked_at",
+                    "providers"
+                ],
+                "title": "CourierRecord"
             },
             "CourierSettlementResource": {
                 "type": "object",

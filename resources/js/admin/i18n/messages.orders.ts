@@ -177,12 +177,6 @@ export const ordersEn = {
     'orders.risk.verification.failed': 'Phone verification failed.',
     'orders.risk.policy': 'The score never cancels an order by itself.',
 
-    'orders.evidence.eyebrow': 'External evidence',
-    'orders.evidence.title': 'Courier-verified delivery record',
-    'orders.evidence.provenance': 'Steadfast fraud_check · no lookup possible',
-    'orders.evidence.notConnected': 'Provider not connected',
-    'orders.evidence.body': 'No courier account is connected, so there is no external delivery record for this phone. This is not a clean record — it is an absence of evidence.',
-    'orders.evidence.connect': 'Steadfast’s fraud check needs a merchant account. Connect one in Integrations → Couriers.',
 
     'orders.bulk.label': 'Bulk actions',
     'orders.bulk.selected': '{count} orders selected',
@@ -503,12 +497,6 @@ export const ordersBn: Record<keyof typeof ordersEn, string> = {
     'orders.risk.verification.failed': 'ফোনে যাচাই ব্যর্থ।',
     'orders.risk.policy': 'স্কোর নিজে থেকে কখনো অর্ডার বাতিল করে না।',
 
-    'orders.evidence.eyebrow': 'বাইরের প্রমাণ',
-    'orders.evidence.title': 'কুরিয়ার-যাচাই করা ডেলিভারি রেকর্ড',
-    'orders.evidence.provenance': 'Steadfast fraud_check · খোঁজা সম্ভব নয়',
-    'orders.evidence.notConnected': 'প্রোভাইডার যুক্ত নয়',
-    'orders.evidence.body': 'কোনো কুরিয়ার অ্যাকাউন্ট যুক্ত নেই, তাই এই ফোনের কোনো বাইরের ডেলিভারি রেকর্ড নেই। এটি পরিষ্কার রেকর্ড নয় — এটি প্রমাণের অনুপস্থিতি।',
-    'orders.evidence.connect': 'Steadfast-এর fraud check-এর জন্য মার্চেন্ট অ্যাকাউন্ট লাগে। ইন্টিগ্রেশন → কুরিয়ার থেকে যুক্ত করুন।',
 
     'orders.bulk.label': 'একসাথে অ্যাকশন',
     'orders.bulk.selected': '{count}টি অর্ডার বাছাই করা',
