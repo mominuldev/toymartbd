@@ -240,9 +240,15 @@ jobs:
         run: |
           set -e
 
+          # ssh joins its arguments into ONE string that the remote shell re-parses, so local
+          # quoting is lost: an empty "$PHP_BIN_OVERRIDE" vanished and every later argument shifted
+          # left — reset_database received the public path and a requested reset silently ran a
+          # plain migrate. printf %q quotes each value for the remote shell ('' for an empty one).
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH")
+
           ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
             "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
-            bash -s -- "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH" <<'REMOTE'
+            "bash -s -- $remote_args" <<'REMOTE'
           set -e
 
           deploy_path=$1
@@ -409,9 +415,12 @@ jobs:
             exit 0
           fi
 
+          # Quoted for the remote shell, as in the migrate step (a path with a space would split).
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PUBLIC_PATH")
+
           ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
             "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
-            bash -s -- "$DEPLOY_PATH" "$PUBLIC_PATH" <<'REMOTE'
+            "bash -s -- $remote_args" <<'REMOTE'
           set -e
 
           deploy_path=${1%/}
