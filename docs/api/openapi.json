@@ -25065,8 +25065,9 @@
                         "name": "provider",
                         "in": "path",
                         "required": true,
+                        "description": "The provider ID",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/components/schemas/AiProvider"
                         }
                     }
                 ],
@@ -25091,6 +25092,9 @@
                             }
                         }
                     },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
                     },
@@ -25113,8 +25117,9 @@
                         "name": "provider",
                         "in": "path",
                         "required": true,
+                        "description": "The provider ID",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/components/schemas/AiProvider"
                         }
                     }
                 ],
@@ -25131,6 +25136,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -25150,8 +25158,9 @@
                         "name": "provider",
                         "in": "path",
                         "required": true,
+                        "description": "The provider ID",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/components/schemas/AiProvider"
                         }
                     }
                 ],
@@ -25168,6 +25177,9 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"

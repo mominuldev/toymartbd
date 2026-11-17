@@ -33544,7 +33544,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                provider: string;
+                /** @description The provider ID */
+                provider: components["schemas"]["AiProvider"];
             };
             cookie?: never;
         };
@@ -33565,6 +33566,7 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -33573,7 +33575,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                provider: string;
+                /** @description The provider ID */
+                provider: components["schemas"]["AiProvider"];
             };
             cookie?: never;
         };
@@ -33590,6 +33593,7 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "v1.admin.settings.ai.providers.check": {
@@ -33597,7 +33601,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                provider: string;
+                /** @description The provider ID */
+                provider: components["schemas"]["AiProvider"];
             };
             cookie?: never;
         };
@@ -33614,6 +33619,7 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "v1.admin.analytics.advisor.show": {
