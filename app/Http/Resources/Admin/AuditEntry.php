@@ -61,6 +61,9 @@ final readonly class AuditEntry
             AuditAction::CapitalEntryRecorded => ($after['kind'] ?? null) === 'drawing' ? 'capital_drawing_recorded' : 'capital_contribution_recorded',
             AuditAction::CapitalEntryReversed => 'capital_entry_reversed',
             AuditAction::CapitalHolderSaved => ($after['created'] ?? false) === true ? 'capital_holder_added' : 'capital_holder_changed',
+            AuditAction::AdSpendCreated => 'ad_spend_added',
+            AuditAction::AdSpendUpdated => 'ad_spend_changed',
+            AuditAction::AdSpendDeleted => 'ad_spend_deleted',
             AuditAction::CredentialChanged => match ($this->scope()) {
                 'staff_password' => 'password_reset',
                 'two_factor' => match ($after['two_factor'] ?? null) {

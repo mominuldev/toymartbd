@@ -5145,6 +5145,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/analytics/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/products` */
+        get: operations["v1.admin.analytics.products"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/visitors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/visitors` */
+        get: operations["v1.admin.analytics.visitors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/marketing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/marketing` */
+        get: operations["v1.admin.analytics.marketing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/marketing/spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/marketing/spend` — the entries whose month overlaps the range, newest month first; `meta.campaigns` are campaign tags seen on orders in the last year, for the form */
+        get: operations["v1.admin.analytics.marketing.spend.index"];
+        put?: never;
+        /** `POST /analytics/marketing/spend` */
+        post: operations["v1.admin.analytics.marketing.spend.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/marketing/spend/{adSpend}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /analytics/marketing/spend/{adSpend}` */
+        put: operations["v1.admin.analytics.marketing.spend.update"];
+        post?: never;
+        /** `DELETE /analytics/marketing/spend/{adSpend}` */
+        delete: operations["v1.admin.analytics.marketing.spend.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/live` */
+        get: operations["v1.admin.analytics.live"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/inbox/conversations": {
         parameters: {
             query?: never;
@@ -7798,6 +7902,30 @@ export interface components {
             /** @description What was found and done. */
             note?: string | null;
         };
+        /** AdSpend */
+        AdSpend: {
+            id: number;
+            campaign: string;
+            source: string | null;
+            /** @description YYYY-MM */
+            month: string;
+            amount: string;
+            note: string | null;
+            entered_by: {
+                id: number;
+                name: string;
+            } | null;
+            changed_by: {
+                id: number;
+                name: string;
+            } | null;
+            /** @description Dhaka date, YYYY-MM-DD */
+            entered_on: string | null;
+            can: {
+                update: boolean;
+                delete: boolean;
+            };
+        };
         /**
          * AddCartItemRequest
          * @description `POST /cart/items` `{ variant_id, quantity, recommendation_source? }`. Without `X-Cart-Token` a new cart is
@@ -8096,7 +8224,7 @@ export interface components {
             /** @description `App\Models\Enums\AuditAction` */
             action: string;
             /** @enum {string} */
-            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "capital_drawing_recorded" | "capital_contribution_recorded" | "capital_entry_reversed" | "capital_holder_added" | "capital_holder_changed" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "two_factor_required" | "two_factor_optional" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
+            kind: "price_changed" | "cost_changed" | "refund_created" | "refund_approved" | "staff_added" | "staff_reactivated" | "role_changed" | "staff_deactivated" | "permissions_changed" | "rider_recorded" | "report_resent" | "capital_drawing_recorded" | "capital_contribution_recorded" | "capital_entry_reversed" | "capital_holder_added" | "capital_holder_changed" | "ad_spend_added" | "ad_spend_changed" | "ad_spend_deleted" | "password_reset" | "two_factor_enabled" | "two_factor_disabled" | "two_factor_reset" | "two_factor_recovery_used" | "two_factor_codes_regenerated" | "two_factor_changed" | "two_factor_required" | "two_factor_optional" | "messaging_settings" | "tracking_settings" | "connection_tested" | "courier_credentials" | "credentials_changed";
             /** @enum {string} */
             area: "catalog" | "refunds" | "staff" | "integrations" | "fulfilment" | "reports" | "finance";
             actor: {
@@ -11702,6 +11830,81 @@ export interface components {
          * @enum {string}
          */
         LandedCostMethod: "value" | "quantity" | "weight";
+        /** LiveAnalytics */
+        LiveAnalytics: {
+            /** @description UTC ISO 8601 — the server clock every window is measured from. */
+            generated_at: string;
+            /** @description Dhaka date, YYYY-MM-DD. */
+            today: string;
+            window_minutes: number;
+            /**
+             * @description Browser events are stored only for shoppers who allowed tracking; sessions are GA4
+             *     session ids, so they need GA4 on. `collecting` is false when neither GA4 nor Meta is on.
+             */
+            tracking: {
+                consent_gated: boolean;
+                consent_mode: string;
+                collecting: boolean;
+                sessions_need_ga4: boolean;
+                ga4_enabled: boolean;
+            };
+            now: {
+                active_sessions: number;
+                checkout_sessions: number;
+            };
+            orders_today: {
+                count: number;
+                value: string;
+                same_time_yesterday: number;
+                difference: number;
+            };
+            last_order: {
+                number: string;
+                amount: string;
+                district: string | null;
+                district_bn: string | null;
+                product_name: string | null;
+                product_name_bn: string | null;
+                at: string;
+                minutes_ago: number;
+            } | null;
+            /** @description Newest first, at most 20, from the last 24 hours. */
+            feed: {
+                id: string;
+                /** @enum {string} */
+                kind: "order" | "view_item" | "add_to_cart" | "begin_checkout";
+                at: string;
+                minutes_ago: number;
+                order_number: string | null;
+                amount: string | null;
+                district: string | null;
+                district_bn: string | null;
+                product_name: string | null;
+                product_name_bn: string | null;
+                items: number | null;
+            }[];
+            /**
+             * @description Products by distinct sessions over view_item in the window. Pages are not
+             *     available: the storefront never stores page_view.
+             */
+            viewing: {
+                pages_available: boolean;
+                /** @constant */
+                pages_reason: "no_page_views";
+                products: {
+                    key: string;
+                    name: string;
+                    name_bn: string | null;
+                    sessions: number;
+                }[];
+            };
+            /** @description 24 Dhaka hours, 0–23. */
+            hourly: {
+                hour: number;
+                orders: number;
+                value: string;
+            }[];
+        };
         /**
          * LogVerificationCallRequest
          * @description `POST /risk/orders/{order}/calls` — `outcome` (CallOutcome) and an optional `note`. Needs risk.verify.
@@ -11755,6 +11958,111 @@ export interface components {
                 price?: string | null;
                 cost_price?: string | null;
             }[];
+        };
+        /** MarketingAnalytics */
+        MarketingAnalytics: {
+            range: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            comparison: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            summary: {
+                spend: string;
+                revenue: string;
+                orders: number;
+                delivered_orders: number;
+                campaigns: number;
+                unpaid_revenue: string;
+                unpaid_orders: number;
+                return_ratio: string | null;
+                cost_per_order: string | null;
+            };
+            previous: {
+                spend: string;
+                revenue: string;
+                orders: number;
+                delivered_orders: number;
+                campaigns: number;
+                unpaid_revenue: string;
+                unpaid_orders: number;
+                return_ratio: string | null;
+                cost_per_order: string | null;
+            };
+            deltas: {
+                spend: string | null;
+                revenue: string | null;
+                orders: string | null;
+            };
+            campaigns: {
+                campaign: string;
+                source: string | null;
+                has_spend: boolean;
+                spend: string;
+                orders: number;
+                delivered_orders: number;
+                delivered_revenue: string;
+                return_ratio: string | null;
+                cost_per_order: string | null;
+            }[];
+            untagged: {
+                orders: number;
+                delivered_orders: number;
+                delivered_revenue: string;
+                sources: string[];
+            };
+            deals: {
+                /** @enum {string} */
+                kind: "coupon" | "promotion";
+                id: number;
+                name: string;
+                name_bn: string | null;
+                type: string;
+                orders: number;
+                new_customers: number;
+                cost: string;
+                order_value: string;
+                delivered_orders: number;
+                delivered_value: string;
+            }[];
+            deal_totals: {
+                coupon: {
+                    cost: string;
+                    orders: number;
+                    new_customers: number;
+                };
+                promotion: {
+                    cost: string;
+                    orders: number;
+                    new_customers: number;
+                };
+            };
+            highlights: {
+                best_campaign: {
+                    campaign: string;
+                    source: string | null;
+                    spend: string;
+                    delivered_revenue: string;
+                    return_ratio: string | null;
+                } | null;
+                top_new_customer_coupon: {
+                    name: string;
+                    new_customers: number;
+                } | null;
+            };
+            empty: boolean;
+            rules: {
+                /** @constant */
+                spend: "prorated_by_day";
+                /** @constant */
+                revenue: "delivered_net_product_revenue";
+            };
         };
         /** Media */
         Media: {
@@ -13424,6 +13732,126 @@ export interface components {
              */
             updated_at: string;
         };
+        /** ProductAnalytics */
+        ProductAnalytics: {
+            range: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            comparison: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            profit_visible: boolean;
+            /** @enum {string} */
+            sort: "revenue" | "units" | "margin" | "returns";
+            thresholds: {
+                running_out_days: number;
+                urgent_days: number;
+                min_units_for_returns: number;
+            };
+            summary: {
+                products_sold: number;
+                products_on_sale: number;
+                units_delivered: number;
+                units_delivered_previous: number;
+                units_delivered_change: number;
+                units_delta: string | null;
+                net_revenue: string;
+                gross_profit: string | null;
+                margin_percent: string | null;
+                units_returned: number;
+                return_rate: string | null;
+                running_out_count: number;
+                running_out_urgent_count: number;
+                not_selling_count: number;
+            };
+            highlights: {
+                best_seller: {
+                    product_id: number | null;
+                    name: string;
+                    name_bn: string | null;
+                    category_name: string | null;
+                    category_name_bn: string | null;
+                    units_delivered: number;
+                    units_returned: number;
+                    units_kept: number;
+                    net_revenue: string;
+                    cogs: string | null;
+                    gross_profit: string | null;
+                    margin_percent: string | null;
+                    return_rate: string | null;
+                    units_paced: number;
+                    stock_left: number;
+                    days_of_stock: number | null;
+                    stock_value: string | null;
+                } | null;
+                most_returned: {
+                    product_id: number | null;
+                    name: string;
+                    name_bn: string | null;
+                    category_name: string | null;
+                    category_name_bn: string | null;
+                    units_delivered: number;
+                    units_returned: number;
+                    units_kept: number;
+                    net_revenue: string;
+                    cogs: string | null;
+                    gross_profit: string | null;
+                    margin_percent: string | null;
+                    return_rate: string | null;
+                    units_paced: number;
+                    stock_left: number;
+                    days_of_stock: number | null;
+                    stock_value: string | null;
+                } | null;
+            };
+            products: {
+                product_id: number | null;
+                name: string;
+                name_bn: string | null;
+                category_name: string | null;
+                category_name_bn: string | null;
+                units_delivered: number;
+                units_returned: number;
+                units_kept: number;
+                net_revenue: string;
+                cogs: string | null;
+                gross_profit: string | null;
+                margin_percent: string | null;
+                return_rate: string | null;
+                units_paced: number;
+                stock_left: number;
+                days_of_stock: number | null;
+                stock_value: string | null;
+            }[];
+            running_out: {
+                product_id: number | null;
+                name: string;
+                name_bn: string | null;
+                category_name: string | null;
+                category_name_bn: string | null;
+                units_paced: number;
+                stock_left: number;
+                days_of_stock: number | null;
+                stock_value: string | null;
+            }[];
+            not_selling: {
+                product_id: number | null;
+                name: string;
+                name_bn: string | null;
+                category_name: string | null;
+                category_name_bn: string | null;
+                units_paced: number;
+                stock_left: number;
+                days_of_stock: number | null;
+                stock_value: string | null;
+            }[];
+        };
         /** ProductCompliance */
         ProductCompliance: {
             bsti_certificate_no: string | null;
@@ -14901,6 +15329,22 @@ export interface components {
             birth_day: number;
             /** @description Optional, only to show an age; within the last 25 years. */
             birth_year: number | null;
+        };
+        /**
+         * SaveAdSpendRequest
+         * @description `POST /analytics/marketing/spend` and `PUT /analytics/marketing/spend/{adSpend}` — ad spend
+         *     typed in by staff: `campaign` (the `utm_campaign` value it pays for, ≤ 128), optional
+         *     `source` (facebook, google …, ≤ 64), `month` (YYYY-MM, a Dhaka month from 2020-01 up to the
+         *     current one), `amount` (a decimal string > 0, two places at most) and an optional `note`.
+         *     One row per campaign and month: a second one for the same pair is a 422 on `month`
+         *     (campaign compared trimmed and case-insensitively). Needs marketing.manage.
+         */
+        SaveAdSpendRequest: {
+            campaign: string;
+            source?: string | null;
+            month: string;
+            amount: string;
+            note?: string | null;
         };
         /**
          * SaveCustomerChildRequest
@@ -18518,6 +18962,104 @@ export interface components {
             phone: string;
             /** @description The 6-digit code from the SMS. */
             code: string;
+        };
+        /** VisitorAnalytics */
+        VisitorAnalytics: {
+            range: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            comparison: {
+                preset: string;
+                from: string;
+                to: string;
+                days: number;
+            };
+            /**
+             * @description Who is counted: sessions whose shopper allowed analytics tracking (the GA4 session id
+             *     is only attached with that consent).
+             * @constant
+             */
+            counted: "analytics_consented_sessions";
+            /**
+             * @description `page_views_recorded` false means a visit is a session with at least one shop action
+             *     (product view, add to cart, checkout). `order_link_complete` false means the range
+             *     reaches past the checkout-context retention, so the order steps undercount.
+             */
+            tracking: {
+                events_recorded: number;
+                events_without_session: number;
+                page_views_recorded: boolean;
+                order_link_retention_days: number;
+                order_link_complete: boolean;
+                devices_recorded: boolean;
+                places_recorded: boolean;
+            };
+            summary: {
+                visits: number;
+                viewed_product: number;
+                added_to_cart: number;
+                reached_checkout: number;
+                placed: number;
+                delivered: number;
+                in_progress: number;
+                orders_total: number;
+                order_rate: string | null;
+                cart_to_order_rate: string | null;
+                delivered_rate: string | null;
+            };
+            previous: {
+                visits: number;
+                viewed_product: number;
+                added_to_cart: number;
+                reached_checkout: number;
+                placed: number;
+                delivered: number;
+                in_progress: number;
+                orders_total: number;
+                order_rate: string | null;
+                cart_to_order_rate: string | null;
+                delivered_rate: string | null;
+            };
+            deltas: {
+                visits: string | null;
+                placed: string | null;
+                order_rate_points: string | null;
+                cart_to_order_points: string | null;
+                delivered_rate_points: string | null;
+            };
+            funnel: {
+                /** @enum {string} */
+                key: "visited" | "viewed_product" | "added_to_cart" | "reached_checkout" | "placed_order" | "delivered";
+                sessions: number;
+                previous_sessions: number;
+                change: string | null;
+                drop_percent: string | null;
+                of_visits_percent: string | null;
+            }[];
+            /** @description The shopping step with the largest relative drop (delivery excluded). */
+            biggest_drop: {
+                /** @enum {string} */
+                from: "visited" | "viewed_product" | "added_to_cart" | "reached_checkout" | "placed_order";
+                /** @enum {string} */
+                to: "viewed_product" | "added_to_cart" | "reached_checkout" | "placed_order";
+                percent: string;
+            } | null;
+            daily: {
+                date: string;
+                visits: number;
+                orders: number;
+            }[];
+            top_products: {
+                product_id: number;
+                name: string;
+                name_bn: string | null;
+                views: number;
+                add_to_carts: number;
+                cart_rate: string | null;
+            }[];
         };
         /** WhatsAppTemplateSync */
         WhatsAppTemplateSync: {
@@ -31722,6 +32264,343 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.analytics.products": {
+        parameters: {
+            query?: {
+                /** @description Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 30d, or custom when dates are given. */
+                range?: string;
+                /** @description Custom range: first Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Custom range: last Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[to]"?: string;
+                /** @description Best-seller order: revenue, units, margin (revenue when cost is hidden) or returns. */
+                sort?: "revenue" | "units" | "margin" | "returns";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductAnalytics"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown preset or sort, a malformed or future date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.visitors": {
+        parameters: {
+            query?: {
+                /** @description Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 7d, or custom when dates are given. */
+                range?: string;
+                /** @description Custom range: first Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Custom range: last Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `VisitorAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorAnalytics"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown preset, a malformed or future date, or a range over 400 days (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.marketing": {
+        parameters: {
+            query?: {
+                /** @description Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 7d, or custom when dates are given. */
+                range?: string;
+                /** @description Custom range: first Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[from]"?: string;
+                /** @description Custom range: last Dhaka date (inclusive), YYYY-MM-DD. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `MarketingAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketingAnalytics"];
+                };
+            };
+            /** @description Unlisted parameter or filter, an unknown preset, or a malformed or future date (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.marketing.spend.index": {
+        parameters: {
+            query?: {
+                /** @description As on GET /analytics/marketing. */
+                range?: string;
+                /** @description As on GET /analytics/marketing. */
+                "filter[from]"?: string;
+                /** @description As on GET /analytics/marketing. */
+                "filter[to]"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `AdSpend` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AdSpend"][];
+                        meta: {
+                            /** @description Campaign tags seen on orders in the last 365 days, most recent first. */
+                            campaigns: unknown[];
+                        };
+                    };
+                };
+            };
+            /** @description Unlisted parameter or filter, or an invalid value (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.marketing.spend.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAdSpendRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdSpend` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdSpend"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing marketing.manage (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.analytics.marketing.spend.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ad spend ID */
+                adSpend: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAdSpendRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdSpend` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdSpend"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing marketing.manage (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.analytics.marketing.spend.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ad spend ID */
+                adSpend: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing marketing.manage (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.analytics.live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `LiveAnalytics` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveAnalytics"];
+                };
+            };
+            /** @description Any query parameter: this endpoint takes none (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.admin.inbox.conversations.index": {

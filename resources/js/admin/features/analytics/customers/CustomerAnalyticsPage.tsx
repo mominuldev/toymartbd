@@ -268,7 +268,8 @@ function Cohorts({ data }: { data: CustomerAnalytics }) {
     const width = Math.max(0, ...data.cohorts.map((c) => c.retention.length));
     return (
         <Panel title={t('customerAnalytics.cohorts.title')} subtitle={t('customerAnalytics.cohorts.subtitle')} titleId={id}>
-            <div className="overflow-x-auto">
+            {/* Focusable so a keyboard can scroll it when the half-width column is narrower than the table (WCAG scrollable-region-focusable). */}
+            <div role="region" aria-labelledby={id} tabIndex={0} className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="border-b border-line-default">

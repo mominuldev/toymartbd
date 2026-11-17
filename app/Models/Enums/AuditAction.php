@@ -25,6 +25,12 @@ enum AuditAction: string
     case CapitalEntryReversed = 'capital_entry_reversed';
     /** A capital holder (owner / partner) added or changed (P10). */
     case CapitalHolderSaved = 'capital_holder_saved';
+    /** Ad spend typed in for a campaign and month (P10, Analytics › Marketing ROI). */
+    case AdSpendCreated = 'ad_spend_created';
+    /** Ad spend changed; before/after in the payload. */
+    case AdSpendUpdated = 'ad_spend_updated';
+    /** Ad spend removed; what it was is in `before`. */
+    case AdSpendDeleted = 'ad_spend_deleted';
 
     /** The activity-log areas (Figma B · 39 "Area" filter), in display order. */
     public const array AREAS = ['catalog', 'refunds', 'staff', 'integrations', 'fulfilment', 'reports', 'finance'];
@@ -44,6 +50,7 @@ enum AuditAction: string
             self::ShipmentRiderRecorded => 'fulfilment',
             self::ScheduledReportResent => 'reports',
             self::CapitalEntryRecorded, self::CapitalEntryReversed, self::CapitalHolderSaved => 'finance',
+            self::AdSpendCreated, self::AdSpendUpdated, self::AdSpendDeleted => 'finance',
         };
     }
 

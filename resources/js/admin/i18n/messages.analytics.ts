@@ -35,8 +35,6 @@ export const analyticsEn = {
     'sales.stat.repeat': 'Repeat-purchase rate',
     'sales.stat.repeatHint': '{returning} of {customers} customers had ordered before',
 
-    'sales.conversionNote':
-        'Conversion rate is not shown. Browsing is only recorded for visitors who accept tracking, and page views are not recorded at all, so there is no honest count of sessions to divide by.',
     'sales.note': 'Order value placed is demand at checkout, not revenue. Revenue is recognised when an order is delivered and comes from the finance ledger. Category, brand and recommendation figures cover the lines of orders delivered in the period, net of returns and refunds.',
     'sales.reconciliation': 'Delivered lines differ from the ledger’s product revenue by {amount}: a return or refund was dated in a different period from its delivery.',
     'sales.profitHidden': 'Cost and profit are hidden for your role.',
@@ -204,7 +202,7 @@ export const analyticsEn = {
     'sales.top.subtitle': 'By revenue on delivery · margin after cost',
     'sales.top.sold': '{count} sold',
     'sales.top.margin': '{percent}% margin',
-    'sales.funnel.title': 'Visitor funnel isn’t tracked yet',
+    'sales.funnel.title': 'Where shoppers drop off',
     'sales.more.title': 'More detail',
     'sales.more.hint': 'All categories · brands · recommendations',
     'customerAnalytics.plain.label': 'In plain words',
@@ -220,6 +218,8 @@ export const analyticsEn = {
     'schedules.plain.failed': '“{name}” failed to send for {period} — open it below to see why and send it again.',
     'schedules.plain.sent': '“{name}” last went to {count} people, covering {period}.',
     'customerAnalytics.months.custom': 'Custom range',
+    'sales.funnel.body': 'The path from a product view to an order is on the Visitors & funnel tab — counted for shoppers who allowed tracking.',
+    'sales.funnel.open': 'Open Visitors & funnel',
 } as const;
 
 export const analyticsBn: Record<keyof typeof analyticsEn, string> = {
@@ -253,8 +253,6 @@ export const analyticsBn: Record<keyof typeof analyticsEn, string> = {
     'sales.stat.repeat': 'পুনরায় কেনার হার',
     'sales.stat.repeatHint': '{customers} জনের মধ্যে {returning} জন আগেও অর্ডার করেছেন',
 
-    'sales.conversionNote':
-        'কনভার্শন রেট দেখানো হচ্ছে না। শুধু ট্র্যাকিংয়ে সম্মতি দেওয়া ভিজিটরদের ব্রাউজিং রেকর্ড হয়, আর পেজ ভিউ একেবারেই রেকর্ড হয় না — তাই ভাগ করার মতো সেশনের সৎ কোনো সংখ্যা নেই।',
     'sales.note': 'দেওয়া অর্ডারের মূল্য চেকআউটের চাহিদা, আয় নয়। অর্ডার ডেলিভারি হলে আয় স্বীকৃত হয়, আর তা ফাইন্যান্স লেজার থেকে আসে। ক্যাটাগরি, ব্র্যান্ড ও রেকমেন্ডেশনের সংখ্যা এই সময়ে ডেলিভারি হওয়া অর্ডারের লাইন থেকে, রিটার্ন ও রিফান্ড বাদ দিয়ে।',
     'sales.reconciliation': 'ডেলিভারি হওয়া লাইন লেজারের পণ্য-আয় থেকে {amount} আলাদা: কোনো রিটার্ন বা রিফান্ড তার ডেলিভারির চেয়ে ভিন্ন সময়ে লেখা হয়েছে।',
     'sales.profitHidden': 'আপনার ভূমিকায় খরচ ও লাভ লুকানো।',
@@ -422,7 +420,7 @@ export const analyticsBn: Record<keyof typeof analyticsEn, string> = {
     'sales.top.subtitle': 'ডেলিভারিতে আয় অনুযায়ী · খরচের পরে মার্জিন',
     'sales.top.sold': '{count}টি বিক্রি',
     'sales.top.margin': '{percent}% মার্জিন',
-    'sales.funnel.title': 'ভিজিটর ফানেল এখনো ট্র্যাক হয় না',
+    'sales.funnel.title': 'ক্রেতারা কোথায় থেমে যান',
     'sales.more.title': 'আরও বিস্তারিত',
     'sales.more.hint': 'সব ক্যাটাগরি · ব্র্যান্ড · সুপারিশ',
     'customerAnalytics.plain.label': 'সহজ কথায়',
@@ -438,4 +436,6 @@ export const analyticsBn: Record<keyof typeof analyticsEn, string> = {
     'schedules.plain.failed': '“{name}” {period}-এর জন্য পাঠানো যায়নি — কারণ দেখতে ও আবার পাঠাতে নিচে খুলুন।',
     'schedules.plain.sent': '“{name}” শেষবার {count} জনের কাছে গেছে, {period}-এর হিসাব।',
     'customerAnalytics.months.custom': 'নিজের মতো সময়',
+    'sales.funnel.body': 'প্রোডাক্ট দেখা থেকে অর্ডার পর্যন্ত পথ ভিজিটর ও ফানেল ট্যাবে আছে — যাঁরা ট্র্যাকিংয়ে সম্মতি দিয়েছেন তাঁদের হিসাব।',
+    'sales.funnel.open': 'ভিজিটর ও ফানেল খুলুন',
 };

@@ -6,8 +6,16 @@ declare(strict_types=1);
 // checked by tests/Arch/AdminRouteAuthorisationTest.php and, in CI, against a recorded run.
 
 return [
+    'api.v1.admin.analytics.live',
+    'api.v1.admin.analytics.marketing',
+    'api.v1.admin.analytics.marketing.spend.destroy',
+    'api.v1.admin.analytics.marketing.spend.index',
+    'api.v1.admin.analytics.marketing.spend.store',
+    'api.v1.admin.analytics.marketing.spend.update',
+    'api.v1.admin.analytics.products',
     'api.v1.admin.analytics.sales',
     'api.v1.admin.analytics.sales.export',
+    'api.v1.admin.analytics.visitors',
     'api.v1.admin.attributes.destroy',
     'api.v1.admin.attributes.index',
     'api.v1.admin.attributes.show',

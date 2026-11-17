@@ -24228,6 +24228,527 @@
                 }
             }
         },
+        "/admin/analytics/products": {
+            "get": {
+                "operationId": "v1.admin.analytics.products",
+                "summary": "`GET /analytics/products`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "description": "Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 30d, or custom when dates are given.",
+                        "schema": {
+                            "type": "string",
+                            "default": "30d"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Custom range: first Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Custom range: last Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Best-seller order: revenue, units, margin (revenue when cost is hidden) or returns.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "revenue",
+                                "units",
+                                "margin",
+                                "returns"
+                            ],
+                            "default": "revenue"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProductAnalytics`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductAnalytics"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown preset or sort, a malformed or future date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/visitors": {
+            "get": {
+                "operationId": "v1.admin.analytics.visitors",
+                "summary": "`GET /analytics/visitors`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "description": "Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 7d, or custom when dates are given.",
+                        "schema": {
+                            "type": "string",
+                            "default": "7d"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Custom range: first Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Custom range: last Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`VisitorAnalytics`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitorAnalytics"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown preset, a malformed or future date, or a range over 400 days (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/marketing": {
+            "get": {
+                "operationId": "v1.admin.analytics.marketing",
+                "summary": "`GET /analytics/marketing`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "description": "Preset: today, 7d, 30d, this_month, last_month or custom (needs filter[from] and filter[to]). Default 7d, or custom when dates are given.",
+                        "schema": {
+                            "type": "string",
+                            "default": "7d"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "Custom range: first Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "Custom range: last Dhaka date (inclusive), YYYY-MM-DD.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MarketingAnalytics`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketingAnalytics"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, an unknown preset, or a malformed or future date (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/marketing/spend": {
+            "get": {
+                "operationId": "v1.admin.analytics.marketing.spend.index",
+                "summary": "`GET /analytics/marketing/spend` \u2014 the entries whose month overlaps the range, newest month first; `meta.campaigns` are campaign tags seen on orders in the last year, for the form",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "description": "As on GET /analytics/marketing.",
+                        "schema": {
+                            "type": "string",
+                            "default": "7d"
+                        }
+                    },
+                    {
+                        "name": "filter[from]",
+                        "in": "query",
+                        "description": "As on GET /analytics/marketing.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "filter[to]",
+                        "in": "query",
+                        "description": "As on GET /analytics/marketing.",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `AdSpend`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdSpend"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "campaigns": {
+                                                    "type": "array",
+                                                    "description": "Campaign tags seen on orders in the last 365 days, most recent first.",
+                                                    "items": {}
+                                                }
+                                            },
+                                            "required": [
+                                                "campaigns"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "Unlisted parameter or filter, or an invalid value (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1.admin.analytics.marketing.spend.store",
+                "summary": "`POST /analytics/marketing/spend`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveAdSpendRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`AdSpend`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdSpend"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Missing marketing.manage (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/marketing/spend/{adSpend}": {
+            "put": {
+                "operationId": "v1.admin.analytics.marketing.spend.update",
+                "summary": "`PUT /analytics/marketing/spend/{adSpend}`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "adSpend",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ad spend ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveAdSpendRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AdSpend`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdSpend"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Missing marketing.manage (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.analytics.marketing.spend.destroy",
+                "summary": "`DELETE /analytics/marketing/spend/{adSpend}`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "adSpend",
+                        "in": "path",
+                        "required": true,
+                        "description": "The ad spend ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "description": "Missing marketing.manage (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/live": {
+            "get": {
+                "operationId": "v1.admin.analytics.live",
+                "summary": "`GET /analytics/live`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`LiveAnalytics`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LiveAnalytics"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Any query parameter: this endpoint takes none (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/inbox/conversations": {
             "get": {
                 "operationId": "v1.admin.inbox.conversations.index",
@@ -36096,6 +36617,107 @@
                 },
                 "title": "AcknowledgeInventoryAlertRequest"
             },
+            "AdSpend": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "campaign": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "month": {
+                        "type": "string",
+                        "description": "YYYY-MM"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "entered_by": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "changed_by": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "entered_on": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Dhaka date, YYYY-MM-DD"
+                    },
+                    "can": {
+                        "type": "object",
+                        "properties": {
+                            "update": {
+                                "type": "boolean"
+                            },
+                            "delete": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "update",
+                            "delete"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "campaign",
+                    "source",
+                    "month",
+                    "amount",
+                    "note",
+                    "entered_by",
+                    "changed_by",
+                    "entered_on",
+                    "can"
+                ],
+                "title": "AdSpend"
+            },
             "AddCartItemRequest": {
                 "type": "object",
                 "description": "`POST /cart/items` `{ variant_id, quantity, recommendation_source? }`. Without `X-Cart-Token` a new cart is\ncreated (201) and its `token` returned for the storefront to store. Stock and\nsellability are checked by the Action (422 on `quantity` / `variant_id`).\n`recommendation_source` is the placement the add came from (rule 25d), stamped onto\nthe order item at checkout.",
@@ -37414,6 +38036,9 @@
                             "capital_entry_reversed",
                             "capital_holder_added",
                             "capital_holder_changed",
+                            "ad_spend_added",
+                            "ad_spend_changed",
+                            "ad_spend_deleted",
                             "password_reset",
                             "two_factor_enabled",
                             "two_factor_disabled",
@@ -51339,6 +51964,307 @@
                 ],
                 "title": "LandedCostMethod"
             },
+            "LiveAnalytics": {
+                "type": "object",
+                "properties": {
+                    "generated_at": {
+                        "type": "string",
+                        "description": "UTC ISO 8601 \u2014 the server clock every window is measured from."
+                    },
+                    "today": {
+                        "type": "string",
+                        "description": "Dhaka date, YYYY-MM-DD."
+                    },
+                    "window_minutes": {
+                        "type": "integer"
+                    },
+                    "tracking": {
+                        "type": "object",
+                        "description": "Browser events are stored only for shoppers who allowed tracking; sessions are GA4\nsession ids, so they need GA4 on. `collecting` is false when neither GA4 nor Meta is on.",
+                        "properties": {
+                            "consent_gated": {
+                                "type": "boolean"
+                            },
+                            "consent_mode": {
+                                "type": "string"
+                            },
+                            "collecting": {
+                                "type": "boolean"
+                            },
+                            "sessions_need_ga4": {
+                                "type": "boolean"
+                            },
+                            "ga4_enabled": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "consent_gated",
+                            "consent_mode",
+                            "collecting",
+                            "sessions_need_ga4",
+                            "ga4_enabled"
+                        ]
+                    },
+                    "now": {
+                        "type": "object",
+                        "properties": {
+                            "active_sessions": {
+                                "type": "integer"
+                            },
+                            "checkout_sessions": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "active_sessions",
+                            "checkout_sessions"
+                        ]
+                    },
+                    "orders_today": {
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "integer"
+                            },
+                            "value": {
+                                "type": "string"
+                            },
+                            "same_time_yesterday": {
+                                "type": "integer"
+                            },
+                            "difference": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "value",
+                            "same_time_yesterday",
+                            "difference"
+                        ]
+                    },
+                    "last_order": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "number": {
+                                "type": "string"
+                            },
+                            "amount": {
+                                "type": "string"
+                            },
+                            "district": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "district_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "product_name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "product_name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "at": {
+                                "type": "string"
+                            },
+                            "minutes_ago": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "number",
+                            "amount",
+                            "district",
+                            "district_bn",
+                            "product_name",
+                            "product_name_bn",
+                            "at",
+                            "minutes_ago"
+                        ]
+                    },
+                    "feed": {
+                        "type": "array",
+                        "description": "Newest first, at most 20, from the last 24 hours.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                        "order",
+                                        "view_item",
+                                        "add_to_cart",
+                                        "begin_checkout"
+                                    ]
+                                },
+                                "at": {
+                                    "type": "string"
+                                },
+                                "minutes_ago": {
+                                    "type": "integer"
+                                },
+                                "order_number": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "amount": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "district": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "district_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "product_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "product_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "items": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "kind",
+                                "at",
+                                "minutes_ago",
+                                "order_number",
+                                "amount",
+                                "district",
+                                "district_bn",
+                                "product_name",
+                                "product_name_bn",
+                                "items"
+                            ]
+                        }
+                    },
+                    "viewing": {
+                        "type": "object",
+                        "description": "Products by distinct sessions over view_item in the window. Pages are not\navailable: the storefront never stores page_view.",
+                        "properties": {
+                            "pages_available": {
+                                "type": "boolean"
+                            },
+                            "pages_reason": {
+                                "type": "string",
+                                "const": "no_page_views"
+                            },
+                            "products": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_bn": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sessions": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "key",
+                                        "name",
+                                        "name_bn",
+                                        "sessions"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "pages_available",
+                            "pages_reason",
+                            "products"
+                        ]
+                    },
+                    "hourly": {
+                        "type": "array",
+                        "description": "24 Dhaka hours, 0\u201323.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "hour": {
+                                    "type": "integer"
+                                },
+                                "orders": {
+                                    "type": "integer"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "hour",
+                                "orders",
+                                "value"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "generated_at",
+                    "today",
+                    "window_minutes",
+                    "tracking",
+                    "now",
+                    "orders_today",
+                    "last_order",
+                    "feed",
+                    "viewing",
+                    "hourly"
+                ],
+                "title": "LiveAnalytics"
+            },
             "LogVerificationCallRequest": {
                 "type": "object",
                 "description": "`POST /risk/orders/{order}/calls` \u2014 `outcome` (CallOutcome) and an optional `note`. Needs risk.verify.",
@@ -51492,6 +52418,470 @@
                     "rows"
                 ],
                 "title": "MarginPreviewRequest"
+            },
+            "MarketingAnalytics": {
+                "type": "object",
+                "properties": {
+                    "range": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "comparison": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "spend": {
+                                "type": "string"
+                            },
+                            "revenue": {
+                                "type": "string"
+                            },
+                            "orders": {
+                                "type": "integer"
+                            },
+                            "delivered_orders": {
+                                "type": "integer"
+                            },
+                            "campaigns": {
+                                "type": "integer"
+                            },
+                            "unpaid_revenue": {
+                                "type": "string"
+                            },
+                            "unpaid_orders": {
+                                "type": "integer"
+                            },
+                            "return_ratio": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cost_per_order": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "spend",
+                            "revenue",
+                            "orders",
+                            "delivered_orders",
+                            "campaigns",
+                            "unpaid_revenue",
+                            "unpaid_orders",
+                            "return_ratio",
+                            "cost_per_order"
+                        ]
+                    },
+                    "previous": {
+                        "type": "object",
+                        "properties": {
+                            "spend": {
+                                "type": "string"
+                            },
+                            "revenue": {
+                                "type": "string"
+                            },
+                            "orders": {
+                                "type": "integer"
+                            },
+                            "delivered_orders": {
+                                "type": "integer"
+                            },
+                            "campaigns": {
+                                "type": "integer"
+                            },
+                            "unpaid_revenue": {
+                                "type": "string"
+                            },
+                            "unpaid_orders": {
+                                "type": "integer"
+                            },
+                            "return_ratio": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cost_per_order": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "spend",
+                            "revenue",
+                            "orders",
+                            "delivered_orders",
+                            "campaigns",
+                            "unpaid_revenue",
+                            "unpaid_orders",
+                            "return_ratio",
+                            "cost_per_order"
+                        ]
+                    },
+                    "deltas": {
+                        "type": "object",
+                        "properties": {
+                            "spend": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "revenue": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "orders": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "spend",
+                            "revenue",
+                            "orders"
+                        ]
+                    },
+                    "campaigns": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "campaign": {
+                                    "type": "string"
+                                },
+                                "source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "has_spend": {
+                                    "type": "boolean"
+                                },
+                                "spend": {
+                                    "type": "string"
+                                },
+                                "orders": {
+                                    "type": "integer"
+                                },
+                                "delivered_orders": {
+                                    "type": "integer"
+                                },
+                                "delivered_revenue": {
+                                    "type": "string"
+                                },
+                                "return_ratio": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "cost_per_order": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "campaign",
+                                "source",
+                                "has_spend",
+                                "spend",
+                                "orders",
+                                "delivered_orders",
+                                "delivered_revenue",
+                                "return_ratio",
+                                "cost_per_order"
+                            ]
+                        }
+                    },
+                    "untagged": {
+                        "type": "object",
+                        "properties": {
+                            "orders": {
+                                "type": "integer"
+                            },
+                            "delivered_orders": {
+                                "type": "integer"
+                            },
+                            "delivered_revenue": {
+                                "type": "string"
+                            },
+                            "sources": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "orders",
+                            "delivered_orders",
+                            "delivered_revenue",
+                            "sources"
+                        ]
+                    },
+                    "deals": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                        "coupon",
+                                        "promotion"
+                                    ]
+                                },
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "orders": {
+                                    "type": "integer"
+                                },
+                                "new_customers": {
+                                    "type": "integer"
+                                },
+                                "cost": {
+                                    "type": "string"
+                                },
+                                "order_value": {
+                                    "type": "string"
+                                },
+                                "delivered_orders": {
+                                    "type": "integer"
+                                },
+                                "delivered_value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "kind",
+                                "id",
+                                "name",
+                                "name_bn",
+                                "type",
+                                "orders",
+                                "new_customers",
+                                "cost",
+                                "order_value",
+                                "delivered_orders",
+                                "delivered_value"
+                            ]
+                        }
+                    },
+                    "deal_totals": {
+                        "type": "object",
+                        "properties": {
+                            "coupon": {
+                                "type": "object",
+                                "properties": {
+                                    "cost": {
+                                        "type": "string"
+                                    },
+                                    "orders": {
+                                        "type": "integer"
+                                    },
+                                    "new_customers": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "cost",
+                                    "orders",
+                                    "new_customers"
+                                ]
+                            },
+                            "promotion": {
+                                "type": "object",
+                                "properties": {
+                                    "cost": {
+                                        "type": "string"
+                                    },
+                                    "orders": {
+                                        "type": "integer"
+                                    },
+                                    "new_customers": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "cost",
+                                    "orders",
+                                    "new_customers"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "coupon",
+                            "promotion"
+                        ]
+                    },
+                    "highlights": {
+                        "type": "object",
+                        "properties": {
+                            "best_campaign": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "campaign": {
+                                        "type": "string"
+                                    },
+                                    "source": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "spend": {
+                                        "type": "string"
+                                    },
+                                    "delivered_revenue": {
+                                        "type": "string"
+                                    },
+                                    "return_ratio": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "campaign",
+                                    "source",
+                                    "spend",
+                                    "delivered_revenue",
+                                    "return_ratio"
+                                ]
+                            },
+                            "top_new_customer_coupon": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "new_customers": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "new_customers"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "best_campaign",
+                            "top_new_customer_coupon"
+                        ]
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    },
+                    "rules": {
+                        "type": "object",
+                        "properties": {
+                            "spend": {
+                                "type": "string",
+                                "const": "prorated_by_day"
+                            },
+                            "revenue": {
+                                "type": "string",
+                                "const": "delivered_net_product_revenue"
+                            }
+                        },
+                        "required": [
+                            "spend",
+                            "revenue"
+                        ]
+                    }
+                },
+                "required": [
+                    "range",
+                    "comparison",
+                    "summary",
+                    "previous",
+                    "deltas",
+                    "campaigns",
+                    "untagged",
+                    "deals",
+                    "deal_totals",
+                    "highlights",
+                    "empty",
+                    "rules"
+                ],
+                "title": "MarketingAnalytics"
             },
             "Media": {
                 "type": "object",
@@ -58351,6 +59741,637 @@
                 ],
                 "title": "Product"
             },
+            "ProductAnalytics": {
+                "type": "object",
+                "properties": {
+                    "range": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "comparison": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "profit_visible": {
+                        "type": "boolean"
+                    },
+                    "sort": {
+                        "type": "string",
+                        "enum": [
+                            "revenue",
+                            "units",
+                            "margin",
+                            "returns"
+                        ]
+                    },
+                    "thresholds": {
+                        "type": "object",
+                        "properties": {
+                            "running_out_days": {
+                                "type": "integer"
+                            },
+                            "urgent_days": {
+                                "type": "integer"
+                            },
+                            "min_units_for_returns": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "running_out_days",
+                            "urgent_days",
+                            "min_units_for_returns"
+                        ]
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "products_sold": {
+                                "type": "integer"
+                            },
+                            "products_on_sale": {
+                                "type": "integer"
+                            },
+                            "units_delivered": {
+                                "type": "integer"
+                            },
+                            "units_delivered_previous": {
+                                "type": "integer"
+                            },
+                            "units_delivered_change": {
+                                "type": "integer"
+                            },
+                            "units_delta": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "net_revenue": {
+                                "type": "string"
+                            },
+                            "gross_profit": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "margin_percent": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "units_returned": {
+                                "type": "integer"
+                            },
+                            "return_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "running_out_count": {
+                                "type": "integer"
+                            },
+                            "running_out_urgent_count": {
+                                "type": "integer"
+                            },
+                            "not_selling_count": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "products_sold",
+                            "products_on_sale",
+                            "units_delivered",
+                            "units_delivered_previous",
+                            "units_delivered_change",
+                            "units_delta",
+                            "net_revenue",
+                            "gross_profit",
+                            "margin_percent",
+                            "units_returned",
+                            "return_rate",
+                            "running_out_count",
+                            "running_out_urgent_count",
+                            "not_selling_count"
+                        ]
+                    },
+                    "highlights": {
+                        "type": "object",
+                        "properties": {
+                            "best_seller": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_bn": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "category_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "category_name_bn": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "units_delivered": {
+                                        "type": "integer"
+                                    },
+                                    "units_returned": {
+                                        "type": "integer"
+                                    },
+                                    "units_kept": {
+                                        "type": "integer"
+                                    },
+                                    "net_revenue": {
+                                        "type": "string"
+                                    },
+                                    "cogs": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "gross_profit": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "margin_percent": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "return_rate": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "units_paced": {
+                                        "type": "integer"
+                                    },
+                                    "stock_left": {
+                                        "type": "integer"
+                                    },
+                                    "days_of_stock": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "stock_value": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "product_id",
+                                    "name",
+                                    "name_bn",
+                                    "category_name",
+                                    "category_name_bn",
+                                    "units_delivered",
+                                    "units_returned",
+                                    "units_kept",
+                                    "net_revenue",
+                                    "cogs",
+                                    "gross_profit",
+                                    "margin_percent",
+                                    "return_rate",
+                                    "units_paced",
+                                    "stock_left",
+                                    "days_of_stock",
+                                    "stock_value"
+                                ]
+                            },
+                            "most_returned": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_bn": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "category_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "category_name_bn": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "units_delivered": {
+                                        "type": "integer"
+                                    },
+                                    "units_returned": {
+                                        "type": "integer"
+                                    },
+                                    "units_kept": {
+                                        "type": "integer"
+                                    },
+                                    "net_revenue": {
+                                        "type": "string"
+                                    },
+                                    "cogs": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "gross_profit": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "margin_percent": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "return_rate": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "units_paced": {
+                                        "type": "integer"
+                                    },
+                                    "stock_left": {
+                                        "type": "integer"
+                                    },
+                                    "days_of_stock": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "stock_value": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "product_id",
+                                    "name",
+                                    "name_bn",
+                                    "category_name",
+                                    "category_name_bn",
+                                    "units_delivered",
+                                    "units_returned",
+                                    "units_kept",
+                                    "net_revenue",
+                                    "cogs",
+                                    "gross_profit",
+                                    "margin_percent",
+                                    "return_rate",
+                                    "units_paced",
+                                    "stock_left",
+                                    "days_of_stock",
+                                    "stock_value"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "best_seller",
+                            "most_returned"
+                        ]
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "units_delivered": {
+                                    "type": "integer"
+                                },
+                                "units_returned": {
+                                    "type": "integer"
+                                },
+                                "units_kept": {
+                                    "type": "integer"
+                                },
+                                "net_revenue": {
+                                    "type": "string"
+                                },
+                                "cogs": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "gross_profit": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "margin_percent": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "return_rate": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "units_paced": {
+                                    "type": "integer"
+                                },
+                                "stock_left": {
+                                    "type": "integer"
+                                },
+                                "days_of_stock": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "stock_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "product_id",
+                                "name",
+                                "name_bn",
+                                "category_name",
+                                "category_name_bn",
+                                "units_delivered",
+                                "units_returned",
+                                "units_kept",
+                                "net_revenue",
+                                "cogs",
+                                "gross_profit",
+                                "margin_percent",
+                                "return_rate",
+                                "units_paced",
+                                "stock_left",
+                                "days_of_stock",
+                                "stock_value"
+                            ]
+                        }
+                    },
+                    "running_out": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "units_paced": {
+                                    "type": "integer"
+                                },
+                                "stock_left": {
+                                    "type": "integer"
+                                },
+                                "days_of_stock": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "stock_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "product_id",
+                                "name",
+                                "name_bn",
+                                "category_name",
+                                "category_name_bn",
+                                "units_paced",
+                                "stock_left",
+                                "days_of_stock",
+                                "stock_value"
+                            ]
+                        }
+                    },
+                    "not_selling": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "category_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "units_paced": {
+                                    "type": "integer"
+                                },
+                                "stock_left": {
+                                    "type": "integer"
+                                },
+                                "days_of_stock": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "stock_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "product_id",
+                                "name",
+                                "name_bn",
+                                "category_name",
+                                "category_name_bn",
+                                "units_paced",
+                                "stock_left",
+                                "days_of_stock",
+                                "stock_value"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "range",
+                    "comparison",
+                    "profit_visible",
+                    "sort",
+                    "thresholds",
+                    "summary",
+                    "highlights",
+                    "products",
+                    "running_out",
+                    "not_selling"
+                ],
+                "title": "ProductAnalytics"
+            },
             "ProductCompliance": {
                 "type": "object",
                 "properties": {
@@ -63672,6 +65693,44 @@
                     "birth_year"
                 ],
                 "title": "SaveAccountChildRequest"
+            },
+            "SaveAdSpendRequest": {
+                "type": "object",
+                "description": "`POST /analytics/marketing/spend` and `PUT /analytics/marketing/spend/{adSpend}` \u2014 ad spend\ntyped in by staff: `campaign` (the `utm_campaign` value it pays for, \u2264 128), optional\n`source` (facebook, google \u2026, \u2264 64), `month` (YYYY-MM, a Dhaka month from 2020-01 up to the\ncurrent one), `amount` (a decimal string > 0, two places at most) and an optional `note`.\nOne row per campaign and month: a second one for the same pair is a 422 on `month`\n(campaign compared trimmed and case-insensitively). Needs marketing.manage.",
+                "properties": {
+                    "campaign": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 64
+                    },
+                    "month": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                    },
+                    "amount": {
+                        "type": "string",
+                        "pattern": "^\\d{1,12}(\\.\\d{1,2})?$"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "campaign",
+                    "month",
+                    "amount"
+                ],
+                "title": "SaveAdSpendRequest"
             },
             "SaveCustomerChildRequest": {
                 "type": "object",
@@ -77501,6 +79560,423 @@
                     "code"
                 ],
                 "title": "VerifyOtpRequest"
+            },
+            "VisitorAnalytics": {
+                "type": "object",
+                "properties": {
+                    "range": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "comparison": {
+                        "type": "object",
+                        "properties": {
+                            "preset": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "preset",
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "counted": {
+                        "type": "string",
+                        "description": "Who is counted: sessions whose shopper allowed analytics tracking (the GA4 session id\nis only attached with that consent).",
+                        "const": "analytics_consented_sessions"
+                    },
+                    "tracking": {
+                        "type": "object",
+                        "description": "`page_views_recorded` false means a visit is a session with at least one shop action\n(product view, add to cart, checkout). `order_link_complete` false means the range\nreaches past the checkout-context retention, so the order steps undercount.",
+                        "properties": {
+                            "events_recorded": {
+                                "type": "integer"
+                            },
+                            "events_without_session": {
+                                "type": "integer"
+                            },
+                            "page_views_recorded": {
+                                "type": "boolean"
+                            },
+                            "order_link_retention_days": {
+                                "type": "integer"
+                            },
+                            "order_link_complete": {
+                                "type": "boolean"
+                            },
+                            "devices_recorded": {
+                                "type": "boolean"
+                            },
+                            "places_recorded": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "events_recorded",
+                            "events_without_session",
+                            "page_views_recorded",
+                            "order_link_retention_days",
+                            "order_link_complete",
+                            "devices_recorded",
+                            "places_recorded"
+                        ]
+                    },
+                    "summary": {
+                        "type": "object",
+                        "properties": {
+                            "visits": {
+                                "type": "integer"
+                            },
+                            "viewed_product": {
+                                "type": "integer"
+                            },
+                            "added_to_cart": {
+                                "type": "integer"
+                            },
+                            "reached_checkout": {
+                                "type": "integer"
+                            },
+                            "placed": {
+                                "type": "integer"
+                            },
+                            "delivered": {
+                                "type": "integer"
+                            },
+                            "in_progress": {
+                                "type": "integer"
+                            },
+                            "orders_total": {
+                                "type": "integer"
+                            },
+                            "order_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cart_to_order_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "delivered_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "visits",
+                            "viewed_product",
+                            "added_to_cart",
+                            "reached_checkout",
+                            "placed",
+                            "delivered",
+                            "in_progress",
+                            "orders_total",
+                            "order_rate",
+                            "cart_to_order_rate",
+                            "delivered_rate"
+                        ]
+                    },
+                    "previous": {
+                        "type": "object",
+                        "properties": {
+                            "visits": {
+                                "type": "integer"
+                            },
+                            "viewed_product": {
+                                "type": "integer"
+                            },
+                            "added_to_cart": {
+                                "type": "integer"
+                            },
+                            "reached_checkout": {
+                                "type": "integer"
+                            },
+                            "placed": {
+                                "type": "integer"
+                            },
+                            "delivered": {
+                                "type": "integer"
+                            },
+                            "in_progress": {
+                                "type": "integer"
+                            },
+                            "orders_total": {
+                                "type": "integer"
+                            },
+                            "order_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cart_to_order_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "delivered_rate": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "visits",
+                            "viewed_product",
+                            "added_to_cart",
+                            "reached_checkout",
+                            "placed",
+                            "delivered",
+                            "in_progress",
+                            "orders_total",
+                            "order_rate",
+                            "cart_to_order_rate",
+                            "delivered_rate"
+                        ]
+                    },
+                    "deltas": {
+                        "type": "object",
+                        "properties": {
+                            "visits": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "placed": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "order_rate_points": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "cart_to_order_points": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "delivered_rate_points": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "visits",
+                            "placed",
+                            "order_rate_points",
+                            "cart_to_order_points",
+                            "delivered_rate_points"
+                        ]
+                    },
+                    "funnel": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "enum": [
+                                        "visited",
+                                        "viewed_product",
+                                        "added_to_cart",
+                                        "reached_checkout",
+                                        "placed_order",
+                                        "delivered"
+                                    ]
+                                },
+                                "sessions": {
+                                    "type": "integer"
+                                },
+                                "previous_sessions": {
+                                    "type": "integer"
+                                },
+                                "change": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "drop_percent": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "of_visits_percent": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "sessions",
+                                "previous_sessions",
+                                "change",
+                                "drop_percent",
+                                "of_visits_percent"
+                            ]
+                        }
+                    },
+                    "biggest_drop": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The shopping step with the largest relative drop (delivery excluded).",
+                        "properties": {
+                            "from": {
+                                "type": "string",
+                                "enum": [
+                                    "visited",
+                                    "viewed_product",
+                                    "added_to_cart",
+                                    "reached_checkout",
+                                    "placed_order"
+                                ]
+                            },
+                            "to": {
+                                "type": "string",
+                                "enum": [
+                                    "viewed_product",
+                                    "added_to_cart",
+                                    "reached_checkout",
+                                    "placed_order"
+                                ]
+                            },
+                            "percent": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "from",
+                            "to",
+                            "percent"
+                        ]
+                    },
+                    "daily": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "date": {
+                                    "type": "string"
+                                },
+                                "visits": {
+                                    "type": "integer"
+                                },
+                                "orders": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "date",
+                                "visits",
+                                "orders"
+                            ]
+                        }
+                    },
+                    "top_products": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "product_id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "views": {
+                                    "type": "integer"
+                                },
+                                "add_to_carts": {
+                                    "type": "integer"
+                                },
+                                "cart_rate": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "product_id",
+                                "name",
+                                "name_bn",
+                                "views",
+                                "add_to_carts",
+                                "cart_rate"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "range",
+                    "comparison",
+                    "counted",
+                    "tracking",
+                    "summary",
+                    "previous",
+                    "deltas",
+                    "funnel",
+                    "biggest_drop",
+                    "daily",
+                    "top_products"
+                ],
+                "title": "VisitorAnalytics"
             },
             "WhatsAppTemplateSync": {
                 "type": "object",

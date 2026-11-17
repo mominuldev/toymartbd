@@ -1,12 +1,13 @@
 import { useId, useState, type ReactNode } from 'react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CaretDownIcon, FunnelSimpleIcon } from '@phosphor-icons/react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import type { Schema } from '@toymart/api-types';
 import { can, useMe } from '@/features/auth/api';
 import { ContentHeader } from '@/components/shell/ContentHeader';
+import { buttonClass } from '@/components/ui/Button';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ExportMenu } from '@/components/ui/ExportMenu';
@@ -407,16 +408,19 @@ function TopCategories({ data }: { data: SalesAnalytics }) {
     );
 }
 
-/** The visitor funnel of the first B · 24 needs storefront visit tracking that does not exist yet — said plainly, never faked. */
+/** The visitor funnel lives on its own tab (Analytics › Visitors & funnel); Sales points there rather than repeating it. */
 function FunnelNote() {
     const { t } = useI18n();
     return (
-        <section className="flex items-start gap-4 rounded-md border border-dashed border-line-strong bg-surface p-5">
-            <FunnelSimpleIcon size={22} aria-hidden className="mt-0.5 shrink-0 text-fg-tertiary" />
-            <div className="flex min-w-0 flex-col gap-1">
+        <section className="flex flex-wrap items-center gap-4 rounded-md border border-dashed border-line-strong bg-surface p-5">
+            <FunnelSimpleIcon size={22} aria-hidden className="shrink-0 text-fg-tertiary" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <h2 className="t-admin-body-strong text-fg-primary">{t('sales.funnel.title')}</h2>
-                <p className="t-admin-body text-fg-secondary">{t('sales.conversionNote')}</p>
+                <p className="t-admin-body text-fg-secondary">{t('sales.funnel.body')}</p>
             </div>
+            <Link to="/analytics/visitors" className={buttonClass('outline', 'sm')}>
+                {t('sales.funnel.open')}
+            </Link>
         </section>
     );
 }
