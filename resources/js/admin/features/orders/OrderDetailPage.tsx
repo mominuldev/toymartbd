@@ -11,8 +11,6 @@ import {
     NoteIcon,
     PackageIcon,
     PhoneIcon,
-    PlugsIcon,
-    ShieldIcon,
     TruckIcon,
     WarningIcon,
 } from '@phosphor-icons/react';
@@ -27,13 +25,14 @@ import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { storeOrderNoteRequestSchema } from '@toymart/api-types/zod';
-import { useAddNote, useOrder, useVerifyPayment, type Order, type RiskLevel } from './api';
+import { useAddNote, useOrder, useOrderCourierRecord, useVerifyPayment, type Order, type RiskLevel } from './api';
 import { Taka, dhakaParts, initials, isZeroAmount, takaText } from './format';
 import { OrderActions, problemText } from './OrderActions';
 import { OrderStatusBadge, PaymentChip, methodLabel, paymentLabel, riskTint, sourceLabel, statusLabel } from './parts';
 import { OrderStepper } from './Stepper';
 import { OrderRefundPanel } from '@/features/returns';
 import { ShipmentCard } from '@/features/couriers';
+import { CourierPanel } from '@/features/risk';
 
 const card = 'flex flex-col gap-4 rounded-md border border-line-default bg-surface p-5 shadow-e1';
 
@@ -107,7 +106,7 @@ export function OrderDetailPage() {
                     <CustomerCard order={o} />
                     <AddressCard order={o} />
                     <RiskCard order={o} />
-                    <CourierEvidenceCard />
+                    <CourierEvidenceCard orderId={o.id} />
                 </div>
             </div>
         </section>
@@ -648,29 +647,19 @@ function RiskLevelChip({ level, score }: { level: RiskLevel; score: number }) {
 }
 
 /**
- * Panel B: EXTERNAL evidence. No courier account exists yet (rule 33b), so this is the honest
- * not-connected state — never a zero, never merged with our score (rule 24).
+ * Panel B: EXTERNAL evidence — what the couriers officially report about this phone, from
+ * `GET /orders/{id}/courier-record` (the same lookup as Fraud & risk › Phone lookup). A courier
+ * that cannot answer says why, never a zero (rule 33b); never merged with our score (rule 24).
  */
-function CourierEvidenceCard() {
+function CourierEvidenceCard({ orderId }: { orderId: number }) {
     const { t } = useI18n();
-    return (
-        <section className="flex flex-col gap-4 rounded-md border border-dashed border-line-strong border-t-3 border-t-fg-secondary bg-surface p-5" aria-labelledby="order-courier-evidence">
-            <div className="flex flex-col gap-1">
-                <p className="t-admin-overline text-fg-secondary">{t('orders.evidence.eyebrow')}</p>
-                <h2 id="order-courier-evidence" className="t-admin-section text-fg-primary">
-                    {t('orders.evidence.title')}
-                </h2>
-                <p className="flex items-center gap-1.5 t-admin-caption text-fg-tertiary">
-                    <ShieldIcon size={14} aria-hidden />
-                    {t('orders.evidence.provenance')}
-                </p>
-            </div>
-            <div className="flex flex-col items-center gap-3 rounded-sm bg-subtle px-5 py-6 text-center">
-                <PlugsIcon size={32} aria-hidden className="text-fg-tertiary" />
-                <p className="t-admin-section text-fg-primary">{t('orders.evidence.notConnected')}</p>
-                <p className="t-admin-body text-fg-secondary">{t('orders.evidence.body')}</p>
-                <p className="border-t border-line-default pt-3 t-admin-caption text-fg-tertiary">{t('orders.evidence.connect')}</p>
-            </div>
-        </section>
-    );
+    const record = useOrderCourierRecord(orderId);
+    if (record.isError) return <QueryError error={record.error} onRetry={() => void record.refetch()} />;
+    if (!record.data)
+        return (
+            <p aria-busy="true" className="rounded-md border border-dashed border-line-strong bg-surface p-5 t-admin-caption text-fg-tertiary">
+                {t('common.loading')}
+            </p>
+        );
+    return <CourierPanel checkedAt={record.data.checked_at} providers={record.data.providers} />;
 }

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Fulfilment\Drivers\Pathao;
 
+use App\Domain\Fulfilment\Contracts\ChecksConnection;
 use App\Domain\Fulfilment\Contracts\CourierGateway;
 use App\Domain\Fulfilment\Contracts\ShapesWebhookResponse;
 use App\Domain\Fulfilment\DTOs\BookingResult;
 use App\Domain\Fulfilment\DTOs\BulkBookingResult;
+use App\Domain\Fulfilment\DTOs\ConnectionCheck;
 use App\Domain\Fulfilment\DTOs\CourierLocationRef;
 use App\Domain\Fulfilment\DTOs\CourierQuote;
 use App\Domain\Fulfilment\DTOs\CourierStatusResult;
@@ -42,7 +44,7 @@ use Throwable;
  * `webhook_integration` handshake must be answered 202 — supplied through
  * {@see ShapesWebhookResponse} and applied by ReceiveCourierWebhook.
  */
-final class PathaoGateway implements CourierGateway, ProvidesCourierLocations, ShapesWebhookResponse
+final class PathaoGateway implements ChecksConnection, CourierGateway, ProvidesCourierLocations, ShapesWebhookResponse
 {
     public const string CODE = 'pathao';
 
@@ -196,6 +198,46 @@ final class PathaoGateway implements CourierGateway, ProvidesCourierLocations, S
             consignmentId: is_string($response->json('data.consignment_id')) ? $response->json('data.consignment_id') : $consignmentId,
             trackingCode: $consignmentId,
         );
+    }
+
+    /**
+     * "Check connection": sign in (the token grant) and read `GET /stores` — read-only, books
+     * nothing (research agent3 §5, store list). Keys accepted but no pickup store id, or an id
+     * that is not one of the account's stores, is still a failure the screen explains: a
+     * booking would be refused.
+     */
+    public function checkConnection(): ConnectionCheck
+    {
+        $credentials = PathaoCredentials::resolve();
+        if ($credentials === null) {
+            return ConnectionCheck::failed('no_credentials');
+        }
+        $sandbox = $credentials->sandbox;
+
+        try {
+            $response = $this->client()->get('/stores', 'store list');
+        } catch (PathaoException $e) {
+            return ConnectionCheck::failed($e->reason === PathaoException::AUTH ? 'credentials_rejected' : 'unreachable', $sandbox);
+        }
+        if ($response->status() === 401 || $response->status() === 403) {
+            return ConnectionCheck::failed('credentials_rejected', $sandbox);
+        }
+        $stores = $response->successful() ? $response->json('data.data') : null;
+        if (! is_array($stores)) {
+            return ConnectionCheck::failed('unreachable', $sandbox);
+        }
+        if ($credentials->storeId === null) {
+            return ConnectionCheck::failed('store_missing', $sandbox);
+        }
+        foreach ($stores as $store) {
+            if (is_array($store) && (int) ($store['store_id'] ?? 0) === $credentials->storeId) {
+                $name = $store['store_name'] ?? null;
+
+                return new ConnectionCheck(true, 'connected', CarbonImmutable::now(), storeName: is_string($name) ? $name : null, sandbox: $sandbox);
+            }
+        }
+
+        return ConnectionCheck::failed('store_not_found', $sandbox);
     }
 
     public function fetchLocations(): array

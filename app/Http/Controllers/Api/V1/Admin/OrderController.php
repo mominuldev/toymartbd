@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Domain\Fulfilment\Services\CourierHistoryLookup;
 use App\Domain\Ordering\Enums\FulfillmentStatus;
 use App\Domain\Ordering\Enums\OrderPaymentStatus;
 use App\Domain\Ordering\Enums\OrderSource;
@@ -14,6 +15,7 @@ use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Queries\OrderAnomalies;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Http\Controllers\Api\V1\ApiController;
+use App\Http\Resources\Admin\CourierRecordResource;
 use App\Http\Resources\Admin\OrderListItemResource;
 use App\Http\Resources\Admin\OrderResource;
 use App\Support\DhakaDate;
@@ -94,6 +96,19 @@ final class OrderController extends ApiController
         $this->authorize('view', $order);
 
         return new OrderResource($order->load(OrderResource::RELATIONS));
+    }
+
+    /**
+     * `GET /orders/{order}/courier-record` — what the couriers officially report about this
+     * order's phone (the order detail's external-evidence panel). Kept apart from our score
+     * (rule 24); a courier that cannot answer says why, never a zero (rule 33b). Asked on demand
+     * and cached per phone for a day by CourierHistoryLookup; never inside a transaction (rule 4).
+     */
+    public function courierRecord(Order $order, CourierHistoryLookup $lookup): CourierRecordResource
+    {
+        $this->authorize('view', $order);
+
+        return new CourierRecordResource(['checked_at' => now()->toIso8601String(), 'providers' => $lookup->forPhone($order->shipping_phone)]);
     }
 
     /** @return array<string, int> status → count, plus `all`, under every filter but status */

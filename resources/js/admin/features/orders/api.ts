@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CourierRecord } from '@/features/risk';
 import type { Schema } from '@toymart/api-types';
 import type { CancelOrderRequestInput, HoldOrderRequestInput, StoreOrderNoteRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
@@ -110,6 +111,16 @@ export function useOrders(filters: BoardFilters, cursor: string | null) {
 
 export function useOrder(id: number) {
     return useQuery({ queryKey: orderKeys.detail(id), queryFn: () => api<Order>(`/orders/${id}`) });
+}
+
+/** What the couriers officially report about this order's phone — asked on demand, kept apart from our score (rule 24). */
+export function useOrderCourierRecord(id: number) {
+    return useQuery({
+        queryKey: [...orderKeys.detail(id), 'courier-record'],
+        queryFn: () => api<{ checked_at: string; providers: CourierRecord[] }>(`/orders/${id}/courier-record`),
+        staleTime: 5 * 60 * 1000,
+        retry: false,
+    });
 }
 
 export type WorkflowMove = 'confirm' | 'release' | 'processing' | 'ready_to_ship';

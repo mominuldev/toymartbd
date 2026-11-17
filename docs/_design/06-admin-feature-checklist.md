@@ -80,7 +80,7 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 - [S] Phone risk lookup: RiskScoreCard with our score and courier-verified record as separate, timestamped panels; order history; pinned notes
 - [S] Blacklist & watchlist: phone/address/device entries, reason, who, when, expiry; typed confirmation for blacklist
 - [C] Duplicate-order detector (same phone or address within 24 h) as a banner on order detail + a queue reason
-- [—] Risk rules (weights, thresholds) — settings form pattern
+- [S] Risk rules (weights, thresholds) — B · 40 premium `504:81358` (390 `504:82192`)
 
 ### 2.5 Customer communication & AI support
 - [S] Unified inbox: Messenger + WhatsApp + live chat in one list, AI-handled vs needs-human, conversation with order context side panel (order status, tracking, risk), quick replies, product cards, "hand over to human", assign
@@ -233,3 +233,7 @@ Placeholders to confirm with the owner: delivery charges ৳70/৳100/৳130, ho
 - Page `07`, top-level frame `B · 33 POS v2 — Sell Pilot layout (2026-11-15)` `344:63829`, right of `Admin — Desktop` (no overlap): Checkout `344:63830` (dark POS bar replaces the sidebar; catalog + Current sale with customer card showing open due and Collect due, Hold / Coupon / Clear, Charge F12), Collect payment `345:64035` (methods F1–F5 incl. Due, amount + Fill remaining, transaction ID, payments list, Paid / Remaining / Change, quick cash, Complete sale Enter), Sale complete `346:64332` (Total / Paid / Change, tenders, Print receipt + WhatsApp receipt, Start new sale Enter, 80 mm receipt preview), Collect due `350:64404` (open due applied oldest first, partial collection allowed).
 - AdminButton Primary still carries the Theme A gradient in the library; these frames override the fill to `color/bg/brand` (the code's Button is solid, as Theme B specifies). Fixing the component itself is a separate library change.
 - Added the same day at the owner's request: Held sales (F8) `351:64687` (optional label + Hold current sale, the drawer's holds with Resume and a red Discard) and Customer (F9) `351:64874` (search by name or phone, Walk-in row, matches with open due and limit, New customer name + phone → Add to sale). With no customer chosen, the cart shows "Walk-in customer" with Add customer (F9) in place of the identity card.
+
+**Fraud & risk premium pass (2026-11-17)**, group `504:75986` in section `366:65205` (page 07): B · 05 Orders to check `504:80340` (390 `504:81866`), B · 06 Phone lookup `504:80850` (390 `504:82029`), B · 40 Risk rules `504:81358` (390 `504:82192`). Built in `resources/js/admin/features/risk/` from what the API returns: no customer name, items, landmark, call-back counts or per-order courier/profit columns are drawn in code, because the queue and lookup resources do not carry them.
+
+**Couriers premium pass (2026-11-17)**, group `513:77225` in section `366:65205` (page 07): B · 41 Couriers · Steadfast · Connection `513:77228`, · Delivery charges `513:77768`, · Pathao · Connection `517:78002`, · 390 `513:78306`. Built in `resources/js/admin/features/couriers/settings/CourierSettingsPage.tsx`; "Check connection" is `POST /settings/couriers/{provider}/check` (docs/api/couriers.md). Code differs from the frames only where data is missing: no merchant-panel links (their exact URLs were not verified).

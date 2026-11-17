@@ -157,6 +157,29 @@ describe('order board', () => {
 });
 
 describe('order detail', () => {
+    it('shows what Steadfast reports about this order’s phone once it is connected', async () => {
+        const calls = ordersApi(operator, (url) =>
+            url.endsWith('/orders/126/courier-record')
+                ? {
+                      status: 200,
+                      body: {
+                          checked_at: '2026-11-17T08:18:00Z',
+                          providers: [
+                              { provider: 'steadfast', name: 'Steadfast', name_bn: null, connected: true, reason: null, total_parcels: null, total_delivered: null, total_cancelled: null, total_fraud_reports: 4, delivery_ratio: '0.3500', cancellation_ratio: '0.6400', volume: '100+', fetched_at: '2026-11-17T08:18:00Z' },
+                              { provider: 'pathao', name: 'Pathao', name_bn: null, connected: false, reason: 'no_official_api', total_parcels: null, total_delivered: null, total_cancelled: null, total_fraud_reports: null, delivery_ratio: null, cancellation_ratio: null, volume: null, fetched_at: null },
+                          ],
+                      },
+                  }
+                : undefined,
+        );
+        renderApp('/orders/126');
+        const courier = await screen.findByRole('region', { name: 'What the couriers say' });
+        expect(await within(courier).findByText('35%')).toBeTruthy();
+        expect(within(courier).getByText('64%')).toBeTruthy();
+        expect(within(courier).queryByText('Provider not connected')).toBeNull();
+        expect(calls.mock.calls.some(([u]) => String(u).endsWith('/orders/126/courier-record'))).toBe(true);
+    });
+
     it('shows the stepper, our risk score apart from the courier panel, and masked PII', async () => {
         ordersApi(operator);
         renderApp('/orders/126');
@@ -166,7 +189,7 @@ describe('order detail', () => {
         expect(screen.getByText('Toy Mart risk score')).toBeTruthy();
         expect(screen.getByText('High risk · 80 / 100')).toBeTruthy();
         // Rule 33b: the courier panel says "not connected", never a zero.
-        expect(screen.getByText('Provider not connected')).toBeTruthy();
+        expect(await screen.findByText('Provider not connected')).toBeTruthy();
         // P6: the shipment card needs shipments.view, which this operator fixture lacks.
         expect(screen.getByText('You do not have access to shipments.')).toBeTruthy();
         expect(screen.getByText('Phone masked — needs the customer PII permission.')).toBeTruthy();

@@ -199,19 +199,26 @@ function settingsApi(me: Me, providers: CourierProvider[] = [steadfast, pathao])
         if (url.endsWith('/settings/delivery')) return { status: 200, body: { free_shipping_threshold: init?.method === 'PUT' ? '2500.00' : '3000.00' } };
         if (url.endsWith('/settings/couriers/1/credentials')) return { status: 200, body: { ...steadfast, credential_fields: steadfast.credential_fields.map((f) => ({ ...f, set: true, hint: '••••2222' })), trust: 'unverified' } };
         if (url.endsWith('/settings/couriers/1/rates')) return { status: 200, body: { ...steadfast, rates: { ...rates, base_charge_outside: '140.00' } } };
+        if (url.endsWith('/settings/couriers/1/check'))
+            return { status: 200, body: { ok: true, reason: 'connected', checked_at: '2026-11-17T08:18:00Z', balance: '-10.00', store_name: null, sandbox: false } };
+        if (url.endsWith('/settings/couriers/2/check'))
+            return { status: 200, body: { ok: false, reason: 'credentials_rejected', checked_at: '2026-11-17T08:18:00Z', balance: null, store_name: null, sandbox: true } };
         return { status: 404, body: { type: 'https://toymartbd.com/problems/not-found', title: 'Not found', status: 404 } };
     });
 }
 
 describe('courier settings', () => {
-    it('shows each courier’s trust, never a credential value, and saves only the fields typed', async () => {
+    it('shows each courier as a checklist in words, never a credential value, and saves only the fields typed', async () => {
         const calls = settingsApi(owner);
         renderApp('/integrations/couriers');
-        expect(await screen.findByRole('heading', { level: 1, name: 'Courier settings & delivery charges' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { level: 1, name: 'Couriers' })).toBeTruthy();
+        expect(screen.getByText('Customers pay delivery by Steadfast’s prices')).toBeTruthy();
         const cards = screen.getByRole('list', { name: 'Couriers' });
-        expect(within(cards).getByText('Untested driver')).toBeTruthy();
-        expect(within(cards).getByText('No credentials')).toBeTruthy();
-        expect(screen.getByText('Steadfast has never been tested against a live account')).toBeTruthy();
+        const sf = within(cards).getByRole('article', { name: 'Steadfast' });
+        expect(within(sf).getByText('Test mode')).toBeTruthy();
+        expect(within(sf).getByText(/Account connected/)).toBeTruthy();
+        expect(within(sf).getByText('Still the starting prices — check them against your contract')).toBeTruthy();
+        expect(within(within(cards).getByRole('article', { name: 'Pathao' })).getByText('Not connected')).toBeTruthy();
 
         const apiKey = screen.getByLabelText('API key') as HTMLInputElement;
         expect(apiKey.value).toBe('');
@@ -219,25 +226,36 @@ describe('courier settings', () => {
         expect(screen.getByText('Saved, ends ••••1111. Leave empty to keep it.')).toBeTruthy();
 
         fireEvent.change(screen.getByLabelText('Secret key'), { target: { value: 'sf-secret-2222' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save credentials' }));
+        // The check uses the SAVED keys: while something is typed and unsaved it waits.
+        expect((screen.getByRole('button', { name: 'Check connection' }) as HTMLButtonElement).disabled).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Save keys' }));
         await waitFor(() => expect(bodyOf(calls, '/settings/couriers/1/credentials', 'PUT')).toEqual({ credentials: { secret_key: 'sf-secret-2222' }, clear: [], webhook_secret: null, clear_webhook_secret: false }));
         // The field empties after saving: the secret is never held in the page longer than needed.
         await waitFor(() => expect((screen.getByLabelText('Secret key') as HTMLInputElement).value).toBe(''));
     });
 
-    it('validates and saves the rate card as decimal strings, and the free-delivery threshold', async () => {
+    it('checks the connection with the saved keys and says what the courier answered', async () => {
+        const calls = settingsApi(owner, [{ ...steadfast, credentials_complete: true, credential_fields: steadfast.credential_fields.map((f) => ({ ...f, set: true, hint: '••••1111' })) }, pathao]);
+        renderApp('/integrations/couriers');
+        fireEvent.click(await screen.findByRole('button', { name: 'Check connection' }));
+        expect(await screen.findByText(/Connected — Steadfast answered\. Balance .*৳10/)).toBeTruthy();
+        expect(calls.mock.calls.some(([u, init]) => String(u).endsWith('/settings/couriers/1/check') && (init as Init)?.method === 'POST')).toBe(true);
+    });
+
+    it('validates and saves the delivery charges as decimal strings, and the free-delivery amount', async () => {
         const calls = settingsApi(owner);
         renderApp('/integrations/couriers');
-        await screen.findByRole('heading', { level: 2, name: 'Steadfast rate card' });
+        fireEvent.click(await screen.findByRole('button', { name: 'Delivery charges' }));
+        expect(await screen.findByRole('heading', { level: 3, name: 'What Steadfast charges for a parcel' })).toBeTruthy();
         expect(screen.getByText('This is the default courier: customers are charged from these rates at checkout.')).toBeTruthy();
 
         fireEvent.change(screen.getByLabelText('Outside Dhaka'), { target: { value: '-140' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save rate card' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save charges' }));
         expect(await screen.findByText('Enter an amount in taka, up to 2 decimals.')).toBeTruthy();
         expect(bodyOf(calls, '/rates', 'PUT')).toBeNull();
 
         fireEvent.change(screen.getByLabelText('Outside Dhaka'), { target: { value: '140' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Save rate card' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save charges' }));
         await waitFor(() =>
             expect(bodyOf(calls, '/settings/couriers/1/rates', 'PUT')).toEqual({
                 base_charge_dhaka: '70',
@@ -250,28 +268,33 @@ describe('courier settings', () => {
             }),
         );
 
-        const threshold = screen.getByLabelText('Free-delivery threshold') as HTMLInputElement;
+        const threshold = screen.getByLabelText('Free delivery on orders from') as HTMLInputElement;
         await waitFor(() => expect(threshold.value).toBe('3000'));
         fireEvent.change(threshold, { target: { value: '' } });
         fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]!);
         await waitFor(() => expect(bodyOf(calls, '/settings/delivery', 'PUT')).toEqual({ free_shipping_threshold: null }));
     });
 
-    it('lets a rates-only role edit rates but not see the credential form', async () => {
+    it('lets a rates-only role edit charges but not see the keys', async () => {
         settingsApi(ratesOnly, [{ ...steadfast, can: { update_rates: true, update_credentials: false } }]);
         renderApp('/integrations/couriers');
-        expect(await screen.findByText('Only the owner can see or change courier credentials.')).toBeTruthy();
+        // Opens on the charges it can edit.
+        expect(await screen.findByRole('button', { name: 'Save charges' })).toBeTruthy();
         expect(screen.queryByLabelText('API key')).toBeNull();
-        expect(screen.getByRole('button', { name: 'Save rate card' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Connection' }));
+        expect(await screen.findByText('Only the owner can see or change courier credentials.')).toBeTruthy();
     });
 
-    it('explains that Pathao’s username/password is its official API token flow (rule 24a)', async () => {
+    it('walks Pathao through its own steps: official token flow (rule 24a), pickup store, area matching (rule 32)', async () => {
         settingsApi(owner);
         renderApp('/integrations/couriers');
-        const pathaoCard = await screen.findByRole('listitem', { name: 'Pathao' });
-        fireEvent.click(within(pathaoCard).getByRole('button', { name: 'Settings' }));
+        const pathaoCard = await screen.findByRole('article', { name: 'Pathao' });
+        fireEvent.click(within(pathaoCard).getByRole('button', { name: 'Set up' }));
         expect(await screen.findByText(/never used to log in to the merchant portal/)).toBeTruthy();
         expect(screen.getByLabelText('Merchant password')).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Choose your pickup store' })).toBeTruthy();
+        expect(screen.getByLabelText('Pickup store ID')).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Match your areas to Pathao zones' })).toBeTruthy();
     });
 });
 

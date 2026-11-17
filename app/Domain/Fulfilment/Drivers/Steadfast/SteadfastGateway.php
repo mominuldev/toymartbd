@@ -6,11 +6,13 @@ namespace App\Domain\Fulfilment\Drivers\Steadfast;
 
 use App\Domain\Customer\Models\District;
 use App\Domain\Customer\Models\Upazila;
+use App\Domain\Fulfilment\Contracts\ChecksConnection;
 use App\Domain\Fulfilment\Contracts\CourierGateway;
 use App\Domain\Fulfilment\Contracts\FraudLookup;
 use App\Domain\Fulfilment\Contracts\LooksUpByMerchantRef;
 use App\Domain\Fulfilment\DTOs\BookingResult;
 use App\Domain\Fulfilment\DTOs\BulkBookingResult;
+use App\Domain\Fulfilment\DTOs\ConnectionCheck;
 use App\Domain\Fulfilment\DTOs\CourierQuote;
 use App\Domain\Fulfilment\DTOs\CourierStatusResult;
 use App\Domain\Fulfilment\DTOs\CourierWebhookEvent;
@@ -63,7 +65,7 @@ use JsonException;
  * definite refusals (4xx, 401) are RETURNED. A 401 is never retried: Steadfast locks a
  * key out for an hour after ten auth failures in five minutes (research §6.10).
  */
-final class SteadfastGateway implements CourierGateway, FraudLookup, LooksUpByMerchantRef
+final class SteadfastGateway implements ChecksConnection, CourierGateway, FraudLookup, LooksUpByMerchantRef
 {
     public const string CODE = 'steadfast';
 
@@ -331,6 +333,39 @@ final class SteadfastGateway implements CourierGateway, FraudLookup, LooksUpByMe
             consignmentId: $consignmentId,
             message: $message,
         );
+    }
+
+    /**
+     * "Check connection": `GET /get_balance` with the saved keys — read-only, books nothing. A
+     * 401/403 is `credentials_rejected` and is never retried (ten auth failures in five minutes
+     * lock the key for an hour, research §6.10); anything else that is not a balance is
+     * `unreachable`.
+     */
+    public function checkConnection(): ConnectionCheck
+    {
+        if ($this->credentials() === null) {
+            return ConnectionCheck::failed('no_credentials');
+        }
+
+        try {
+            $response = $this->send('get_balance', fn (PendingRequest $http): Response => $http->get($this->url('/get_balance')));
+            if ($response->status() === 401 || $response->status() === 403) {
+                Log::warning('courier.steadfast.auth_failed', ['http' => $response->status(), 'operation' => 'check_connection']);
+
+                return ConnectionCheck::failed('credentials_rejected');
+            }
+            if (! $response->successful()) {
+                return ConnectionCheck::failed('unreachable');
+            }
+            $value = $this->decode('get_balance', $response)['current_balance'] ?? null;
+        } catch (SteadfastUnavailable) {
+            return ConnectionCheck::failed('unreachable');
+        }
+        if (! is_int($value) && ! is_float($value) && ! (is_string($value) && is_numeric($value))) {
+            return ConnectionCheck::failed('unreachable');
+        }
+
+        return new ConnectionCheck(true, 'connected', CarbonImmutable::now(), Money::of(is_int($value) ? $value : number_format((float) $value, 2, '.', '')));
     }
 
     /** Current merchant balance — can be negative (delivered COD less charges and the 1% fee). */

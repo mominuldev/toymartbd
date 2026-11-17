@@ -19,6 +19,23 @@ number; Pathao's documented webhooks and `order/info` carry none either. Nothing
 automatically — staff record the rider on the shipment (`PATCH /shipments/{id}/rider`, see
 `shipments.md`). Scraping the merchant portal for it is forbidden (rule 24a).
 
+## Check connection (Settings › Couriers)
+
+`POST /api/v1/admin/settings/couriers/{provider}/check` — one read-only call to the courier with the
+**saved** credentials; it books nothing and never sets `verified` (rule 33a). Drivers opt in through
+`App\Domain\Fulfilment\Contracts\ChecksConnection` (rule 5). Same permission as the credentials
+(`settings.manage_integrations`), throttled to 6 a minute: Steadfast locks a key for an hour after ten
+auth failures in five minutes.
+
+| Driver | Call | Success |
+|---|---|---|
+| Steadfast | `GET /get_balance` | `connected` + `balance`, kept on `courier_providers.balance` / `balance_checked_at` |
+| Pathao | token grant, then `GET /stores` | `connected` + `store_name` when `store_id` is one of the account's stores; `store_missing` / `store_not_found` otherwise; `sandbox: true` on the test server |
+
+Other reasons: `no_credentials` (nothing is sent), `credentials_rejected` (401/403, or Pathao's token grant
+refused — never retried), `unreachable` (timeout, 5xx, non-JSON), `unsupported`. Verified live against
+Steadfast 2026-11-17 (balance ৳0); Pathao is covered by its real sandbox fixtures.
+
 ## Steadfast
 
 **Status: fixture-only.** No merchant account exists and Steadfast has **no sandbox** (rule 33a).
