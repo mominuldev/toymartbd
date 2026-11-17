@@ -79,6 +79,11 @@ Route::post('/auth/two-factor-challenge', [AuthController::class, 'twoFactorChal
 Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFactorEnrolled::class])->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
+    // My account (B · 40): your own name, sign-in email and password.
+    Route::put('/auth/profile', [App\Http\Controllers\Api\V1\Admin\Auth\AccountController::class, 'updateProfile'])->middleware('throttle:10,1')->name('auth.profile.update');
+    Route::put('/auth/password', [App\Http\Controllers\Api\V1\Admin\Auth\AccountController::class, 'updatePassword'])->middleware('throttle:10,1')->name('auth.password.update');
+    Route::post('/auth/avatar', [App\Http\Controllers\Api\V1\Admin\Auth\AccountController::class, 'updateAvatar'])->middleware('throttle:10,1')->name('auth.avatar.update');
+    Route::delete('/auth/avatar', [App\Http\Controllers\Api\V1\Admin\Auth\AccountController::class, 'destroyAvatar'])->name('auth.avatar.destroy');
 
     // Your own two-factor sign-in (owner decision 2026-11-14). Reachable before enrolment.
     Route::get('/auth/two-factor', [TwoFactorController::class, 'show'])->name('auth.two-factor.show');

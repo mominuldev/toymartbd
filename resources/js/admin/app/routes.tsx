@@ -7,6 +7,7 @@ import { RouteError } from './RouteError';
 import { BlogPostEditorPage, BlogPostsPage, BlogTermsPage } from '@/features/content/blog';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { TwoFactorPage } from '@/features/auth/TwoFactorPage';
+import { AccountPage } from '@/features/auth/AccountPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { sectionPaths } from '@/components/shell/nav';
 import { CatalogLayout } from '@/features/catalog/CatalogLayout';
@@ -121,6 +122,8 @@ export const routes: RouteObject[] = [
                 element: <Shell />,
                 children: [
                     { index: true, element: <Dashboard /> },
+                    // My account (B · 40 547:83811): your own name, email and password.
+                    { path: 'account', element: <AccountPage /> },
                     {
                         path: 'products',
                         element: <CatalogLayout />,

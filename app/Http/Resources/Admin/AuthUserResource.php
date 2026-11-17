@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin;
 
+use App\Domain\Catalog\Services\MediaUrls;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\BranchMode;
 use App\Domain\Staff\Services\TwoFactor;
@@ -26,7 +27,7 @@ use Illuminate\Http\Request;
 final class AuthUserResource extends ApiResource
 {
     /**
-     * @return array{id: int, name: string, email: string, locale: string|null, roles: list<string>, permissions: list<string>, two_factor: array{enabled: bool, required: bool}, branches: array{multi_branch: bool, locations: list<array{id: int, name: string, name_bn: string|null, area: string|null, type: string|null, is_default: bool}>}}
+     * @return array{id: int, name: string, email: string, avatar_url: string|null, locale: string|null, roles: list<string>, permissions: list<string>, two_factor: array{enabled: bool, required: bool}, branches: array{multi_branch: bool, locations: list<array{id: int, name: string, name_bn: string|null, area: string|null, type: string|null, is_default: bool}>}}
      */
     public function toArray(Request $request): array
     {
@@ -54,6 +55,8 @@ final class AuthUserResource extends ApiResource
             'id' => (int) $user->getKey(),
             'name' => $user->name,
             'email' => $user->email,
+            /** Your profile photo (256 px square), or null for initials. */
+            'avatar_url' => is_string($user->avatar_path) && $user->avatar_path !== '' ? MediaUrls::url($user->avatar_path) : null,
             /**
              * No `users.locale` column yet; null means "use the request locale".
              *

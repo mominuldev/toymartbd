@@ -13,7 +13,7 @@ const shots = process.env.SHOTS_DIR;
 async function signIn(page: Page) {
     await page.goto('/admin/shipments');
     await expect(page.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
-    await page.getByLabel('Email').fill('owner@toymart.test');
+    await page.getByLabel('Email').fill('mominulfed@gmail.com');
     await page.getByLabel('Password').fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
 }

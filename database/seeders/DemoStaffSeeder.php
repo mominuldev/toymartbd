@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
  * through each role's permissions and the segregation-of-duties flows have two real
  * people: the accountant enters an expense, the manager approves it.
  *
- * The super admin is DatabaseSeeder's `owner@toymart.test`; this adds the other six as
+ * The super admin is DatabaseSeeder's `mominulfed@gmail.com`; this adds the other six as
  * `<role>@toymart.test` with the factory password ("password", the same as the owner).
  * Names are invented, Bangla beside English, since `users.name` is one column.
  *

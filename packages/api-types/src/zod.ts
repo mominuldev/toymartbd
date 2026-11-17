@@ -1990,6 +1990,29 @@ export const updateOrderRequestSchema = z.object({
 });
 export type UpdateOrderRequestInput = z.input<typeof updateOrderRequestSchema>;
 
+/** `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }` */
+export const updateOwnAvatarRequestSchema = z.object({
+    "avatar": z.instanceof(Blob).optional(),
+    "media_id": z.number().int().nullable().optional(),
+});
+export type UpdateOwnAvatarRequestInput = z.input<typeof updateOwnAvatarRequestSchema>;
+
+/** `PUT /auth/password` — `{ current_password, password, password_confirmation }`. Your own */
+export const updateOwnPasswordRequestSchema = z.object({
+    "current_password": z.string().min(1).max(255),
+    "password": z.string().min(12).max(128),
+    "password_confirmation": z.string().min(12).max(128),
+});
+export type UpdateOwnPasswordRequestInput = z.input<typeof updateOwnPasswordRequestSchema>;
+
+/** `PUT /auth/profile` — `{ name, email, current_password? }`. Your own account only, so any */
+export const updateOwnProfileRequestSchema = z.object({
+    "name": z.string().min(1).max(120),
+    "email": z.email().min(1).max(255),
+    "current_password": z.string().max(255).nullable().optional(),
+});
+export type UpdateOwnProfileRequestInput = z.input<typeof updateOwnProfileRequestSchema>;
+
 /** `PUT /settings/pos` — Store settings › Point of sale (the whole section); needs settings.update. */
 export const updatePosSettingsRequestSchema = z.object({
     "discount_max_percent": z.string().min(0).max(100).regex(new RegExp("^\\d{1,3}(\\.\\d{1,2})?$")),

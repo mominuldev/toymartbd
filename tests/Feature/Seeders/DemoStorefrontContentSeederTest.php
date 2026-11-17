@@ -60,7 +60,7 @@ beforeEach(function (): void {
 
     $this->seed([RolesAndPermissionsSeeder::class, GeographySeeder::class, CatalogReferenceSeeder::class, MediaFoldersSeeder::class,
         DeliverySeeder::class, CmsHomeBlocksSeeder::class, StaticPagesSeeder::class]);
-    User::factory()->create(['email' => 'owner@toymart.test'])->assignRole(Role::SuperAdmin->value);
+    User::factory()->create(['email' => 'mominulfed@gmail.com'])->assignRole(Role::SuperAdmin->value);
     $this->seed([CategoryDemoSeeder::class, BrandDemoSeeder::class, DemoCatalogSeeder::class, DemoInventorySeeder::class]);
     $this->seed([DemoMarketingSeeder::class, DemoReviewsSeeder::class, DemoContentSeeder::class, DemoSeoSeeder::class]);
 });

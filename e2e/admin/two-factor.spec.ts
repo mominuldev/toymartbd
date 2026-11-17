@@ -42,7 +42,7 @@ async function signIn(page: Page, email: string, password: string, path = '/admi
 
 test('set up two-factor, sign in with a code, and an owner resets a lost one', async ({ browser }) => {
     const owner = await open(browser);
-    await signIn(owner, 'owner@toymart.test', 'password', '/admin/staff');
+    await signIn(owner, 'mominulfed@gmail.com', 'password', '/admin/staff');
     await owner.getByRole('button', { name: 'Add staff' }).click();
     const add = owner.getByRole('dialog', { name: 'Add staff' });
     await add.getByLabel('Full name').fill('Nadia Rahman');

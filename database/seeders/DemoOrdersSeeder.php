@@ -1242,8 +1242,8 @@ class DemoOrdersSeeder extends Seeder
     /** @return array{operator: User, manager: User, accountant: User} DemoStaffSeeder's users, or the owner */
     private static function staff(): array
     {
-        $owner = User::query()->where('email', 'owner@toymart.test')->first()
-            ?? throw new RuntimeException('Demo orders need the owner@toymart.test login (DatabaseSeeder creates it).');
+        $owner = User::query()->where('email', 'mominulfed@gmail.com')->first()
+            ?? throw new RuntimeException('Demo orders need the mominulfed@gmail.com login (DatabaseSeeder creates it).');
         $find = static fn (string $email): User => User::query()->where('email', $email)->first() ?? $owner;
 
         return [

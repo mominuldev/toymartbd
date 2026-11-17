@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon, UserCircleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
 import { buttonClass } from '@/components/ui/Button';
@@ -95,7 +95,7 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
             >
                 {/* Named by its content, not an aria-label (WCAG 2.5.3 label in name): below lg only the
                     avatar shows, so the full label is visually hidden there; from lg the visible name and role. */}
-                <Avatar name={me.name} />
+                <Avatar name={me.name} src={me.avatar_url} />
                 <span className="sr-only lg:hidden">{t('shell.userMenu', { name: me.name })}</span>
                 <span className="hidden min-w-0 flex-col items-start text-start lg:flex">
                     <span className="max-w-32 truncate t-admin-body-strong text-fg-primary">{firstName}</span>
@@ -106,9 +106,18 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
             {open && (
                 <div id={menuId} role="menu" className="absolute end-0 top-full z-30 mt-1 min-w-44 rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3">
                     <Link
-                        to="/account/two-factor"
+                        to="/account"
                         role="menuitem"
                         autoFocus
+                        onClick={() => setOpen(false)}
+                        className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body whitespace-nowrap text-fg-primary hover:bg-subtle"
+                    >
+                        <UserCircleIcon size={18} aria-hidden />
+                        {t('account.menu')}
+                    </Link>
+                    <Link
+                        to="/account/two-factor"
+                        role="menuitem"
                         className="flex h-9 w-full items-center gap-2 rounded-xs px-3 t-admin-body whitespace-nowrap text-fg-primary hover:bg-subtle"
                     >
                         <ShieldCheckIcon size={18} aria-hidden />

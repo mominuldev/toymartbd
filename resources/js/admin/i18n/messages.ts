@@ -44,6 +44,7 @@ import { analyticsVisitorsBn, analyticsVisitorsEn } from './messages.analyticsVi
 import { analyticsMarketingBn, analyticsMarketingEn } from './messages.analyticsMarketing';
 import { analyticsLiveBn, analyticsLiveEn } from './messages.analyticsLive';
 import { staffBn, staffEn } from './messages.staff';
+import { accountBn, accountEn } from './messages.account';
 import { auditBn, auditEn } from './messages.audit';
 import { integrationsHubBn, integrationsHubEn } from './messages.integrationsHub';
 import { storeSettingsBn, storeSettingsEn } from './messages.storeSettings';
@@ -94,6 +95,7 @@ export const en = {
     ...blogEn,
     ...trackingEn,
     ...staffEn,
+    ...accountEn,
     ...auditEn,
     ...integrationsHubEn,
     ...storeSettingsEn,
@@ -423,6 +425,7 @@ export const bn: Messages = {
     ...blogBn,
     ...trackingBn,
     ...staffBn,
+    ...accountBn,
     ...auditBn,
     ...integrationsHubBn,
     ...storeSettingsBn,

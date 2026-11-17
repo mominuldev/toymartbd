@@ -21,7 +21,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * Demo owner capital (P10; local/testing only, from DemoDataSeeder before DemoFinanceSeeder so the
- * daily rollup includes it): the owner — linked to the `owner@toymart.test` login — and two
+ * daily rollup includes it): the owner — linked to the `mominulfed@gmail.com` login — and two
  * partners; their investments and drawings across the demo window, and one drawing entered twice
  * and reversed, so the Capital page shows every state (money in, money out, reversal, reversed).
  * Every entry goes through RecordCapitalEntry / ReverseCapitalEntry with the clock at that Dhaka
@@ -37,7 +37,7 @@ class DemoCapitalSeeder extends Seeder
             return;
         }
 
-        $owner = User::query()->where('email', 'owner@toymart.test')->first();
+        $owner = User::query()->where('email', 'mominulfed@gmail.com')->first();
         $accountant = DemoStaffSeeder::user(Role::Accountant);
         $by = $accountant->id ?? $owner?->id;
 

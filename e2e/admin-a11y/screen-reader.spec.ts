@@ -18,7 +18,7 @@ const m = (locale: Locale, key: Key, vars: Record<string, string> = {}): string 
 
 test.use({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
 
-async function signIn(page: Page, { locale = 'en', email = 'owner@toymart.test' }: { locale?: Locale; email?: string } = {}) {
+async function signIn(page: Page, { locale = 'en', email = 'mominulfed@gmail.com' }: { locale?: Locale; email?: string } = {}) {
     await page.addInitScript((l) => localStorage.setItem('tm-admin-locale', l), locale);
     await page.goto('/admin/login');
     await page.getByRole('textbox', { name: m(locale, 'auth.email') }).fill(email);
@@ -103,7 +103,7 @@ test('sign in: form names, the error alert tied to both fields, in English and B
     // Each language's label is spoken in its own voice.
     await expect(page.getByRole('button', { name: 'বাং' })).toHaveAttribute('lang', 'bn');
 
-    await page.getByRole('textbox', { name: 'Email' }).fill('owner@toymart.test');
+    await page.getByRole('textbox', { name: 'Email' }).fill('mominulfed@gmail.com');
     await page.getByRole('textbox', { name: 'Password' }).fill('not-the-password');
     await page.getByRole('button', { name: 'Sign in' }).click();
     const alert = page.getByRole('alert');

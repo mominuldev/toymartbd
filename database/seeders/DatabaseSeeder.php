@@ -32,9 +32,10 @@ class DatabaseSeeder extends Seeder
         // A known login is only ever created on a developer's machine or in tests. In any
         // other environment a seeded account with a factory password is a back door.
         if (app()->environment('local', 'testing')) {
+            // Local sign-in: mominulfed@gmail.com / password. Change either at /admin/account.
             User::query()->firstOrCreate(
-                ['email' => 'owner@toymart.test'],
-                User::factory()->raw(['name' => 'Local Owner', 'email' => 'owner@toymart.test']),
+                ['email' => 'mominulfed@gmail.com'],
+                User::factory()->raw(['name' => 'Mominul Islam', 'email' => 'mominulfed@gmail.com', 'password' => 'password']),
             )->assignRole(Role::SuperAdmin->value);
             $this->call(CategoryDemoSeeder::class);
             $this->call(BrandDemoSeeder::class);

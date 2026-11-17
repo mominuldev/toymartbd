@@ -12,15 +12,20 @@ use App\Domain\Inventory\Actions\SetReorderLevels;
 use App\Domain\Inventory\Enums\StockLocationType;
 use App\Domain\Inventory\Events\StockLevelChanged;
 use App\Domain\Inventory\Models\StockLocation;
+use App\Domain\Inventory\Services\BranchMode;
 use App\Domain\Inventory\Services\StockOverview;
+use App\Models\Enums\SettingGroup;
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Event;
 
 /**
  * Demo branches and reorder levels for the admin inventory overview (local/testing only —
- * DatabaseSeeder never runs it elsewhere). Figma B · 14 Inventory 241:39494 draws three
- * stock locations; this seeds the same three, so the location cards, "Other branches",
- * the tab counts and the nav badge show real numbers:
+ * DatabaseSeeder never runs it elsewhere). By default the store is a single shop: only the
+ * main location is seeded and multi-branch is saved as off (owner request 2026-11-18). With
+ * `demo.branches` on (DEMO_SEED_BRANCHES, the admin E2E run) it seeds the three stock
+ * locations Figma B · 14 Inventory 241:39494 draws and switches multiple branches on, so the
+ * location cards, "Other branches", the tab counts and the nav badge show real numbers:
  *
  *   dhk  Dhaka HQ · Mirpur      the migration's default location, renamed (it keeps its id
  *                               and the DemoCatalogSeeder opening stock the storefront reads)
@@ -90,30 +95,33 @@ class DemoInventorySeeder extends Seeder
 
     public function run(): void
     {
-        $locations = $this->locations();
+        $multi = (bool) config('demo.branches');
+        $branches = $multi ? ['ctg', 'syl'] : [];
+        $locations = $this->locations($multi);
         $products = Product::query()
             ->whereIn('slug', array_keys(DemoCatalogSeeder::PRODUCTS))
             ->with('variants:id,product_id')
             ->orderBy('id')
             ->get();
 
-        Event::fakeFor(function () use ($locations, $products): void {
+        Event::fakeFor(function () use ($locations, $products, $branches): void {
             $opening = app(RecordOpeningStock::class);
             $reorder = app(SetReorderLevels::class);
 
-            $levels = ['dhk' => [], 'ctg' => [], 'syl' => []];
+            $levels = array_fill_keys(['dhk', ...$branches], []);
             foreach ($products as $product) {
                 $variantIds = $product->variants->pluck('id')->all();
                 $branch = self::BRANCH_STOCK[$product->slug] ?? self::BRANCH_STOCK_DEFAULT;
 
-                foreach (['ctg', 'syl'] as $code) {
+                foreach ($branches as $code) {
                     $opening->handle($product, array_fill_keys($variantIds, $branch[$code]), locationId: $locations[$code]->id);
                 }
 
                 foreach ($variantIds as $variantId) {
                     $levels['dhk'][$variantId] = self::REORDER_DHK[$product->slug] ?? self::REORDER_DEFAULT['dhk'];
-                    $levels['ctg'][$variantId] = self::REORDER_DEFAULT['ctg'];
-                    $levels['syl'][$variantId] = self::REORDER_DEFAULT['syl'];
+                    foreach ($branches as $code) {
+                        $levels[$code][$variantId] = self::REORDER_DEFAULT[$code];
+                    }
                 }
             }
 
@@ -123,6 +131,14 @@ class DemoInventorySeeder extends Seeder
         }, [ProductChanged::class, StockLevelChanged::class]);
 
         StockOverview::forgetLowCounts();
+
+        // Single shop ⇔ at most one active location (BranchMode). Branches seeded → multi on;
+        // otherwise single, unless the owner already chose or other branches are active.
+        if ($multi) {
+            Setting::put(BranchMode::KEY, true, SettingGroup::Store);
+        } elseif (BranchMode::saved() === null && BranchMode::activeCount() <= 1) {
+            Setting::put(BranchMode::KEY, false, SettingGroup::Store);
+        }
     }
 
     /**
@@ -138,10 +154,14 @@ class DemoInventorySeeder extends Seeder
     ];
 
     /** @return array<string, StockLocation> code → location */
-    private function locations(): array
+    private function locations(bool $multi): array
     {
         $out = [];
         foreach (self::LOCATIONS as $code => [$name, $nameBn, $description, $descriptionBn]) {
+            if (! $multi && $code !== 'dhk') {
+                continue;
+            }
+
             $attributes = ['code' => $code, 'name' => $name, 'name_bn' => $nameBn, 'description' => $description, 'description_bn' => $descriptionBn, 'is_active' => true]
                 + self::profile($code);
 

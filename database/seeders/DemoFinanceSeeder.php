@@ -107,7 +107,7 @@ class DemoFinanceSeeder extends Seeder
         CarbonImmutable::setTestNow(null);
         $this->today = DhakaDate::todayDate();
 
-        $owner = User::query()->where('email', 'owner@toymart.test')->value('id');
+        $owner = User::query()->where('email', 'mominulfed@gmail.com')->value('id');
         $this->accountantId = DemoStaffSeeder::user(Role::Accountant)->id ?? (is_numeric($owner) ? (int) $owner : null);
         $this->managerId = DemoStaffSeeder::user(Role::Manager)->id ?? (is_numeric($owner) ? (int) $owner : null);
 

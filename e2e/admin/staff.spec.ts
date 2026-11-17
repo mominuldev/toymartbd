@@ -23,10 +23,10 @@ async function signInAs(browser: Browser, email: string, password: string): Prom
 }
 
 test('owner adds, manages and deactivates a staff member', async ({ browser }) => {
-    const owner = await signInAs(browser, 'owner@toymart.test', 'password');
+    const owner = await signInAs(browser, 'mominulfed@gmail.com', 'password');
     await expect(owner.getByRole('heading', { name: 'Staff & roles' })).toBeVisible();
     const table = owner.getByRole('table');
-    await expect(table.getByText('owner@toymart.test')).toBeVisible();
+    await expect(table.getByText('mominulfed@gmail.com')).toBeVisible();
     if (shots) await owner.screenshot({ path: `${shots}/people.png`, fullPage: true });
 
     // Add — a short temporary password is caught by the generated schema first.
@@ -79,8 +79,8 @@ test('owner adds, manages and deactivates a staff member', async ({ browser }) =
     await expect(sadia.getByText('Those details did not match an active staff account.')).toBeVisible();
 
     // Your own account cannot be demoted or deactivated from here.
-    await owner.getByRole('button', { name: /^Manage Local Owner$/ }).click();
-    const self = owner.getByRole('dialog', { name: /Manage Local Owner/ });
+    await owner.getByRole('button', { name: /^Manage Mominul Islam$/ }).click();
+    const self = owner.getByRole('dialog', { name: /Manage Mominul Islam/ });
     await expect(self.getByText('This is your account. Another owner must change your role or status.')).toBeVisible();
     await expect(self.getByRole('button', { name: 'Deactivate' })).toHaveCount(0);
     await self.getByRole('button', { name: 'Cancel' }).click();

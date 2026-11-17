@@ -98,6 +98,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/auth/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /auth/profile` — returns the refreshed `/auth/me` body */
+        put: operations["v1.admin.auth.profile.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /auth/password` — 204. Other browser sessions are signed out; this one stays */
+        put: operations["v1.admin.auth.password.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/auth/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /auth/avatar` — your profile photo, uploaded or picked from the media library; returns the refreshed `/auth/me` body */
+        post: operations["v1.admin.auth.avatar.update"];
+        /** `DELETE /auth/avatar` — back to initials; returns the refreshed `/auth/me` body */
+        delete: operations["v1.admin.auth.avatar.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/auth/two-factor": {
         parameters: {
             query?: never;
@@ -8694,6 +8746,8 @@ export interface components {
             id: number;
             name: string;
             email: string;
+            /** @description Your profile photo (256 px square), or null for initials. */
+            avatar_url: string | null;
             /**
              * @description No `users.locale` column yet; null means "use the request locale".
              * @enum {string|null}
@@ -19325,6 +19379,41 @@ export interface components {
             note?: string | null;
         };
         /**
+         * UpdateOwnAvatarRequest
+         * @description `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }`
+         *     to use an image already in the media library. Your own photo only.
+         */
+        UpdateOwnAvatarRequest: {
+            /**
+             * Format: binary
+             * @description Maximum file size: 5120 kilobytes.
+             */
+            avatar?: string;
+            media_id?: number | null;
+        };
+        /**
+         * UpdateOwnPasswordRequest
+         * @description `PUT /auth/password` — `{ current_password, password, password_confirmation }`. Your own
+         *     password only; the same minimum as a staff password set by the owner.
+         */
+        UpdateOwnPasswordRequest: {
+            current_password: string;
+            password: string;
+            password_confirmation: string;
+        };
+        /**
+         * UpdateOwnProfileRequest
+         * @description `PUT /auth/profile` — `{ name, email, current_password? }`. Your own account only, so any
+         *     signed-in staff member may call it. Changing the email (the sign-in name) needs the current
+         *     password; renaming yourself does not.
+         */
+        UpdateOwnProfileRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            current_password?: string | null;
+        };
+        /**
          * UpdatePosSettingsRequest
          * @description `PUT /settings/pos` — Store settings › Point of sale (the whole section); needs settings.update.
          */
@@ -20126,6 +20215,107 @@ export interface operations {
         };
     };
     "v1.admin.auth.me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AuthUserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthUserResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "v1.admin.auth.profile.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOwnProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description `AuthUserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthUserResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.password.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOwnPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.avatar.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["UpdateOwnAvatarRequest"];
+            };
+        };
+        responses: {
+            /** @description `AuthUserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthUserResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.auth.avatar.destroy": {
         parameters: {
             query?: never;
             header?: never;

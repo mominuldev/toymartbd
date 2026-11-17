@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Inventory\Models\StockLevel;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Models\StockMovement;
+use App\Domain\Inventory\Services\BranchMode;
 use App\Domain\Inventory\Services\StockLedgerReport;
 use App\Domain\Inventory\Services\StockOverview;
 use Database\Seeders\DemoCatalogSeeder;
@@ -21,6 +22,24 @@ beforeEach(function (): void {
     Http::preventStrayRequests();
     config(['services.storefront.url' => '', 'services.storefront.revalidate_secret' => '']);
     $this->seed(DemoCatalogSeeder::class);
+    config(['demo.branches' => true]); // the branch tests below; the single-shop default has its own
+});
+
+it('seeds a single shop with multi-branch off by default', function (): void {
+    config(['demo.branches' => false]);
+    $this->seed(DemoInventorySeeder::class);
+
+    expect(StockLocation::query()->pluck('code')->all())->toBe(['dhk'])
+        ->and(BranchMode::saved())->toBeFalse()
+        ->and(BranchMode::isMulti())->toBeFalse()
+        ->and(demoDrift())->toBe([])
+        ->and(DB::table('stock_levels')->where('reorder_point', '>', 0)->exists())->toBeTrue();
+});
+
+it('switches multiple branches on when it seeds the demo branches', function (): void {
+    $this->seed(DemoInventorySeeder::class);
+
+    expect(BranchMode::saved())->toBeTrue();
 });
 
 /** @return array<string, int> "variant:location" → on_hand drift (movements − level), non-zero only */

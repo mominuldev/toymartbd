@@ -19,7 +19,7 @@ test.use({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
 test('sign in, skip to content, and process an order with the keyboard only', async ({ page }) => {
     await page.goto('/admin/login');
     await tabTo(page, page.locator('input[type="email"]'));
-    await page.keyboard.type('owner@toymart.test');
+    await page.keyboard.type('mominulfed@gmail.com');
     await tabTo(page, page.locator('input[type="password"]'));
     await page.keyboard.type('password');
     await page.keyboard.press('Enter');
@@ -68,7 +68,7 @@ async function assertTrapped(page: Page, dialog: Locator): Promise<void> {
 
 async function signInOwner(page: Page): Promise<void> {
     await page.goto('/admin/login');
-    await page.locator('input[type="email"]').fill('owner@toymart.test');
+    await page.locator('input[type="email"]').fill('mominulfed@gmail.com');
     await page.locator('input[type="password"]').fill('password');
     await page.locator('button[type="submit"]').click();
     await expect(page).not.toHaveURL(/\/login/);

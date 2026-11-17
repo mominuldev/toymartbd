@@ -22,7 +22,7 @@ const shots = process.env.SHOTS_DIR;
 async function signIn(page: Page) {
     await page.addInitScript(() => localStorage.setItem('tm-admin-locale', 'bn'));
     await page.goto('/admin/login');
-    await page.locator('input[type="email"]').fill('owner@toymart.test');
+    await page.locator('input[type="email"]').fill('mominulfed@gmail.com');
     await page.locator('input[type="password"]').fill('password');
     await page.locator('button[type="submit"]').click();
     await expect(page).not.toHaveURL(/\/login/);

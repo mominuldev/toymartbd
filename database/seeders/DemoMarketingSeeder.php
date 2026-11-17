@@ -326,7 +326,7 @@ class DemoMarketingSeeder extends Seeder
     /** The marketing manager when DemoStaffSeeder ran, else the local owner, else nobody. */
     private static function actorId(): ?int
     {
-        $user = DemoStaffSeeder::user(Role::Manager) ?? User::query()->where('email', 'owner@toymart.test')->first();
+        $user = DemoStaffSeeder::user(Role::Manager) ?? User::query()->where('email', 'mominulfed@gmail.com')->first();
 
         return $user?->id;
     }

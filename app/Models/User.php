@@ -23,6 +23,7 @@ use Spatie\Permission\Traits\HasRoles;
  * the `encrypted` cast (rule 20); neither is ever serialised. A secret without
  * `two_factor_confirmed_at` is a setup in progress, not an active second factor.
  *
+ * @property string|null $avatar_path
  * @property bool $is_active
  * @property Carbon|null $last_login_at
  * @property string|null $two_factor_secret

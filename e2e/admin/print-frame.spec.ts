@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 /** Print buttons print a PDF from a hidden same-origin frame; the admin CSP must allow it. */
 test('a PDF loads in the print frame without a CSP violation', async ({ page }) => {
     await page.goto('/admin/login');
-    await page.locator('input[type="email"]').fill('owner@toymart.test');
+    await page.locator('input[type="email"]').fill('mominulfed@gmail.com');
     await page.locator('input[type="password"]').fill('password');
     await page.locator('button[type="submit"]').click();
     await expect(page).not.toHaveURL(/\/login/);

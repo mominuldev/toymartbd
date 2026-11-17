@@ -20,6 +20,7 @@ const owner: Me = {
     id: 1,
     name: 'Mominul Islam',
     email: 'owner@example.com',
+    avatar_url: null,
     locale: null,
     roles: ['super_admin'],
     permissions: ['dashboard.view', 'orders.view', 'orders.update', 'shipments.view', 'shipments.book'],

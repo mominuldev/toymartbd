@@ -87,7 +87,7 @@ function m(locale: Locale, key: Key, vars: Record<string, string> = {}): string 
     return Object.entries(vars).reduce((text, [k, v]) => text.replaceAll(`{${k}}`, v), (locale === 'bn' ? bn : en)[key]);
 }
 
-async function signIn(page: Page, locale: 'en' | 'bn', theme: 'admin-light' | 'admin-dark', email = 'owner@toymart.test', expectSignedIn = true) {
+async function signIn(page: Page, locale: 'en' | 'bn', theme: 'admin-light' | 'admin-dark', email = 'mominulfed@gmail.com', expectSignedIn = true) {
     await page.addInitScript(([l, th]) => {
         localStorage.setItem('tm-admin-locale', l);
         localStorage.setItem('tm-admin-theme', th);

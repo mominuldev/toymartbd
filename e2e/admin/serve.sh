@@ -1,6 +1,6 @@
 #!/bin/sh
 # Boots the real Laravel app for the admin E2E suite on a throwaway SQLite database.
-# APP_ENV=local makes DatabaseSeeder create owner@toymart.test and the demo brands.
+# APP_ENV=local makes DatabaseSeeder create mominulfed@gmail.com and the demo brands.
 set -e
 cd "$(dirname "$0")/../.."
 PHP_BIN="${PHP_BIN:-php}"
@@ -18,6 +18,8 @@ export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
 export DEMO_SEED_IMAGES=false
 # Specs count orders and queue badges exactly: no demo order history in this run.
 export DEMO_SEED_TRANSACTIONS=false
+# The POS, transfer and branch-setup specs need the demo branches (a normal seed is a single shop).
+export DEMO_SEED_BRANCHES=true
 # Every spec signs in; the production limit (5/min) would throttle the sixth.
 export AUTH_LOGIN_PER_MINUTE=60
 # …and the per-account limit (10 / 15 min): every spec signs the same owner in.

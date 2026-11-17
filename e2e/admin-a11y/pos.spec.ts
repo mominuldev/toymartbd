@@ -56,7 +56,7 @@ async function signIn(page: Page, locale: Locale, theme: Theme = 'admin-light') 
         [locale, theme] as const,
     );
     await page.goto('/admin/login');
-    await page.locator('input[type="email"]').fill('owner@toymart.test');
+    await page.locator('input[type="email"]').fill('mominulfed@gmail.com');
     await page.locator('input[type="password"]').fill('password');
     await page.locator('button[type="submit"]').click();
     await expect(page).not.toHaveURL(/\/login/);

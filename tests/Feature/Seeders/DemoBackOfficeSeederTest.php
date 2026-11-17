@@ -42,7 +42,7 @@ beforeEach(function (): void {
         ExpenseCategoriesSeeder::class, CategoryDemoSeeder::class, BrandDemoSeeder::class, DemoCatalogSeeder::class,
         DemoInventorySeeder::class,
     ]);
-    User::factory()->create(['email' => 'owner@toymart.test'])->assignRole(Role::SuperAdmin->value);
+    User::factory()->create(['email' => 'mominulfed@gmail.com'])->assignRole(Role::SuperAdmin->value);
 });
 
 afterEach(function (): void {
@@ -69,7 +69,8 @@ it('seeds staff, purchasing and finance in every state with both invariants inta
     foreach (PurchaseStatus::values() as $status) {
         expect($statuses)->toContain($status);
     }
-    expect(DB::table('purchase_receipts')->distinct()->count('location_id'))->toBe(2)
+    // A single shop by default (demo.branches off): the Chattogram purchase receives at the main shop.
+    expect(DB::table('purchase_receipts')->distinct()->count('location_id'))->toBe(1)
         ->and(Supplier::query()->where('status', 'archived')->count())->toBe(1);
 
     // Payables: some suppliers owed, some fully paid.

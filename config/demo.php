@@ -15,6 +15,14 @@ return [
      */
     'transactions' => (bool) env('DEMO_SEED_TRANSACTIONS', env('APP_ENV') === 'local'),
 
+    /*
+     * Demo branches (DemoInventorySeeder): Chattogram and Sylhet beside the main shop, with
+     * multiple branches switched on. Off by default — a seeded store is a single shop with
+     * multi-branch off (owner request 2026-11-18). The admin E2E run (e2e/admin/serve.sh)
+     * turns it on, because its POS, transfer and branch-setup specs need the branches.
+     */
+    'branches' => (bool) env('DEMO_SEED_BRANCHES', false),
+
     /* How many days back the demo order history starts, ending today (Dhaka time). */
     'history_days' => (int) env('DEMO_SEED_HISTORY_DAYS', 60),
 ];

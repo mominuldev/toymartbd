@@ -171,7 +171,7 @@ class DemoSeoSeeder extends Seeder
 
     private static function actorId(): ?int
     {
-        return (DemoStaffSeeder::user(Role::ContentEditor) ?? User::query()->where('email', 'owner@toymart.test')->first())?->id;
+        return (DemoStaffSeeder::user(Role::ContentEditor) ?? User::query()->where('email', 'mominulfed@gmail.com')->first())?->id;
     }
 
     private static function at(CarbonImmutable $instant, callable $fn): void

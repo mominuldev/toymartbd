@@ -91,7 +91,7 @@ export function Shell() {
     const signOut = () => logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) });
     const roleKey = `role.${me.roles[0] ?? ''}`;
     const roleLabel = roleKey in en ? t(roleKey as MessageKey) : (me.roles[0] ?? '');
-    const user = { name: me.name, role: roleLabel };
+    const user = { name: me.name, role: roleLabel, avatar: me.avatar_url };
     const branches = {
         multi: working.multi,
         locations: working.locations,

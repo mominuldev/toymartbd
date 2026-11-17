@@ -190,6 +190,143 @@
                 }
             }
         },
+        "/admin/auth/profile": {
+            "put": {
+                "operationId": "v1.admin.auth.profile.update",
+                "summary": "`PUT /auth/profile` \u2014 returns the refreshed `/auth/me` body",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOwnProfileRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AuthUserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthUserResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/auth/password": {
+            "put": {
+                "operationId": "v1.admin.auth.password.update",
+                "summary": "`PUT /auth/password` \u2014 204. Other browser sessions are signed out; this one stays",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOwnPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/auth/avatar": {
+            "post": {
+                "operationId": "v1.admin.auth.avatar.update",
+                "summary": "`POST /auth/avatar` \u2014 your profile photo, uploaded or picked from the media library; returns the refreshed `/auth/me` body",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOwnAvatarRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AuthUserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthUserResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.auth.avatar.destroy",
+                "summary": "`DELETE /auth/avatar` \u2014 back to initials; returns the refreshed `/auth/me` body",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AuthUserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthUserResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/auth/two-factor": {
             "get": {
                 "operationId": "v1.admin.auth.two-factor.show",
@@ -39701,6 +39838,13 @@
                     "email": {
                         "type": "string"
                     },
+                    "avatar_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Your profile photo (256 px square), or null for initials."
+                    },
                     "locale": {
                         "type": [
                             "string",
@@ -39808,6 +39952,7 @@
                     "id",
                     "name",
                     "email",
+                    "avatar_url",
                     "locale",
                     "roles",
                     "permissions",
@@ -80852,6 +80997,78 @@
                     "expected_total"
                 ],
                 "title": "UpdateOrderRequest"
+            },
+            "UpdateOwnAvatarRequest": {
+                "type": "object",
+                "description": "`POST /auth/avatar` \u2014 multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }`\nto use an image already in the media library. Your own photo only.",
+                "properties": {
+                    "avatar": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "Maximum file size: 5120 kilobytes."
+                    },
+                    "media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "title": "UpdateOwnAvatarRequest"
+            },
+            "UpdateOwnPasswordRequest": {
+                "type": "object",
+                "description": "`PUT /auth/password` \u2014 `{ current_password, password, password_confirmation }`. Your own\npassword only; the same minimum as a staff password set by the owner.",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 128
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "UpdateOwnPasswordRequest"
+            },
+            "UpdateOwnProfileRequest": {
+                "type": "object",
+                "description": "`PUT /auth/profile` \u2014 `{ name, email, current_password? }`. Your own account only, so any\nsigned-in staff member may call it. Changing the email (the sign-in name) needs the current\npassword; renaming yourself does not.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "current_password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "name",
+                    "email"
+                ],
+                "title": "UpdateOwnProfileRequest"
             },
             "UpdatePosSettingsRequest": {
                 "type": "object",

@@ -56,7 +56,7 @@ beforeEach(function (): void {
         RolesAndPermissionsSeeder::class, GeographySeeder::class, CatalogReferenceSeeder::class,
         DeliverySeeder::class, ExpenseCategoriesSeeder::class,
     ]);
-    User::query()->firstOrCreate(['email' => 'owner@toymart.test'], User::factory()->raw(['name' => 'Local Owner', 'email' => 'owner@toymart.test']))
+    User::query()->firstOrCreate(['email' => 'mominulfed@gmail.com'], User::factory()->raw(['name' => 'Mominul Islam', 'email' => 'mominulfed@gmail.com']))
         ->assignRole(Role::SuperAdmin->value);
     $this->seed([CategoryDemoSeeder::class, BrandDemoSeeder::class, DemoCatalogSeeder::class, DemoInventorySeeder::class]);
 });

@@ -13,7 +13,7 @@ const shots = process.env.SHOTS_DIR;
 test('owner reads every integration, filters, switches a courier and opens its settings', async ({ browser }) => {
     const page = await (await browser.newContext({ viewport: { width: 1440, height: 1000 } })).newPage();
     await page.goto('/admin/integrations');
-    await page.getByLabel('Email').fill('owner@toymart.test');
+    await page.getByLabel('Email').fill('mominulfed@gmail.com');
     await page.getByLabel('Password').fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
@@ -49,7 +49,7 @@ test('owner reads every integration, filters, switches a courier and opens its s
 test('Bangla hub keeps Western digits in the tab counts', async ({ browser }) => {
     const page = await (await browser.newContext({ viewport: { width: 768, height: 1000 } })).newPage();
     await page.goto('/admin/integrations');
-    await page.getByLabel('Email').fill('owner@toymart.test');
+    await page.getByLabel('Email').fill('mominulfed@gmail.com');
     await page.getByLabel('Password').fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('heading', { name: 'Integrations', level: 1 })).toBeVisible();

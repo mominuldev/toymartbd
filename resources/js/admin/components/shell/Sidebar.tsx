@@ -20,7 +20,7 @@ type SidebarProps = {
     /** The off-canvas drawer (<1024px) always shows labels. */
     variant?: 'rail' | 'drawer';
     /** Signed-in user for the pinned footer. */
-    user?: { name: string; role: string };
+    user?: { name: string; role: string; avatar?: string | null };
     /** The branch switcher under the brand row (Figma BranchSwitcher 187:102); omitted, none is shown. */
     branches?: {
         multi: boolean;
@@ -179,7 +179,7 @@ export function Sidebar({ permissions, counts = {}, collapsed, onToggleCollapsed
                 >
                     {user && (
                         <>
-                            <Avatar name={user.name} />
+                            <Avatar name={user.name} src={user.avatar} />
                             <span className={`min-w-0 flex-1 flex-col whitespace-nowrap ${onlyExpanded}`}>
                                 <span className="truncate t-admin-body-strong text-fg-primary">{user.name}</span>
                                 <span className="truncate t-admin-caption text-fg-tertiary">{user.role}</span>

@@ -42,7 +42,7 @@ class DemoInboxSeeder extends Seeder
             $c->delete();
         });
 
-        $owner = User::query()->where('email', 'owner@toymart.test')->first();
+        $owner = User::query()->where('email', 'mominulfed@gmail.com')->first();
         $agent = User::query()->where('email', 'order_operator@toymart.test')->first() ?? $owner;
         $customerId = Order::query()->selectRaw('customer_id, COUNT(*) as n')->groupBy('customer_id')->orderByDesc('n')->value('customer_id');
         $customer = $customerId === null ? null : Customer::query()->find($customerId);

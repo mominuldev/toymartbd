@@ -140,7 +140,7 @@ class DemoReviewsSeeder extends Seeder
             return;
         }
 
-        $moderator = (DemoStaffSeeder::user(Role::Manager) ?? User::query()->where('email', 'owner@toymart.test')->first() ?? User::query()->orderBy('id')->first())
+        $moderator = (DemoStaffSeeder::user(Role::Manager) ?? User::query()->where('email', 'mominulfed@gmail.com')->first() ?? User::query()->orderBy('id')->first())
             ?? throw new RuntimeException('DemoReviewsSeeder needs a staff user to moderate as.');
 
         Event::fakeFor(function () use ($moderator): void {

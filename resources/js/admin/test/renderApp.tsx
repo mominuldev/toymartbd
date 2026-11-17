@@ -47,6 +47,7 @@ export const viewer: Me = {
     id: 7,
     name: 'Rina Akter',
     email: 'rina@example.com',
+    avatar_url: null,
     locale: null,
     roles: ['viewer'],
     permissions: ['dashboard.view', 'orders.view', 'catalog.view'],
