@@ -11,7 +11,11 @@ import { TabList, TabLink } from '@/components/ui/Tabs';
 const tabs: { to: string; label: MessageKey; permissions: string[] }[] = [
     { to: '/analytics/sales', label: 'analyticsNav.sales', permissions: ['reports.view'] },
     { to: '/analytics/customers', label: 'customerAnalytics.tab', permissions: ['reports.view', 'customers.view'] },
+    { to: '/analytics/visitors', label: 'analyticsVisitors.tab', permissions: ['reports.view'] },
+    { to: '/analytics/products', label: 'analyticsProducts.tab', permissions: ['reports.view'] },
     { to: '/analytics/couriers', label: 'courierReport.tab', permissions: ['reports.view', 'shipments.view'] },
+    { to: '/analytics/marketing', label: 'analyticsMarketing.tab', permissions: ['reports.view'] },
+    { to: '/analytics/live', label: 'analyticsLive.tab', permissions: ['reports.view'] },
     { to: '/analytics/schedules', label: 'analyticsNav.schedules', permissions: ['reports.view', 'reports.export'] },
 ];
 
