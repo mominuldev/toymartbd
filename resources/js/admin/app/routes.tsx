@@ -33,7 +33,9 @@ import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
 import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
-import { InvoiceSettingsPage } from '@/features/invoices/InvoiceSettingsPage';
+import { InvoicePrintTab } from '@/features/print/InvoicePrintTab';
+import { ReceiptPrintTab } from '@/features/print/ReceiptPrintTab';
+import { LabelsPrintTab } from '@/features/print/LabelsPrintTab';
 import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
 import { PeopleTab, RolesTab, StaffPage } from '@/features/staff';
 import { ActivityLogPage } from '@/features/audit/ActivityLogPage';
@@ -268,7 +270,10 @@ export const routes: RouteObject[] = [
                             { path: 'checkout', element: <CheckoutSection /> },
                             { path: 'delivery', element: <DeliveryAreasSection /> },
                             { path: 'pos', element: <PosSection /> },
-                            { path: 'invoice', element: <InvoiceSettingsPage /> },
+                            // Invoices, receipts & labels (owner request 2026-11-17, Figma 528:81351): one tab per document.
+                            { path: 'invoice', element: <InvoicePrintTab /> },
+                            { path: 'invoice/receipt', element: <ReceiptPrintTab /> },
+                            { path: 'invoice/labels', element: <LabelsPrintTab /> },
                         ],
                     },
                     // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).

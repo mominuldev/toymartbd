@@ -14059,6 +14059,70 @@
                 }
             }
         },
+        "/admin/settings/print": {
+            "get": {
+                "operationId": "v1.admin.settings.print.show",
+                "summary": "`GET /settings/print`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PrintSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrintSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.print.update",
+                "summary": "`PUT /settings/print`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePrintSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PrintSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrintSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/returns": {
             "get": {
                 "operationId": "v1.admin.returns.index",
@@ -57828,6 +57892,228 @@
                 ],
                 "title": "PrintLabelsRequest"
             },
+            "PrintSettings": {
+                "type": "object",
+                "properties": {
+                    "invoice": {
+                        "type": "object",
+                        "description": "The A4 customer invoice.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "a4",
+                                    "a5"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "both"
+                                ]
+                            },
+                            "colour": {
+                                "type": "string",
+                                "enum": [
+                                    "brand",
+                                    "mono"
+                                ]
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_phone": {
+                                "type": "boolean"
+                            },
+                            "show_email": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_payment_stamp": {
+                                "type": "boolean"
+                            },
+                            "show_track_qr": {
+                                "type": "boolean"
+                            },
+                            "show_signatures": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "colour",
+                            "show_bin",
+                            "show_barcode",
+                            "show_phone",
+                            "show_email",
+                            "show_sku",
+                            "show_options",
+                            "show_payment_stamp",
+                            "show_track_qr",
+                            "show_signatures"
+                        ]
+                    },
+                    "receipt": {
+                        "type": "object",
+                        "description": "The POS counter receipt.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "text_size",
+                            "auto_print",
+                            "show_logo",
+                            "show_branch",
+                            "show_bin",
+                            "show_cashier",
+                            "show_customer_name",
+                            "show_sku",
+                            "show_barcode",
+                            "show_whatsapp_qr",
+                            "show_cut_line",
+                            "footer_en",
+                            "footer_bn"
+                        ]
+                    },
+                    "labels": {
+                        "type": "object",
+                        "description": "Product barcode labels.",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "enum": [
+                                    "roll_38x25",
+                                    "roll_50x25",
+                                    "a4_65",
+                                    "a4_24"
+                                ]
+                            },
+                            "show_name": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_price": {
+                                "type": "boolean"
+                            },
+                            "show_store": {
+                                "type": "boolean"
+                            },
+                            "show_digits": {
+                                "type": "boolean"
+                            },
+                            "generate_missing": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "template",
+                            "show_name",
+                            "show_options",
+                            "show_price",
+                            "show_store",
+                            "show_digits",
+                            "generate_missing"
+                        ]
+                    },
+                    "saved": {
+                        "type": "array",
+                        "description": "Documents saved at least once; the others print with the defaults.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "invoice",
+                                "receipt",
+                                "labels"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "invoice",
+                    "receipt",
+                    "labels",
+                    "saved"
+                ],
+                "title": "PrintSettings"
+            },
             "ProblemDetails": {
                 "type": "object",
                 "description": "RFC 9457 problem details, served as `application/problem+json`.",
@@ -75981,6 +76267,182 @@
                     "due_limit"
                 ],
                 "title": "UpdatePosSettingsRequest"
+            },
+            "UpdatePrintSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/print` \u2014 Settings \u203a Invoices, receipts & labels; needs settings.update. Send one\nor more whole documents (`invoice`, `receipt`, `labels`); each replaces what is stored for it.",
+                "properties": {
+                    "invoice": {
+                        "type": "object",
+                        "description": "The A4 customer invoice.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "description": "`a4` or `a5`.",
+                                "enum": [
+                                    "a4",
+                                    "a5"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "description": "`en`, `bn` or `both` (English with Bangla beneath).",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "both"
+                                ]
+                            },
+                            "colour": {
+                                "type": "string",
+                                "description": "`brand` or `mono` (black and white).",
+                                "enum": [
+                                    "brand",
+                                    "mono"
+                                ]
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_phone": {
+                                "type": "boolean"
+                            },
+                            "show_email": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_payment_stamp": {
+                                "type": "boolean"
+                            },
+                            "show_track_qr": {
+                                "type": "boolean"
+                            },
+                            "show_signatures": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "receipt": {
+                        "type": "object",
+                        "description": "The POS counter receipt.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "description": "Roll width in mm: `80` or `58`.",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "description": "`en`, `bn`, or `ask` (the cashier picks per sale).",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "description": "`normal` or `large`.",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message at the bottom, English. Empty uses the standard thank-you.",
+                                "maxLength": 160
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message at the bottom, Bangla.",
+                                "maxLength": 160
+                            }
+                        }
+                    },
+                    "labels": {
+                        "type": "object",
+                        "description": "Product barcode labels.",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "description": "The label stock loaded in the printer.",
+                                "enum": [
+                                    "roll_38x25",
+                                    "roll_50x25",
+                                    "a4_65",
+                                    "a4_24"
+                                ]
+                            },
+                            "show_name": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_price": {
+                                "type": "boolean"
+                            },
+                            "show_store": {
+                                "type": "boolean"
+                            },
+                            "show_digits": {
+                                "type": "boolean"
+                            },
+                            "generate_missing": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "title": "UpdatePrintSettingsRequest"
             },
             "UpdateProductImageRequest": {
                 "type": "object",

@@ -1918,6 +1918,51 @@ export const updatePosSettingsRequestSchema = z.object({
 });
 export type UpdatePosSettingsRequestInput = z.input<typeof updatePosSettingsRequestSchema>;
 
+/** `PUT /settings/print` — Settings › Invoices, receipts & labels; needs settings.update. Send one */
+export const updatePrintSettingsRequestSchema = z.object({
+    "invoice": z.object({
+    "paper": z.enum(["a4","a5"]).optional(),
+    "language": z.enum(["en","bn","both"]).optional(),
+    "colour": z.enum(["brand","mono"]).optional(),
+    "show_bin": z.boolean().optional(),
+    "show_barcode": z.boolean().optional(),
+    "show_phone": z.boolean().optional(),
+    "show_email": z.boolean().optional(),
+    "show_sku": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_payment_stamp": z.boolean().optional(),
+    "show_track_qr": z.boolean().optional(),
+    "show_signatures": z.boolean().optional(),
+}).optional(),
+    "receipt": z.object({
+    "paper": z.enum(["80","58"]).optional(),
+    "language": z.enum(["en","bn","ask"]).optional(),
+    "text_size": z.enum(["normal","large"]).optional(),
+    "auto_print": z.boolean().optional(),
+    "show_logo": z.boolean().optional(),
+    "show_branch": z.boolean().optional(),
+    "show_bin": z.boolean().optional(),
+    "show_cashier": z.boolean().optional(),
+    "show_customer_name": z.boolean().optional(),
+    "show_sku": z.boolean().optional(),
+    "show_barcode": z.boolean().optional(),
+    "show_whatsapp_qr": z.boolean().optional(),
+    "show_cut_line": z.boolean().optional(),
+    "footer_en": z.string().max(160).nullable().optional(),
+    "footer_bn": z.string().max(160).nullable().optional(),
+}).optional(),
+    "labels": z.object({
+    "template": z.enum(["roll_38x25","roll_50x25","a4_65","a4_24"]).optional(),
+    "show_name": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_price": z.boolean().optional(),
+    "show_store": z.boolean().optional(),
+    "show_digits": z.boolean().optional(),
+    "generate_missing": z.boolean().optional(),
+}).optional(),
+});
+export type UpdatePrintSettingsRequestInput = z.input<typeof updatePrintSettingsRequestSchema>;
+
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({
     "alt_text": z.string().max(255).nullable().optional(),

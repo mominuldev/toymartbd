@@ -2896,6 +2896,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/print` */
+        get: operations["v1.admin.settings.print.show"];
+        /** `PUT /settings/print` */
+        put: operations["v1.admin.settings.print.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/returns": {
         parameters: {
             query?: never;
@@ -13262,6 +13280,61 @@ export interface components {
             /** @description Generate in-store EAN-13s for variants without a barcode first; needs catalog.update. */
             generate_missing?: boolean;
         };
+        /** PrintSettings */
+        PrintSettings: {
+            /** @description The A4 customer invoice. */
+            invoice: {
+                /** @enum {string} */
+                paper: "a4" | "a5";
+                /** @enum {string} */
+                language: "en" | "bn" | "both";
+                /** @enum {string} */
+                colour: "brand" | "mono";
+                show_bin: boolean;
+                show_barcode: boolean;
+                show_phone: boolean;
+                show_email: boolean;
+                show_sku: boolean;
+                show_options: boolean;
+                show_payment_stamp: boolean;
+                show_track_qr: boolean;
+                show_signatures: boolean;
+            };
+            /** @description The POS counter receipt. */
+            receipt: {
+                /** @enum {string} */
+                paper: "80" | "58";
+                /** @enum {string} */
+                language: "en" | "bn" | "ask";
+                /** @enum {string} */
+                text_size: "normal" | "large";
+                auto_print: boolean;
+                show_logo: boolean;
+                show_branch: boolean;
+                show_bin: boolean;
+                show_cashier: boolean;
+                show_customer_name: boolean;
+                show_sku: boolean;
+                show_barcode: boolean;
+                show_whatsapp_qr: boolean;
+                show_cut_line: boolean;
+                footer_en: string | null;
+                footer_bn: string | null;
+            };
+            /** @description Product barcode labels. */
+            labels: {
+                /** @enum {string} */
+                template: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+                show_name: boolean;
+                show_options: boolean;
+                show_price: boolean;
+                show_store: boolean;
+                show_digits: boolean;
+                generate_missing: boolean;
+            };
+            /** @description Documents saved at least once; the others print with the defaults. */
+            saved: ("invoice" | "receipt" | "labels")[];
+        };
         /**
          * ProblemDetails
          * @description RFC 9457 problem details, served as `application/problem+json`.
@@ -18095,6 +18168,86 @@ export interface components {
             discount_max_percent: string;
             /** @description The most one customer may owe from POS sales on due, in taka, e.g. `5000.00`. `0` stops new sales on due. */
             due_limit: string;
+        };
+        /**
+         * UpdatePrintSettingsRequest
+         * @description `PUT /settings/print` — Settings › Invoices, receipts & labels; needs settings.update. Send one
+         *     or more whole documents (`invoice`, `receipt`, `labels`); each replaces what is stored for it.
+         */
+        UpdatePrintSettingsRequest: {
+            /** @description The A4 customer invoice. */
+            invoice?: {
+                /**
+                 * @description `a4` or `a5`.
+                 * @enum {string}
+                 */
+                paper?: "a4" | "a5";
+                /**
+                 * @description `en`, `bn` or `both` (English with Bangla beneath).
+                 * @enum {string}
+                 */
+                language?: "en" | "bn" | "both";
+                /**
+                 * @description `brand` or `mono` (black and white).
+                 * @enum {string}
+                 */
+                colour?: "brand" | "mono";
+                show_bin?: boolean;
+                show_barcode?: boolean;
+                show_phone?: boolean;
+                show_email?: boolean;
+                show_sku?: boolean;
+                show_options?: boolean;
+                show_payment_stamp?: boolean;
+                show_track_qr?: boolean;
+                show_signatures?: boolean;
+            };
+            /** @description The POS counter receipt. */
+            receipt?: {
+                /**
+                 * @description Roll width in mm: `80` or `58`.
+                 * @enum {string}
+                 */
+                paper?: "80" | "58";
+                /**
+                 * @description `en`, `bn`, or `ask` (the cashier picks per sale).
+                 * @enum {string}
+                 */
+                language?: "en" | "bn" | "ask";
+                /**
+                 * @description `normal` or `large`.
+                 * @enum {string}
+                 */
+                text_size?: "normal" | "large";
+                auto_print?: boolean;
+                show_logo?: boolean;
+                show_branch?: boolean;
+                show_bin?: boolean;
+                show_cashier?: boolean;
+                show_customer_name?: boolean;
+                show_sku?: boolean;
+                show_barcode?: boolean;
+                show_whatsapp_qr?: boolean;
+                show_cut_line?: boolean;
+                /** @description Message at the bottom, English. Empty uses the standard thank-you. */
+                footer_en?: string | null;
+                /** @description Message at the bottom, Bangla. */
+                footer_bn?: string | null;
+            };
+            /** @description Product barcode labels. */
+            labels?: {
+                /**
+                 * @description The label stock loaded in the printer.
+                 * @enum {string}
+                 */
+                template?: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+                show_name?: boolean;
+                show_options?: boolean;
+                show_price?: boolean;
+                show_store?: boolean;
+                show_digits?: boolean;
+                generate_missing?: boolean;
+            };
         };
         /**
          * UpdateProductImageRequest
@@ -26072,6 +26225,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PosSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.print.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PrintSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.print.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrintSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `PrintSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintSettings"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
