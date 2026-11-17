@@ -75,7 +75,16 @@ final class PdfText
             if ($end === false) {
                 break;
             }
-            $out[] = rtrim(substr($pdf, $body, $end - $body), "\r\n");
+            // Strip only the ONE end-of-line mPDF writes before `endstream`. rtrim("\r\n") also ate
+            // compressed bytes that happened to be \r or \n, gzuncompress() then failed, and the
+            // PDF read back as empty text — the intermittent OrderEditDocumentsTest failure.
+            $stream = substr($pdf, $body, $end - $body);
+            if (str_ends_with($stream, "\r\n")) {
+                $stream = substr($stream, 0, -2);
+            } elseif (str_ends_with($stream, "\n") || str_ends_with($stream, "\r")) {
+                $stream = substr($stream, 0, -1);
+            }
+            $out[] = $stream;
             $offset = $end + 9;
         }
 
