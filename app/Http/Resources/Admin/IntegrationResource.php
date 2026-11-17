@@ -28,7 +28,7 @@ final class IntegrationResource extends ApiResource
             'key' => $r['key'],
             /** @var string English name; the admin translates by `key` where the name is not a brand. */
             'name' => $r['name'],
-            /** @var 'couriers'|'payments'|'messaging'|'marketing' */
+            /** @var 'couriers'|'payments'|'messaging'|'marketing'|'ai' */
             'category' => $r['category'],
             /** @var 'connected_live'|'test_mode'|'needs_attention'|'not_connected'|'not_available' `not_available` = no driver in the codebase yet. */
             'status' => $r['status'],

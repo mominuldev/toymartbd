@@ -280,6 +280,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Orders (P4-ORD-04/05 read side). Never deleted (rule 12); PII masked without customers.view_pii.
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/courier-record', [OrderController::class, 'courierRecord'])->whereNumber('order')->name('orders.courier-record');
 
     // Order workflow (P4-ORD-04/05 write side): each move goes through TransitionOrder /
     // CancelOrder; a move the state machine refuses is a 409. Bulk confirm reports per order.
@@ -343,6 +344,10 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Store settings › Point of sale (rule 33d): the cap on a cashier's discount.
     Route::get('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'show'])->name('settings.pos.show');
     Route::put('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'update'])->name('settings.pos.update');
+    // Invoices, receipts & labels (owner request 2026-11-17): what each printed document shows.
+    Route::get('/settings/print', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'show'])->name('settings.print.show');
+    Route::put('/settings/print', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'update'])->name('settings.print.update');
+    Route::get('/settings/print/invoice-preview', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'invoicePreview'])->name('settings.print.invoice-preview');
 
     // Returns & refunds (DATABASE-DESIGN §4.7, PRD O-21, Figma 211:5121). Paying a refund out
     // moves money, so a double submit must replay, not pay twice.
@@ -411,6 +416,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     Route::patch('/settings/couriers/{provider}', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'update'])->whereNumber('provider')->name('settings.couriers.update');
     Route::put('/settings/couriers/{provider}/rates', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'rates'])->whereNumber('provider')->name('settings.couriers.rates');
     Route::put('/settings/couriers/{provider}/credentials', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'credentials'])->whereNumber('provider')->name('settings.couriers.credentials');
+    Route::post('/settings/couriers/{provider}/check', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'check'])->whereNumber('provider')->middleware('throttle:6,1')->name('settings.couriers.check');
     Route::get('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'delivery'])->name('settings.delivery.show');
     Route::put('/settings/delivery', [App\Http\Controllers\Api\V1\Admin\Settings\CourierProvidersController::class, 'updateDelivery'])->name('settings.delivery.update');
     // Booking panel charge preview (P6): read-only, from stored rate cards; orders.update + shipments.book.
@@ -522,6 +528,11 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     require __DIR__.'/api_v1_admin_checkout_settings.php';
     // Phase 10 batch 4.
     require __DIR__.'/api_v1_admin_pos.php';
+    require __DIR__.'/api_v1_admin_analytics_products.php';
+    require __DIR__.'/api_v1_admin_analytics_visitors.php';
+    require __DIR__.'/api_v1_admin_analytics_marketing.php';
+    require __DIR__.'/api_v1_admin_analytics_live.php';
+    require __DIR__.'/api_v1_admin_ai.php';
     require __DIR__.'/api_v1_admin_inbox.php';
     require __DIR__.'/api_v1_admin_delivery_settings.php';
     // Phase 10 batch 5.

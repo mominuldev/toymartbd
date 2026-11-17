@@ -80,7 +80,7 @@ const receipt: PosReceipt = {
     order_number: 'TMB-26-00042',
     sold_at: '2026-11-15T05:00:00+00:00',
     customer: { name: null, phone_masked: null },
-    lines: [{ name: 'Brick Box 500', name_bn: null, variant_name: null, quantity: 1, unit_price: '1850.00', discount: '0.00', total: '1850.00' }],
+    lines: [{ name: 'Brick Box 500', name_bn: null, variant_name: null, sku: 'BRK-500', quantity: 1, unit_price: '1850.00', discount: '0.00', total: '1850.00' }],
     subtotal: '1850.00',
     promotion_discount: '0.00',
     coupon_discount: '0.00',
@@ -93,7 +93,36 @@ const receipt: PosReceipt = {
     change_due: '545.00',
     due_amount: '0.00',
     whatsapp: { enabled: false, reason: 'no_provider' },
+    // Settings › Thermal receipt, as the receipt response carries them (the store defaults).
+    print: {
+        paper: '80',
+        language: 'ask',
+        text_size: 'normal',
+        auto_print: true,
+        show_logo: true,
+        show_branch: true,
+        show_bin: true,
+        show_cashier: true,
+        show_customer_name: false,
+        show_sku: false,
+        show_barcode: true,
+        show_whatsapp_qr: true,
+        show_cut_line: true,
+        footer_en: null,
+        footer_bn: null,
+    },
+    logo_url: null,
+    barcode_svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 4"/>',
+    whatsapp_link: null,
+    whatsapp_qr_svg: null,
 };
+
+/** window.print as a browser would: the dialog closes, then `afterprint`. */
+function stubPrint() {
+    const print = vi.fn(() => window.dispatchEvent(new Event('afterprint')));
+    vi.stubGlobal('print', print);
+    return print;
+}
 
 const rubina: PosCustomerMatch = { id: 7, name: 'Rubina Akter', phone: '01819552310', orders_count: 12, open_due: '1200.00', due_limit: '5000.00', due_available: '3800.00' };
 const rubinaLookup: PosCustomer = { phone: '01819552310', customer: { id: 7, name: 'Rubina Akter', orders_count: 12, open_due: '1200.00', due_limit: '5000.00', due_available: '3800.00' } };
@@ -126,7 +155,7 @@ const collection: PosDueCollection = {
     created_at: '2026-11-15T08:00:00+00:00',
 };
 
-function posApi(me: Me, open: PosSession | null = session) {
+function posApi(me: Me, open: PosSession | null = session, printed: PosReceipt = receipt) {
     return mockApi((url, init) => {
         const method = init?.method ?? 'GET';
         const path = new URL(url, 'http://x').pathname.replace('/api/v1/admin', '');
@@ -145,7 +174,7 @@ function posApi(me: Me, open: PosSession | null = session) {
             return { status: 200, body: body.discount ? { ...priced, rows: [...priced.rows, { type: 'manual', label: body.discount.reason, label_bn: null, amount: '-92.50' }] } : priced };
         }
         if (path === '/pos/sessions/1/sales' && method === 'POST') return { status: 201, body: sale };
-        if (path === '/pos/sales/40/receipt') return { status: 200, body: receipt };
+        if (path === '/pos/sales/40/receipt') return { status: 200, body: printed };
         if (path === '/pos/customers/search') return { status: 200, body: { data: [rubina] } };
         if (path === '/pos/customers') return { status: 200, body: rubinaLookup };
         if (path === '/pos/sessions/1/due-collections/quote') return { status: 200, body: dueQuote(sent().tenders ?? []) };
@@ -240,6 +269,7 @@ describe('POS register', () => {
     });
 
     it('charges with an Idempotency-Key, shows Sale complete, and prints the receipt in the language picked', async () => {
+        const print = stubPrint();
         const calls = posApi(cashier);
         renderApp('/pos');
 
@@ -263,7 +293,10 @@ describe('POS register', () => {
             expected_total: '3455.00',
         });
         expect((init.headers as Record<string, string>)['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
+        // Print automatically after each sale (the default): once, as soon as the receipt loads.
+        await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Print receipt' })).toHaveProperty('disabled', false));
+        expect(screen.queryByTestId('pos-receipt-print')).toBeNull();
         expect(screen.getByRole('button', { name: 'WhatsApp receipt' })).toHaveProperty('disabled', true);
         expect(screen.getByText('WhatsApp receipts need a WhatsApp provider — none is connected yet.')).toBeTruthy();
 
@@ -274,9 +307,52 @@ describe('POS register', () => {
         expect(paper.getAttribute('lang')).toBe('bn');
         expect(within(paper).getByText('মোট')).toBeTruthy();
         expect(within(paper).getByText('৳3,455')).toBeTruthy();
+        // The receipt barcode prints; the customer line is off by default.
+        expect(within(paper).getByRole('img', { name: 'TMB-26-00042-এর বারকোড' })).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Print receipt' }));
+        expect(print).toHaveBeenCalledTimes(2);
 
         fireEvent.click(screen.getByRole('button', { name: 'Start new sale' }));
         expect(await screen.findByText('Scan or tap a product to start a sale.')).toBeTruthy();
+    });
+
+    it('follows the store’s receipt settings: no auto-print, a fixed language, 58 mm, what shows', async () => {
+        const print = stubPrint();
+        posApi(cashier, session, {
+            ...receipt,
+            customer: { name: 'Rubina Akter', phone_masked: '018****2310' },
+            print: { ...receipt.print, paper: '58', language: 'bn', auto_print: false, show_customer_name: true, show_sku: true, show_barcode: false, show_cut_line: false, footer_bn: 'আবার আসবেন' },
+            barcode_svg: null,
+        });
+        renderApp('/pos');
+
+        const dialog = await toPayment();
+        fireEvent.click(within(dialog).getByRole('button', { name: '৳1,000' }));
+        fireEvent.change(within(dialog).getByLabelText('Cash received'), { target: { value: '4000' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Update payment' }));
+        const complete = within(dialog).getByRole('button', { name: 'Complete sale' });
+        await waitFor(() => expect(complete).toHaveProperty('disabled', false));
+        fireEvent.click(complete);
+
+        expect(await screen.findByRole('heading', { name: 'Sale complete' })).toBeTruthy();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Print receipt' })).toHaveProperty('disabled', false));
+        // auto_print off: nothing printed until the cashier presses Print.
+        expect(print).not.toHaveBeenCalled();
+        // The store fixed the language: no choice, the receipt is in Bangla while the UI is English.
+        expect(screen.queryByRole('group', { name: 'Receipt language' })).toBeNull();
+        const paper = screen.getByTestId('pos-receipt');
+        expect(paper.getAttribute('lang')).toBe('bn');
+        expect(paper.getAttribute('data-paper')).toBe('58');
+        expect(within(paper).getByText('গ্রাহক Rubina Akter 018****2310')).toBeTruthy();
+        expect(within(paper).getByText('SKU BRK-500')).toBeTruthy();
+        expect(within(paper).getByText('আবার আসবেন')).toBeTruthy();
+        expect(within(paper).queryByRole('img')).toBeNull();
+        expect(within(paper).queryByText('— এখানে কাটুন —')).toBeNull();
+        // The phone is only ever the masked one (rule 20).
+        expect(paper.textContent).not.toContain('01819552310');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Print receipt' }));
+        expect(print).toHaveBeenCalledTimes(1);
     });
 
     it('asks bKash for a transaction ID, one method at a time', async () => {

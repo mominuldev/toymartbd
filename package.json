@@ -4,8 +4,7 @@
     "private": true,
     "type": "module",
     "workspaces": [
-        "packages/*",
-        "toymartbd-app/storefront"
+        "packages/*"
     ],
     "scripts": {
         "dev": "vite",
@@ -14,18 +13,12 @@
         "lint": "eslint resources/js",
         "lint:i18n": "node --test scripts/i18n/i18n.test.mjs && node scripts/i18n/lint.mjs && node scripts/i18n/check-keys.mjs",
         "lint:i18n:admin": "node scripts/i18n/lint.mjs admin && node scripts/i18n/check-keys.mjs admin",
-        "lint:i18n:storefront": "node scripts/i18n/lint.mjs storefront && node scripts/i18n/check-keys.mjs storefront",
         "test": "vitest run",
-        "dev:storefront": "npm run dev --workspace=storefront",
-        "build:storefront": "npm run build --workspace=storefront",
-        "start:storefront": "npm run start --workspace=storefront",
-        "typecheck:storefront": "npm run typecheck --workspace=storefront",
-        "test:storefront": "npm run test --workspace=storefront",
-        "test:e2e:storefront": "npm run test:e2e --workspace=storefront",
         "tokens:build": "npm run build --workspace=@toymart/tokens",
         "api-types:generate": "npm run generate --workspace=@toymart/api-types",
         "test:e2e:admin": "playwright test --config e2e/admin/playwright.config.ts",
-        "test:a11y:admin": "playwright test --config e2e/admin-a11y/playwright.config.ts"
+        "test:a11y:admin": "playwright test --config e2e/admin-a11y/playwright.config.ts",
+        "sync:storefront": "node scripts/sync-storefront.mjs"
     },
     "dependencies": {
         "@hookform/resolvers": "6.0.1",

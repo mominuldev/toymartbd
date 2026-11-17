@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const ageBandSchema = z.enum(["0-12","12-24","24-48","48-72","72-96","96-144","144-"]);
 export type AgeBand = z.infer<typeof ageBandSchema>;
 
+export const aiProviderSchema = z.enum(["anthropic","openai","gemini"]);
+export type AiProvider = z.infer<typeof aiProviderSchema>;
+
 export const attributeTypeSchema = z.enum(["select","color","text"]);
 export type AttributeType = z.infer<typeof attributeTypeSchema>;
 
@@ -164,6 +167,12 @@ export const approveStockAdjustmentRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
 });
 export type ApproveStockAdjustmentRequestInput = z.input<typeof approveStockAdjustmentRequestSchema>;
+
+/** `POST /analytics/advisor/ask` — one question for the Growth advisor; needs reports.view. */
+export const askAdvisorRequestSchema = z.object({
+    "question": z.string().min(3).max(500),
+});
+export type AskAdvisorRequestInput = z.input<typeof askAdvisorRequestSchema>;
 
 /** `POST /inbox/conversations/{conversation}/assign` — needs inbox.reply. `user_id` null */
 export const assignConversationRequestSchema = z.object({
@@ -472,6 +481,12 @@ export const deliverOrderRequestSchema = z.object({
 });
 export type DeliverOrderRequestInput = z.input<typeof deliverOrderRequestSchema>;
 
+/** `POST /inbox/conversations/{conversation}/ai-draft` — a suggested reply; needs inbox.reply */
+export const draftInboxReplyRequestSchema = z.object({
+    "style": z.enum(["default","shorter","english","bangla"]).nullable().optional(),
+});
+export type DraftInboxReplyRequestInput = z.input<typeof draftInboxReplyRequestSchema>;
+
 /** An expense category, for `POST /finance/expense-categories` and `PATCH …/{category}`. */
 export const expenseCategoryRequestSchema = z.object({
     "name": z.string().min(1).max(120),
@@ -728,13 +743,25 @@ export const printLabelsRequestSchema = z.object({
     "variant_id": z.number().int(),
     "copies": z.number().int().min(1).max(500),
 })).min(1).max(300),
-    "template": labelTemplateSchema,
+    "template": labelTemplateSchema.optional(),
     "show_price": z.boolean().optional(),
     "show_name": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_store": z.boolean().optional(),
+    "show_digits": z.boolean().optional(),
     "locale": z.enum(["en","bn"]).nullable().optional(),
     "generate_missing": z.boolean().optional(),
 });
 export type PrintLabelsRequestInput = z.input<typeof printLabelsRequestSchema>;
+
+/** `POST /products/{product}/ai-copy` — what to write, in which language and tone; needs catalog.update. */
+export const productCopyRequestSchema = z.object({
+    "fields": z.array(z.enum(["title","description","seo"])).min(1).max(3),
+    "language": z.enum(["en","bn","both"]),
+    "tone": z.enum(["warm","playful","premium"]),
+    "keywords": z.string().max(120).nullable().optional(),
+});
+export type ProductCopyRequestInput = z.input<typeof productCopyRequestSchema>;
 
 /** `POST /content/home/publish` — an optional note for the version history. */
 export const publishCmsLayoutRequestSchema = z.object({
@@ -928,6 +955,13 @@ export const resetStaffPasswordRequestSchema = z.object({
 });
 export type ResetStaffPasswordRequestInput = z.input<typeof resetStaffPasswordRequestSchema>;
 
+/** `POST /inventory/restock/note` — the AI note for the forecast at this horizon; needs inventory.view. */
+export const restockNoteRequestSchema = z.object({
+    "horizon": z.enum(["7","14","30"]),
+    "fresh": z.boolean().optional(),
+});
+export type RestockNoteRequestInput = z.input<typeof restockNoteRequestSchema>;
+
 /** `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7). */
 export const restoreCartRequestSchema = z.object({
     "token": z.string().min(16).max(64).regex(new RegExp("^[A-Za-z0-9]+$")),
@@ -961,6 +995,22 @@ export const saveAccountChildRequestSchema = z.object({
     "birth_year": z.number().int().min(1990).max(2200).nullable(),
 });
 export type SaveAccountChildRequestInput = z.input<typeof saveAccountChildRequestSchema>;
+
+/** `POST /analytics/marketing/spend` and `PUT /analytics/marketing/spend/{adSpend}` — ad spend */
+export const saveAdSpendRequestSchema = z.object({
+    "campaign": z.string().min(1).max(128),
+    "source": z.string().max(64).nullable().optional(),
+    "month": z.string().min(1).regex(new RegExp("^\\d{4}-(0[1-9]|1[0-2])$")),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type SaveAdSpendRequestInput = z.input<typeof saveAdSpendRequestSchema>;
+
+/** `PUT /settings/ai/providers/{provider}` — connect a provider with its API key; needs settings.manage_integrations. */
+export const saveAiKeyRequestSchema = z.object({
+    "api_key": z.string().min(16).max(300).regex(new RegExp("^\\S+$")),
+});
+export type SaveAiKeyRequestInput = z.input<typeof saveAiKeyRequestSchema>;
 
 /** `POST /customers/{customer}/children` and `PATCH …/children/{child}` (P8 batch 3) — staff add */
 export const saveCustomerChildRequestSchema = z.object({
@@ -1601,6 +1651,35 @@ export const updateAccountNotificationPreferencesRequestSchema = z.object({
 });
 export type UpdateAccountNotificationPreferencesRequestInput = z.input<typeof updateAccountNotificationPreferencesRequestSchema>;
 
+/** `PUT /settings/ai` — which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update. */
+export const updateAiSettingsRequestSchema = z.object({
+    "features": z.object({
+    "advisor": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "product_copy": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "inbox_reply": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "restock_note": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+}),
+    "cap_usd": z.string().min(1).regex(new RegExp("^\\d{1,6}(\\.\\d{1,2})?$")),
+    "share": z.object({
+    "figures": z.boolean(),
+    "products": z.boolean(),
+    "first_names": z.boolean(),
+}),
+});
+export type UpdateAiSettingsRequestInput = z.input<typeof updateAiSettingsRequestSchema>;
+
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({
     "name": z.string().max(80).optional(),
@@ -1917,6 +1996,51 @@ export const updatePosSettingsRequestSchema = z.object({
     "due_limit": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
 });
 export type UpdatePosSettingsRequestInput = z.input<typeof updatePosSettingsRequestSchema>;
+
+/** `PUT /settings/print` — Settings › Invoices, receipts & labels; needs settings.update. Send one */
+export const updatePrintSettingsRequestSchema = z.object({
+    "invoice": z.object({
+    "paper": z.enum(["a4","a5"]).optional(),
+    "language": z.enum(["en","bn","both"]).optional(),
+    "colour": z.enum(["brand","mono"]).optional(),
+    "show_bin": z.boolean().optional(),
+    "show_barcode": z.boolean().optional(),
+    "show_phone": z.boolean().optional(),
+    "show_email": z.boolean().optional(),
+    "show_sku": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_payment_stamp": z.boolean().optional(),
+    "show_track_qr": z.boolean().optional(),
+    "show_signatures": z.boolean().optional(),
+}).optional(),
+    "receipt": z.object({
+    "paper": z.enum(["80","58"]).optional(),
+    "language": z.enum(["en","bn","ask"]).optional(),
+    "text_size": z.enum(["normal","large"]).optional(),
+    "auto_print": z.boolean().optional(),
+    "show_logo": z.boolean().optional(),
+    "show_branch": z.boolean().optional(),
+    "show_bin": z.boolean().optional(),
+    "show_cashier": z.boolean().optional(),
+    "show_customer_name": z.boolean().optional(),
+    "show_sku": z.boolean().optional(),
+    "show_barcode": z.boolean().optional(),
+    "show_whatsapp_qr": z.boolean().optional(),
+    "show_cut_line": z.boolean().optional(),
+    "footer_en": z.string().max(160).nullable().optional(),
+    "footer_bn": z.string().max(160).nullable().optional(),
+}).optional(),
+    "labels": z.object({
+    "template": z.enum(["roll_38x25","roll_50x25","a4_65","a4_24"]).optional(),
+    "show_name": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_price": z.boolean().optional(),
+    "show_store": z.boolean().optional(),
+    "show_digits": z.boolean().optional(),
+    "generate_missing": z.boolean().optional(),
+}).optional(),
+});
+export type UpdatePrintSettingsRequestInput = z.input<typeof updatePrintSettingsRequestSchema>;
 
 /** `PATCH /products/{product}/images/{image}` — any of `alt_text`, `alt_text_bn`, */
 export const updateProductImageRequestSchema = z.object({

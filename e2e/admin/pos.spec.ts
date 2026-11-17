@@ -36,6 +36,10 @@ async function openDrawer(page: Page) {
 }
 
 test('cashier opens a drawer, sells for cash, holds and resumes a cart, and closes the drawer', async ({ page }) => {
+    // Sale complete prints the receipt automatically (print settings default): no dialog in a test run, but fire afterprint like a browser does.
+    await page.addInitScript(() => {
+        window.print = () => window.dispatchEvent(new Event('afterprint'));
+    });
     await signIn(page);
     await openDrawer(page);
     await expect(page.getByText(/^Drawer since .* · float ৳5,000$/)).toBeVisible();

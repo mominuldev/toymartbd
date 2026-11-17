@@ -39,12 +39,26 @@ import { invoicesBn, invoicesEn } from './messages.invoices';
 import { customersBn, customersEn } from './messages.customers';
 import { dashboardBn, dashboardEn } from './messages.dashboard';
 import { analyticsBn, analyticsEn } from './messages.analytics';
+import { analyticsProductsBn, analyticsProductsEn } from './messages.analyticsProducts';
+import { analyticsVisitorsBn, analyticsVisitorsEn } from './messages.analyticsVisitors';
+import { analyticsMarketingBn, analyticsMarketingEn } from './messages.analyticsMarketing';
+import { analyticsLiveBn, analyticsLiveEn } from './messages.analyticsLive';
 import { staffBn, staffEn } from './messages.staff';
 import { auditBn, auditEn } from './messages.audit';
 import { integrationsHubBn, integrationsHubEn } from './messages.integrationsHub';
 import { storeSettingsBn, storeSettingsEn } from './messages.storeSettings';
 import { checkoutSettingsBn, checkoutSettingsEn } from './messages.checkoutSettings';
 import { posBn, posEn } from './messages.pos';
+import { aiBn, aiEn } from './messages.ai';
+import { aiSettingsBn, aiSettingsEn } from './messages.aiSettings';
+import { aiAdvisorBn, aiAdvisorEn } from './messages.aiAdvisor';
+import { aiCopyBn, aiCopyEn } from './messages.aiCopy';
+import { aiInboxBn, aiInboxEn } from './messages.aiInbox';
+import { aiRestockBn, aiRestockEn } from './messages.aiRestock';
+import { printBn, printEn } from './messages.print';
+import { printInvoiceBn, printInvoiceEn } from './messages.printInvoice';
+import { printReceiptBn, printReceiptEn } from './messages.printReceipt';
+import { printLabelsBn, printLabelsEn } from './messages.printLabels';
 import { inboxBn, inboxEn } from './messages.inbox';
 import { deliverySettingsBn, deliverySettingsEn } from './messages.deliverySettings';
 import { shipmentsBoardBn, shipmentsBoardEn } from './messages.shipmentsBoard';
@@ -85,6 +99,16 @@ export const en = {
     ...storeSettingsEn,
     ...checkoutSettingsEn,
     ...posEn,
+    ...aiEn,
+    ...aiSettingsEn,
+    ...aiAdvisorEn,
+    ...aiCopyEn,
+    ...aiInboxEn,
+    ...aiRestockEn,
+    ...printEn,
+    ...printInvoiceEn,
+    ...printReceiptEn,
+    ...printLabelsEn,
     ...inboxEn,
     ...deliverySettingsEn,
     ...shipmentsBoardEn,
@@ -93,6 +117,10 @@ export const en = {
     ...customersEn,
     ...dashboardEn,
     ...analyticsEn,
+    ...analyticsProductsEn,
+    ...analyticsVisitorsEn,
+    ...analyticsMarketingEn,
+    ...analyticsLiveEn,
     'app.name': 'Toy Mart BD',
     'app.admin': 'Admin',
     'app.wordmark': 'toymart',
@@ -400,6 +428,16 @@ export const bn: Messages = {
     ...storeSettingsBn,
     ...checkoutSettingsBn,
     ...posBn,
+    ...aiBn,
+    ...aiSettingsBn,
+    ...aiAdvisorBn,
+    ...aiCopyBn,
+    ...aiInboxBn,
+    ...aiRestockBn,
+    ...printBn,
+    ...printInvoiceBn,
+    ...printReceiptBn,
+    ...printLabelsBn,
     ...inboxBn,
     ...deliverySettingsBn,
     ...shipmentsBoardBn,
@@ -408,6 +446,10 @@ export const bn: Messages = {
     ...customersBn,
     ...dashboardBn,
     ...analyticsBn,
+    ...analyticsProductsBn,
+    ...analyticsVisitorsBn,
+    ...analyticsMarketingBn,
+    ...analyticsLiveBn,
     'app.name': 'টয় মার্ট বিডি',
     'app.admin': 'অ্যাডমিন',
     'app.wordmark': 'toymart',

@@ -6,7 +6,7 @@ export type Device = 'desktop' | 'mobile';
 /** The storefront layouts the canvas shows: the 1440 design at its 1280 content width, and 390. */
 const FRAME_WIDTH: Record<Device, number> = { desktop: 1280, mobile: 390 };
 
-/** Mirrors toymartbd-app/storefront/lib/content/preview-bridge.ts. */
+/** Mirrors toymartbd-storefront/lib/content/preview-bridge.ts. */
 export const BRIDGE_SOURCE = 'tm-home-builder';
 
 type Props = {

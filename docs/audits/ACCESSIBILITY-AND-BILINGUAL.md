@@ -4,7 +4,7 @@
 
 **Method**
 - **axe-core 4.14** through `@axe-core/playwright` 4.14.0. This is a new root **dev dependency**. Every rule tagged WCAG 2.0, 2.1 or 2.2 at level A or AA runs, and a violation of any impact fails. Best-practice rules also run, but their findings are only attached to the report.
-- **Storefront:** `toymartbd-app/storefront/e2e/accessibility.spec.ts` uses the existing mock-API E2E setup with JavaScript on, so it audits the hydrated page.
+- **Storefront:** `toymartbd-storefront/e2e/accessibility.spec.ts` uses the existing mock-API E2E setup with JavaScript on, so it audits the hydrated page.
   - It covers 31 screens per locale and width: 16 catalogue, content and status pages, 8 account pages (signed in through the real OTP flow), and the cart → checkout blank / with errors / filled → confirmation → tracking flow.
   - That makes 124 page audits.
 - **Keyboard:** `e2e/keyboard.spec.ts` (storefront) and `e2e/admin-a11y/keyboard.spec.ts` (admin).

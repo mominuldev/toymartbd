@@ -9,6 +9,7 @@ use App\Domain\Finance\Models\CapitalEntry;
 use App\Domain\Finance\Models\CapitalHolder;
 use App\Domain\Fulfilment\Models\CourierProvider;
 use App\Domain\Fulfilment\Models\Shipment;
+use App\Domain\Marketing\Models\AdSpend;
 use App\Domain\Payment\Models\Refund;
 use App\Domain\Reporting\Models\ReportScheduleRun;
 use App\Models\AuditSensitive;
@@ -37,6 +38,7 @@ final class AuditSubjects
         ReportScheduleRun::class => 'report_run',
         CapitalEntry::class => 'capital_entry',
         CapitalHolder::class => 'capital_holder',
+        AdSpend::class => 'ad_spend',
     ];
 
     /** @var array<string, array<int, string>> type → id → label */
@@ -140,6 +142,10 @@ final class AuditSubjects
                 break;
             case 'capital_holder':
                 $labels = CapitalHolder::query()->whereIn('id', $ids)->pluck('name', 'id')->all();
+                break;
+            case 'ad_spend':
+                // Known by its campaign — never by its amount. A deleted row has no label.
+                $labels = AdSpend::query()->whereIn('id', $ids)->pluck('campaign', 'id')->all();
                 break;
         }
 

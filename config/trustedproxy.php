@@ -8,7 +8,7 @@ declare(strict_types=1);
  * Every storefront request reaches Laravel from the Next.js server, so without this every
  * per-IP rate limit (OTP, search-suggest, tracking, reviews) would be keyed on that one
  * server's address. The Next server forwards the shopper's IP as X-Forwarded-For
- * (toymartbd-app/storefront/lib/api.ts) and Laravel honours it ONLY when the TCP peer is
+ * (toymartbd-storefront/lib/api.ts) and Laravel honours it ONLY when the TCP peer is
  * one of the addresses listed here: a comma-separated list of IPs or CIDR ranges, e.g.
  * `TRUSTED_PROXIES=10.0.0.12,10.0.1.0/24`.
  *

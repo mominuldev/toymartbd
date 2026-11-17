@@ -70,6 +70,8 @@ export const integrationsHubEn = {
     'integrationsHub.attention.pixel_id_missing': 'Switched on without a pixel ID',
     'integrationsHub.attention.measurement_id_missing': 'Switched on without a measurement ID',
     'integrationsHub.attention.tracking_send_failing': 'Server events are failing',
+    'integrationsHub.category.ai': 'AI assistant',
+    'integrationsHub.attention.ai_key_rejected': 'The provider rejected the saved key',
 } as const;
 
 export const integrationsHubBn: Record<keyof typeof integrationsHubEn, string> = {
@@ -138,4 +140,6 @@ export const integrationsHubBn: Record<keyof typeof integrationsHubEn, string> =
     'integrationsHub.attention.pixel_id_missing': 'পিক্সেল আইডি ছাড়া চালু করা',
     'integrationsHub.attention.measurement_id_missing': 'মেজারমেন্ট আইডি ছাড়া চালু করা',
     'integrationsHub.attention.tracking_send_failing': 'সার্ভার ইভেন্ট ব্যর্থ হচ্ছে',
+    'integrationsHub.category.ai': 'AI সহকারী',
+    'integrationsHub.attention.ai_key_rejected': 'প্রোভাইডার সংরক্ষিত কী গ্রহণ করেনি',
 };

@@ -1,6 +1,6 @@
 # SEO plumbing (Phase 7 — S-01…S-04, P-06c)
 
-Owner of this contract: the SEO module (`app/Domain/Seo`, `toymartbd-app/storefront/lib/seo/**`,
+Owner of this contract: the SEO module (`app/Domain/Seo`, `toymartbd-storefront/lib/seo/**`,
 `resources/js/admin/features/seo/**`). Every storefront template and every content entity uses
 these helpers; nothing builds its own `<head>`, JSON-LD, sitemap entry or redirect.
 
@@ -121,7 +121,7 @@ Truncation is computed on the server at Google's desktop pixel metric (`SerpMeas
 Every text value is already the effective one (override, else the server default). `title` is a
 complete `<title>` (it already carries the site name) — use it as `title.absolute`.
 
-## 4. Storefront helpers (`toymartbd-app/storefront/lib/seo/`)
+## 4. Storefront helpers (`toymartbd-storefront/lib/seo/`)
 
 - `metadata.ts` — `buildMetadata(input)` plus one function per template: `homeMetadata`,
   `listingPageMetadata` (category / brand / toys, pagination + facets), `productMetadata`,

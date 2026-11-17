@@ -373,7 +373,7 @@ test('orders board → order detail: filters, table, the three tracks, and the h
         - link "Call customer"
       - region "Delivery address"
       - region "Toy Mart risk score"
-      - region "Courier-verified delivery record"
+      - region "What the couriers say"
     `);
     // Rule 24: our score and the courier's record are two separately named regions, never one.
     // The raw column names under each track are hidden from speech (they would be spelled out).

@@ -15,8 +15,9 @@ use Illuminate\Http\Response;
 use Throwable;
 
 /**
- * Customer invoice / packing slip PDFs (P4-ORD-08, P8 N-13) — one A4 page per order, in the
- * customer's preferred language unless `locale` says otherwise. Needs orders.view and
+ * Customer invoice / packing slip PDFs (P4-ORD-08, P8 N-13) — one page per order, on the paper
+ * and in the language chosen in Settings › Invoices, receipts & labels unless `locale` says
+ * otherwise. Needs orders.view and
  * customers.view_pii (the slip carries the full phone and street address, rule 20).
  *
  * The first print of an order ISSUES its invoice (IssueSalesInvoice: gap-free `INV-YY-NNNNNN`,
@@ -33,7 +34,7 @@ final class OrderInvoiceController extends ApiController
         $invoice = $issue->handle($order, self::userId($request));
 
         return self::pdf(
-            $pdf->render([['invoice' => $invoice, 'locale' => self::locale($invoice, $request->locale())]]),
+            $pdf->render([['invoice' => $invoice, 'locale' => $pdf->locale($invoice, $request->locale())]]),
             $invoice->number.'.pdf',
             ['X-Invoice-Numbers' => $order->id.':'.$invoice->number],
         );
@@ -80,7 +81,7 @@ final class OrderInvoiceController extends ApiController
 
                 continue;
             }
-            $printed[] = ['invoice' => $invoice, 'locale' => self::locale($invoice, $request->locale())];
+            $printed[] = ['invoice' => $invoice, 'locale' => $pdf->locale($invoice, $request->locale())];
             $numbers[] = $id.':'.$invoice->number;
         }
 
@@ -91,12 +92,6 @@ final class OrderInvoiceController extends ApiController
             'X-Orders-Not-Found' => $missing === [] ? null : implode(',', $missing),
             'X-Orders-Not-Invoiced' => $refused === [] ? null : implode(',', $refused),
         ]);
-    }
-
-    /** The requested language, else the customer's preferred language at issue. */
-    public static function locale(Invoice $invoice, ?string $requested): string
-    {
-        return $requested ?? (($invoice->issued_to['preferred_language'] ?? 'bn') === 'en' ? 'en' : 'bn');
     }
 
     /** @param  array<string, string|null>  $headers */

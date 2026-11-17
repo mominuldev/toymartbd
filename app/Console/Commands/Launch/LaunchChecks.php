@@ -71,7 +71,8 @@ final class LaunchChecks
 
     public const int SITEMAP_MAX_AGE_HOURS = 48;
 
-    public const string STOREFRONT_SITE_CONFIG = 'toymartbd-app/storefront/lib/site-config.ts';
+    /** The storefront is its own repository (2026-11-17): read from a sibling checkout when there is one. */
+    public const string STOREFRONT_SITE_CONFIG = '../toymartbd-storefront/lib/site-config.ts';
 
     public function __construct(private readonly Application $app) {}
 
@@ -706,12 +707,12 @@ final class LaunchChecks
                 $problems[] = "{$flags} organization value(s) still marked `placeholder: true` in site-config.ts (logo, legal name)";
             }
         } elseif ($problems === []) {
-            return CheckResult::manual('storefront.site_config', $title, 'F4', 'Business values are set. The storefront source is not on this host: on the storefront build, confirm toymartbd-app/storefront/lib/site-config.ts has no `placeholder: true` after `cmsPaths` (organization logo, legal name).');
+            return CheckResult::manual('storefront.site_config', $title, 'F4', 'Business values are set. The storefront source is not on this host: on the storefront build, confirm lib/site-config.ts (toymartbd-storefront repo) has no `placeholder: true` after `cmsPaths` (organization logo, legal name).');
         }
 
         return $problems === []
             ? CheckResult::pass('storefront.site_config', $title, 'F4', 'Hotline, WhatsApp, email, trade licence and BIN are set in Business; no organization placeholders in the storefront config.')
-            : CheckResult::fail('storefront.site_config', $title, 'F4', implode('; ', $problems).'.', 'Enter the values in Admin → Settings → Store → Business (the storefront refreshes on save); for logo and legal name edit toymartbd-app/storefront/lib/site-config.ts and redeploy the storefront.');
+            : CheckResult::fail('storefront.site_config', $title, 'F4', implode('; ', $problems).'.', 'Enter the values in Admin → Settings → Store → Business (the storefront refreshes on save); for logo and legal name edit lib/site-config.ts in the toymartbd-storefront repo and redeploy the storefront.');
     }
 
     private function placeholderValues(): CheckResult

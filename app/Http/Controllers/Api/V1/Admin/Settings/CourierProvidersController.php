@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin\Settings;
 
+use App\Domain\Fulfilment\Actions\CheckCourierConnection;
 use App\Domain\Fulfilment\Actions\UpdateCourierCredentials;
 use App\Domain\Fulfilment\Actions\UpdateCourierProviderStatus;
 use App\Domain\Fulfilment\Actions\UpdateCourierRateCard;
@@ -15,6 +16,7 @@ use App\Http\Requests\Admin\Settings\UpdateCourierCredentialsRequest;
 use App\Http\Requests\Admin\Settings\UpdateCourierProviderRequest;
 use App\Http\Requests\Admin\Settings\UpdateCourierRatesRequest;
 use App\Http\Requests\Admin\Settings\UpdateDeliverySettingsRequest;
+use App\Http\Resources\Admin\CourierConnectionCheckResource;
 use App\Http\Resources\Admin\CourierProviderSettingsResource;
 use App\Http\Resources\Admin\DeliverySettingsResource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -58,6 +60,19 @@ final class CourierProvidersController extends ApiController
             $request->boolean('clear_webhook_secret'),
             $request->user()?->getKey() !== null ? (int) $request->user()->getKey() : null,
         ));
+    }
+
+    /**
+     * `POST /settings/couriers/{provider}/check` — "Check connection": one read-only call to the
+     * courier with the SAVED credentials (Steadfast: balance; Pathao: store list). Books nothing,
+     * never verifies the provider (rule 33a). Same permission as the credentials; throttled,
+     * because Steadfast locks a key after ten auth failures in five minutes.
+     */
+    public function check(CourierProvider $provider, CheckCourierConnection $action): CourierConnectionCheckResource
+    {
+        $this->authorize('updateCredentials', $provider);
+
+        return new CourierConnectionCheckResource($action->handle($provider));
     }
 
     /** `GET /settings/delivery` — the free-delivery threshold. */

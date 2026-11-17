@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CheckCircleIcon, InfoIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { IconButton } from './IconButton';
@@ -24,13 +24,29 @@ const looks = {
 export function ToastProvider({ children }: { children: ReactNode }) {
     const { t } = useI18n();
     const [toasts, setToasts] = useState<Toast[]>([]);
+    // Pending auto-dismiss timers, cleared on unmount: a timer that outlives the provider would
+    // set state on an unmounted tree (and, in tests, after the DOM is torn down).
+    const timers = useRef(new Set<number>());
+    useEffect(() => {
+        const pending = timers.current;
+        return () => {
+            pending.forEach((timer) => window.clearTimeout(timer));
+            pending.clear();
+        };
+    }, []);
 
     const dismiss = useCallback((id: number) => setToasts((all) => all.filter((x) => x.id !== id)), []);
     const notify = useCallback<ToastApi['notify']>(
         (message, tone = 'success') => {
             const id = nextId++;
             setToasts((all) => [...all.slice(-2), { id, tone, message }]);
-            if (tone !== 'danger') window.setTimeout(() => dismiss(id), 5000);
+            if (tone !== 'danger') {
+                const timer = window.setTimeout(() => {
+                    timers.current.delete(timer);
+                    dismiss(id);
+                }, 5000);
+                timers.current.add(timer);
+            }
         },
         [dismiss],
     );

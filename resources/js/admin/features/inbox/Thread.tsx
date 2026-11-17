@@ -23,6 +23,8 @@ import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { canReplyFreely, isWebForm, useAddNote, useAssign, useAssignees, useMessages, useResolve, useSendReply, type ConversationDetail, type InboxMessage } from './api';
 import { TemplatePanel } from './TemplatePanel';
+import { AiDraftButton, AiDraftCard } from '@/features/ai/inbox/AiDraftCard';
+import { useAiDraft } from '@/features/ai/inbox/api';
 import { ChannelIcon, ContactAvatar, channelLabel, dhakaDayTime, dhakaTime, displayPhone, langProps, useContactName } from './parts';
 
 type Mode = 'reply' | 'note';
@@ -33,9 +35,9 @@ type Mode = 'reply' | 'note';
  * their delivery status, internal notes (dashed, never sent), system lines — and the composer
  * with Reply / Internal note and the WhatsApp 24-hour window notice.
  *
- * Left out of the frame on purpose (owner has not chosen an AI provider): the AI handover
- * banner, AI-assistant bubbles, "Suggested reply" and the composer's quick-reply/attachment
- * icons, which have nothing behind them yet.
+ * The composer carries "Draft with AI" and the Suggested reply card (Figma 539:83211,
+ * features/ai/inbox). Still left out: the AI handover banner, AI-assistant bubbles and the
+ * composer's quick-reply/attachment icons, which have nothing behind them yet.
  */
 export function Thread({ detail }: { detail: ConversationDetail }) {
     const { t } = useI18n();
@@ -273,6 +275,7 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
     const state = detail.reply.state;
     const replyBlocked = mode === 'reply' && !canReplyFreely(state);
     const pending = reply.isPending || note.isPending;
+    const aiDraft = useAiDraft(detail.id);
 
     useEffect(() => {
         setText('');
@@ -310,19 +313,32 @@ export function Composer({ detail }: { detail: ConversationDetail }) {
 
     return (
         <div className="flex flex-col gap-2 border-t border-line-default px-4 py-3 lg:px-5">
-            <div role="radiogroup" aria-label={t('inbox.composer.modes')} className="flex items-center gap-1">
-                {(['reply', 'note'] as const).map((m) => (
-                    <button
-                        key={m}
-                        type="button"
-                        role="radio"
-                        aria-checked={mode === m}
-                        onClick={() => setMode(m)}
-                        className={`h-7 rounded-sm px-2.5 ${mode === m ? 'bg-subtle t-admin-caption-strong text-fg-primary' : 't-admin-caption text-fg-secondary hover:text-fg-primary'}`}
-                    >
-                        {t(m === 'reply' ? 'inbox.composer.reply' : 'inbox.composer.note')}
-                    </button>
-                ))}
+            <AiDraftCard
+                state={aiDraft}
+                onUse={(draft) => {
+                    setMode('reply');
+                    setText(draft);
+                    aiDraft.discard();
+                }}
+            />
+            <div className="flex items-center gap-1">
+                <div role="radiogroup" aria-label={t('inbox.composer.modes')} className="flex items-center gap-1">
+                    {(['reply', 'note'] as const).map((m) => (
+                        <button
+                            key={m}
+                            type="button"
+                            role="radio"
+                            aria-checked={mode === m}
+                            onClick={() => setMode(m)}
+                            className={`h-7 rounded-sm px-2.5 ${mode === m ? 'bg-subtle t-admin-caption-strong text-fg-primary' : 't-admin-caption text-fg-secondary hover:text-fg-primary'}`}
+                        >
+                            {t(m === 'reply' ? 'inbox.composer.reply' : 'inbox.composer.note')}
+                        </button>
+                    ))}
+                </div>
+                <span className="ml-auto">
+                    <AiDraftButton state={aiDraft} />
+                </span>
             </div>
             {mode === 'reply' && state === 'template_only' ? (
                 <TemplatePanel detail={detail} />

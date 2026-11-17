@@ -3,7 +3,7 @@
 The homepage — and, since 2026-11-16 (owner decision), **every static page** — is an ordered list of typed blocks ("sections"). Each one is a **layout** with its own key: `home` or `page:{id}` (`App\Domain\Content\Blocks\ValueObjects\LayoutKey`). Editors change a **draft**; **publish** freezes the
 draft into an immutable **version**, which is what the storefront renders. Domain:
 `app/Domain/Content/Blocks`. Admin: `resources/js/admin/features/content/home` (Figma B · 26 Page
-builder `241:44102`). Storefront: `toymartbd-app/storefront/components/content/**`.
+builder `241:44102`). Storefront: `toymartbd-storefront/components/content/**`.
 
 ## Data
 

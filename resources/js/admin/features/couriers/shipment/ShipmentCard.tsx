@@ -1,3 +1,4 @@
+import { openPdf } from '@/lib/pdf';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ArrowClockwiseIcon, ArrowSquareOutIcon, CheckIcon, ClockClockwiseIcon, CopyIcon, MotorcycleIcon, PrinterIcon, TruckIcon, WarningIcon } from '@phosphor-icons/react';
@@ -216,10 +217,10 @@ function ShipmentBody({ shipment: s, canPrint, canRetry, canRecordRider }: { shi
                 )}
                 {canPrint &&
                     (s.consignment_id ? (
-                        <a href={labelUrl(s.id, locale)} target="_blank" rel="noopener" className={buttonClass('outline', 'sm')}>
+                        <Button variant="outline" size="sm" onClick={() => void openPdf(labelUrl(s.id, locale))}>
                             <PrinterIcon size={14} aria-hidden />
                             {t('couriers.card.label')}
-                        </a>
+                        </Button>
                     ) : (
                         <Button variant="outline" size="sm" disabled title={t('couriers.card.labelLater')} aria-describedby={`label-later-${s.id}`}>
                             <PrinterIcon size={14} aria-hidden />

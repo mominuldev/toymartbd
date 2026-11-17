@@ -8,6 +8,8 @@ import { controlHeight, inputClass } from '@/components/ui/Field';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { ApiError } from '@/lib/api';
+import { can, useMe } from '@/features/auth/api';
+import { usePrintSettings } from '@/features/print/api';
 import { useLabelTemplates, usePrintLabels, type LabelTemplate, type Product } from './api';
 
 /** App\Http\Requests\Admin\Product\PrintLabelsRequest caps — the server enforces them; these only keep the inputs in range. */
@@ -44,6 +46,11 @@ type Props = {
  * data carries it), show price / show name, label language, and the variants without a
  * barcode — skipped, or generated first by someone with catalog.update. The server lays out
  * and prices every label; this only sends the choices and downloads the PDF.
+ *
+ * Defaults are the saved Barcode labels settings (Settings › Invoices, receipts & labels) when
+ * the user can read them (settings.view). Otherwise the size starts at "As in print settings"
+ * and only what the user changes is sent — the server fills the rest from the same settings.
+ * What the dialog has no control for (options line, store name, digits) always follows them.
  */
 export function PrintLabelsDialog({ open, onClose, products, loading = false, canGenerate, onGenerateMissing }: Props) {
     const { t, locale } = useI18n();
@@ -52,12 +59,18 @@ export function PrintLabelsDialog({ open, onClose, products, loading = false, ca
     const titleId = useId();
     const templates = useLabelTemplates(open);
     const print = usePrintLabels();
-    const [template, setTemplate] = useState<LabelTemplate>('roll_38x25');
+    const { data: me } = useMe();
+    const settings = usePrintSettings(open && can(me, 'settings.view'));
+    const saved = settings.data?.labels;
+    /** '' = not chosen here: the server uses the saved label paper. */
+    const [template, setTemplate] = useState<LabelTemplate | ''>('');
     const [copies, setCopies] = useState<Record<number, string>>({});
-    const [showPrice, setShowPrice] = useState(true);
-    const [showName, setShowName] = useState(true);
+    /** undefined = not changed here: the saved setting (shown, when readable) applies. */
+    const [showPrice, setShowPrice] = useState<boolean | undefined>(undefined);
+    const [showName, setShowName] = useState<boolean | undefined>(undefined);
     const [labelLocale, setLabelLocale] = useState<'en' | 'bn'>(locale === 'bn' ? 'bn' : 'en');
-    const [generate, setGenerate] = useState(canGenerate);
+    const [generateChoice, setGenerate] = useState<boolean | undefined>(undefined);
+    const generate = generateChoice ?? (canGenerate && (saved?.generate_missing ?? true));
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string[]>([]);
 
@@ -106,11 +119,15 @@ export function PrintLabelsDialog({ open, onClose, products, loading = false, ca
     const total = printable.reduce((sum, row) => sum + copiesOf(row.id), 0);
     const hasStock = rows.some((row) => row.onHand !== null);
     const busy = print.isPending || generating;
+    // The size select shows the saved paper once it is known; before that (or without access), "As in print settings".
+    const shownTemplate: LabelTemplate | '' = template || saved?.template || '';
 
     const fillFromStock = () => setCopies(Object.fromEntries(rows.map((row) => [row.id, String(Math.max(0, Math.min(row.onHand ?? 0, MAX_COPIES)))])));
 
     const submit = async () => {
         setError([]);
+        const sendPrice = showPrice ?? saved?.show_price;
+        const sendName = showName ?? saved?.show_name;
         const toGenerate = willGenerate ? printable.filter((row) => !row.barcode).map((row) => row.id) : [];
         try {
             if (toGenerate.length > 0 && onGenerateMissing) {
@@ -118,12 +135,13 @@ export function PrintLabelsDialog({ open, onClose, products, loading = false, ca
                 await onGenerateMissing(toGenerate);
             }
             await print.mutateAsync({
-                template,
+                ...(shownTemplate ? { template: shownTemplate } : {}),
                 items: printable.map((row) => ({ variant_id: row.id, copies: copiesOf(row.id) })),
-                show_price: showPrice,
-                show_name: showName,
+                ...(sendPrice === undefined ? {} : { show_price: sendPrice }),
+                ...(sendName === undefined ? {} : { show_name: sendName }),
                 locale: labelLocale,
-                generate_missing: toGenerate.length > 0 && !onGenerateMissing ? true : undefined,
+                // Always sent: omitted, the server would apply the saved "create missing barcodes".
+                generate_missing: toGenerate.length > 0 && !onGenerateMissing,
             });
             onClose();
         } catch (caught) {
@@ -162,7 +180,8 @@ export function PrintLabelsDialog({ open, onClose, products, loading = false, ca
                         <div className="grid gap-3 md:grid-cols-2">
                             <label className="flex flex-col gap-1.5">
                                 <span className="t-admin-body-strong text-fg-primary">{t('products.labels.template')}</span>
-                                <Select ref={firstField} value={template} onChange={(e) => setTemplate(e.target.value as LabelTemplate)} disabled={busy}>
+                                <Select ref={firstField} value={shownTemplate} onChange={(e) => setTemplate(e.target.value as LabelTemplate | '')} disabled={busy}>
+                                    {shownTemplate === '' && <option value="">{t('printLabels.dialog.fromSettings')}</option>}
                                     {(templates.data ?? []).map((info) => (
                                         <option key={info.value} value={info.value}>
                                             {t('products.labels.templateOption', { name: t(templateLabel[info.value]), width: info.width_mm, height: info.height_mm })}
@@ -187,14 +206,15 @@ export function PrintLabelsDialog({ open, onClose, products, loading = false, ca
 
                         <div className="flex flex-wrap gap-x-6 gap-y-2">
                             <label className="flex items-center gap-2 t-admin-body text-fg-primary">
-                                <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} disabled={busy} className="size-4 accent-brand" />
+                                <input type="checkbox" checked={showName ?? saved?.show_name ?? true} onChange={(e) => setShowName(e.target.checked)} disabled={busy} className="size-4 accent-brand" />
                                 {t('products.labels.showName')}
                             </label>
                             <label className="flex items-center gap-2 t-admin-body text-fg-primary">
-                                <input type="checkbox" checked={showPrice} onChange={(e) => setShowPrice(e.target.checked)} disabled={busy} className="size-4 accent-brand" />
+                                <input type="checkbox" checked={showPrice ?? saved?.show_price ?? true} onChange={(e) => setShowPrice(e.target.checked)} disabled={busy} className="size-4 accent-brand" />
                                 {t('products.labels.showPrice')}
                             </label>
                         </div>
+                        {!saved && <p className="t-admin-caption text-fg-tertiary">{t('printLabels.dialog.followsSettings')}</p>}
 
                         {missing.length > 0 && (
                             <div role="note" className="flex flex-col gap-2 rounded-md border border-line-default bg-warning-subtle px-4 py-3">

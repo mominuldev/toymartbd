@@ -47,6 +47,7 @@ import { ImagesPanel, attachPendingImages } from './ImagesPanel';
 import type { Media } from '@/features/media';
 import { SeoPanel } from './SeoPanel';
 import { DescriptionEditor } from './DescriptionEditor';
+import { WriteWithAiDialog, productFieldsFromCopy, type CopyTexts } from '@/features/ai/copy';
 import { CertificateFile, StockByBranchCard } from './RailCards';
 
 /** The section navigation of Figma "B · 12 Product edit" 241:37900, in Figma order. */
@@ -175,6 +176,7 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     const [pendingImages, setPendingImages] = useState<Media[]>([]);
     const [placed, setPlaced] = useState<PlacedErrors>(noErrors);
     const [confirming, setConfirming] = useState(false);
+    const [aiOpen, setAiOpen] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
     const addAnother = useRef(false);
 
@@ -419,6 +421,11 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
         const generated = await generateBarcodes.mutateAsync(variantIds);
         applyBarcodes(generated);
         notify(t('products.barcodes.generated', { count: generated.length }));
+    };
+    /** Write with AI → "Use these texts": fill the fields and mark them dirty. Save product saves; the slug never changes. */
+    const applyAiTexts = (texts: CopyTexts) => {
+        for (const [path, value] of productFieldsFromCopy(texts)) setValue(path, value, { shouldDirty: true });
+        notify(t('aiCopy.used'));
     };
     const onGenerateBarcodes = () => void generateMissing(barcodeMissing).catch((error: unknown) => notify(error instanceof ApiError ? (error.problem.detail ?? error.problem.title) : t('error.title'), 'danger'));
     const barcodeButton = canGenerateBarcodes && (
@@ -700,7 +707,9 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                                     error={descError}
                                     invalid={{ en: Boolean(errorOf('description')), bn: Boolean(errorOf('description_bn')) }}
                                     disabled={!editable || save.isPending}
+                                    onAiWrite={id !== null && editable ? () => setAiOpen(true) : undefined}
                                 />
+                                {aiOpen && id !== null && <WriteWithAiDialog productId={id} onClose={() => setAiOpen(false)} onUse={applyAiTexts} />}
 
                                 {/* Category · Brand · Age (241:37927) */}
                                 <div className="grid gap-4 lg:grid-cols-3">

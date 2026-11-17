@@ -34,7 +34,7 @@ toymartbd/
 ├── packages/
 │   ├── tokens/           Figma export → tokens.css, Tailwind theme, tokens.json (see its README)
 │   └── api-types/        generated from OpenAPI — never hand-edited
-├── toymartbd-app/storefront/   Next.js 16 App Router
+├── toymartbd-storefront/   Next.js 16 App Router
 ├── tests/{Arch,Unit,Feature}/  Pest; MySQL-only tests in group "mysql"
 ├── docker-compose.yml · Makefile   local services and one-command setup
 ├── docs/{_research,_design}/
@@ -64,7 +64,7 @@ One repository, because the API and both frontends share a contract and must cha
 | P3-SUP-04 | Slug generator with Bangla transliteration and uniqueness | S | P3-SET-04 | Bangla name yields a usable ASCII slug; collisions suffix correctly; **one slug serves both locales** |
 | P3-I18N-01 | Laravel locale resolution, lang files, explicit-locale API contract (`?locale=` plus `Accept-Language` fallback), locale-aware date/number formatters pinned to Western digits | M | P3-SET-03 | a request resolves the right locale from each source; an unknown locale falls back to `en` without erroring |
 | P3-I18N-02 | Next.js locale routing — English at `/`, Bangla at `/bn/`; `hreflang` pair plus `x-default` emitted on every page; persisted toggle; Bangla suggested (never force-redirected) on a first BD visit | L | P3-STO-01, P3-I18N-01 | both locale trees render; `hreflang` is reciprocal on every template; a crawler is never redirected |
-| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `resources/js/admin` and `toymartbd-app/storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
+| P3-I18N-03 | Lint rule failing any hardcoded user-facing string in `resources/js/admin` and `toymartbd-storefront`; i18n key extraction script | S | P3-I18N-02 | a deliberately hardcoded label fails CI |
 
 ### Data foundation
 | ID | Task | Size | Depends | Tests |
@@ -151,7 +151,7 @@ One repository, because the API and both frontends share a contract and must cha
 - **P3-DAT-04** — `DemoCatalogSeeder`: 13 products with Bangla names, 3 with variants (local/testing only).
 - Verified on the real app: product and category APIs, the mega menu rendering seeded categories in both locales, and a category rename revalidating the storefront.
 
-**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details were placeholders in `toymartbd-app/storefront/lib/site-config.ts`; since Phase 10 batch 3 they come from Admin → Settings → Store → Business via `GET /storefront/store-info` (samples remain for unset values).
+**Open:** image upload (P4-CAT-07) — image rows exist with `path` null; category image/banner upload waits for it. The contact details were placeholders in `toymartbd-storefront/lib/site-config.ts`; since Phase 10 batch 3 they come from Admin → Settings → Store → Business via `GET /storefront/store-info` (samples remain for unset values).
 
 ### Progress — Phase 4 batch 2 (PR #6, 2026-11-12)
 
@@ -211,7 +211,7 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 
 **Owner decisions (2026-11-12):** the `Aa` (clear formatting) button is removed from the rich-text toolbar; a saved simple product stays unable to become variable (API refuses the type change). **Still open:** overstock = `available > reorder_point + 2 × reorder_quantity` (needs reorder_quantity > 0); media delete/bulk download limited to super_admin + manager; storage quota unset.
 
-**Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed and AI write in the description toolbar.
+**Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed. (AI write in the description toolbar: enabled 2026-11-17 by the product copy writer.)
 
 ### Progress — Phase 4 batch 6 (2026-11-12)
 
@@ -439,7 +439,7 @@ Expanded to task level at each phase start. Each feature below carries its own t
 ### Progress — Phase 10 batch 4: POS, unified inbox, delivery areas, admin a11y in CI (2026-11-15, 4 parallel agents)
 
 Owner decisions of 2026-11-15:
-- POS and Inbox are in v1; the Inbox has no AI until a provider is chosen.
+- POS and Inbox are in v1. (2026-11-17: AI reply drafts added — see AI for growth.)
 - Editors for the seed-only delivery settings.
 - Admin axe in CI.
 - A screen-reader pass.
@@ -475,7 +475,7 @@ Owner decisions of 2026-11-15:
 
 **Owner decisions open:**
 - WhatsApp Business account and Meta app; Facebook Page; WhatsApp templates outside the 24-hour window.
-- An AI provider.
+- ~~An AI provider.~~ — answered 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature (SYSTEM-ARCHITECTURE §8).
 - A storefront live-chat widget.
 - A payment gateway (bKash link, card terminal, bKash/Nagad merchant).
 - A receipt printer.
@@ -553,7 +553,7 @@ Owner decisions of 2026-11-15:
 - Free delivery inside Dhaka only, or in every zone (as today)?
 - Advance payment for risky orders needs a gateway.
 - List or hide services with no driver?
-- Which AI and accounting providers, if any?
+- ~~Which AI~~ (answered 2026-11-17, see above) and accounting providers, if any?
 - A stricter "connected" rule for SMS?
 - Export permission for the activity log.
 - An actor list for the Person filter for accountants, who lack `staff.view`.

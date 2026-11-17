@@ -9,8 +9,8 @@ Working protocol for AI coding agents on this repository.
 ## 1. Ground rules
 
 1. **One agent owns one domain at a time.** Ownership is by directory, listed in §3. Never edit a file outside your assigned domain; if you need a change there, state the requirement and let the owning agent make it.
-2. **Never edit a shared file concurrently.** `composer.json`, `toymartbd-app/package.json`, `routes/*`, `config/*`, `.env.example`, `docs/*` and the OpenAPI document are shared. Changes to them are serialised through the lead.
-2a. **Two frontends, two homes.** The admin SPA is inside Laravel at `resources/js/admin/`; the Next.js storefront is at `toymartbd-app/storefront/`; shared packages are at `packages/`. The repo root is both the Laravel app and the single npm workspaces root.
+2. **Never edit a shared file concurrently.** `composer.json`, the root `package.json`, `routes/*`, `config/*`, `.env.example`, `docs/*` and the OpenAPI document are shared. Changes to them are serialised through the lead.
+2a. **Two frontends, two homes.** The admin SPA is inside Laravel at `resources/js/admin/`; the Next.js storefront is its own repository (`../toymartbd-storefront`, since 2026-11-17) and gets copies of `packages/` through `npm run sync:storefront`. The repo root is both the Laravel app and the npm workspaces root.
 2b. **Figma writes are never parallel.** The design-system tooling requires strictly sequential mutations — two agents calling `use_figma` at once can corrupt the file. Parallelise the specification work in `docs/_design/`; one agent at a time executes the Figma construction.
 3. **Migrations are append-only across agents.** Never modify another agent's migration. Add a new one.
 4. **Contract before code.** If your work changes an API shape, update the OpenAPI document and regenerate `packages/api-types` in the same PR. Clients must break at typecheck time, not at runtime.
@@ -53,8 +53,8 @@ Assign at most one agent per row at any time. Rows in the same group can run in 
 | **SEO** | `app/Domain/Seo/`, slug history, redirects, sitemap, schema | Catalog, Content |
 | **Tracking** | `app/Domain/Tracking/`, GA4 MP, Meta CAPI, dedup | Ordering |
 | **Admin UI** | `resources/js/admin/features/<feature>/` — one agent per feature folder | the matching API domain |
-| **Storefront** | `toymartbd-app/storefront/app/<route-group>/` — one agent per route group | Catalog, Cart, Ordering |
-| **Design system** | `packages/tokens/`, `resources/js/admin/components/ui/`, `toymartbd-app/storefront/components/ui/` | Figma library built |
+| **Storefront** | the toymartbd-storefront repo, `app/<route-group>/` — one agent per route group | Catalog, Cart, Ordering |
+| **Design system** | `packages/tokens/`, `resources/js/admin/components/ui/`, `components/ui/` in the toymartbd-storefront repo | Figma library built |
 | **API types** | `packages/api-types/` — **generated, never hand-edited** | the OpenAPI document |
 
 ### Hard rules for this map

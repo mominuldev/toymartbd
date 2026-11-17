@@ -79,10 +79,11 @@ These encode decisions already argued in the docs. Changing one requires updatin
 24d. Bulk courier booking returns no consignment ids on either provider. Show "submitted" until a webhook or poll confirms.
 
 ### Frontend
-25. **Two frontends, two homes** (owner decision, 2026-11-08 — this supersedes the earlier rule that all frontend lived under `toymartbd-app/`):
+25. **Two frontends, two homes** (owner decisions 2026-11-08 and 2026-11-17 — the storefront moved to its own repository):
     - **Admin** → `resources/js/admin/`, inside Laravel, built by Laravel's Vite, served from the `/admin/{any?}` catch-all via `resources/views/admin.blade.php`. It consumes `/api/v1/admin/*` over a Sanctum **cookie** session, so every write carries the CSRF token and no long-lived credential sits in JavaScript.
-    - **Storefront** → `toymartbd-app/storefront/`, a separate Next.js app. Never part of the Vite bundle.
-    - **Shared** → `packages/tokens` and `packages/api-types` at the repo root, so one npm workspaces root (the root `package.json`) covers admin, storefront and both packages. One `npm install`.
+    - **Storefront** → its own repository, github.com/mominuldev/toymartbd-storefront (checked out as the sibling folder `../toymartbd-storefront`), a separate Next.js app with its own CI and Vercel deploy. Never part of the Vite bundle. Its rules are in that repo's CLAUDE.md.
+    - **Shared** → `packages/tokens`, `packages/api-types` and `packages/observability` here (npm workspaces root: the root `package.json`). The storefront gets **copies**: after `npm run tokens:build` or `npm run api-types:generate`, run `npm run sync:storefront` (writes `../toymartbd-storefront/shared/`, plus `config/payments.php` and `StaticPagesSeeder.php` for its contract tests) and commit the result in the storefront repo. `npm run sync:storefront -- --check` reports stale copies.
+    - **Deploy order:** a storefront change that needs a new API endpoint deploys only after that API release is live — the two pipelines are separate now.
     - `resources/views/` holds the admin shell plus invoice PDF and mail templates. There is no Blade storefront.
 25a. Server data lives in TanStack Query only. Zustand holds no server data.
 25b. **Recommendations: nothing on checkout.** No upsell, no cross-sell, no "customers also bought". Checkout completes one task. Caps elsewhere are 2 upsell + 4 cross-sell + 1 frequently-bought-together on a product page, and one cross-sell rail in the cart — the cart carries no upsell, because a buyer there has already decided.
@@ -131,7 +132,7 @@ These encode decisions already argued in the docs. Changing one requires updatin
 
 ## Commands
 
-**Laravel 13 lives at the repo root, and so does the npm workspaces root.** Run everything from the repo root. The admin SPA is inside Laravel at `resources/js/admin/`; the Next.js storefront is at `toymartbd-app/storefront/`.
+**Laravel 13 lives at the repo root, and so does the npm workspaces root.** Run everything from the repo root. The admin SPA is inside Laravel at `resources/js/admin/`; the Next.js storefront is its own repository (`../toymartbd-storefront`, commands in its README).
 
 ```bash
 # API — from the repo root
@@ -145,7 +146,6 @@ php artisan test
 npm install
 npm run dev                     # Laravel Vite dev server for the admin SPA
 npm run build                   # build the admin bundle
-npm run dev:storefront          # Next.js storefront on http://localhost:3000
 npm run typecheck
 npm run tokens:build            # rebuild the Tailwind preset from the design tokens
 npm run api-types:generate      # regenerate types from the API's OpenAPI document
@@ -160,11 +160,12 @@ npm run api-types:generate      # regenerate types from the API's OpenAPI docume
 # tool. CI alone uses `npx playwright install chromium`. Screenshots for a Figma check: run a
 # spec with SHOTS_DIR=<dir> (e2e/admin/staff.spec.ts shows the pattern).
 npm run build && npm run test:e2e:admin   # real Laravel app on a throwaway SQLite DB
-npm run test:e2e:storefront               # storefront against a mock API, JS disabled
+# Storefront e2e runs in the storefront repo (npm run test:e2e there).
 
 # Contract — after changing a FormRequest or Resource
 composer openapi:export                   # docs/api/openapi.json (a test fails when stale)
 npm run api-types:generate                # packages/api-types: TS types + Zod schemas
+npm run sync:storefront                   # then copy them to the storefront repo and commit there
 
 # Ops
 php artisan toymart:backup && php artisan toymart:backup:restore-rehearsal

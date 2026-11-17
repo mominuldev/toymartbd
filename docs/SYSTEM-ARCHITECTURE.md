@@ -15,7 +15,9 @@
 | Small-team maintainability | One or two developers will own this | All business logic in Laravel services; clients are view layers only; no logic duplicated across apps |
 
 ### Non-goals for MVP
-Multi-vendor marketplace, multi-warehouse, multi-currency, native mobile apps, AI recommendations, loyalty points. The schema leaves room for each (see `DATABASE-DESIGN.md`) but none ship in MVP.
+Multi-vendor marketplace, multi-warehouse, multi-currency, native mobile apps, AI product recommendations on the storefront, loyalty points. The schema leaves room for each (see `DATABASE-DESIGN.md`) but none ship in MVP.
+
+> **Changed 2026-11-17 (owner decision):** admin-side **AI assistance** ships — see §8 "AI providers". It is suggest-only and sits behind the same driver pattern as couriers; storefront AI recommendations remain a non-goal.
 
 ---
 
@@ -301,6 +303,16 @@ Same shape: `PaymentGateway` with `initiate`, `verify`, `refund`, `verifyWebhook
 4. Respond 200 fast; do all work in a queued job.
 5. Store every raw inbound payload for 90 days for dispute resolution.
 6. IP allowlist where the provider publishes ranges, as defence in depth only — never as the primary control.
+
+### AI providers (owner decision 2026-11-17)
+Four admin features use a large language model: the Growth advisor (weekly brief, suggested actions, Ask AI on Analytics), the product copy writer, inbox reply drafts and the restock-forecast note. The owner connects **Anthropic Claude, OpenAI and/or Google Gemini** and picks a provider and model per feature (Integrations › AI assistant).
+
+- **Driver pattern (rule 5).** `App\Domain\Ai\Contracts\AiDriver` with `AnthropicDriver` (official `anthropic-ai/sdk`), `OpenAiDriver` (Responses API over HTTP), `GeminiDriver` (`generateContent` over HTTP) and `FakeDriver` for tests; real drivers refuse to run under the test suite. Defaults are each provider's flagship (Claude Opus 5.5, GPT-6 Astra, Gemini 4 Carbon). Some OpenAI and Gemini response fields were not verifiable from their docs on 2026-11-17 — confirm with a live call when keys exist.
+- **One entry point.** Feature code calls `AiClient::run(feature, prompt, user)`: routing, the monthly USD cap (Dhaka month, rule 11), redaction of phones, emails and long digit runs (rule 20), and one row in the append-only `ai_requests` log (tokens and estimated cost — never prompt or answer text). Never called inside a DB transaction (rule 4).
+- **Rule 1 holds.** Every figure is computed by the server and passed to the model as facts; `FigureGuard` rejects answers that state a number not in those facts. The restock forecast is pure server arithmetic; the AI only writes the note.
+- **Suggest only.** The AI never sends a message, changes a price, saves a product or creates a purchase order. A person presses the button.
+- **Never sent:** phone numbers, addresses, payment details. Report figures, product details and customer first names can each be switched off.
+- **Keys** live in `settings` (`ai.key.{provider}`, encrypted, audited as `credential_changed` scope `ai_{provider}`), are checked with a real call before saving, and are never returned by the API.
 
 ### Server-side tracking
 Browser fires GA4 and Meta Pixel with a generated `event_id`; the server fires the same event with the **same** `event_id` to GA4 Measurement Protocol and Meta Conversions API. Meta deduplicates on `event_id` + `event_name`. Server-side events are the reliable channel (ad-blockers and iOS suppress ~20–40% of browser events); the browser event supplies the `fbp`/`fbc` cookies that improve match quality. Consent state is stored per visitor and checked before dispatch. Every event is written to `tracking_events` with its dispatch result so the admin has a diagnostics screen instead of guessing why conversions are under-reported.

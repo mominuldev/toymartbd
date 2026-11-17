@@ -1,3 +1,4 @@
+import { printPdfBlob } from '@/lib/pdf';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type {
@@ -20,6 +21,7 @@ import { api, csrfToken, apiLocale } from '@/lib/api';
 
 export type CourierProvider = Schema<'CourierProviderSettings'>;
 export type DeliverySettings = Schema<'DeliverySettings'>;
+export type ConnectionCheck = Schema<'CourierConnectionCheck'>;
 export type ShipmentQuote = Schema<'ShipmentQuote'>;
 export type QuoteProvider = ShipmentQuote['providers'][number];
 export type QuoteOrder = ShipmentQuote['orders'][number];
@@ -103,6 +105,19 @@ function useProviderWrite<TInput>(path: (id: number) => string, method: 'PUT' | 
 export const useSaveRates = () => useProviderWrite<RatesInput>((id) => `/settings/couriers/${id}/rates`, 'PUT');
 export const useSaveCredentials = () => useProviderWrite<CredentialsInput>((id) => `/settings/couriers/${id}/credentials`, 'PUT');
 export const useUpdateProvider = () => useProviderWrite<ProviderInput>((id) => `/settings/couriers/${id}`, 'PATCH');
+
+/**
+ * "Check connection": one read-only call to the courier with the SAVED credentials (Steadfast's
+ * balance, Pathao's store list). A Steadfast balance it reads is kept on the provider, so the
+ * list is re-read afterwards.
+ */
+export function useCheckConnection() {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (id: number) => api<ConnectionCheck>(`/settings/couriers/${id}/check`, { method: 'POST' }),
+        onSuccess: () => void client.invalidateQueries({ queryKey: courierKeys.settings }),
+    });
+}
 
 export function useSaveDelivery() {
     const client = useQueryClient();
@@ -196,7 +211,7 @@ export function labelUrl(shipmentId: number, locale: string): string {
     return `/api/v1/admin/shipments/${shipmentId}/label?locale=${locale === 'bn' ? 'bn' : 'en'}`;
 }
 
-/** Bulk labels: POST, then open the PDF blob. Returns the ids the server skipped (no consignment yet). */
+/** Bulk labels: POST, then print the PDF. Returns the ids the server skipped (no consignment yet). */
 export async function printLabels(shipmentIds: number[], locale: string): Promise<number[]> {
     const response = await fetch('/api/v1/admin/shipments/labels', {
         method: 'POST',
@@ -205,8 +220,6 @@ export async function printLabels(shipmentIds: number[], locale: string): Promis
         body: JSON.stringify({ shipment_ids: shipmentIds, locale: locale === 'bn' ? 'bn' : 'en' }),
     });
     if (!response.ok) throw new Error(String(response.status));
-    const url = URL.createObjectURL(await response.blob());
-    window.open(url, '_blank', 'noopener');
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    printPdfBlob(await response.blob());
     return (response.headers.get('X-Shipments-Skipped') ?? '').split(',').filter(Boolean).map(Number);
 }

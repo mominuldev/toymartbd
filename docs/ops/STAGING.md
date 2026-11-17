@@ -63,7 +63,7 @@ Start from `.env.example`. Every variable below is read by `config/*.php`. The l
 | `STOREFRONT_URL` | `https://staging.<domain>` (also the SSLCommerz return base) |
 | `STOREFRONT_REVALIDATE_SECRET` | `openssl rand -hex 32`. The **same** value goes in the storefront's env. |
 
-**In the storefront's own env** (`toymartbd-app/storefront/.env.example`; all server-only, never `NEXT_PUBLIC_`):
+**In the storefront's own env** (`toymartbd-storefront/.env.example`; all server-only, never `NEXT_PUBLIC_`):
 
 | Variable | Value |
 |---|---|

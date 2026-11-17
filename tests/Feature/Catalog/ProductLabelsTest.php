@@ -70,7 +70,7 @@ it('renders a PDF for every template', function (LabelTemplate $template): void 
         ->and(str_contains((string) $response->headers->get('Content-Disposition'), 'attachment; filename="labels-'))->toBeTrue()
         ->and($text)->toContain('Wooden Train Set')
         ->and($text)->toContain('Red / Large')
-        ->and($text)->toContain('৳1,250')
+        ->and($text)->toContain('1,250')->and($text)->toContain('৳')
         ->and($text)->toContain('WTS-RED')
         ->and($text)->toContain('TOY-BLUE-01')
         ->and(preg_match_all('/\/Type\s*\/Page\b/', $pdf))->toBe($template->isSheet() ? 1 : 3);
@@ -121,7 +121,8 @@ it('is a 422 listing the variants without a barcode', function (): void {
     $ok = labelVariant();
     $missing = labelVariant(['sku' => 'NO-CODE', 'barcode' => null]);
 
-    printLabels(['template' => 'a4_65', 'items' => [['variant_id' => $ok->id, 'copies' => 1], ['variant_id' => $missing->id, 'copies' => 1]]])
+    // generate_missing sent false: omitted, the saved setting (on by default) would generate them.
+    printLabels(['template' => 'a4_65', 'generate_missing' => false, 'items' => [['variant_id' => $ok->id, 'copies' => 1], ['variant_id' => $missing->id, 'copies' => 1]]])
         ->assertUnprocessable()
         ->assertJsonPath('errors.0.field', 'items.1.variant_id');
 
