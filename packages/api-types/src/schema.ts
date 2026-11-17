@@ -8383,6 +8383,7 @@ export interface components {
                 last4: string | null;
                 checked_at: string | null;
                 check_ok: boolean | null;
+                limited: boolean;
                 default_model: string;
                 models: {
                     id: string;

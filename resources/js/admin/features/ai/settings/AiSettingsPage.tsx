@@ -336,6 +336,12 @@ function ProviderCard({ provider: p, canManage }: { provider: AiProviderInfo; ca
                         </p>
                     )}
                     <p className="t-admin-caption text-fg-secondary">{t('aiSettings.key.defaultModel', { model: defaultModel })}</p>
+                    {p.limited && (
+                        <p role="status" className="flex items-start gap-1.5 t-admin-caption text-fg-primary">
+                            <WarningIcon size={14} aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />
+                            {t('aiSettings.key.limited', { provider: p.label })}
+                        </p>
+                    )}
                 </div>
             )}
 

@@ -48,7 +48,7 @@ final class AiSettings
         return $this->apiKey($p) !== null;
     }
 
-    /** @return array{last4: string|null, checked_at: string|null, ok: bool|null} */
+    /** @return array{last4: string|null, checked_at: string|null, ok: bool|null, limited: bool} */
     public function meta(AiProvider $p): array
     {
         $m = Setting::get(self::metaName($p));
@@ -58,6 +58,7 @@ final class AiSettings
             'last4' => is_string($m['last4'] ?? null) ? $m['last4'] : null,
             'checked_at' => is_string($m['checked_at'] ?? null) ? $m['checked_at'] : null,
             'ok' => is_bool($m['ok'] ?? null) ? $m['ok'] : null,
+            'limited' => ($m['limited'] ?? false) === true,
         ];
     }
 

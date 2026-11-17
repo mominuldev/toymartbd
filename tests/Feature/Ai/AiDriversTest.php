@@ -60,3 +60,25 @@ it('treats a Gemini safety block as a refusal', function (): void {
     expect(fn () => app(GeminiDriver::class)->complete(new AiPrompt('s', 'u'), 'gemini-4-carbon', 'k', 100))
         ->toThrow(fn (AiException $e) => expect($e->reason)->toBe(AiException::REFUSED));
 });
+
+it('reads a Gemini 400 API_KEY_INVALID as a rejected key', function (): void {
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['error' => ['code' => 400, 'status' => 'INVALID_ARGUMENT', 'message' => 'API key not valid. Please pass a valid API key.', 'details' => [['reason' => 'API_KEY_INVALID']]]], 400)]);
+
+    expect(fn () => app(GeminiDriver::class)->check('bad', 'gemini-4-carbon'))
+        ->toThrow(fn (AiException $e) => expect($e->reason)->toBe(AiException::AUTH));
+});
+
+it('checks a Gemini key on the cheapest model, whatever model the features use', function (): void {
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['finishReason' => 'STOP', 'content' => ['parts' => [['text' => 'OK']]]]]])]);
+
+    app(GeminiDriver::class)->check('g-key', 'gemini-4-carbon');
+
+    Http::assertSent(fn (Request $req) => str_contains($req->url(), '/models/gemini-3.5-flash-lite:generateContent'));
+});
+
+it('reports a Gemini quota refusal as rate limited', function (): void {
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED']], 429)]);
+
+    expect(fn () => app(GeminiDriver::class)->check('g-key', 'gemini-4-carbon'))
+        ->toThrow(fn (AiException $e) => expect($e->reason)->toBe(AiException::RATE_LIMITED));
+});

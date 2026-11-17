@@ -21,9 +21,12 @@ final class HttpErrors
             throw new AiException(AiException::PROVIDER, $provider.' could not be reached.');
         }
 
+        // Gemini answers a bad key with 400 INVALID_ARGUMENT / reason API_KEY_INVALID, not 401.
+        $badKey = $response->status() === 400 && (str_contains($response->body(), 'API_KEY_INVALID') || str_contains($response->body(), 'API key not valid'));
+
         return match (true) {
             $response->successful() => $response,
-            in_array($response->status(), [401, 403], true) => throw new AiException(AiException::AUTH, $provider.' rejected the API key.'),
+            $badKey, in_array($response->status(), [401, 403], true) => throw new AiException(AiException::AUTH, $provider.' rejected the API key.'),
             $response->status() === 429 => throw new AiException(AiException::RATE_LIMITED, $provider.' is rate limiting requests.'),
             $response->status() === 404 => throw new AiException(AiException::PROVIDER, $provider.' does not know this model.'),
             default => throw new AiException(AiException::PROVIDER, $provider.' answered with an error ('.$response->status().').'),

@@ -38443,6 +38443,9 @@
                                         "null"
                                     ]
                                 },
+                                "limited": {
+                                    "type": "boolean"
+                                },
                                 "default_model": {
                                     "type": "string"
                                 },
@@ -38480,6 +38483,7 @@
                                 "last4",
                                 "checked_at",
                                 "check_ok",
+                                "limited",
                                 "default_model",
                                 "models"
                             ]

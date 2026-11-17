@@ -44,6 +44,9 @@ final class FakeDriver implements AiDriver
 
     public function check(string $apiKey, string $model): void
     {
+        if (str_starts_with($apiKey, 'limited-')) {
+            throw new AiException(AiException::RATE_LIMITED, 'Fake provider is over quota.');
+        }
         if (str_starts_with($apiKey, 'bad-')) {
             throw new AiException(AiException::AUTH, 'Fake provider rejected the key.');
         }

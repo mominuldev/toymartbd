@@ -77,8 +77,22 @@ final readonly class GeminiDriver implements AiDriver
         );
     }
 
+    /**
+     * Checked on the cheapest model: free AI Studio keys often have no quota for the Pro-tier
+     * models, and the check only needs to prove the key.
+     */
+    public const string CHECK_MODEL = 'gemini-3.5-flash-lite';
+
     public function check(string $apiKey, string $model): void
     {
-        $this->complete(new AiPrompt('Reply with OK.', 'OK?'), $model, $apiKey, 64);
+        try {
+            $this->complete(new AiPrompt('Reply with OK.', 'OK?'), self::CHECK_MODEL, $apiKey, 64);
+        } catch (AiException $e) {
+            // A short or empty answer still proves the key; only auth and transport failures matter.
+            if ($e->reason === AiException::INVALID_OUTPUT || $e->reason === AiException::REFUSED) {
+                return;
+            }
+            throw $e;
+        }
     }
 }

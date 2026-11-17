@@ -20,9 +20,11 @@ final class AiSettingsResource extends ApiResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
+        // `limited`: the provider accepted the key but answered "too many requests / quota" on the
+        // last check — usually a free plan with no quota for the chosen model.
         return [
             /**
-             * @var list<array{provider: 'anthropic'|'openai'|'gemini', label: string, connected: bool, last4: string|null, checked_at: string|null, check_ok: bool|null, default_model: string, models: list<array{id: string, label: string, input_usd_per_million: string, output_usd_per_million: string}>}>
+             * @var list<array{provider: 'anthropic'|'openai'|'gemini', label: string, connected: bool, last4: string|null, checked_at: string|null, check_ok: bool|null, limited: bool, default_model: string, models: list<array{id: string, label: string, input_usd_per_million: string, output_usd_per_million: string}>}>
              */
             'providers' => $this->resource['providers'],
             /**

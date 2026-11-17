@@ -89,6 +89,7 @@ export const aiSettingsEn = {
     'aiSettings.suggest.body': 'The AI drafts and explains. It never sends a message, changes a price, edits a product or places a purchase order by itself — you press the button.',
     'aiSettings.key.getKey': 'Get an API key from {provider}',
     'aiSettings.key.newTab': '(opens in a new tab)',
+    'aiSettings.key.limited': '{provider} accepted the key but says it is over its usage limit (quota). This is common on free plans for the larger models — pick a smaller model below, or add billing with the provider.',
 } as const;
 
 export const aiSettingsBn: Record<keyof typeof aiSettingsEn, string> = {
@@ -177,4 +178,5 @@ export const aiSettingsBn: Record<keyof typeof aiSettingsEn, string> = {
     'aiSettings.suggest.body': 'AI খসড়া লেখে ও ব্যাখ্যা করে। নিজে থেকে কখনো মেসেজ পাঠায় না, দাম বদলায় না, পণ্য এডিট করে না বা পারচেজ অর্ডার দেয় না — বোতাম আপনিই চাপেন।',
     'aiSettings.key.getKey': '{provider} থেকে API কী নিন',
     'aiSettings.key.newTab': '(নতুন ট্যাবে খুলবে)',
+    'aiSettings.key.limited': '{provider} কী গ্রহণ করেছে, কিন্তু বলছে ব্যবহারের সীমা (কোটা) পেরিয়ে গেছে। ফ্রি প্ল্যানে বড় মডেলের ক্ষেত্রে এটা সাধারণ — নিচে ছোট একটি মডেল বেছে নিন, অথবা প্রোভাইডারের কাছে বিলিং যোগ করুন।',
 };

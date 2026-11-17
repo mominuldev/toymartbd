@@ -92,6 +92,7 @@ final class AiSettingsController extends ApiController
                 'last4' => $meta['last4'],
                 'checked_at' => $meta['checked_at'],
                 'check_ok' => $meta['ok'],
+                'limited' => $meta['limited'],
                 'default_model' => $p->defaultModel(),
                 'models' => array_map(static fn (string $id, array $m): array => ['id' => $id, 'label' => $m[0], 'input_usd_per_million' => $m[1], 'output_usd_per_million' => $m[2]], array_keys($p->models()), $p->models()),
             ];

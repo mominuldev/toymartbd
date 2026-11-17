@@ -33,9 +33,9 @@ const minutesAgo = (n: number) => new Date(Date.now() - n * 60_000).toISOString(
 function settings(over: Partial<AiSettings> = {}): AiSettings {
     return {
         providers: [
-            { provider: 'anthropic', label: 'Anthropic Claude', connected: true, last4: '7Hk2', checked_at: minutesAgo(5), check_ok: true, default_model: 'claude-opus-5-5', models: models.anthropic },
-            { provider: 'openai', label: 'OpenAI', connected: false, last4: null, checked_at: null, check_ok: null, default_model: 'gpt-6-astra', models: models.openai },
-            { provider: 'gemini', label: 'Google Gemini', connected: true, last4: 'Zz90', checked_at: minutesAgo(60), check_ok: false, default_model: 'gemini-4-carbon', models: models.gemini },
+            { provider: 'anthropic', label: 'Anthropic Claude', connected: true, last4: '7Hk2', checked_at: minutesAgo(5), check_ok: true, limited: false, default_model: 'claude-opus-5-5', models: models.anthropic },
+            { provider: 'openai', label: 'OpenAI', connected: false, last4: null, checked_at: null, check_ok: null, limited: false, default_model: 'gpt-6-astra', models: models.openai },
+            { provider: 'gemini', label: 'Google Gemini', connected: true, last4: 'Zz90', checked_at: minutesAgo(60), check_ok: false, limited: false, default_model: 'gemini-4-carbon', models: models.gemini },
         ],
         features: [
             { feature: 'advisor', provider: 'anthropic', model: 'claude-opus-5-5', connected: true },

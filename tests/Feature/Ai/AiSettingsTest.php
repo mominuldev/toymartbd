@@ -112,3 +112,13 @@ describe('role matrix', function (): void {
         $this->getJson(AI_SETTINGS_URL)->assertUnauthorized();
     });
 });
+
+it('saves a key the provider accepts but rate-limits, and flags it as limited', function (): void {
+    Support::actingAs(Role::SuperAdmin);
+
+    $this->putJson(AI_SETTINGS_URL.'/providers/gemini', ['api_key' => 'limited-key-0000000000000'])->assertOk()
+        ->assertJsonPath('providers.2.connected', true)
+        ->assertJsonPath('providers.2.check_ok', true)
+        ->assertJsonPath('providers.2.limited', true);
+    expect(Setting::query()->find('ai.key.gemini'))->not->toBeNull();
+});

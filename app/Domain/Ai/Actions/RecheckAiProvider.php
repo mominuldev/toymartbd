@@ -21,16 +21,20 @@ final readonly class RecheckAiProvider
     {
         $key = $this->settings->apiKey($provider) ?? throw new AiException(AiException::NOT_CONFIGURED, $provider->label().' is not connected.');
         $ok = true;
+        $limited = false;
         try {
             $this->drivers->for($provider)->check($key, $provider->defaultModel());
         } catch (AiException $e) {
-            if ($e->reason !== AiException::AUTH) {
+            if ($e->reason === AiException::RATE_LIMITED) {
+                $limited = true;
+            } elseif ($e->reason === AiException::AUTH) {
+                $ok = false;
+            } else {
                 throw $e;
             }
-            $ok = false;
         }
         $meta = $this->settings->meta($provider);
-        DB::transaction(static fn () => Setting::put(AiSettings::metaName($provider), ['last4' => $meta['last4'], 'checked_at' => now()->toIso8601String(), 'ok' => $ok], AiSettings::group(), false, $userId));
+        DB::transaction(static fn () => Setting::put(AiSettings::metaName($provider), ['last4' => $meta['last4'], 'checked_at' => now()->toIso8601String(), 'ok' => $ok, 'limited' => $limited], AiSettings::group(), false, $userId));
 
         return $ok;
     }
