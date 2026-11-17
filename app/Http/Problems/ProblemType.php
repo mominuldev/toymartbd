@@ -48,6 +48,7 @@ enum ProblemType: string
     /** AI (owner request 2026-11-17): no provider key for the feature, the monthly cap, or the provider failed. */
     case AiNotConfigured = 'ai-not-configured';
     case AiCapReached = 'ai-cap-reached';
+    case AiNotShared = 'ai-not-shared';
     case AiUnavailable = 'ai-unavailable';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
@@ -77,7 +78,7 @@ enum ProblemType: string
             self::IdempotencyKeyReused => 422,
             self::RequestInProgress => 409,
             self::PriceChanged, self::InsufficientStock, self::MediaInUse, self::BranchModeBlocked, self::SingleBranchMode => 409,
-            self::AiNotConfigured, self::AiCapReached => 409,
+            self::AiNotConfigured, self::AiCapReached, self::AiNotShared => 409,
             self::AiUnavailable => 503,
             self::ServerError, self::HttpError => 500,
         };
@@ -109,6 +110,7 @@ enum ProblemType: string
             self::SingleBranchMode => 'Single-shop mode',
             self::AiNotConfigured => 'AI is not set up',
             self::AiCapReached => 'AI spending cap reached',
+            self::AiNotShared => 'Not shared with AI',
             self::AiUnavailable => 'AI is unavailable',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
@@ -143,6 +145,7 @@ enum ProblemType: string
             self::AiNotConfigured => 'Connect an AI provider for this feature in Integrations › AI assistant.',
             self::AiCapReached => 'This month’s AI spending cap is reached. Raise it in Integrations › AI assistant, or wait until the 1st.',
             self::AiUnavailable => 'The AI provider did not give a usable answer. Try again in a moment.',
+            self::AiNotShared => 'What this feature needs is not shared with AI. Turn it on in Integrations › AI assistant › What the AI can see.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',
         };

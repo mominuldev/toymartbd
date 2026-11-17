@@ -211,7 +211,7 @@ Pulled forward from Phase 7 (T-02) at the owner's request; design approved 2026-
 
 **Owner decisions (2026-11-12):** the `Aa` (clear formatting) button is removed from the rich-text toolbar; a saved simple product stays unable to become variable (API refuses the type change). **Still open:** overstock = `available > reorder_point + 2 × reorder_quantity` (needs reorder_quantity > 0); media delete/bulk download limited to super_admin + manager; storage quota unset.
 
-**Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed and AI write in the description toolbar.
+**Disabled pending later features:** Transfer stock / Transfer N, Create PO, product/QR embed. (AI write in the description toolbar: enabled 2026-11-17 by the product copy writer.)
 
 ### Progress — Phase 4 batch 6 (2026-11-12)
 
@@ -439,7 +439,7 @@ Expanded to task level at each phase start. Each feature below carries its own t
 ### Progress — Phase 10 batch 4: POS, unified inbox, delivery areas, admin a11y in CI (2026-11-15, 4 parallel agents)
 
 Owner decisions of 2026-11-15:
-- POS and Inbox are in v1; the Inbox has no AI until a provider is chosen.
+- POS and Inbox are in v1. (2026-11-17: AI reply drafts added — see AI for growth.)
 - Editors for the seed-only delivery settings.
 - Admin axe in CI.
 - A screen-reader pass.
@@ -475,7 +475,7 @@ Owner decisions of 2026-11-15:
 
 **Owner decisions open:**
 - WhatsApp Business account and Meta app; Facebook Page; WhatsApp templates outside the 24-hour window.
-- An AI provider.
+- ~~An AI provider.~~ — answered 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature (SYSTEM-ARCHITECTURE §8).
 - A storefront live-chat widget.
 - A payment gateway (bKash link, card terminal, bKash/Nagad merchant).
 - A receipt printer.
@@ -553,7 +553,7 @@ Owner decisions of 2026-11-15:
 - Free delivery inside Dhaka only, or in every zone (as today)?
 - Advance payment for risky orders needs a gateway.
 - List or hide services with no driver?
-- Which AI and accounting providers, if any?
+- ~~Which AI~~ (answered 2026-11-17, see above) and accounting providers, if any?
 - A stricter "connected" rule for SMS?
 - Export permission for the activity log.
 - An actor list for the Person filter for accountants, who lack `staff.view`.

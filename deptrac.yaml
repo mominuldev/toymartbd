@@ -162,11 +162,19 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Domain\\Pos\\(?!Events\\)#'
+    # AI for growth (owner decision 2026-11-17): suggest-only assistance. Reads the figures it
+    # summarises (reports, catalog, stock, purchasing, orders, shipments, the inbox thread) and
+    # writes only its own ai_* tables. External calls go through its drivers (rule 5). Nothing
+    # depends on it except Http and Providers.
+    - name: Ai
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Domain\\Ai\\#'
   ruleset:
-    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox]
+    Http: [Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox, Ai]
     Support: ~
     Models: [Support]
-    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox]
+    Providers: [Http, Support, Models, DomainEvents, Catalog, Inventory, Cart, Ordering, Payment, Fulfilment, Risk, Finance, Customer, Marketing, Content, Seo, Tracking, Search, Notification, NotificationContracts, Purchasing, SeoContracts, Reporting, Invoicing, MarketingContracts, Monitoring, Staff, Pos, Inbox, Ai]
     DomainEvents: [Support, Models, Catalog, Customer]
     Catalog: [Support, Models, DomainEvents, Customer]
     Inventory: [Support, Models, DomainEvents, Catalog, Customer]
@@ -215,3 +223,4 @@ deptrac:
     # Inbox reads the approved WhatsApp templates through NotificationContracts (WhatsAppTemplateLibrary).
     Inbox: [Support, Models, DomainEvents, Catalog, Customer, Ordering, NotificationContracts]
     Pos: [Support, Models, DomainEvents, Catalog, Customer, Cart, Inventory, Ordering, Payment, Marketing, Finance]
+    Ai: [Support, Models, DomainEvents, Catalog, Customer, Inventory, Ordering, Fulfilment, Purchasing, Reporting, Inbox, Risk, Marketing, Finance]

@@ -16,6 +16,9 @@ final class AiException extends RuntimeException
 
     public const string CAP_REACHED = 'cap_reached';
 
+    /** The owner switched off sharing what this feature needs (Integrations › AI assistant › What the AI can see). */
+    public const string NOT_SHARED = 'not_shared';
+
     public const string AUTH = 'auth_failed';
 
     public const string RATE_LIMITED = 'rate_limited';

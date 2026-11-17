@@ -168,6 +168,12 @@ export const approveStockAdjustmentRequestSchema = z.object({
 });
 export type ApproveStockAdjustmentRequestInput = z.input<typeof approveStockAdjustmentRequestSchema>;
 
+/** `POST /analytics/advisor/ask` — one question for the Growth advisor; needs reports.view. */
+export const askAdvisorRequestSchema = z.object({
+    "question": z.string().min(3).max(500),
+});
+export type AskAdvisorRequestInput = z.input<typeof askAdvisorRequestSchema>;
+
 /** `POST /inbox/conversations/{conversation}/assign` — needs inbox.reply. `user_id` null */
 export const assignConversationRequestSchema = z.object({
     "user_id": z.number().int().nullable(),
@@ -475,6 +481,12 @@ export const deliverOrderRequestSchema = z.object({
 });
 export type DeliverOrderRequestInput = z.input<typeof deliverOrderRequestSchema>;
 
+/** `POST /inbox/conversations/{conversation}/ai-draft` — a suggested reply; needs inbox.reply */
+export const draftInboxReplyRequestSchema = z.object({
+    "style": z.enum(["default","shorter","english","bangla"]).nullable().optional(),
+});
+export type DraftInboxReplyRequestInput = z.input<typeof draftInboxReplyRequestSchema>;
+
 /** An expense category, for `POST /finance/expense-categories` and `PATCH …/{category}`. */
 export const expenseCategoryRequestSchema = z.object({
     "name": z.string().min(1).max(120),
@@ -742,6 +754,15 @@ export const printLabelsRequestSchema = z.object({
 });
 export type PrintLabelsRequestInput = z.input<typeof printLabelsRequestSchema>;
 
+/** `POST /products/{product}/ai-copy` — what to write, in which language and tone; needs catalog.update. */
+export const productCopyRequestSchema = z.object({
+    "fields": z.array(z.enum(["title","description","seo"])).min(1).max(3),
+    "language": z.enum(["en","bn","both"]),
+    "tone": z.enum(["warm","playful","premium"]),
+    "keywords": z.string().max(120).nullable().optional(),
+});
+export type ProductCopyRequestInput = z.input<typeof productCopyRequestSchema>;
+
 /** `POST /content/home/publish` — an optional note for the version history. */
 export const publishCmsLayoutRequestSchema = z.object({
     "note": z.string().max(191).nullable().optional(),
@@ -933,6 +954,13 @@ export const resetStaffPasswordRequestSchema = z.object({
     "password": z.string().min(12).max(128),
 });
 export type ResetStaffPasswordRequestInput = z.input<typeof resetStaffPasswordRequestSchema>;
+
+/** `POST /inventory/restock/note` — the AI note for the forecast at this horizon; needs inventory.view. */
+export const restockNoteRequestSchema = z.object({
+    "horizon": z.enum(["7","14","30"]),
+    "fresh": z.boolean().optional(),
+});
+export type RestockNoteRequestInput = z.input<typeof restockNoteRequestSchema>;
 
 /** `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7). */
 export const restoreCartRequestSchema = z.object({

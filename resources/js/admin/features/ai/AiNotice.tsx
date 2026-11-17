@@ -11,13 +11,14 @@ import { buttonClass } from '@/components/ui/Button';
  * or the provider failed (problem types ai-not-configured / ai-cap-reached / ai-unavailable).
  */
 
-export type AiProblem = 'not_configured' | 'cap_reached' | 'unavailable' | 'other';
+export type AiProblem = 'not_configured' | 'cap_reached' | 'not_shared' | 'unavailable' | 'other';
 
 export function aiProblem(error: unknown): AiProblem {
     if (!(error instanceof ApiError)) return 'other';
     const type = error.problem.type;
     if (type.endsWith('/ai-not-configured')) return 'not_configured';
     if (type.endsWith('/ai-cap-reached')) return 'cap_reached';
+    if (type.endsWith('/ai-not-shared')) return 'not_shared';
     if (type.endsWith('/ai-unavailable')) return 'unavailable';
     return 'other';
 }
@@ -26,7 +27,7 @@ export function aiProblem(error: unknown): AiProblem {
 export function AiErrorNotice({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
     const { t } = useI18n();
     const kind = aiProblem(error);
-    const setup = kind === 'not_configured' || kind === 'cap_reached';
+    const setup = kind === 'not_configured' || kind === 'cap_reached' || kind === 'not_shared';
     return (
         <div role="alert" className="flex flex-wrap items-start gap-3 rounded-md border border-line-default bg-subtle p-4">
             <WarningIcon size={20} aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />

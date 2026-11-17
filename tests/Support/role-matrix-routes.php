@@ -6,6 +6,11 @@ declare(strict_types=1);
 // checked by tests/Arch/AdminRouteAuthorisationTest.php and, in CI, against a recorded run.
 
 return [
+    'api.v1.admin.analytics.advisor.actions.dismiss',
+    'api.v1.admin.analytics.advisor.actions.done',
+    'api.v1.admin.analytics.advisor.ask',
+    'api.v1.admin.analytics.advisor.brief',
+    'api.v1.admin.analytics.advisor.show',
     'api.v1.admin.analytics.sales',
     'api.v1.admin.analytics.sales.export',
     'api.v1.admin.attributes.destroy',
@@ -163,6 +168,7 @@ return [
     'api.v1.admin.finance.settlements.items.review',
     'api.v1.admin.finance.settlements.show',
     'api.v1.admin.finance.settlements.store',
+    'api.v1.admin.inbox.ai-draft',
     'api.v1.admin.inbox.assignees',
     'api.v1.admin.inbox.conversations.assign',
     'api.v1.admin.inbox.conversations.index',
@@ -188,6 +194,8 @@ return [
     'api.v1.admin.inventory.low-stock-count',
     'api.v1.admin.inventory.movements',
     'api.v1.admin.inventory.movements.reconciliation',
+    'api.v1.admin.inventory.restock.index',
+    'api.v1.admin.inventory.restock.note',
     'api.v1.admin.inventory.stock',
     'api.v1.admin.inventory.summary',
     'api.v1.admin.inventory.transfers.index',
@@ -282,6 +290,8 @@ return [
     'api.v1.admin.product-imports.errors',
     'api.v1.admin.product-imports.show',
     'api.v1.admin.product-imports.store',
+    'api.v1.admin.products.ai-copy',
+    'api.v1.admin.products.ai-copy.facts',
     'api.v1.admin.products.barcodes.bulk',
     'api.v1.admin.products.barcodes.store',
     'api.v1.admin.products.compliance.certificate.destroy',

@@ -39,6 +39,8 @@ type DescriptionEditorProps = {
     /** Accessible name; defaults to "Description". `hideLabel` keeps it for screen readers only (blog editor, Figma 241:46027). */
     label?: string;
     hideLabel?: boolean;
+    /** Opens Write with AI (product editor only); without it "AI write" stays a disabled "coming soon". */
+    onAiWrite?: () => void;
 };
 
 /** Links the API keeps (App\Domain\Catalog\Services\ProductDescription): http, https and mailto only. */
@@ -104,7 +106,7 @@ const contentClass = [
  * text and undo history. The HTML goes to the API as it is; the API sanitises it on save
  * against its allowlist, and the toolbar offers only what that allowlist keeps.
  */
-export function DescriptionEditor({ value, onChange, error, invalid = {}, disabled = false, initialLanguage = 'en', label, hideLabel = false }: DescriptionEditorProps) {
+export function DescriptionEditor({ value, onChange, error, invalid = {}, disabled = false, initialLanguage = 'en', label, hideLabel = false, onAiWrite }: DescriptionEditorProps) {
     const { t } = useI18n();
     const labelId = useId();
     const errorId = useId();
@@ -144,7 +146,7 @@ export function DescriptionEditor({ value, onChange, error, invalid = {}, disabl
             <span id={labelId} className={hideLabel ? 'sr-only' : 't-admin-body-strong text-fg-primary'}>
                 {label ?? t('products.field.description')}
             </span>
-            <RichTextToolbar editor={editor} language={language} onLanguage={setLanguage} onImage={() => setPicking(true)} disabled={disabled} />
+            <RichTextToolbar editor={editor} language={language} onLanguage={setLanguage} onImage={() => setPicking(true)} onAiWrite={onAiWrite} disabled={disabled} />
             <div className="overflow-hidden rounded-sm border border-line-default bg-surface focus-within:border-line-focus focus-within:ring-1 focus-within:ring-inset focus-within:ring-line-focus has-aria-invalid:border-line-danger">
                 <EditorContent editor={en} hidden={language !== 'en'} />
                 <EditorContent editor={bn} hidden={language !== 'bn'} />
@@ -225,16 +227,19 @@ type ToolbarProps = {
     language: DescriptionLanguage;
     onLanguage: (language: DescriptionLanguage) => void;
     onImage: () => void;
+    /** Write with AI; absent → the button stays "coming soon". */
+    onAiWrite?: () => void;
     disabled: boolean;
 };
 
 /**
  * RichTextToolbar 201:1570 on bg/subtle, radius/sm, 4 padding, 2 between controls:
  * block select · B I Aa · lists and quote · link, image, product, QR · AI write · EN | বাং.
- * Product embed, QR and AI write have no backend yet: they render per Figma, disabled,
- * with a "coming soon" tooltip — never a fake action.
+ * Product embed and QR have no backend yet: they render per Figma, disabled, with a "coming
+ * soon" tooltip — never a fake action. AI write opens Write with AI where the host passes
+ * `onAiWrite` (the product editor); elsewhere it stays "coming soon".
  */
-export function RichTextToolbar({ editor, language, onLanguage, onImage, disabled }: ToolbarProps) {
+export function RichTextToolbar({ editor, language, onLanguage, onImage, onAiWrite, disabled }: ToolbarProps) {
     const { t } = useI18n();
     const blockId = useId();
     const [linking, setLinking] = useState(false);
@@ -311,14 +316,27 @@ export function RichTextToolbar({ editor, language, onLanguage, onImage, disable
                 <ToolButton icon={PackageIcon} label={t('products.editor.productEmbed')} soon />
                 <ToolButton icon={QrCodeIcon} label={t('products.editor.qrEmbed')} soon />
                 <Divider />
-                <Soon label={t('products.editor.comingSoon', { feature: t('products.editor.aiWrite') })}>
-                    {(describedBy) => (
-                        <button type="button" aria-disabled="true" aria-describedby={describedBy} onClick={(e) => e.preventDefault()} className="flex h-8 cursor-not-allowed items-center gap-1.5 rounded-sm px-3 t-admin-button-sm text-fg-disabled">
-                            <MagicWandIcon size={16} aria-hidden />
-                            {t('products.editor.aiWrite')}
-                        </button>
-                    )}
-                </Soon>
+                {onAiWrite ? (
+                    <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        disabled={disabled}
+                        onClick={onAiWrite}
+                        className="flex h-8 items-center gap-1.5 rounded-sm px-3 t-admin-button-sm text-fg-brand hover:bg-surface disabled:cursor-not-allowed disabled:text-fg-disabled disabled:hover:bg-transparent"
+                    >
+                        <MagicWandIcon size={16} aria-hidden />
+                        {t('products.editor.aiWrite')}
+                    </button>
+                ) : (
+                    <Soon label={t('products.editor.comingSoon', { feature: t('products.editor.aiWrite') })}>
+                        {(describedBy) => (
+                            <button type="button" aria-disabled="true" aria-describedby={describedBy} onClick={(e) => e.preventDefault()} className="flex h-8 cursor-not-allowed items-center gap-1.5 rounded-sm px-3 t-admin-button-sm text-fg-disabled">
+                                <MagicWandIcon size={16} aria-hidden />
+                                {t('products.editor.aiWrite')}
+                            </button>
+                        )}
+                    </Soon>
+                )}
                 <button
                     type="button"
                     onClick={() => onLanguage(other)}

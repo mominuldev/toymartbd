@@ -2,7 +2,7 @@
 
 WhatsApp, Messenger, live chat and the storefront Contact page form (`web_form`, inbound only — see *Website contact form* below) in one admin inbox. **Every channel is UNVERIFIED**: no WhatsApp Business account, Meta app or Facebook Page exists (2026-11-15). The Meta drivers are written from Meta's published docs and tested only against hand-authored fixtures (`tests/Feature/Inbox/fixtures`). Every channel defaults to the `log` driver, which sends nothing.
 
-No AI: the frame's AI handover banner, AI-assistant bubbles, "Suggested reply" and the AI tab/chips are not built — no AI provider is chosen.
+Suggested reply (Figma 539:83211, P10 AI for growth): `POST /inbox/conversations/{conversation}/ai-draft` (inbox.reply; body `{style?: default|shorter|english|bangla}`) returns `{text, language, based_on[], model, seconds, window_open, reply_state}`. It drafts only — nothing is sent or stored as a message. The prompt carries the last 10 text messages (no notes, redacted), the customer's first name when Integrations › AI allows names, and — for staff with customers.view — the linked customer's orders: number, status, courier, latest tracking status and time, district name and COD amount as display text. Never the phone number, address lines or payment details. A draft quoting a figure not in those facts is retried once, then refused (503 `ai-unavailable`). Outside the WhatsApp window the draft is still returned with `window_open: false`. Still not built: the AI handover banner, AI-assistant bubbles and the AI tab/chips.
 
 ## Admin endpoints (`/api/v1/admin`, Sanctum cookie session)
 

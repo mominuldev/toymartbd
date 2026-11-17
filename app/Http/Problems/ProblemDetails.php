@@ -63,6 +63,7 @@ final readonly class ProblemDetails implements Responsable
             $e instanceof AiException => match ($e->reason) {
                 AiException::NOT_CONFIGURED => self::make(ProblemType::AiNotConfigured),
                 AiException::CAP_REACHED => self::make(ProblemType::AiCapReached),
+                AiException::NOT_SHARED => self::make(ProblemType::AiNotShared, $e->getMessage()),
                 default => new self(ProblemType::AiUnavailable, 503, $e->getMessage(), [['field' => 'ai', 'message' => $e->reason]]),
             },
             $e instanceof HttpExceptionInterface => self::fromHttpException($e),
