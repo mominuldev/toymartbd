@@ -343,6 +343,10 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Store settings › Point of sale (rule 33d): the cap on a cashier's discount.
     Route::get('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'show'])->name('settings.pos.show');
     Route::put('/settings/pos', [App\Http\Controllers\Api\V1\Admin\Settings\PosSettingsController::class, 'update'])->name('settings.pos.update');
+    // Invoices, receipts & labels (owner request 2026-11-17): what each printed document shows.
+    Route::get('/settings/print', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'show'])->name('settings.print.show');
+    Route::put('/settings/print', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'update'])->name('settings.print.update');
+    Route::get('/settings/print/invoice-preview', [App\Http\Controllers\Api\V1\Admin\Settings\PrintSettingsController::class, 'invoicePreview'])->name('settings.print.invoice-preview');
 
     // Returns & refunds (DATABASE-DESIGN §4.7, PRD O-21, Figma 211:5121). Paying a refund out
     // moves money, so a double submit must replay, not pay twice.
@@ -526,6 +530,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     require __DIR__.'/api_v1_admin_analytics_visitors.php';
     require __DIR__.'/api_v1_admin_analytics_marketing.php';
     require __DIR__.'/api_v1_admin_analytics_live.php';
+    require __DIR__.'/api_v1_admin_ai.php';
     require __DIR__.'/api_v1_admin_inbox.php';
     require __DIR__.'/api_v1_admin_delivery_settings.php';
     // Phase 10 batch 5.

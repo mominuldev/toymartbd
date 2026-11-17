@@ -18,4 +18,5 @@ enum SettingGroup: string
     case Localization = 'localization';
     case System = 'system';
     case Risk = 'risk';
+    case Ai = 'ai';
 }

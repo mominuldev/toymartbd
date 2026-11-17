@@ -116,7 +116,7 @@ final class InvoiceController extends ApiController
     public function pdf(InvoicePdfRequest $request, Invoice $invoice, OrderInvoicePdf $pdf): Response
     {
         $this->authorize('print', $invoice);
-        $locale = $invoice->type === InvoiceType::Sales ? OrderInvoiceController::locale($invoice, $request->locale()) : ($request->locale() ?? 'en');
+        $locale = $pdf->locale($invoice, $request->locale());
 
         return OrderInvoiceController::pdf(
             $pdf->render([['invoice' => $invoice, 'locale' => $locale]]),

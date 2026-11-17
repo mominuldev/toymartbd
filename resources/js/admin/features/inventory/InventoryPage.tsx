@@ -11,6 +11,7 @@ import {
     PackageIcon,
     ShoppingCartIcon,
     SlidersHorizontalIcon,
+    SparkleIcon,
     WarningCircleIcon,
     WarningIcon,
     XCircleIcon,
@@ -218,6 +219,10 @@ export function InventoryPage() {
 
     const headerActions = wide ? (
         <>
+            <Link to="/inventory/restock" className={buttonClass('outline')}>
+                <SparkleIcon size={16} aria-hidden />
+                {t('aiRestock.navLink')}
+            </Link>
             {multi && canTransfer && data && (
                 <Button variant="outline" onClick={() => openTransfer(null)}>
                     <ArrowsLeftRightIcon size={16} aria-hidden />
@@ -251,6 +256,7 @@ export function InventoryPage() {
                 variant="outline"
                 size="md"
                 items={[
+                    { key: 'restock', label: t('aiRestock.navLink'), icon: <SparkleIcon size={16} aria-hidden />, to: '/inventory/restock' },
                     ...(multi && canTransfer && data
                         ? [{ key: 'transfer', label: t('inventory.transferStock'), icon: <ArrowsLeftRightIcon size={16} aria-hidden />, onSelect: () => openTransfer(null) }]
                         : []),

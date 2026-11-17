@@ -49,6 +49,16 @@ import { integrationsHubBn, integrationsHubEn } from './messages.integrationsHub
 import { storeSettingsBn, storeSettingsEn } from './messages.storeSettings';
 import { checkoutSettingsBn, checkoutSettingsEn } from './messages.checkoutSettings';
 import { posBn, posEn } from './messages.pos';
+import { aiBn, aiEn } from './messages.ai';
+import { aiSettingsBn, aiSettingsEn } from './messages.aiSettings';
+import { aiAdvisorBn, aiAdvisorEn } from './messages.aiAdvisor';
+import { aiCopyBn, aiCopyEn } from './messages.aiCopy';
+import { aiInboxBn, aiInboxEn } from './messages.aiInbox';
+import { aiRestockBn, aiRestockEn } from './messages.aiRestock';
+import { printBn, printEn } from './messages.print';
+import { printInvoiceBn, printInvoiceEn } from './messages.printInvoice';
+import { printReceiptBn, printReceiptEn } from './messages.printReceipt';
+import { printLabelsBn, printLabelsEn } from './messages.printLabels';
 import { inboxBn, inboxEn } from './messages.inbox';
 import { deliverySettingsBn, deliverySettingsEn } from './messages.deliverySettings';
 import { shipmentsBoardBn, shipmentsBoardEn } from './messages.shipmentsBoard';
@@ -89,6 +99,16 @@ export const en = {
     ...storeSettingsEn,
     ...checkoutSettingsEn,
     ...posEn,
+    ...aiEn,
+    ...aiSettingsEn,
+    ...aiAdvisorEn,
+    ...aiCopyEn,
+    ...aiInboxEn,
+    ...aiRestockEn,
+    ...printEn,
+    ...printInvoiceEn,
+    ...printReceiptEn,
+    ...printLabelsEn,
     ...inboxEn,
     ...deliverySettingsEn,
     ...shipmentsBoardEn,
@@ -408,6 +428,16 @@ export const bn: Messages = {
     ...storeSettingsBn,
     ...checkoutSettingsBn,
     ...posBn,
+    ...aiBn,
+    ...aiSettingsBn,
+    ...aiAdvisorBn,
+    ...aiCopyBn,
+    ...aiInboxBn,
+    ...aiRestockBn,
+    ...printBn,
+    ...printInvoiceBn,
+    ...printReceiptBn,
+    ...printLabelsBn,
     ...inboxBn,
     ...deliverySettingsBn,
     ...shipmentsBoardBn,

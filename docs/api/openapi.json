@@ -2915,7 +2915,7 @@
         "/admin/products/labels": {
             "post": {
                 "operationId": "v1.admin.products.labels.print",
-                "summary": "`POST /products/labels` \u2014 the labels as `application/pdf`, in the order of `items`, each\nrepeated `copies` times. Needs catalog.view; `generate_missing: true` also needs\ncatalog.update and first gives the listed variants without a barcode an in-store EAN-13",
+                "summary": "`POST /products/labels` \u2014 the labels as `application/pdf`, in the order of `items`, each\nrepeated `copies` times. Needs catalog.view; `generate_missing: true` also needs\ncatalog.update and first gives the listed variants without a barcode an in-store EAN-13.\nOmitted fields (template too) take the saved Barcode labels settings",
                 "tags": [
                     "Admin"
                 ],
@@ -14059,6 +14059,245 @@
                 }
             }
         },
+        "/admin/settings/print": {
+            "get": {
+                "operationId": "v1.admin.settings.print.show",
+                "summary": "`GET /settings/print`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PrintSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrintSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.print.update",
+                "summary": "`PUT /settings/print`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePrintSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PrintSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrintSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/print/invoice-preview": {
+            "get": {
+                "operationId": "v1.admin.settings.print.invoice-preview",
+                "summary": "`GET /settings/print/invoice-preview` \u2014 a fixed sample customer invoice as a PDF, through the\nreal template with today's company details, on the saved invoice settings overlaid with\nany sent as query parameters (the page's unsaved draft). Nothing is issued or stored",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "paper",
+                        "in": "query",
+                        "description": "`a4` or `a5`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "a4",
+                                "a5"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "language",
+                        "in": "query",
+                        "description": "`en`, `bn` or `both`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn",
+                                "both"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "colour",
+                        "in": "query",
+                        "description": "`brand` or `mono`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "brand",
+                                "mono"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_bin",
+                        "in": "query",
+                        "description": "`1` or `0`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_barcode",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_phone",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_sku",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_options",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_payment_stamp",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_track_qr",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_signatures",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The sample invoice PDF",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/returns": {
             "get": {
                 "operationId": "v1.admin.returns.index",
@@ -24745,6 +24984,718 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/ai": {
+            "get": {
+                "operationId": "v1.admin.settings.ai.show",
+                "summary": "`GET /settings/ai`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.ai.update",
+                "summary": "`PUT /settings/ai`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAiSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/ai/providers/{provider}": {
+            "put": {
+                "operationId": "v1.admin.settings.ai.providers.update",
+                "summary": "`PUT /settings/ai/providers/{provider}` \u2014 check the key, then save it. 503 `ai-unavailable` when the provider rejects it",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveAiKeyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.settings.ai.providers.destroy",
+                "summary": "`DELETE /settings/ai/providers/{provider}`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/ai/providers/{provider}/check": {
+            "post": {
+                "operationId": "v1.admin.settings.ai.providers.check",
+                "summary": "`POST /settings/ai/providers/{provider}/check`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/advisor": {
+            "get": {
+                "operationId": "v1.admin.analytics.advisor.show",
+                "summary": "`GET /analytics/advisor` \u2014 the latest brief, its open suggestions, done-this-month",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`GrowthAdvisor`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GrowthAdvisor"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Missing reports.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/analytics/advisor/brief": {
+            "post": {
+                "operationId": "v1.admin.analytics.advisor.brief",
+                "summary": "`POST /analytics/advisor/brief` \u2014 write (or rewrite) this week's brief now",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`GrowthAdvisor`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GrowthAdvisor"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rewritten less than ten minutes ago (`too-many-requests`, Retry-After)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "AI not set up (`ai-not-configured`), over the monthly cap (`ai-cap-reached`), or report figures may not be shared (`ai-not-shared`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The provider gave no usable answer (`ai-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/advisor/ask": {
+            "post": {
+                "operationId": "v1.admin.analytics.advisor.ask",
+                "summary": "`POST /analytics/advisor/ask` \u2014 answer one question from this week's report figures",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskAdvisorRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AdvisorAnswer`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdvisorAnswer"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "More than twenty questions in an hour (`too-many-requests`, Retry-After)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "AI not set up (`ai-not-configured`), over the monthly cap (`ai-cap-reached`), or report figures may not be shared (`ai-not-shared`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The provider gave no usable answer (`ai-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/advisor/actions/{action}/done": {
+            "post": {
+                "operationId": "v1.admin.analytics.advisor.actions.done",
+                "summary": "`POST /analytics/advisor/actions/{action}/done`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "path",
+                        "required": true,
+                        "description": "The action ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AdvisorAction`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdvisorAction"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "Already marked done or not useful (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/advisor/actions/{action}/dismiss": {
+            "post": {
+                "operationId": "v1.admin.analytics.advisor.actions.dismiss",
+                "summary": "`POST /analytics/advisor/actions/{action}/dismiss` \u2014 \"Not useful\"",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "path",
+                        "required": true,
+                        "description": "The action ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AdvisorAction`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdvisorAction"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "409": {
+                        "description": "Already marked done or not useful (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/ai-copy/facts": {
+            "get": {
+                "operationId": "v1.admin.products.ai-copy.facts",
+                "summary": "`GET /products/{product}/ai-copy/facts` \u2014 the facts a draft would use, shown before writing. No AI call",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ProductCopyFacts`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductCopyFacts"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/products/{product}/ai-copy": {
+            "post": {
+                "operationId": "v1.admin.products.ai-copy",
+                "summary": "`POST /products/{product}/ai-copy` \u2014 a draft title, description and SEO texts from the\nproduct's own facts. Saves nothing; the editor fills its form and Save product saves.\n409 `ai-not-shared` when product details are not shared with AI (Integrations \u203a AI assistant);\n409 `ai-not-configured`, 409 `ai-cap-reached`, 503 `ai-unavailable` from the AI layer",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "description": "The product ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductCopyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ProductCopyDraft`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductCopyDraft"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/inbox/conversations/{conversation}/ai-draft": {
+            "post": {
+                "operationId": "v1.admin.inbox.ai-draft",
+                "summary": "`POST /inbox/conversations/{conversation}/ai-draft` \u2014 a suggested reply from the thread and\nthe customer's orders. Nothing is sent or stored. inbox.reply; order facts also need\ncustomers.view, like the customer panel",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "description": "The conversation ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DraftInboxReplyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AiInboxDraft`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiInboxDraft"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "Missing inbox.reply (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "AI is not set up (`ai-not-configured`) or over its monthly cap (`ai-cap-reached`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The provider failed, or the draft quoted figures we could not check (`ai-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inventory/restock": {
+            "get": {
+                "operationId": "v1.admin.inventory.restock.index",
+                "summary": "`GET /inventory/restock` \u2014 needs inventory.view. Any query parameter but `horizon` is a 400",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "horizon",
+                        "in": "query",
+                        "description": "Days ahead the forecast covers.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "7",
+                                "14",
+                                "30"
+                            ],
+                            "default": "14"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`RestockForecast`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RestockForecast"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "400": {
+                        "description": "An unlisted parameter or a horizon other than 7, 14 or 30 (`bad-request`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/inventory/restock/note": {
+            "post": {
+                "operationId": "v1.admin.inventory.restock.note",
+                "summary": "`POST /inventory/restock/note` \u2014 the AI note for the current forecast (cached 6 hours per\nDhaka day, horizon and language). Needs inventory.view. 409 `ai-not-configured` /\n`ai-cap-reached`, 503 `ai-unavailable`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RestockNoteRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`RestockNote`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RestockNote"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }
@@ -37841,6 +38792,161 @@
                 ],
                 "title": "AdminReview"
             },
+            "AdvisorAction": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                        ]
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "restock",
+                            "campaign",
+                            "verify_orders",
+                            "bangla_copy",
+                            "other"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "why": {
+                        "type": "string"
+                    },
+                    "figures": {
+                        "type": "array",
+                        "description": "Short figure labels from the facts, e.g. \"12 in stock\".",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "link": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Where the primary button goes; null when there is nothing to open.",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "product",
+                                    "restock_forecast",
+                                    "purchase_order_new",
+                                    "low_stock",
+                                    "verification_queue",
+                                    "failed_bookings",
+                                    "promotion",
+                                    "promotions",
+                                    "coupons",
+                                    "sales_report"
+                                ]
+                            },
+                            "path": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "type",
+                            "path"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "done",
+                            "dismissed"
+                        ]
+                    },
+                    "decided_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "ISO 8601, when it was marked done or not useful."
+                    }
+                },
+                "required": [
+                    "id",
+                    "priority",
+                    "kind",
+                    "title",
+                    "why",
+                    "figures",
+                    "link",
+                    "status",
+                    "decided_at"
+                ],
+                "title": "AdvisorAction"
+            },
+            "AdvisorAnswer": {
+                "type": "object",
+                "properties": {
+                    "answer_sentences": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sources": {
+                        "type": "array",
+                        "description": "The report sections the answer used; `detail` is a short qualifier such as a weekday, or empty.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "section": {
+                                    "type": "string",
+                                    "enum": [
+                                        "sales",
+                                        "sales_by_day",
+                                        "channels",
+                                        "payment_methods",
+                                        "categories",
+                                        "products",
+                                        "stock",
+                                        "marketing",
+                                        "couriers",
+                                        "risk",
+                                        "catalog"
+                                    ]
+                                },
+                                "detail": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "section",
+                                "detail"
+                            ]
+                        }
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "The model id that wrote the answer, e.g. `claude-opus-5-5`."
+                    },
+                    "trimmed": {
+                        "type": "boolean",
+                        "description": "True when sentences with a figure not in the reports were removed."
+                    }
+                },
+                "required": [
+                    "answer_sentences",
+                    "sources",
+                    "model",
+                    "trimmed"
+                ],
+                "title": "AdvisorAnswer"
+            },
             "AgeBand": {
                 "type": "string",
                 "description": "The storefront age facet (03-storefront-spec \u00a7A7.2), in months. A band covers ages `min \u2264 x < max` (`max` null = open-ended). A product is in a band when its own inclusive range `[age_min_months, age_max_months]` (null bounds open) shares at least one age with it \u2014 so bands overlap, and a 0\u201312 month toy is in both `0-12` and `12-24` (it fits a 12-month-old), consistent with `filter[age]=12`.\n",
@@ -37854,6 +38960,273 @@
                     "144-"
                 ],
                 "title": "AgeBand"
+            },
+            "AiInboxDraft": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The suggested reply."
+                    },
+                    "language": {
+                        "type": "string",
+                        "enum": [
+                            "bn",
+                            "en"
+                        ]
+                    },
+                    "based_on": {
+                        "type": "array",
+                        "description": "The facts the draft used, as display labels (e.g. `Order TMB-26-00126`, `Steadfast \u00b7 In transit \u00b7 2 h ago`).",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "The provider's model id."
+                    },
+                    "seconds": {
+                        "type": "number",
+                        "description": "How long the draft took, in seconds."
+                    },
+                    "window_open": {
+                        "type": "boolean",
+                        "description": "False when a free-form reply cannot be sent now (WhatsApp after 24 hours: an approved template is needed)."
+                    },
+                    "reply_state": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "human_agent",
+                            "template_only",
+                            "closed"
+                        ]
+                    }
+                },
+                "required": [
+                    "text",
+                    "language",
+                    "based_on",
+                    "model",
+                    "seconds",
+                    "window_open",
+                    "reply_state"
+                ],
+                "title": "AiInboxDraft"
+            },
+            "AiProvider": {
+                "type": "string",
+                "description": "The AI providers a feature can use (owner decision 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature). Model ids and list prices are the providers' own, read from their docs on 2026-11-17 (USD per 1M tokens, input / output) \u2014 {@see self::models()}. A price is only used to estimate spend for the monthly cap; the provider's bill is the truth.\n",
+                "enum": [
+                    "anthropic",
+                    "openai",
+                    "gemini"
+                ],
+                "title": "AiProvider"
+            },
+            "AiSettings": {
+                "type": "object",
+                "properties": {
+                    "providers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "provider": {
+                                    "type": "string",
+                                    "enum": [
+                                        "anthropic",
+                                        "openai",
+                                        "gemini"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "connected": {
+                                    "type": "boolean"
+                                },
+                                "last4": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "checked_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "check_ok": {
+                                    "type": [
+                                        "boolean",
+                                        "null"
+                                    ]
+                                },
+                                "limited": {
+                                    "type": "boolean"
+                                },
+                                "default_model": {
+                                    "type": "string"
+                                },
+                                "models": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "label": {
+                                                "type": "string"
+                                            },
+                                            "input_usd_per_million": {
+                                                "type": "string"
+                                            },
+                                            "output_usd_per_million": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "label",
+                                            "input_usd_per_million",
+                                            "output_usd_per_million"
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "provider",
+                                "label",
+                                "connected",
+                                "last4",
+                                "checked_at",
+                                "check_ok",
+                                "limited",
+                                "default_model",
+                                "models"
+                            ]
+                        }
+                    },
+                    "features": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "feature": {
+                                    "type": "string",
+                                    "enum": [
+                                        "advisor",
+                                        "product_copy",
+                                        "inbox_reply",
+                                        "restock_note"
+                                    ]
+                                },
+                                "provider": {
+                                    "type": "string",
+                                    "enum": [
+                                        "anthropic",
+                                        "openai",
+                                        "gemini"
+                                    ]
+                                },
+                                "model": {
+                                    "type": "string"
+                                },
+                                "connected": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "feature",
+                                "provider",
+                                "model",
+                                "connected"
+                            ]
+                        }
+                    },
+                    "cap_usd": {
+                        "type": "string",
+                        "description": "Monthly cap, US dollars, e.g. `50.00`."
+                    },
+                    "share": {
+                        "type": "object",
+                        "properties": {
+                            "figures": {
+                                "type": "boolean"
+                            },
+                            "products": {
+                                "type": "boolean"
+                            },
+                            "first_names": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "figures",
+                            "products",
+                            "first_names"
+                        ]
+                    },
+                    "usage": {
+                        "type": "object",
+                        "description": "Estimated spend this Dhaka month (list prices \u00d7 tokens); the provider's bill is the truth.",
+                        "properties": {
+                            "spent_usd": {
+                                "type": "string"
+                            },
+                            "requests": {
+                                "type": "integer"
+                            },
+                            "failed": {
+                                "type": "integer"
+                            },
+                            "by_feature": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            },
+                            "since": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "spent_usd",
+                            "requests",
+                            "failed",
+                            "by_feature",
+                            "since"
+                        ]
+                    },
+                    "can": {
+                        "type": "object",
+                        "properties": {
+                            "update": {
+                                "type": "boolean"
+                            },
+                            "manage_keys": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "update",
+                            "manage_keys"
+                        ]
+                    }
+                },
+                "required": [
+                    "providers",
+                    "features",
+                    "cap_usd",
+                    "share",
+                    "usage",
+                    "can"
+                ],
+                "title": "AiSettings"
             },
             "ApplyCouponRequest": {
                 "type": "object",
@@ -37883,6 +39256,22 @@
                     }
                 },
                 "title": "ApproveStockAdjustmentRequest"
+            },
+            "AskAdvisorRequest": {
+                "type": "object",
+                "description": "`POST /analytics/advisor/ask` \u2014 one question for the Growth advisor; needs reports.view.",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The owner's question, in English or Bangla. Answered from report figures only.",
+                        "minLength": 3,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "question"
+                ],
+                "title": "AskAdvisorRequest"
             },
             "AssignConversationRequest": {
                 "type": "object",
@@ -46921,6 +48310,27 @@
                 ],
                 "title": "DiscountReason"
             },
+            "DraftInboxReplyRequest": {
+                "type": "object",
+                "description": "`POST /inbox/conversations/{conversation}/ai-draft` \u2014 a suggested reply; needs inbox.reply\n(the conversation policy's `reply`). Nothing is sent.",
+                "properties": {
+                    "style": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "`default` (the customer's language, 3 sentences at most), `shorter`, `english` or `bangla`.",
+                        "enum": [
+                            "default",
+                            "shorter",
+                            "english",
+                            "bangla",
+                            null
+                        ]
+                    }
+                },
+                "title": "DraftInboxReplyRequest"
+            },
             "Expense": {
                 "type": "object",
                 "properties": {
@@ -47925,6 +49335,120 @@
                     "barcode"
                 ],
                 "title": "GeneratedBarcode"
+            },
+            "GrowthAdvisor": {
+                "type": "object",
+                "properties": {
+                    "ai": {
+                        "type": "object",
+                        "description": "`configured`: the advisor's provider has a key. `figures_shared`: report figures may be sent (the advisor refuses without them).",
+                        "properties": {
+                            "configured": {
+                                "type": "boolean"
+                            },
+                            "figures_shared": {
+                                "type": "boolean"
+                            },
+                            "provider": {
+                                "type": "string",
+                                "enum": [
+                                    "anthropic",
+                                    "openai",
+                                    "gemini"
+                                ]
+                            },
+                            "model": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "configured",
+                            "figures_shared",
+                            "provider",
+                            "model"
+                        ]
+                    },
+                    "brief": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Null until the first brief is written. `from`/`to` are the Dhaka dates covered (Monday to Sunday, or this week to date).",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "week_start": {
+                                "type": "string"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "locale": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn"
+                                ]
+                            },
+                            "provider": {
+                                "type": "string"
+                            },
+                            "model": {
+                                "type": "string"
+                            },
+                            "sentences": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "generated_at": {
+                                "type": "string"
+                            },
+                            "scheduled": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "week_start",
+                            "from",
+                            "to",
+                            "locale",
+                            "provider",
+                            "model",
+                            "sentences",
+                            "generated_at",
+                            "scheduled"
+                        ]
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdvisorAction"
+                        }
+                    },
+                    "open_count": {
+                        "type": "integer",
+                        "description": "Open suggestions under the latest brief."
+                    },
+                    "done_this_month": {
+                        "type": "integer",
+                        "description": "Suggestions marked done since the 1st of this Dhaka month."
+                    }
+                },
+                "required": [
+                    "ai",
+                    "brief",
+                    "actions",
+                    "open_count",
+                    "done_this_month"
+                ],
+                "title": "GrowthAdvisor"
             },
             "HealthReportResource": {
                 "type": "object",
@@ -50004,7 +51528,8 @@
                             "couriers",
                             "payments",
                             "messaging",
-                            "marketing"
+                            "marketing",
+                            "ai"
                         ]
                     },
                     "status": {
@@ -55605,7 +57130,7 @@
             },
             "OrderInvoicesRequest": {
                 "type": "object",
-                "description": "`POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` \u2014 the invoice /\npacking-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip\ncarries the full phone and street address the rider needs. `locale` picks the\nlanguage (default: each customer's preferred language).",
+                "description": "`POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` \u2014 the invoice /\npacking-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip\ncarries the full phone and street address the rider needs. `locale` picks the\nlanguage (default: the one chosen in Settings \u203a Invoices, receipts & labels).",
                 "properties": {
                     "order_ids": {
                         "type": "array",
@@ -58728,6 +60253,9 @@
                                         "null"
                                     ]
                                 },
+                                "sku": {
+                                    "type": "string"
+                                },
                                 "quantity": {
                                     "type": "integer"
                                 },
@@ -58745,6 +60273,7 @@
                                 "name",
                                 "name_bn",
                                 "variant_name",
+                                "sku",
                                 "quantity",
                                 "unit_price",
                                 "discount",
@@ -58841,6 +60370,121 @@
                             "enabled",
                             "reason"
                         ]
+                    },
+                    "print": {
+                        "type": "object",
+                        "description": "How the receipt prints (Settings \u203a Invoices, receipts & labels \u203a Thermal receipt).\n`language` `ask` = the cashier picks per sale; `en`/`bn` fixes it.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "text_size",
+                            "auto_print",
+                            "show_logo",
+                            "show_branch",
+                            "show_bin",
+                            "show_cashier",
+                            "show_customer_name",
+                            "show_sku",
+                            "show_barcode",
+                            "show_whatsapp_qr",
+                            "show_cut_line",
+                            "footer_en",
+                            "footer_bn"
+                        ]
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The store logo (printed in black); null when none is chosen or the logo is switched off."
+                    },
+                    "barcode_svg": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Code 128 of the order number as a standalone SVG; null when the barcode is switched off."
+                    },
+                    "whatsapp_link": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The store's WhatsApp chat link (`https://wa.me/\u2026`); null when switched off or no number is saved."
+                    },
+                    "whatsapp_qr_svg": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A QR code of `whatsapp_link` as a standalone SVG, or null."
                     }
                 },
                 "required": [
@@ -58863,7 +60507,12 @@
                     "cash_tendered",
                     "change_due",
                     "due_amount",
-                    "whatsapp"
+                    "whatsapp",
+                    "print",
+                    "logo_url",
+                    "barcode_svg",
+                    "whatsapp_link",
+                    "whatsapp_qr_svg"
                 ],
                 "title": "PosReceipt"
             },
@@ -59159,7 +60808,7 @@
             },
             "PrintLabelsRequest": {
                 "type": "object",
-                "description": "`POST /products/labels` \u2014 barcode labels as one PDF. Needs catalog.view; with\n`generate_missing: true` also catalog.update (it writes barcodes first), else 403.\n\n`items[] {variant_id, copies}` \u2014 \u2264 300 items, copies 1\u2013500, \u2264 5,000 labels in all; printed\nin the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless\n`generate_missing` is true. Only the fields below are accepted; any other is a 422.",
+                "description": "`POST /products/labels` \u2014 barcode labels as one PDF. Needs catalog.view; with\n`generate_missing: true` also catalog.update (it writes barcodes first), else 403.\n\n`items[] {variant_id, copies}` \u2014 \u2264 300 items, copies 1\u2013500, \u2264 5,000 labels in all; printed\nin the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless\n`generate_missing` is true. Only the fields below are accepted; any other is a 422.\n\nEvery field but `items` and `locale` is optional and, when omitted, takes the value saved in\nSettings \u203a Invoices, receipts & labels \u203a Barcode labels ({@see PrintSettings::labels()}, the\nFigma defaults until saved). The saved \"create missing barcodes\" applies only for someone\nwith catalog.update; for anyone else an omitted `generate_missing` is false, so a variant\nwithout a barcode is the usual 422 rather than a 403.",
                 "properties": {
                     "items": {
                         "type": "array",
@@ -59185,15 +60834,28 @@
                         "uniqueItems": true
                     },
                     "template": {
+                        "description": "The label stock; omitted, the saved Barcode labels paper.",
                         "$ref": "#/components/schemas/LabelTemplate"
                     },
                     "show_price": {
                         "type": "boolean",
-                        "description": "Print the selling price (default true)."
+                        "description": "Print the selling price; omitted, the saved setting."
                     },
                     "show_name": {
                         "type": "boolean",
-                        "description": "Print the product and variant name (default true)."
+                        "description": "Print the product name; omitted, the saved setting."
+                    },
+                    "show_options": {
+                        "type": "boolean",
+                        "description": "Print the variant's options line (size, colour); omitted, the saved setting."
+                    },
+                    "show_store": {
+                        "type": "boolean",
+                        "description": "Print the store name (in the label language) at the top; omitted, the saved setting."
+                    },
+                    "show_digits": {
+                        "type": "boolean",
+                        "description": "Print the barcode number under the bars; omitted, the saved setting."
                     },
                     "locale": {
                         "type": [
@@ -59209,14 +60871,235 @@
                     },
                     "generate_missing": {
                         "type": "boolean",
-                        "description": "Generate in-store EAN-13s for variants without a barcode first; needs catalog.update."
+                        "description": "Generate in-store EAN-13s for variants without a barcode first; `true` needs\ncatalog.update. Omitted, the saved setting for someone with catalog.update, else false."
                     }
                 },
                 "required": [
-                    "items",
-                    "template"
+                    "items"
                 ],
                 "title": "PrintLabelsRequest"
+            },
+            "PrintSettings": {
+                "type": "object",
+                "properties": {
+                    "invoice": {
+                        "type": "object",
+                        "description": "The A4 customer invoice.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "a4",
+                                    "a5"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "both"
+                                ]
+                            },
+                            "colour": {
+                                "type": "string",
+                                "enum": [
+                                    "brand",
+                                    "mono"
+                                ]
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_phone": {
+                                "type": "boolean"
+                            },
+                            "show_email": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_payment_stamp": {
+                                "type": "boolean"
+                            },
+                            "show_track_qr": {
+                                "type": "boolean"
+                            },
+                            "show_signatures": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "colour",
+                            "show_bin",
+                            "show_barcode",
+                            "show_phone",
+                            "show_email",
+                            "show_sku",
+                            "show_options",
+                            "show_payment_stamp",
+                            "show_track_qr",
+                            "show_signatures"
+                        ]
+                    },
+                    "receipt": {
+                        "type": "object",
+                        "description": "The POS counter receipt.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "text_size",
+                            "auto_print",
+                            "show_logo",
+                            "show_branch",
+                            "show_bin",
+                            "show_cashier",
+                            "show_customer_name",
+                            "show_sku",
+                            "show_barcode",
+                            "show_whatsapp_qr",
+                            "show_cut_line",
+                            "footer_en",
+                            "footer_bn"
+                        ]
+                    },
+                    "labels": {
+                        "type": "object",
+                        "description": "Product barcode labels.",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "enum": [
+                                    "roll_38x25",
+                                    "roll_50x25",
+                                    "a4_65",
+                                    "a4_24"
+                                ]
+                            },
+                            "show_name": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_price": {
+                                "type": "boolean"
+                            },
+                            "show_store": {
+                                "type": "boolean"
+                            },
+                            "show_digits": {
+                                "type": "boolean"
+                            },
+                            "generate_missing": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "template",
+                            "show_name",
+                            "show_options",
+                            "show_price",
+                            "show_store",
+                            "show_digits",
+                            "generate_missing"
+                        ]
+                    },
+                    "saved": {
+                        "type": "array",
+                        "description": "Documents saved at least once; the others print with the defaults.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "invoice",
+                                "receipt",
+                                "labels"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "invoice",
+                    "receipt",
+                    "labels",
+                    "saved"
+                ],
+                "title": "PrintSettings"
             },
             "ProblemDetails": {
                 "type": "object",
@@ -60416,6 +62299,270 @@
                     "certificate"
                 ],
                 "title": "ProductCompliance"
+            },
+            "ProductCopyDraft": {
+                "type": "object",
+                "properties": {
+                    "en": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "English copy. `description_html` uses only p, ul, li and strong. `too_long` lists keys still over their limit (title 70, seo_title 60, meta_description 160); `unknown_figures` lists numbers that match no fact.",
+                        "properties": {
+                            "title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "description_html": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "seo_title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "meta_description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "too_long": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "title",
+                                        "seo_title",
+                                        "meta_description"
+                                    ]
+                                }
+                            },
+                            "unknown_figures": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "title",
+                            "description_html",
+                            "seo_title",
+                            "meta_description",
+                            "too_long",
+                            "unknown_figures"
+                        ]
+                    },
+                    "bn": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Bangla copy, Western digits; same shape as `en`.",
+                        "properties": {
+                            "title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "description_html": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "seo_title": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "meta_description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "too_long": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "title",
+                                        "seo_title",
+                                        "meta_description"
+                                    ]
+                                }
+                            },
+                            "unknown_figures": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "title",
+                            "description_html",
+                            "seo_title",
+                            "meta_description",
+                            "too_long",
+                            "unknown_figures"
+                        ]
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "The model that wrote the draft, e.g. `claude-opus-5-5`."
+                    },
+                    "facts": {
+                        "type": "array",
+                        "description": "The facts the AI was given, from the product itself. `key` is stable; `value` is what the AI saw (long text shortened).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "enum": [
+                                        "name",
+                                        "name_bn",
+                                        "category",
+                                        "brand",
+                                        "age",
+                                        "gender",
+                                        "educational",
+                                        "spec",
+                                        "option",
+                                        "price",
+                                        "warranty",
+                                        "safety_note",
+                                        "safety_note_bn",
+                                        "description",
+                                        "description_bn"
+                                    ]
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "value"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "en",
+                    "bn",
+                    "model",
+                    "facts"
+                ],
+                "title": "ProductCopyDraft"
+            },
+            "ProductCopyFacts": {
+                "type": "object",
+                "properties": {
+                    "facts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "enum": [
+                                        "name",
+                                        "name_bn",
+                                        "category",
+                                        "brand",
+                                        "age",
+                                        "gender",
+                                        "educational",
+                                        "spec",
+                                        "option",
+                                        "price",
+                                        "warranty",
+                                        "safety_note",
+                                        "safety_note_bn",
+                                        "description",
+                                        "description_bn"
+                                    ]
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "value"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "facts"
+                ],
+                "title": "ProductCopyFacts"
+            },
+            "ProductCopyRequest": {
+                "type": "object",
+                "description": "`POST /products/{product}/ai-copy` \u2014 what to write, in which language and tone; needs catalog.update.",
+                "properties": {
+                    "fields": {
+                        "type": "array",
+                        "description": "What to write: the title, the description, and/or the SEO title with meta description.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "title",
+                                "description",
+                                "seo"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "uniqueItems": true
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "`both` writes English and Bangla.",
+                        "enum": [
+                            "en",
+                            "bn",
+                            "both"
+                        ]
+                    },
+                    "tone": {
+                        "type": "string",
+                        "enum": [
+                            "warm",
+                            "playful",
+                            "premium"
+                        ]
+                    },
+                    "keywords": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Search keywords to work in where they fit the facts.",
+                        "maxLength": 120
+                    }
+                },
+                "required": [
+                    "fields",
+                    "language",
+                    "tone"
+                ],
+                "title": "ProductCopyRequest"
             },
             "ProductImage": {
                 "type": "object",
@@ -64021,6 +66168,317 @@
                 ],
                 "title": "ResetStaffPasswordRequest"
             },
+            "RestockForecast": {
+                "type": "object",
+                "properties": {
+                    "horizon": {
+                        "type": "integer",
+                        "description": "Days ahead: 7, 14 or 30."
+                    },
+                    "today": {
+                        "type": "string",
+                        "description": "Today in Dhaka, Y-m-d."
+                    },
+                    "window": {
+                        "type": "object",
+                        "description": "The sales window, Dhaka dates inclusive (30 days ending today).",
+                        "properties": {
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "days": {
+                                "type": "integer"
+                            }
+                        },
+                        "required": [
+                            "from",
+                            "to",
+                            "days"
+                        ]
+                    },
+                    "kpis": {
+                        "type": "object",
+                        "description": "The KPI row.",
+                        "properties": {
+                            "running_out": {
+                                "type": "integer"
+                            },
+                            "before_arrival": {
+                                "type": "integer"
+                            },
+                            "sales_at_risk": {
+                                "type": "string"
+                            },
+                            "suggested_order_value": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "running_out",
+                            "before_arrival",
+                            "sales_at_risk",
+                            "suggested_order_value"
+                        ]
+                    },
+                    "rows": {
+                        "type": "array",
+                        "description": "Variants that run out within the horizon plus their lead time, the soonest first.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "variant_id": {
+                                    "type": "integer"
+                                },
+                                "product_id": {
+                                    "type": "integer"
+                                },
+                                "product_name": {
+                                    "type": "string"
+                                },
+                                "product_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "variant_name_bn": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "sku": {
+                                    "type": "string"
+                                },
+                                "in_stock": {
+                                    "type": "integer"
+                                },
+                                "units_sold": {
+                                    "type": "integer"
+                                },
+                                "sells_per_day": {
+                                    "type": "string"
+                                },
+                                "runs_out_in_days": {
+                                    "type": "integer"
+                                },
+                                "lead_time_days": {
+                                    "type": "integer"
+                                },
+                                "lead_time_estimated": {
+                                    "type": "boolean"
+                                },
+                                "open_po_quantity": {
+                                    "type": "integer"
+                                },
+                                "suggested_order": {
+                                    "type": "integer"
+                                },
+                                "units_short": {
+                                    "type": "integer"
+                                },
+                                "confidence": {
+                                    "type": "string",
+                                    "enum": [
+                                        "high",
+                                        "medium",
+                                        "low"
+                                    ]
+                                },
+                                "price": {
+                                    "type": "string"
+                                },
+                                "sales_at_risk": {
+                                    "type": "string"
+                                },
+                                "supplier": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name"
+                                    ]
+                                },
+                                "last_unit_cost": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "suggested_order_value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "variant_id",
+                                "product_id",
+                                "product_name",
+                                "product_name_bn",
+                                "variant_name",
+                                "variant_name_bn",
+                                "sku",
+                                "in_stock",
+                                "units_sold",
+                                "sells_per_day",
+                                "runs_out_in_days",
+                                "lead_time_days",
+                                "lead_time_estimated",
+                                "open_po_quantity",
+                                "suggested_order",
+                                "units_short",
+                                "confidence",
+                                "price",
+                                "sales_at_risk",
+                                "supplier",
+                                "last_unit_cost",
+                                "suggested_order_value"
+                            ]
+                        }
+                    },
+                    "note": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Today's cached AI note for exactly these figures, if one was written.",
+                        "properties": {
+                            "sentences": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "model": {
+                                "type": "string"
+                            },
+                            "generated_at": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "sentences",
+                            "model",
+                            "generated_at"
+                        ]
+                    },
+                    "note_blocked": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why no note can be written (`figures_not_shared`, `nothing_to_order`), else null.",
+                        "enum": [
+                            "figures_not_shared",
+                            "nothing_to_order",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "horizon",
+                    "today",
+                    "window",
+                    "kpis",
+                    "rows",
+                    "note",
+                    "note_blocked"
+                ],
+                "title": "RestockForecast"
+            },
+            "RestockNote": {
+                "type": "object",
+                "properties": {
+                    "sentences": {
+                        "type": "array",
+                        "description": "At most three sentences; empty when omitted.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "model": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The model id that wrote it."
+                    },
+                    "generated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When it was written (UTC, ISO 8601)."
+                    },
+                    "omitted": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why no note was written.",
+                        "enum": [
+                            "figures_not_shared",
+                            "nothing_to_order",
+                            "unverified_figures",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "sentences",
+                    "model",
+                    "generated_at",
+                    "omitted"
+                ],
+                "title": "RestockNote"
+            },
+            "RestockNoteRequest": {
+                "type": "object",
+                "description": "`POST /inventory/restock/note` \u2014 the AI note for the forecast at this horizon; needs inventory.view.",
+                "properties": {
+                    "horizon": {
+                        "type": "integer",
+                        "description": "Days ahead the forecast covers.",
+                        "enum": [
+                            "7",
+                            "14",
+                            "30"
+                        ]
+                    },
+                    "fresh": {
+                        "type": "boolean",
+                        "description": "Write a new note even when today's note for this forecast is cached."
+                    }
+                },
+                "required": [
+                    "horizon"
+                ],
+                "title": "RestockNoteRequest"
+            },
             "RestoreCartRequest": {
                 "type": "object",
                 "description": "`POST /cart/restore` `{token}` \u2014 the token from a recovery SMS link (P7).",
@@ -65731,6 +68189,23 @@
                     "amount"
                 ],
                 "title": "SaveAdSpendRequest"
+            },
+            "SaveAiKeyRequest": {
+                "type": "object",
+                "description": "`PUT /settings/ai/providers/{provider}` \u2014 connect a provider with its API key; needs settings.manage_integrations.",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "The provider's secret API key. Checked with a real call before it is saved; never returned.",
+                        "pattern": "^\\S+$",
+                        "minLength": 16,
+                        "maxLength": 300
+                    }
+                },
+                "required": [
+                    "api_key"
+                ],
+                "title": "SaveAiKeyRequest"
             },
             "SaveCustomerChildRequest": {
                 "type": "object",
@@ -76668,6 +79143,116 @@
                 ],
                 "title": "UpdateAccountNotificationPreferencesRequest"
             },
+            "UpdateAiSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/ai` \u2014 which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update.",
+                "properties": {
+                    "features": {
+                        "type": "object",
+                        "properties": {
+                            "advisor": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "product_copy": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "inbox_reply": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "restock_note": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "advisor",
+                            "product_copy",
+                            "inbox_reply",
+                            "restock_note"
+                        ]
+                    },
+                    "cap_usd": {
+                        "type": "string",
+                        "pattern": "^\\d{1,6}(\\.\\d{1,2})?$"
+                    },
+                    "share": {
+                        "type": "object",
+                        "properties": {
+                            "figures": {
+                                "type": "boolean"
+                            },
+                            "products": {
+                                "type": "boolean"
+                            },
+                            "first_names": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "figures",
+                            "products",
+                            "first_names"
+                        ]
+                    }
+                },
+                "required": [
+                    "features",
+                    "cap_usd",
+                    "share"
+                ],
+                "title": "UpdateAiSettingsRequest"
+            },
             "UpdateAttributeRequest": {
                 "type": "object",
                 "description": "`PATCH /attributes/{attribute}` \u2014 every field optional; only the fields sent\nchange. Changing `type` away from `color` clears the values' swatches.",
@@ -78040,6 +80625,182 @@
                     "due_limit"
                 ],
                 "title": "UpdatePosSettingsRequest"
+            },
+            "UpdatePrintSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/print` \u2014 Settings \u203a Invoices, receipts & labels; needs settings.update. Send one\nor more whole documents (`invoice`, `receipt`, `labels`); each replaces what is stored for it.",
+                "properties": {
+                    "invoice": {
+                        "type": "object",
+                        "description": "The A4 customer invoice.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "description": "`a4` or `a5`.",
+                                "enum": [
+                                    "a4",
+                                    "a5"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "description": "`en`, `bn` or `both` (English with Bangla beneath).",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "both"
+                                ]
+                            },
+                            "colour": {
+                                "type": "string",
+                                "description": "`brand` or `mono` (black and white).",
+                                "enum": [
+                                    "brand",
+                                    "mono"
+                                ]
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_phone": {
+                                "type": "boolean"
+                            },
+                            "show_email": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_payment_stamp": {
+                                "type": "boolean"
+                            },
+                            "show_track_qr": {
+                                "type": "boolean"
+                            },
+                            "show_signatures": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "receipt": {
+                        "type": "object",
+                        "description": "The POS counter receipt.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "description": "Roll width in mm: `80` or `58`.",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "description": "`en`, `bn`, or `ask` (the cashier picks per sale).",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "description": "`normal` or `large`.",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message at the bottom, English. Empty uses the standard thank-you.",
+                                "maxLength": 160
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message at the bottom, Bangla.",
+                                "maxLength": 160
+                            }
+                        }
+                    },
+                    "labels": {
+                        "type": "object",
+                        "description": "Product barcode labels.",
+                        "properties": {
+                            "template": {
+                                "type": "string",
+                                "description": "The label stock loaded in the printer.",
+                                "enum": [
+                                    "roll_38x25",
+                                    "roll_50x25",
+                                    "a4_65",
+                                    "a4_24"
+                                ]
+                            },
+                            "show_name": {
+                                "type": "boolean"
+                            },
+                            "show_options": {
+                                "type": "boolean"
+                            },
+                            "show_price": {
+                                "type": "boolean"
+                            },
+                            "show_store": {
+                                "type": "boolean"
+                            },
+                            "show_digits": {
+                                "type": "boolean"
+                            },
+                            "generate_missing": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                "title": "UpdatePrintSettingsRequest"
             },
             "UpdateProductImageRequest": {
                 "type": "object",

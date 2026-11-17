@@ -138,6 +138,8 @@ final readonly class IssueSalesInvoice
             'customer_id' => $order->customer_id,
             'name' => $order->shipping_name,
             'phone' => $order->shipping_phone,
+            // Printed only when Settings › A4 invoice › Customer email is on (2026-11-17).
+            'email' => $order->customer->email,
             'alt_phone' => $order->shipping_alt_phone,
             'address' => $order->shipping_address,
             'area' => $order->shipping_area,

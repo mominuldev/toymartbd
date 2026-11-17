@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Problems;
 
+use App\Domain\Ai\Exceptions\AiException;
 use App\Support\Logging\RequestId;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Responsable;
@@ -58,6 +59,13 @@ final readonly class ProblemDetails implements Responsable
                 self::flattenErrors($e->errors()),
             ),
             $e instanceof AuthenticationException => self::make(ProblemType::Unauthenticated),
+            // AI messages are ours (no key, no prompt, no provider body), so safe to show.
+            $e instanceof AiException => match ($e->reason) {
+                AiException::NOT_CONFIGURED => self::make(ProblemType::AiNotConfigured),
+                AiException::CAP_REACHED => self::make(ProblemType::AiCapReached),
+                AiException::NOT_SHARED => self::make(ProblemType::AiNotShared, $e->getMessage()),
+                default => new self(ProblemType::AiUnavailable, 503, $e->getMessage(), [['field' => 'ai', 'message' => $e->reason]]),
+            },
             $e instanceof HttpExceptionInterface => self::fromHttpException($e),
             default => self::make(ProblemType::ServerError),
         };

@@ -33,7 +33,9 @@ import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
 import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
-import { InvoiceSettingsPage } from '@/features/invoices/InvoiceSettingsPage';
+import { InvoicePrintTab } from '@/features/print/InvoicePrintTab';
+import { ReceiptPrintTab } from '@/features/print/ReceiptPrintTab';
+import { LabelsPrintTab } from '@/features/print/LabelsPrintTab';
 import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settings/tracking';
 import { PeopleTab, RolesTab, StaffPage } from '@/features/staff';
 import { ActivityLogPage } from '@/features/audit/ActivityLogPage';
@@ -66,6 +68,9 @@ import { LedgerPage } from '@/features/finance/LedgerPage';
 import { InventoryValuationPage } from '@/features/reports/InventoryValuationPage';
 import { CourierPerformancePage } from '@/features/reports/couriers/CourierPerformancePage';
 import { SalesAnalyticsPage } from '@/features/analytics/sales/SalesAnalyticsPage';
+import { AiSettingsPage } from '@/features/ai/settings/AiSettingsPage';
+import { GrowthAdvisorPage } from '@/features/ai/advisor/GrowthAdvisorPage';
+import { RestockForecastPage } from '@/features/ai/restock/RestockForecastPage';
 import { ReportSchedulesPage } from '@/features/reports/schedules/ReportSchedulesPage';
 import { CustomerProfilePage, CustomersPage } from '@/features/customers';
 import { CustomerAnalyticsPage } from '@/features/analytics/customers';
@@ -143,6 +148,8 @@ export const routes: RouteObject[] = [
                     { path: 'inventory/movements', element: <MovementsPage /> },
                     { path: 'inventory/adjustments', element: <AdjustmentsPage /> },
                     { path: 'inventory/alerts', element: <AlertsPage /> },
+                    // AI for growth (Figma 540:83487): restock forecast with an AI note.
+                    { path: 'inventory/restock', element: <RestockForecastPage /> },
                     // Purchasing (Figma "16 Purchase orders" 213:7971, Theme B): POs with the receive card,
                     // PO form/detail, suppliers with payables. Static siblings win over :purchaseId.
                     { path: 'purchasing', element: <PurchaseOrdersPage /> },
@@ -159,6 +166,8 @@ export const routes: RouteObject[] = [
                     { path: 'analytics', element: <Navigate to="/analytics/sales" replace /> },
                     // P8: sales analytics (Figma B · 24 241:30584) and scheduled report emails.
                     { path: 'analytics/sales', element: <SalesAnalyticsPage /> },
+                    // AI for growth (Figma 537:82561): weekly brief, suggested actions, Ask AI.
+                    { path: 'analytics/advisor', element: <GrowthAdvisorPage /> },
                     { path: 'analytics/schedules', element: <ReportSchedulesPage /> },
                     { path: 'analytics/couriers', element: <CourierPerformancePage /> },
                     // P8 Analytics → Customers (no frame; B · 24 Analytics 241:30584 language): LTV, cohorts, repeat rate, segments.
@@ -276,7 +285,10 @@ export const routes: RouteObject[] = [
                             { path: 'checkout', element: <CheckoutSection /> },
                             { path: 'delivery', element: <DeliveryAreasSection /> },
                             { path: 'pos', element: <PosSection /> },
-                            { path: 'invoice', element: <InvoiceSettingsPage /> },
+                            // Invoices, receipts & labels (owner request 2026-11-17, Figma 528:81351): one tab per document.
+                            { path: 'invoice', element: <InvoicePrintTab /> },
+                            { path: 'invoice/receipt', element: <ReceiptPrintTab /> },
+                            { path: 'invoice/labels', element: <LabelsPrintTab /> },
                         ],
                     },
                     // P7 server-side tracking: Tracking & pixels (Figma B · 25 241:31086) and its Diagnostics (no frame).
@@ -284,6 +296,8 @@ export const routes: RouteObject[] = [
                     { path: 'integrations/tracking/diagnostics', element: <TrackingDiagnosticsPage /> },
                     // P6 couriers: settings & delivery charges (no frame; B · 37 / B · 07 parts) and the failed-booking retry queue.
                     { path: 'integrations/couriers', element: <CourierSettingsPage /> },
+                    // AI for growth (Figma 536:82215): providers, routing, cap, sharing.
+                    { path: 'integrations/ai', element: <AiSettingsPage /> },
                     // Shipments & tracking (Figma B · 08 241:34682) and the courier booking queue (B · 07 241:34046).
                     { path: 'shipments', element: <ShipmentsPage /> },
                     { path: 'shipments/booking', element: <BookingQueuePage /> },

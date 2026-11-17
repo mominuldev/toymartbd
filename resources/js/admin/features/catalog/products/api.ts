@@ -1,3 +1,4 @@
+import { printPdfBlob } from '@/lib/pdf';
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
@@ -312,24 +313,11 @@ export function usePrintLabels() {
                 const payload: unknown = await response.json().catch(() => null);
                 throw new ApiError(response.status, isProblem(payload) ? payload : { type: 'about:blank', title: response.statusText || 'Printing failed', status: response.status });
             }
-            const disposition = response.headers.get('Content-Disposition') ?? '';
-            const filename = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'labels.pdf';
-            saveBlob(await response.blob(), filename);
+            printPdfBlob(await response.blob());
         },
         onSuccess: (_, input) => {
             // generate_missing wrote barcodes: refetch what shows them.
             if (input.generate_missing) void client.invalidateQueries({ queryKey: keys.all });
         },
     });
-}
-
-function saveBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

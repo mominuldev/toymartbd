@@ -745,7 +745,8 @@ export interface paths {
         /**
          * `POST /products/labels` — the labels as `application/pdf`, in the order of `items`, each
          *     repeated `copies` times. Needs catalog.view; `generate_missing: true` also needs
-         *     catalog.update and first gives the listed variants without a barcode an in-store EAN-13
+         *     catalog.update and first gives the listed variants without a barcode an in-store EAN-13.
+         *     Omitted fields (template too) take the saved Barcode labels settings
          */
         post: operations["v1.admin.products.labels.print"];
         delete?: never;
@@ -2889,6 +2890,45 @@ export interface paths {
         get: operations["v1.admin.settings.pos.show"];
         /** `PUT /settings/pos` */
         put: operations["v1.admin.settings.pos.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/print` */
+        get: operations["v1.admin.settings.print.show"];
+        /** `PUT /settings/print` */
+        put: operations["v1.admin.settings.print.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/print/invoice-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /settings/print/invoice-preview` — a fixed sample customer invoice as a PDF, through the
+         *     real template with today's company details, on the saved invoice settings overlaid with
+         *     any sent as query parameters (the page's unsaved draft). Nothing is issued or stored
+         */
+        get: operations["v1.admin.settings.print.invoice-preview"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -5243,6 +5283,242 @@ export interface paths {
         get: operations["v1.admin.analytics.live"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/ai` */
+        get: operations["v1.admin.settings.ai.show"];
+        /** `PUT /settings/ai` */
+        put: operations["v1.admin.settings.ai.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/ai/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /settings/ai/providers/{provider}` — check the key, then save it. 503 `ai-unavailable` when the provider rejects it */
+        put: operations["v1.admin.settings.ai.providers.update"];
+        post?: never;
+        /** `DELETE /settings/ai/providers/{provider}` */
+        delete: operations["v1.admin.settings.ai.providers.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/ai/providers/{provider}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /settings/ai/providers/{provider}/check` */
+        post: operations["v1.admin.settings.ai.providers.check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/advisor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /analytics/advisor` — the latest brief, its open suggestions, done-this-month */
+        get: operations["v1.admin.analytics.advisor.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/advisor/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /analytics/advisor/brief` — write (or rewrite) this week's brief now */
+        post: operations["v1.admin.analytics.advisor.brief"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/advisor/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /analytics/advisor/ask` — answer one question from this week's report figures */
+        post: operations["v1.admin.analytics.advisor.ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/advisor/actions/{action}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /analytics/advisor/actions/{action}/done` */
+        post: operations["v1.admin.analytics.advisor.actions.done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/analytics/advisor/actions/{action}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /analytics/advisor/actions/{action}/dismiss` — "Not useful" */
+        post: operations["v1.admin.analytics.advisor.actions.dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/ai-copy/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /products/{product}/ai-copy/facts` — the facts a draft would use, shown before writing. No AI call */
+        get: operations["v1.admin.products.ai-copy.facts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/products/{product}/ai-copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /products/{product}/ai-copy` — a draft title, description and SEO texts from the
+         *     product's own facts. Saves nothing; the editor fills its form and Save product saves.
+         *     409 `ai-not-shared` when product details are not shared with AI (Integrations › AI assistant);
+         *     409 `ai-not-configured`, 409 `ai-cap-reached`, 503 `ai-unavailable` from the AI layer
+         */
+        post: operations["v1.admin.products.ai-copy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inbox/conversations/{conversation}/ai-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /inbox/conversations/{conversation}/ai-draft` — a suggested reply from the thread and
+         *     the customer's orders. Nothing is sent or stored. inbox.reply; order facts also need
+         *     customers.view, like the customer panel
+         */
+        post: operations["v1.admin.inbox.ai-draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/restock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /inventory/restock` — needs inventory.view. Any query parameter but `horizon` is a 400 */
+        get: operations["v1.admin.inventory.restock.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/inventory/restock/note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /inventory/restock/note` — the AI note for the current forecast (cached 6 hours per
+         *     Dhaka day, horizon and language). Needs inventory.view. 409 `ai-not-configured` /
+         *     `ai-cap-reached`, 503 `ai-unavailable`
+         */
+        post: operations["v1.admin.inventory.restock.note"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8160,12 +8436,120 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        /** AdvisorAction */
+        AdvisorAction: {
+            id: number;
+            /** @enum {string} */
+            priority: "high" | "medium" | "low";
+            /** @enum {string} */
+            kind: "restock" | "campaign" | "verify_orders" | "bangla_copy" | "other";
+            title: string;
+            why: string;
+            /** @description Short figure labels from the facts, e.g. "12 in stock". */
+            figures: string[];
+            /** @description Where the primary button goes; null when there is nothing to open. */
+            link: {
+                /** @enum {string} */
+                type: "product" | "restock_forecast" | "purchase_order_new" | "low_stock" | "verification_queue" | "failed_bookings" | "promotion" | "promotions" | "coupons" | "sales_report";
+                path: string;
+            } | null;
+            /** @enum {string} */
+            status: "open" | "done" | "dismissed";
+            /** @description ISO 8601, when it was marked done or not useful. */
+            decided_at: string | null;
+        };
+        /** AdvisorAnswer */
+        AdvisorAnswer: {
+            answer_sentences: string[];
+            /** @description The report sections the answer used; `detail` is a short qualifier such as a weekday, or empty. */
+            sources: {
+                /** @enum {string} */
+                section: "sales" | "sales_by_day" | "channels" | "payment_methods" | "categories" | "products" | "stock" | "marketing" | "couriers" | "risk" | "catalog";
+                detail: string;
+            }[];
+            /** @description The model id that wrote the answer, e.g. `claude-opus-5-5`. */
+            model: string;
+            /** @description True when sentences with a figure not in the reports were removed. */
+            trimmed: boolean;
+        };
         /**
          * AgeBand
          * @description The storefront age facet (03-storefront-spec §A7.2), in months. A band covers ages `min ≤ x < max` (`max` null = open-ended). A product is in a band when its own inclusive range `[age_min_months, age_max_months]` (null bounds open) shares at least one age with it — so bands overlap, and a 0–12 month toy is in both `0-12` and `12-24` (it fits a 12-month-old), consistent with `filter[age]=12`.
          * @enum {string}
          */
         AgeBand: "0-12" | "12-24" | "24-48" | "48-72" | "72-96" | "96-144" | "144-";
+        /** AiInboxDraft */
+        AiInboxDraft: {
+            /** @description The suggested reply. */
+            text: string;
+            /** @enum {string} */
+            language: "bn" | "en";
+            /** @description The facts the draft used, as display labels (e.g. `Order TMB-26-00126`, `Steadfast · In transit · 2 h ago`). */
+            based_on: string[];
+            /** @description The provider's model id. */
+            model: string;
+            /** @description How long the draft took, in seconds. */
+            seconds: number;
+            /** @description False when a free-form reply cannot be sent now (WhatsApp after 24 hours: an approved template is needed). */
+            window_open: boolean;
+            /** @enum {string} */
+            reply_state: "open" | "human_agent" | "template_only" | "closed";
+        };
+        /**
+         * AiProvider
+         * @description The AI providers a feature can use (owner decision 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature). Model ids and list prices are the providers' own, read from their docs on 2026-11-17 (USD per 1M tokens, input / output) — {@see self::models()}. A price is only used to estimate spend for the monthly cap; the provider's bill is the truth.
+         * @enum {string}
+         */
+        AiProvider: "anthropic" | "openai" | "gemini";
+        /** AiSettings */
+        AiSettings: {
+            providers: {
+                /** @enum {string} */
+                provider: "anthropic" | "openai" | "gemini";
+                label: string;
+                connected: boolean;
+                last4: string | null;
+                checked_at: string | null;
+                check_ok: boolean | null;
+                limited: boolean;
+                default_model: string;
+                models: {
+                    id: string;
+                    label: string;
+                    input_usd_per_million: string;
+                    output_usd_per_million: string;
+                }[];
+            }[];
+            features: {
+                /** @enum {string} */
+                feature: "advisor" | "product_copy" | "inbox_reply" | "restock_note";
+                /** @enum {string} */
+                provider: "anthropic" | "openai" | "gemini";
+                model: string;
+                connected: boolean;
+            }[];
+            /** @description Monthly cap, US dollars, e.g. `50.00`. */
+            cap_usd: string;
+            share: {
+                figures: boolean;
+                products: boolean;
+                first_names: boolean;
+            };
+            /** @description Estimated spend this Dhaka month (list prices × tokens); the provider's bill is the truth. */
+            usage: {
+                spent_usd: string;
+                requests: number;
+                failed: number;
+                by_feature: {
+                    [key: string]: string;
+                };
+                since: string;
+            };
+            can: {
+                update: boolean;
+                manage_keys: boolean;
+            };
+        };
         /**
          * ApplyCouponRequest
          * @description `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason.
@@ -8180,6 +8564,14 @@ export interface components {
         ApproveStockAdjustmentRequest: {
             /** @description Why it was approved (optional). */
             note?: string | null;
+        };
+        /**
+         * AskAdvisorRequest
+         * @description `POST /analytics/advisor/ask` — one question for the Growth advisor; needs reports.view.
+         */
+        AskAdvisorRequest: {
+            /** @description The owner's question, in English or Bangla. Answered from report figures only. */
+            question: string;
         };
         /**
          * AssignConversationRequest
@@ -10488,6 +10880,18 @@ export interface components {
          * @enum {string}
          */
         DiscountReason: "regular_customer" | "bulk_purchase" | "damaged_packaging" | "price_match" | "staff_purchase" | "promotional" | "other";
+        /**
+         * DraftInboxReplyRequest
+         * @description `POST /inbox/conversations/{conversation}/ai-draft` — a suggested reply; needs inbox.reply
+         *     (the conversation policy's `reply`). Nothing is sent.
+         */
+        DraftInboxReplyRequest: {
+            /**
+             * @description `default` (the customer's language, 3 sentences at most), `shorter`, `english` or `bangla`.
+             * @enum {string|null}
+             */
+            style?: "default" | "shorter" | "english" | "bangla" | null;
+        };
         /** Expense */
         Expense: {
             id: number;
@@ -10751,6 +11155,36 @@ export interface components {
             product_id: number;
             sku: string;
             barcode: string;
+        };
+        /** GrowthAdvisor */
+        GrowthAdvisor: {
+            /** @description `configured`: the advisor's provider has a key. `figures_shared`: report figures may be sent (the advisor refuses without them). */
+            ai: {
+                configured: boolean;
+                figures_shared: boolean;
+                /** @enum {string} */
+                provider: "anthropic" | "openai" | "gemini";
+                model: string;
+            };
+            /** @description Null until the first brief is written. `from`/`to` are the Dhaka dates covered (Monday to Sunday, or this week to date). */
+            brief: {
+                id: number;
+                week_start: string;
+                from: string;
+                to: string;
+                /** @enum {string} */
+                locale: "en" | "bn";
+                provider: string;
+                model: string;
+                sentences: string[];
+                generated_at: string;
+                scheduled: boolean;
+            } | null;
+            actions: components["schemas"]["AdvisorAction"][];
+            /** @description Open suggestions under the latest brief. */
+            open_count: number;
+            /** @description Suggestions marked done since the 1st of this Dhaka month. */
+            done_this_month: number;
         };
         /** HealthReportResource */
         HealthReportResource: {
@@ -11275,7 +11709,7 @@ export interface components {
             /** @description English name; the admin translates by `key` where the name is not a brand. */
             name: string;
             /** @enum {string} */
-            category: "couriers" | "payments" | "messaging" | "marketing";
+            category: "couriers" | "payments" | "messaging" | "marketing" | "ai";
             /**
              * @description `not_available` = no driver in the codebase yet.
              * @enum {string}
@@ -12670,7 +13104,7 @@ export interface components {
          * @description `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice /
          *     packing-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip
          *     carries the full phone and street address the rider needs. `locale` picks the
-         *     language (default: each customer's preferred language).
+         *     language (default: the one chosen in Settings › Invoices, receipts & labels).
          */
         OrderInvoicesRequest: {
             order_ids: number[];
@@ -13421,6 +13855,7 @@ export interface components {
                 name: string;
                 name_bn: string | null;
                 variant_name: string | null;
+                sku: string;
                 quantity: number;
                 unit_price: string;
                 discount: string;
@@ -13452,6 +13887,38 @@ export interface components {
                 /** @constant */
                 reason: "no_provider";
             };
+            /**
+             * @description How the receipt prints (Settings › Invoices, receipts & labels › Thermal receipt).
+             *     `language` `ask` = the cashier picks per sale; `en`/`bn` fixes it.
+             */
+            print: {
+                /** @enum {string} */
+                paper: "80" | "58";
+                /** @enum {string} */
+                language: "en" | "bn" | "ask";
+                /** @enum {string} */
+                text_size: "normal" | "large";
+                auto_print: boolean;
+                show_logo: boolean;
+                show_branch: boolean;
+                show_bin: boolean;
+                show_cashier: boolean;
+                show_customer_name: boolean;
+                show_sku: boolean;
+                show_barcode: boolean;
+                show_whatsapp_qr: boolean;
+                show_cut_line: boolean;
+                footer_en: string | null;
+                footer_bn: string | null;
+            };
+            /** @description The store logo (printed in black); null when none is chosen or the logo is switched off. */
+            logo_url: string | null;
+            /** @description Code 128 of the order number as a standalone SVG; null when the barcode is switched off. */
+            barcode_svg: string | null;
+            /** @description The store's WhatsApp chat link (`https://wa.me/…`); null when switched off or no number is saved. */
+            whatsapp_link: string | null;
+            /** @description A QR code of `whatsapp_link` as a standalone SVG, or null. */
+            whatsapp_qr_svg: string | null;
         };
         /** PosSale */
         PosSale: {
@@ -13551,24 +14018,95 @@ export interface components {
          *     `items[] {variant_id, copies}` — ≤ 300 items, copies 1–500, ≤ 5,000 labels in all; printed
          *     in the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless
          *     `generate_missing` is true. Only the fields below are accepted; any other is a 422.
+         *
+         *     Every field but `items` and `locale` is optional and, when omitted, takes the value saved in
+         *     Settings › Invoices, receipts & labels › Barcode labels ({@see PrintSettings::labels()}, the
+         *     Figma defaults until saved). The saved "create missing barcodes" applies only for someone
+         *     with catalog.update; for anyone else an omitted `generate_missing` is false, so a variant
+         *     without a barcode is the usual 422 rather than a 403.
          */
         PrintLabelsRequest: {
             items: {
                 variant_id: number;
                 copies: number;
             }[];
-            template: components["schemas"]["LabelTemplate"];
-            /** @description Print the selling price (default true). */
+            /** @description The label stock; omitted, the saved Barcode labels paper. */
+            template?: components["schemas"]["LabelTemplate"];
+            /** @description Print the selling price; omitted, the saved setting. */
             show_price?: boolean;
-            /** @description Print the product and variant name (default true). */
+            /** @description Print the product name; omitted, the saved setting. */
             show_name?: boolean;
+            /** @description Print the variant's options line (size, colour); omitted, the saved setting. */
+            show_options?: boolean;
+            /** @description Print the store name (in the label language) at the top; omitted, the saved setting. */
+            show_store?: boolean;
+            /** @description Print the barcode number under the bars; omitted, the saved setting. */
+            show_digits?: boolean;
             /**
              * @description Language of the printed name, falling back to English (default `en`).
              * @enum {string|null}
              */
             locale?: "en" | "bn" | null;
-            /** @description Generate in-store EAN-13s for variants without a barcode first; needs catalog.update. */
+            /**
+             * @description Generate in-store EAN-13s for variants without a barcode first; `true` needs
+             *     catalog.update. Omitted, the saved setting for someone with catalog.update, else false.
+             */
             generate_missing?: boolean;
+        };
+        /** PrintSettings */
+        PrintSettings: {
+            /** @description The A4 customer invoice. */
+            invoice: {
+                /** @enum {string} */
+                paper: "a4" | "a5";
+                /** @enum {string} */
+                language: "en" | "bn" | "both";
+                /** @enum {string} */
+                colour: "brand" | "mono";
+                show_bin: boolean;
+                show_barcode: boolean;
+                show_phone: boolean;
+                show_email: boolean;
+                show_sku: boolean;
+                show_options: boolean;
+                show_payment_stamp: boolean;
+                show_track_qr: boolean;
+                show_signatures: boolean;
+            };
+            /** @description The POS counter receipt. */
+            receipt: {
+                /** @enum {string} */
+                paper: "80" | "58";
+                /** @enum {string} */
+                language: "en" | "bn" | "ask";
+                /** @enum {string} */
+                text_size: "normal" | "large";
+                auto_print: boolean;
+                show_logo: boolean;
+                show_branch: boolean;
+                show_bin: boolean;
+                show_cashier: boolean;
+                show_customer_name: boolean;
+                show_sku: boolean;
+                show_barcode: boolean;
+                show_whatsapp_qr: boolean;
+                show_cut_line: boolean;
+                footer_en: string | null;
+                footer_bn: string | null;
+            };
+            /** @description Product barcode labels. */
+            labels: {
+                /** @enum {string} */
+                template: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+                show_name: boolean;
+                show_options: boolean;
+                show_price: boolean;
+                show_store: boolean;
+                show_digits: boolean;
+                generate_missing: boolean;
+            };
+            /** @description Documents saved at least once; the others print with the defaults. */
+            saved: ("invoice" | "receipt" | "labels")[];
         };
         /**
          * ProblemDetails
@@ -13861,6 +14399,60 @@ export interface components {
                 name: string;
                 size_bytes: number;
             } | null;
+        };
+        /** ProductCopyDraft */
+        ProductCopyDraft: {
+            /** @description English copy. `description_html` uses only p, ul, li and strong. `too_long` lists keys still over their limit (title 70, seo_title 60, meta_description 160); `unknown_figures` lists numbers that match no fact. */
+            en: {
+                title: string | null;
+                description_html: string | null;
+                seo_title: string | null;
+                meta_description: string | null;
+                too_long: ("title" | "seo_title" | "meta_description")[];
+                unknown_figures: string[];
+            } | null;
+            /** @description Bangla copy, Western digits; same shape as `en`. */
+            bn: {
+                title: string | null;
+                description_html: string | null;
+                seo_title: string | null;
+                meta_description: string | null;
+                too_long: ("title" | "seo_title" | "meta_description")[];
+                unknown_figures: string[];
+            } | null;
+            /** @description The model that wrote the draft, e.g. `claude-opus-5-5`. */
+            model: string;
+            /** @description The facts the AI was given, from the product itself. `key` is stable; `value` is what the AI saw (long text shortened). */
+            facts: {
+                /** @enum {string} */
+                key: "name" | "name_bn" | "category" | "brand" | "age" | "gender" | "educational" | "spec" | "option" | "price" | "warranty" | "safety_note" | "safety_note_bn" | "description" | "description_bn";
+                value: string;
+            }[];
+        };
+        /** ProductCopyFacts */
+        ProductCopyFacts: {
+            facts: {
+                /** @enum {string} */
+                key: "name" | "name_bn" | "category" | "brand" | "age" | "gender" | "educational" | "spec" | "option" | "price" | "warranty" | "safety_note" | "safety_note_bn" | "description" | "description_bn";
+                value: string;
+            }[];
+        };
+        /**
+         * ProductCopyRequest
+         * @description `POST /products/{product}/ai-copy` — what to write, in which language and tone; needs catalog.update.
+         */
+        ProductCopyRequest: {
+            /** @description What to write: the title, the description, and/or the SEO title with meta description. */
+            fields: ("title" | "description" | "seo")[];
+            /**
+             * @description `both` writes English and Bangla.
+             * @enum {string}
+             */
+            language: "en" | "bn" | "both";
+            /** @enum {string} */
+            tone: "warm" | "playful" | "premium";
+            /** @description Search keywords to work in where they fit the facts. */
+            keywords?: string | null;
         };
         /** ProductImage */
         ProductImage: {
@@ -14923,6 +15515,93 @@ export interface components {
         ResetStaffPasswordRequest: {
             password: string;
         };
+        /** RestockForecast */
+        RestockForecast: {
+            /** @description Days ahead: 7, 14 or 30. */
+            horizon: number;
+            /** @description Today in Dhaka, Y-m-d. */
+            today: string;
+            /** @description The sales window, Dhaka dates inclusive (30 days ending today). */
+            window: {
+                from: string;
+                to: string;
+                days: number;
+            };
+            /** @description The KPI row. */
+            kpis: {
+                running_out: number;
+                before_arrival: number;
+                sales_at_risk: string;
+                suggested_order_value: string | null;
+            };
+            /** @description Variants that run out within the horizon plus their lead time, the soonest first. */
+            rows: {
+                variant_id: number;
+                product_id: number;
+                product_name: string;
+                product_name_bn: string | null;
+                variant_name: string | null;
+                variant_name_bn: string | null;
+                sku: string;
+                in_stock: number;
+                units_sold: number;
+                sells_per_day: string;
+                runs_out_in_days: number;
+                lead_time_days: number;
+                lead_time_estimated: boolean;
+                open_po_quantity: number;
+                suggested_order: number;
+                units_short: number;
+                /** @enum {string} */
+                confidence: "high" | "medium" | "low";
+                price: string;
+                sales_at_risk: string;
+                supplier: {
+                    id: number;
+                    name: string;
+                } | null;
+                last_unit_cost: string | null;
+                suggested_order_value: string | null;
+            }[];
+            /** @description Today's cached AI note for exactly these figures, if one was written. */
+            note: {
+                sentences: string[];
+                model: string;
+                generated_at: string;
+            } | null;
+            /**
+             * @description Why no note can be written (`figures_not_shared`, `nothing_to_order`), else null.
+             * @enum {string|null}
+             */
+            note_blocked: "figures_not_shared" | "nothing_to_order" | null;
+        };
+        /** RestockNote */
+        RestockNote: {
+            /** @description At most three sentences; empty when omitted. */
+            sentences: string[];
+            /** @description The model id that wrote it. */
+            model: string | null;
+            /** @description When it was written (UTC, ISO 8601). */
+            generated_at: string | null;
+            /**
+             * @description Why no note was written.
+             * @enum {string|null}
+             */
+            omitted: "figures_not_shared" | "nothing_to_order" | "unverified_figures" | null;
+        };
+        /**
+         * RestockNoteRequest
+         * @description `POST /inventory/restock/note` — the AI note for the forecast at this horizon; needs inventory.view.
+         */
+        RestockNoteRequest: {
+            /**
+             * @description Days ahead the forecast covers.
+             * @enum {integer}
+             */
+            horizon: "7" | "14" | "30";
+            /** @description Write a new note even when today's note for this forecast is cached. */
+            fresh?: boolean;
+        };
         /**
          * RestoreCartRequest
          * @description `POST /cart/restore` `{token}` — the token from a recovery SMS link (P7).
@@ -15345,6 +16024,14 @@ export interface components {
             month: string;
             amount: string;
             note?: string | null;
+        };
+        /**
+         * SaveAiKeyRequest
+         * @description `PUT /settings/ai/providers/{provider}` — connect a provider with its API key; needs settings.manage_integrations.
+         */
+        SaveAiKeyRequest: {
+            /** @description The provider's secret API key. Checked with a real call before it is saved; never returned. */
+            api_key: string;
         };
         /**
          * SaveCustomerChildRequest
@@ -18056,6 +18743,36 @@ export interface components {
             }[];
         };
         /**
+         * UpdateAiSettingsRequest
+         * @description `PUT /settings/ai` — which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update.
+         */
+        UpdateAiSettingsRequest: {
+            features: {
+                advisor: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                product_copy: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                inbox_reply: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                restock_note: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+            };
+            cap_usd: string;
+            share: {
+                figures: boolean;
+                products: boolean;
+                first_names: boolean;
+            };
+        };
+        /**
          * UpdateAttributeRequest
          * @description `PATCH /attributes/{attribute}` — every field optional; only the fields sent
          *     change. Changing `type` away from `color` clears the values' swatches.
@@ -18539,6 +19256,86 @@ export interface components {
             discount_max_percent: string;
             /** @description The most one customer may owe from POS sales on due, in taka, e.g. `5000.00`. `0` stops new sales on due. */
             due_limit: string;
+        };
+        /**
+         * UpdatePrintSettingsRequest
+         * @description `PUT /settings/print` — Settings › Invoices, receipts & labels; needs settings.update. Send one
+         *     or more whole documents (`invoice`, `receipt`, `labels`); each replaces what is stored for it.
+         */
+        UpdatePrintSettingsRequest: {
+            /** @description The A4 customer invoice. */
+            invoice?: {
+                /**
+                 * @description `a4` or `a5`.
+                 * @enum {string}
+                 */
+                paper?: "a4" | "a5";
+                /**
+                 * @description `en`, `bn` or `both` (English with Bangla beneath).
+                 * @enum {string}
+                 */
+                language?: "en" | "bn" | "both";
+                /**
+                 * @description `brand` or `mono` (black and white).
+                 * @enum {string}
+                 */
+                colour?: "brand" | "mono";
+                show_bin?: boolean;
+                show_barcode?: boolean;
+                show_phone?: boolean;
+                show_email?: boolean;
+                show_sku?: boolean;
+                show_options?: boolean;
+                show_payment_stamp?: boolean;
+                show_track_qr?: boolean;
+                show_signatures?: boolean;
+            };
+            /** @description The POS counter receipt. */
+            receipt?: {
+                /**
+                 * @description Roll width in mm: `80` or `58`.
+                 * @enum {string}
+                 */
+                paper?: "80" | "58";
+                /**
+                 * @description `en`, `bn`, or `ask` (the cashier picks per sale).
+                 * @enum {string}
+                 */
+                language?: "en" | "bn" | "ask";
+                /**
+                 * @description `normal` or `large`.
+                 * @enum {string}
+                 */
+                text_size?: "normal" | "large";
+                auto_print?: boolean;
+                show_logo?: boolean;
+                show_branch?: boolean;
+                show_bin?: boolean;
+                show_cashier?: boolean;
+                show_customer_name?: boolean;
+                show_sku?: boolean;
+                show_barcode?: boolean;
+                show_whatsapp_qr?: boolean;
+                show_cut_line?: boolean;
+                /** @description Message at the bottom, English. Empty uses the standard thank-you. */
+                footer_en?: string | null;
+                /** @description Message at the bottom, Bangla. */
+                footer_bn?: string | null;
+            };
+            /** @description Product barcode labels. */
+            labels?: {
+                /**
+                 * @description The label stock loaded in the printer.
+                 * @enum {string}
+                 */
+                template?: "roll_38x25" | "roll_50x25" | "a4_65" | "a4_24";
+                show_name?: boolean;
+                show_options?: boolean;
+                show_price?: boolean;
+                show_store?: boolean;
+                show_digits?: boolean;
+                generate_missing?: boolean;
+            };
         };
         /**
          * UpdateProductImageRequest
@@ -26621,6 +27418,96 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.admin.settings.print.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PrintSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.print.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrintSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `PrintSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.print.invoice-preview": {
+        parameters: {
+            query?: {
+                /** @description `a4` or `a5`. */
+                paper?: "a4" | "a5";
+                /** @description `en`, `bn` or `both`. */
+                language?: "en" | "bn" | "both";
+                /** @description `brand` or `mono`. */
+                colour?: "brand" | "mono";
+                /** @description `1` or `0`. */
+                show_bin?: "0" | "1";
+                show_barcode?: "0" | "1";
+                show_phone?: "0" | "1";
+                show_email?: "0" | "1";
+                show_sku?: "0" | "1";
+                show_options?: "0" | "1";
+                show_payment_stamp?: "0" | "1";
+                show_track_qr?: "0" | "1";
+                show_signatures?: "0" | "1";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sample invoice PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.admin.returns.index": {
         parameters: {
             query?: {
@@ -32601,6 +33488,508 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+        };
+    };
+    "v1.admin.settings.ai.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.ai.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAiSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.analytics.advisor.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `GrowthAdvisor` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrowthAdvisor"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing reports.view (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.advisor.brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `GrowthAdvisor` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrowthAdvisor"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description AI not set up (`ai-not-configured`), over the monthly cap (`ai-cap-reached`), or report figures may not be shared (`ai-not-shared`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Rewritten less than ten minutes ago (`too-many-requests`, Retry-After) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The provider gave no usable answer (`ai-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.advisor.ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskAdvisorRequest"];
+            };
+        };
+        responses: {
+            /** @description `AdvisorAnswer` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorAnswer"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description AI not set up (`ai-not-configured`), over the monthly cap (`ai-cap-reached`), or report figures may not be shared (`ai-not-shared`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description More than twenty questions in an hour (`too-many-requests`, Retry-After) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The provider gave no usable answer (`ai-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.advisor.actions.done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The action ID */
+                action: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdvisorAction` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorAction"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already marked done or not useful (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.analytics.advisor.actions.dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The action ID */
+                action: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AdvisorAction` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorAction"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description Already marked done or not useful (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.products.ai-copy.facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ProductCopyFacts` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCopyFacts"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.products.ai-copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The product ID */
+                product: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductCopyRequest"];
+            };
+        };
+        responses: {
+            /** @description `ProductCopyDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductCopyDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.inbox.ai-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The conversation ID */
+                conversation: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DraftInboxReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description `AiInboxDraft` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiInboxDraft"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Missing inbox.reply (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            /** @description AI is not set up (`ai-not-configured`) or over its monthly cap (`ai-cap-reached`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description The provider failed, or the draft quoted figures we could not check (`ai-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.inventory.restock.index": {
+        parameters: {
+            query?: {
+                /** @description Days ahead the forecast covers. */
+                horizon?: "7" | "14" | "30";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `RestockForecast` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestockForecast"];
+                };
+            };
+            /** @description An unlisted parameter or a horizon other than 7, 14 or 30 (`bad-request`) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.inventory.restock.note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestockNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description `RestockNote` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestockNote"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.inbox.conversations.index": {

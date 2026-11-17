@@ -9,6 +9,7 @@ import { TabList, TabLink } from '@/components/ui/Tabs';
  * Add a section by adding a row here; every Analytics page renders this one strip.
  */
 const tabs: { to: string; label: MessageKey; permissions: string[] }[] = [
+    { to: '/analytics/advisor', label: 'aiAdvisor.tab', permissions: ['reports.view'] },
     { to: '/analytics/sales', label: 'analyticsNav.sales', permissions: ['reports.view'] },
     { to: '/analytics/customers', label: 'customerAnalytics.tab', permissions: ['reports.view', 'customers.view'] },
     { to: '/analytics/visitors', label: 'analyticsVisitors.tab', permissions: ['reports.view'] },

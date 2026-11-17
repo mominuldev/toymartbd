@@ -386,7 +386,8 @@ describe('shipment card', () => {
         });
         mount(<ShipmentCard order={{ id: 126, number: 'TMB-26-00126', status: 'shipped' }} />);
         expect(await screen.findByText('1234567')).toBeTruthy();
-        expect(screen.getByRole('link', { name: /Print label/ }).getAttribute('href')).toBe('/api/v1/admin/shipments/40/label?locale=en');
+        // Print sends the PDF straight to the print dialog (no new tab).
+        expect(screen.getByRole('button', { name: /Print label/ })).toBeTruthy();
         expect(screen.getByRole('link', { name: /Track on Steadfast/ }).getAttribute('href')).toBe('https://steadfast.com.bd/t/15BAEB8A');
         expect(screen.getByText('“পিকআপ সম্পন্ন”')).toBeTruthy();
         expect(screen.getByText('webhook')).toBeTruthy();

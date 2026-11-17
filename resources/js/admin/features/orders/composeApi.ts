@@ -1,3 +1,4 @@
+import { printPdfBlob } from '@/lib/pdf';
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
@@ -167,9 +168,7 @@ export async function openInvoices(orderIds: number[]): Promise<{ missing: numbe
         const payload: unknown = await response.json().catch(() => null);
         throw new ApiError(response.status, isProblem(payload) ? payload : { type: 'about:blank', title: response.statusText, status: response.status });
     }
-    const url = URL.createObjectURL(await response.blob());
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    printPdfBlob(await response.blob());
     const header = response.headers.get('X-Orders-Not-Found');
     // P8: `{order id}:{reason}` for orders left out (a cancelled order is never invoiced).
     const refused = response.headers.get('X-Orders-Not-Invoiced');

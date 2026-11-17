@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin\Pos;
 
+use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Inventory\Enums\StockLocationType;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Invoicing\Services\CompanyDetails;
+use App\Domain\Invoicing\Services\PrintSettings;
+use App\Domain\Invoicing\Services\ReceiptCodes;
 use App\Domain\Pos\Actions\ChargeSale;
 use App\Domain\Pos\Actions\CloseRegisterSession;
 use App\Domain\Pos\Actions\DiscardHeldSale;
@@ -184,12 +187,21 @@ final class PosController extends ApiController
     }
 
     /** `GET /pos/sales/{sale}/receipt` — the printable receipt. */
-    public function receipt(PosSale $sale, CompanyDetails $company): PosReceiptResource
+    public function receipt(PosSale $sale, CompanyDetails $company, PrintSettings $print): PosReceiptResource
     {
         $this->authorize('view', $sale);
         $sale->load(['order.items', 'order.payments', 'order.customer', 'session.location', 'cashier']);
+        $saved = $company->saved();
+        $logo = is_int($saved['logo_media_id']) ? Media::query()->find($saved['logo_media_id']) : null;
 
-        return new PosReceiptResource(['sale' => $sale, 'company' => $company->snapshot()]);
+        return new PosReceiptResource([
+            'sale' => $sale,
+            'company' => $company->snapshot(),
+            'print' => $print->receipt(),
+            // The 320px rendition: ~40 mm across on a receipt roll.
+            'logo_url' => $logo instanceof Media && $logo->isImage() ? $logo->url(320) : null,
+            'whatsapp_link' => ReceiptCodes::whatsappLink($company->whatsapp()),
+        ]);
     }
 
     /** `GET /pos/sessions/{session}/holds` — parked carts on this drawer, oldest first. */

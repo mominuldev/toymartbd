@@ -182,3 +182,6 @@ Schedule::command('toymart:synthetic:cart')
     ->when(static fn (): bool => is_string(config('monitoring.synthetic.token')) && config('monitoring.synthetic.token') !== '')
     ->withoutOverlapping(10)
     ->onOneServer();
+
+// Growth advisor (P10): the weekly brief, Saturday 09:00 Dhaka (the shop's week ends Friday), only when an AI key is set for it.
+Schedule::job(new App\Domain\Ai\Advisor\Jobs\WriteScheduledBrief)->weeklyOn(6, '09:00')->timezone('Asia/Dhaka')->onOneServer();

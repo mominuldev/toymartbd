@@ -131,7 +131,7 @@ export const posEn = {
     'pos.done.change': 'Change',
     'pos.done.next': 'Start new sale',
     'pos.done.note': 'Stock deducted and the sale posted to the ledger.',
-    'pos.receipt.preview': 'Receipt preview · 80 mm',
+    'pos.receipt.preview': 'Receipt preview · {paper} mm',
     'pos.receipt.language': 'Receipt language',
 
     'pos.loading': 'Loading the register…',
@@ -357,7 +357,7 @@ export const posBn: Record<keyof typeof posEn, string> = {
     'pos.done.change': 'ফেরত',
     'pos.done.next': 'নতুন বিক্রি শুরু',
     'pos.done.note': 'স্টক কমানো হয়েছে এবং বিক্রি লেজারে উঠেছে।',
-    'pos.receipt.preview': 'রসিদের প্রিভিউ · 80 mm',
+    'pos.receipt.preview': 'রসিদের প্রিভিউ · {paper} mm',
     'pos.receipt.language': 'রসিদের ভাষা',
 
     'pos.loading': 'রেজিস্টার লোড হচ্ছে…',
