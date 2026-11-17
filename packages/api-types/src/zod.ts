@@ -4,6 +4,9 @@ import { z } from 'zod';
 export const ageBandSchema = z.enum(["0-12","12-24","24-48","48-72","72-96","96-144","144-"]);
 export type AgeBand = z.infer<typeof ageBandSchema>;
 
+export const aiProviderSchema = z.enum(["anthropic","openai","gemini"]);
+export type AiProvider = z.infer<typeof aiProviderSchema>;
+
 export const attributeTypeSchema = z.enum(["select","color","text"]);
 export type AttributeType = z.infer<typeof attributeTypeSchema>;
 
@@ -965,6 +968,12 @@ export const saveAccountChildRequestSchema = z.object({
 });
 export type SaveAccountChildRequestInput = z.input<typeof saveAccountChildRequestSchema>;
 
+/** `PUT /settings/ai/providers/{provider}` — connect a provider with its API key; needs settings.manage_integrations. */
+export const saveAiKeyRequestSchema = z.object({
+    "api_key": z.string().min(16).max(300).regex(new RegExp("^\\S+$")),
+});
+export type SaveAiKeyRequestInput = z.input<typeof saveAiKeyRequestSchema>;
+
 /** `POST /customers/{customer}/children` and `PATCH …/children/{child}` (P8 batch 3) — staff add */
 export const saveCustomerChildRequestSchema = z.object({
     "name": z.string().min(1).max(40).nullable(),
@@ -1603,6 +1612,35 @@ export const updateAccountNotificationPreferencesRequestSchema = z.object({
 })).min(1).max(2),
 });
 export type UpdateAccountNotificationPreferencesRequestInput = z.input<typeof updateAccountNotificationPreferencesRequestSchema>;
+
+/** `PUT /settings/ai` — which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update. */
+export const updateAiSettingsRequestSchema = z.object({
+    "features": z.object({
+    "advisor": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "product_copy": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "inbox_reply": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+    "restock_note": z.object({
+    "provider": aiProviderSchema,
+    "model": z.string().min(1).max(60),
+}),
+}),
+    "cap_usd": z.string().min(1).regex(new RegExp("^\\d{1,6}(\\.\\d{1,2})?$")),
+    "share": z.object({
+    "figures": z.boolean(),
+    "products": z.boolean(),
+    "first_names": z.boolean(),
+}),
+});
+export type UpdateAiSettingsRequestInput = z.input<typeof updateAiSettingsRequestSchema>;
 
 /** `PATCH /attributes/{attribute}` — every field optional; only the fields sent */
 export const updateAttributeRequestSchema = z.object({

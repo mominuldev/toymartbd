@@ -83,8 +83,8 @@ it('lists every service by category, with not-built services as not_available', 
     $response = $this->getJson(HUB_URL)->assertOk();
 
     $keys = collect($response->json('data'))->pluck('key')->all();
-    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console']);
-    expect(collect($response->json('data'))->pluck('category')->unique()->values()->all())->toBe(['couriers', 'payments', 'messaging', 'marketing']);
+    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console', 'anthropic', 'openai', 'gemini']);
+    expect(collect($response->json('data'))->pluck('category')->unique()->values()->all())->toBe(['couriers', 'payments', 'messaging', 'marketing', 'ai']);
 
     foreach (['redx', 'bkash', 'nagad', 'live_chat', 'search_console'] as $key) {
         expect(hubItem($response, $key))->toMatchArray(['status' => 'not_available', 'notes' => ['no_driver'], 'settings_path' => null, 'enabled' => null]);
@@ -287,4 +287,18 @@ it('shows an inbox channel with keys entered as test mode, never live while unve
     expect(hubItem($this->getJson(HUB_URL), 'messenger'))->toMatchArray([
         'status' => 'test_mode', 'notes' => ['inbox_unverified'], 'settings_path' => '/inbox',
     ]);
+});
+
+it('lists the AI providers: not connected, connected, or rejected on the last check', function (): void {
+    hubOwner();
+    App\Models\Setting::put('ai.key.anthropic', 'sk-ant-0000000000000000', App\Models\Enums\SettingGroup::Ai, true);
+    App\Models\Setting::put('ai.key.openai', 'sk-0000000000000000', App\Models\Enums\SettingGroup::Ai, true);
+    App\Models\Setting::put('ai.key_meta.openai', ['last4' => '0000', 'checked_at' => now()->toIso8601String(), 'ok' => false], App\Models\Enums\SettingGroup::Ai);
+
+    $ai = collect($this->getJson(HUB_URL)->assertOk()->json('data'))->where('category', 'ai')->keyBy('key');
+
+    expect($ai['anthropic']['status'])->toBe('connected_live')
+        ->and($ai['openai']['status'])->toBe('needs_attention')->and($ai['openai']['attention'])->toBe('ai_key_rejected')
+        ->and($ai['gemini']['status'])->toBe('not_connected')
+        ->and($ai['gemini']['settings_path'])->toBe('/integrations/ai');
 });

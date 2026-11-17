@@ -24467,6 +24467,193 @@
                 }
             }
         },
+        "/admin/settings/ai": {
+            "get": {
+                "operationId": "v1.admin.settings.ai.show",
+                "summary": "`GET /settings/ai`",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1.admin.settings.ai.update",
+                "summary": "`PUT /settings/ai`",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAiSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/ai/providers/{provider}": {
+            "put": {
+                "operationId": "v1.admin.settings.ai.providers.update",
+                "summary": "`PUT /settings/ai/providers/{provider}` \u2014 check the key, then save it. 503 `ai-unavailable` when the provider rejects it",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveAiKeyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.admin.settings.ai.providers.destroy",
+                "summary": "`DELETE /settings/ai/providers/{provider}`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/ai/providers/{provider}/check": {
+            "post": {
+                "operationId": "v1.admin.settings.ai.providers.check",
+                "summary": "`POST /settings/ai/providers/{provider}/check`",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`AiSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AiSettings"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/inbox/conversations": {
             "get": {
                 "operationId": "v1.admin.inbox.conversations.index",
@@ -37472,6 +37659,215 @@
                 ],
                 "title": "AgeBand"
             },
+            "AiProvider": {
+                "type": "string",
+                "description": "The AI providers a feature can use (owner decision 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature). Model ids and list prices are the providers' own, read from their docs on 2026-11-17 (USD per 1M tokens, input / output) \u2014 {@see self::models()}. A price is only used to estimate spend for the monthly cap; the provider's bill is the truth.\n",
+                "enum": [
+                    "anthropic",
+                    "openai",
+                    "gemini"
+                ],
+                "title": "AiProvider"
+            },
+            "AiSettings": {
+                "type": "object",
+                "properties": {
+                    "providers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "provider": {
+                                    "type": "string",
+                                    "enum": [
+                                        "anthropic",
+                                        "openai",
+                                        "gemini"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "connected": {
+                                    "type": "boolean"
+                                },
+                                "last4": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "checked_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "check_ok": {
+                                    "type": [
+                                        "boolean",
+                                        "null"
+                                    ]
+                                },
+                                "default_model": {
+                                    "type": "string"
+                                },
+                                "models": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "label": {
+                                                "type": "string"
+                                            },
+                                            "input_usd_per_million": {
+                                                "type": "string"
+                                            },
+                                            "output_usd_per_million": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "label",
+                                            "input_usd_per_million",
+                                            "output_usd_per_million"
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": [
+                                "provider",
+                                "label",
+                                "connected",
+                                "last4",
+                                "checked_at",
+                                "check_ok",
+                                "default_model",
+                                "models"
+                            ]
+                        }
+                    },
+                    "features": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "feature": {
+                                    "type": "string",
+                                    "enum": [
+                                        "advisor",
+                                        "product_copy",
+                                        "inbox_reply",
+                                        "restock_note"
+                                    ]
+                                },
+                                "provider": {
+                                    "type": "string",
+                                    "enum": [
+                                        "anthropic",
+                                        "openai",
+                                        "gemini"
+                                    ]
+                                },
+                                "model": {
+                                    "type": "string"
+                                },
+                                "connected": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "feature",
+                                "provider",
+                                "model",
+                                "connected"
+                            ]
+                        }
+                    },
+                    "cap_usd": {
+                        "type": "string",
+                        "description": "Monthly cap, US dollars, e.g. `50.00`."
+                    },
+                    "share": {
+                        "type": "object",
+                        "properties": {
+                            "figures": {
+                                "type": "boolean"
+                            },
+                            "products": {
+                                "type": "boolean"
+                            },
+                            "first_names": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "figures",
+                            "products",
+                            "first_names"
+                        ]
+                    },
+                    "usage": {
+                        "type": "object",
+                        "description": "Estimated spend this Dhaka month (list prices \u00d7 tokens); the provider's bill is the truth.",
+                        "properties": {
+                            "spent_usd": {
+                                "type": "string"
+                            },
+                            "requests": {
+                                "type": "integer"
+                            },
+                            "failed": {
+                                "type": "integer"
+                            },
+                            "by_feature": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            },
+                            "since": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "spent_usd",
+                            "requests",
+                            "failed",
+                            "by_feature",
+                            "since"
+                        ]
+                    },
+                    "can": {
+                        "type": "object",
+                        "properties": {
+                            "update": {
+                                "type": "boolean"
+                            },
+                            "manage_keys": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "update",
+                            "manage_keys"
+                        ]
+                    }
+                },
+                "required": [
+                    "providers",
+                    "features",
+                    "cap_usd",
+                    "share",
+                    "usage",
+                    "can"
+                ],
+                "title": "AiSettings"
+            },
             "ApplyCouponRequest": {
                 "type": "object",
                 "description": "`POST /cart/coupon` `{ code }` \u2014 case-insensitive. A rejected code is a 422 on `code` with the reason.",
@@ -49618,7 +50014,8 @@
                             "couriers",
                             "payments",
                             "messaging",
-                            "marketing"
+                            "marketing",
+                            "ai"
                         ]
                     },
                     "status": {
@@ -64270,6 +64667,23 @@
                 ],
                 "title": "SaveAccountChildRequest"
             },
+            "SaveAiKeyRequest": {
+                "type": "object",
+                "description": "`PUT /settings/ai/providers/{provider}` \u2014 connect a provider with its API key; needs settings.manage_integrations.",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "The provider's secret API key. Checked with a real call before it is saved; never returned.",
+                        "pattern": "^\\S+$",
+                        "minLength": 16,
+                        "maxLength": 300
+                    }
+                },
+                "required": [
+                    "api_key"
+                ],
+                "title": "SaveAiKeyRequest"
+            },
             "SaveCustomerChildRequest": {
                 "type": "object",
                 "description": "`POST /customers/{customer}/children` and `PATCH \u2026/children/{child}` (P8 batch 3) \u2014 staff add\nor edit a child as the parent told them. Children's data: customers.update AND\ncustomers.view_pii (rule 20). PATCH replaces every field.",
@@ -75205,6 +75619,116 @@
                     "preferences"
                 ],
                 "title": "UpdateAccountNotificationPreferencesRequest"
+            },
+            "UpdateAiSettingsRequest": {
+                "type": "object",
+                "description": "`PUT /settings/ai` \u2014 which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update.",
+                "properties": {
+                    "features": {
+                        "type": "object",
+                        "properties": {
+                            "advisor": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "product_copy": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "inbox_reply": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            },
+                            "restock_note": {
+                                "type": "object",
+                                "properties": {
+                                    "provider": {
+                                        "$ref": "#/components/schemas/AiProvider"
+                                    },
+                                    "model": {
+                                        "type": "string",
+                                        "maxLength": 60
+                                    }
+                                },
+                                "required": [
+                                    "provider",
+                                    "model"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "advisor",
+                            "product_copy",
+                            "inbox_reply",
+                            "restock_note"
+                        ]
+                    },
+                    "cap_usd": {
+                        "type": "string",
+                        "pattern": "^\\d{1,6}(\\.\\d{1,2})?$"
+                    },
+                    "share": {
+                        "type": "object",
+                        "properties": {
+                            "figures": {
+                                "type": "boolean"
+                            },
+                            "products": {
+                                "type": "boolean"
+                            },
+                            "first_names": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "figures",
+                            "products",
+                            "first_names"
+                        ]
+                    }
+                },
+                "required": [
+                    "features",
+                    "cap_usd",
+                    "share"
+                ],
+                "title": "UpdateAiSettingsRequest"
             },
             "UpdateAttributeRequest": {
                 "type": "object",

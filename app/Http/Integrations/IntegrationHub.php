@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Integrations;
 
+use App\Domain\Ai\Enums\AiProvider;
+use App\Domain\Ai\Services\AiSettings;
 use App\Domain\Fulfilment\Drivers\Pathao\PathaoCredentials;
 use App\Domain\Fulfilment\Models\CourierProvider;
 use App\Domain\Fulfilment\Models\Shipment;
@@ -41,7 +43,7 @@ use Carbon\CarbonImmutable;
  */
 final readonly class IntegrationHub
 {
-    public const array CATEGORIES = ['couriers', 'payments', 'messaging', 'marketing'];
+    public const array CATEGORIES = ['couriers', 'payments', 'messaging', 'marketing', 'ai'];
 
     public const array STATUSES = ['connected_live', 'test_mode', 'needs_attention', 'not_connected', 'not_available'];
 
@@ -58,6 +60,7 @@ final readonly class IntegrationHub
         private TrackingSettings $tracking,
         private TrackingDiagnostics $diagnostics,
         private InboxChannels $inbox,
+        private AiSettings $ai,
     ) {}
 
     /** @return list<Integration> */
@@ -68,7 +71,30 @@ final readonly class IntegrationHub
             ...$this->payments(),
             ...$this->messagingServices(),
             ...$this->marketing(),
+            ...$this->aiProviders(),
         ];
+    }
+
+    /**
+     * AI providers (owner request 2026-11-17): connected once a key is saved and its last check
+     * passed; needs attention when the provider rejected it on the last check.
+     *
+     * @return list<Integration>
+     */
+    private function aiProviders(): array
+    {
+        $items = [];
+        foreach (AiProvider::cases() as $provider) {
+            $meta = $this->ai->meta($provider);
+            $status = match (true) {
+                ! $this->ai->connected($provider) => 'not_connected',
+                $meta['ok'] === false => 'needs_attention',
+                default => 'connected_live',
+            };
+            $items[] = $this->item($provider->value, $provider->label(), 'ai', $status, [], $status === 'needs_attention' ? 'ai_key_rejected' : null, path: '/integrations/ai');
+        }
+
+        return $items;
     }
 
     /** @return list<Integration> */

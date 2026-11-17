@@ -5185,6 +5185,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/ai` */
+        get: operations["v1.admin.settings.ai.show"];
+        /** `PUT /settings/ai` */
+        put: operations["v1.admin.settings.ai.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/ai/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** `PUT /settings/ai/providers/{provider}` — check the key, then save it. 503 `ai-unavailable` when the provider rejects it */
+        put: operations["v1.admin.settings.ai.providers.update"];
+        post?: never;
+        /** `DELETE /settings/ai/providers/{provider}` */
+        delete: operations["v1.admin.settings.ai.providers.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/ai/providers/{provider}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** `POST /settings/ai/providers/{provider}/check` */
+        post: operations["v1.admin.settings.ai.providers.check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/inbox/conversations": {
         parameters: {
             query?: never;
@@ -8078,6 +8131,60 @@ export interface components {
          * @enum {string}
          */
         AgeBand: "0-12" | "12-24" | "24-48" | "48-72" | "72-96" | "96-144" | "144-";
+        /**
+         * AiProvider
+         * @description The AI providers a feature can use (owner decision 2026-11-17: Anthropic Claude, OpenAI and Google Gemini, chosen per feature). Model ids and list prices are the providers' own, read from their docs on 2026-11-17 (USD per 1M tokens, input / output) — {@see self::models()}. A price is only used to estimate spend for the monthly cap; the provider's bill is the truth.
+         * @enum {string}
+         */
+        AiProvider: "anthropic" | "openai" | "gemini";
+        /** AiSettings */
+        AiSettings: {
+            providers: {
+                /** @enum {string} */
+                provider: "anthropic" | "openai" | "gemini";
+                label: string;
+                connected: boolean;
+                last4: string | null;
+                checked_at: string | null;
+                check_ok: boolean | null;
+                default_model: string;
+                models: {
+                    id: string;
+                    label: string;
+                    input_usd_per_million: string;
+                    output_usd_per_million: string;
+                }[];
+            }[];
+            features: {
+                /** @enum {string} */
+                feature: "advisor" | "product_copy" | "inbox_reply" | "restock_note";
+                /** @enum {string} */
+                provider: "anthropic" | "openai" | "gemini";
+                model: string;
+                connected: boolean;
+            }[];
+            /** @description Monthly cap, US dollars, e.g. `50.00`. */
+            cap_usd: string;
+            share: {
+                figures: boolean;
+                products: boolean;
+                first_names: boolean;
+            };
+            /** @description Estimated spend this Dhaka month (list prices × tokens); the provider's bill is the truth. */
+            usage: {
+                spent_usd: string;
+                requests: number;
+                failed: number;
+                by_feature: {
+                    [key: string]: string;
+                };
+                since: string;
+            };
+            can: {
+                update: boolean;
+                manage_keys: boolean;
+            };
+        };
         /**
          * ApplyCouponRequest
          * @description `POST /cart/coupon` `{ code }` — case-insensitive. A rejected code is a 422 on `code` with the reason.
@@ -11187,7 +11294,7 @@ export interface components {
             /** @description English name; the admin translates by `key` where the name is not a brand. */
             name: string;
             /** @enum {string} */
-            category: "couriers" | "payments" | "messaging" | "marketing";
+            category: "couriers" | "payments" | "messaging" | "marketing" | "ai";
             /**
              * @description `not_available` = no driver in the codebase yet.
              * @enum {string}
@@ -15047,6 +15154,14 @@ export interface components {
             birth_year: number | null;
         };
         /**
+         * SaveAiKeyRequest
+         * @description `PUT /settings/ai/providers/{provider}` — connect a provider with its API key; needs settings.manage_integrations.
+         */
+        SaveAiKeyRequest: {
+            /** @description The provider's secret API key. Checked with a real call before it is saved; never returned. */
+            api_key: string;
+        };
+        /**
          * SaveCustomerChildRequest
          * @description `POST /customers/{customer}/children` and `PATCH …/children/{child}` (P8 batch 3) — staff add
          *     or edit a child as the parent told them. Children's data: customers.update AND
@@ -17754,6 +17869,36 @@ export interface components {
                 category: "order_updates";
                 enabled: boolean;
             }[];
+        };
+        /**
+         * UpdateAiSettingsRequest
+         * @description `PUT /settings/ai` — which provider and model each feature uses, the monthly cap, what may be shared; needs settings.update.
+         */
+        UpdateAiSettingsRequest: {
+            features: {
+                advisor: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                product_copy: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                inbox_reply: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+                restock_note: {
+                    provider: components["schemas"]["AiProvider"];
+                    model: string;
+                };
+            };
+            cap_usd: string;
+            share: {
+                figures: boolean;
+                products: boolean;
+                first_names: boolean;
+            };
         };
         /**
          * UpdateAttributeRequest
@@ -32036,6 +32181,132 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "v1.admin.settings.ai.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.ai.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAiSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.ai.providers.check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `AiSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "v1.admin.inbox.conversations.index": {

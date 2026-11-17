@@ -7,7 +7,7 @@ export type Integration = Schema<'Integration'>;
 export type IntegrationCategory = Integration['category'];
 export type IntegrationStatus = Integration['status'];
 
-export const integrationCategories: IntegrationCategory[] = ['couriers', 'payments', 'messaging', 'marketing'];
+export const integrationCategories: IntegrationCategory[] = ['couriers', 'payments', 'messaging', 'marketing', 'ai'];
 
 const key = ['integrations'] as const;
 

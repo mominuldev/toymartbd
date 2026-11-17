@@ -20,6 +20,7 @@ import {
     WhatsappLogoIcon,
     type IconProps,
     ChatsCircleIcon,
+    SparkleIcon,
 } from '@phosphor-icons/react';
 import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -40,6 +41,7 @@ const categoryLabel: Record<IntegrationCategory, MessageKey> = {
     payments: 'integrationsHub.category.payments',
     messaging: 'integrationsHub.category.messaging',
     marketing: 'integrationsHub.category.marketing',
+    ai: 'integrationsHub.category.ai',
 };
 
 const statusChip: Record<IntegrationStatus, { tone: StatusTone; icon: ComponentType<IconProps>; label: MessageKey }> = {
@@ -91,6 +93,9 @@ const nameKeys: Record<string, MessageKey> = {
 };
 
 const icons: Record<string, ComponentType<IconProps>> = {
+    anthropic: SparkleIcon,
+    openai: SparkleIcon,
+    gemini: SparkleIcon,
     cod: MoneyIcon,
     sslcommerz: CreditCardIcon,
     bkash: WalletIcon,
