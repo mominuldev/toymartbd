@@ -10,8 +10,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  php:
-    name: PHP — Pint, PHPStan, deptrac, Pest
+  # PHP runs as three jobs at once: static analysis + the MySQL group, and the SQLite suite split in
+  # two (Pest --shard). The job named exactly like the required check ("PHP — Pint, PHPStan,
+  # deptrac, Pest", branch protection on main) gates them and checks role-matrix coverage over both
+  # shards' logs together.
+  php-static:
+    name: PHP · Pint, PHPStan, deptrac, MySQL group, load harness
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -46,13 +50,6 @@ jobs:
         run: vendor/bin/deptrac analyse --no-progress
       - name: Shellcheck — deploy and provisioning scripts (docs/ops/DEPLOYMENT.md)
         run: shellcheck -x ops/deploy/*.sh ops/provision/provision.sh
-      - name: Pest (SQLite)
-        env:
-          # Every route a RoleMatrix assertion reaches is appended here (tests/Support/RoleMatrixCoverage.php).
-          ROLE_MATRIX_COVERAGE_FILE: ${{ runner.temp }}/role-matrix-coverage.log
-        run: php artisan test --parallel
-      - name: Role matrix coverage (rule 21)
-        run: php scripts/role-matrix-coverage.php verify "${{ runner.temp }}/role-matrix-coverage.log"
       - name: Pest (MySQL 8.4 group — collation, locking)
         env:
           DB_CONNECTION: mysql
@@ -74,6 +71,63 @@ jobs:
           mysql -h 127.0.0.1 -uroot -psecret -e "CREATE DATABASE IF NOT EXISTS toymartbd_load CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
           # p95 is loose here: a shared 4-vCPU runner proves correctness, not latency (staging run = owner).
           php tests/Load/run.php --port=8341 --workers=16 --queue-workers=4 --p95-ms=15000 --report="${{ runner.temp }}/load-report.json"
+
+  php-tests:
+    name: PHP · Pest (SQLite, shard ${{ matrix.shard }}/2)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, pdo_sqlite, gd, exif, fileinfo
+          coverage: none
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Prepare .env
+        run: cp .env.example .env && php artisan key:generate
+      - name: Pest (SQLite)
+        env:
+          # Every route a RoleMatrix assertion reaches is appended here (tests/Support/RoleMatrixCoverage.php).
+          ROLE_MATRIX_COVERAGE_FILE: ${{ runner.temp }}/role-matrix-coverage.log
+        # Pest itself, not `php artisan test`: artisan passes --runner to the --list-tests call that
+        # --shard makes, and that call fails ("Unknown option --runner").
+        run: vendor/bin/pest --parallel --shard=${{ matrix.shard }}/2
+      - name: Keep this shard's role-matrix log for the gate
+        uses: actions/upload-artifact@v4
+        with:
+          name: role-matrix-coverage-${{ matrix.shard }}
+          path: ${{ runner.temp }}/role-matrix-coverage.log
+          if-no-files-found: error
+          retention-days: 1
+
+  php:
+    name: PHP — Pint, PHPStan, deptrac, Pest
+    needs: [php-static, php-tests]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every PHP job passed
+        run: |
+          echo "php-static: ${{ needs.php-static.result }}, php-tests: ${{ needs.php-tests.result }}"
+          [ "${{ needs.php-static.result }}" = success ] && [ "${{ needs.php-tests.result }}" = success ]
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: role-matrix-coverage-*
+          path: ${{ runner.temp }}/coverage
+      - name: Role matrix coverage (rule 21), over both shards
+        run: |
+          cat "${{ runner.temp }}"/coverage/*/role-matrix-coverage.log > "${{ runner.temp }}/role-matrix-coverage.log"
+          php scripts/role-matrix-coverage.php verify "${{ runner.temp }}/role-matrix-coverage.log"
 
   frontend:
     name: Frontend — tokens, typecheck, admin build
@@ -137,13 +191,32 @@ jobs:
           name: admin-playwright-report
           path: e2e/admin/playwright-report
 
-  admin-a11y:
-    # Rule 29: the accessibility budget is a CI gate. Its own job, in parallel with the others,
-    # so the ~10-minute axe sweep never lengthens the critical path. The server seeds the full
-    # demo data into a throwaway SQLite file (e2e/admin-a11y/serve.sh).
-    name: Admin a11y — axe (EN/BN, light/dark), keyboard, Bangla layout, screen-reader tree
+  # Rule 29: the accessibility budget is a CI gate. The suite is split into four groups of about
+  # equal time (scripts/ci/a11y-group.sh), each on its own runner with its own seeded app, instead
+  # of ~16 minutes on one. a11y-plan proves the groups cover the suite exactly once; the job named
+  # like the required check gates them all.
+  a11y-plan:
+    name: Admin a11y · groups cover the suite exactly once
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: npm ci
+        run: npm ci
+      - name: Partition check (lists tests; no browser, no server)
+        run: sh scripts/ci/a11y-group.sh plan
+
+  a11y-groups:
+    name: Admin a11y · group ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [A, B, C, D]
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -165,21 +238,32 @@ jobs:
         run: npx playwright install chromium  # browser only: the runner image already has its system libraries, and apt mirrors are not always reachable
       - name: Build admin bundle
         run: npm run build
-      - name: Playwright (admin a11y)
+      - name: Playwright (admin a11y, group ${{ matrix.group }})
         env:
           CI: '1'
-        run: npm run test:a11y:admin -- --trace off
+        run: sh scripts/ci/a11y-group.sh ${{ matrix.group }} --trace off
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: admin-a11y-playwright-report
+          name: admin-a11y-playwright-report-${{ matrix.group }}
           path: e2e/admin-a11y/playwright-report
           retention-days: 7
       - name: Upload Laravel log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: admin-a11y-laravel-log
+          name: admin-a11y-laravel-log-${{ matrix.group }}
           path: storage/logs/
           retention-days: 7
+
+  admin-a11y:
+    name: Admin a11y — axe (EN/BN, light/dark), keyboard, Bangla layout, screen-reader tree
+    needs: [a11y-plan, a11y-groups]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: The partition check and every group passed
+        run: |
+          echo "plan: ${{ needs.a11y-plan.result }}, groups: ${{ needs.a11y-groups.result }}"
+          [ "${{ needs.a11y-plan.result }}" = success ] && [ "${{ needs.a11y-groups.result }}" = success ]
