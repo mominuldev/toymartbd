@@ -200,13 +200,10 @@ export function OurCounts({ ours }: { ours: OurScore }) {
     );
 }
 
+/** Reasons the owner can fix in courier settings (Pathao's `no_official_api` is not one). */
+const fixableReasons = ['no_merchant_account', 'credentials_rejected'];
 const knownReasons = ['no_merchant_account', 'credentials_rejected', 'no_official_api', 'driver_missing', 'provider_error'];
 
-/**
- * Panel B of RiskScoreCard: each courier's OFFICIAL record, timestamped — or, when not
- * connected, an explicit "Provider not connected" with the reason. Never a zero (rule 33b),
- * never averaged with our score (rule 24).
- */
 /** A provider's 0–1 ratio as a percentage, with the count beside it when the provider reports one. Display only. */
 function rate(ratio: string | null, count: number | null): string | null {
     if (ratio === null) return count === null ? null : String(count);
@@ -214,12 +211,32 @@ function rate(ratio: string | null, count: number | null): string | null {
     return count === null ? percent : `${percent} · ${count}`;
 }
 
+/**
+ * Panel B of RiskScoreCard: each courier's OFFICIAL record, timestamped — or, when not
+ * connected, an explicit "Provider not connected" with the reason; once any courier answers, the
+ * others are listed with their reason only, never under a "nothing is connected" banner. Never a zero (rule 33b),
+ * never averaged with our score (rule 24).
+ */
 export function CourierPanel({ checkedAt, providers }: { checkedAt: string; providers: CourierRecord[] }) {
     const { t, locale } = useI18n();
     const { data: me } = useMe();
     const connected = providers.filter((p) => p.connected);
     const missing = providers.filter((p) => !p.connected);
     const name = (p: CourierRecord) => (locale === 'bn' && p.name_bn ? p.name_bn : p.name);
+    const reasons = missing.map((p) => (
+        <li key={p.provider} className="t-admin-caption text-fg-secondary">
+            {t(`risk.courier.reason.${knownReasons.includes(p.reason ?? '') ? p.reason : 'other'}` as MessageKey, { name: name(p) })}
+        </li>
+    ));
+    const settingsLink = can(me, 'settings.manage_integrations') && (
+        <Link
+            to="/integrations/couriers"
+            className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-default bg-surface px-3 t-admin-body-strong text-fg-primary hover:bg-subtle"
+        >
+            <PlugsIcon size={16} aria-hidden />
+            {t('risk.courier.settings')}
+        </Link>
+    );
     return (
         <section className="flex flex-col gap-4 rounded-md border border-dashed border-line-strong bg-surface p-5" aria-labelledby="risk-courier">
             <div className="flex flex-col gap-1">
@@ -259,27 +276,20 @@ export function CourierPanel({ checkedAt, providers }: { checkedAt: string; prov
                     </dl>
                 </div>
             ))}
-            {missing.length > 0 && (
+            {missing.length > 0 && connected.length === 0 && (
                 <div className="flex flex-col items-center gap-2 rounded-md bg-subtle px-6 py-6 text-center">
                     <WifiSlashIcon size={28} aria-hidden className="text-fg-secondary" />
                     <p className="t-admin-section text-fg-primary">{t('risk.courier.notConnected')}</p>
                     <p className="t-admin-body text-fg-secondary">{t('risk.courier.notConnectedBody')}</p>
-                    <ul className="flex flex-col gap-1">
-                        {missing.map((p) => (
-                            <li key={p.provider} className="t-admin-caption text-fg-secondary">
-                                {t(`risk.courier.reason.${knownReasons.includes(p.reason ?? '') ? p.reason : 'other'}` as MessageKey, { name: name(p) })}
-                            </li>
-                        ))}
-                    </ul>
-                    {can(me, 'settings.manage_integrations') && (
-                        <Link
-                            to="/integrations/couriers"
-                            className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-sm border border-line-default bg-surface px-3 t-admin-body-strong text-fg-primary hover:bg-subtle"
-                        >
-                            <PlugsIcon size={16} aria-hidden />
-                            {t('risk.courier.settings')}
-                        </Link>
-                    )}
+                    <ul className="flex flex-col gap-1">{reasons}</ul>
+                    {settingsLink}
+                </div>
+            )}
+            {/* Another courier did answer: no "nothing is connected" empty state, just why the rest are absent. */}
+            {missing.length > 0 && connected.length > 0 && (
+                <div className="flex flex-col items-start gap-2">
+                    <ul className="flex flex-col gap-1">{reasons}</ul>
+                    {missing.some((p) => fixableReasons.includes(p.reason ?? '')) && settingsLink}
                 </div>
             )}
         </section>
