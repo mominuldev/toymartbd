@@ -265,7 +265,7 @@ The owner confirmed on 2026-11-08 that **no Pathao or Steadfast merchant account
 
 #### ⚠️ What the missing Steadfast account costs the risk module
 
-Steadfast's `GET /fraud_check/{phone}` is the **only officially published courier-history endpoint in the Bangladesh market**, and it requires a merchant account. Without one:
+Steadfast's fraud check (`GET /fraud_check/score/{phone}` since 2026-09-27; the older `/fraud_check/{phone}` now returns all-zero counts) is the **only officially published courier-history endpoint in the Bangladesh market**, and it requires a merchant account. Without one:
 
 - The risk score at launch is computed **entirely from our own order history**. For a repeat customer that is actually the better evidence. For a genuinely first-time caller it means **no external signal at all** — exactly the case the feature exists to catch.
 - Compensating control, in MVP: any **first order from an unknown phone above a configurable value threshold** is routed to the verification queue for a confirmation call, regardless of score. A phone call is cheap; a round-trip courier charge on a fake order is not.
@@ -283,7 +283,7 @@ The BD market's "fake order check" products, AppByte included, do not disclose t
 
 **Toy Mart BD will not do this.** Storing a merchant's portal password to scrape an unsupported endpoint is a credential-handling liability, breaks without warning, and is plainly outside the providers' terms. Instead:
 
-1. **Steadfast's official fraud endpoint** — `GET /fraud_check/{phone}`, published in its own Postman collection, returning `total_parcels` / `total_delivered` / `total_cancelled` / `total_fraud_reports`. This is supported, documented, and uses our normal API credentials. A newer `/fraud_check/score/{phone}` exists but currently returns `score` and `level` as `null` with `scoring_disabled: true`, so **we must not depend on its score** — we consume the ratios and compute our own.
+1. **Steadfast's official fraud endpoint** — `GET /fraud_check/score/{phone}` (it replaced `/fraud_check/{phone}`, which since 2026-09-27 returns every count as 0), returning delivery and cancellation percentages, `total_reports` and a parcel-volume band — no parcel counts. This is supported, documented, and uses our normal API credentials. A newer `/fraud_check/score/{phone}` exists but currently returns `score` and `level` as `null` with `scoring_disabled: true`, so **we must not depend on its score** — we consume the ratios and compute our own.
 2. **Our own order history**, which for a repeat customer is better evidence than any third party's.
 3. If the owner later wants broader courier history, the correct route is to ask each provider for API access, not to scrape with their password. This is recorded as a deliberate trade-off: we accept slightly thinner first-order signal in exchange for not holding credentials we have no right to.
 

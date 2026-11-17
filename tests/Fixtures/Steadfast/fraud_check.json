@@ -2,7 +2,7 @@
     "_fixture": {
         "source": "Steadfast's published Postman collection 'SteadFast API Documentation' (https://documenter.getpostman.com/view/26211192/2sAYJ1mhpk, JSON fetched 2026-11-13) — request 'Fraud Check', 200 example",
         "provenance": "hand-authored, unverified — no Steadfast merchant account exists (rule 33a); never observed from a real call",
-        "notes": "No status wrapper on this endpoint. Requires a merchant account (rule 33b) — not called anywhere until one exists."
+        "notes": "RETIRED: since 2026-09-27 this endpoint answers 200 with every count 0 and a notice pointing to /fraud_check/score/{phone} (observed live 2026-11-17). Not called any more; kept as the historical shape. See fraud_check_score.json."
     },
     "http_status": 200,
     "body": {

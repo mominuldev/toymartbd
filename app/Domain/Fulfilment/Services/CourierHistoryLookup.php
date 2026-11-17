@@ -15,10 +15,11 @@ use Carbon\CarbonImmutable;
  * The courier-data panel's source (rules 24, 24a, 33b): per provider, what that courier
  * officially reports about a phone's delivery history — or why it reports nothing.
  *
- * Today every provider answers `connected: false`: Steadfast needs a merchant account
- * and verification (`no_merchant_account` / `provider_unverified`), and Pathao publishes
- * no history endpoint (`no_official_api` — we never scrape its portal, rule 24a). The
- * panel renders that as "provider not connected", never as a zero.
+ * Steadfast answers once merchant credentials are stored (`no_merchant_account` until
+ * then); it reports delivery/cancellation RATES, a report count and a volume band, not
+ * parcel counts. Pathao publishes no history endpoint (`no_official_api` — we never
+ * scrape its portal, rule 24a). A provider that cannot answer is rendered as "provider
+ * not connected", never as a zero.
  *
  * This is verified EXTERNAL data. It is returned separately and timestamped, and is never
  * merged into our own risk score (rule 24). A connected answer is cached in
@@ -33,7 +34,7 @@ final readonly class CourierHistoryLookup
     public function __construct(private CourierRegistry $registry) {}
 
     /**
-     * @return list<array{provider: string, name: string, name_bn: string|null, connected: bool, reason: string|null, total_parcels: int|null, total_delivered: int|null, total_cancelled: int|null, total_fraud_reports: int|null, delivery_ratio: string|null, cancellation_ratio: string|null, fetched_at: string|null}>
+     * @return list<array{provider: string, name: string, name_bn: string|null, connected: bool, reason: string|null, total_parcels: int|null, total_delivered: int|null, total_cancelled: int|null, total_fraud_reports: int|null, delivery_ratio: string|null, cancellation_ratio: string|null, volume: string|null, fetched_at: string|null}>
      */
     public function forPhone(PhoneNumber|string $phone): array
     {
@@ -113,7 +114,7 @@ final readonly class CourierHistoryLookup
     }
 
     /**
-     * @return array{provider: string, name: string, name_bn: string|null, connected: bool, reason: string|null, total_parcels: int|null, total_delivered: int|null, total_cancelled: int|null, total_fraud_reports: int|null, delivery_ratio: string|null, cancellation_ratio: string|null, fetched_at: string|null}
+     * @return array{provider: string, name: string, name_bn: string|null, connected: bool, reason: string|null, total_parcels: int|null, total_delivered: int|null, total_cancelled: int|null, total_fraud_reports: int|null, delivery_ratio: string|null, cancellation_ratio: string|null, volume: string|null, fetched_at: string|null}
      */
     private function present(CourierProvider $provider, FraudLookupResult $result): array
     {
@@ -129,6 +130,8 @@ final readonly class CourierHistoryLookup
             'total_fraud_reports' => $result->totalFraudReports,
             'delivery_ratio' => $result->deliveryRatio,
             'cancellation_ratio' => $result->cancellationRatio,
+            // The provider's parcel-volume band (Steadfast: "1", "10+", "100+"), when it gives no count.
+            'volume' => is_string($result->raw['volume_range'] ?? null) ? $result->raw['volume_range'] : null,
             'fetched_at' => $result->fetchedAt?->toIso8601String(),
         ];
     }

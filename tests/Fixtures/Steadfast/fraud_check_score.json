@@ -1,0 +1,26 @@
+{
+    "_fixture": {
+        "source": "Shape observed from a live call to GET https://portal.packzy.com/api/v1/fraud_check/score/{phone} with a real merchant account, 2026-11-17. Values are synthetic.",
+        "provenance": "hand-authored from an observed response; the merchant API guide (steadfast.com.bd/user/api/guide, login-only) was not read for field semantics",
+        "notes": "Ratios are whole percentages (delivery + cancellation ≈ 100). No parcel counts: delivered_count/cancelled_count are null and the volume is a band. score/level were null with scoring_disabled true on every call observed. The old GET /fraud_check/{phone} returns all-zero counts since 2026-09-27 — see fraud_check.json."
+    },
+    "http_status": 200,
+    "body": {
+        "status": 200,
+        "phone": "01712345678",
+        "score": null,
+        "level": null,
+        "reasons": [],
+        "scoring_disabled": true,
+        "doubtful_reports": false,
+        "total_reports": 4,
+        "delivery_ratio": 10,
+        "cancellation_ratio": 90,
+        "volume_band": "medium",
+        "volume_range": "10+",
+        "delivered_count": null,
+        "cancelled_count": null,
+        "fraud_categories": {"no_response": 1, "other": 3},
+        "return_ratio": 90
+    }
+}

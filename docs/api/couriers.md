@@ -42,7 +42,7 @@ stays `false`, and **production booking through Steadfast is refused** — by th
 | Status | `GET /status_by_cid/{id}` |
 | By invoice | `GET /trackings_by_invoice/{invoice}` (consignment id) + `GET /status_by_invoice/{invoice}` (status) — resolves a bulk-submitted shipment (`LooksUpByMerchantRef`) |
 | Balance | `GET /get_balance` → `current_balance` (can be negative) |
-| Fraud lookup | `GET /fraud_check/{phone}` (official). Not called until credentials exist **and** the provider is verified; until then `CourierHistoryLookup::forPhone()` answers `connected: false` (rule 33b) |
+| Fraud lookup | `GET /fraud_check/score/{phone}` (official). Called as soon as credentials are stored — `verified` gates booking only; with no credentials `CourierHistoryLookup::forPhone()` answers `connected: false` (rule 33b). Returns whole-percent `delivery_ratio` / `cancellation_ratio` (stored as 0–1 fractions), `total_reports` and a `volume_range` band — **no parcel counts** (they stay null). A 401/403 is `credentials_rejected`; a body without both ratios is `provider_error`, never zeros. The old `GET /fraud_check/{phone}` answers all-zero counts since 2026-09-27 and must not be called. Observed live 2026-11-17; Steadfast's own `score`/`level` were null (`scoring_disabled: true`) and live only in `raw` |
 | Webhook | `Authorization: Bearer <webhook_secret>` (official package). `X-Signature` HMAC-SHA256 of the raw body is checked when present (third-party sources only). Only `notification_type = delivery_status` becomes an event — a trigger to re-query `status()`; the body's money fields are never trusted (rule 19) |
 
 ### Field handling

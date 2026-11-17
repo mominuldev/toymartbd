@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { renderApp } from '@/test/renderApp';
-import { manager, operator, riskApi } from './fixtures';
+import { manager, operator, phoneRisk, riskApi } from './fixtures';
 
 afterEach(() => {
     cleanup();
@@ -99,6 +99,40 @@ describe('phone lookup', () => {
         ).toBeTruthy();
         expect(screen.getByText('TMB-26-00126')).toBeTruthy();
         expect(screen.getByText('No list')).toBeTruthy();
+    });
+
+    it('shows Steadfast’s rates once it answers, and lists Pathao by reason without a “nothing connected” banner', async () => {
+        const [steadfast, pathao] = phoneRisk.courier.providers;
+        const body = {
+            ...phoneRisk,
+            courier: {
+                ...phoneRisk.courier,
+                providers: [
+                    {
+                        ...steadfast,
+                        connected: true,
+                        reason: null,
+                        total_fraud_reports: 4,
+                        delivery_ratio: '0.1000',
+                        cancellation_ratio: '0.9000',
+                        volume: '10+',
+                        fetched_at: '2026-11-17T05:06:32Z',
+                    },
+                    pathao,
+                ],
+            },
+        };
+        riskApi(manager, (url) => (url.includes('/risk/lookup') ? { status: 200, body } : undefined));
+        renderApp('/risk/lookup?phone=01712046318');
+
+        const courier = await screen.findByRole('region', { name: 'Courier-verified delivery record' });
+        expect(await within(courier).findByText('10%')).toBeTruthy();
+        expect(within(courier).getByText('90%')).toBeTruthy();
+        expect(within(courier).getByText('10+')).toBeTruthy();
+        expect(within(courier).getByText(/Pathao: publishes no official delivery-history API/)).toBeTruthy();
+        expect(within(courier).queryByText('Provider not connected')).toBeNull();
+        // Pathao cannot be fixed in settings, so no settings button for it.
+        expect(within(courier).queryByRole('link', { name: 'Open courier settings' })).toBeNull();
     });
 
     it('renders in Bangla with Western digits', async () => {
