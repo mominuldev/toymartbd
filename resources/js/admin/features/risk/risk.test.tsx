@@ -17,44 +17,42 @@ const posts = (calls: ReturnType<typeof riskApi>) =>
         }));
 
 describe('verification queue', () => {
-    it('shows the held order, why it is held, our breakdown and — separately — the courier panel as not connected', async () => {
+    it('says in one line why each order waits, then our record and — separately — the couriers’', async () => {
         riskApi(operator);
         renderApp('/risk/queue');
 
         expect(await screen.findByText('TMB-26-00126')).toBeTruthy();
         const list = screen.getByRole('list', { name: 'Held orders' });
-        expect(within(list).getByText('High risk score')).toBeTruthy();
-        expect(within(list).getByText('First order above the threshold')).toBeTruthy();
+        // The strongest reason, in words — not a factor code.
+        expect(within(list).getByText('Cancelled 4 of their 7 past orders')).toBeTruthy();
         expect(within(list).getByText('High 80')).toBeTruthy();
 
-        const courier = await screen.findByRole('region', {
-            name: 'Courier-verified delivery record',
-        });
+        const panel = await screen.findByRole('region', { name: 'Chosen order' });
+        const why = within(panel).getByRole('region', { name: 'Why this order is paused' });
+        expect(within(why).getByText('+25')).toBeTruthy();
+        expect(within(why).getByText('First order, and above the first-order limit — we always check these')).toBeTruthy();
+
+        // Our record and the couriers' are separate blocks (rule 24); no courier answering is never a zero (rule 33b).
+        expect(within(panel).getByRole('region', { name: 'From our orders' })).toBeTruthy();
+        const courier = within(panel).getByRole('region', { name: 'What the couriers say' });
         expect(within(courier).getByText('Provider not connected')).toBeTruthy();
         expect(within(courier).getByText(/Steadfast: needs a merchant account/)).toBeTruthy();
-        expect(within(courier).getByText(/Pathao: publishes no official delivery-history API/)).toBeTruthy();
-        // Never a zero for a courier we cannot ask (rules 24, 33b).
         expect(within(courier).queryByText('0')).toBeNull();
-        // Our score is its own block with its own timestamp.
-        const ours = screen.getByRole('region', {
-            name: 'Toy Mart risk score',
-        });
-        expect(within(ours).getByText(/Computed by us from this phone’s order history/)).toBeTruthy();
-        expect(within(ours).getByText('17 / 100')).toBeTruthy();
     });
 
-    it('verifies and confirms, and logs a call — never cancels by itself', async () => {
+    it('confirms with one tap, logs other outcomes with one tap — never cancels by itself', async () => {
         const calls = riskApi(operator);
         renderApp('/risk/queue');
         await screen.findByRole('heading', { name: /Call শাহরিয়ার কবির/ });
 
-        fireEvent.change(screen.getByRole('combobox', { name: 'Call outcome' }), { target: { value: 'no_answer' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Log call' }));
+        fireEvent.click(screen.getByRole('button', { name: 'No answer' }));
         await waitFor(() => expect(posts(calls).some((p) => p.url.endsWith('/risk/orders/126/calls'))).toBe(true));
         expect(posts(calls).find((p) => p.url.endsWith('/calls'))?.body).toEqual({ outcome: 'no_answer', note: null });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Verify & confirm' }));
+        fireEvent.change(screen.getByRole('textbox', { name: /Note for the call log/ }), { target: { value: 'Landmark checked' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Confirmed — send to courier' }));
         await waitFor(() => expect(posts(calls).some((p) => p.url.endsWith('/risk/orders/126/verify'))).toBe(true));
+        expect(posts(calls).find((p) => p.url.endsWith('/verify'))?.body).toEqual({ note: 'Landmark checked' });
         expect(posts(calls).some((p) => p.url.includes('/reject'))).toBe(false);
     });
 
@@ -90,13 +88,12 @@ describe('phone lookup', () => {
 
         fireEvent.change(input, { target: { value: '01712 046318' } });
         fireEvent.click(screen.getByRole('button', { name: 'Look up' }));
-        await screen.findByRole('region', { name: 'Toy Mart risk score' });
+        await screen.findByRole('region', { name: 'Our score' });
         expect(calls.mock.calls.some(([u]) => String(u).includes('/risk/lookup?phone=01712046318'))).toBe(true);
-        expect(
-            screen.getByRole('region', {
-                name: 'Courier-verified delivery record',
-            }),
-        ).toBeTruthy();
+        // A verdict from OUR level only; the couriers' record is its own block (rule 24).
+        expect(screen.getByRole('heading', { name: 'Nothing worrying in our orders' })).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'What the couriers say' })).toBeTruthy();
+        expect(screen.getByRole('region', { name: 'From our orders' })).toBeTruthy();
         expect(screen.getByText('TMB-26-00126')).toBeTruthy();
         expect(screen.getByText('No list')).toBeTruthy();
     });
@@ -125,11 +122,12 @@ describe('phone lookup', () => {
         riskApi(manager, (url) => (url.includes('/risk/lookup') ? { status: 200, body } : undefined));
         renderApp('/risk/lookup?phone=01712046318');
 
-        const courier = await screen.findByRole('region', { name: 'Courier-verified delivery record' });
+        const courier = await screen.findByRole('region', { name: 'What the couriers say' });
         expect(await within(courier).findByText('10%')).toBeTruthy();
         expect(within(courier).getByText('90%')).toBeTruthy();
         expect(within(courier).getByText('10+')).toBeTruthy();
-        expect(within(courier).getByText(/Pathao: publishes no official delivery-history API/)).toBeTruthy();
+        expect(within(courier).getByText('90% were refused or cancelled')).toBeTruthy();
+        expect(within(courier).getByText(/Pathao doesn’t share delivery history/)).toBeTruthy();
         expect(within(courier).queryByText('Provider not connected')).toBeNull();
         // Pathao cannot be fixed in settings, so no settings button for it.
         expect(within(courier).queryByRole('link', { name: 'Open courier settings' })).toBeNull();
@@ -139,7 +137,8 @@ describe('phone lookup', () => {
         riskApi(manager);
         renderApp('/risk/lookup?phone=01712046318', { locale: 'bn' });
         expect(await screen.findByText('প্রোভাইডার সংযুক্ত নয়')).toBeTruthy();
-        expect(screen.getByText('17 / 100')).toBeTruthy();
+        expect(screen.getByText('17')).toBeTruthy();
+        expect(screen.getByText('আগের 3টি অর্ডারের 2টি বাতিল করেছেন')).toBeTruthy();
     });
 });
 
@@ -147,8 +146,8 @@ describe('risk rules', () => {
     it('saves weights and thresholds as numbers; the server validates the total', async () => {
         const calls = riskApi(manager);
         renderApp('/risk/rules');
-        const first = await screen.findByRole('spinbutton', {
-            name: 'First-ever order',
+        const first = await screen.findByRole('textbox', {
+            name: 'Points for First order',
         });
         await waitFor(() => expect((first as HTMLInputElement).value).toBe('10'));
         fireEvent.change(first, { target: { value: '5' } });
@@ -163,5 +162,22 @@ describe('risk rules', () => {
                 first_order_hold_threshold: '3000.00',
             },
         });
+    });
+
+    it('keeps each factor setting inside its sentence and shows the points used as you type', async () => {
+        const calls = riskApi(manager);
+        renderApp('/risk/rules');
+        const minutes = await screen.findByRole('textbox', { name: 'Minutes between orders' });
+        await waitFor(() => expect((minutes as HTMLInputElement).value).toBe('10'));
+        expect(screen.getByText('95')).toBeTruthy();
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Points for Thin address' }), { target: { value: '15' } });
+        expect(screen.getByText('105')).toBeTruthy();
+        expect(screen.getByText('Over 100 — lower some points before saving.')).toBeTruthy();
+
+        fireEvent.change(minutes, { target: { value: '20' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save rules' }));
+        await waitFor(() => expect(posts(calls)).toHaveLength(1));
+        expect(posts(calls)[0]?.body).toMatchObject({ rapid_repeat_minutes: 20, value_norm_multiplier: 2, weights: { address_quality: 15 } });
     });
 });

@@ -35,6 +35,9 @@ const SCREENS: Array<[string, string]> = [
     ['finance-pnl', '/admin/finance/pnl'],
     ['invoices', '/admin/invoices'],
     ['risk-queue', '/admin/risk/queue'],
+    // Fraud & risk premium pass (Figma 504:75986): the lookup on a demo phone and the rules form.
+    ['risk-lookup', '/admin/risk/lookup?phone=01712046318'],
+    ['risk-rules', '/admin/risk/rules'],
     ['settings-invoice', '/admin/settings/invoice'],
     ['couriers', '/admin/integrations/couriers'],
     ['cms-pages', '/admin/store/pages'],
