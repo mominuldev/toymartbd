@@ -50,11 +50,23 @@ function cartHeaders(token: string): Record<string, string> {
 
 /** The priced cart, or null when there is no cart (no cookie, or the API no longer knows the token). */
 export async function getCart(token: string | null, dest: Destination | null, locale: Locale): Promise<Cart | null> {
-    if (!token) return null;
+    return (await getCartFor(token, dest, locale)).cart;
+}
+
+/**
+ * The priced cart and the destination it was actually priced for. A saved destination the API
+ * refuses (422 — a district or upazila id it no longer has, e.g. after the location list was
+ * re-imported) must not cost the shopper their cart: the cart is priced without it instead and
+ * `dest` comes back null, so the page asks for the district again. Before this, the cart page
+ * showed "That didn't work" with no items on every visit until the cookie expired.
+ */
+export async function getCartFor(token: string | null, dest: Destination | null, locale: Locale): Promise<{ cart: Cart | null; dest: Destination | null }> {
+    if (!token) return { cart: null, dest };
     try {
-        return await noStore<Cart>(cartPath(dest), { locale, headers: cartHeaders(token) });
+        return { cart: await noStore<Cart>(cartPath(dest), { locale, headers: cartHeaders(token) }), dest };
     } catch (error) {
-        if (error instanceof ApiError && error.isNotFound) return null;
+        if (error instanceof ApiError && error.isNotFound) return { cart: null, dest };
+        if (dest !== null && error instanceof ApiError && error.status === 422) return getCartFor(token, null, locale);
         throw error;
     }
 }

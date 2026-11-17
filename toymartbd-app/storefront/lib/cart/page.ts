@@ -3,7 +3,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 
 import type { Locale } from '../i18n/config';
-import { CART_COOKIE, DEST_COOKIE, FLASH_COOKIE, decodeNotice, getCart, parseDestination, validToken, type Destination } from './server';
+import { CART_COOKIE, DEST_COOKIE, FLASH_COOKIE, decodeNotice, getCartFor, parseDestination, validToken, type Destination } from './server';
 import type { Cart, CartNotice } from './types';
 
 // What the cart and checkout pages read per request: the cart (by the httpOnly token), the chosen
@@ -22,13 +22,16 @@ export interface CartPageState {
 export async function loadCartPage(locale: Locale): Promise<CartPageState> {
     const jar = await cookies();
     const token = validToken(jar.get(CART_COOKIE)?.value);
-    const dest = parseDestination(jar.get(DEST_COOKIE)?.value);
+    const saved = parseDestination(jar.get(DEST_COOKIE)?.value);
     const notice = decodeNotice(jar.get(FLASH_COOKIE)?.value);
 
     let cart: Cart | null = null;
+    // A saved destination the API no longer knows is dropped here (getCartFor), so the district
+    // picker starts empty instead of the whole cart failing.
+    let dest: Destination | null = saved;
     let failed = false;
     try {
-        cart = await getCart(token, dest, locale);
+        ({ cart, dest } = await getCartFor(token, saved, locale));
     } catch {
         failed = true;
     }
