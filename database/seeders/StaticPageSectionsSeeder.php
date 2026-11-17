@@ -186,7 +186,7 @@ final class StaticPageSectionsSeeder extends Seeder
 
     /**
      * The About collage photos. On a developer machine the design's mock photos (unbranded AI
-     * images from the Figma file, toymartbd-app/storefront/public/mock/about) are added to the
+     * images from the Figma file, database/seeders/assets/about) are added to the
      * media library once, so the page renders as designed; anywhere else the hero starts without
      * photos and the owner picks licensed ones in the builder.
      *
@@ -202,7 +202,7 @@ final class StaticPageSectionsSeeder extends Seeder
         foreach (['shape-sorter' => 'A shape-sorter puzzle', 'slide' => 'A child on a garden slide', 'blocks' => 'A child building with bricks'] as $name => $alt) {
             $filename = 'about-'.$name.'.jpg';
             $id = Media::query()->where('filename', $filename)->where('kind', 'image')->value('id');
-            $source = base_path('toymartbd-app/storefront/public/mock/about/'.$name.'.jpg');
+            $source = database_path('seeders/assets/about/'.$name.'.jpg');
             if ($id === null && is_file($source)) {
                 $copy = (string) tempnam(sys_get_temp_dir(), 'about');
                 copy($source, $copy);

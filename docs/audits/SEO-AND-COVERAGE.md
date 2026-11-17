@@ -59,7 +59,7 @@ Severity: **high** means a sitewide or money-visible defect. **Medium** means a 
 
 - **Agent 2 (security / rate limits):** SEO-1 changed the `storefront` limiter in `ApiServiceProvider` (surgical edit, 3 tests in my own file). Please review the bucket split. The server budget applies only when the TCP peer is in `TRUSTED_PROXIES` and the request has no `X-Forwarded-For`, so a client cannot claim it.
 - **Agent 4 (accessibility):** `e2e/accessibility.spec.ts` audits `['cms-page', '/pages/privacy']`. The mock now serves the real slug, so change it to `/pages/privacy-policy`, or that case will audit the 404 page.
-- **Lead:** `next dev` or `next typegen` appends each agent's dist dir to `toymartbd-app/storefront/tsconfig.json` `include` (`.next-p9a5`, `.next-a4`, `.next-p9a3`, `.next-a4dev`). Revert those lines before committing. I removed mine.
+- **Lead:** `next dev` or `next typegen` appends each agent's dist dir to `toymartbd-storefront/tsconfig.json` `include` (`.next-p9a5`, `.next-a4`, `.next-p9a3`, `.next-a4dev`). Revert those lines before committing. I removed mine.
 - **Not mine, failing during my run:** `tests/Feature/Notification/BirthdayRemindersTest.php` has 3 failures (coupon `ends_at`, a Bangla offer line, redemption). `app/Domain/Marketing/Actions/ReverseOrderMarketingUsage.php` is modified in the tree by another agent.
 
 ## Files

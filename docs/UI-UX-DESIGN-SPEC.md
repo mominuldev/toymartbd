@@ -334,7 +334,7 @@ CI gate: `axe-core` via Playwright on home, category, PDP, cart, checkout, and t
 
 Means: AVIF with WebP fallback via `next/image`, explicit dimensions everywhere, `priority` only on the LCP image, `font-display: swap` with self-hosted subsets, no third-party script in the critical path (GTM loads after interactive), route-level code splitting, `prefers-reduced-data` honoured. A PR that breaks a budget fails CI.
 
-**How CI measures it (Phase 9).** `toymartbd-app/storefront/e2e/performance-budgets.spec.ts`, inside the Storefront job's E2E step, against the mock API and the production build that step already makes: home (EN + BN), category, PDP, cart, checkout on Lighthouse's mobile profile (412×823 @1.75, 4× CPU, 150 ms RTT / 1.6 Mbps), median of 3 runs. Cart has no column above; it takes the checkout budget. INP is measured on one tap after load (a navigation-only Lighthouse run cannot measure INP either); TBT is reported alongside. Lab numbers only — field data (CrUX, real mid-range Android over 4G) is an owner task.
+**How CI measures it (Phase 9).** `toymartbd-storefront/e2e/performance-budgets.spec.ts`, inside the Storefront job's E2E step, against the mock API and the production build that step already makes: home (EN + BN), category, PDP, cart, checkout on Lighthouse's mobile profile (412×823 @1.75, 4× CPU, 150 ms RTT / 1.6 Mbps), median of 3 runs. Cart has no column above; it takes the checkout budget. INP is measured on one tap after load (a navigation-only Lighthouse run cannot measure INP either); TBT is reported alongside. Lab numbers only — field data (CrUX, real mid-range Android over 4G) is an owner task.
 
 > **JS budget — owner decision needed (docs/audits/PERFORMANCE.md P-01).** Next.js 16 + React 19 ship ~150 KB gzipped of framework/runtime chunks on every App Router page before any storefront code, so the JS row above cannot be met on this stack (measured 200–214 KB per template after Phase 9's cuts). Until the owner re-baselines this row (or changes the stack), CI holds each template at a ratchet ceiling (`JS_CEILING_KB` in the spec, measurement + ~5 %) so JS can only shrink. Every other row is enforced as written.
 
@@ -383,7 +383,7 @@ CI runs `npm run check --workspace=@toymart/tokens`, which fails if any output i
 | ActivityFeed 203:1532 · PermissionMatrix 203:1610 · IntegrationCard 203:2257 | `features/activity/…` · `features/staff/…` · `features/settings/…` |
 | Admin icons (115, Phosphor) | `@phosphor-icons/react`, same glyph names — not re-drawn |
 
-**Storefront map.** Primitives (page 02) → `toymartbd-app/storefront/src/components/ui/`; composites (page 03) → `src/components/<area>/` (`product/`, `cart/`, `checkout/`, `account/` …). Filled in when the storefront scaffold lands in Phase 3.
+**Storefront map.** Primitives (page 02) → `toymartbd-storefront/src/components/ui/`; composites (page 03) → `src/components/<area>/` (`product/`, `cart/`, `checkout/`, `account/` …). Filled in when the storefront scaffold lands in Phase 3.
 
 Build rules for future Figma work stay as before: variables not styles, composites from instances only, screens from composites only. A raw rectangle or hardcoded hex on a screen is a defect.
 

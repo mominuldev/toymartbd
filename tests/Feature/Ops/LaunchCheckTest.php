@@ -502,8 +502,11 @@ it('checks the storefront contact and legal values in Business, and organization
     }
     Setting::put(CompanyDetails::WHATSAPP_KEY, '+8801711000222', SettingGroup::Store, false, null);
 
-    $dir = sys_get_temp_dir().'/launch-sf-'.uniqid();
-    mkdir($dir.'/toymartbd-app/storefront/lib', 0777, true);
+    // The storefront is a sibling checkout of the API (its own repository since 2026-11-17).
+    $root = sys_get_temp_dir().'/launch-sf-'.uniqid();
+    $dir = $root.'/toymartbd';
+    mkdir($dir, 0777, true);
+    mkdir($root.'/toymartbd-storefront/lib', 0777, true);
     // Samples before cmsPaths may carry the flag; nothing after it does.
     file_put_contents($dir.'/'.LaunchChecks::STOREFRONT_SITE_CONFIG, "export const sampleContact = { hotline: { placeholder: true } };\nexport const cmsPaths = {};\nexport const organization = { logo: { placeholder: false } };\n");
     $original = app()->basePath();

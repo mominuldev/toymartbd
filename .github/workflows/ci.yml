@@ -102,46 +102,6 @@ jobs:
       # native compiler is unverified. resources/js/admin/test/conventions.test.ts
       # covers the two rules that matter most (no hardcoded strings, hex or px).
 
-  storefront:
-    name: Storefront — typecheck, unit, build, e2e (JS disabled)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-      - name: npm ci
-        run: npm ci
-      - name: Install Chromium for Playwright
-        run: npx playwright install chromium  # browser only: the runner image already has its system libraries, and apt mirrors are not always reachable
-      - name: Typecheck
-        run: npm run typecheck:storefront
-      - name: i18n — no hardcoded storefront copy, every storefront key in en and bn
-        run: npm run lint:i18n:storefront
-      - name: Unit tests (revalidation HMAC, API client, i18n)
-        run: npm run test:storefront
-      - name: Build
-        # A production build requires these (lib/env.ts). CI placeholders, not secrets: this build is
-        # only checked, never served.
-        env:
-          API_URL: http://127.0.0.1:4010
-          ADMIN_URL: http://127.0.0.1:4010
-          SITE_URL: http://127.0.0.1:3100
-          STOREFRONT_API_TOKEN: ci-placeholder-storefront-token
-          STOREFRONT_REVALIDATE_SECRET: ci-placeholder-revalidate-secret
-        run: npm run build:storefront
-      - name: E2E — SSR without JS, no locale redirect, ISR revalidation, no secrets in bundles, Bangla layout at 390/1440, golden path in both locales, axe + keyboard in both locales, performance budgets (UI-UX §8)
-        env:
-          CI: '1'
-        run: npm run test:e2e:storefront
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: storefront-playwright-report
-          path: toymartbd-app/storefront/playwright-report
-
   admin-e2e:
     name: Admin E2E — login, brand create/edit/archive on the real app
     runs-on: ubuntu-latest

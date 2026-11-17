@@ -18,7 +18,7 @@
 // unverified (see .github/workflows/ci.yml). This walks the oxc AST that rolldown (Vite 8's
 // bundler, already installed) exposes, so it parses exactly what Vite builds.
 //
-// Usage: node scripts/i18n/lint.mjs [admin|storefront]   (no argument = both)
+// Usage: node scripts/i18n/lint.mjs [admin]
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,7 @@ const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 export const targets = {
     admin: { roots: ['resources/js/admin'] },
-    storefront: { roots: ['toymartbd-app/storefront/app', 'toymartbd-app/storefront/components'] },
+    // The storefront has its own copy of this check in its repository (split 2026-11-17).
 };
 
 const TEXT_PROPS = new Set([

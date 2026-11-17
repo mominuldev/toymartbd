@@ -13,7 +13,7 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 const sentryUpload = Boolean(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_ADMIN_PROJECT);
 
 // This Vite build serves ONE app: the admin SPA at /admin, hosted by Laravel.
-// The customer storefront is a separate Next.js app in toymartbd-app/storefront
+// The customer storefront is a separate Next.js app in its own repository (toymartbd-storefront)
 // and is never part of this bundle.
 export default defineConfig({
     plugins: [

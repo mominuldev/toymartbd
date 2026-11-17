@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | There is deliberately no Blade storefront here. The customer-facing shop is
-| the Next.js app in toymartbd-app/storefront, and the operations dashboard is
-| the React app in toymartbd-app/admin. Both consume /api/v1/*.
+| the Next.js app in its own repository (toymartbd-storefront), and the operations
+| dashboard is the React admin in resources/js/admin. Both consume /api/v1/*.
 |
 | Blade is used only for invoice PDFs and transactional mail.
 |

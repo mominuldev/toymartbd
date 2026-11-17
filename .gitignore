@@ -26,15 +26,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# --- Toy Mart BD: frontend workspaces (toymartbd-app/) ---
-toymartbd-app/**/node_modules
-toymartbd-app/**/.next
-toymartbd-app/**/dist
-toymartbd-app/**/build
-toymartbd-app/**/.turbo
-toymartbd-app/**/*.tsbuildinfo
-toymartbd-app/packages/tokens/dist
-toymartbd-app/packages/api-types/dist
 .vercel
 
 # --- tooling ---
