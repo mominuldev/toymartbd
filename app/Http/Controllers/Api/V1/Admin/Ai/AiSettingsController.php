@@ -43,34 +43,29 @@ final class AiSettingsController extends ApiController
     }
 
     /** `PUT /settings/ai/providers/{provider}` — check the key, then save it. 503 `ai-unavailable` when the provider rejects it. */
-    public function saveKey(SaveAiKeyRequest $request, string $provider, SaveAiProviderKey $save, AiSettings $settings): AiSettingsResource
+    public function saveKey(SaveAiKeyRequest $request, AiProvider $provider, SaveAiProviderKey $save, AiSettings $settings): AiSettingsResource
     {
-        $save->handle(self::provider($provider), $request->apiKey(), self::uid($request));
+        $save->handle($provider, $request->apiKey(), self::uid($request));
 
         return self::view($request, $settings);
     }
 
     /** `DELETE /settings/ai/providers/{provider}` */
-    public function forgetKey(Request $request, string $provider, ForgetAiProviderKey $forget, AiSettings $settings): AiSettingsResource
+    public function forgetKey(Request $request, AiProvider $provider, ForgetAiProviderKey $forget, AiSettings $settings): AiSettingsResource
     {
         $this->authorize(Permission::SettingsManageIntegrations->value);
-        $forget->handle(self::provider($provider), self::uid($request));
+        $forget->handle($provider, self::uid($request));
 
         return self::view($request, $settings);
     }
 
     /** `POST /settings/ai/providers/{provider}/check` */
-    public function check(Request $request, string $provider, RecheckAiProvider $recheck, AiSettings $settings): AiSettingsResource
+    public function check(Request $request, AiProvider $provider, RecheckAiProvider $recheck, AiSettings $settings): AiSettingsResource
     {
         $this->authorize(Permission::SettingsManageIntegrations->value);
-        $recheck->handle(self::provider($provider), self::uid($request));
+        $recheck->handle($provider, self::uid($request));
 
         return self::view($request, $settings);
-    }
-
-    private static function provider(string $value): AiProvider
-    {
-        return AiProvider::tryFrom($value) ?? abort(404);
     }
 
     private static function uid(Request $request): ?int

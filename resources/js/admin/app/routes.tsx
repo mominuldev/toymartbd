@@ -74,6 +74,10 @@ import { RestockForecastPage } from '@/features/ai/restock/RestockForecastPage';
 import { ReportSchedulesPage } from '@/features/reports/schedules/ReportSchedulesPage';
 import { CustomerProfilePage, CustomersPage } from '@/features/customers';
 import { CustomerAnalyticsPage } from '@/features/analytics/customers';
+import { ProductAnalyticsPage } from '@/features/analytics/products/ProductAnalyticsPage';
+import { VisitorAnalyticsPage } from '@/features/analytics/visitors/VisitorAnalyticsPage';
+import { MarketingAnalyticsPage } from '@/features/analytics/marketing/MarketingAnalyticsPage';
+import { LiveAnalyticsPage } from '@/features/analytics/live/LiveAnalyticsPage';
 import { LocationMappingPage } from '@/features/couriers/locations/LocationMappingPage';
 import { CourierSettingsPage, FailedBookingsPage } from '@/features/couriers';
 import { PhoneLookupPage, RiskRulesPage, VerificationQueuePage } from '@/features/risk';
@@ -168,6 +172,10 @@ export const routes: RouteObject[] = [
                     { path: 'analytics/couriers', element: <CourierPerformancePage /> },
                     // P8 Analytics → Customers (no frame; B · 24 Analytics 241:30584 language): LTV, cohorts, repeat rate, segments.
                     { path: 'analytics/customers', element: <CustomerAnalyticsPage /> },
+                    { path: 'analytics/products', element: <ProductAnalyticsPage /> },
+                    { path: 'analytics/visitors', element: <VisitorAnalyticsPage /> },
+                    { path: 'analytics/marketing', element: <MarketingAnalyticsPage /> },
+                    { path: 'analytics/live', element: <LiveAnalyticsPage /> },
                     // P8 Customers list (Figma B · 17 241:40845) and profile (B · 18 241:41374).
                     { path: 'customers', element: <CustomersPage /> },
                     { path: 'customers/:customerId', element: <CustomerProfilePage /> },

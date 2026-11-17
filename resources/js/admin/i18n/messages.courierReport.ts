@@ -39,6 +39,21 @@ export const courierReportEn = {
     'courierReport.col.codOutstanding': 'COD to collect',
     'courierReport.note':
         'Each parcel is counted in its current status. COD collected is what the courier took from customers; money the courier has paid us is on the COD settlements screen.',
+    'courierReport.plain.label': 'In plain words',
+    'courierReport.plain.rate': '{rate}% of finished parcels reached the buyer; {returned} came back ({returnRate}%).',
+    'courierReport.plain.courier': '{name} delivered {rate}%',
+    'courierReport.plain.courierDays': '{name} delivered {rate}% in {days} days on average',
+    'courierReport.plain.cashOwed': '{amount} of cash is still with the couriers — chase it on the COD settlements page.',
+    'courierReport.plain.cashClear': 'Every taka the couriers collected has been paid to you.',
+    'courierReport.compare': 'Couriers side by side',
+    'courierReport.more': 'More detail · every figure per courier',
+    'courierReport.card.delivered': 'Reached the buyer',
+    'courierReport.card.returned': 'Came back',
+    'courierReport.card.speed': 'Speed',
+    'courierReport.card.cost': 'Cost a parcel',
+    'courierReport.card.collected': 'Cash collected',
+    'courierReport.card.owed': 'Still owed',
+    'courierReport.card.booked': '{booked} booked · {inFlight} on the way',
 };
 
 export const courierReportBn: Record<keyof typeof courierReportEn, string> = {
@@ -77,4 +92,19 @@ export const courierReportBn: Record<keyof typeof courierReportEn, string> = {
     'courierReport.col.codOutstanding': 'COD বাকি',
     'courierReport.note':
         'প্রতিটি পার্সেল তার বর্তমান অবস্থায় গোনা হয়েছে। COD সংগ্রহ মানে কুরিয়ার গ্রাহকের কাছ থেকে যা নিয়েছে; কুরিয়ার আমাদের যা দিয়েছে তা COD সেটেলমেন্ট স্ক্রিনে।',
+    'courierReport.plain.label': 'সহজ কথায়',
+    'courierReport.plain.rate': 'শেষ হওয়া পার্সেলের {rate}% ক্রেতার কাছে পৌঁছেছে; {returned}টি ফেরত এসেছে ({returnRate}%)।',
+    'courierReport.plain.courier': '{name} {rate}% ডেলিভারি করেছে',
+    'courierReport.plain.courierDays': '{name} গড়ে {days} দিনে {rate}% ডেলিভারি করেছে',
+    'courierReport.plain.cashOwed': '{amount} নগদ এখনো কুরিয়ারের কাছে — COD সেটেলমেন্ট পাতায় খোঁজ নিন।',
+    'courierReport.plain.cashClear': 'কুরিয়ার যত টাকা তুলেছে, সবই আপনাকে দেওয়া হয়েছে।',
+    'courierReport.compare': 'কুরিয়ার পাশাপাশি',
+    'courierReport.more': 'আরও বিস্তারিত · প্রতি কুরিয়ারের সব হিসাব',
+    'courierReport.card.delivered': 'ক্রেতার কাছে পৌঁছেছে',
+    'courierReport.card.returned': 'ফেরত এসেছে',
+    'courierReport.card.speed': 'গতি',
+    'courierReport.card.cost': 'প্রতি পার্সেলে খরচ',
+    'courierReport.card.collected': 'তোলা নগদ',
+    'courierReport.card.owed': 'এখনো পাওনা',
+    'courierReport.card.booked': '{booked}টি বুক · {inFlight}টি পথে',
 };

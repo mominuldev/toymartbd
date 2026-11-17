@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /*
  * Settings › Store (Figma B · 38) against the real app: the section nav, Business saving into
- * the same rows Taxes & invoices prints, and a branch added, edited and switched off — never
+ * the same rows Invoices, receipts & labels prints, and a branch added, edited and switched off — never
  * deleted. The default location cannot be switched off. SHOTS_DIR=… also saves screenshots for
  * the Figma check.
  */
@@ -18,7 +18,7 @@ async function signIn(page: Page) {
     await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
-test('owner edits business details once and sees them under Taxes & invoices', async ({ page }) => {
+test('owner edits business details once, then the invoice details on Invoices, receipts & labels', async ({ page }) => {
     await signIn(page);
     await expect(page.getByRole('heading', { level: 1, name: 'Store settings' })).toBeVisible();
     const nav = page.getByRole('navigation', { name: 'Store settings sections' });
@@ -41,13 +41,11 @@ test('owner edits business details once and sees them under Taxes & invoices', a
     await expect(page.getByLabel('WhatsApp')).toHaveValue('+880 1711-000222');
     if (shots) await page.screenshot({ path: `${shots}/business.png`, fullPage: true });
 
-    // One value, two screens: Taxes & invoices shows what Business saved.
-    await nav.getByRole('link', { name: 'Taxes & invoices' }).click();
-    await expect(page.getByText('TRAD/DNCC/045512/2025')).toBeVisible();
-    await expect(page.getByText('004567891-0101')).toBeVisible();
+    // Invoices, receipts & labels › A4 invoice edits the rest of what invoices print.
+    await nav.getByRole('link', { name: 'Invoices, receipts & labels' }).click();
     await page.getByLabel(/^Address(?! \()/).fill('House 7, Road 2, Section 10, Mirpur, Dhaka 1216');
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await expect(page.getByText('Invoice details saved. New invoices will use them.')).toBeVisible();
+    await expect(page.getByText('Saved. Invoices print this way from now on.')).toBeVisible();
 
     // …and the invoice save left the Business values alone.
     await nav.getByRole('link', { name: 'Business' }).click();

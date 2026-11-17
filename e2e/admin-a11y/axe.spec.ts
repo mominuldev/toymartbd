@@ -25,6 +25,13 @@ const SCREENS: Array<[string, string]> = [
     ['customer-profile', '/admin/customers/1'],
     ['analytics-sales', '/admin/analytics/sales'],
     ['analytics-customers', '/admin/analytics/customers'],
+    // Analytics premium pass (Figma 518:78370): the four tabs added 2026-11-17.
+    ['analytics-products', '/admin/analytics/products'],
+    ['analytics-visitors', '/admin/analytics/visitors'],
+    ['analytics-marketing', '/admin/analytics/marketing'],
+    ['analytics-live', '/admin/analytics/live'],
+    ['analytics-couriers', '/admin/analytics/couriers'],
+    ['analytics-schedules', '/admin/analytics/schedules'],
     ['finance-pnl', '/admin/finance/pnl'],
     ['invoices', '/admin/invoices'],
     ['risk-queue', '/admin/risk/queue'],

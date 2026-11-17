@@ -85,6 +85,18 @@ function api(me: Me = manager, body: SalesAnalytics = report()) {
 const urls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.map(([url]) => decodeURIComponent(String(url)));
 
 describe('sales analytics', () => {
+    it('leads with three plain sentences built only from the server’s figures', async () => {
+        api();
+        renderApp('/analytics/sales');
+        const words = await screen.findByRole('region', { name: /In plain words/ });
+        expect(within(words).getByText(/Customers placed ৳7,060 in 5 orders — 782\.5% more than the period before\./)).toBeTruthy();
+        expect(within(words).getByText(/৳4,710 was delivered and counted as revenue, leaving ৳2,310 profit \(49\.04% margin\)\./)).toBeTruthy();
+        expect(within(words).getByText(/Website brought 80\.00% of orders\. 1 of 6 orders were cancelled \(16\.67%\)\./)).toBeTruthy();
+        // The funnel lives on its own tab; Sales points there.
+        expect(screen.getByRole('link', { name: 'Open Visitors & funnel' }).getAttribute('href')).toBe('/analytics/visitors');
+        expect(screen.getByText('What happened to these orders')).toBeTruthy();
+    });
+
     it('shows placed demand and recognised revenue as separate figures, from the server', async () => {
         api();
         renderApp('/analytics/sales');
@@ -96,7 +108,7 @@ describe('sales analytics', () => {
         expect(screen.getByText('+782.50%')).toBeTruthy();
         expect(screen.getByText('−33.33 pts')).toBeTruthy();
         expect(screen.getByText('66.67%')).toBeTruthy();
-        expect(screen.getByText(/Conversion rate is not shown/)).toBeTruthy();
+        expect(screen.getByText(/The path from a product view to an order is on the Visitors & funnel tab/)).toBeTruthy();
 
         const categories = screen.getAllByRole('table')[0]!;
         const puzzles = within(categories).getByRole('row', { name: /Puzzles/ });

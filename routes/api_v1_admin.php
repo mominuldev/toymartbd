@@ -526,6 +526,10 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     require __DIR__.'/api_v1_admin_checkout_settings.php';
     // Phase 10 batch 4.
     require __DIR__.'/api_v1_admin_pos.php';
+    require __DIR__.'/api_v1_admin_analytics_products.php';
+    require __DIR__.'/api_v1_admin_analytics_visitors.php';
+    require __DIR__.'/api_v1_admin_analytics_marketing.php';
+    require __DIR__.'/api_v1_admin_analytics_live.php';
     require __DIR__.'/api_v1_admin_ai.php';
     require __DIR__.'/api_v1_admin_inbox.php';
     require __DIR__.'/api_v1_admin_delivery_settings.php';

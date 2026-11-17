@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
+import { CaretDownIcon, TruckIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
@@ -11,9 +12,10 @@ import { Input } from '@/components/ui/Input';
 import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
 import { TakaAmount } from '@/components/ui/TakaAmount';
-import { formatCount } from '@/lib/money';
+import { formatCount, isZeroAmount, takaText } from '@/lib/money';
 import { AnalyticsTabs } from '@/features/analytics/AnalyticsTabs';
-import { courierReportExportUrl, useCourierPerformance, type CourierFilters, type Metrics } from './api';
+import { PlainWords } from '@/features/analytics/PlainWords';
+import { courierReportExportUrl, useCourierPerformance, type CourierFilters, type CourierPerformance, type Metrics } from './api';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -209,6 +211,7 @@ export function CourierPerformancePage() {
                 <EmptyState title={t('courierReport.empty')} body={t('courierReport.emptyBody')} />
             ) : (
                 <>
+                    <PlainWords label={t('courierReport.plain.label')} lines={courierSentences(data, t, name)} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <Stat label={t('courierReport.stat.booked')} value={count(data.totals.booked)} hint={t('courierReport.stat.bookedHint', { delivered: count(data.totals.delivered), returned: count(data.totals.returned), inFlight: count(data.totals.in_flight) })} />
                         <Stat label={t('courierReport.stat.deliveryRate')} value={<Percent value={data.totals.delivery_rate} />} hint={t('courierReport.stat.deliveryRateHint')} />
@@ -232,19 +235,99 @@ export function CourierPerformancePage() {
                         />
                     </div>
 
-                    <MetricsTable
-                        title={t('courierReport.byCourier')}
-                        firstColumn={t('courierReport.col.courier')}
-                        rows={data.providers.map((row) => ({ key: row.provider.code, name: name(row.provider.name, row.provider.name_bn), metrics: row }))}
-                    />
+                    <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label={t('courierReport.compare')}>
+                        {data.providers.map((row) => (
+                            <CourierCard key={row.provider.code} name={name(row.provider.name, row.provider.name_bn)} metrics={row} />
+                        ))}
+                    </ul>
                     <MetricsTable
                         title={t('courierReport.byDistrict')}
                         firstColumn={t('courierReport.col.district')}
                         rows={data.districts.map((row) => ({ key: String(row.district?.id ?? 0), name: row.district ? name(row.district.name, row.district.name_bn) : t('courierReport.noDistrict'), metrics: row }))}
                     />
+                    <details className="group rounded-md border border-line-default bg-surface shadow-e1">
+                        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4">
+                            <span className="flex-1 t-admin-body-strong text-fg-primary">{t('courierReport.more')}</span>
+                            <CaretDownIcon size={16} aria-hidden className="shrink-0 text-fg-tertiary transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t border-line-default p-5">
+                            <MetricsTable
+                                title={t('courierReport.byCourier')}
+                                firstColumn={t('courierReport.col.courier')}
+                                rows={data.providers.map((row) => ({ key: row.provider.code, name: name(row.provider.name, row.provider.name_bn), metrics: row }))}
+                            />
+                        </div>
+                    </details>
                     <p className="t-admin-caption text-fg-secondary">{t('courierReport.note')}</p>
                 </>
             )}
         </section>
     );
+}
+
+/** One courier side by side with the others (Figma 518:79744): delivered and came-back bars, then speed, cost and cash. */
+function CourierCard({ name, metrics }: { name: string; metrics: Metrics }) {
+    const { t } = useI18n();
+    const bars: [MessageKey, string | null, string][] = [
+        ['courierReport.card.delivered', metrics.delivery_rate, 'bg-feedback-success'],
+        ['courierReport.card.returned', metrics.return_rate, 'bg-feedback-danger'],
+    ];
+    const tiles: [MessageKey, ReactNode][] = [
+        ['courierReport.card.speed', metrics.average_days_to_deliver === null ? '—' : t('courierReport.days', { days: metrics.average_days_to_deliver })],
+        ['courierReport.card.cost', <Money key="c" amount={metrics.average_charge} />],
+        ['courierReport.card.collected', <Money key="cc" amount={metrics.cod_collected} />],
+        ['courierReport.card.owed', <Money key="o" amount={metrics.cod_outstanding} />],
+    ];
+    return (
+        <li className="flex flex-col gap-4 rounded-md border border-line-default bg-surface p-5 shadow-e1" aria-label={name}>
+            <div className="flex items-center gap-3">
+                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-sm bg-subtle">
+                    <TruckIcon size={18} className="text-fg-primary" />
+                </span>
+                <h3 className="flex-1 t-admin-section text-fg-primary">{name}</h3>
+                <span className="t-admin-caption tabular text-fg-secondary">{t('courierReport.card.booked', { booked: count(metrics.booked), inFlight: count(metrics.in_flight) })}</span>
+            </div>
+            {bars.map(([label, rate, tone]) => (
+                <div key={label} className="flex flex-col gap-1">
+                    <p className="flex items-center justify-between gap-2">
+                        <span className="t-admin-body text-fg-primary">{t(label)}</span>
+                        <span className="t-admin-body-strong">
+                            <Percent value={rate} />
+                        </span>
+                    </p>
+                    <span aria-hidden className="block h-2 w-full overflow-hidden rounded-full bg-subtle">
+                        <span className={`block h-full rounded-full ${tone}`} style={{ width: `${rate ?? '0'}%` }} />
+                    </span>
+                </div>
+            ))}
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {tiles.map(([label, value]) => (
+                    <div key={label} className="flex flex-col gap-0.5 rounded-sm bg-subtle px-3 py-2">
+                        <dt className="t-admin-caption text-fg-secondary">{t(label)}</dt>
+                        <dd className="t-admin-num tabular text-fg-primary">{value}</dd>
+                    </div>
+                ))}
+            </dl>
+        </li>
+    );
+}
+
+/**
+ * The Couriers page's sentences (Figma 518:79744): how many parcels reached the buyer and came
+ * back, each courier in one clause, and the cash still with the couriers. Server figures, in words.
+ */
+function courierSentences(data: CourierPerformance, t: (k: MessageKey, p?: Record<string, string | number>) => string, name: (n: string, bn: string | null | undefined) => string): string[] {
+    const lines: string[] = [];
+    const tot = data.totals;
+    if (tot.delivery_rate !== null) lines.push(t('courierReport.plain.rate', { rate: tot.delivery_rate, returned: count(tot.returned), returnRate: tot.return_rate ?? '0' }));
+    const each = data.providers
+        .filter((p) => p.booked > 0 && p.delivery_rate !== null)
+        .map((p) =>
+            p.average_days_to_deliver === null
+                ? t('courierReport.plain.courier', { name: name(p.provider.name, p.provider.name_bn), rate: p.delivery_rate ?? '' })
+                : t('courierReport.plain.courierDays', { name: name(p.provider.name, p.provider.name_bn), rate: p.delivery_rate ?? '', days: p.average_days_to_deliver }),
+        );
+    if (each.length > 0) lines.push(`${each.join('; ')}.`);
+    lines.push(isZeroAmount(tot.cod_outstanding) ? t('courierReport.plain.cashClear') : t('courierReport.plain.cashOwed', { amount: takaText(tot.cod_outstanding) }));
+    return lines;
 }

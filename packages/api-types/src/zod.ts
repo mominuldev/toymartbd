@@ -996,6 +996,16 @@ export const saveAccountChildRequestSchema = z.object({
 });
 export type SaveAccountChildRequestInput = z.input<typeof saveAccountChildRequestSchema>;
 
+/** `POST /analytics/marketing/spend` and `PUT /analytics/marketing/spend/{adSpend}` — ad spend */
+export const saveAdSpendRequestSchema = z.object({
+    "campaign": z.string().min(1).max(128),
+    "source": z.string().max(64).nullable().optional(),
+    "month": z.string().min(1).regex(new RegExp("^\\d{4}-(0[1-9]|1[0-2])$")),
+    "amount": z.string().min(1).regex(new RegExp("^\\d{1,12}(\\.\\d{1,2})?$")),
+    "note": z.string().max(500).nullable().optional(),
+});
+export type SaveAdSpendRequestInput = z.input<typeof saveAdSpendRequestSchema>;
+
 /** `PUT /settings/ai/providers/{provider}` — connect a provider with its API key; needs settings.manage_integrations. */
 export const saveAiKeyRequestSchema = z.object({
     "api_key": z.string().min(16).max(300).regex(new RegExp("^\\S+$")),

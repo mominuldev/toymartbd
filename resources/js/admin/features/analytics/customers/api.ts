@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 export type CustomerAnalytics = Schema<'CustomerAnalytics'>;
 export type Cohort = CustomerAnalytics['cohorts'][number];
 
-export const monthChoices = ['3', '6', '12'] as const;
+export const monthChoices = ['3', '6', '12', 'custom'] as const;
 export type Months = (typeof monthChoices)[number];
 
 /** First day of the Dhaka month `months − 1` before this one, and today — a custom range for the API. */
@@ -17,16 +17,21 @@ export function monthsRange(months: number, now: Date = new Date()): { from: str
 }
 
 /** The server defaults to six months; other choices go as `range=custom`. Nothing is computed here (rule 1). */
-export function customerAnalyticsPath(months: Months, now?: Date): string {
+export function customerAnalyticsPath(months: Months, now?: Date, custom?: { from: string; to: string }): string {
+    if (months === 'custom') {
+        // Both dates or the server's default: half a range is never sent. The server validates them.
+        if (!custom?.from || !custom.to) return '/reports/customers';
+        return `/reports/customers?${new URLSearchParams({ range: 'custom', from: custom.from, to: custom.to }).toString()}`;
+    }
     if (months === '6') return '/reports/customers';
     const { from, to } = monthsRange(Number(months), now);
     return `/reports/customers?${new URLSearchParams({ range: 'custom', from, to }).toString()}`;
 }
 
-export function useCustomerAnalytics(months: Months) {
+export function useCustomerAnalytics(months: Months, custom?: { from: string; to: string }) {
     return useQuery({
-        queryKey: ['reports', 'customers', months],
-        queryFn: () => api<CustomerAnalytics>(customerAnalyticsPath(months)),
+        queryKey: ['reports', 'customers', months, custom?.from ?? '', custom?.to ?? ''],
+        queryFn: () => api<CustomerAnalytics>(customerAnalyticsPath(months, undefined, custom)),
         placeholderData: keepPreviousData,
     });
 }

@@ -1,12 +1,13 @@
 import { useId, useState, type ReactNode } from 'react';
-import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { InfoIcon } from '@phosphor-icons/react';
-import { useSearchParams } from 'react-router';
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CaretDownIcon, FunnelSimpleIcon } from '@phosphor-icons/react';
+import { Link, useSearchParams } from 'react-router';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import type { Schema } from '@toymart/api-types';
 import { can, useMe } from '@/features/auth/api';
 import { ContentHeader } from '@/components/shell/ContentHeader';
+import { buttonClass } from '@/components/ui/Button';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ExportMenu } from '@/components/ui/ExportMenu';
@@ -15,6 +16,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { AnalyticsTabs } from '../AnalyticsTabs';
+import { PlainWords, change } from '../PlainWords';
 import { groups, rangePresets, salesExportUrl, useSalesAnalytics, type Group, type PerformanceRow, type RangePreset, type SalesAnalytics, type SalesFilters, type TrendRow } from './api';
 import { Delta, Money, Percent, TAKA, dhakaToday, formatAmount, formatCount, formatDay, takaText } from './format';
 
@@ -124,41 +126,40 @@ export function SalesAnalyticsPage() {
                 <EmptyState title={t('sales.empty')} body={t('sales.emptyBody', { range })} />
             ) : (
                 <>
+                    <PlainWords label={t('sales.plain.label', { range })} lines={salesSentences(data, t)} />
                     <Stats data={data} />
-                    <p className="flex items-start gap-2 rounded-sm bg-info-subtle px-3.5 py-2.5 t-admin-body text-fg-primary">
-                        <InfoIcon size={16} aria-hidden className="mt-0.5 shrink-0 text-feedback-info" />
-                        {t('sales.conversionNote')}
-                    </p>
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_376px]">
-                        <TrendCard data={data} range={range} onGroup={(g) => set({ group: g })} />
+                    <TrendCard data={data} range={range} onGroup={(g) => set({ group: g })} />
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                        <OutcomeSummary data={data} />
                         <BarListCard
                             title={t('sales.channels.title')}
                             subtitle={t('sales.channels.subtitle')}
                             rows={data.channels.map((c) => ({ key: c.source, label: channelLabel(c.source, t), value: c.value, orders: c.orders, percent: c.orders_percent }))}
                         />
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                        <OutcomeCard data={data} range={range} />
-                        <ListCard
+                        <BarListCard
                             title={t('sales.payments.title')}
                             subtitle={t('sales.payments.subtitle')}
-                            rows={data.payment_methods.map((m) => ({
-                                key: m.method,
-                                label: t(`orders.method.${m.method}` as MessageKey),
-                                value: (
-                                    <>
-                                        <Percent value={m.orders_percent} /> <span className="t-admin-caption text-fg-tertiary">· {t('sales.orders', { count: formatCount(m.orders) })}</span>
-                                    </>
-                                ),
-                            }))}
+                            tone="success"
+                            rows={data.payment_methods.map((m) => ({ key: m.method, label: t(`orders.method.${m.method}` as MessageKey), value: m.value, orders: m.orders, percent: m.value_percent }))}
                         />
                     </div>
-                    <PerformanceTable title={t('sales.categories.title')} first={t('sales.col.category')} rows={data.categories} fallback={t('sales.noCategory')} profit={data.profit_visible} />
-                    <PerformanceTable title={t('sales.brands.title')} first={t('sales.col.brand')} rows={data.brands} fallback={t('sales.noBrand')} profit={data.profit_visible} />
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        <TopCategories data={data} />
                         <DiscountsCard data={data} />
-                        <RecommendationsCard data={data} />
                     </div>
+                    <FunnelNote />
+                    <details className="group flex flex-col rounded-md border border-line-default bg-surface shadow-e1">
+                        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4">
+                            <span className="flex-1 t-admin-body-strong text-fg-primary">{t('sales.more.title')}</span>
+                            <span className="hidden t-admin-caption text-fg-secondary sm:inline">{t('sales.more.hint')}</span>
+                            <CaretDownIcon size={16} aria-hidden className="shrink-0 text-fg-tertiary transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="flex flex-col gap-6 border-t border-line-default p-5">
+                            <PerformanceTable title={t('sales.categories.title')} first={t('sales.col.category')} rows={data.categories} fallback={t('sales.noCategory')} profit={data.profit_visible} />
+                            <PerformanceTable title={t('sales.brands.title')} first={t('sales.col.brand')} rows={data.brands} fallback={t('sales.noBrand')} profit={data.profit_visible} />
+                            <RecommendationsCard data={data} />
+                        </div>
+                    </details>
                     <p className="t-admin-caption text-fg-secondary">
                         {t('sales.note')}
                         {data.reconciliation.difference !== '0.00' && <> {t('sales.reconciliation', { amount: takaText(data.reconciliation.difference) })}</>}
@@ -334,13 +335,6 @@ function Tick({ x, y, payload, anchor, money = false }: { x?: number; y?: number
     );
 }
 
-const outcomeColours = {
-    delivered: 'var(--color-feedback-success)',
-    shipped: 'var(--color-feedback-info)',
-    open: 'var(--color-brand)',
-    cancelled: 'var(--color-fg-tertiary)',
-    returned: 'var(--color-feedback-danger)',
-} as const;
 const outcomeSwatch = {
     delivered: 'bg-feedback-success',
     shipped: 'bg-feedback-info',
@@ -350,39 +344,89 @@ const outcomeSwatch = {
 } as const;
 const outcomes = ['delivered', 'shipped', 'open', 'cancelled', 'returned'] as const;
 
-/** Figma "Orders by outcome" (stacked bars, 241:30691): orders placed per bucket by where each is now. */
-function OutcomeCard({ data, range }: { data: SalesAnalytics; range: string }) {
-    const { t, locale } = useI18n();
-    const points = data.trend.map((row) => ({ short: axisLabel(row.from, data.granularity, locale), ...row.outcomes }));
+/**
+ * "What happened to these orders" (Figma 518:78373): one bar of the period's orders by where each
+ * is now, and the counts. The counts are the server's per-bucket outcomes, added up for display.
+ */
+function OutcomeSummary({ data }: { data: SalesAnalytics }) {
+    const { t } = useI18n();
+    const totals = outcomes.map((o) => [o, data.trend.reduce((sum, row) => sum + row.outcomes[o], 0)] as const);
+    const all = totals.reduce((sum, [, n]) => sum + n, 0);
     return (
-        <Card title={t('sales.outcome.title')} subtitle={t('sales.outcome.subtitle', { group: t(`sales.group.${data.granularity}` as MessageKey), range })}>
-            <ul className="flex flex-wrap items-center gap-4">
-                {outcomes.map((o) => (
-                    <li key={o} className="flex items-center gap-1.5 t-admin-caption text-fg-secondary">
-                        <span aria-hidden className={`size-2.5 rounded-3xs ${outcomeSwatch[o]}`} />
-                        {t(`sales.outcome.${o}` as MessageKey)}
-                    </li>
-                ))}
-            </ul>
-            <div className="h-56" aria-hidden>
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart accessibilityLayer={false} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                        <CartesianGrid vertical={false} stroke="var(--color-line-default)" />
-                        <XAxis dataKey="short" axisLine={false} tickLine={false} tick={<Tick anchor="middle" />} minTickGap={12} />
-                        <YAxis axisLine={false} tickLine={false} width={32} allowDecimals={false} tick={<Tick anchor="end" />} />
-                        <Tooltip cursor={{ fill: 'var(--color-subtle)' }} contentStyle={{ background: 'var(--color-surface)', border: '1px solid var(--color-line-default)' }} formatter={(value, name) => [formatCount(Number(value)), t(`sales.outcome.${String(name)}` as MessageKey)]} />
-                        {outcomes.map((o) => (
-                            <Bar key={o} dataKey={o} stackId="outcome" fill={outcomeColours[o]} maxBarSize={36} isAnimationActive={false} />
+        <Card title={t('sales.outcome.title')} subtitle={t('sales.outcome.summary', { count: formatCount(all) })}>
+            {all > 0 && (
+                <span aria-hidden className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full">
+                    {totals
+                        .filter(([, n]) => n > 0)
+                        .map(([o, n]) => (
+                            <span key={o} className={`h-full ${outcomeSwatch[o]}`} style={{ flexGrow: n }} />
                         ))}
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
+                </span>
+            )}
+            <dl className="flex flex-col">
+                {totals.map(([o, n]) => (
+                    <div key={o} className="flex items-center gap-2 py-1.5">
+                        <dt className="flex min-w-0 flex-1 items-center gap-2 t-admin-body text-fg-primary">
+                            <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${outcomeSwatch[o]}`} />
+                            {t(`sales.outcome.${o}` as MessageKey)}
+                        </dt>
+                        <dd className="t-admin-body-strong tabular text-fg-primary">{formatCount(n)}</dd>
+                    </div>
+                ))}
+            </dl>
         </Card>
     );
 }
 
+/** The five best categories by revenue on delivery, with their margin; the full table is under "More detail". */
+function TopCategories({ data }: { data: SalesAnalytics }) {
+    const { t, locale } = useI18n();
+    const rows = data.categories.slice(0, 5);
+    return (
+        <Card title={t('sales.top.title')} subtitle={t('sales.top.subtitle')}>
+            {rows.length === 0 ? (
+                <p className="t-admin-caption text-fg-tertiary">{t('sales.noDelivered')}</p>
+            ) : (
+                <ul className="flex flex-col">
+                    {rows.map((row, i) => (
+                        <li key={`${row.category_id ?? 'none'}-${i}`} className="flex items-center gap-3 border-t border-line-default py-2.5 first:border-t-0">
+                            <span className="flex min-w-0 flex-1 flex-col">
+                                <span className="truncate t-admin-body-strong text-fg-primary">{(locale === 'bn' && row.name_bn ? row.name_bn : row.name) || t('sales.noCategory')}</span>
+                                <span className="t-admin-caption tabular text-fg-secondary">{t('sales.top.sold', { count: formatCount(row.units_sold) })}</span>
+                            </span>
+                            <span className="t-admin-num">
+                                <Money amount={row.net_revenue} />
+                            </span>
+                            {data.profit_visible && row.margin_percent !== null && (
+                                <span className="rounded-xs bg-success-subtle px-2 py-0.5 t-admin-caption-strong tabular text-fg-primary">{t('sales.top.margin', { percent: row.margin_percent })}</span>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Card>
+    );
+}
+
+/** The visitor funnel lives on its own tab (Analytics › Visitors & funnel); Sales points there rather than repeating it. */
+function FunnelNote() {
+    const { t } = useI18n();
+    return (
+        <section className="flex flex-wrap items-center gap-4 rounded-md border border-dashed border-line-strong bg-surface p-5">
+            <FunnelSimpleIcon size={22} aria-hidden className="shrink-0 text-fg-tertiary" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <h2 className="t-admin-body-strong text-fg-primary">{t('sales.funnel.title')}</h2>
+                <p className="t-admin-body text-fg-secondary">{t('sales.funnel.body')}</p>
+            </div>
+            <Link to="/analytics/visitors" className={buttonClass('outline', 'sm')}>
+                {t('sales.funnel.open')}
+            </Link>
+        </section>
+    );
+}
+
 /** Figma "Traffic sources" (241:30674): label, figure, and a 6px bar on bg/subtle. */
-function BarListCard({ title, subtitle, rows }: { title: string; subtitle: string; rows: { key: string; label: string; value: string; orders: number; percent: string | null }[] }) {
+function BarListCard({ title, subtitle, rows, tone = 'brand' }: { title: string; subtitle: string; rows: { key: string; label: string; value: string; orders: number; percent: string | null }[]; tone?: 'brand' | 'success' }) {
     const { t } = useI18n();
     return (
         <Card title={title} subtitle={subtitle}>
@@ -399,32 +443,11 @@ function BarListCard({ title, subtitle, rows }: { title: string; subtitle: strin
                                 </span>
                             </div>
                             <span aria-hidden className="h-1.5 w-full overflow-hidden rounded-3xs bg-subtle">
-                                <span className="block h-full rounded-3xs bg-brand" style={{ width: `${row.percent ?? '0'}%` }} />
+                                <span className={`block h-full rounded-3xs ${tone === 'success' ? 'bg-feedback-success' : 'bg-brand'}`} style={{ width: `${row.percent ?? '0'}%` }} />
                             </span>
                         </li>
                     ))}
                 </ul>
-            )}
-        </Card>
-    );
-}
-
-/** Figma "Devices & places" (241:30711): label in text/secondary, figure semibold, 6px rows. */
-function ListCard({ title, subtitle, rows }: { title: string; subtitle?: string; rows: { key: string; label: string; value: ReactNode }[] }) {
-    const { t } = useI18n();
-    return (
-        <Card title={title} subtitle={subtitle}>
-            {rows.length === 0 ? (
-                <p className="t-admin-caption text-fg-tertiary">{t('sales.none')}</p>
-            ) : (
-                <dl className="flex flex-col">
-                    {rows.map((row) => (
-                        <div key={row.key} className="flex items-center gap-2 py-1.5">
-                            <dt className="min-w-0 flex-1 t-admin-body text-fg-secondary">{row.label}</dt>
-                            <dd className="t-admin-body-strong whitespace-nowrap text-fg-primary">{row.value}</dd>
-                        </div>
-                    ))}
-                </dl>
             )}
         </Card>
     );
@@ -600,4 +623,31 @@ const channelLabels: Record<Schema<'OrderListItem'>['source'], MessageKey> = {
 export function channelLabel(source: string, t: (key: MessageKey) => string): string {
     const key = (channelLabels as Record<string, MessageKey | undefined>)[source];
     return key ? t(key) : source;
+}
+
+/**
+ * The Sales page's three sentences (Figma 518:78373 "In plain words"): what was placed and how it
+ * moved, what was delivered (and kept, if the role may see profit), and where orders came from
+ * with the cancellations. Every figure is a server string; this only words them.
+ */
+function salesSentences(data: SalesAnalytics, t: (k: MessageKey, p?: Record<string, string | number>) => string): string[] {
+    const s = data.summary;
+    const lines: string[] = [];
+    const placed = change(data.deltas.placed_value);
+    lines.push(
+        placed
+            ? t(placed.up ? 'sales.plain.placedUp' : 'sales.plain.placedDown', { value: takaText(s.placed.net_value), orders: formatCount(s.placed.net_orders), percent: placed.amount })
+            : t('sales.plain.placed', { value: takaText(s.placed.net_value), orders: formatCount(s.placed.net_orders) }),
+    );
+    if (data.profit_visible && s.recognised.gross_profit !== null && s.recognised.gross_margin_percent !== null) {
+        lines.push(t('sales.plain.deliveredProfit', { revenue: takaText(s.recognised.net_revenue), profit: takaText(s.recognised.gross_profit), margin: s.recognised.gross_margin_percent }));
+    } else {
+        lines.push(t('sales.plain.delivered', { revenue: takaText(s.recognised.net_revenue), orders: formatCount(s.delivered.orders) }));
+    }
+    const top = [...data.channels].sort((a, b) => b.orders - a.orders)[0];
+    const channel = top && top.orders_percent !== null ? t('sales.plain.channel', { channel: channelLabel(top.source, t), percent: top.orders_percent }) : '';
+    const cancelled = s.placed.cancelled_orders > 0 && s.placed.cancel_rate !== null ? t('sales.plain.cancelled', { count: formatCount(s.placed.cancelled_orders), orders: formatCount(s.placed.orders), percent: s.placed.cancel_rate }) : '';
+    const last = [channel, cancelled].filter(Boolean).join(' ');
+    if (last) lines.push(last);
+    return lines;
 }
