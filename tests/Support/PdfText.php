@@ -40,7 +40,11 @@ final class PdfText
             }
         }
 
-        return $text;
+        // Always valid UTF-8: an odd-length string (or a binary stream that happens to hold "BT")
+        // passes through as raw bytes, and any caller's preg_*() with /u then returns null, which
+        // a (string) cast turns into "" — the same "Expected: (empty)" failure, seen in
+        // LakhGroupingTest.
+        return mb_scrub($text, 'UTF-8');
     }
 
     /**
@@ -71,15 +75,41 @@ final class PdfText
 
                 continue;
             }
+            // Take exactly the dictionary's /Length bytes. Guessing the end from `endstream` and
+            // trimming line endings cut real data whenever the compressed bytes themselves ended
+            // in \r or \n (rtrim, and then a "\r\n" strip, both did) — gzuncompress() failed and
+            // the PDF read back as empty text: the intermittent invoice-test failures.
+            $length = self::declaredLength($pdf, $start);
+            if ($length !== null && $body + $length <= strlen($pdf)) {
+                $out[] = substr($pdf, $body, $length);
+                $offset = $body + $length;
+
+                continue;
+            }
+
+            // No direct /Length: mPDF writes the data, then exactly one "\n", then `endstream`.
             $end = strpos($pdf, 'endstream', $body);
             if ($end === false) {
                 break;
             }
-            $out[] = rtrim(substr($pdf, $body, $end - $body), "\r\n");
+            $stream = substr($pdf, $body, $end - $body);
+            $out[] = str_ends_with($stream, "\n") ? substr($stream, 0, -1) : $stream;
             $offset = $end + 9;
         }
 
         return $out;
+    }
+
+    /** The direct `/Length N` of the dictionary just before `stream` (not /Length1, not `N 0 R`). */
+    private static function declaredLength(string $pdf, int $streamKeyword): ?int
+    {
+        $head = substr($pdf, max(0, $streamKeyword - 512), min(512, $streamKeyword));
+        $dict = substr($head, (int) strrpos($head, 'obj'));
+        if (preg_match_all('#/Length\s+(\d+)(?!\d)(?!\s+\d+\s+R)#', $dict, $m) < 1) {
+            return null;
+        }
+
+        return (int) end($m[1]);
     }
 
     /** Bangla consonants and independent vowels only (no signs, no hasant, no PUA, no spaces). */
