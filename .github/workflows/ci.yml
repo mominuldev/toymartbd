@@ -10,12 +10,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # PHP runs as three jobs at once: static analysis + the MySQL group, and the SQLite suite split in
-  # two (Pest --shard). The job named exactly like the required check ("PHP — Pint, PHPStan,
-  # deptrac, Pest", branch protection on main) gates them and checks role-matrix coverage over both
-  # shards' logs together.
+  # PHP runs as four jobs at once: static analysis, the MySQL group + load harness, and the SQLite
+  # suite split in two (Pest --shard). The job named exactly like the required check ("PHP — Pint,
+  # PHPStan, deptrac, Pest", branch protection on main) gates them and checks role-matrix coverage
+  # over both shards' logs together.
   php-static:
-    name: PHP · Pint, PHPStan, deptrac, MySQL group, load harness
+    name: PHP · Pint, PHPStan, deptrac, shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, pdo_sqlite, gd, exif, fileinfo
+          coverage: none
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Prepare .env
+        run: cp .env.example .env && php artisan key:generate
+      - name: Pint
+        run: vendor/bin/pint --test
+      - name: PHPStan (level 6)
+        run: php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress
+      - name: deptrac
+        run: vendor/bin/deptrac analyse --no-progress
+      - name: Shellcheck — deploy and provisioning scripts (docs/ops/DEPLOYMENT.md)
+        run: shellcheck -x ops/deploy/*.sh ops/provision/provision.sh
+
+  php-mysql:
+    name: PHP · MySQL 8.4 group, load harness
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -42,14 +65,6 @@ jobs:
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Prepare .env
         run: cp .env.example .env && php artisan key:generate
-      - name: Pint
-        run: vendor/bin/pint --test
-      - name: PHPStan (level 6)
-        run: php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress
-      - name: deptrac
-        run: vendor/bin/deptrac analyse --no-progress
-      - name: Shellcheck — deploy and provisioning scripts (docs/ops/DEPLOYMENT.md)
-        run: shellcheck -x ops/deploy/*.sh ops/provision/provision.sh
       - name: Pest (MySQL 8.4 group — collation, locking)
         env:
           DB_CONNECTION: mysql
@@ -107,14 +122,14 @@ jobs:
 
   php:
     name: PHP — Pint, PHPStan, deptrac, Pest
-    needs: [php-static, php-tests]
+    needs: [php-static, php-mysql, php-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Every PHP job passed
         run: |
-          echo "php-static: ${{ needs.php-static.result }}, php-tests: ${{ needs.php-tests.result }}"
-          [ "${{ needs.php-static.result }}" = success ] && [ "${{ needs.php-tests.result }}" = success ]
+          echo "php-static: ${{ needs.php-static.result }}, php-mysql: ${{ needs.php-mysql.result }}, php-tests: ${{ needs.php-tests.result }}"
+          [ "${{ needs.php-static.result }}" = success ] && [ "${{ needs.php-mysql.result }}" = success ] && [ "${{ needs.php-tests.result }}" = success ]
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
