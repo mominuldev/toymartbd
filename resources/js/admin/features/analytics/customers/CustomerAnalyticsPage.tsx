@@ -9,8 +9,10 @@ import { ContentHeader } from '@/components/shell/ContentHeader';
 import { dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
+import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { AnalyticsTabs } from '../AnalyticsTabs';
+import { PlainWords } from '../PlainWords';
 import { monthChoices, useCustomerAnalytics, type CustomerAnalytics, type Months } from './api';
 
 /**
@@ -37,7 +39,22 @@ export function CustomerAnalyticsPage() {
     const { data: me } = useMe();
     const [params, setParams] = useSearchParams();
     const months: Months = (monthChoices as readonly string[]).includes(params.get('months') ?? '') ? (params.get('months') as Months) : '6';
-    const report = useCustomerAnalytics(months);
+    const date = (key: string) => (/^\d{4}-\d{2}-\d{2}$/.test(params.get(key) ?? '') ? params.get(key)! : '');
+    const custom = { from: date('from'), to: date('to') };
+    const report = useCustomerAnalytics(months, custom);
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const setParam = (entries: Record<string, string>) =>
+        setParams(
+            (current) => {
+                const next = new URLSearchParams(current);
+                for (const [k, v] of Object.entries(entries)) {
+                    if (v) next.set(k, v);
+                    else next.delete(k);
+                }
+                return next;
+            },
+            { replace: true },
+        );
     const data = report.data;
     const ids = useId();
 
@@ -56,13 +73,38 @@ export function CustomerAnalyticsPage() {
                         <label htmlFor={`${ids}-months`} className="sr-only">
                             {t('customerAnalytics.months')}
                         </label>
-                        <Select id={`${ids}-months`} value={months} onChange={(e) => setParams(e.target.value === '6' ? {} : { months: e.target.value }, { replace: true })} className="w-44">
+                        <Select
+                            id={`${ids}-months`}
+                            value={months}
+                            onChange={(e) =>
+                                e.target.value === 'custom'
+                                    ? setParam({ months: 'custom', from: custom.from || data?.range.from || today, to: custom.to || data?.range.to || today })
+                                    : setParams(e.target.value === '6' ? {} : { months: e.target.value }, { replace: true })
+                            }
+                            className="w-44"
+                        >
                             {monthChoices.map((m) => (
                                 <option key={m} value={m}>
                                     {t(`customerAnalytics.months.${m}` as MessageKey)}
                                 </option>
                             ))}
                         </Select>
+                        {months === 'custom' && (
+                            <>
+                                <label htmlFor={`${ids}-from`} className="sr-only">
+                                    {t('reports.period.from')}
+                                </label>
+                                <div className="w-40 shrink-0">
+                                    <Input id={`${ids}-from`} type="date" max={custom.to || today} value={custom.from} onChange={(e) => setParam({ from: e.target.value })} className="tabular" />
+                                </div>
+                                <label htmlFor={`${ids}-to`} className="sr-only">
+                                    {t('reports.period.to')}
+                                </label>
+                                <div className="w-40 shrink-0">
+                                    <Input id={`${ids}-to`} type="date" min={custom.from} max={today} value={custom.to} onChange={(e) => setParam({ to: e.target.value })} className="tabular" />
+                                </div>
+                            </>
+                        )}
                     </>
                 }
             />
@@ -78,6 +120,7 @@ export function CustomerAnalyticsPage() {
                 <EmptyState title={t('customerAnalytics.empty')} body={t('customerAnalytics.emptyBody')} />
             ) : (
                 <>
+                    <PlainWords label={t('customerAnalytics.plain.label')} lines={customerSentences(data, t)} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <Stat
                             label={t('customerAnalytics.stat.ltv')}
@@ -97,12 +140,12 @@ export function CustomerAnalyticsPage() {
                         <Stat label={t('customerAnalytics.stat.new')} value={count(data.period.new_customers)} hint={t('customerAnalytics.stat.newHint')} />
                     </div>
 
-                    <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                        <LtvDistribution data={data} />
-                        <Segments data={data} />
-                    </div>
+                    <Segments data={data} />
 
-                    <Cohorts data={data} />
+                    <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+                        <LtvDistribution data={data} />
+                        <Cohorts data={data} />
+                    </div>
                     <TopCustomers data={data} canOpen={can(me, 'customers.view')} />
                     <p className="t-admin-caption text-fg-secondary">{t('customerAnalytics.note')}</p>
                 </>
@@ -188,6 +231,7 @@ function BarValue({ x, y, width, value }: { x?: number | string; y?: number | st
     );
 }
 
+/** The groups as cards (Figma 518:79062): who they are in words, how many, and what they are worth together. */
 function Segments({ data }: { data: CustomerAnalytics }) {
     const { t } = useI18n();
     const id = useId();
@@ -198,41 +242,23 @@ function Segments({ data }: { data: CustomerAnalytics }) {
         return t(`customerAnalytics.segments.rule.${segment}` as MessageKey);
     };
     return (
-        <Panel title={t('customerAnalytics.segments.title')} subtitle={t('customerAnalytics.segments.subtitle')} titleId={id}>
-            <div className="overflow-x-auto">
-                <table className={dataTable.table}>
-                    <thead>
-                        <tr className="border-b border-line-default">
-                            <th scope="col" className={dataTable.th}>
-                                {t('customerAnalytics.segments.col.segment')}
-                            </th>
-                            <th scope="col" className={`${dataTable.th} text-end`}>
-                                {t('customerAnalytics.segments.col.customers')}
-                            </th>
-                            <th scope="col" className={`${dataTable.th} text-end`}>
-                                {t('customerAnalytics.segments.col.ltv')}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.segments.map((row) => (
-                            <tr key={row.segment} className="border-t border-line-default">
-                                <th scope="row" className="px-3 py-2 text-start align-middle">
-                                    <span className="flex flex-col items-start gap-1">
-                                        <SegmentTag segment={row.segment} />
-                                        <span className="t-admin-caption text-fg-secondary">{rule(row.segment)}</span>
-                                    </span>
-                                </th>
-                                <td className="px-3 py-2 text-end t-admin-num tabular">{count(row.customers)}</td>
-                                <td className="px-3 py-2 text-end t-admin-num">
-                                    <Taka amount={row.lifetime_value} />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </Panel>
+        <section aria-labelledby={id} className="flex flex-col gap-3">
+            <h2 id={id} className="t-admin-section text-fg-primary">
+                {t('customerAnalytics.segments.title')}
+            </h2>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                {data.segments.map((row) => (
+                    <li key={row.segment} className="flex flex-col gap-2 rounded-md border border-line-default bg-surface p-4 shadow-e1">
+                        <SegmentTag segment={row.segment} />
+                        <span className="t-admin-num-lg tabular text-fg-primary">{count(row.customers)}</span>
+                        <span className="t-admin-caption text-fg-secondary">{rule(row.segment)}</span>
+                        <span className="mt-auto t-admin-caption-strong text-fg-primary">
+                            {t('customerAnalytics.segments.worth')} <Taka amount={row.lifetime_value} signClass="t-admin-currency-caption" />
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </section>
     );
 }
 
@@ -360,4 +386,29 @@ function TopCustomers({ data, canOpen }: { data: CustomerAnalytics; canOpen: boo
             )}
         </section>
     );
+}
+
+/**
+ * The Customers page's sentences (Figma 518:79062): who bought and who came back, what a customer
+ * is worth, and the at-risk group worth a message. Server figures only, put into words.
+ */
+function customerSentences(data: CustomerAnalytics, t: (k: MessageKey, p?: Record<string, string | number>) => string): string[] {
+    const lines: string[] = [];
+    const p = data.period;
+    if (p.customers > 0) {
+        lines.push(
+            p.returning_share === null
+                ? t('customerAnalytics.plain.period', { customers: count(p.customers), newCount: count(p.new_customers) })
+                : t('customerAnalytics.plain.periodReturning', { customers: count(p.customers), returning: count(p.returning_customers), share: percentText(p.returning_share) }),
+        );
+    }
+    const ltv = data.lifetime_value;
+    if (ltv.average !== null && ltv.median !== null) lines.push(t('customerAnalytics.plain.worth', { average: takaText(ltv.average), median: takaText(ltv.median) }));
+    const atRisk = data.segments.find((s) => s.segment === 'at_risk');
+    if (atRisk && atRisk.customers > 0) {
+        lines.push(t('customerAnalytics.plain.atRisk', { count: count(atRisk.customers), days: data.thresholds.at_risk_after_days, worth: takaText(atRisk.lifetime_value) }));
+    } else if (data.repeat_purchase.rate !== null) {
+        lines.push(t('customerAnalytics.plain.repeat', { rate: percentText(data.repeat_purchase.rate), repeat: count(data.repeat_purchase.repeat_customers), buyers: count(data.repeat_purchase.customers_with_delivered) }));
+    }
+    return lines;
 }

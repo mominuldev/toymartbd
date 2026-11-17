@@ -85,6 +85,18 @@ function api(me: Me = manager, body: SalesAnalytics = report()) {
 const urls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.map(([url]) => decodeURIComponent(String(url)));
 
 describe('sales analytics', () => {
+    it('leads with three plain sentences built only from the server’s figures', async () => {
+        api();
+        renderApp('/analytics/sales');
+        const words = await screen.findByRole('region', { name: /In plain words/ });
+        expect(within(words).getByText(/Customers placed ৳7,060 in 5 orders — 782\.5% more than the period before\./)).toBeTruthy();
+        expect(within(words).getByText(/৳4,710 was delivered and counted as revenue, leaving ৳2,310 profit \(49\.04% margin\)\./)).toBeTruthy();
+        expect(within(words).getByText(/Website brought 80\.00% of orders\. 1 of 6 orders were cancelled \(16\.67%\)\./)).toBeTruthy();
+        // The funnel is not faked: it says it is not tracked yet.
+        expect(screen.getByRole('heading', { name: 'Visitor funnel isn’t tracked yet' })).toBeTruthy();
+        expect(screen.getByText('What happened to these orders')).toBeTruthy();
+    });
+
     it('shows placed demand and recognised revenue as separate figures, from the server', async () => {
         api();
         renderApp('/analytics/sales');

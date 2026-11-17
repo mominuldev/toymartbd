@@ -67,11 +67,18 @@ describe('courier performance', () => {
         expect(screen.getAllByText('75.00%').length).toBeGreaterThan(0);
         expect(screen.getByText('2.0 days')).toBeTruthy();
 
-        const couriers = screen.getAllByRole('table')[0]!;
+        const couriers = within(screen.getByRole('region', { name: 'By courier' })).getByRole('table');
         const steadfast = within(couriers).getByRole('row', { name: /Steadfast/ });
         expect(within(steadfast).getByText('66.67%')).toBeTruthy();
         expect(within(steadfast).getByText('92.5')).toBeTruthy(); // ৳ sign in its own span; the server's 92.50 grouped, never re-computed
-        const districts = screen.getAllByRole('table')[1]!;
+        const districts = within(screen.getByRole('region', { name: 'By district' })).getByRole('table');
+        // In plain words, and the couriers side by side as cards (Figma 518:79744).
+        const words = screen.getByRole('region', { name: 'In plain words' });
+        expect(within(words).getByText('75.00% of finished parcels reached the buyer; 1 came back (25.00%).')).toBeTruthy();
+        expect(within(words).getByText('Steadfast delivered 66.67% in 1.5 days on average; Pathao delivered 100.00% in 3.0 days on average.')).toBeTruthy();
+        expect(within(words).getByText(/৳1,500 of cash is still with the couriers/)).toBeTruthy();
+        const cards = screen.getByRole('list', { name: 'Couriers side by side' });
+        expect(within(within(cards).getByRole('listitem', { name: 'Pathao' })).getByText('3.0 days')).toBeTruthy();
         expect(within(districts).getByRole('row', { name: /No district/ })).toBeTruthy();
         expect(within(districts).getAllByText('—').length).toBeGreaterThan(0);
 

@@ -88,6 +88,8 @@ describe('scheduled reports', () => {
         renderApp('/analytics/schedules');
         const card = await screen.findByRole('button', { name: /Weekly P&L/ }, { timeout: 8000 });
         expect(within(card).getByText('When: Every Saturday at 09:15')).toBeTruthy();
+        // In plain words: how many schedules exist and are on (Figma 518:80430).
+        expect(within(screen.getByRole('region', { name: 'In plain words' })).getByText(/reports are scheduled; \d+ are switched on\./)).toBeTruthy();
         expect(within(card).getByText('Then: Profit and loss as XLSX to 1 staff')).toBeTruthy();
         expect(within(card).getByText(/Last sent: 2026-10-31 – 2026-11-06/)).toBeTruthy();
         expect(await screen.findByText('Recent runs')).toBeTruthy();

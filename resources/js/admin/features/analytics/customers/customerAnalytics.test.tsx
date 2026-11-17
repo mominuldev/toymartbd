@@ -64,6 +64,16 @@ function api(me: Me = manager, body: CustomerAnalytics = report) {
 const urls = (calls: ReturnType<typeof mockApi>) => calls.mock.calls.map(([url]) => decodeURIComponent(String(url)));
 
 describe('customer analytics', () => {
+    it('leads with plain sentences from the server’s figures and shows the groups as cards', async () => {
+        api();
+        renderApp('/analytics/customers');
+        const words = await screen.findByRole('region', { name: 'In plain words' });
+        expect(within(words).getByText('3 customers bought in this period; 1 of them had bought before (33.33%).')).toBeTruthy();
+        expect(within(words).getByText('A customer is worth ৳2,200 on average over time — half are worth ৳2,200 or more.')).toBeTruthy();
+        expect(within(words).getByText('50% of buyers came back for another delivered order (1 of 2).')).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Groups of customers' })).toBeTruthy();
+    });
+
     it('lays out the server’s figures: LTV, repeat rate, segments, cohorts and top customers', async () => {
         api();
         renderApp('/analytics/customers');
@@ -85,6 +95,16 @@ describe('customer analytics', () => {
         expect(within(top).getByText('3,300')).toBeTruthy();
         expect(screen.getByRole('table', { name: 'Customers per lifetime-value band' })).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Couriers' }).getAttribute('href')).toBe('/analytics/couriers');
+    });
+
+    it('lets the owner pick any dates: both are sent as a custom range', async () => {
+        const calls = api();
+        renderApp('/analytics/customers');
+        await screen.findByRole('heading', { name: 'Monthly cohorts' });
+        fireEvent.change(screen.getByLabelText('Cohort months'), { target: { value: 'custom' } });
+        fireEvent.change(await screen.findByLabelText('From'), { target: { value: '2026-09-01' } });
+        fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-10-31' } });
+        await waitFor(() => expect(calls.mock.calls.some(([u]) => String(u).includes('range=custom&from=2026-09-01&to=2026-10-31'))).toBe(true));
     });
 
     it('asks the server for another month span as a custom range; the default goes without parameters', async () => {

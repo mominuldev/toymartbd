@@ -17,6 +17,8 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { AnalyticsTabs } from '@/features/analytics/AnalyticsTabs';
+import { PlainWords } from '@/features/analytics/PlainWords';
+import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
 import { formats, frequencies, reportTypes, sendTimes, toInput, useDeleteSchedule, useRecipients, useResendRun, useRuns, useSaveSchedule, useSchedules, type ReportSchedule, type ReportScheduleRun, type ReportType, type RunCopy, type ScheduleInput } from './api';
 
 /** "Sat 7 Nov, 9:15 am" in Dhaka time, Western digits (rules 11, 36). */
@@ -87,6 +89,8 @@ export function ReportSchedulesPage() {
                     }
                 />
             ) : (
+                <>
+                {list.length > 0 && <PlainWords label={t('schedules.plain.label')} lines={scheduleSentences(list, t)} />}
                 <div className="flex flex-col items-start gap-6 xl:flex-row">
                     <ul aria-label={t('schedules.list')} className="flex w-full shrink-0 flex-col gap-3 xl:w-130">
                         {list.map((s) => (
@@ -100,9 +104,24 @@ export function ReportSchedulesPage() {
                         {selected && <RecentRuns schedule={selected} />}
                     </div>
                 </div>
+                </>
             )}
         </section>
     );
+}
+
+const runTone: Record<ReportScheduleRun['status'], StatusTone> = { queued: 'info', sending: 'info', sent: 'success', skipped: 'neutral', failed: 'danger' };
+
+/** The page's sentences: how many schedules exist and are on, and the one that failed last if any. */
+function scheduleSentences(list: ReportSchedule[], t: ReturnType<typeof useI18n>['t']): string[] {
+    const lines = [t('schedules.plain.count', { total: list.length, on: list.filter((s) => s.is_active).length })];
+    const failed = list.find((s) => s.latest_run?.status === 'failed');
+    if (failed?.latest_run) lines.push(t('schedules.plain.failed', { name: failed.name, period: periodText(failed.latest_run) }));
+    else {
+        const sent = list.find((s) => s.latest_run?.status === 'sent');
+        if (sent?.latest_run) lines.push(t('schedules.plain.sent', { name: sent.name, period: periodText(sent.latest_run), count: sent.latest_run.recipients_sent }));
+    }
+    return lines;
 }
 
 function whenText(t: ReturnType<typeof useI18n>['t'], s: Pick<ReportSchedule, 'frequency' | 'send_time'>): string {
@@ -150,10 +169,10 @@ function ScheduleCard({ schedule, selected, onSelect }: { schedule: ReportSchedu
             <p className="t-admin-caption text-fg-secondary">
                 {t('schedules.card.then', { report: t(`schedules.type.${schedule.report_type}` as MessageKey), format: schedule.format.toUpperCase(), count: schedule.recipients.length })}
             </p>
-            <p className="t-admin-caption tabular text-fg-tertiary">
-                {run ? t(`schedules.card.last.${run.status}` as MessageKey, { period: periodText(run) }) : t('schedules.card.never')}
-                {schedule.next_send_at && ` · ${t('schedules.card.next', { when: dhakaWhen(schedule.next_send_at, locale) })}`}
-            </p>
+            <span className="flex flex-wrap items-center gap-2">
+                <StatusChip label={run ? t(`schedules.card.last.${run.status}` as MessageKey, { period: periodText(run) }) : t('schedules.card.never')} tone={run ? runTone[run.status] : 'neutral'} />
+                {schedule.next_send_at && <span className="t-admin-caption tabular text-fg-tertiary">{t('schedules.card.next', { when: dhakaWhen(schedule.next_send_at, locale) })}</span>}
+            </span>
         </div>
     );
 }
