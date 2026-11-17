@@ -12,8 +12,8 @@ use Carbon\CarbonImmutable;
  * reason. A not-connected result carries NO numbers: the panel renders "provider not
  * connected", never a zero.
  *
- * Reasons: `no_merchant_account` (no credentials stored), `provider_unverified` (rule
- * 33a: the driver has not been exercised against the live API), `no_official_api` (the
+ * Reasons: `no_merchant_account` (no credentials stored), `credentials_rejected` (the
+ * provider answered 401/403), `no_official_api` (the
  * provider publishes no history endpoint; we do not scrape — rule 24a),
  * `driver_missing`, `provider_error` (the call failed; retry later).
  */
@@ -62,6 +62,25 @@ final readonly class FraudLookupResult
             $raw,
             $fetchedAt,
         );
+    }
+
+    /**
+     * A provider that reports rates rather than counts (Steadfast's score endpoint). The
+     * ratios are 0–1 fraction strings as the provider gave them; counts it does not report
+     * stay null, never 0 (rule 33b).
+     *
+     * @param  array<string, mixed>|null  $raw
+     */
+    public static function fromRatios(
+        ?int $totalDelivered,
+        ?int $totalCancelled,
+        ?int $totalFraudReports,
+        string $deliveryRatio,
+        string $cancellationRatio,
+        ?array $raw,
+        CarbonImmutable $fetchedAt,
+    ): self {
+        return new self(true, null, null, $totalDelivered, $totalCancelled, $totalFraudReports, $deliveryRatio, $cancellationRatio, $raw, $fetchedAt);
     }
 
     /** @param  array<string, mixed>|null  $raw */

@@ -200,13 +200,20 @@ export function OurCounts({ ours }: { ours: OurScore }) {
     );
 }
 
-const knownReasons = ['no_merchant_account', 'provider_unverified', 'no_official_api', 'driver_missing', 'provider_error'];
+const knownReasons = ['no_merchant_account', 'credentials_rejected', 'no_official_api', 'driver_missing', 'provider_error'];
 
 /**
  * Panel B of RiskScoreCard: each courier's OFFICIAL record, timestamped — or, when not
  * connected, an explicit "Provider not connected" with the reason. Never a zero (rule 33b),
  * never averaged with our score (rule 24).
  */
+/** A provider's 0–1 ratio as a percentage, with the count beside it when the provider reports one. Display only. */
+function rate(ratio: string | null, count: number | null): string | null {
+    if (ratio === null) return count === null ? null : String(count);
+    const percent = `${Math.round(Number(ratio) * 1000) / 10}%`;
+    return count === null ? percent : `${percent} · ${count}`;
+}
+
 export function CourierPanel({ checkedAt, providers }: { checkedAt: string; providers: CourierRecord[] }) {
     const { t, locale } = useI18n();
     const { data: me } = useMe();
@@ -238,11 +245,11 @@ export function CourierPanel({ checkedAt, providers }: { checkedAt: string; prov
                     <dl className="grid grid-cols-4 gap-2">
                         {(
                             [
-                                ['risk.courier.parcels', p.total_parcels],
-                                ['risk.courier.delivered', p.total_delivered],
-                                ['risk.courier.cancelled', p.total_cancelled],
+                                ['risk.courier.parcels', p.total_parcels ?? p.volume],
+                                ['risk.courier.delivered', rate(p.delivery_ratio, p.total_delivered)],
+                                ['risk.courier.cancelled', rate(p.cancellation_ratio, p.total_cancelled)],
                                 ['risk.courier.fraud', p.total_fraud_reports],
-                            ] as [MessageKey, number | null][]
+                            ] as [MessageKey, number | string | null][]
                         ).map(([key, value]) => (
                             <div key={key}>
                                 <dt className="t-admin-caption text-fg-secondary">{t(key)}</dt>

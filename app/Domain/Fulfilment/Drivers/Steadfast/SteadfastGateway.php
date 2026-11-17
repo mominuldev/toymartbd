@@ -52,7 +52,8 @@ use JsonException;
  *               GET  /status_by_invoice/{invoice}   (status) — resolves a bulk-submitted
  *               shipment, which has no consignment id yet (rule 24d)
  *  - balance    GET  /get_balance              {"status":200,"current_balance":-10}
- *  - fraud      GET  /fraud_check/{phone}      official; needs a merchant account (33b)
+ *  - fraud      GET  /fraud_check/score/{phone} official; needs a merchant account (33b).
+ *               The old /fraud_check/{phone} returns all-zero counts since 2026-09-27.
  *
  * Address: free text only — Steadfast has no city/zone/area ids (§3.6), so no location
  * mapping. Price: Steadfast publishes no price API, so `quote()` reads our stored rate
@@ -414,21 +415,33 @@ final class SteadfastGateway implements CourierGateway, FraudLookup, LooksUpByMe
     }
 
     /**
-     * `GET /fraud_check/{phone}` — official (in Steadfast's own collection), but it needs a
-     * merchant account (rule 33b). Until credentials exist AND the provider is verified the
-     * answer is "not connected", never a zero.
+     * `GET /fraud_check/score/{phone}` — official, needs a merchant account (rule 33b).
+     *
+     * Read-only, so it runs as soon as credentials are stored: `verified` gates production
+     * BOOKING (rule 33a), not reading Steadfast's record of a phone.
+     *
+     * Since 2026-09-27 the old `GET /fraud_check/{phone}` answers 200 with every count 0 plus a
+     * `notice` pointing here — calling it would show every customer as a clean record. The
+     * score endpoint reports no parcel counts (`delivered_count` / `cancelled_count` are null,
+     * the volume comes only as a band such as "10+"); it gives `delivery_ratio` and
+     * `cancellation_ratio` as whole percentages and `total_reports`. Observed live 2026-11-17;
+     * Steadfast's own `score`/`level` were null with `scoring_disabled: true` and are kept only
+     * in `raw` — never merged into our score (rule 24). An answer without both ratios is
+     * treated as an error, never as a zero.
      */
     public function fraudLookup(PhoneNumber $phone): FraudLookupResult
     {
         if ($this->credentials() === null) {
             return FraudLookupResult::notConnected('no_merchant_account');
         }
-        if (! $this->provider()->verified) {
-            return FraudLookupResult::notConnected('provider_unverified');
-        }
 
         try {
-            $response = $this->send('fraud_check', fn (PendingRequest $http): Response => $http->get($this->url('/fraud_check/'.$phone->national())));
+            $response = $this->send('fraud_check', fn (PendingRequest $http): Response => $http->get($this->url('/fraud_check/score/'.$phone->national())));
+            if ($response->status() === 401 || $response->status() === 403) {
+                Log::warning('courier.steadfast.auth_failed', ['http' => $response->status()]);
+
+                return FraudLookupResult::notConnected('credentials_rejected');
+            }
             if (! $response->successful()) {
                 throw SteadfastUnavailable::http('fraud_check', $response->status());
             }
@@ -439,16 +452,39 @@ final class SteadfastGateway implements CourierGateway, FraudLookup, LooksUpByMe
             return FraudLookupResult::notConnected('provider_error');
         }
 
-        $reports = $body['total_fraud_reports'] ?? null;
+        $delivered = $this->percentOrNull($body['delivery_ratio'] ?? null);
+        $cancelled = $this->percentOrNull($body['cancellation_ratio'] ?? null);
+        if ($delivered === null || $cancelled === null) {
+            Log::warning('courier.steadfast.fraud_check_unexpected', ['phone' => $phone->masked(), 'keys' => array_keys($body)]);
 
-        return FraudLookupResult::connected(
-            $this->intOrNull($body['total_parcels'] ?? null),
-            $this->intOrNull($body['total_delivered'] ?? null),
-            $this->intOrNull($body['total_cancelled'] ?? null),
+            return FraudLookupResult::notConnected('provider_error');
+        }
+
+        $reports = $body['total_reports'] ?? null;
+
+        return FraudLookupResult::fromRatios(
+            $this->intOrNull($body['delivered_count'] ?? null),
+            $this->intOrNull($body['cancelled_count'] ?? null),
             is_array($reports) ? count($reports) : $this->intOrNull($reports),
+            $delivered,
+            $cancelled,
             $body,
             CarbonImmutable::now(),
         );
+    }
+
+    /** A 0–100 percentage as a 0–1 fraction string (4 places), or null when it is not one. */
+    private function percentOrNull(mixed $value): ?string
+    {
+        if (! is_int($value) && ! is_float($value) && ! (is_string($value) && is_numeric($value))) {
+            return null;
+        }
+        $percent = (float) $value;
+        if ($percent < 0 || $percent > 100) {
+            return null;
+        }
+
+        return number_format($percent / 100, 4, '.', '');
     }
 
     /**

@@ -53,6 +53,8 @@ export type CourierRecord = {
     total_fraud_reports: number | null;
     delivery_ratio: string | null;
     cancellation_ratio: string | null;
+    /** The provider's parcel-volume band ("10+") when it reports no count. */
+    volume: string | null;
     fetched_at: string | null;
 };
 export type OrderRisk = {

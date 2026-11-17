@@ -41,6 +41,7 @@ const notConnected = {
     total_delivered: null,
     total_cancelled: null,
     total_fraud_reports: null,
+    volume: null,
     delivery_ratio: null,
     cancellation_ratio: null,
     fetched_at: null,
