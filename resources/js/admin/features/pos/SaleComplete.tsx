@@ -6,19 +6,32 @@ import type { MessageKey } from '@/i18n/messages';
 import { Button } from '@/components/ui/Button';
 import { useReceipt, type PosContext, type PosSale } from './api';
 import { dhakaTime, isZeroAmount, takaText } from './format';
-import { ReceiptBody } from './Receipt';
+import { ReceiptBody, ReceiptPrint } from './Receipt';
 import { KEY } from './keys';
 
 /**
  * Sale complete (Figma B · 33 POS v2 — 346:64332): the sale's own total / paid / change, the
  * tenders as recorded, Print receipt, WhatsApp receipt (disabled with the reason until a
  * WhatsApp provider is connected), Start new sale (Enter), and the receipt as it will print.
+ * The owner's Thermal receipt settings (on the receipt response) decide whether it prints by
+ * itself once loaded (`auto_print`) and whether the cashier picks its language (`ask`) or the
+ * store fixed it (`en` / `bn` — no choice shown).
  */
 export function SaleComplete({ context, sale, onNext }: { context: PosContext; sale: PosSale; onNext: () => void }) {
     const { t, locale } = useI18n();
-    // The customer's language, not the cashier's: defaults to the UI, one tap to switch (owner, 2026-11-15).
-    const [language, setLanguage] = useState<Locale>(locale);
     const receipt = useReceipt(sale.id);
+    // The customer's language, not the cashier's: defaults to the UI, one tap to switch (owner, 2026-11-15) —
+    // unless Settings › Thermal receipt fixes it.
+    const [picked, setPicked] = useState<Locale>(locale);
+    const fixed = receipt.data && receipt.data.print.language !== 'ask' ? receipt.data.print.language : null;
+    const language: Locale = fixed ?? picked;
+    const [printing, setPrinting] = useState(false);
+    const autoPrinted = useRef(false);
+    useEffect(() => {
+        if (!receipt.data?.print.auto_print || autoPrinted.current) return;
+        autoPrinted.current = true;
+        setPrinting(true);
+    }, [receipt.data]);
     const waNote = useId();
     const nextRef = useRef<HTMLButtonElement>(null);
 
@@ -46,7 +59,8 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
     ];
 
     return (
-        <div className="flex min-h-0 flex-1 items-start justify-center gap-8 overflow-y-auto px-4 py-6 sm:px-8 lg:items-center lg:gap-24 lg:px-16 lg:py-8 print:block print:p-0">
+        <div className="flex min-h-0 flex-1 items-start justify-center gap-8 overflow-y-auto px-4 py-6 sm:px-8 lg:items-center lg:gap-24 lg:px-16 lg:py-8">
+            {printing && receipt.data && <ReceiptPrint receipt={receipt.data} language={language} onDone={() => setPrinting(false)} />}
             <section aria-labelledby="pos-done-title" className="flex w-full max-w-120 flex-col gap-5 print:hidden">
                 <span aria-hidden className="grid size-16 place-items-center rounded-full bg-success-subtle text-feedback-success">
                     <CheckCircleIcon size={36} weight="fill" />
@@ -85,21 +99,23 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
                         ))}
                     </ul>
                 )}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="t-admin-body-strong text-fg-primary">{t('pos.receipt.language')}</span>
-                    <SegmentedControl<Locale>
-                        label={t('pos.receipt.language')}
-                        options={[
-                            { value: 'en', label: 'English', lang: 'en' },
-                            { value: 'bn', label: 'বাংলা', lang: 'bn' },
-                        ]}
-                        value={language}
-                        onChange={setLanguage}
-                        className="h-11 [&>button]:h-10 [&>button]:px-4"
-                    />
-                </div>
+                {receipt.data && !fixed && (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="t-admin-body-strong text-fg-primary">{t('pos.receipt.language')}</span>
+                        <SegmentedControl<Locale>
+                            label={t('pos.receipt.language')}
+                            options={[
+                                { value: 'en', label: 'English', lang: 'en' },
+                                { value: 'bn', label: 'বাংলা', lang: 'bn' },
+                            ]}
+                            value={language}
+                            onChange={setPicked}
+                            className="h-11 [&>button]:h-10 [&>button]:px-4"
+                        />
+                    </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
-                    <Button variant="outline" size="lg" disabled={!receipt.data} onClick={() => window.print()}>
+                    <Button variant="outline" size="lg" disabled={!receipt.data || printing} onClick={() => setPrinting(true)}>
                         <PrinterIcon size={20} aria-hidden />
                         {t('pos.receipt.print')}
                     </Button>
@@ -140,14 +156,14 @@ export function SaleComplete({ context, sale, onNext }: { context: PosContext; s
                 </p>
             </section>
 
-            <section aria-label={t('pos.receipt.preview')} className="hidden shrink-0 flex-col items-center gap-2.5 lg:flex print:flex">
-                <p className="flex items-center gap-1.5 t-admin-caption text-fg-secondary print:hidden">
+            <section aria-label={t('pos.receipt.preview', { paper: receipt.data?.print.paper ?? '80' })} className="hidden shrink-0 flex-col items-center gap-2.5 lg:flex">
+                <p className="flex items-center gap-1.5 t-admin-caption text-fg-secondary">
                     <ReceiptIcon size={14} aria-hidden />
-                    {t('pos.receipt.preview')}
+                    {t('pos.receipt.preview', { paper: receipt.data?.print.paper ?? '80' })}
                 </p>
                 {receipt.data && (
-                    <div className="w-80 rounded-xs bg-surface p-5 shadow-e2 print:w-full print:p-0 print:shadow-none">
-                        <ReceiptBody receipt={receipt.data} language={language} preview />
+                    <div className="rounded-xs bg-surface shadow-e2">
+                        <ReceiptBody receipt={receipt.data} language={language} />
                     </div>
                 )}
             </section>

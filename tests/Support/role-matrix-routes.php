@@ -401,6 +401,7 @@ return [
     'api.v1.admin.settings.messaging.update',
     'api.v1.admin.settings.pos.show',
     'api.v1.admin.settings.pos.update',
+    'api.v1.admin.settings.print.invoice-preview',
     'api.v1.admin.settings.print.show',
     'api.v1.admin.settings.print.update',
     'api.v1.admin.settings.tracking.show',

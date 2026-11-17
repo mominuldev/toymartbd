@@ -745,7 +745,8 @@ export interface paths {
         /**
          * `POST /products/labels` — the labels as `application/pdf`, in the order of `items`, each
          *     repeated `copies` times. Needs catalog.view; `generate_missing: true` also needs
-         *     catalog.update and first gives the listed variants without a barcode an in-store EAN-13
+         *     catalog.update and first gives the listed variants without a barcode an in-store EAN-13.
+         *     Omitted fields (template too) take the saved Barcode labels settings
          */
         post: operations["v1.admin.products.labels.print"];
         delete?: never;
@@ -2907,6 +2908,27 @@ export interface paths {
         get: operations["v1.admin.settings.print.show"];
         /** `PUT /settings/print` */
         put: operations["v1.admin.settings.print.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/print/invoice-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /settings/print/invoice-preview` — a fixed sample customer invoice as a PDF, through the
+         *     real template with today's company details, on the saved invoice settings overlaid with
+         *     any sent as query parameters (the page's unsaved draft). Nothing is issued or stored
+         */
+        get: operations["v1.admin.settings.print.invoice-preview"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -12380,7 +12402,7 @@ export interface components {
          * @description `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice /
          *     packing-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip
          *     carries the full phone and street address the rider needs. `locale` picks the
-         *     language (default: each customer's preferred language).
+         *     language (default: the one chosen in Settings › Invoices, receipts & labels).
          */
         OrderInvoicesRequest: {
             order_ids: number[];
@@ -13131,6 +13153,7 @@ export interface components {
                 name: string;
                 name_bn: string | null;
                 variant_name: string | null;
+                sku: string;
                 quantity: number;
                 unit_price: string;
                 discount: string;
@@ -13162,6 +13185,38 @@ export interface components {
                 /** @constant */
                 reason: "no_provider";
             };
+            /**
+             * @description How the receipt prints (Settings › Invoices, receipts & labels › Thermal receipt).
+             *     `language` `ask` = the cashier picks per sale; `en`/`bn` fixes it.
+             */
+            print: {
+                /** @enum {string} */
+                paper: "80" | "58";
+                /** @enum {string} */
+                language: "en" | "bn" | "ask";
+                /** @enum {string} */
+                text_size: "normal" | "large";
+                auto_print: boolean;
+                show_logo: boolean;
+                show_branch: boolean;
+                show_bin: boolean;
+                show_cashier: boolean;
+                show_customer_name: boolean;
+                show_sku: boolean;
+                show_barcode: boolean;
+                show_whatsapp_qr: boolean;
+                show_cut_line: boolean;
+                footer_en: string | null;
+                footer_bn: string | null;
+            };
+            /** @description The store logo (printed in black); null when none is chosen or the logo is switched off. */
+            logo_url: string | null;
+            /** @description Code 128 of the order number as a standalone SVG; null when the barcode is switched off. */
+            barcode_svg: string | null;
+            /** @description The store's WhatsApp chat link (`https://wa.me/…`); null when switched off or no number is saved. */
+            whatsapp_link: string | null;
+            /** @description A QR code of `whatsapp_link` as a standalone SVG, or null. */
+            whatsapp_qr_svg: string | null;
         };
         /** PosSale */
         PosSale: {
@@ -13261,23 +13316,39 @@ export interface components {
          *     `items[] {variant_id, copies}` — ≤ 300 items, copies 1–500, ≤ 5,000 labels in all; printed
          *     in the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless
          *     `generate_missing` is true. Only the fields below are accepted; any other is a 422.
+         *
+         *     Every field but `items` and `locale` is optional and, when omitted, takes the value saved in
+         *     Settings › Invoices, receipts & labels › Barcode labels ({@see PrintSettings::labels()}, the
+         *     Figma defaults until saved). The saved "create missing barcodes" applies only for someone
+         *     with catalog.update; for anyone else an omitted `generate_missing` is false, so a variant
+         *     without a barcode is the usual 422 rather than a 403.
          */
         PrintLabelsRequest: {
             items: {
                 variant_id: number;
                 copies: number;
             }[];
-            template: components["schemas"]["LabelTemplate"];
-            /** @description Print the selling price (default true). */
+            /** @description The label stock; omitted, the saved Barcode labels paper. */
+            template?: components["schemas"]["LabelTemplate"];
+            /** @description Print the selling price; omitted, the saved setting. */
             show_price?: boolean;
-            /** @description Print the product and variant name (default true). */
+            /** @description Print the product name; omitted, the saved setting. */
             show_name?: boolean;
+            /** @description Print the variant's options line (size, colour); omitted, the saved setting. */
+            show_options?: boolean;
+            /** @description Print the store name (in the label language) at the top; omitted, the saved setting. */
+            show_store?: boolean;
+            /** @description Print the barcode number under the bars; omitted, the saved setting. */
+            show_digits?: boolean;
             /**
              * @description Language of the printed name, falling back to English (default `en`).
              * @enum {string|null}
              */
             locale?: "en" | "bn" | null;
-            /** @description Generate in-store EAN-13s for variants without a barcode first; needs catalog.update. */
+            /**
+             * @description Generate in-store EAN-13s for variants without a barcode first; `true` needs
+             *     catalog.update. Omitted, the saved setting for someone with catalog.update, else false.
+             */
             generate_missing?: boolean;
         };
         /** PrintSettings */
@@ -26274,6 +26345,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrintSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.print.invoice-preview": {
+        parameters: {
+            query?: {
+                /** @description `a4` or `a5`. */
+                paper?: "a4" | "a5";
+                /** @description `en`, `bn` or `both`. */
+                language?: "en" | "bn" | "both";
+                /** @description `brand` or `mono`. */
+                colour?: "brand" | "mono";
+                /** @description `1` or `0`. */
+                show_bin?: "0" | "1";
+                show_barcode?: "0" | "1";
+                show_phone?: "0" | "1";
+                show_email?: "0" | "1";
+                show_sku?: "0" | "1";
+                show_options?: "0" | "1";
+                show_payment_stamp?: "0" | "1";
+                show_track_qr?: "0" | "1";
+                show_signatures?: "0" | "1";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sample invoice PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "application/pdf": string;
                 };
             };
             401: components["responses"]["AuthenticationException"];

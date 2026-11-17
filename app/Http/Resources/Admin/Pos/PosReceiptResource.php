@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Admin\Pos;
 
+use App\Domain\Invoicing\Services\PrintSettings;
+use App\Domain\Invoicing\Services\ReceiptCodes;
 use App\Domain\Ordering\Models\OrderItem;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Pos\Models\PosDueCollectionAllocation;
@@ -23,7 +25,12 @@ use Illuminate\Http\Request;
  * WhatsApp receipt: `whatsapp.enabled` is false with reason `no_provider` until a WhatsApp
  * provider is live.
  *
- * @property array{sale: PosSale, company: array<string, mixed>} $resource
+ * `print` is the owner's Thermal receipt settings (Settings › Invoices, receipts & labels,
+ * {@see PrintSettings::receipt()}) — on the receipt itself because a cashier may not hold
+ * settings.view. `logo_url`, `barcode_svg` and `whatsapp_qr_svg` are only filled when the
+ * setting that prints them is on (and the logo / number exists).
+ *
+ * @property array{sale: PosSale, company: array<string, mixed>, print: array<string, string|bool|null>, logo_url: string|null, whatsapp_link: string|null} $resource
  */
 #[SchemaName('PosReceipt')]
 final class PosReceiptResource extends ApiResource
@@ -41,6 +48,9 @@ final class PosReceiptResource extends ApiResource
         // The sale's own tenders only: due collected later on this order is its own record.
         $collected = PosDueCollectionAllocation::query()->where('order_id', $order->id)->pluck('payment_id')->all();
         $text = static fn (string $key): ?string => is_string($company[$key] ?? null) ? $company[$key] : null;
+        $print = $this->resource['print'];
+        $codes = app(ReceiptCodes::class);
+        $whatsappLink = $print['show_whatsapp_qr'] === true ? $this->resource['whatsapp_link'] : null;
 
         return [
             'store' => [
@@ -85,11 +95,12 @@ final class PosReceiptResource extends ApiResource
                 /** 017****5678. @var string|null */
                 'phone_masked' => $phone?->masked(),
             ],
-            /** @var list<array{name: string, name_bn: string|null, variant_name: string|null, quantity: int, unit_price: string, discount: string, total: string}> */
+            /** @var list<array{name: string, name_bn: string|null, variant_name: string|null, sku: string, quantity: int, unit_price: string, discount: string, total: string}> */
             'lines' => $order->items->map(static fn (OrderItem $item): array => [
                 'name' => $item->product_name,
                 'name_bn' => $item->product_name_bn,
                 'variant_name' => $item->variant_name,
+                'sku' => $item->sku,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price->toDecimal(),
                 'discount' => $item->discount->toDecimal(),
@@ -124,6 +135,37 @@ final class PosReceiptResource extends ApiResource
                 /** @var 'no_provider' */
                 'reason' => 'no_provider',
             ],
+            /**
+             * How the receipt prints (Settings › Invoices, receipts & labels › Thermal receipt).
+             * `language` `ask` = the cashier picks per sale; `en`/`bn` fixes it.
+             *
+             * @var array{paper: '80'|'58', language: 'en'|'bn'|'ask', text_size: 'normal'|'large', auto_print: bool, show_logo: bool, show_branch: bool, show_bin: bool, show_cashier: bool, show_customer_name: bool, show_sku: bool, show_barcode: bool, show_whatsapp_qr: bool, show_cut_line: bool, footer_en: string|null, footer_bn: string|null}
+             */
+            'print' => $print,
+            /**
+             * The store logo (printed in black); null when none is chosen or the logo is switched off.
+             *
+             * @var string|null
+             */
+            'logo_url' => $print['show_logo'] === true ? $this->resource['logo_url'] : null,
+            /**
+             * Code 128 of the order number as a standalone SVG; null when the barcode is switched off.
+             *
+             * @var string|null
+             */
+            'barcode_svg' => $print['show_barcode'] === true ? $codes->code128Svg($order->number) : null,
+            /**
+             * The store's WhatsApp chat link (`https://wa.me/…`); null when switched off or no number is saved.
+             *
+             * @var string|null
+             */
+            'whatsapp_link' => $whatsappLink,
+            /**
+             * A QR code of `whatsapp_link` as a standalone SVG, or null.
+             *
+             * @var string|null
+             */
+            'whatsapp_qr_svg' => $whatsappLink !== null ? $codes->qrSvg($whatsappLink) : null,
         ];
     }
 }

@@ -50,6 +50,8 @@ async function signIn(page: Page, locale: Locale, theme: Theme = 'admin-light') 
         ([l, th]) => {
             localStorage.setItem('tm-admin-locale', l);
             localStorage.setItem('tm-admin-theme', th);
+            // Sale complete prints the receipt automatically (print settings default); no dialog in a test run.
+            window.print = () => {};
         },
         [locale, theme] as const,
     );

@@ -76,7 +76,8 @@ describe('shipments board', () => {
 
         const track = screen.getByRole('link', { name: 'Track on Steadfast' });
         expect(track.getAttribute('href')).toBe(tracking.tracking_url);
-        expect(screen.getByRole('link', { name: 'Print label' }).getAttribute('href')).toBe('/api/v1/admin/shipments/96/label?locale=en');
+        // Print sends the PDF straight to the print dialog (no new tab).
+        expect(screen.getByRole('button', { name: 'Print label' })).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Raw events' }));
         expect(screen.getByText('status, cod_amount')).toBeTruthy();

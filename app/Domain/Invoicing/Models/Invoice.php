@@ -22,7 +22,7 @@ use Illuminate\Support\Carbon;
  *
  * `issued_by`: name_en, name_bn, address_en, address_bn, hotline, email, website,
  *   trade_licence, bin, logo_media_id, footer_en, footer_bn, placeholders (list of unset keys).
- * `issued_to` (sales): name, phone (E.164), address, area, upazila, district, division,
+ * `issued_to` (sales): name, phone (E.164), email (from 2026-11-17), address, area, upazila, district, division,
  *   landmark, postcode, customer_id, preferred_language. (purchase): supplier_id, name,
  *   contact_person, phone, email, address, tin, supplier_invoice_no.
  * `lines`: list of {name, name_bn, variant, sku, quantity, unit_price, discount, line_total}

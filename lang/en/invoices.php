@@ -91,4 +91,14 @@ return [
         'purchase_not_ordered' => 'Purchase order :number is :status; only a placed purchase order can be issued as an invoice.',
         'none_printable' => 'None of the selected orders can be invoiced (cancelled orders are not invoiced).',
     ],
+    // Settings › Invoices, receipts & labels › A4 invoice (owner request 2026-11-17): optional parts.
+    'print' => [
+        'paid' => 'Paid',
+        'cod_due' => 'Cash on delivery · :amount due',
+        'track' => 'Track your order',
+        'track_hint' => 'Scan with your phone camera',
+        'sign_customer' => 'Received by (customer)',
+        'sign_store' => 'Authorised signature',
+        'sample' => 'Sample invoice — settings preview, not an issued invoice.',
+    ],
 ];

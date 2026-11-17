@@ -728,9 +728,12 @@ export const printLabelsRequestSchema = z.object({
     "variant_id": z.number().int(),
     "copies": z.number().int().min(1).max(500),
 })).min(1).max(300),
-    "template": labelTemplateSchema,
+    "template": labelTemplateSchema.optional(),
     "show_price": z.boolean().optional(),
     "show_name": z.boolean().optional(),
+    "show_options": z.boolean().optional(),
+    "show_store": z.boolean().optional(),
+    "show_digits": z.boolean().optional(),
     "locale": z.enum(["en","bn"]).nullable().optional(),
     "generate_missing": z.boolean().optional(),
 });

@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
  * `POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` — the invoice /
  * packing-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip
  * carries the full phone and street address the rider needs. `locale` picks the
- * language (default: each customer's preferred language).
+ * language (default: the one chosen in Settings › Invoices, receipts & labels).
  */
 final class OrderInvoicesRequest extends ApiFormRequest
 {

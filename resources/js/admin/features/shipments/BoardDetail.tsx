@@ -1,3 +1,4 @@
+import { openPdf } from '@/lib/pdf';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ArrowSquareOutIcon, CaretDownIcon, CaretUpIcon, PrinterIcon } from '@phosphor-icons/react';
@@ -156,10 +157,10 @@ function Card({ s }: { s: ShipmentTracking }) {
                 )}
                 {can(me, 'customers.view_pii') &&
                     (s.can_print_label ? (
-                        <a href={labelUrl(s.id, locale)} target="_blank" rel="noopener" className={buttonClass('outline', 'sm')}>
+                        <Button variant="outline" size="sm" onClick={() => void openPdf(labelUrl(s.id, locale))}>
                             <PrinterIcon size={14} aria-hidden />
                             {t('shipmentsBoard.detail.label')}
-                        </a>
+                        </Button>
                     ) : (
                         <Button variant="outline" size="sm" disabled title={t('shipmentsBoard.detail.labelLater')}>
                             <PrinterIcon size={14} aria-hidden />

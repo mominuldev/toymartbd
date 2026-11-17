@@ -2915,7 +2915,7 @@
         "/admin/products/labels": {
             "post": {
                 "operationId": "v1.admin.products.labels.print",
-                "summary": "`POST /products/labels` \u2014 the labels as `application/pdf`, in the order of `items`, each\nrepeated `copies` times. Needs catalog.view; `generate_missing: true` also needs\ncatalog.update and first gives the listed variants without a barcode an in-store EAN-13",
+                "summary": "`POST /products/labels` \u2014 the labels as `application/pdf`, in the order of `items`, each\nrepeated `copies` times. Needs catalog.view; `generate_missing: true` also needs\ncatalog.update and first gives the listed variants without a barcode an in-store EAN-13.\nOmitted fields (template too) take the saved Barcode labels settings",
                 "tags": [
                     "Admin"
                 ],
@@ -14107,6 +14107,181 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/PrintSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/print/invoice-preview": {
+            "get": {
+                "operationId": "v1.admin.settings.print.invoice-preview",
+                "summary": "`GET /settings/print/invoice-preview` \u2014 a fixed sample customer invoice as a PDF, through the\nreal template with today's company details, on the saved invoice settings overlaid with\nany sent as query parameters (the page's unsaved draft). Nothing is issued or stored",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "paper",
+                        "in": "query",
+                        "description": "`a4` or `a5`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "a4",
+                                "a5"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "language",
+                        "in": "query",
+                        "description": "`en`, `bn` or `both`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en",
+                                "bn",
+                                "both"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "colour",
+                        "in": "query",
+                        "description": "`brand` or `mono`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "brand",
+                                "mono"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_bin",
+                        "in": "query",
+                        "description": "`1` or `0`.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_barcode",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_phone",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_sku",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_options",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_payment_stamp",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_track_qr",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "show_signatures",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The sample invoice PDF",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         }
@@ -54279,7 +54454,7 @@
             },
             "OrderInvoicesRequest": {
                 "type": "object",
-                "description": "`POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` \u2014 the invoice /\npacking-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip\ncarries the full phone and street address the rider needs. `locale` picks the\nlanguage (default: each customer's preferred language).",
+                "description": "`POST /orders/bulk/invoices` and `GET /orders/{order}/invoice` \u2014 the invoice /\npacking-slip PDF (P4-ORD-08). Needs orders.view AND customers.view_pii: the slip\ncarries the full phone and street address the rider needs. `locale` picks the\nlanguage (default: the one chosen in Settings \u203a Invoices, receipts & labels).",
                 "properties": {
                     "order_ids": {
                         "type": "array",
@@ -57402,6 +57577,9 @@
                                         "null"
                                     ]
                                 },
+                                "sku": {
+                                    "type": "string"
+                                },
                                 "quantity": {
                                     "type": "integer"
                                 },
@@ -57419,6 +57597,7 @@
                                 "name",
                                 "name_bn",
                                 "variant_name",
+                                "sku",
                                 "quantity",
                                 "unit_price",
                                 "discount",
@@ -57515,6 +57694,121 @@
                             "enabled",
                             "reason"
                         ]
+                    },
+                    "print": {
+                        "type": "object",
+                        "description": "How the receipt prints (Settings \u203a Invoices, receipts & labels \u203a Thermal receipt).\n`language` `ask` = the cashier picks per sale; `en`/`bn` fixes it.",
+                        "properties": {
+                            "paper": {
+                                "type": "string",
+                                "enum": [
+                                    "80",
+                                    "58"
+                                ]
+                            },
+                            "language": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "bn",
+                                    "ask"
+                                ]
+                            },
+                            "text_size": {
+                                "type": "string",
+                                "enum": [
+                                    "normal",
+                                    "large"
+                                ]
+                            },
+                            "auto_print": {
+                                "type": "boolean"
+                            },
+                            "show_logo": {
+                                "type": "boolean"
+                            },
+                            "show_branch": {
+                                "type": "boolean"
+                            },
+                            "show_bin": {
+                                "type": "boolean"
+                            },
+                            "show_cashier": {
+                                "type": "boolean"
+                            },
+                            "show_customer_name": {
+                                "type": "boolean"
+                            },
+                            "show_sku": {
+                                "type": "boolean"
+                            },
+                            "show_barcode": {
+                                "type": "boolean"
+                            },
+                            "show_whatsapp_qr": {
+                                "type": "boolean"
+                            },
+                            "show_cut_line": {
+                                "type": "boolean"
+                            },
+                            "footer_en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "footer_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "paper",
+                            "language",
+                            "text_size",
+                            "auto_print",
+                            "show_logo",
+                            "show_branch",
+                            "show_bin",
+                            "show_cashier",
+                            "show_customer_name",
+                            "show_sku",
+                            "show_barcode",
+                            "show_whatsapp_qr",
+                            "show_cut_line",
+                            "footer_en",
+                            "footer_bn"
+                        ]
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The store logo (printed in black); null when none is chosen or the logo is switched off."
+                    },
+                    "barcode_svg": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Code 128 of the order number as a standalone SVG; null when the barcode is switched off."
+                    },
+                    "whatsapp_link": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The store's WhatsApp chat link (`https://wa.me/\u2026`); null when switched off or no number is saved."
+                    },
+                    "whatsapp_qr_svg": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A QR code of `whatsapp_link` as a standalone SVG, or null."
                     }
                 },
                 "required": [
@@ -57537,7 +57831,12 @@
                     "cash_tendered",
                     "change_due",
                     "due_amount",
-                    "whatsapp"
+                    "whatsapp",
+                    "print",
+                    "logo_url",
+                    "barcode_svg",
+                    "whatsapp_link",
+                    "whatsapp_qr_svg"
                 ],
                 "title": "PosReceipt"
             },
@@ -57833,7 +58132,7 @@
             },
             "PrintLabelsRequest": {
                 "type": "object",
-                "description": "`POST /products/labels` \u2014 barcode labels as one PDF. Needs catalog.view; with\n`generate_missing: true` also catalog.update (it writes barcodes first), else 403.\n\n`items[] {variant_id, copies}` \u2014 \u2264 300 items, copies 1\u2013500, \u2264 5,000 labels in all; printed\nin the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless\n`generate_missing` is true. Only the fields below are accepted; any other is a 422.",
+                "description": "`POST /products/labels` \u2014 barcode labels as one PDF. Needs catalog.view; with\n`generate_missing: true` also catalog.update (it writes barcodes first), else 403.\n\n`items[] {variant_id, copies}` \u2014 \u2264 300 items, copies 1\u2013500, \u2264 5,000 labels in all; printed\nin the order given. A variant without a barcode is a 422 on `items.N.variant_id` unless\n`generate_missing` is true. Only the fields below are accepted; any other is a 422.\n\nEvery field but `items` and `locale` is optional and, when omitted, takes the value saved in\nSettings \u203a Invoices, receipts & labels \u203a Barcode labels ({@see PrintSettings::labels()}, the\nFigma defaults until saved). The saved \"create missing barcodes\" applies only for someone\nwith catalog.update; for anyone else an omitted `generate_missing` is false, so a variant\nwithout a barcode is the usual 422 rather than a 403.",
                 "properties": {
                     "items": {
                         "type": "array",
@@ -57859,15 +58158,28 @@
                         "uniqueItems": true
                     },
                     "template": {
+                        "description": "The label stock; omitted, the saved Barcode labels paper.",
                         "$ref": "#/components/schemas/LabelTemplate"
                     },
                     "show_price": {
                         "type": "boolean",
-                        "description": "Print the selling price (default true)."
+                        "description": "Print the selling price; omitted, the saved setting."
                     },
                     "show_name": {
                         "type": "boolean",
-                        "description": "Print the product and variant name (default true)."
+                        "description": "Print the product name; omitted, the saved setting."
+                    },
+                    "show_options": {
+                        "type": "boolean",
+                        "description": "Print the variant's options line (size, colour); omitted, the saved setting."
+                    },
+                    "show_store": {
+                        "type": "boolean",
+                        "description": "Print the store name (in the label language) at the top; omitted, the saved setting."
+                    },
+                    "show_digits": {
+                        "type": "boolean",
+                        "description": "Print the barcode number under the bars; omitted, the saved setting."
                     },
                     "locale": {
                         "type": [
@@ -57883,12 +58195,11 @@
                     },
                     "generate_missing": {
                         "type": "boolean",
-                        "description": "Generate in-store EAN-13s for variants without a barcode first; needs catalog.update."
+                        "description": "Generate in-store EAN-13s for variants without a barcode first; `true` needs\ncatalog.update. Omitted, the saved setting for someone with catalog.update, else false."
                     }
                 },
                 "required": [
-                    "items",
-                    "template"
+                    "items"
                 ],
                 "title": "PrintLabelsRequest"
             },

@@ -1,3 +1,4 @@
+import { printPdfBlob } from '@/lib/pdf';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schema } from '@toymart/api-types';
 import type {
@@ -196,7 +197,7 @@ export function labelUrl(shipmentId: number, locale: string): string {
     return `/api/v1/admin/shipments/${shipmentId}/label?locale=${locale === 'bn' ? 'bn' : 'en'}`;
 }
 
-/** Bulk labels: POST, then open the PDF blob. Returns the ids the server skipped (no consignment yet). */
+/** Bulk labels: POST, then print the PDF. Returns the ids the server skipped (no consignment yet). */
 export async function printLabels(shipmentIds: number[], locale: string): Promise<number[]> {
     const response = await fetch('/api/v1/admin/shipments/labels', {
         method: 'POST',
@@ -205,8 +206,6 @@ export async function printLabels(shipmentIds: number[], locale: string): Promis
         body: JSON.stringify({ shipment_ids: shipmentIds, locale: locale === 'bn' ? 'bn' : 'en' }),
     });
     if (!response.ok) throw new Error(String(response.status));
-    const url = URL.createObjectURL(await response.blob());
-    window.open(url, '_blank', 'noopener');
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    printPdfBlob(await response.blob());
     return (response.headers.get('X-Shipments-Skipped') ?? '').split(',').filter(Boolean).map(Number);
 }

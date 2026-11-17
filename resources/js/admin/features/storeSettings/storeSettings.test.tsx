@@ -130,7 +130,7 @@ describe('store settings layout', () => {
             ['Branches & warehouses', '/settings/branches'],
             ['Checkout & delivery', '/settings/checkout'],
             ['Delivery areas & timing', '/settings/delivery'],
-            ['Taxes & invoices', '/settings/invoice'],
+            ['Invoices, receipts & labels', '/settings/invoice'],
             ['Point of sale', '/settings/pos'],
         ]);
         // The index <Navigate> may land a tick after the layout's heading (seen under load).

@@ -24,11 +24,17 @@ export function PrintTabs() {
     );
 }
 
-/** Options on the left, preview on the right; stacked below xl (the settings nav takes room). */
-export function PrintLayout({ options, preview }: { options: ReactNode; preview: ReactNode }) {
+/**
+ * Options on the left, preview on the right; stacked below xl (the settings nav takes room).
+ * `before` sits above the options card in the left column (Barcode labels: the print job).
+ */
+export function PrintLayout({ options, preview, before }: { options: ReactNode; preview: ReactNode; before?: ReactNode }) {
     return (
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-            <div className="flex min-w-0 flex-col rounded-md border border-line-default bg-surface px-6 pb-2 shadow-e1">{options}</div>
+            <div className="flex min-w-0 flex-col gap-6">
+                {before}
+                <div className="flex min-w-0 flex-col rounded-md border border-line-default bg-surface px-6 pb-2 shadow-e1">{options}</div>
+            </div>
             {preview}
         </div>
     );

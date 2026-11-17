@@ -36,7 +36,7 @@ final class InvoiceResource extends ApiResource
             $phone = PhoneNumber::tryParse((string) ($to['phone'] ?? ''));
             $to['phone'] = $phone?->masked();
             $to['alt_phone'] = null;
-            unset($to['address'], $to['landmark'], $to['postcode']);
+            unset($to['address'], $to['landmark'], $to['postcode'], $to['email']);
         }
 
         return [

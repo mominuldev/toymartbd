@@ -18,8 +18,10 @@ const withOneBarcode: Product = { ...product, variants: [variant(100, [10, 20], 
 
 const readOnly: Me = { ...viewer, permissions: ['dashboard.view', 'catalog.view'] };
 
-function labelApi(me: Me, doc: Product = withOneBarcode) {
+/** `labels`: what GET /settings/print answers for the Barcode labels document (else it is a 404). */
+function labelApi(me: Me, doc: Product = withOneBarcode, labels?: Record<string, unknown>) {
     return productApi(me, (url, init) => {
+        if (labels && url.endsWith('/settings/print')) return { status: 200, body: { invoice: {}, receipt: {}, labels, saved: ['labels'] } };
         if (/\/products\/42$/.test(url) && (!init?.method || init.method === 'GET')) return { status: 200, body: doc };
         if (url.endsWith('/products/labels/templates')) return { status: 200, body: { data: templates } };
         if (url.endsWith('/products/labels')) return { status: 200, body: {} };
@@ -99,15 +101,16 @@ describe('print labels dialog', () => {
                 { variant_id: 102, copies: 1 },
                 { variant_id: 103, copies: 1 },
             ],
+            // show_name was left alone and print settings are not readable: the server's saved value applies.
             show_price: false,
-            show_name: true,
             locale: 'bn',
+            generate_missing: false,
         });
         expect(URL.createObjectURL).toHaveBeenCalled();
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     });
 
-    it('generates missing barcodes through the form first, then prints without generate_missing', async () => {
+    it('generates missing barcodes through the form first, then prints with generate_missing false', async () => {
         const calls = labelApi(owner);
         renderApp('/products/42');
 
@@ -119,8 +122,43 @@ describe('print labels dialog', () => {
 
         await waitFor(() => expect(posted(calls, '/products/labels')).toHaveLength(1));
         expect(posted(calls, '/products/42/barcodes')).toEqual([{ variant_ids: [101, 102, 103] }]);
-        expect(posted(calls, '/products/labels')[0]!.generate_missing).toBeUndefined();
+        // Sent false, not omitted: omitted, the server would apply the saved "create missing barcodes".
+        expect(posted(calls, '/products/labels')[0]!.generate_missing).toBe(false);
         expect((posted(calls, '/products/labels')[0]!.items as unknown[]).length).toBe(4);
+    });
+
+    it('starts from the saved Barcode labels settings when the user can read them', async () => {
+        const reader: Me = { ...owner, permissions: [...owner.permissions, 'settings.view'] };
+        const labels = { template: 'a4_24', show_name: false, show_options: true, show_price: false, show_store: true, show_digits: false, generate_missing: false } as const;
+        const api = labelApi(reader, withOneBarcode, labels);
+        renderApp('/products/42');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Print labels' }));
+        const dialog = await screen.findByRole('dialog', { name: 'Print barcode labels' });
+        await waitFor(() => expect((within(dialog).getByRole('combobox', { name: 'Label size' }) as HTMLSelectElement).value).toBe('a4_24'));
+        expect((within(dialog).getByRole('checkbox', { name: 'Show product name' }) as HTMLInputElement).checked).toBe(false);
+        expect((within(dialog).getByRole('checkbox', { name: 'Show price' }) as HTMLInputElement).checked).toBe(false);
+        expect((within(dialog).getByRole('checkbox', { name: 'Generate in-store barcodes for them first' }) as HTMLInputElement).checked).toBe(false);
+        expect(within(dialog).queryByText('Anything you leave unchanged follows the store’s print settings.')).toBeNull();
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Download PDF' }));
+
+        await waitFor(() => expect(posted(api, '/products/labels')).toHaveLength(1));
+        expect(posted(api, '/products/labels')[0]).toEqual({ template: 'a4_24', items: [{ variant_id: 100, copies: 1 }], show_price: false, show_name: false, locale: 'en', generate_missing: false });
+    });
+
+    it('sends only what changed when print settings are not readable', async () => {
+        const calls = labelApi(owner);
+        renderApp('/products/42');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Print labels' }));
+        const dialog = await screen.findByRole('dialog', { name: 'Print barcode labels' });
+        await within(dialog).findByRole('option', { name: 'As in print settings' });
+        expect(within(dialog).getByText('Anything you leave unchanged follows the store’s print settings.')).toBeTruthy();
+        fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Generate in-store barcodes for them first' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Download PDF' }));
+
+        await waitFor(() => expect(posted(calls, '/products/labels')).toHaveLength(1));
+        expect(posted(calls, '/products/labels')[0]).toEqual({ items: [{ variant_id: 100, copies: 1 }], locale: 'en', generate_missing: false });
     });
 
     it('leaves variants without a barcode out for a role that cannot generate them', async () => {
