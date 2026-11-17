@@ -78,7 +78,9 @@ final class SecurityHeaders
             'img-src' => ["'self'", 'data:', 'blob:', 'https:', ...($local ? ['http:'] : [])],
             // + the admin's Sentry ingest origin, only when SENTRY_ADMIN_DSN is set (P10).
             'connect-src' => ["'self'", ...$hot['http'], ...$hot['ws'], ...(($sentry = self::origin(config('monitoring.sentry_admin.dsn'))) !== null ? [$sentry] : [])],
-            'frame-src' => ["'self'", ...($storefront !== null ? [$storefront] : [])],
+            // blob: — Print buttons load the PDF into a hidden frame from a blob URL the admin
+            // itself made, then print it (lib/pdf.ts printPdfBlob). Nothing else can mint one.
+            'frame-src' => ["'self'", 'blob:', ...($storefront !== null ? [$storefront] : [])],
             'frame-ancestors' => ["'none'"],
             'base-uri' => ["'self'"],
             'form-action' => ["'self'"],

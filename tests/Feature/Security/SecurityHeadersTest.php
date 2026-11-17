@@ -45,7 +45,7 @@ it('serves the admin shell with a nonce CSP, and nonces its one inline script', 
         ->and($csp)->not->toContain("'unsafe-eval'")
         ->and($csp)->toContain("frame-ancestors 'none'")
         ->and($csp)->toContain("object-src 'none'")
-        ->and($csp)->toContain('frame-src \'self\' https://shop.toymartbd.test;')
+        ->and($csp)->toContain('frame-src \'self\' blob: https://shop.toymartbd.test;')
         ->and($response->getContent())->toContain('<script nonce="'.$nonce.'">');
 
     // The nonce is per request.

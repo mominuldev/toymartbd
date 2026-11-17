@@ -17,10 +17,13 @@ describe('printPdfBlob', () => {
         const frame = document.querySelector<HTMLIFrameElement>('iframe[data-print-frame]');
         expect(frame).toBeTruthy();
         expect(frame!.getAttribute('src')).toBe('blob:pdf-1');
-        expect(frame!.style.visibility).toBe('hidden');
+        expect(frame!.style.opacity).toBe('0');
         const print = vi.fn();
         Object.defineProperty(frame!, 'contentWindow', { value: { focus: vi.fn(), print } });
+        vi.useFakeTimers();
         frame!.onload?.(new Event('load'));
+        vi.advanceTimersByTime(300);
+        vi.useRealTimers();
         expect(print).toHaveBeenCalledOnce();
         expect(open).not.toHaveBeenCalled();
     });

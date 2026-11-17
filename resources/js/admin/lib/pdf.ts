@@ -13,20 +13,19 @@ export function printPdfBlob(blob: Blob): void {
     frame.setAttribute('data-print-frame', '');
     frame.setAttribute('aria-hidden', 'true');
     frame.tabIndex = -1;
-    frame.style.position = 'fixed';
-    frame.style.right = '0';
-    frame.style.bottom = '0';
-    frame.style.width = '0';
-    frame.style.height = '0';
-    frame.style.border = '0';
-    frame.style.visibility = 'hidden';
+    // Rendered but unseen: Chrome does not start its PDF viewer in a display:none, hidden or
+    // zero-sized frame, and then print() has nothing to print.
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
     frame.onload = () => {
-        try {
-            frame.contentWindow?.focus();
-            frame.contentWindow?.print();
-        } catch {
-            window.open(url, '_blank', 'noopener');
-        }
+        // A beat for the PDF viewer to attach after the frame's load event.
+        window.setTimeout(() => {
+            try {
+                frame.contentWindow?.focus();
+                frame.contentWindow?.print();
+            } catch {
+                window.open(url, '_blank', 'noopener');
+            }
+        }, 250);
     };
     frame.src = url;
     document.body.appendChild(frame);
