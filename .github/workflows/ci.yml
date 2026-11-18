@@ -206,7 +206,7 @@ jobs:
           name: admin-playwright-report
           path: e2e/admin/playwright-report
 
-  # Rule 29: the accessibility budget is a CI gate. The suite is split into four groups of about
+  # Rule 29: the accessibility budget is a CI gate. The suite is split into five groups of about
   # equal time (scripts/ci/a11y-group.sh), each on its own runner with its own seeded app, instead
   # of ~16 minutes on one. a11y-plan proves the groups cover the suite exactly once; the job named
   # like the required check gates them all.
@@ -231,7 +231,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [A, B, C, D]
+        group: [A, B, C, D, E]
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2

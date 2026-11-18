@@ -171,6 +171,8 @@ No other WCAG A/AA violation on any Phase 10 screen, dialog or two-factor state,
 
 *Update 2026-11-17: the job is now split across four runners.* `scripts/ci/a11y-group.sh` cuts the suite into groups of about equal **time**, not count: A = English "main screens" sweeps, B = the other "main screens" sweeps, C = the rest of `axe.spec.ts`, D = every other spec file, found at run time. Playwright's `--shard` splits by count and would have put all four 2-minute sweeps in one shard. The `a11y-plan` job runs `a11y-group.sh plan`, which fails unless the four groups list exactly the whole suite. The job named "Admin a11y — …" (the required check) only gates `a11y-plan` and the four `a11y-groups` runs. Wall time goes from ~16 min to ~6–7 min.
 
+*Update 2026-11-18: five runners.* Group D took ~6.5 min, half of it the 12-test POS axe matrix (3 sizes × EN/BN × light/dark, ~14 s each). Those tests share the owner's single POS drawer, so they cannot run on parallel workers. They are now group E (`pos.spec.ts --grep "POS axe"`), and D runs every other spec with `--grep-invert "POS axe"`. Coverage is unchanged: `plan` still proves the five groups list the whole suite exactly once.
+
 **Making the suite CI-stable** (`e2e/admin-a11y/playwright.config.ts`, `axe.spec.ts`):
 - **Retries and timeouts:** one retry in CI (none locally). The per-test budget is 600 s in CI and 300 s locally, because the long sweeps audit 33 screens per test. In CI, `expect` waits 15 s, actions 30 s and navigation 60 s.
 - **Time zone:** `timezoneId: 'Asia/Dhaka'`, so dates and "41m ago" render the same on a UTC runner (rule 11).
