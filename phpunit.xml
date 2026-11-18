@@ -30,6 +30,9 @@
         <!-- Staff two-factor: off so unrelated tests need no second factor; the 2FA tests switch it on. -->
         <env name="TWO_FACTOR_ENFORCE" value="false"/>
         <env name="APP_MAINTENANCE_DRIVER" value="array"/>
+        <!-- Blank whatever a developer's .env holds: with a secret set, every content and stock
+             change POSTs to the storefront's /api/revalidate. Tests that cover it set it themselves. -->
+        <env name="STOREFRONT_REVALIDATE_SECRET" value="" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
