@@ -184,6 +184,33 @@ jobs:
           ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
             "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "echo 'SSH connection successful'"
 
+      # Before the rsync, so a bad .env never leaves new code on the host against an old schema.
+      # local/testing on a deployed host is never right: DatabaseSeeder then seeds a known login
+      # and demo data — needing dev-only faker, absent under --no-dev, and a back door if it were
+      # there — and the production guards (rule 33a booking block, two-factor enforcement) are
+      # off. A missing .env is left to the migrate step, which explains how to create one.
+      - name: Refuse a local or testing APP_ENV on the host
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          # Same quoting rule as the migrate step: arguments go through printf %q, the script
+          # through stdin, so nothing is re-parsed by the remote shell.
+          app_env=$(ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+            "bash -s -- $(printf '%q' "$DEPLOY_PATH")" <<'REMOTE'
+          [ -f "$1/.env" ] || exit 0
+          sed -n 's/^[[:space:]]*APP_ENV=//p' "$1/.env" | tail -1 | tr -d "\"' \r"
+          REMOTE
+          )
+          case "$app_env" in
+            local|testing)
+              echo "::error::APP_ENV is '$app_env' in the host .env. Set APP_ENV=production (or staging) and APP_DEBUG=false there, then re-run the deploy. Nothing was changed on the host."
+              exit 1
+              ;;
+          esac
+          echo "Host APP_ENV: ${app_env:-<no .env yet>}"
+
       # --delete removes anything on the host the checkout does not carry, so every path that
       # lives only on the server must be named here.
       #
