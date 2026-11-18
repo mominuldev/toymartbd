@@ -113,6 +113,22 @@ describe('Ask AI panel', () => {
         expect(document.activeElement).toBe(button);
     });
 
+    it('says the model is not in the plan, with a link to AI settings, when the key has no quota for it', async () => {
+        api({
+            ask: () => ({
+                status: 503,
+                body: { type: 'https://toymartbd.com/problems/ai-unavailable', title: 'AI unavailable', status: 503, errors: [{ field: 'ai', message: 'no_quota' }] },
+            }),
+        });
+        renderApp('/account');
+        const panel = await openPanel();
+
+        fireEvent.click(await within(panel).findByRole('button', { name: 'Today’s sales' }));
+        expect(await within(panel).findByText('This model is not in your AI plan')).toBeTruthy();
+        expect(within(panel).getByRole('link', { name: 'Open AI settings' }).getAttribute('href')).toBe('/integrations/ai');
+        expect(within(panel).queryByRole('button', { name: 'Try again' })).toBeNull();
+    });
+
     it('explains the setup instead of a question box when AI is not connected', async () => {
         api({ ai: { ...overview.ai, configured: false } });
         renderApp('/account');

@@ -82,3 +82,16 @@ it('reports a Gemini quota refusal as rate limited', function (): void {
     expect(fn () => app(GeminiDriver::class)->check('g-key', 'gemini-4-carbon'))
         ->toThrow(fn (AiException $e) => expect($e->reason)->toBe(AiException::RATE_LIMITED));
 });
+
+it('reports a model the key’s plan has no quota for as no_quota, not a rate limit', function (): void {
+    // Google's answer to a free AI Studio key calling a Pro model, from the first call (2026-11-18).
+    Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['error' => [
+        'code' => 429,
+        'status' => 'RESOURCE_EXHAUSTED',
+        'message' => 'You exceeded your current quota, please check your plan and billing details.',
+        'details' => [['violations' => [['quotaId' => 'GenerateRequestsPerDayPerProjectPerModel-FreeTier']]]],
+    ]], 429)]);
+
+    expect(fn () => app(GeminiDriver::class)->complete(new AiPrompt('s', 'u'), 'gemini-4-carbon', 'g-key', 64))
+        ->toThrow(fn (AiException $e) => expect($e->reason)->toBe(AiException::NO_QUOTA));
+});

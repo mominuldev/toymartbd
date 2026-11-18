@@ -14,7 +14,10 @@ use App\Models\Setting;
  *
  * - `ai.key.{provider}` — the API key, `is_encrypted` (rule 20). Never returned by the API.
  * - `ai.key_meta.{provider}` — last four characters, when it was checked and whether it worked.
- * - `ai.features` — feature => {provider, model}. Default: Anthropic, Claude Opus 5.5.
+ * - `ai.features` — feature => {provider, model}. A feature nobody has assigned yet uses
+ *   Anthropic (Claude Opus 5.5) when that key is saved, otherwise the first connected provider
+ *   (Anthropic, OpenAI, Gemini order) — so connecting only Gemini makes every feature work.
+ *   An assignment the owner saved is kept as chosen, even if its key is later removed.
  * - `ai.cap_usd` — the monthly spending cap (Dhaka month); `0` turns AI off.
  * - `ai.share` — what features may send: report figures, product details, customer first names.
  *   Phone numbers, addresses and payment details are never sent and have no switch.
@@ -67,10 +70,22 @@ final class AiSettings
     {
         $all = Setting::get('ai.features');
         $row = is_array($all) && is_array($all[$f->value] ?? null) ? $all[$f->value] : [];
-        $provider = AiProvider::tryFrom((string) ($row['provider'] ?? '')) ?? AiProvider::Anthropic;
+        $provider = AiProvider::tryFrom((string) ($row['provider'] ?? '')) ?? $this->defaultProvider();
         $model = is_string($row['model'] ?? null) && $provider->hasModel($row['model']) ? $row['model'] : $provider->defaultModel();
 
         return ['provider' => $provider, 'model' => $model];
+    }
+
+    /** For a feature with no saved choice: Anthropic if connected, else the first connected provider. */
+    private function defaultProvider(): AiProvider
+    {
+        foreach (AiProvider::cases() as $p) {
+            if ($this->connected($p)) {
+                return $p;
+            }
+        }
+
+        return AiProvider::Anthropic;
     }
 
     public function cap(): string

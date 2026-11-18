@@ -11,7 +11,7 @@ import { buttonClass } from '@/components/ui/Button';
  * or the provider failed (problem types ai-not-configured / ai-cap-reached / ai-unavailable).
  */
 
-export type AiProblem = 'not_configured' | 'cap_reached' | 'not_shared' | 'unavailable' | 'other';
+export type AiProblem = 'not_configured' | 'cap_reached' | 'not_shared' | 'no_quota' | 'unavailable' | 'other';
 
 export function aiProblem(error: unknown): AiProblem {
     if (!(error instanceof ApiError)) return 'other';
@@ -19,7 +19,7 @@ export function aiProblem(error: unknown): AiProblem {
     if (type.endsWith('/ai-not-configured')) return 'not_configured';
     if (type.endsWith('/ai-cap-reached')) return 'cap_reached';
     if (type.endsWith('/ai-not-shared')) return 'not_shared';
-    if (type.endsWith('/ai-unavailable')) return 'unavailable';
+    if (type.endsWith('/ai-unavailable')) return error.problem.errors?.some((e) => e.message === 'no_quota') ? 'no_quota' : 'unavailable';
     return 'other';
 }
 
@@ -27,7 +27,7 @@ export function aiProblem(error: unknown): AiProblem {
 export function AiErrorNotice({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
     const { t } = useI18n();
     const kind = aiProblem(error);
-    const setup = kind === 'not_configured' || kind === 'cap_reached' || kind === 'not_shared';
+    const setup = kind === 'not_configured' || kind === 'cap_reached' || kind === 'not_shared' || kind === 'no_quota';
     return (
         <div role="alert" className="flex flex-wrap items-start gap-3 rounded-md border border-line-default bg-subtle p-4">
             <WarningIcon size={20} aria-hidden className="mt-0.5 shrink-0 text-feedback-warning" />

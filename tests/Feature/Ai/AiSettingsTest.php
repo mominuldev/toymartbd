@@ -39,6 +39,19 @@ it('shows the defaults: nothing connected, Claude Opus 5.5 everywhere, a $50 cap
         ->assertJsonPath('can', ['update' => true, 'manage_keys' => true]);
 });
 
+it('routes unassigned features to the only connected provider, but keeps a saved choice', function (): void {
+    Support::actingAs(Role::SuperAdmin);
+    // The owner connects only Gemini and never touches routing: every feature must work.
+    $this->putJson(AI_SETTINGS_URL.'/providers/gemini', ['api_key' => 'AIza-test-000000000000'])->assertOk()
+        ->assertJsonPath('features.0', ['feature' => 'advisor', 'provider' => 'gemini', 'model' => 'gemini-4-carbon', 'connected' => true]);
+    $this->getJson('/api/v1/admin/analytics/advisor')->assertOk()
+        ->assertJsonPath('ai.configured', true)->assertJsonPath('ai.provider', 'gemini');
+
+    // A saved choice stays as chosen, even pointing at a provider without a key.
+    $this->putJson(AI_SETTINGS_URL, aiSettingsBody())->assertOk()
+        ->assertJsonPath('features.0.provider', 'anthropic')->assertJsonPath('features.0.connected', false);
+});
+
 it('checks a key before saving it encrypted, never returns it, and audits the change', function (): void {
     $user = Support::actingAs(Role::SuperAdmin);
 

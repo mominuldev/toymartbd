@@ -23,6 +23,12 @@ final class AiException extends RuntimeException
 
     public const string RATE_LIMITED = 'rate_limited';
 
+    /**
+     * The key's plan has no quota for this model at all (a free Gemini key on a Pro model, an
+     * OpenAI account without credit). Unlike a rate limit, waiting does not help.
+     */
+    public const string NO_QUOTA = 'no_quota';
+
     public const string PROVIDER = 'provider_error';
 
     public const string REFUSED = 'refused';
