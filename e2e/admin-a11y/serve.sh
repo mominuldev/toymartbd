@@ -18,7 +18,9 @@ export MAIL_MAILER=log
 export SANCTUM_STATEFUL_DOMAINS="localhost:$PORT" SESSION_DOMAIN=
 export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
-export DEMO_SEED_IMAGES=false AUTH_LOGIN_PER_MINUTE=60
+# Demo-seed shape shared with the admin E2E harness (images off, demo branches on).
+. e2e/demo-seed.env.sh
+export AUTH_LOGIN_PER_MINUTE=60
 # Every audit signs the owner in again; the per-account limit (10 / 15 min) would throttle it.
 export AUTH_LOGIN_PER_ACCOUNT_PER_15_MIN=200
 # …and the admin API limit (300/min per user): the suite is one owner, and a fast runner

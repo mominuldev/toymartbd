@@ -14,12 +14,10 @@ export SANCTUM_STATEFUL_DOMAINS=localhost:8124 SESSION_DOMAIN=
 # No storefront in this run: the revalidation job must skip, not call out.
 export STOREFRONT_URL= STOREFRONT_REVALIDATE_SECRET=
 export SCOUT_DRIVER=null SENTRY_LARAVEL_DSN=
-# The demo catalogue without its Figma photos: 16 × 9 image encodes would slow every run.
-export DEMO_SEED_IMAGES=false
+# Demo-seed shape shared with the a11y harness (images off, demo branches on).
+. e2e/demo-seed.env.sh
 # Specs count orders and queue badges exactly: no demo order history in this run.
 export DEMO_SEED_TRANSACTIONS=false
-# The POS, transfer and branch-setup specs need the demo branches (a normal seed is a single shop).
-export DEMO_SEED_BRANCHES=true
 # Every spec signs in; the production limit (5/min) would throttle the sixth.
 export AUTH_LOGIN_PER_MINUTE=60
 # …and the per-account limit (10 / 15 min): every spec signs the same owner in.

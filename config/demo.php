@@ -18,8 +18,9 @@ return [
     /*
      * Demo branches (DemoInventorySeeder): Chattogram and Sylhet beside the main shop, with
      * multiple branches switched on. Off by default — a seeded store is a single shop with
-     * multi-branch off (owner request 2026-11-18). The admin E2E run (e2e/admin/serve.sh)
-     * turns it on, because its POS, transfer and branch-setup specs need the branches.
+     * multi-branch off (owner request 2026-11-18). The admin E2E and a11y runs
+     * (e2e/demo-seed.env.sh, sourced by both serve.sh) turn it on, because their POS, transfer
+     * and branch-setup specs need the branches.
      */
     'branches' => (bool) env('DEMO_SEED_BRANCHES', false),
 
