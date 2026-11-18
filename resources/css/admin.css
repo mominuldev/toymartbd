@@ -57,6 +57,15 @@
 }
 
 /*
+ * Ask AI panel (Figma 603:51917): from `dock:` (1720) the 440 panel pushes the page, which then
+ * keeps at least the 1032 an expanded-sidebar page has at 1280. Narrower, the page lays out by
+ * viewport breakpoints it would no longer fit, so the panel docks over it instead.
+ */
+@theme {
+    --breakpoint-dock: 107.5rem;
+}
+
+/*
  * Sign-in "Toy orbit" motion (Figma 595:50745). The rings turn slowly for ever; each badge
  * counter-turns at the ring's own speed so the toy stays upright, and bobs gently. Use them
  * only behind `motion-safe:` — the reduced-motion rule above shortens durations, and an

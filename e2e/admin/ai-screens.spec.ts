@@ -35,3 +35,35 @@ test('AI settings, Growth advisor and Restock forecast render without a provider
     await expect(page.getByRole('heading', { level: 1, name: 'Restock forecast' })).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/ai-restock.png`, fullPage: true });
 });
+
+test('Ask AI pushes the page on a wide screen and docks over it on a narrower one', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    await signIn(page);
+    await page.goto('/admin/returns');
+    const main = page.locator('#content');
+    const before = (await main.boundingBox())!.width;
+
+    const ask = page.getByRole('button', { name: 'Ask', exact: true });
+    await ask.click();
+    await expect(ask).toHaveAttribute('aria-pressed', 'true');
+    const panel = page.getByRole('region', { name: 'Ask Toy Mart AI' });
+    await expect(panel.getByText('AI is not set up for this')).toBeVisible();
+    // From 1720 it pushes: the page is 440 narrower once the slide ends.
+    await expect.poll(async () => Math.round(before - (await main.boundingBox())!.width)).toBe(440);
+    if (shots) await page.screenshot({ path: `${shots}/ask-ai-panel-1920.png` });
+
+    await page.keyboard.press('Escape');
+    await expect(ask).toHaveAttribute('aria-pressed', 'false');
+    await expect(ask).toBeFocused();
+    await expect.poll(async () => Math.round((await main.boundingBox())!.width)).toBe(Math.round(before));
+
+    // At 1440 the page would be squeezed to 752 under its xl layout, so the panel docks over it.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/admin');
+    const wide = (await main.boundingBox())!.width;
+    await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    await expect(panel).toBeVisible();
+    expect(Math.round((await main.boundingBox())!.width)).toBe(Math.round(wide));
+    expect((await panel.boundingBox())!.y).toBe(60);
+    if (shots) await page.screenshot({ path: `${shots}/ask-ai-panel-1440.png` });
+});

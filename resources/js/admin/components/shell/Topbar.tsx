@@ -1,6 +1,6 @@
-import { forwardRef, useEffect, useId, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useRef, useState, type Ref } from 'react';
 import { Link } from 'react-router';
-import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SidebarSimpleIcon, SignOutIcon, SunIcon, UserCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SidebarSimpleIcon, SignOutIcon, SparkleIcon, SunIcon, UserCircleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
 import { buttonClass } from '@/components/ui/Button';
@@ -18,6 +18,8 @@ type TopbarProps = {
     /** The desktop sidebar's collapsed state and its toggle (the button sits before the search). */
     collapsed: boolean;
     onToggleCollapsed: () => void;
+    /** The Ask AI panel (Figma Ask `601:12062`); omitted for staff without reports.view. */
+    ask?: { open: boolean; onToggle: () => void; ref: Ref<HTMLButtonElement> };
     onSignOut: () => void;
     signingOut: boolean;
 };
@@ -144,15 +146,19 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
 
 /**
  * Figma Topbar 187:474 (≥1024) and Topbar / Tablet 228:1857 (<1024): 60 high, bg/surface,
- * border/default bottom edge, no shadow. Search 420 wide with ⌘K, Dhaka clock chip,
+ * border/default bottom edge, no shadow. Search 420 wide with ⌘K, Ask, Dhaka clock chip,
  * EN | বাং, theme, notifications, user menu. Below 1024 the menu button opens the drawer; from
  * 1280 (where the sidebar can expand) a collapse / expand button sits before the search.
+ * While the Ask AI panel pushes the page (from `dock`, 1720) the bar compacts (Figma 605:50940):
+ * search 200, the clock and View store hidden. Narrower, the panel docks below the bar, which
+ * stays whole. Ask shows pressed either way.
  */
-export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar({ me, roleLabel, onOpenMenu, collapsed, onToggleCollapsed, onSignOut, signingOut }, menuButtonRef) {
+export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar({ me, roleLabel, onOpenMenu, collapsed, onToggleCollapsed, ask, onSignOut, signingOut }, menuButtonRef) {
     const { t, locale } = useI18n();
     const { theme, toggle } = useTheme();
     const time = useDhakaTime(locale);
     const dark = theme === 'admin-dark';
+    const compact = ask?.open === true;
 
     return (
         <header className="sticky top-0 z-20 flex h-15 shrink-0 items-center gap-2 border-b border-line-default bg-surface px-4 md:gap-3 lg:gap-4 lg:px-6">
@@ -168,11 +174,25 @@ export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar
             </span>
 
             {/* Search is a placeholder until the global search endpoint lands. */}
-            <SearchField label={t('shell.search')} placeholder={t('shell.search')} shortcut="⌘K" className="hidden w-105 shrink lg:flex" />
+            <SearchField label={t('shell.search')} placeholder={t('shell.search')} shortcut="⌘K" className={`hidden w-105 shrink lg:flex ${compact ? 'dock:w-50' : ''}`} />
+
+            {ask && (
+                <button
+                    ref={ask.ref}
+                    type="button"
+                    onClick={ask.onToggle}
+                    aria-pressed={ask.open}
+                    title={t('askAi.openHint')}
+                    className={`${buttonClass('outline', 'md')} aria-pressed:border-line-brand aria-pressed:bg-brand-subtle aria-pressed:text-fg-brand max-sm:w-9 max-sm:px-0`}
+                >
+                    <SparkleIcon size={16} aria-hidden className="text-fg-brand" />
+                    <span className="max-sm:sr-only">{t('askAi.open')}</span>
+                </button>
+            )}
 
             <div className="flex-1" />
 
-            <span className="hidden h-6.5 items-center gap-1.5 rounded-xs bg-subtle px-2.5 t-admin-caption whitespace-nowrap text-fg-secondary tabular md:inline-flex">
+            <span className={`hidden h-6.5 items-center gap-1.5 rounded-xs bg-subtle px-2.5 t-admin-caption whitespace-nowrap text-fg-secondary tabular md:inline-flex ${compact ? 'dock:hidden' : ''}`}>
                 <ClockIcon size={14} aria-hidden />
                 {t('shell.timezone', { time })}
             </span>
@@ -183,7 +203,7 @@ export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar
                     rel="noopener noreferrer"
                     title={t('shell.viewSiteHint')}
                     aria-label={t('shell.viewSiteHint')}
-                    className={`${buttonClass('outline', 'sm')} gap-1.5`}
+                    className={`${buttonClass('outline', 'sm')} gap-1.5 ${compact ? 'dock:hidden' : ''}`}
                 >
                     <ArrowSquareOutIcon size={16} aria-hidden />
                     <span className="hidden md:inline">{t('shell.viewSite')}</span>

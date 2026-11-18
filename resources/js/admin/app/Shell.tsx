@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/shell/Sidebar';
 import { useInboxBadge } from '@/components/shell/useInboxBadge';
 import { useWorkingBranch } from '@/components/shell/workingBranch';
 import { Topbar } from '@/components/shell/Topbar';
+import { AskAiPanel } from '@/features/ai/advisor/AskAiPanel';
 import { can, useLogout, useMe } from '@/features/auth/api';
 import { useLowStockCount } from '@/features/inventory/api';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -28,6 +29,12 @@ function storedCollapsed(): boolean {
  *   <1024  no sidebar; Topbar / Tablet menu button opens the 248 drawer over a scrim
  *          (Figma Navigation drawer 230:22387); focus trapped, Esc closes, focus returns
  * The sidebar always renders in admin-dark, matching Figma.
+ *
+ * Ask AI (Figma B · 42 603:51917): from `dock` (1720) a 440 column on the right that pushes the
+ * page narrower, like the sidebar. Below that the page would be squeezed under the widths its
+ * viewport breakpoints assume (4 KPI columns in 752), so the panel docks over the page's right
+ * edge under the topbar (1024+) or covers it (<1024). It mounts on first open (so no advisor
+ * request until then) and stays mounted, so closing keeps the conversation.
  */
 export function Shell() {
     const { t } = useI18n();
@@ -49,6 +56,17 @@ export function Shell() {
     const inbox = useInboxBadge(can(me, 'inbox.view'));
     // The working branch (sidebar switcher): a per-device default for POS, purchases and stock screens.
     const working = useWorkingBranch();
+    const [askOpen, setAskOpen] = useState(false);
+    const [askMounted, setAskMounted] = useState(false);
+    const askButton = useRef<HTMLButtonElement>(null);
+    const toggleAsk = useCallback(() => {
+        setAskMounted(true);
+        setAskOpen((value) => !value);
+    }, []);
+    const closeAsk = useCallback(() => {
+        setAskOpen(false);
+        askButton.current?.focus();
+    }, []);
     const counts: Record<string, number | undefined> = { '/inventory': lowStock.data?.count, '/inbox': inbox.data?.count };
 
     const toggleCollapsed = useCallback(() => {
@@ -106,6 +124,7 @@ export function Shell() {
     const roleKey = `role.${me.roles[0] ?? ''}`;
     const roleLabel = roleKey in en ? t(roleKey as MessageKey) : (me.roles[0] ?? '');
     const user = { name: me.name, role: roleLabel, avatar: me.avatar_url };
+    const canAsk = can(me, 'reports.view');
     const branches = {
         multi: working.multi,
         locations: working.locations,
@@ -151,11 +170,30 @@ export function Shell() {
             )}
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <Topbar ref={menuButton} me={me} roleLabel={roleLabel} onOpenMenu={() => setDrawerOpen(true)} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSignOut={signOut} signingOut={logout.isPending} />
+                <Topbar
+                    ref={menuButton}
+                    me={me}
+                    roleLabel={roleLabel}
+                    onOpenMenu={() => setDrawerOpen(true)}
+                    collapsed={collapsed}
+                    onToggleCollapsed={toggleCollapsed}
+                    ask={canAsk ? { open: askOpen, onToggle: toggleAsk, ref: askButton } : undefined}
+                    onSignOut={signOut}
+                    signingOut={logout.isPending}
+                />
                 <main id="content" tabIndex={-1} className="flex-1 p-4 md:px-5 md:pt-5 md:pb-10 xl:px-6 xl:pt-6">
                     <Outlet />
                 </main>
             </div>
+
+            {canAsk && (
+                <div
+                    inert={!askOpen}
+                    className={`fixed inset-y-0 end-0 z-40 w-full overflow-hidden shadow-e4 sm:w-110 lg:top-15 lg:z-30 dock:sticky dock:top-0 dock:bottom-auto dock:z-auto dock:h-dvh dock:shrink-0 dock:shadow-none dock:transition-[width] dock:duration-(--tm-duration-slow) dock:ease-standard motion-reduce:transition-none ${askOpen ? '' : 'max-dock:hidden dock:w-0'}`}
+                >
+                    <div className="h-full w-full sm:w-110">{askMounted && <AskAiPanel open={askOpen} onClose={closeAsk} />}</div>
+                </div>
+            )}
         </div>
     );
 }

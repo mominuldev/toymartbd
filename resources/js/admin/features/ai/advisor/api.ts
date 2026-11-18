@@ -35,9 +35,14 @@ export function useDecideAction() {
     });
 }
 
-/** `POST /analytics/advisor/ask` — one question, answered from the report figures. */
+/**
+ * `POST /analytics/advisor/ask` — one question, answered from the report figures. `answerIn`
+ * picks the answer language (`?locale=`, which the API resolves ahead of Accept-Language);
+ * without it the answer follows the UI language.
+ */
 export function useAskAdvisor() {
     return useMutation({
-        mutationFn: (input: AskAdvisorRequestInput) => api<AdvisorAnswer>('/analytics/advisor/ask', { method: 'POST', body: JSON.stringify(input) }),
+        mutationFn: ({ answerIn, ...input }: AskAdvisorRequestInput & { answerIn?: 'en' | 'bn' }) =>
+            api<AdvisorAnswer>(`/analytics/advisor/ask${answerIn ? `?locale=${answerIn}` : ''}`, { method: 'POST', body: JSON.stringify(input) }),
     });
 }
