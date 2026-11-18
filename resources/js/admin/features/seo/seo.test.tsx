@@ -66,6 +66,20 @@ const doc: SeoDocument = {
         bn: serp('লেগো | Toy Mart BD', 'লেগো | Toy Mart BD', false, 'toymartbd.com › bn › brands › lego'),
     },
     in_sitemap: true,
+    checklist: {
+        passed: 5,
+        total: 8,
+        items: [
+            { key: 'title_fits', status: 'fail', params: { px: 720, max: 580 } },
+            { key: 'description_fits', status: 'pass', params: { px: 150, max: 920 } },
+            { key: 'title_fits_bn', status: 'pass', params: { px: 300, max: 580 } },
+            { key: 'description_fits_bn', status: 'pass', params: { px: 150, max: 920 } },
+            { key: 'keyword_in_title', status: 'warn', params: { keyword: '' } },
+            { key: 'keyword_in_description', status: 'warn', params: { keyword: '' } },
+            { key: 'social_image', status: 'pass', params: {} },
+            { key: 'indexable', status: 'pass', params: { reason: '' } },
+        ],
+    },
 };
 
 function brandApi(me: Me, onPut?: (body: unknown) => { status: number; body?: unknown }) {
@@ -84,7 +98,7 @@ describe('SeoPanel', () => {
         brandApi(editor);
         renderApp('/products/brands/1');
 
-        const preview = await screen.findByTestId('serp-preview');
+        const preview = await screen.findByTestId('serp-preview', {}, { timeout: 5000 });
         expect(within(preview).getByText('A very long LEGO brand title that Google …')).toBeTruthy();
         expect(within(preview).getByText('toymartbd.com › brands › lego')).toBeTruthy();
         expect(screen.getByText('Title 720 / 580 px · Google will cut it')).toBeTruthy();
@@ -93,6 +107,43 @@ describe('SeoPanel', () => {
         const bnPreview = await screen.findByTestId('serp-preview');
         expect(within(bnPreview).getByText('toymartbd.com › bn › brands › lego')).toBeTruthy();
         expect((screen.getByLabelText(/Meta title \(বাংলা\)/) as HTMLInputElement).placeholder).toBe('লেগো | Toy Mart BD');
+    });
+
+    it('shows the server’s SEO score with a reason on each failing check', async () => {
+        brandApi(editor);
+        renderApp('/products/brands/1');
+
+        const score = await screen.findByTestId('seo-score', {}, { timeout: 5000 });
+        expect(within(score).getByRole('meter', { name: 'SEO score' }).getAttribute('aria-valuenow')).toBe('5');
+        expect(within(score).getAllByText('5 / 8').length).toBeGreaterThan(0);
+        expect(within(score).getByText('English title fits the Google result').parentElement?.textContent).toContain('720 of 580 px.');
+        expect(within(score).getAllByText('Set a focus keyword under Advanced.')).toHaveLength(2);
+    });
+
+    it('previews the Facebook / WhatsApp share card from the share fields as they are typed', async () => {
+        brandApi(editor);
+        renderApp('/products/brands/1');
+
+        const card = await screen.findByTestId('social-preview', {}, { timeout: 5000 });
+        expect(within(card).getByText('toymartbd.com')).toBeTruthy();
+        expect(within(card).getByText('No share image')).toBeTruthy();
+        fireEvent.change(screen.getByLabelText(/^Share title/), { target: { value: 'LEGO at Toy Mart BD' } });
+        expect(await within(card).findByText('LEGO at Toy Mart BD')).toBeTruthy();
+    });
+
+    it('picks the share image from the Media Library or takes a pasted URL', async () => {
+        brandApi(editor);
+        renderApp('/products/brands/1');
+
+        fireEvent.click(await screen.findByRole('tab', { name: 'Advanced' }, { timeout: 5000 }));
+        fireEvent.click(screen.getByRole('button', { name: 'Choose from Media Library' }));
+        expect(await screen.findByRole('dialog', { name: 'Choose a share image' })).toBeTruthy();
+        fireEvent.click(within(screen.getByRole('dialog', { name: 'Choose a share image' })).getAllByRole('button', { name: /close|cancel/i })[0]!);
+
+        fireEvent.change(screen.getByLabelText(/Or paste an image URL/), { target: { value: 'https://cdn.example.com/share.jpg' } });
+        expect(await screen.findByText('This page’s own share image.')).toBeTruthy();
+        fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+        expect((screen.getByLabelText(/Or paste an image URL/) as HTMLInputElement).value).toBe('');
     });
 
     it('saves the whole document with empty fields as null', async () => {

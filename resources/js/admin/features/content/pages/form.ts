@@ -16,27 +16,10 @@ export type PageForm = {
     status: 'draft' | 'published' | 'archived';
     /** datetime-local value, Dhaka time. */
     published_at: string;
-    seo: {
-        title: string;
-        title_bn: string;
-        description: string;
-        description_bn: string;
-        canonical_url: string;
-        robots: 'index,follow' | 'noindex,follow' | 'index,nofollow' | 'noindex,nofollow';
-        sitemap_exclude: boolean;
-        og_title: string;
-        og_description: string;
-        og_image: string;
-        twitter_card: 'summary_large_image' | 'summary';
-        focus_keyword: string;
-    };
     acknowledge_slug_redirect: boolean;
 };
 
-const robots = ['index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow'] as const;
-
 export function toPageForm(page?: CmsPage): PageForm {
-    const seo = page?.seo;
     return {
         title: page?.title ?? '',
         title_bn: page?.title_bn ?? '',
@@ -47,20 +30,6 @@ export function toPageForm(page?: CmsPage): PageForm {
         template: page?.template ?? 'default',
         status: page?.status ?? 'draft',
         published_at: toDhakaInput(page?.published_at),
-        seo: {
-            title: seo?.title ?? '',
-            title_bn: seo?.title_bn ?? '',
-            description: seo?.description ?? '',
-            description_bn: seo?.description_bn ?? '',
-            canonical_url: seo?.canonical_url ?? '',
-            robots: (robots as readonly string[]).includes(seo?.robots ?? '') ? (seo!.robots as PageForm['seo']['robots']) : 'index,follow',
-            sitemap_exclude: seo?.sitemap_exclude ?? false,
-            og_title: seo?.og_title ?? '',
-            og_description: seo?.og_description ?? '',
-            og_image: seo?.og_image ?? '',
-            twitter_card: seo?.twitter_card === 'summary' ? 'summary' : 'summary_large_image',
-            focus_keyword: seo?.focus_keyword ?? '',
-        },
         acknowledge_slug_redirect: false,
     };
 }
@@ -72,6 +41,7 @@ const orNull = (value: string): string | null => (value.trim() === '' ? null : v
  * list exactly as stored (sections replaced them, but a PUT must not wipe them);
  * `acknowledge_slug_redirect` only when the slug of a live page actually changes.
  */
+/** SEO is not part of the page form: the SEO panel below it saves `seo_meta` on its own, so the PUT leaves it untouched. */
 export function toPagePayload(form: PageForm, page?: CmsPage): CmsPageInput {
     const slug = orNull(form.slug);
     const slugChanged = page !== undefined && slug !== null && slug !== page.slug;
@@ -85,20 +55,6 @@ export function toPagePayload(form: PageForm, page?: CmsPage): CmsPageInput {
         status: form.status,
         published_at: fromDhakaInput(form.published_at),
         faq_items: form.faq_items,
-        seo: {
-            title: orNull(form.seo.title),
-            title_bn: orNull(form.seo.title_bn),
-            description: orNull(form.seo.description),
-            description_bn: orNull(form.seo.description_bn),
-            canonical_url: orNull(form.seo.canonical_url),
-            robots: form.seo.robots,
-            sitemap_exclude: form.seo.sitemap_exclude,
-            og_title: orNull(form.seo.og_title),
-            og_description: orNull(form.seo.og_description),
-            og_image: orNull(form.seo.og_image),
-            twitter_card: form.seo.twitter_card,
-            focus_keyword: orNull(form.seo.focus_keyword),
-        },
     };
     if (slugChanged && page?.state === 'live' && form.acknowledge_slug_redirect) payload.acknowledge_slug_redirect = true;
     return payload;

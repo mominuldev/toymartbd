@@ -216,7 +216,8 @@ deptrac:
     # Reporting reads the read models of the domains it reports on (P8 batch 1 brief).
     Reporting: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Finance, Inventory, Fulfilment]
     # Credit notes (P8 batch 2) read the paid refund (Payment\Models\Refund) they credit.
-    Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing, Payment]
+    # Invoicing owns the store identity, so it also provides the homepage's SEO subject (HomeSeoSubjects).
+    Invoicing: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Purchasing, Payment, SeoContracts]
     # Monitoring reads the domains it watches (P10); nothing depends on it except Http and Providers.
     Monitoring: [Support, Models, DomainEvents, Catalog, Customer, Ordering, Fulfilment, Notification, NotificationContracts]
     # Staff reads Catalog's ImagePipeline/MediaUrls to sanitise a profile photo (My account, B · 40).

@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Domain\Catalog\Events\BrandChanged;
 use App\Domain\Catalog\Events\CategoryChanged;
 use App\Domain\Content\Listeners\RevalidateSeoPages;
+use App\Domain\Invoicing\Seo\HomeSeoSubjects;
 use App\Domain\Seo\Actions\SaveSeoMeta;
 use App\Domain\Seo\Contracts\SeoMetaStore;
 use App\Domain\Seo\Contracts\SeoSubjectProvider;
@@ -31,7 +32,7 @@ final class SeoServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->tag([ProductSubjects::class, CategorySubjects::class, BrandSubjects::class, PageSubjects::class], SeoSubjectProvider::TAG);
+        $this->app->tag([ProductSubjects::class, CategorySubjects::class, BrandSubjects::class, PageSubjects::class, HomeSeoSubjects::class], SeoSubjectProvider::TAG);
         // Content writes its posts' seo_meta through this contract (no Content → Seo dependency).
         $this->app->bind(SeoMetaStore::class, SaveSeoMeta::class);
         $this->app->scoped(SeoSubjects::class);

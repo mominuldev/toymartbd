@@ -95,6 +95,7 @@ import { BannerFormPage } from '@/features/content/banners/BannerFormPage';
 import { TestimonialsPage } from '@/features/content/testimonials/TestimonialsPage';
 import { TestimonialFormPage } from '@/features/content/testimonials/TestimonialFormPage';
 import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
+import { HomeSettingsPage } from '@/features/content/home/HomeSettingsPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
@@ -210,8 +211,6 @@ export const routes: RouteObject[] = [
                     { path: 'risk/queue', element: <VerificationQueuePage /> },
                     { path: 'risk/lookup', element: <PhoneLookupPage /> },
                     { path: 'risk/rules', element: <RiskRulesPage /> },
-                    // Online store: the media library (Figma 303:53185) is its first screen; the
-                    // section's other pages are still to come.
                     // P7 Marketing: coupons + builder (Figma B · 20 241:42268), promotions and flash sales
                     // (B · 20 builder layout, no frame of their own), abandoned carts (B · 21 241:42726).
                     { path: 'marketing', element: <Navigate to="/marketing/coupons" replace /> },
@@ -226,11 +225,14 @@ export const routes: RouteObject[] = [
                     { path: 'marketing/flash-sales/new', element: <PromotionFormPage flash key="flash-new" /> },
                     { path: 'marketing/flash-sales/:promotionId', element: <PromotionFormPage flash key="flash-edit" /> },
                     { path: 'marketing/abandoned-carts', element: <AbandonedCartsPage /> },
-                    { path: 'store', element: <Navigate to="/store/media" replace /> },
+                    // Online store opens on Pages; the media library (Figma 303:53185) is its last submenu item.
+                    { path: 'store', element: <Navigate to="/store/pages" replace /> },
                     { path: 'store/media', element: <MediaLibraryPage /> },
                     // P7 Pages & navigation (Figma B · 27 241:45525): pages, header/footer/mobile menus;
                     // banners and testimonials have no frame and share the same tab row.
                     { path: 'store/pages', element: <PagesPage /> },
+                    // Home → Edit: the homepage's SEO (owner request 2026-11-18); its builder is /store/home.
+                    { path: 'store/home/settings', element: <HomeSettingsPage /> },
                     { path: 'store/pages/new', element: <PageFormPage /> },
                     { path: 'store/pages/:pageId', element: <PageFormPage /> },
                     { path: 'store/navigation', element: <Navigate to="/store/navigation/header" replace /> },

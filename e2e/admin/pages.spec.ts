@@ -44,11 +44,26 @@ test('home in the pages list, and a new page built from sections', async ({ page
     if (shots) await page.screenshot({ path: `${shots}/page-builder.png` });
 
     await page.getByRole('link', { name: 'Page settings' }).click();
+    // Settings: details and the SEO panel share the left column; the save bar closes the page.
+    await expect(page.getByTestId('seo-score')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save SEO' })).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/page-settings.png`, fullPage: true });
     await expect(page.getByRole('link', { name: 'Edit sections' })).toHaveAttribute('href', /\/store\/pages\/\d+\/build$/);
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Page saved')).toBeVisible();
 
     await page.goto('/admin/store/pages');
     await expect(list.getByRole('link', { name: 'Returns policy', exact: true })).toHaveAttribute('href', /\/store\/pages\/\d+\/build$/);
-    await expect(list.getByRole('link', { name: 'Settings for Returns policy' })).toHaveAttribute('href', /\/store\/pages\/\d+$/);
+    await list.getByRole('button', { name: 'Actions for Returns policy' }).click();
+    const menu = page.getByRole('menu', { name: 'Actions for Returns policy' });
+    await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Edit sections', 'Preview', 'Archive']);
+    await expect(menu.getByRole('menuitem', { name: 'Edit', exact: true })).toHaveAttribute('href', /\/store\/pages\/\d+$/);
+    await page.keyboard.press('Escape');
+
+    // Home → Edit: the homepage's SEO settings.
+    await list.getByRole('button', { name: 'Actions for Home' }).click();
+    await page.getByRole('menu', { name: 'Actions for Home' }).getByRole('menuitem', { name: 'Edit', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Home settings' })).toBeVisible();
+    await expect(page.getByTestId('seo-score')).toBeVisible();
+    if (shots) await page.screenshot({ path: `${shots}/home-settings.png`, fullPage: true });
 });

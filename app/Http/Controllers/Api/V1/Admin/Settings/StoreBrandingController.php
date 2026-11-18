@@ -8,6 +8,7 @@ use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Content\Jobs\RevalidateStorefrontTags;
 use App\Domain\Invoicing\Actions\UpdateStoreBranding;
 use App\Domain\Invoicing\Jobs\RenderStoreFavicons;
+use App\Domain\Invoicing\Seo\HomeSeoSubjects;
 use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Domain\Invoicing\Services\StoreBranding;
 use App\Domain\Seo\Services\SiteUrl;
@@ -41,7 +42,8 @@ final class StoreBrandingController extends ApiController
         $iconChanged = $update->handle($data, is_int($userId) ? $userId : null);
 
         // The storefront chrome and metadata show these values: purge its cache. Queued, after commit.
-        RevalidateStorefrontTags::dispatch([StoreInfoController::CACHE_TAG]);
+        // `home:home` is the homepage's SEO document, whose defaults are these texts (HomeSeoSubjects).
+        RevalidateStorefrontTags::dispatch([StoreInfoController::CACHE_TAG, HomeSeoSubjects::TYPE.':'.HomeSeoSubjects::SLUG]);
         $icon = $data->media['icon_media_id'] ?? null;
         if ($iconChanged && $icon !== null) {
             // Render the PNG favicons, then purge again so the storefront picks them up.

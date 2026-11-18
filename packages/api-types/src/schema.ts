@@ -16207,7 +16207,10 @@ export interface components {
             og_title_bn?: string | null;
             og_description?: string | null;
             og_description_bn?: string | null;
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description Media Library picks are served over http on a local machine; production stays https-only.
+             */
             og_image?: string | null;
             /** Format: uri */
             canonical_url?: string | null;
@@ -16334,6 +16337,20 @@ export interface components {
                 };
             };
             in_sitemap: boolean;
+            /** @description The SEO score: server-computed checks on the saved document. */
+            checklist: {
+                passed: number;
+                total: number;
+                items: {
+                    /** @enum {string} */
+                    key: "title_fits" | "description_fits" | "title_fits_bn" | "description_fits_bn" | "keyword_in_title" | "keyword_in_description" | "social_image" | "indexable";
+                    /** @enum {string} */
+                    status: "pass" | "warn" | "fail";
+                    params: {
+                        [key: string]: number | string;
+                    };
+                }[];
+            };
         };
         /**
          * SeoMeasureRequest

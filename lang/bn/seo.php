@@ -8,7 +8,9 @@ declare(strict_types=1);
 */
 return [
     'site_name' => 'Toy Mart BD',
+    'home_tagline' => 'সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।',
     'default_description' => [
+        'home' => '0–12 বছরের খেলনা, প্রতিটিতে বয়স, দাম আর স্টক পরিষ্কার লেখা। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
         'category' => 'Toy Mart BD-তে অনলাইনে :name খেলনা কিনুন। আসল পণ্য, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
         'brand' => 'Toy Mart BD-তে আসল :name খেলনা কিনুন। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
         'page' => ':name — Toy Mart BD।',

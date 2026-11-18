@@ -80,7 +80,6 @@ describe('app shell', () => {
         const submenu = await within(nav).findByRole('list', { name: 'Online store' });
 
         expect(within(submenu).getAllByRole('link').map((a) => a.textContent)).toEqual([
-            'Homepage',
             'Pages',
             'Navigation',
             'Blog',
@@ -90,6 +89,17 @@ describe('app shell', () => {
         ]);
         expect(within(submenu).getByRole('link', { name: 'Banners' }).getAttribute('aria-current')).toBe('page');
         expect(within(submenu).getByRole('link', { name: 'Pages' }).getAttribute('aria-current')).toBeNull();
+    });
+
+    it('opens Online store on Pages, not the media library', async () => {
+        signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
+        renderApp('/store');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        const submenu = await within(nav).findByRole('list', { name: 'Online store' });
+
+        await waitFor(() => expect(within(submenu).getByRole('link', { name: 'Pages' }).getAttribute('aria-current')).toBe('page'));
+        expect(within(submenu).getByRole('link', { name: 'Media library' }).getAttribute('aria-current')).toBeNull();
     });
 
     it('keeps the Online store submenu closed outside the store', async () => {

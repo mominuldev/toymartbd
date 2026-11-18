@@ -13,6 +13,7 @@ import { QueryError } from '@/components/ui/QueryError';
 import { Select } from '@/components/ui/Select';
 import { tabClass } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
+import { OgImageField, SeoScore, SocialCard } from './SeoExtras';
 import { robotsDirectives, twitterCards, useSaveSeoDocument, useSeoDocument, useSerpPreview, type SeoDocument, type SeoInput, type SeoLocale, type SerpPreview } from './api';
 
 type FormValues = {
@@ -130,7 +131,8 @@ function SeoForm({ type, id, doc }: { type: string; id: number; doc: SeoDocument
             return Object.keys(result.errors).length > 0 ? { values: {}, errors: result.errors as never } : { values, errors: {} };
         },
     });
-    const { register, handleSubmit, setError, formState, reset, control } = form;
+    const { register, handleSubmit, setError, formState, reset, control, setValue } = form;
+    const ogImage = useWatch({ control, name: 'og_image' });
     useEffect(() => reset(toForm(doc)), [doc, reset]);
 
     const errorOf = (field: keyof FormValues) => formState.errors[field]?.message;
@@ -166,6 +168,9 @@ function SeoForm({ type, id, doc }: { type: string; id: number; doc: SeoDocument
                 </h2>
                 <p className="t-admin-caption text-fg-secondary">{t('seo.panel.hint')}</p>
             </div>
+            <div className="px-5 pt-4">
+                <SeoScore checklist={doc.checklist} />
+            </div>
 
             <div role="tablist" aria-label={t('seo.panel.title')} className="scrollbar-none flex gap-1 overflow-x-auto border-b border-line-default px-5 pt-2">
                 {tabs.map((item) => (
@@ -196,9 +201,17 @@ function SeoForm({ type, id, doc }: { type: string; id: number; doc: SeoDocument
 
                 {tab === 'advanced' && (
                     <>
-                        <Field label={t('seo.panel.ogImage')} hint={t('seo.panel.ogImageHint')} error={errorOf('og_image')} optional>
-                            {(ids) => <input {...inputProps(ids)} type="url" spellCheck={false} placeholder={doc.defaults.og_image ?? 'https://'} className={`${controlHeight.md} ${monoInputClass}`} {...register('og_image')} />}
-                        </Field>
+                        <OgImageField
+                            value={ogImage ?? ''}
+                            fallback={doc.defaults.og_image}
+                            disabled={!editable || save.isPending}
+                            onChange={(url) => setValue('og_image', url, { shouldDirty: true, shouldValidate: true })}
+                            urlInput={
+                                <Field label={t('seo.ogImage.url')} hint={t('seo.panel.ogImageHint')} error={errorOf('og_image')} optional>
+                                    {(ids) => <input {...inputProps(ids)} type="url" spellCheck={false} placeholder={doc.defaults.og_image ?? 'https://'} className={`${controlHeight.md} ${monoInputClass}`} {...register('og_image')} />}
+                                </Field>
+                            }
+                        />
                         <Field label={t('seo.panel.twitterCard')} error={errorOf('twitter_card')}>
                             {(ids) => (
                                 <Select {...inputProps(ids)} {...register('twitter_card')}>
@@ -295,6 +308,15 @@ function LocaleFields({ locale, doc, form, control, errorOf }: LocaleFieldsProps
                     {(ids) => <textarea {...inputProps(ids)} lang={lang} rows={2} placeholder={description} className={`${inputClass} py-2`} {...register(f('og_description'))} />}
                 </Field>
             </div>
+
+            <SocialCard
+                heading={t(bn ? 'seo.social.headingBn' : 'seo.social.heading')}
+                lang={lang}
+                image={(values.og_image ?? '').trim() || doc.defaults.og_image}
+                host={hostOf(doc.urls[locale])}
+                title={(values[f('og_title')] ?? '').trim() || title}
+                description={(values[f('og_description')] ?? '').trim() || description}
+            />
         </>
     );
 }
@@ -320,6 +342,14 @@ function SerpCard({ preview, heading, lang }: { preview: SerpPreview; heading: s
             </ul>
         </div>
     );
+}
+
+function hostOf(url: string): string {
+    try {
+        return new URL(url).host;
+    } catch {
+        return url;
+    }
 }
 
 function inputProps({ id, describedBy, invalid }: { id: string; describedBy: string | undefined; invalid: boolean }) {

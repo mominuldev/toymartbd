@@ -200,7 +200,7 @@ it('purges the storefront store-info cache on save, and queues the favicons only
     $icon = brandingImage(1024, 1024);
 
     $this->putJson(BRANDING_URL, brandingBody(['icon_media_id' => $icon->id]))->assertOk();
-    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['store-info']);
+    Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['store-info', 'home:home']);
     Queue::assertPushedWithChain(RenderStoreFavicons::class, [RevalidateStorefrontTags::class], fn (RenderStoreFavicons $job): bool => $job->mediaId === $icon->id);
     Queue::assertPushed(RenderStoreFavicons::class, 1);
 

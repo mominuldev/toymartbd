@@ -16,6 +16,7 @@ these helpers; nothing builds its own `<head>`, JSON-LD, sitemap entry or redire
 | `page` | `/{slug}` (site root) | `PageSubjects` (CMS `CmsPage::MORPH`) — live = published, `published_at` reached. A slug may not be a storefront route's first segment (`CmsPage::RESERVED_SLUGS`); the old `/pages/{slug}` URLs redirect permanently (storefront `next.config.ts`) |
 | `blog_post` | `/blog/{slug}` (article) · `/guides/{slug}` (buying guide) | `Content\Blog\Seo\BlogPostSeoSubjects` (`BlogPost::SEO_TYPE`) |
 | `blog_category` · `blog_tag` · `blog_author` | `/blog/category/{slug}` · `/blog/tag/{slug}` · `/blog/author/{slug}` | `Content\Blog\Seo\Blog{Category,Tag,Author}SeoSubjects` — live = at least one live post |
+| `home` | `/` (singleton: id `1`, slug `home`) | `Invoicing\Seo\HomeSeoSubjects` — always live, no sitemap rows (the builder lists `/` itself). Defaults are Site & branding: title `{site name}{separator}{tagline}` (absolute), the branding description, the branding share image — the storefront's head before the document existed. A branding save purges `home:home` |
 
 Blog archives are in the SEO panel (admin Blog → Categories / Tags / Authors, when editing one),
 the `blog` sitemap partition (both locales, hreflang) and the storefront archive `<head>`.
@@ -65,7 +66,7 @@ transaction (`SaveProductWithSeo`); categories and brands are recorded from `Cat
 
 | Method | Path | |
 |---|---|---|
-| GET | `/seo/meta/{type}/{id}` | `SeoDocument`: stored overrides (null = unset), server defaults, both-locale SERP previews, URLs |
+| GET | `/seo/meta/{type}/{id}` | `SeoDocument`: stored overrides (null = unset), server defaults, both-locale SERP previews, URLs, and `checklist` — the SEO score (`SeoDocuments::checklist`: both titles and descriptions fit, focus keyword in title/description, share image, indexable), computed on the saved document |
 | PUT | `/seo/meta/{type}/{id}` | save the whole document (`SaveSeoMetaRequest`); returns `SeoDocument`; revalidates the page |
 | POST | `/seo/serp-preview` | `{title, description, url, locale}` → measured + truncated preview for unsaved text |
 | GET | `/seo/redirects` | manual redirects; `filter[q]`, `filter[status_code]`, `filter[is_active]`, `sort` ∈ `from_path,-hit_count,-last_hit_at,-created_at` |
@@ -97,6 +98,8 @@ Truncation is computed on the server at Google's desktop pixel metric (`SerpMeas
 - **No chains:** a target that is itself redirected is stored as its final target, and redirects
   that pointed at the new `from_path` are re-pointed to the new target. A → B → C is stored A → C.
 - `status_code` ∈ 301 | 302. `hit_count` / `last_hit_at` count storefront hits.
+
+**Share image.** `og_image` is an absolute URL; the admin panel fills it from the Media Library (the image's `large` rendition) or takes a pasted one. `https` only in production; `http` is accepted elsewhere because local media is served over http.
 
 ## 3. Storefront API (`/api/v1/storefront/*`, `storefront:read`)
 

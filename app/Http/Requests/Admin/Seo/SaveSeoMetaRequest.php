@@ -34,7 +34,8 @@ final class SaveSeoMetaRequest extends ApiFormRequest
             'og_title_bn' => ['nullable', 'string', 'max:191'],
             'og_description' => ['nullable', 'string', 'max:500'],
             'og_description_bn' => ['nullable', 'string', 'max:500'],
-            'og_image' => ['nullable', 'string', 'max:2048', 'url:https'],
+            // Media Library picks are served over http on a local machine; production stays https-only.
+            'og_image' => ['nullable', 'string', 'max:2048', app()->isProduction() ? 'url:https' : 'url:http,https'],
             'canonical_url' => ['nullable', 'string', 'max:2048', 'url:https'],
             'robots' => ['sometimes', 'nullable', Rule::enum(RobotsDirective::class)],
             'sitemap_exclude' => ['sometimes', 'boolean'],

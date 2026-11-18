@@ -14,6 +14,7 @@ use App\Domain\Seo\Models\SeoMeta;
  * back to Bangla first (title_bn → name_bn) and only then to English.
  *
  * @phpstan-type LocaleSeo array{title: string, description: string, og_title: string, og_description: string}
+ * @phpstan-type ChecklistItem array{key: string, status: 'pass'|'warn'|'fail', params: array<string, int|string>}
  */
 final readonly class SeoDocuments
 {
@@ -35,8 +36,8 @@ final readonly class SeoDocuments
         }
 
         return [
-            'title' => SiteTitle::of($subject->name),
-            'title_bn' => SiteTitle::of($nameBn),
+            'title' => $subject->tagline !== null ? $subject->name.SiteTitle::separator().$subject->tagline : SiteTitle::of($subject->name),
+            'title_bn' => $subject->taglineBn !== null ? $nameBn.SiteTitle::separator().$subject->taglineBn : SiteTitle::of($nameBn),
             'description' => $description,
             'description_bn' => $descriptionBn,
             'og_image' => $subject->image,
@@ -89,6 +90,52 @@ final readonly class SeoDocuments
     public function robots(?SeoMeta $meta): RobotsDirective
     {
         return $meta === null ? RobotsDirective::IndexFollow : $meta->robots;
+    }
+
+    /**
+     * The SEO score of any subject's saved document (the panel's checklist): both search
+     * results fit, the focus keyword is in the title and description, there is a share image,
+     * and search engines may index the page. Same item shape as ProductSeo::checklist.
+     *
+     * @return array{passed: int, total: int, items: list<ChecklistItem>}
+     */
+    public function checklist(SeoSubject $subject, ?SeoMeta $meta): array
+    {
+        $effective = $this->effective($subject, $meta);
+        $items = [];
+
+        foreach (['en' => '', 'bn' => '_bn'] as $locale => $suffix) {
+            $title = $this->measure->title($effective[$locale]['title']);
+            $description = $this->measure->description($effective[$locale]['description']);
+            $items[] = ['key' => 'title_fits'.$suffix, 'status' => $title['fits'] ? 'pass' : 'fail', 'params' => ['px' => $title['px'], 'max' => $title['max']]];
+            $items[] = [
+                'key' => 'description_fits'.$suffix,
+                'status' => $effective[$locale]['description'] === '' ? 'fail' : ($description['fits'] ? 'pass' : 'warn'),
+                'params' => ['px' => $description['px'], 'max' => $description['max']],
+            ];
+        }
+
+        $keyword = trim((string) $meta?->focus_keyword);
+        $has = static fn (string $text): bool => $keyword !== '' && mb_stripos($text, $keyword) !== false;
+        $items[] = ['key' => 'keyword_in_title', 'status' => $has($effective['en']['title']) || $has($effective['bn']['title']) ? 'pass' : 'warn', 'params' => ['keyword' => $keyword]];
+        $items[] = ['key' => 'keyword_in_description', 'status' => $has($effective['en']['description']) || $has($effective['bn']['description']) ? 'pass' : 'warn', 'params' => ['keyword' => $keyword]];
+
+        $image = $meta->og_image ?? $subject->image;
+        $items[] = ['key' => 'social_image', 'status' => $image !== null && $image !== '' ? 'pass' : 'warn', 'params' => []];
+
+        $reason = match (true) {
+            ! $subject->isLive => 'not_live',
+            ! $this->robots($meta)->indexable() => 'noindex',
+            $meta?->canonical_url !== null => 'canonical',
+            default => '',
+        };
+        $items[] = ['key' => 'indexable', 'status' => $reason === '' ? 'pass' : 'warn', 'params' => ['reason' => $reason]];
+
+        return [
+            'passed' => count(array_filter($items, static fn (array $i): bool => $i['status'] === 'pass')),
+            'total' => count($items),
+            'items' => $items,
+        ];
     }
 
     /** Listed in the sitemap: live, indexable and not excluded. */

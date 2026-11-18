@@ -95,7 +95,6 @@ export const navigation: NavGroup[] = [
                 icon: BrowserIcon,
                 permission: 'content.view',
                 children: [
-                    { key: 'nav.store.home', path: '/store/home' },
                     { key: 'nav.store.pages', path: '/store/pages' },
                     { key: 'nav.store.navigation', path: '/store/navigation' },
                     { key: 'nav.store.blog', path: '/store/blog' },

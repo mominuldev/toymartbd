@@ -78,6 +78,12 @@ final class SeoDocumentResource extends ApiResource
             'serp' => $docs->serp($subject, $meta),
             /** @var bool */
             'in_sitemap' => $docs->inSitemap($subject, $meta),
+            /**
+             * The SEO score: server-computed checks on the saved document.
+             *
+             * @var array{passed: int, total: int, items: list<array{key: 'title_fits'|'description_fits'|'title_fits_bn'|'description_fits_bn'|'keyword_in_title'|'keyword_in_description'|'social_image'|'indexable', status: 'pass'|'warn'|'fail', params: array<string, int|string>}>}
+             */
+            'checklist' => $docs->checklist($subject, $meta),
         ];
     }
 }

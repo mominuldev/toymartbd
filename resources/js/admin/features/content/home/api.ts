@@ -134,6 +134,14 @@ export function useRevert(base: LayoutBase) {
     });
 }
 
+/** Mints a one-off preview token + URL, for a preview opened outside the builder (the Pages row menu). */
+export function useIssuePreview() {
+    return useMutation({
+        mutationFn: ({ base, locale }: { base: LayoutBase; locale: 'en' | 'bn' }) =>
+            api<CmsPreviewToken>(`${base}/preview-token`, { method: 'POST', body: JSON.stringify({ locale }) }),
+    });
+}
+
 /** A fresh preview token + URL. Tokens live 10 minutes; the builder re-mints one every 8. */
 export function usePreviewToken(base: LayoutBase, locale: 'en' | 'bn', enabled: boolean) {
     return useQuery({

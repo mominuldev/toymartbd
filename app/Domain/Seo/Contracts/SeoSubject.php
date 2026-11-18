@@ -28,5 +28,11 @@ final readonly class SeoSubject
         public ?string $image,
         public bool $isLive,
         public ?CarbonImmutable $updatedAt,
+        /**
+         * When set, the default title is "{name}{separator}{tagline}" (the homepage's) instead
+         * of "{name}{separator}{site name}".
+         */
+        public ?string $tagline = null,
+        public ?string $taglineBn = null,
     ) {}
 }

@@ -19,6 +19,7 @@ enum SeoableType: string
     case BlogCategory = 'blog_category';
     case BlogTag = 'blog_tag';
     case BlogAuthor = 'blog_author';
+    case Home = 'home';
 
     /** Catalogue paths (the content types' paths come from their providers). */
     public function catalogPrefix(): ?string

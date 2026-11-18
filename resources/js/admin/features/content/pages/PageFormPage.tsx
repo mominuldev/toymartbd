@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowUUpLeftIcon, SquaresFourIcon } from '@phosphor-icons/react';
 import { cmsPageRequestSchema } from '@toymart/api-types/zod';
@@ -15,6 +15,7 @@ import { Select } from '@/components/ui/Select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
+import { SeoPanel } from '@/features/seo';
 import { PageStateChip } from '../shared/PageStateChip';
 import { apiFieldErrors, issuesToErrors, type FieldErrors } from '../shared/errors';
 import { SITE_HOST } from './PagesPage';
@@ -24,7 +25,7 @@ import { toPageForm, toPagePayload, type PageForm } from './form';
 const URL_PREFIX = `${SITE_HOST}/`;
 
 /**
- * Create a static page and edit its settings — title, URL, status, template, SEO. No dedicated
+ * Create a static page and edit its settings — title, URL, status, template; its SEO panel sits under the details. No dedicated
  * Figma frame: Product edit (B · 12 241:37883) language. The page body is sections, edited in
  * the page builder (owner decision 2026-11-16); "Edit sections" opens it, and a new page goes
  * straight there once created.
@@ -51,9 +52,9 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
     const [errors, setErrors] = useState<FieldErrors>({});
     const [confirming, setConfirming] = useState(false);
     const editable = can(me, 'content.manage');
+    const formId = useId();
 
     const set = <K extends keyof PageForm>(key: K, value: PageForm[K]) => setForm((f) => ({ ...f, [key]: value }));
-    const setSeo = <K extends keyof PageForm['seo']>(key: K, value: PageForm['seo'][K]) => setForm((f) => ({ ...f, seo: { ...f.seo, [key]: value } }));
     const err = (field: string) => errors[field];
 
     const slugChanged = page !== undefined && page.state === 'live' && form.slug.trim() !== '' && form.slug.trim() !== page.slug;
@@ -97,34 +98,6 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
             )}
         </Field>
     );
-    const seoText = (key: keyof PageForm['seo'], label: MessageKey, opts: { lang?: string; hint?: string; area?: boolean } = {}): ReactNode => (
-        <Field label={t(label)} hint={opts.hint} error={err(`seo.${key}`)} optional>
-            {({ id: fid, describedBy, invalid }) =>
-                opts.area ? (
-                    <textarea
-                        id={fid}
-                        rows={2}
-                        lang={opts.lang}
-                        aria-describedby={describedBy}
-                        aria-invalid={invalid || undefined}
-                        className={`py-2 ${inputClass}`}
-                        value={form.seo[key] as string}
-                        onChange={(e) => setSeo(key, e.target.value as never)}
-                    />
-                ) : (
-                    <input
-                        id={fid}
-                        lang={opts.lang}
-                        aria-describedby={describedBy}
-                        aria-invalid={invalid || undefined}
-                        className={`h-10 ${inputClass}`}
-                        value={form.seo[key] as string}
-                        onChange={(e) => setSeo(key, e.target.value as never)}
-                    />
-                )
-            }
-        </Field>
-    );
 
     return (
         <section className="flex flex-col gap-6">
@@ -142,55 +115,37 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                 }
             />
 
-            <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-                <fieldset disabled={!editable || save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-                    <div className="flex min-w-0 flex-col gap-6">
-                        <FormSection title={t('content.pages.section.details')}>
-                            <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
-                                {text('title', 'content.pages.field.title')}
-                                {text('title_bn', 'content.pages.field.titleBn', { lang: 'bn', hint: t('content.pages.field.titleBnHint'), optional: true })}
-                            </div>
-                            <p className="t-admin-caption text-fg-secondary">{t(id === null ? 'content.pages.sectionsHintNew' : 'content.pages.sectionsHint')}</p>
-                        </FormSection>
+            {/*
+              * One grid for the page: details and the SEO panel on the left, publishing on the right.
+              * The SEO panel is its own <form> (forms cannot nest), so the page form wraps only the
+              * details; the rail's fields are React state like the rest, and Save joins the form
+              * through its `form` attribute. The sticky save bar closes the page, below everything.
+              */}
+            <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+                <div className="flex min-w-0 flex-col gap-6">
+                    <form id={formId} onSubmit={submit} noValidate>
+                        <fieldset disabled={!editable || save.isPending} className="flex min-w-0 flex-col gap-6">
+                            <FormSection title={t('content.pages.section.details')}>
+                                <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                                    {text('title', 'content.pages.field.title')}
+                                    {text('title_bn', 'content.pages.field.titleBn', { lang: 'bn', hint: t('content.pages.field.titleBnHint'), optional: true })}
+                                </div>
+                                <p className="t-admin-caption text-fg-secondary">{t(id === null ? 'content.pages.sectionsHintNew' : 'content.pages.sectionsHint')}</p>
+                            </FormSection>
 
-                        <FormSection title={t('content.pages.section.seo')}>
-                            <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
-                                {seoText('title', 'content.pages.seo.title', { hint: page?.seo ? t('content.pages.seo.defaultHint', { value: page.seo.defaults.title }) : undefined })}
-                                {seoText('title_bn', 'content.pages.seo.titleBn', { lang: 'bn', hint: page?.seo ? t('content.pages.seo.defaultHint', { value: page.seo.defaults.title_bn }) : undefined })}
-                                {seoText('description', 'content.pages.seo.description', { area: true, hint: page?.seo?.defaults.description ? t('content.pages.seo.defaultHint', { value: page.seo.defaults.description }) : undefined })}
-                                {seoText('description_bn', 'content.pages.seo.descriptionBn', { area: true, lang: 'bn' })}
-                                {seoText('og_title', 'content.pages.seo.ogTitle')}
-                                {seoText('og_description', 'content.pages.seo.ogDescription', { area: true })}
-                                {seoText('og_image', 'content.pages.seo.ogImage')}
-                                {seoText('canonical_url', 'content.pages.seo.canonical')}
-                                {seoText('focus_keyword', 'content.pages.seo.focusKeyword')}
-                                <Field label={t('content.pages.seo.robots')} error={err('seo.robots')}>
-                                    {({ id: fid }) => (
-                                        <Select id={fid} value={form.seo.robots} onChange={(e) => setSeo('robots', e.target.value as PageForm['seo']['robots'])}>
-                                            {(['index,follow', 'noindex,follow', 'index,nofollow', 'noindex,nofollow'] as const).map((r) => (
-                                                <option key={r} value={r}>
-                                                    {r}
-                                                </option>
-                                            ))}
-                                        </Select>
-                                    )}
-                                </Field>
-                                <Field label={t('content.pages.seo.twitterCard')}>
-                                    {({ id: fid }) => (
-                                        <Select id={fid} value={form.seo.twitter_card} onChange={(e) => setSeo('twitter_card', e.target.value as PageForm['seo']['twitter_card'])}>
-                                            <option value="summary_large_image">{t('content.pages.seo.twitter.summary_large_image')}</option>
-                                            <option value="summary">{t('content.pages.seo.twitter.summary')}</option>
-                                        </Select>
-                                    )}
-                                </Field>
-                            </div>
-                            <label className="flex min-h-touch-min items-center gap-3 t-admin-body text-fg-primary">
-                                <input type="checkbox" className="size-4 accent-brand" checked={form.seo.sitemap_exclude} onChange={(e) => setSeo('sitemap_exclude', e.target.checked)} />
-                                {t('content.pages.seo.sitemapExclude')}
-                            </label>
-                        </FormSection>
-                    </div>
+                            {id === null && (
+                                <FormSection title={t('content.pages.section.seo')}>
+                                    <p className="t-admin-caption text-fg-secondary">{t('content.pages.seoAfterSave')}</p>
+                                </FormSection>
+                            )}
+                        </fieldset>
+                    </form>
 
+                    {/* Full SEO (owner request 2026-11-18): previews, score, Bangla share text, Media Library share image. */}
+                    {page && can(me, 'seo.view') && <SeoPanel type="page" id={page.id} />}
+                </div>
+
+                <fieldset disabled={!editable || save.isPending} className="min-w-0">
                     <aside className="flex min-w-0 flex-col gap-6">
                         <FormSection title={t('content.pages.section.publish')}>
                             <Field label={t('content.pages.field.status')} error={err('status')}>
@@ -269,26 +224,26 @@ function PageEditor({ id, page }: { id: number | null; page?: CmsPage }) {
                         </div>
                     </aside>
                 </fieldset>
+            </div>
 
-                <FormActions
-                    start={
-                        page && editable && page.state !== 'archived' ? (
-                            <Button variant="danger" onClick={() => setConfirming(true)}>
-                                {t('content.pages.archive')}
-                            </Button>
-                        ) : undefined
-                    }
-                >
-                    <Link to="/store/pages" className={buttonClass('ghost')}>
-                        {t('common.cancel')}
-                    </Link>
-                    {editable && (
-                        <Button type="submit" disabled={save.isPending}>
-                            {save.isPending ? t('common.saving') : t('common.save')}
+            <FormActions
+                start={
+                    page && editable && page.state !== 'archived' ? (
+                        <Button variant="danger" onClick={() => setConfirming(true)}>
+                            {t('content.pages.archive')}
                         </Button>
-                    )}
-                </FormActions>
-            </form>
+                    ) : undefined
+                }
+            >
+                <Link to="/store/pages" className={buttonClass('ghost')}>
+                    {t('common.cancel')}
+                </Link>
+                {editable && (
+                    <Button type="submit" form={formId} disabled={save.isPending}>
+                        {save.isPending ? t('common.saving') : t('common.save')}
+                    </Button>
+                )}
+            </FormActions>
 
             {page && (
                 <ConfirmDialog

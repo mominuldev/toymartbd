@@ -3,10 +3,20 @@ import { Link } from 'react-router';
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import { IconButton, type IconButtonVariant } from './IconButton';
 
-export type ActionMenuItem = { key: string; label: string; icon?: ReactNode } & ({ to: string; onSelect?: never } | { onSelect: () => void; to?: never });
+/**
+ * A `disabled` item stays in the menu (so related rows show the same menu) but does nothing;
+ * `hint` says why, as its accessible description and tooltip.
+ */
+export type ActionMenuItem = { key: string; label: string; icon?: ReactNode } & (
+    | { to: string; onSelect?: never; disabled?: never; hint?: never }
+    | { onSelect: () => void; to?: never; disabled?: never; hint?: never }
+    | { disabled: true; hint: string; to?: never; onSelect?: never }
+);
 
-const itemClass =
-    'flex h-9 w-full items-center gap-2 rounded-xs px-3 text-start t-admin-body whitespace-nowrap text-fg-primary outline-none hover:bg-subtle focus-visible:bg-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-line-focus';
+const itemBase =
+    'flex h-9 w-full items-center gap-2 rounded-xs px-3 text-start t-admin-body whitespace-nowrap outline-none focus-visible:bg-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-line-focus';
+const itemClass = `${itemBase} text-fg-primary hover:bg-subtle`;
+const disabledItemClass = `${itemBase} cursor-not-allowed text-fg-disabled`;
 
 /**
  * Row and toolbar ⋯ overflow (AdminIconButton + the surface-raised e3 menu the order bar's
@@ -118,7 +128,21 @@ export function ActionMenu({ label, items, variant = 'ghost', size = 'sm' }: { l
                     className="z-50 min-w-48 rounded-sm border border-line-default bg-surface-raised p-1 shadow-e3"
                 >
                     {items.map((item) =>
-                        item.to !== undefined ? (
+                        item.disabled ? (
+                            <button
+                                key={item.key}
+                                type="button"
+                                role="menuitem"
+                                tabIndex={-1}
+                                aria-disabled="true"
+                                aria-description={item.hint}
+                                title={item.hint}
+                                className={disabledItemClass}
+                            >
+                                {item.icon}
+                                {item.label}
+                            </button>
+                        ) : item.to !== undefined ? (
                             <Link key={item.key} to={item.to} role="menuitem" tabIndex={-1} className={itemClass} onClick={() => setOpen(false)}>
                                 {item.icon}
                                 {item.label}

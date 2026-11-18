@@ -68746,6 +68746,7 @@
                             "null"
                         ],
                         "format": "uri",
+                        "description": "Media Library picks are served over http on a local machine; production stays https-only.",
                         "maxLength": 2048
                     },
                     "canonical_url": {
@@ -69159,6 +69160,66 @@
                     },
                     "in_sitemap": {
                         "type": "boolean"
+                    },
+                    "checklist": {
+                        "type": "object",
+                        "description": "The SEO score: server-computed checks on the saved document.",
+                        "properties": {
+                            "passed": {
+                                "type": "integer"
+                            },
+                            "total": {
+                                "type": "integer"
+                            },
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string",
+                                            "enum": [
+                                                "title_fits",
+                                                "description_fits",
+                                                "title_fits_bn",
+                                                "description_fits_bn",
+                                                "keyword_in_title",
+                                                "keyword_in_description",
+                                                "social_image",
+                                                "indexable"
+                                            ]
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "pass",
+                                                "warn",
+                                                "fail"
+                                            ]
+                                        },
+                                        "params": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": [
+                                                    "integer",
+                                                    "string"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "key",
+                                        "status",
+                                        "params"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "passed",
+                            "total",
+                            "items"
+                        ]
                     }
                 },
                 "required": [
@@ -69184,7 +69245,8 @@
                     "focus_keyword",
                     "defaults",
                     "serp",
-                    "in_sitemap"
+                    "in_sitemap",
+                    "checklist"
                 ],
                 "title": "SeoDocument"
             },
