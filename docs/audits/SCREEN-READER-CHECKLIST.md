@@ -44,7 +44,7 @@ If you can, also note what the page showed at that moment. A screenshot is fine.
 
 | # | Do | You should hear (EN) | (BN) |
 |---|---|---|---|
-| 1.1 | Open `/admin/login` | "Sign in to Admin, heading level 1" somewhere in the first few items | "অ্যাডমিনে সাইন ইন করুন, শিরোনাম ১" |
+| 1.1 | Open `/admin/login` | "Welcome back, heading level 1" somewhere in the first few items; the show-password button is announced as "Show password, toggle button, not pressed" | "আবার স্বাগতম, শিরোনাম ১" |
 | 1.2 | Move through the form | "Email, edit text" → "Password, secure edit text" → "Keep me signed in on this device, checkbox, unchecked" → "Sign in, button" | "ইমেইল…" → "পাসওয়ার্ড…" → "এই ডিভাইসে সাইন ইন রাখুন…" → "সাইন ইন, বোতাম" |
 | 1.3 | Enter a wrong password and press Sign in | The error is spoken right away, without you moving: "Those details did not match an active staff account." Going back to Email gives "invalid data" and the same sentence | "এই তথ্যের সাথে কোনো সক্রিয় স্টাফ অ্যাকাউন্ট মেলেনি।" |
 | 1.4 | Enter the right password | Focus jumps to the code field: "Code from the app, edit text". The heading "Enter your sign-in code" is nearby | "অ্যাপের কোড…", heading "সাইন-ইন কোড দিন" |

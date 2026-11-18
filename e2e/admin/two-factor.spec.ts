@@ -36,7 +36,7 @@ async function open(browser: Browser): Promise<Page> {
 async function signIn(page: Page, email: string, password: string, path = '/admin') {
     await page.goto(path);
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill(password);
+    await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
@@ -102,5 +102,5 @@ test('set up two-factor, sign in with a code, and an owner resets a lost one', a
     const fourth = await open(browser);
     await signIn(fourth, 'nadia@toymart.test', 'temporary-pass-2026');
     await expect(fourth.getByRole('heading', { name: 'Enter your sign-in code' })).toHaveCount(0);
-    await expect(fourth.getByRole('heading', { name: 'Sign in to Admin' })).toHaveCount(0);
+    await expect(fourth.getByRole('heading', { name: 'Welcome back' })).toHaveCount(0);
 });

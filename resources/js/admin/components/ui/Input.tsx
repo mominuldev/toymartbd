@@ -2,13 +2,15 @@ import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { controlHeight, inputClass } from './Field';
 
 export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
-    size?: 'sm' | 'md';
+    size?: 'sm' | 'md' | 'lg';
     /** 16px leading icon (Phosphor, regular). */
     leading?: ReactNode;
     /** Inline prefix such as ৳ for money. */
     prefix?: ReactNode;
     /** Inline unit suffix (g, %, pcs). */
     suffix?: ReactNode;
+    /** A control at the end of the field, such as the sign-in page's show-password button. */
+    trailing?: ReactNode;
 };
 
 /**
@@ -16,10 +18,10 @@ export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'p
  * box moves to a wrapper and the focus/error border follows the input inside it.
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-    { size = 'md', leading, prefix, suffix, className = '', ...props },
+    { size = 'md', leading, prefix, suffix, trailing, className = '', ...props },
     ref,
 ) {
-    if (!leading && !prefix && !suffix) {
+    if (!leading && !prefix && !suffix && !trailing) {
         return <input ref={ref} className={`${controlHeight[size]} ${inputClass} ${className}`} {...props} />;
     }
 
@@ -35,6 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
                 {...props}
             />
             {suffix && <span className="shrink-0 t-admin-caption text-fg-tertiary">{suffix}</span>}
+            {trailing && <span className="-me-2 flex shrink-0">{trailing}</span>}
         </div>
     );
 });

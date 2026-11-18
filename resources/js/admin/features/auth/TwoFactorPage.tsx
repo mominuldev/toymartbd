@@ -14,7 +14,7 @@ import { useLogout } from './api';
 import { SignInFrame } from './SignInFrame';
 import { useConfirmTwoFactor, useDisableTwoFactor, useNewRecoveryCodes, useStartTwoFactor, useTwoFactorStatus, type TwoFactorSetup } from './twoFactorApi';
 
-const card = 'flex w-full max-w-120 flex-col gap-4.5 rounded-lg border border-line-default bg-surface p-6 shadow-e2 sm:p-10';
+const card = 'flex w-full max-w-120 flex-col gap-4.5 rounded-lg border border-line-default bg-surface p-6 shadow-e3 sm:p-10';
 
 /** The 422 message for `code` (or a generic one) from a failed code check. */
 function codeError(error: unknown, fallback: string): string | undefined {

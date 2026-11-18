@@ -52,8 +52,8 @@ export function Field({ label, hint, error, optional, required, children }: Fiel
     );
 }
 
-/** AdminInput heights: sm 32, md 40 (Figma 184:338). Add one to `inputClass` on single-line controls. */
-export const controlHeight = { sm: 'h-8', md: 'h-10' } as const;
+/** AdminInput heights: sm 32, md 40 (Figma 184:338), lg 44 (sign-in, Figma 586:50586). Add one to `inputClass` on single-line controls. */
+export const controlHeight = { sm: 'h-8', md: 'h-10', lg: 'h-11' } as const;
 
 /**
  * Figma AdminInput 184:338 box, without a height (textareas grow). Default border/default;

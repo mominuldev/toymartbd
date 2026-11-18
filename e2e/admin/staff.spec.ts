@@ -10,9 +10,9 @@ const shots = process.env.SHOTS_DIR;
 
 async function signIn(page: Page, email: string, password: string) {
     await page.goto('/admin/staff');
-    await expect(page.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill(password);
+    await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
@@ -72,9 +72,9 @@ test('owner adds, manages and deactivates a staff member', async ({ browser }) =
 
     // Her open session is refused on the next request; a fresh sign-in fails.
     await sadia.reload();
-    await expect(sadia.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
+    await expect(sadia.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await sadia.getByLabel('Email').fill('sadia@toymart.test');
-    await sadia.getByLabel('Password').fill('temporary-pass-2026');
+    await sadia.getByLabel('Password', { exact: true }).fill('temporary-pass-2026');
     await sadia.getByRole('button', { name: 'Sign in' }).click();
     await expect(sadia.getByText('Those details did not match an active staff account.')).toBeVisible();
 

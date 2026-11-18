@@ -12,9 +12,9 @@ let page: Page;
 test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
     await page.goto('/admin/products');
-    await expect(page.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await page.getByLabel('Email').fill('mominulfed@gmail.com');
-    await page.getByLabel('Password').fill('password');
+    await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
 });

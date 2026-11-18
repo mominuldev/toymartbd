@@ -94,7 +94,7 @@ test('sign in: form names, the error alert tied to both fields, in English and B
         - group "Language":
           - button "EN" [pressed]
           - button "বাং"
-        - heading "Sign in to Admin" [level=1]
+        - heading "Welcome back" [level=1]
         - textbox "Email"
         - textbox "Password"
         - checkbox "Keep me signed in on this device" [checked=false]

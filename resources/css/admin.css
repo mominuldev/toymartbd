@@ -56,6 +56,37 @@
     }
 }
 
+/*
+ * Sign-in "Toy orbit" motion (Figma 595:50745). The rings turn slowly for ever; each badge
+ * counter-turns at the ring's own speed so the toy stays upright, and bobs gently. Use them
+ * only behind `motion-safe:` — the reduced-motion rule above shortens durations, and an
+ * infinite loop at 0.01ms would flicker instead of stopping.
+ */
+@theme {
+    --animate-orbit-inner: tm-orbit 140s linear infinite;
+    --animate-orbit-inner-counter: tm-orbit 140s linear infinite reverse;
+    --animate-orbit-outer: tm-orbit 200s linear infinite reverse;
+    --animate-orbit-outer-counter: tm-orbit 200s linear infinite;
+    --animate-orbit-bob: tm-orbit-bob 3.2s var(--tm-ease-standard) infinite alternate;
+    --animate-orbit-breathe: tm-orbit-breathe 7s var(--tm-ease-standard) infinite alternate;
+
+    @keyframes tm-orbit {
+        to {
+            rotate: 360deg;
+        }
+    }
+    @keyframes tm-orbit-bob {
+        to {
+            translate: 0 calc(var(--spacing) * -1.5);
+        }
+    }
+    @keyframes tm-orbit-breathe {
+        to {
+            scale: 1.04;
+        }
+    }
+}
+
 /* A quiet scrollbar for the sidebar and other long panels, in token colours. */
 .scrollbar-thin {
     scrollbar-width: thin;

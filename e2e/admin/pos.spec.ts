@@ -17,9 +17,9 @@ async function shot(page: Page, name: string) {
 
 async function signIn(page: Page) {
     await page.goto('/admin/pos');
-    await expect(page.getByRole('heading', { name: 'Sign in to Admin' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await page.getByLabel('Email').fill('mominulfed@gmail.com');
-    await page.getByLabel('Password').fill('password');
+    await page.getByLabel('Password', { exact: true }).fill('password');
     await page.getByRole('button', { name: 'Sign in' }).click();
 }
 

@@ -77,7 +77,7 @@ describe('two-factor sign-in', () => {
         expect(screen.getByLabelText('Recovery code').getAttribute('aria-describedby')).toBe(alert.id);
 
         fireEvent.click(screen.getByRole('button', { name: 'Start again' }));
-        expect(await screen.findByRole('heading', { name: 'Sign in to Admin' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeTruthy();
         // The pressed button is gone: focus lands on Email, not the page.
         expect(document.activeElement).toBe(screen.getByLabelText('Email'));
     });
