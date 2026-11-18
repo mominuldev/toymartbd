@@ -73,7 +73,7 @@ function Panel({ orderId }: { orderId: number }) {
                             </div>
                             <StatusChip label={t(returnStatusLabel(r.status))} tone={returnTone[r.status]} />
                             {r.refund && <StatusChip label={t(refundStatusLabel(r.refund.status))} tone={refundTone[r.refund.status]} />}
-                            <Link to={`/returns?tab=${r.status}&rma=${r.id}`} className="t-admin-body text-fg-link hover:underline">
+                            <Link to={`/returns/${r.id}`} className="t-admin-body text-fg-link hover:underline">
                                 {t('returns.panel.view')}
                             </Link>
                         </li>

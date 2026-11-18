@@ -14,7 +14,7 @@ export type OpenReturnInput = StoreReturnRequestInput;
 export type InspectInput = InspectReturnRequestInput;
 export type PayInput = PayRefundRequestInput;
 
-/** The queue's tabs, in Figma 241:35772 order (exchanges are not built yet). */
+/** The queue's steps, in workflow order (Figma B · 10 List 582:50341; exchanges are not built yet). */
 export const returnTabs: ReturnStatus[] = ['requested', 'received', 'inspected', 'closed', 'rejected'];
 export const returnReasons: ReturnReason[] = ['damaged_in_transit', 'defective', 'wrong_item', 'missing_parts', 'not_as_described', 'changed_mind', 'other'];
 /** How staff can send money back by hand for a COD order. */

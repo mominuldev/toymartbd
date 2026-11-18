@@ -67,6 +67,9 @@ function PHASE10_SCREENS(): Array<[string, string]> {
         // Purchasing premium pass: the list and a partly received PO (demo PO-2026-0008).
         ['purchasing', '/admin/purchasing'],
         ['purchase-order', '/admin/purchasing/8'],
+        // Returns & refunds, one column (Figma B · 10 List 582:50341, Return detail 583:50649): the list and a demo return.
+        ['returns', '/admin/returns'],
+        ['return-detail', '/admin/returns/1'],
         // Finance › Owner capital (Figma B · 32), on DemoCapitalSeeder's holders and entries.
         ['finance-capital', '/admin/finance/capital'],
         // Finance premium pass (Figma B · 32): expenses, categories, ledger, COD settlements, reports.

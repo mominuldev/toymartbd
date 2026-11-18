@@ -60,6 +60,7 @@ import { SuppliersPage } from '@/features/purchasing/SuppliersPage';
 import { SupplierFormPage } from '@/features/purchasing/SupplierFormPage';
 import { SupplierDetailPage } from '@/features/purchasing/SupplierDetailPage';
 import { ReturnsPage } from '@/features/returns/ReturnsPage';
+import { ReturnDetailPage } from '@/features/returns/ReturnDetailPage';
 import { ProfitLossPage } from '@/features/finance/reports/ProfitLossPage';
 import { DailyReportsPage } from '@/features/finance/reports/DailyReportsPage';
 import { ProfitabilityPage } from '@/features/finance/reports/ProfitabilityPage';
@@ -204,8 +205,10 @@ export const routes: RouteObject[] = [
                     { path: 'orders/new', element: <OrderCreatePage /> },
                     { path: 'orders/:orderId', element: <OrderDetailPage /> },
                     { path: 'orders/:orderId/edit', element: <OrderEditPage /> },
-                    // Returns, refunds & exchanges (Figma B · 10 241:35772).
+                    // Returns & refunds, one column: the list (Figma B · 10 Returns · Premium · List 582:50341)
+                    // and each return on its own page (Return detail 583:50649 / 584:50961).
                     { path: 'returns', element: <ReturnsPage /> },
+                    { path: 'returns/:returnId', element: <ReturnDetailPage /> },
                     // P6 Fraud & risk: verification queue (B · 05 241:36206), phone lookup (B · 06 241:36699), risk rules (settings form pattern).
                     { path: 'risk', element: <Navigate to="/risk/queue" replace /> },
                     { path: 'risk/queue', element: <VerificationQueuePage /> },

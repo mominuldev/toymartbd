@@ -37,6 +37,7 @@ const PARAM_IDS: Record<string, string> = {
     purchaseId: '8',
     customerId: '1',
     orderId: '1',
+    returnId: '1',
     id: '1', // finance/settlements/:id
     couponId: '1',
     promotionId: '1',

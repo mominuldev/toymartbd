@@ -1,33 +1,54 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from '@phosphor-icons/react';
+import { useEffect, useState, type ComponentType } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
+import {
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    CheckIcon,
+    ClockCounterClockwiseIcon,
+    HandCoinsIcon,
+    ImageSquareIcon,
+    InfoIcon,
+    ListChecksIcon,
+    PlusIcon,
+    XCircleIcon,
+    type IconProps,
+} from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { buttonClass, Button } from '@/components/ui/Button';
-import { CountBadge } from '@/components/ui/CountBadge';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
-import { TabList, tabClass } from '@/components/ui/Tabs';
+import { StatusChip } from '@/components/ui/StatusChip';
+import { PaymentChip } from '@/features/orders';
 import { returnTabs, useReturns, type OrderReturn, type ReturnStatus } from './api';
-import { ReturnDetail } from './ReturnDetail';
-import { Taka, WantsChip, ageParts, reasonLabel } from './parts';
+import { LONG_WAIT_DAYS, Taka, ageParts, daysOpen, nextAction, reasonLabel } from './parts';
+
+/** The three working steps, in order; closed and rejected sit in the "Finished" card. */
+const workSteps: { status: ReturnStatus; icon: ComponentType<IconProps> }[] = [
+    { status: 'requested', icon: ClockCounterClockwiseIcon },
+    { status: 'received', icon: ListChecksIcon },
+    { status: 'inspected', icon: HandCoinsIcon },
+];
+const finished: { status: ReturnStatus; icon: ComponentType<IconProps>; tint: string }[] = [
+    { status: 'closed', icon: CheckIcon, tint: 'text-feedback-success' },
+    { status: 'rejected', icon: XCircleIcon, tint: 'text-fg-tertiary' },
+];
 
 /**
- * Returns, refunds & exchanges (Figma "B · 10" 241:35772, Theme B): ContentHeader, status
- * AdminTabs with server counts, then a split — the 740-wide queue (RMA · order and
- * customer · reason · wants · value · age; the selected row bg/brand-subtle) and the
- * detail panel (inspection, resolution, actions). Tab, search, cursor and the selected RMA
- * live in the URL. Exchanges and store credit are not built yet, so every row wants a refund.
+ * Returns & refunds list (Figma "B · 10 Returns · Premium · List" 582:50341, Theme B), one
+ * column: the three working steps as cards with server counts and what each step waits on,
+ * a Finished card (closed · rejected), then the full-width queue. Each row says the next
+ * thing to do and opens the return's own page (/returns/:id). Step, search and cursor live
+ * in the URL. Exchanges and store credit are not built yet, so every return is a refund.
  */
 export function ReturnsPage() {
     const { t } = useI18n();
     const [params, setParams] = useSearchParams();
     const tab = (returnTabs.includes(params.get('tab') as ReturnStatus) ? params.get('tab') : 'requested') as ReturnStatus;
     const cursor = params.get('cursor');
-    const selected = Number(params.get('rma')) || null;
     const [search, setSearch] = useState(params.get('q') ?? '');
     const query = params.get('q') ?? '';
     const returns = useReturns(tab, query, cursor);
@@ -53,8 +74,13 @@ export function ReturnsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
 
+    // Links from before the detail page had its own route: /returns?rma=42 → /returns/42.
+    const legacy = Number(params.get('rma'));
+    if (legacy) return <Navigate to={`/returns/${legacy}`} replace />;
+
     const rows = returns.data?.data ?? [];
     const counts = returns.data?.meta.counts;
+    const pick = (value: ReturnStatus) => set({ tab: value === 'requested' ? '' : value, cursor: '' });
 
     return (
         <section className="flex flex-col gap-6">
@@ -70,91 +96,127 @@ export function ReturnsPage() {
                 }
             />
 
-            <TabList label={t('returns.tabs')}>
-                {returnTabs.map((value) => (
-                    <button key={value} type="button" aria-pressed={tab === value} onClick={() => set({ tab: value === 'requested' ? '' : value, cursor: '', rma: '' })} className={tabClass(tab === value)}>
-                        {t(`returns.tab.${value}` as MessageKey)}
-                        <CountBadge count={counts?.[value] ?? 0} />
-                    </button>
-                ))}
-            </TabList>
+            <div role="group" aria-label={t('returns.tabs')} className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_13rem]">
+                {workSteps.map(({ status, icon: Icon }, index) => {
+                    const active = tab === status;
+                    return (
+                        <button
+                            key={status}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => pick(status)}
+                            className={`flex flex-col gap-2 rounded-md border p-4 text-start transition-colors duration-150 ease-standard ${active ? 'border-line-brand bg-brand-subtle' : 'border-line-default bg-surface shadow-e1 hover:bg-subtle'}`}
+                        >
+                            <span className="flex w-full items-center gap-2">
+                                <span aria-hidden className={`grid size-6 shrink-0 place-items-center rounded-full t-admin-caption-strong ${active ? 'bg-brand text-fg-on-brand' : 'bg-subtle text-fg-secondary'}`}>
+                                    {index + 1}
+                                </span>
+                                <span className="min-w-0 flex-1 t-admin-body-strong text-fg-primary">{t(`returns.tab.${status}` as MessageKey)}</span>
+                                <span className="t-admin-num-md tabular text-fg-primary">{counts?.[status] ?? 0}</span>
+                            </span>
+                            <span className="flex items-center gap-1 t-admin-caption text-fg-secondary">
+                                <Icon size={14} aria-hidden className={`shrink-0 ${active ? 'text-fg-brand' : 'text-fg-tertiary'}`} />
+                                {t(`returns.step.hint.${status}` as MessageKey)}
+                            </span>
+                        </button>
+                    );
+                })}
+                <div className="flex flex-col gap-1 rounded-md border border-line-default bg-surface p-4 shadow-e1">
+                    <p className="t-admin-overline text-fg-tertiary uppercase">{t('returns.finished')}</p>
+                    {finished.map(({ status, icon: Icon, tint }) => (
+                        <button
+                            key={status}
+                            type="button"
+                            aria-pressed={tab === status}
+                            onClick={() => pick(status)}
+                            className="-mx-2 flex items-center gap-2 rounded-sm px-2 py-1 text-start hover:bg-subtle aria-pressed:bg-brand-subtle"
+                        >
+                            <Icon size={16} aria-hidden className={`shrink-0 ${tint}`} />
+                            <span className="min-w-0 flex-1 t-admin-body text-fg-primary">{t(`returns.tab.${status}` as MessageKey)}</span>
+                            <span className="t-admin-num tabular text-fg-secondary">{counts?.[status] ?? 0}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             <SearchField label={t('returns.searchLabel')} placeholder={t('returns.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full sm:w-85" />
 
-            <div className="flex flex-col items-start gap-6 xl:flex-row">
-                <div className="w-full min-w-0 xl:w-185 xl:shrink-0">
-                    {returns.isError ? (
-                        <QueryError error={returns.error} onRetry={() => void returns.refetch()} />
-                    ) : returns.isPending ? (
-                        <p className="t-admin-body text-fg-tertiary" aria-busy="true">
-                            {t('common.loading')}
+            {returns.isError ? (
+                <QueryError error={returns.error} onRetry={() => void returns.refetch()} />
+            ) : returns.isPending ? (
+                <p className="t-admin-body text-fg-tertiary" aria-busy="true">
+                    {t('common.loading')}
+                </p>
+            ) : rows.length === 0 ? (
+                <EmptyState reason="allClear" title={t('returns.empty')} body={t(`returns.emptyBody.${tab}` as MessageKey)} />
+            ) : (
+                <div className={dataTable.card}>
+                    <table className={`${dataTable.table} lg:table-fixed`}>
+                        <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
+                            <tr className="border-b border-line-strong">
+                                <th scope="col" className={`${dataTable.th} w-37.5`}>{t('returns.col.return')}</th>
+                                <th scope="col" className={`${dataTable.th} w-49`}>{t('returns.col.order')}</th>
+                                <th scope="col" className={dataTable.th}>{t('returns.col.why')}</th>
+                                <th scope="col" className={`${dataTable.th} w-54`}>{t('returns.col.items')}</th>
+                                <th scope="col" className={`${dataTable.th} w-36 text-end`}>{t('returns.col.value')}</th>
+                                <th scope="col" className={`${dataTable.th} w-30`}>{t('returns.col.waiting')}</th>
+                                <th scope="col" className={`${dataTable.th} w-40 text-end`}>{t('returns.col.next')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row) => (
+                                <QueueRow key={row.id} row={row} />
+                            ))}
+                        </tbody>
+                    </table>
+                    {tab === 'requested' && (
+                        <p className="flex items-center gap-2 border-t border-line-default px-4 py-3 t-admin-caption text-fg-secondary">
+                            <InfoIcon size={16} aria-hidden className="shrink-0 text-fg-tertiary" />
+                            {t('returns.requestedHint')}
                         </p>
-                    ) : rows.length === 0 ? (
-                        <EmptyState reason="allClear" title={t('returns.empty')} body={t('returns.emptyBody')} />
-                    ) : (
-                        <div className={dataTable.card}>
-                            <table className={`${dataTable.table} lg:table-fixed`}>
-                                <thead className={`hidden lg:table-header-group ${dataTable.head}`}>
-                                    <tr className="border-b border-line-strong">
-                                        <th scope="col" className={`${dataTable.th} w-27.5`}>{t('returns.col.rma')}</th>
-                                        <th scope="col" className={`${dataTable.th} w-45`}>{t('returns.col.order')}</th>
-                                        <th scope="col" className={`${dataTable.th} w-42.5`}>{t('returns.col.reason')}</th>
-                                        <th scope="col" className={`${dataTable.th} w-30`}>{t('returns.col.wants')}</th>
-                                        <th scope="col" className={`${dataTable.th} w-22 text-end`}>{t('returns.col.value')}</th>
-                                        <th scope="col" className={`${dataTable.th} w-18`}>{t('returns.col.age')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map((row) => (
-                                        <QueueRow key={row.id} row={row} selected={row.id === selected} onSelect={() => set({ rma: String(row.id) })} />
-                                    ))}
-                                </tbody>
-                            </table>
-                            {/* Figma's queue has no footer; it appears only when there is another page to reach. */}
-                            {(returns.data?.meta.prev_cursor || returns.data?.meta.next_cursor) && (
-                                <DataTableFooter summary={t('returns.footer', { count: rows.length })}>
-                                    <Button variant="outline" size="sm" disabled={!returns.data?.meta.prev_cursor} onClick={() => set({ cursor: returns.data?.meta.prev_cursor ?? '' })}>
-                                        <ArrowLeftIcon size={16} aria-hidden />
-                                        {t('returns.newer')}
-                                    </Button>
-                                    <Button variant="outline" size="sm" disabled={!returns.data?.meta.next_cursor} onClick={() => set({ cursor: returns.data?.meta.next_cursor ?? '' })}>
-                                        {t('returns.older')}
-                                        <ArrowRightIcon size={16} aria-hidden />
-                                    </Button>
-                                </DataTableFooter>
-                            )}
-                        </div>
+                    )}
+                    {(returns.data?.meta.prev_cursor || returns.data?.meta.next_cursor) && (
+                        <DataTableFooter summary={t('returns.footer', { count: rows.length })}>
+                            <Button variant="outline" size="sm" disabled={!returns.data?.meta.prev_cursor} onClick={() => set({ cursor: returns.data?.meta.prev_cursor ?? '' })}>
+                                <ArrowLeftIcon size={16} aria-hidden />
+                                {t('returns.newer')}
+                            </Button>
+                            <Button variant="outline" size="sm" disabled={!returns.data?.meta.next_cursor} onClick={() => set({ cursor: returns.data?.meta.next_cursor ?? '' })}>
+                                {t('returns.older')}
+                                <ArrowRightIcon size={16} aria-hidden />
+                            </Button>
+                        </DataTableFooter>
                     )}
                 </div>
-                <div className="w-full min-w-0 flex-1">
-                    {selected ? (
-                        <ReturnDetail id={selected} />
-                    ) : (
-                        <EmptyState reason="noDataYet" title={t('returns.pick')} className="border-dashed bg-subtle" />
-                    )}
-                </div>
-            </div>
+            )}
         </section>
     );
 }
 
-function QueueRow({ row, selected, onSelect }: { row: OrderReturn; selected: boolean; onSelect: () => void }) {
+function QueueRow({ row }: { row: OrderReturn }) {
     const { t, locale } = useI18n();
+    const navigate = useNavigate();
+    const to = `/returns/${row.id}`;
     const age = ageParts(row.created_at);
+    const long = row.status !== 'closed' && row.status !== 'rejected' && daysOpen(row.created_at) >= LONG_WAIT_DAYS;
+    const name = (i: OrderReturn['items'][number]) => (locale === 'bn' && i.product_name_bn ? i.product_name_bn : i.product_name);
     const first = row.items[0];
-    const sub = row.reason_note ?? (first ? (locale === 'bn' && first.product_name_bn ? first.product_name_bn : first.product_name) : '');
-    const cell = `${dataTable.td.replace('h-15', 'h-auto')} min-h-14 py-2.5 max-lg:h-auto max-lg:p-0`;
+    const action = nextAction(row);
+    const cell = `${dataTable.td.replace('h-15', 'h-auto')} min-h-14 py-3 max-lg:h-auto max-lg:p-0`;
 
     return (
         <tr
-            className={`relative flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${dataTable.row} ${selected ? 'bg-brand-subtle hover:bg-brand-subtle' : ''}`}
-            aria-selected={selected}
-            onClick={onSelect}
+            className={`relative flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 first:border-t-0 lg:table-row lg:p-0 lg:first:border-t ${dataTable.row}`}
+            onClick={(e) => {
+                // A click on the row opens the return; links and buttons inside keep their own behaviour.
+                if (!(e.target as HTMLElement).closest('a, button')) void navigate(to);
+            }}
         >
             <td className={cell}>
-                <button type="button" onClick={onSelect} aria-label={t('returns.select', { number: row.number })} className="t-admin-mono whitespace-nowrap text-fg-primary hover:text-fg-link hover:underline">
+                <Link to={to} className="t-admin-mono whitespace-nowrap text-fg-link hover:underline">
                     {row.number}
-                </button>
+                </Link>
+                {row.created_at && <p className="t-admin-caption text-fg-tertiary">{t('returns.opened', { date: formatDate(row.created_at, locale) })}</p>}
             </td>
             <td className={`min-w-0 ${cell}`}>
                 <p className="truncate t-admin-body-strong text-fg-primary">{row.order.number}</p>
@@ -162,15 +224,60 @@ function QueueRow({ row, selected, onSelect }: { row: OrderReturn; selected: boo
             </td>
             <td className={`min-w-0 ${cell}`}>
                 <p className="truncate t-admin-body-strong text-fg-primary">{t(reasonLabel(row.reason))}</p>
-                {sub && <p className="truncate t-admin-caption text-fg-tertiary">{sub}</p>}
+                {row.within_window === false ? (
+                    <span className="mt-1 inline-flex">
+                        <StatusChip label={t('returns.late', { days: row.window_days })} tone="warning" />
+                    </span>
+                ) : (
+                    row.reason_note && <p className="truncate t-admin-caption text-fg-tertiary">{row.reason_note}</p>
+                )}
+            </td>
+            <td className={`min-w-0 ${cell}`}>
+                {first && (
+                    <div className="flex min-w-0 items-center gap-2">
+                        <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-xs bg-subtle text-fg-tertiary">
+                            <ImageSquareIcon size={16} />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="line-clamp-2 t-admin-body text-fg-primary">{name(first)}</p>
+                            <p className="t-admin-caption text-fg-tertiary">
+                                {t('returns.units', { count: row.items.reduce((sum, i) => sum + i.quantity, 0) })}
+                                {row.items.length > 1 && ` · ${t('returns.moreItems', { count: row.items.length - 1 })}`}
+                            </p>
+                        </div>
+                    </div>
+                )}
             </td>
             <td className={cell}>
-                <WantsChip label={t('returns.wants.refund')} />
+                <div className="flex flex-col gap-1 lg:items-end">
+                    <span className="t-admin-num tabular whitespace-nowrap text-fg-primary">
+                        <Taka amount={row.value} />
+                    </span>
+                    <PaymentChip method={row.order.payment_method} />
+                </div>
             </td>
-            <td className={`${cell} t-admin-num tabular whitespace-nowrap lg:text-end`}>
-                <Taka amount={row.value} />
+            <td className={cell}>
+                {long ? (
+                    <>
+                        <p className="flex items-center gap-1 t-admin-body-strong text-fg-primary">
+                            <ClockCounterClockwiseIcon size={14} aria-hidden className="shrink-0 text-feedback-warning" />
+                            {age ? t(age.key, age.vars) : '—'}
+                        </p>
+                        <p className="t-admin-caption text-fg-tertiary">{t('returns.longWait')}</p>
+                    </>
+                ) : (
+                    <p className="t-admin-body tabular text-fg-primary">{age ? t(age.key, age.vars) : '—'}</p>
+                )}
             </td>
-            <td className={`${cell} t-admin-body tabular`}>{age ? t(age.key, age.vars) : '—'}</td>
+            <td className={`${cell} lg:text-end`}>
+                <Link to={to} className={buttonClass(action === 'returns.next.view' ? 'ghost' : 'outline', 'sm')} aria-label={`${t(action)} — ${row.number}`}>
+                    {t(action)}
+                </Link>
+            </td>
         </tr>
     );
+}
+
+function formatDate(iso: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale === 'bn' ? 'bn-BD' : 'en-GB', { timeZone: 'Asia/Dhaka', day: '2-digit', month: 'short', numberingSystem: 'latn' }).format(new Date(iso));
 }

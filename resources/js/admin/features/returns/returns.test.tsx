@@ -14,70 +14,131 @@ const posts = (calls: ReturnType<typeof returnsApi>) =>
         .filter(([, init]) => (init as RequestInit | undefined)?.method === 'POST')
         .map(([url, init]) => ({ url: String(url), body: JSON.parse(String((init as RequestInit).body ?? 'null')) as unknown, headers: (init as RequestInit).headers as Record<string, string> }));
 
-describe('returns queue', () => {
-    it('shows server counts per tab and the queue row, filtering on the server', async () => {
+describe('returns list', () => {
+    it('shows the steps with server counts and each row’s next action, filtering on the server', async () => {
         const calls = returnsApi(operator);
         renderApp('/returns');
 
         const table = await screen.findByRole('table');
-        expect(within(table).getByText('RMA-26-00042')).toBeTruthy();
+        expect(within(table).getByRole('link', { name: 'RMA-26-00042' }).getAttribute('href')).toBe('/returns/42');
         expect(within(table).getByText('TMB-26-00120')).toBeTruthy();
         expect(within(table).getByText('রাকিবুল হাসান')).toBeTruthy();
         expect(within(table).getByText('Damaged in transit')).toBeTruthy();
-        expect(within(table).getByText('Refund')).toBeTruthy();
-        expect(screen.getByRole('button', { name: /^Refund pending\s*1$/ })).toBeTruthy();
+        expect(within(table).getByRole('link', { name: 'Inspect — RMA-26-00042' }).getAttribute('href')).toBe('/returns/42');
+        const refundStep = screen.getByRole('button', { name: /^Refund to pay\s*1/ });
         expect(screen.getByRole('button', { name: /^Closed\s*3$/ })).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: /^Refund pending\s*1$/ }));
+        fireEvent.click(refundStep);
         await waitFor(() => expect(calls.mock.calls.some(([u]) => String(u).includes('filter%5Bstatus%5D=inspected'))).toBe(true));
+        expect(await screen.findByRole('link', { name: 'Record payout — RMA-26-00042' })).toBeTruthy();
     });
 
-    it('inspects a return with resellable and damaged counts that add up', async () => {
-        const calls = returnsApi(operator, (url, init) => (init?.method === 'POST' && url.endsWith('/returns/42/inspect') ? { status: 200, body: inspected } : undefined));
+    it('sends an old ?rma= link to the return’s own page', async () => {
+        returnsApi(operator);
         renderApp('/returns?rma=42');
+        expect(await screen.findByRole('heading', { name: 'Return RMA-26-00042' })).toBeTruthy();
+    });
+});
 
-        await screen.findByRole('heading', { name: 'RMA-26-00042 · Refund' });
+describe('return detail page', () => {
+    it('says what to do next and inspects with resellable and damaged counts that add up', async () => {
+        const calls = returnsApi(operator, (url, init) => (init?.method === 'POST' && url.endsWith('/returns/42/inspect') ? { status: 200, body: inspected } : undefined));
+        renderApp('/returns/42');
+
+        await screen.findByRole('heading', { name: 'Return RMA-26-00042' });
+        expect(screen.getByText('Next: check the parcel')).toBeTruthy();
+        expect(screen.getByRole('listitem', { current: 'step' }).textContent).toContain('Parcel back');
+
         const damaged = screen.getByRole('spinbutton', { name: 'Damaged units of Brick Box 500' });
         fireEvent.change(damaged, { target: { value: '1' } });
         expect((screen.getByRole('spinbutton', { name: 'Resellable units of Brick Box 500' }) as HTMLInputElement).value).toBe('1');
+        expect(screen.getByText('1 back on shelf · 1 damaged · 2 returned')).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Inspect & restock' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Finish inspection & restock' }));
         await waitFor(() => expect(posts(calls)).toHaveLength(1));
         expect(posts(calls)[0]).toMatchObject({ url: '/api/v1/admin/returns/42/inspect', body: { items: [{ order_item_id: 501, resellable: 1, damaged: 1 }], note: null } });
+    });
+
+    it('sets every unit at once with the quick set and the steppers', async () => {
+        const calls = returnsApi(operator, (url, init) => (init?.method === 'POST' && url.endsWith('/returns/42/inspect') ? { status: 200, body: inspected } : undefined));
+        renderApp('/returns/42');
+
+        await screen.findByRole('heading', { name: 'Return RMA-26-00042' });
+        fireEvent.click(screen.getByRole('button', { name: 'All damaged' }));
+        expect((screen.getByRole('spinbutton', { name: 'Damaged units of Brick Box 500' }) as HTMLInputElement).value).toBe('2');
+        fireEvent.click(screen.getByRole('button', { name: 'One more: Resellable units of Brick Box 500' }));
+        expect((screen.getByRole('spinbutton', { name: 'Damaged units of Brick Box 500' }) as HTMLInputElement).value).toBe('1');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Finish inspection & restock' }));
+        await waitFor(() => expect(posts(calls)).toHaveLength(1));
+        expect(posts(calls)[0]!.body).toMatchObject({ items: [{ order_item_id: 501, resellable: 1, damaged: 1 }] });
+    });
+
+    it('rejects a return only with a reason', async () => {
+        const calls = returnsApi(operator, (url, init) => (init?.method === 'POST' && url.endsWith('/returns/42/reject') ? { status: 200, body: { ...requested, status: 'rejected' } } : undefined));
+        renderApp('/returns/42');
+
+        await screen.findByRole('heading', { name: 'Return RMA-26-00042' });
+        fireEvent.click(screen.getByRole('button', { name: 'Reject return' }));
+        const confirm = screen.getAllByRole('button', { name: 'Reject return' }).at(-1) as HTMLButtonElement;
+        expect(confirm.disabled).toBe(true);
+        fireEvent.change(screen.getByRole('textbox', { name: /Reason/ }), { target: { value: 'Opened and used' } });
+        fireEvent.click(confirm);
+        await waitFor(() => expect(posts(calls)).toHaveLength(1));
+        expect(posts(calls)[0]).toMatchObject({ url: '/api/v1/admin/returns/42/reject', body: { note: 'Opened and used' } });
     });
 
     it('records a hand-paid refund with method, reference and an Idempotency-Key — the amount is the server’s', async () => {
         const calls = returnsApi(operator, (url, init) => {
             if (/\/returns\/42$/.test(url)) return { status: 200, body: inspected };
-            if (init?.method === 'POST' && url.endsWith('/refunds/31/pay')) return { status: 200, body: { ...refund, status: 'completed', method: 'bkash', gateway_reference: 'BK8XYZ' } };
+            if (init?.method === 'POST' && url.endsWith('/refunds/31/pay')) return { status: 200, body: { ...refund, status: 'completed', method: 'nagad', gateway_reference: 'NG8XYZ' } };
             return undefined;
         });
-        renderApp('/returns?tab=inspected&rma=42');
+        renderApp('/returns/42');
 
-        await screen.findByRole('heading', { name: 'RMA-26-00042 · Refund' });
-        expect(screen.getByText('1 restocked · 1 written off')).toBeTruthy();
-        expect(screen.getByText('Approved — to pay')).toBeTruthy();
-        const pay = screen.getByRole('button', { name: 'Record payout' }) as HTMLButtonElement;
+        await screen.findByRole('heading', { name: 'Return RMA-26-00042' });
+        expect(screen.getByText('1 back in stock · 1 written off')).toBeTruthy();
+        expect(screen.getByText('Next: send ৳1,250 back to the customer')).toBeTruthy();
+        const pay = screen.getByRole('button', { name: 'Record payout of ৳1,250' }) as HTMLButtonElement;
         expect(pay.disabled).toBe(true); // a reference is required for bKash
 
-        fireEvent.change(screen.getByRole('textbox', { name: /Transaction reference/ }), { target: { value: 'BK8XYZ' } });
+        fireEvent.click(screen.getByRole('radio', { name: 'Nagad' }));
+        expect(screen.getByText('Send ৳1,250 by Nagad, then record it')).toBeTruthy();
+        fireEvent.change(screen.getByRole('textbox', { name: /Nagad transaction ID/ }), { target: { value: 'NG8XYZ' } });
         fireEvent.click(pay);
         await waitFor(() => expect(posts(calls)).toHaveLength(1));
         const sent = posts(calls)[0]!;
         expect(sent.url).toBe('/api/v1/admin/refunds/31/pay');
-        expect(sent.body).toEqual({ method: 'bkash', reference: 'BK8XYZ' });
+        expect(sent.body).toEqual({ method: 'nagad', reference: 'NG8XYZ' });
         expect(sent.headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it('does not ask for a reference when the refund went out in cash', async () => {
+        const calls = returnsApi(operator, (url, init) => {
+            if (/\/returns\/42$/.test(url)) return { status: 200, body: inspected };
+            if (init?.method === 'POST' && url.endsWith('/refunds/31/pay')) return { status: 200, body: { ...refund, status: 'completed', method: 'cash' } };
+            return undefined;
+        });
+        renderApp('/returns/42');
+
+        await screen.findByRole('heading', { name: 'Return RMA-26-00042' });
+        fireEvent.click(screen.getByRole('radio', { name: 'Cash' }));
+        expect(screen.queryByRole('textbox', { name: /transaction ID/ })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Record payout of ৳1,250' }));
+        await waitFor(() => expect(posts(calls)).toHaveLength(1));
+        expect(posts(calls)[0]!.body).toEqual({ method: 'cash', reference: null });
     });
 
     it('flags a refund above the threshold instead of offering approval', async () => {
         returnsApi(operator, (url) =>
             /\/returns\/42$/.test(url) ? { status: 200, body: { ...inspected, refund: { ...refund, status: 'requested', amount: '2500.00', needs_manager: true, can: { approve: false, pay: false } } } } : undefined,
         );
-        renderApp('/returns?tab=inspected&rma=42');
+        renderApp('/returns/42');
 
-        await screen.findByText('Above ৳2,000: a manager or accountant approves this refund.');
+        expect((await screen.findAllByText('Above ৳2,000: a manager or accountant approves this refund.')).length).toBeGreaterThan(0);
+        expect(screen.getByText('Waiting for approval')).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Approve refund' })).toBeNull();
-        expect(screen.queryByRole('button', { name: 'Record payout' })).toBeNull();
+        expect(screen.queryByRole('button', { name: /Record payout/ })).toBeNull();
     });
 });
 
