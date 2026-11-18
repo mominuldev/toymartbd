@@ -108,13 +108,17 @@ async function settle(page: Page) {
 
 async function audit(page: Page, testInfo: TestInfo, label: string) {
     await settle(page);
-    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
-    const advice = await new AxeBuilder({ page }).withTags(['best-practice']).analyze();
+    // One scan for both tag sets, split by tag afterwards: a second full scan for the advice
+    // doubled the time of every sweep (54 screens). A rule carrying a WCAG tag is a failure even
+    // if it is also tagged best-practice, exactly as when the WCAG scan ran on its own.
+    const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS, 'best-practice']).analyze();
+    const isWcag = (v: (typeof results.violations)[number]) => v.tags.some((tag) => WCAG_TAGS.includes(tag));
     const shape = (vs: typeof results.violations) =>
         vs.map((v) => ({ rule: v.id, impact: v.impact, help: v.help, targets: v.nodes.slice(0, 5).map((n) => n.target.join(' ')) }));
-    const wcag = shape(results.violations);
-    if (wcag.length || advice.violations.length) {
-        await testInfo.attach(`axe-${label}.json`, { body: JSON.stringify({ wcag, advice: shape(advice.violations) }, null, 2), contentType: 'application/json' });
+    const wcag = shape(results.violations.filter(isWcag));
+    const advice = shape(results.violations.filter((v) => !isWcag(v)));
+    if (wcag.length || advice.length) {
+        await testInfo.attach(`axe-${label}.json`, { body: JSON.stringify({ wcag, advice }, null, 2), contentType: 'application/json' });
     }
     const lines = wcag.map((f) => `\n  [${f.impact}] ${f.rule} — ${f.help}\n      ${f.targets.join('\n      ')}`).join('');
     expect.soft(wcag, `${label}: ${wcag.length} WCAG violation(s)${lines}`).toEqual([]);
