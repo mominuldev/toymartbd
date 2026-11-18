@@ -36,6 +36,11 @@ export function Shell() {
     const navigate = useNavigate();
 
     const [collapsed, setCollapsed] = useState(storedCollapsed);
+    // The sidebar's layout trails the width when collapsing: the expanded layout stays while the
+    // width slides shut (a curtain over still content) and becomes the rail once it has. Expanding
+    // switches at once, and the growing width reveals it. Both layouts share their geometry.
+    const [rail, setRail] = useState(storedCollapsed);
+    const railTimer = useRef<number | undefined>(undefined);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const menuButton = useRef<HTMLButtonElement>(null);
     const drawer = useRef<HTMLDivElement>(null);
@@ -48,14 +53,23 @@ export function Shell() {
 
     const toggleCollapsed = useCallback(() => {
         setCollapsed((value) => {
+            const next = !value;
             try {
-                localStorage.setItem(COLLAPSED_KEY, value ? '0' : '1');
+                localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0');
             } catch {
                 // Preference only.
             }
-            return !value;
+            window.clearTimeout(railTimer.current);
+            if (next) {
+                // transitionend ends the slide; the timer covers reduced motion and screens below 1280,
+                // where the width does not change and no transition fires.
+                railTimer.current = window.setTimeout(() => setRail(true), 360);
+            } else setRail(false);
+            return next;
         });
     }, []);
+
+    useEffect(() => () => window.clearTimeout(railTimer.current), []);
 
     const closeDrawer = useCallback(() => {
         setDrawerOpen(false);
@@ -106,8 +120,20 @@ export function Shell() {
                 {t('shell.skipToContent')}
             </a>
 
-            <aside data-theme="admin-dark" className={`sticky top-0 hidden h-dvh shrink-0 lg:block lg:w-16 ${collapsed ? '' : 'xl:w-62'}`}>
-                <Sidebar permissions={me.permissions} counts={counts} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} user={user} branches={branches} />
+            {/* Collapse / expand glides: the width eases over the slow motion token while the labels
+                are clipped, so text never spills over the page mid-way. The branch menu is portalled
+                (position: fixed), so the clip cannot cut it; reduced motion makes it instant. */}
+            <aside
+                data-theme="admin-dark"
+                className={`sticky top-0 hidden h-dvh shrink-0 overflow-hidden transition-[width] duration-(--tm-duration-slow) ease-standard motion-reduce:transition-none lg:block lg:w-16 ${collapsed ? '' : 'xl:w-62'}`}
+                onTransitionEnd={(event) => {
+                    if (event.target === event.currentTarget && event.propertyName === 'width' && collapsed) {
+                        window.clearTimeout(railTimer.current);
+                        setRail(true);
+                    }
+                }}
+            >
+                <Sidebar permissions={me.permissions} counts={counts} collapsed={rail} user={user} branches={branches} />
             </aside>
 
             {drawerOpen && (
@@ -125,7 +151,7 @@ export function Shell() {
             )}
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <Topbar ref={menuButton} me={me} roleLabel={roleLabel} onOpenMenu={() => setDrawerOpen(true)} onSignOut={signOut} signingOut={logout.isPending} />
+                <Topbar ref={menuButton} me={me} roleLabel={roleLabel} onOpenMenu={() => setDrawerOpen(true)} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSignOut={signOut} signingOut={logout.isPending} />
                 <main id="content" tabIndex={-1} className="flex-1 p-4 md:px-5 md:pt-5 md:pb-10 xl:px-6 xl:pt-6">
                     <Outlet />
                 </main>

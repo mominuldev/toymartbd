@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import { bn, en } from '@/i18n/messages';
@@ -43,6 +43,29 @@ describe('app shell', () => {
 
         expect(document.documentElement.getAttribute('data-theme')).toBe('admin-dark');
         expect(localStorage.getItem('tm-admin-theme')).toBe('admin-dark');
+    });
+
+    it('collapses and expands the sidebar from the topbar, before the search, and remembers it', async () => {
+        signedInAs(viewer);
+        renderApp('/');
+
+        const header = (await screen.findAllByRole('banner'))[0]!;
+        const toggle = within(header).getByRole('button', { name: 'Collapse sidebar' });
+        // It comes before the search field in the topbar's reading order.
+        const search = within(header).getByRole('searchbox');
+        expect(toggle.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+        fireEvent.click(toggle);
+        const expand = within(header).getByRole('button', { name: 'Expand sidebar' });
+        expect(expand.getAttribute('aria-pressed')).toBe('true');
+        expect(localStorage.getItem('tm-admin-sidebar-collapsed')).toBe('1');
+
+        fireEvent.click(expand);
+        expect(within(header).getByRole('button', { name: 'Collapse sidebar' })).toBeTruthy();
+        expect(localStorage.getItem('tm-admin-sidebar-collapsed')).toBe('0');
+        // One toggle only: the sidebar footer no longer carries its own.
+        expect(screen.getAllByRole('button', { name: /^(Collapse|Expand) sidebar$/ })).toHaveLength(1);
     });
 
     it('opens the mobile drawer and closes it with Escape, returning focus', async () => {
@@ -109,6 +132,41 @@ describe('app shell', () => {
         const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
         expect(within(nav).getByRole('link', { name: 'Online store' })).toBeTruthy();
         expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull();
+    });
+
+    it('in the collapsed rail, hovering Online store shows its sub-pages beside the icon', async () => {
+        localStorage.setItem('tm-admin-sidebar-collapsed', '1');
+        signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        const parent = within(nav).getByRole('link', { name: 'Online store' });
+        // Closed until hovered; the parent drops its tooltip because the panel names it.
+        expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull();
+        expect(parent.getAttribute('title')).toBeNull();
+
+        fireEvent.mouseEnter(parent.closest('li')!);
+        const panel = await within(nav).findByRole('list', { name: 'Online store' });
+        expect(within(panel).getAllByRole('link').map((a) => a.textContent)).toEqual(['Pages', 'Navigation', 'Blog', 'Banners', 'Testimonials', 'Media library']);
+
+        fireEvent.mouseLeave(parent.closest('li')!);
+        await waitFor(() => expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull());
+    });
+
+    it('opens the rail sub-pages on keyboard focus, and Escape closes them back onto the icon', async () => {
+        localStorage.setItem('tm-admin-sidebar-collapsed', '1');
+        signedInAs({ ...viewer, permissions: [...viewer.permissions, 'content.view'] });
+        renderApp('/');
+
+        const nav = (await screen.findAllByRole('navigation', { name: 'Main navigation' }))[0]!;
+        const parent = within(nav).getByRole('link', { name: 'Online store' });
+        act(() => parent.focus());
+        const panel = await within(nav).findByRole('list', { name: 'Online store' });
+        act(() => within(panel).getByRole('link', { name: 'Blog' }).focus());
+        fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+
+        await waitFor(() => expect(within(nav).queryByRole('list', { name: 'Online store' })).toBeNull());
+        expect(document.activeElement).toBe(parent);
     });
 
     it('gives every sidebar section its own screen — no section falls back to the placeholder', async () => {

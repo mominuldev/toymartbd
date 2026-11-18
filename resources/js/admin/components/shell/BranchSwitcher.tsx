@@ -119,7 +119,7 @@ export function BranchSwitcher({ multi, locations, current, onSelect, manageHref
     const itemClass = 'flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-start outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-line-focus max-lg:min-h-11';
 
     return (
-        <div className={`flex shrink-0 ${pick('px-3 pb-2', 'justify-center px-2 pb-2', 'justify-center px-2 pb-2 xl:justify-stretch xl:px-3')}`}>
+        <div className={`flex shrink-0 ${pick('px-3 pb-2', 'justify-center px-2 pb-2 xl:h-16 xl:items-center', 'justify-center px-2 pb-2 xl:justify-stretch xl:px-3')}`}>
             <button
                 ref={button}
                 type="button"
@@ -131,7 +131,7 @@ export function BranchSwitcher({ multi, locations, current, onSelect, manageHref
                 onKeyDown={onButtonKey}
                 className={`flex min-w-0 items-center gap-2.5 rounded-sm border text-start transition-colors duration-150 ease-standard hover:bg-subtle ${
                     open ? 'border-line-focus bg-subtle' : 'border-line-default'
-                } ${pick('w-full px-2.5 py-2', 'size-10 justify-center', 'size-10 justify-center xl:size-auto xl:w-full xl:justify-start xl:px-2.5 xl:py-2')}`}
+                } ${pick('w-full px-2.5 py-2', 'size-10 justify-center', 'size-10 justify-center xl:h-14 xl:w-full xl:justify-start xl:px-2.5')}`}
             >
                 {/* The name is the visible text (WCAG 2.5.3), after a hidden "Working branch:"; in the rail only the name. */}
                 <span className="sr-only">{`${t('branchSwitcher.label')}: `}</span>

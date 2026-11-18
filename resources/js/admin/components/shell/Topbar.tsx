@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SignOutIcon, SunIcon, UserCircleIcon } from '@phosphor-icons/react';
+import { ArrowSquareOutIcon, BellIcon, CaretDownIcon, ClockIcon, ListIcon, MoonIcon, ShieldCheckIcon, SidebarSimpleIcon, SignOutIcon, SunIcon, UserCircleIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useTheme } from '@/lib/theme';
 import { buttonClass } from '@/components/ui/Button';
@@ -15,6 +15,9 @@ type TopbarProps = {
     /** Translated role name for the user block. */
     roleLabel: string;
     onOpenMenu: () => void;
+    /** The desktop sidebar's collapsed state and its toggle (the button sits before the search). */
+    collapsed: boolean;
+    onToggleCollapsed: () => void;
     onSignOut: () => void;
     signingOut: boolean;
 };
@@ -142,9 +145,10 @@ function UserMenu({ me, roleLabel, onSignOut, signingOut }: Pick<TopbarProps, 'm
 /**
  * Figma Topbar 187:474 (≥1024) and Topbar / Tablet 228:1857 (<1024): 60 high, bg/surface,
  * border/default bottom edge, no shadow. Search 420 wide with ⌘K, Dhaka clock chip,
- * EN | বাং, theme, notifications, user menu. Below 1024 the menu button opens the drawer.
+ * EN | বাং, theme, notifications, user menu. Below 1024 the menu button opens the drawer; from
+ * 1280 (where the sidebar can expand) a collapse / expand button sits before the search.
  */
-export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar({ me, roleLabel, onOpenMenu, onSignOut, signingOut }, menuButtonRef) {
+export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar({ me, roleLabel, onOpenMenu, collapsed, onToggleCollapsed, onSignOut, signingOut }, menuButtonRef) {
     const { t, locale } = useI18n();
     const { theme, toggle } = useTheme();
     const time = useDhakaTime(locale);
@@ -155,6 +159,13 @@ export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar
             <IconButton ref={menuButtonRef} onClick={onOpenMenu} aria-label={t('shell.openMenu')} className="lg:hidden">
                 <ListIcon size={20} aria-hidden />
             </IconButton>
+
+            {/* Below 1280 the sidebar is always the icon rail, so the toggle only shows where it does something. */}
+            <span className="hidden xl:flex">
+                <IconButton onClick={onToggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? t('shell.expand') : t('shell.collapse')} title={collapsed ? t('shell.expand') : t('shell.collapse')}>
+                    <SidebarSimpleIcon size={20} aria-hidden />
+                </IconButton>
+            </span>
 
             {/* Search is a placeholder until the global search endpoint lands. */}
             <SearchField label={t('shell.search')} placeholder={t('shell.search')} shortcut="⌘K" className="hidden w-105 shrink lg:flex" />
