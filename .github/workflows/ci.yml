@@ -15,10 +15,6 @@ on:
         description: "DESTRUCTIVE: drop every table on the host and re-migrate. First-deploy recovery only — refused once any order, customer, product or staff user exists."
         type: boolean
         default: false
-      seed_demo_catalog:
-        description: "First time only: seed the demo catalog (categories, brands, products, opening stock) on the host. Skipped once any product exists; live settings are snapshotted and restored."
-        type: boolean
-        default: false
 
 # A newer push cancels an older run on a pull request, but never on main: cancelling a main run
 # could interrupt the deploy job between `rsync --delete` and `migrate --force`, leaving the host
@@ -543,7 +539,6 @@ jobs:
           PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH || vars.HOSTINGER_PUBLIC_PATH }}
           PHP_BIN_OVERRIDE: ${{ vars.HOSTINGER_PHP_BIN }}
           RESET_DATABASE: ${{ inputs.reset_database }}
-          SEED_DEMO_CATALOG: ${{ inputs.seed_demo_catalog }}
         run: |
           set -e
 
@@ -551,7 +546,7 @@ jobs:
           # quoting is lost: an empty "$PHP_BIN_OVERRIDE" vanished and every later argument shifted
           # left — reset_database received the public path and a requested reset silently ran a
           # plain migrate. printf %q quotes each value for the remote shell ('' for an empty one).
-          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH" "$SEED_DEMO_CATALOG")
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH")
 
           ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
             "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
@@ -562,7 +557,6 @@ jobs:
           php_override=$2
           reset_database=$3
           public_path=$4
-          seed_demo_catalog=$5
 
           [ -n "$deploy_path" ] || { echo "HOSTINGER_DEPLOY_PATH missing"; exit 1; }
           cd "$deploy_path"
@@ -665,14 +659,6 @@ jobs:
           if [ "$user_count" = "0" ]; then
             echo "Fresh install (no users yet): seeding the reference data."
             "$php_bin" artisan db:seed --force
-          fi
-
-          # The demo catalog only on a manual run with the box ticked, and only on an empty shop:
-          # the seeder itself refuses once any product exists. It snapshots every setting to
-          # storage/app/backups/ first and restores them afterwards, so the live settings stay.
-          if [ "$seed_demo_catalog" = "true" ]; then
-            echo "seed_demo_catalog was requested."
-            "$php_bin" artisan db:seed --class='Database\Seeders\LiveDemoCatalogSeeder' --force
           fi
 
           "$php_bin" artisan storage:link || true

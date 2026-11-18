@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Ordering\Models\Order;
 use App\Models\Enums\Role;
 use App\Models\User;
+use Database\Seeders\Demo\DemoLogin;
+use Database\Seeders\Demo\SettingsSnapshot;
 use Illuminate\Database\Seeder;
 
 /**
@@ -15,7 +18,35 @@ use Illuminate\Database\Seeder;
  */
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * The same seed everywhere. On a deployed host `php artisan toymart:demo:seed` runs it with
+     * `demo.live_seed` on, which seeds everything a developer machine gets — demo logins on the
+     * typed password, catalog, stock, inbox and the transactional history — once only (refused
+     * when any order exists), with every live setting snapshotted to storage/app/backups/ and
+     * restored afterwards. The deploy's own fresh-install `db:seed` leaves it off: reference only.
+     */
     public function run(): void
+    {
+        if (! (bool) config('demo.live_seed')) {
+            $this->seedAll();
+
+            return;
+        }
+
+        if (Order::query()->exists()) {
+            $this->command?->info('Orders already exist: the full demo data is seeded only once. Nothing changed.');
+
+            return;
+        }
+
+        config(['demo.transactions' => true]);
+        $result = SettingsSnapshot::around('demo-seed', function (): void {
+            $this->seedAll();
+        });
+        $this->command?->info('Settings snapshot: storage/app/backups/'.$result['file'].'. Restored '.$result['restored'].' settings to their values before seeding.');
+    }
+
+    private function seedAll(): void
     {
         // Reference data — safe and required in every environment.
         $this->call(RolesAndPermissionsSeeder::class);
@@ -29,13 +60,13 @@ class DatabaseSeeder extends Seeder
         $this->call(StaticPagesSeeder::class);
         $this->call(StaticPageSectionsSeeder::class);
 
-        // A known login is only ever created on a developer's machine or in tests. In any
-        // other environment a seeded account with a factory password is a back door.
-        if (app()->environment('local', 'testing')) {
+        // A known login is only ever created on a developer's machine or in tests, or on a host
+        // through `toymart:demo:seed` with the password typed at its hidden prompt (DemoLogin).
+        if (DemoLogin::enabled()) {
             // Local sign-in: mominulfed@gmail.com / password. Change either at /admin/account.
             User::query()->firstOrCreate(
                 ['email' => 'mominulfed@gmail.com'],
-                User::factory()->raw(['name' => 'Mominul Islam', 'email' => 'mominulfed@gmail.com', 'password' => 'password']),
+                DemoLogin::attributes('Mominul Islam', 'mominulfed@gmail.com'),
             )->assignRole(Role::SuperAdmin->value);
             $this->call(CategoryDemoSeeder::class);
             $this->call(BrandDemoSeeder::class);

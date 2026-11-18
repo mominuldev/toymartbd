@@ -16,6 +16,7 @@ use App\Domain\Inbox\Models\ConversationMessage;
 use App\Domain\Inbox\Support\MessagePreview;
 use App\Domain\Ordering\Models\Order;
 use App\Models\User;
+use Database\Seeders\Demo\DemoLogin;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use RuntimeException;
@@ -33,8 +34,8 @@ class DemoInboxSeeder extends Seeder
 {
     public function run(): void
     {
-        if (! app()->environment('local', 'testing')) {
-            throw new RuntimeException('DemoInboxSeeder is for local and testing only.');
+        if (! DemoLogin::enabled()) {
+            throw new RuntimeException('DemoInboxSeeder is for local and testing only (or toymart:demo:seed).');
         }
 
         Conversation::query()->where('external_thread_id', 'like', 'demo-%')->each(function (Conversation $c): void {

@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Enums\Role;
 use App\Models\User;
+use Database\Seeders\Demo\DemoLogin;
 use Illuminate\Database\Seeder;
 
 /**
@@ -53,14 +54,14 @@ class DemoStaffSeeder extends Seeder
     public function run(): void
     {
         // A seeded login with a known password anywhere else is a back door.
-        if (! app()->environment('local', 'testing')) {
+        if (! DemoLogin::enabled()) {
             return;
         }
 
         foreach (self::STAFF as $role => [$email, $name]) {
             User::query()->firstOrCreate(
                 ['email' => $email],
-                User::factory()->raw(['name' => $name, 'email' => $email]),
+                DemoLogin::attributes($name, $email),
             )->syncRoles([Role::from($role)->value]);
         }
     }

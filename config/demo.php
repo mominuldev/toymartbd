@@ -26,4 +26,12 @@ return [
 
     /* How many days back the demo order history starts, ending today (Dhaka time). */
     'history_days' => (int) env('DEMO_SEED_HISTORY_DAYS', 60),
+
+    /*
+     * Runtime only, never from .env: `php artisan toymart:demo:seed` turns `live_seed` on for its
+     * own process so a deployed host can be seeded like a developer machine, and sets `password`
+     * (typed at its hidden prompt) for every demo login it creates. See Database\Seeders\Demo\DemoLogin.
+     */
+    'live_seed' => false,
+    'password' => null,
 ];
