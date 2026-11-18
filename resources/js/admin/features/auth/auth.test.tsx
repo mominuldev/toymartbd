@@ -56,9 +56,9 @@ describe('auth guard', () => {
         fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
         fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-        const alert = await screen.findByRole('alert');
-        expect(alert.textContent).toContain('Those details did not match an active staff account.');
-        expect(alert.textContent).toContain('Check the email and password, then try again.');
+        expect((await screen.findByRole('alert')).textContent).toBe('Those details did not match an active staff account.');
+        expect(screen.getByText('Check the email and password, then try again.')).toBeTruthy();
+        expect(screen.getByLabelText('Email').getAttribute('aria-describedby')).toBe((await screen.findByRole('alert')).id);
     });
 
     it('shows and hides the password with a labelled toggle button', async () => {

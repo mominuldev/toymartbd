@@ -88,10 +88,13 @@ export function LoginPage() {
                 </div>
 
                 {message && (
-                    <div id={ids.error} role="alert" className="flex items-start gap-2 rounded-sm border border-line-danger bg-danger-subtle px-3 py-3">
+                    <div className="flex items-start gap-2 rounded-sm border border-line-danger bg-danger-subtle px-3 py-3">
                         <WarningCircleIcon size={18} aria-hidden className="mt-0.5 shrink-0 text-feedback-danger" />
                         <div className="flex flex-col gap-0.5">
-                            <p className="t-admin-body text-fg-primary">{message}</p>
+                            {/* The alert and both fields' description are the message alone; the hint is extra help. */}
+                            <p id={ids.error} role="alert" className="t-admin-body text-fg-primary">
+                                {message}
+                            </p>
                             {!(error instanceof ApiError && error.status === 429) && <p className="t-admin-caption text-fg-secondary">{t('auth.failedHint')}</p>}
                         </div>
                     </div>
