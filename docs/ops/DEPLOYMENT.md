@@ -82,7 +82,7 @@ You need: a VPS with **Ubuntu 24.04 LTS** (2 GB RAM minimum, 4 GB comfortable; w
    php artisan toymart:notifications:sync-templates
    php artisan toymart:storefront-token                  # copy it into Vercel (§7), once
    ```
-   Create your own admin login as in `STAGING.md` §4 ("Create the owner's account by hand"). Then run `php artisan toymart:launch:check` (`LAUNCH-CHECKLIST.md`).
+   Create your own admin login: `php artisan toymart:owner:create --email=you@example.com --name="Your Name"` (password prompted, hidden; `STAGING.md` §4). Then run `php artisan toymart:launch:check` (`LAUNCH-CHECKLIST.md`).
 
 **What the script installs and why**
 

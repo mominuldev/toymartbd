@@ -149,13 +149,13 @@ php artisan toymart:storefront-token        # copy into the storefront env, once
 
 It creates **no login and no demo catalogue**; those run only in `local` / `testing`.
 
-Create the owner's account by hand:
+Create the owner's account:
 
 ```bash
-php artisan tinker --execute '
-  $u = App\Models\User::create(["name" => "Owner", "email" => "OWNER_EMAIL", "password" => bcrypt("A-LONG-PASSWORD")]);
-  $u->assignRole(App\Models\Enums\Role::SuperAdmin->value);'
+php artisan toymart:owner:create --email=OWNER_EMAIL --name="Owner Name"
 ```
+
+It asks for the password twice, hidden. The password must be at least 12 characters. It never takes the password as an option, so the password stays out of shell history. An email that already has an account is refused, not promoted: change roles in Admin → Staff & roles. The role grant is audited.
 
 **Demo catalogue only if the owner asks:** `php artisan db:seed --class=CategoryDemoSeeder --force`, then `BrandDemoSeeder`, `DemoCatalogSeeder` and `DemoInventorySeeder`. Do not do this before the Gate 4 run. Demo products mixed with real ones make the ten-order profit check harder to read.
 

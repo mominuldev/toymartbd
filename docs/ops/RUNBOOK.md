@@ -267,7 +267,7 @@ php artisan tinker --execute '
 
 - Two-factor cannot be switched off in production: `TWO_FACTOR_ENFORCE` is ignored there.
 
-**What the screen refuses, on purpose:** changing your own role, status or password, and anything that would leave the shop with no active owner. Make a second owner first. If the last owner is locked out, the developer can run, on the server:
+**What the screen refuses, on purpose:** changing your own role, status or password, and anything that would leave the shop with no active owner. Make a second owner first (from the screen, or on the server with `php artisan toymart:owner:create`, which prompts for the password and audits the grant). If the last owner is locked out, the developer can run, on the server:
 
 ```bash
 php artisan tinker --execute '
