@@ -135,7 +135,9 @@ export function StatCard({ label, to, info, value, delta, footnote, sparkline }:
             <p className="t-admin-num-lg text-fg-primary">{value}</p>
             {delta}
             {footnote !== undefined && <div className="t-admin-caption text-fg-secondary">{footnote}</div>}
-            {sparkline}
+            {/* Pinned to the card's foot: cards in a row stretch to one height, so every sparkline lines
+                up even when one card carries an extra line (Net profit's gross-profit footnote). */}
+            {sparkline && <div className="mt-auto">{sparkline}</div>}
         </article>
     );
 }
