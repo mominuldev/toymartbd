@@ -1,13 +1,31 @@
-name: CI
+name: CI and deploy
+
+# One workflow for test and deploy. Every push to main and every pull request runs the full test
+# suite; on main (a push, or Actions → CI and deploy → Run workflow from main) the Hostinger deploy
+# job runs last, and only when every test job passed. Pull requests and other branches never deploy.
+# The storefront is its own repository and deploys to Vercel from there. docs/ops/DEPLOYMENT.md §11.
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      reset_database:
+        description: "DESTRUCTIVE: drop every table on the host and re-migrate. First-deploy recovery only — refused once any order, customer, product or staff user exists."
+        type: boolean
+        default: false
 
+# A newer push cancels an older run on a pull request, but never on main: cancelling a main run
+# could interrupt the deploy job between `rsync --delete` and `migrate --force`, leaving the host
+# serving new code against an old schema. Main runs each get their own group; the deploy job
+# serialises itself below.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
 
 jobs:
   # PHP runs as four jobs at once: static analysis, the MySQL group + load harness, and the SQLite
@@ -282,3 +300,571 @@ jobs:
         run: |
           echo "plan: ${{ needs.a11y-plan.result }}, groups: ${{ needs.a11y-groups.result }}"
           [ "${{ needs.a11y-plan.result }}" = success ] && [ "${{ needs.a11y-groups.result }}" = success ]
+
+  # Deploy to Hostinger over SSH (docs/ops/DEPLOYMENT.md §11). Runs only on main, only after every
+  # test job above passed. Builds vendor/ (--no-dev) and public/build on the runner, rsyncs the tree
+  # with --delete (never .env, storage/, public/storage, the host's .htaccess or .well-known/), then on
+  # the host: migrate --force, the roles seeder, the full reference seed only on a fresh install,
+  # storage:link, the config/route/view/event caches and queue:restart.
+  #
+  # With no HOSTINGER_* secrets set the job skips with a notice and succeeds — it never fails a
+  # merge for missing infrastructure.
+  deploy:
+    name: Deploy to Hostinger
+    needs: [php, frontend, admin-e2e, admin-a11y]
+    if: >-
+      success() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Never cancel a running deploy, and never run two at once.
+    concurrency:
+      group: deploy-hostinger
+      cancel-in-progress: false
+
+    steps:
+      - name: Hostinger secrets present?
+        id: gate
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_KEY" ] || [ -z "$DEPLOY_PATH" ]; then
+            echo "::notice title=Hostinger deploy skipped::HOSTINGER_SSH_HOST, HOSTINGER_SSH_KEY or HOSTINGER_DEPLOY_PATH not set. See docs/ops/DEPLOYMENT.md §11."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+
+      - name: Setup PHP
+        if: steps.gate.outputs.enabled == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, zip, gd, curl, bcmath, intl, sodium, pdo_mysql, exif
+          tools: composer:v2
+          coverage: none
+
+      # Built here rather than on the shared host: the release has to carry a vendor/ tree,
+      # because the rsync below runs --delete and would otherwise wipe the server's.
+      - name: Install production Composer dependencies
+        if: steps.gate.outputs.enabled == 'true'
+        run: composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction --no-progress
+
+      - name: Setup Node
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install frontend dependencies
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm ci
+
+      # public/build is gitignored; the admin SPA ships only from here.
+      - name: Build admin assets
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm run build
+
+      # Hostinger's panel presents SSH access as a whole command —
+      # `ssh -p 65002 u123456789@82.180.132.207` — so that string, or a bare `user@host`, is
+      # what usually ends up in HOSTINGER_SSH_HOST. Normalise once and export the parts.
+      - name: Setup SSH
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+        run: |
+          set -e
+
+          host=$(printf '%s' "$SSH_HOST" | tr -d '\r' | xargs)
+          user=$(printf '%s' "$SSH_USER" | tr -d '\r' | xargs)
+          port=$(printf '%s' "$SSH_PORT" | tr -d '\r' | xargs)
+
+          # `ssh [-p PORT] [user@]host` pasted whole: take the port if it carries one and no
+          # port secret was set, then the last word.
+          case "$host" in
+            ssh\ *|ssh://*)
+              echo "HOSTINGER_SSH_HOST looks like a connection command or URL; parsing it."
+              embedded_port=$(printf '%s' "$host" | sed -n 's/.*-p[[:space:]]*\([0-9][0-9]*\).*/\1/p')
+              [ -n "$embedded_port" ] && [ -z "$port" ] && port="$embedded_port"
+              host=${host##* }
+              host=${host#ssh://}
+              ;;
+          esac
+
+          # `user@host` in the host secret: the user half wins only when HOSTINGER_SSH_USER is unset.
+          case "$host" in
+            *@*)
+              [ -n "$user" ] || user=${host%@*}
+              host=${host#*@}
+              ;;
+          esac
+
+          # A trailing `:port` (the URL form), same precedence rule.
+          case "$host" in
+            *:[0-9]*)
+              [ -n "$port" ] || port=${host##*:}
+              host=${host%:*}
+              ;;
+          esac
+
+          host=${host%/}
+          port=${port:-65002}
+
+          [ -n "$user" ] || { echo "HOSTINGER_SSH_USER missing, and HOSTINGER_SSH_HOST carries no user@ to fall back on"; exit 1; }
+
+          # The parsed values are no longer byte-identical to the secrets, so nothing masks them.
+          echo "::add-mask::$host"
+          echo "::add-mask::$user"
+
+          # Advisory only: `getent hosts <ip>` is a reverse lookup, so an IP with no PTR record
+          # fails it although ssh connects fine. The login step reports a genuinely bad value.
+          case "$host" in
+            *[!0-9.]*)
+              if ! getent hosts "$host" >/dev/null 2>&1; then
+                echo "Warning: HOSTINGER_SSH_HOST did not resolve from the runner. If the login below fails,"
+                echo "set it to the hostname or IP alone, the user in HOSTINGER_SSH_USER, the port in HOSTINGER_SSH_PORT."
+              fi
+              ;;
+          esac
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Best-effort and never fatal: every ssh and rsync below passes StrictHostKeyChecking=no.
+          if ! ssh-keyscan -p "$port" "$host" >> ~/.ssh/known_hosts; then
+            echo "ssh-keyscan could not fetch a host key; continuing."
+          fi
+
+          {
+            echo "DEPLOY_SSH_HOST=$host"
+            echo "DEPLOY_SSH_USER=$user"
+            echo "DEPLOY_SSH_PORT=$port"
+          } >> "$GITHUB_ENV"
+
+          echo "SSH target resolved; port $port."
+
+      - name: Verify SSH login
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "echo 'SSH connection successful'"
+
+      # Before the rsync, so a bad .env never leaves new code on the host against an old schema.
+      # local/testing on a deployed host is never right: DatabaseSeeder then seeds a known login
+      # and demo data — needing dev-only faker, absent under --no-dev, and a back door if it were
+      # there — and the production guards (rule 33a booking block, two-factor enforcement) are
+      # off. A missing .env is left to the migrate step, which explains how to create one.
+      - name: Refuse a local or testing APP_ENV on the host
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          # Same quoting rule as the migrate step: arguments go through printf %q, the script
+          # through stdin, so nothing is re-parsed by the remote shell.
+          app_env=$(ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+            "bash -s -- $(printf '%q' "$DEPLOY_PATH")" <<'REMOTE'
+          [ -f "$1/.env" ] || exit 0
+          sed -n 's/^[[:space:]]*APP_ENV=//p' "$1/.env" | tail -1 | tr -d "\"' \r"
+          REMOTE
+          )
+          case "$app_env" in
+            local|testing)
+              echo "::error::APP_ENV is '$app_env' in the host .env. Set APP_ENV=production (or staging) and APP_DEBUG=false there, then re-run the deploy. Nothing was changed on the host."
+              exit 1
+              ;;
+          esac
+          echo "Host APP_ENV: ${app_env:-<no .env yet>}"
+
+      # --delete removes anything on the host the checkout does not carry, so every path that
+      # lives only on the server must be named here.
+      #
+      # --exclude both skips sending a path and spares it from --delete: .env holds the
+      # credentials (APP_KEY decrypts gateway and courier credentials and AI keys — losing it
+      # loses them), storage/ holds uploaded media, sessions, logs and backups, and
+      # public/storage is the symlink into it.
+      #
+      # --filter='protect ...' spares a path from deletion while still letting the repo's own
+      # copy through: the host's document-root .htaccess must survive, while public/.htaccess
+      # (Laravel's front-controller rewrite) is tracked here and must keep shipping.
+      # .well-known holds ACME challenge files during certificate renewal.
+      - name: Deploy files
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+        run: |
+          set -e
+
+          rsync -az --delete --stats \
+            -e "ssh -i ~/.ssh/id_rsa -p $DEPLOY_SSH_PORT -o StrictHostKeyChecking=no" \
+            --filter='protect .htaccess' \
+            --filter='protect .well-known/***' \
+            --filter='protect .user.ini' \
+            --filter='protect .env.backup-*' \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude=".idea" \
+            --exclude="node_modules" \
+            --exclude="/tests" \
+            --exclude="/e2e" \
+            --exclude="/docs" \
+            --exclude="test-results" \
+            --exclude="playwright-report" \
+            --exclude="public/hot" \
+            --exclude=".env" \
+            --exclude="storage/" \
+            --exclude="public/storage" \
+            ./ "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_PATH"
+
+      # Hostinger's default CLI `php` is often older than the ^8.4 composer.json requires, and
+      # the newer builds sit alongside it. Resolve one instead of trusting PATH; set the
+      # repository variable HOSTINGER_PHP_BIN if the plan keeps it somewhere this list misses.
+      #
+      # This selects the CLI only. The PHP the *website* runs under is set per-domain in hPanel
+      # and has to be 8.4 as well, or the deploy succeeds and every request 500s.
+      - name: Migrate and refresh caches
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH || vars.HOSTINGER_PUBLIC_PATH }}
+          PHP_BIN_OVERRIDE: ${{ vars.HOSTINGER_PHP_BIN }}
+          RESET_DATABASE: ${{ inputs.reset_database }}
+        run: |
+          set -e
+
+          # ssh joins its arguments into ONE string that the remote shell re-parses, so local
+          # quoting is lost: an empty "$PHP_BIN_OVERRIDE" vanished and every later argument shifted
+          # left — reset_database received the public path and a requested reset silently ran a
+          # plain migrate. printf %q quotes each value for the remote shell ('' for an empty one).
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH")
+
+          ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+            "bash -s -- $remote_args" <<'REMOTE'
+          set -e
+
+          deploy_path=$1
+          php_override=$2
+          reset_database=$3
+          public_path=$4
+
+          [ -n "$deploy_path" ] || { echo "HOSTINGER_DEPLOY_PATH missing"; exit 1; }
+          cd "$deploy_path"
+
+          # storage/ is excluded from the rsync, so a fresh host has none of Laravel's writable
+          # directories; view:cache fails without storage/framework/views. Existing files untouched.
+          mkdir -p storage/app/public storage/app/private storage/app/backups \
+            storage/framework/cache/data storage/framework/sessions \
+            storage/framework/views storage/logs bootstrap/cache
+
+          # The web server follows public/storage into storage/app/public, so every directory on
+          # that path has to be traversable — before the seeders upload media through it.
+          chmod 755 storage storage/app storage/app/public
+
+          # When the project root IS the document root, its .htaccess is the only thing keeping
+          # .env, vendor/ and storage/ from being served. Restore it when absent; never overwrite.
+          if [ -n "$public_path" ]; then
+            echo "Split layout (HOSTINGER_PUBLIC_PATH is set): this directory is not web-served."
+          elif [ ! -f .htaccess ] && [ -f deploy/hostinger/document-root.htaccess ]; then
+            cp deploy/hostinger/document-root.htaccess .htaccess
+            echo "Document-root .htaccess was missing; restored it from deploy/hostinger/document-root.htaccess."
+          fi
+
+          php_bin=""
+          for candidate in "$php_override" \
+            /opt/alt/php84/usr/bin/php /opt/alt/php85/usr/bin/php \
+            /usr/bin/php8.4 /usr/local/bin/php8.4 \
+            php8.4 php; do
+              [ -n "$candidate" ] || continue
+              command -v "$candidate" >/dev/null 2>&1 || continue
+              version_id=$("$candidate" -r 'echo PHP_VERSION_ID;' 2>/dev/null) || continue
+              case "$version_id" in ''|*[!0-9]*) continue ;; esac
+              [ "$version_id" -ge 80400 ] || continue
+              php_bin=$candidate
+              break
+          done
+
+          if [ -z "$php_bin" ]; then
+            echo "No PHP 8.4 or newer found on the host."
+            echo "Default CLI is: $(php -v 2>/dev/null | head -1)"
+            echo "Set the repository variable HOSTINGER_PHP_BIN to the full path of an 8.4 binary"
+            echo "(Hostinger usually keeps them under /opt/alt/phpXX/usr/bin/php)."
+            exit 1
+          fi
+
+          echo "Running artisan under $php_bin ($("$php_bin" -r 'echo PHP_VERSION;'))"
+
+          [ -f .env ] || {
+            echo "No .env on the host. The deploy never uploads one — it holds the credentials and"
+            echo "the APP_KEY that encrypts gateway, courier and AI credentials."
+            echo "Create it by hand; docs/ops/DEPLOYMENT.md §11 has the key set."
+            exit 1
+          }
+
+          env_value() {
+            sed -n "s/^[[:space:]]*$1=//p" .env | tail -1 | tr -d '"'"'"' ' | tr -d '\r'
+          }
+
+          # Reported rather than corrected: only the host knows its domains and services.
+          app_env=$(env_value APP_ENV)
+          if [ "$app_env" = "production" ]; then
+            [ "$(env_value APP_DEBUG)" = "false" ] || echo "WARNING: APP_DEBUG is not false in production (ProductionSafety forces it off, but fix .env)."
+            [ -n "$(env_value APP_KEY)" ] || { echo "APP_KEY is empty. Set it once (php artisan key:generate) and never change it: it decrypts stored credentials."; exit 1; }
+            case "$(env_value APP_URL)" in
+              https://*) ;;
+              *) echo "WARNING: APP_URL is not https — secure cookies and the admin session need it." ;;
+            esac
+          else
+            echo "WARNING: APP_ENV is '${app_env:-unset}', not production."
+          fi
+          # Shared Hostinger plans have no Redis and no Meilisearch.
+          for key in SESSION_DRIVER QUEUE_CONNECTION CACHE_STORE; do
+            [ "$(env_value $key)" = "redis" ] && echo "WARNING: $key=redis but this host may have no Redis — use 'database' on shared hosting."
+          done
+          [ "$(env_value SCOUT_DRIVER)" = "meilisearch" ] && echo "WARNING: SCOUT_DRIVER=meilisearch — make sure MEILISEARCH_HOST is a reachable (hosted) server, or set SCOUT_DRIVER=null for database search."
+
+          # migrate:fresh only on an explicit manual dispatch with the box ticked — never on a
+          # push — and refused while the database holds anything real. "Could not check" must
+          # never read as "empty".
+          if [ "$reset_database" = "true" ]; then
+            live_rows=$("$php_bin" artisan tinker --execute='$n = 0; foreach (["orders", "customers", "products", "users"] as $t) { if (Illuminate\Support\Facades\Schema::hasTable($t)) { $n += Illuminate\Support\Facades\DB::table($t)->count(); } } echo "LIVE_ROWS=".$n;' 2>/dev/null | grep -o 'LIVE_ROWS=[0-9]*' | cut -d= -f2)
+            if [ "$live_rows" != "0" ]; then
+              echo "Refusing reset_database: the database holds ${live_rows:-an unknown number of} order/customer/product/user rows."
+              echo "migrate:fresh would delete them all (rule 12: orders are never deleted). Back up and reset by hand if you mean it."
+              exit 1
+            fi
+            echo "reset_database was requested on an empty database: dropping every table and re-migrating."
+            "$php_bin" artisan migrate:fresh --force
+          else
+            "$php_bin" artisan migrate --force
+          fi
+
+          # Roles and permissions on every deploy: the seeder adds what a release registers and
+          # never touches what an owner edited (CLAUDE.md rule 20b).
+          "$php_bin" artisan db:seed --class='Database\Seeders\RolesAndPermissionsSeeder' --force
+
+          # The reference data (geography, catalog reference, delivery, CMS pages…) only on a fresh
+          # install. DatabaseSeeder seeds demo data and accounts only in local/testing, never here.
+          user_count=$("$php_bin" artisan tinker --execute='echo "USERS=".Illuminate\Support\Facades\DB::table("users")->count();' 2>/dev/null | grep -o 'USERS=[0-9]*' | cut -d= -f2)
+          if [ "$user_count" = "0" ]; then
+            echo "Fresh install (no users yet): seeding the reference data."
+            "$php_bin" artisan db:seed --force
+          fi
+
+          "$php_bin" artisan storage:link || true
+
+          # Seeders and uploads create directories under a umask this host chooses; one 0700
+          # directory in the path and the web server cannot reach the file.
+          find storage/app/public -type d ! -perm -755 -exec chmod 755 {} + || true
+
+          # Clear before re-caching: a stale route or view cache from the previous release is
+          # not overwritten by anything below.
+          "$php_bin" artisan optimize:clear || {
+            echo "optimize:clear failed (usually an unreachable cache store); clearing compiled files individually."
+            "$php_bin" artisan config:clear
+            "$php_bin" artisan route:clear
+            "$php_bin" artisan view:clear
+            "$php_bin" artisan event:clear || true
+          }
+
+          "$php_bin" artisan config:cache
+          "$php_bin" artisan route:cache
+          "$php_bin" artisan view:cache
+          "$php_bin" artisan event:cache
+
+          # Workers started by cron (`queue:work --stop-when-empty`) pick up the new code on their
+          # next start; a long-running one is told to finish its job and exit.
+          "$php_bin" artisan queue:restart
+
+          if [ "$user_count" = "0" ]; then
+            echo
+            echo "No staff accounts yet. Create the owner's super admin account by hand:"
+            echo "  docs/ops/STAGING.md §4 (\"Create the owner's account by hand\"), then run"
+            echo "  cd $deploy_path && $php_bin artisan toymart:launch:check"
+          fi
+          REMOTE
+
+      # Publishes ONLY the contents of public/ into the directory Apache serves, so .env,
+      # vendor/, app/ and storage/ live outside the web root:
+      #
+      #   ~/domains/<domain>/laravel/       <- HOSTINGER_DEPLOY_PATH, never served
+      #   ~/domains/<domain>/public_html/   <- HOSTINGER_PUBLIC_PATH, document root
+      #
+      # Opt-in: with HOSTINGER_PUBLIC_PATH unset this step skips. It runs ON the host, after the
+      # migrate step on purpose: that step refuses without a .env, so a wrong DEPLOY_PATH never
+      # reaches the --delete below.
+      - name: Publish Laravel public directory
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH || vars.HOSTINGER_PUBLIC_PATH }}
+        run: |
+          set -e
+
+          if [ -z "$PUBLIC_PATH" ]; then
+            echo "HOSTINGER_PUBLIC_PATH is not set, so the Laravel tree is assumed to be served directly"
+            echo "(document root at .../public, or the document-root .htaccess). Nothing to publish."
+            exit 0
+          fi
+
+          # Quoted for the remote shell, as in the migrate step (a path with a space would split).
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PUBLIC_PATH")
+
+          ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+            "bash -s -- $remote_args" <<'REMOTE'
+          set -e
+
+          deploy_path=${1%/}
+          public_path=${2%/}
+
+          [ -n "$deploy_path" ] || { echo "HOSTINGER_DEPLOY_PATH missing"; exit 1; }
+          [ -d "$deploy_path/public" ] || {
+            echo "$deploy_path/public does not exist, so HOSTINGER_DEPLOY_PATH is not the Laravel project root."
+            exit 1
+          }
+          [ -d "$public_path" ] || {
+            echo "$public_path does not exist. Create the document root first, or correct HOSTINGER_PUBLIC_PATH —"
+            echo "this step will not create a web root it was pointed at by mistake."
+            exit 1
+          }
+
+          # Resolve both before comparing: a public_html symlinked at public/ is the same
+          # directory, and rsync --delete into itself deletes as it goes.
+          app_root=$(cd "$deploy_path" && pwd -P)
+          src=$(cd "$deploy_path/public" && pwd -P)
+          dest=$(cd "$public_path" && pwd -P)
+
+          if [ "$src" = "$dest" ]; then
+            echo "$public_path already IS $deploy_path/public; nothing to copy."
+            exit 0
+          fi
+
+          # Refuse the targets where --delete is catastrophic.
+          case "$dest" in
+            /|"$HOME") echo "Refusing to --delete inside $dest."; exit 1 ;;
+          esac
+          case "$app_root/" in
+            "$dest"/*)
+              echo "$app_root sits inside $dest, so publishing there with --delete would erase the application."
+              echo "Move the Laravel tree out of the web root first."
+              exit 1
+              ;;
+          esac
+
+          if [ -f "$dest/.env" ]; then
+            backup="$app_root/.env.webroot-$(date +%Y%m%d%H%M%S)"
+            cp "$dest/.env" "$backup"
+            echo "WARNING: found $dest/.env inside the web root — treat every credential in it as compromised and"
+            echo "rotate it. Copied to $backup; the sync below removes it."
+          fi
+
+          # The web root reaches the media disk only through storage/; a real directory left there
+          # by an earlier layout shadows it and every media URL 404s. Nothing here removes a
+          # directory with files in it.
+          want="$app_root/storage/app/public"
+
+          if [ -L "$dest/storage" ]; then
+            if [ "$(readlink "$dest/storage")" != "$want" ]; then
+              rm "$dest/storage"
+              ln -s "$want" "$dest/storage"
+              echo "Repointed $dest/storage -> $want."
+            fi
+          elif [ ! -e "$dest/storage" ]; then
+            ln -s "$want" "$dest/storage"
+            echo "Created $dest/storage -> $want."
+          elif [ -d "$dest/storage" ] && [ -z "$(ls -A "$dest/storage")" ]; then
+            rmdir "$dest/storage"
+            ln -s "$want" "$dest/storage"
+            echo "Replaced an empty $dest/storage directory with the symlink."
+          else
+            echo "$dest/storage is a real directory holding files, shadowing the media disk at $want."
+            echo "Move anything it holds into that directory, delete it, then re-run this workflow."
+            exit 1
+          fi
+
+          # .htaccess is excluded (neither sent nor deleted): the served one is usually the host's,
+          # with an hPanel PHP handler block. Handled below.
+          rsync -a --delete \
+            --exclude='.htaccess' \
+            --exclude='.well-known/' \
+            --exclude='.user.ini' \
+            --exclude='storage' \
+            "$src/" "$dest/"
+
+          echo "Published $src/ -> $dest/"
+
+          if [ ! -d "$dest/storage/." ]; then
+            echo "$dest/storage does not resolve to a directory, so every media URL will 404. Expected it to reach $want."
+            exit 1
+          fi
+
+          # public/index.php loads the framework from __DIR__.'/../'. Copied into a web root
+          # elsewhere, `..` is no longer the app; rewrite the published copy (never the repo's) to
+          # the absolute app root. rsync re-copies a pristine one every deploy, so it never compounds.
+          case "$app_root" in
+            *[\|\\\&]*) echo "Refusing to rewrite index.php: $app_root contains a character that would break the substitution."; exit 1 ;;
+          esac
+
+          sed "s|__DIR__\.'/\.\./|'$app_root/|g" "$dest/index.php" > "$dest/index.php.publishing"
+          mv "$dest/index.php.publishing" "$dest/index.php"
+
+          if grep -q "__DIR__\.'/\.\./" "$dest/index.php"; then
+            echo "index.php still resolves the framework relative to the web root after rewriting."
+            exit 1
+          fi
+
+          for required in "$app_root/vendor/autoload.php" "$app_root/bootstrap/app.php"; do
+            if ! grep -qF "'$required'" "$dest/index.php"; then
+              echo "$dest/index.php does not require $required after rewriting."
+              exit 1
+            fi
+            if [ ! -f "$required" ]; then
+              echo "$dest/index.php requires $required, which does not exist on this host."
+              exit 1
+            fi
+          done
+
+          php -l "$dest/index.php" > /dev/null || { echo "The rewritten $dest/index.php is not valid PHP."; exit 1; }
+
+          echo "Rewrote $dest/index.php to load the framework from $app_root."
+
+          if [ ! -f "$dest/.htaccess" ]; then
+            cp "$src/.htaccess" "$dest/.htaccess"
+            echo "No .htaccess in the web root; installed Laravel's front-controller rewrite."
+          elif grep -qE '^[[:space:]]*RewriteRule[[:space:]]+\^\(\.\*\)\$[[:space:]]+public/' "$dest/.htaccess"; then
+            echo "$dest/.htaccess still carries the document-root rewrite into public/, which 404s every request in"
+            echo "this layout. Replace it with Laravel's own (keep any hPanel PHP handler block): cp $src/.htaccess $dest/.htaccess"
+            exit 1
+          elif ! grep -qE 'RewriteRule.*index\.php' "$dest/.htaccess"; then
+            # Typically just an hPanel PHP handler block: append Laravel's rules once.
+            printf '\n# BEGIN laravel-front-controller -- appended by the deploy, safe to edit\n' >> "$dest/.htaccess"
+            cat "$src/.htaccess" >> "$dest/.htaccess"
+            printf '# END laravel-front-controller\n' >> "$dest/.htaccess"
+            echo "Appended Laravel's front-controller rules to the existing web-root .htaccess."
+          fi
+          REMOTE
+
+      # A green deploy over a site answering 500 is the failure that matters, so ask the live API.
+      - name: Smoke test
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          APP_URL: ${{ vars.HOSTINGER_APP_URL }}
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "Set the repository variable HOSTINGER_APP_URL (e.g. https://api.example.com) to enable this check."
+            exit 0
+          fi
+          status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${APP_URL%/}/up")
+          echo "GET /up -> $status"
+          [ "$status" = "200" ] || { echo "The deployed app is not healthy."; exit 1; }

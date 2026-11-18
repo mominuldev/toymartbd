@@ -12,7 +12,7 @@
 | `ops/deploy/deploy.sh` | Release / rollback / list / health on the server (installed as `/var/www/toymartbd/bin/toymart-deploy`) |
 | `ops/deploy/build-artifact.sh` | Packs the release tarball in CI |
 | `ops/deploy/rehearse-local.sh` | The local proof (§9) |
-| `.github/workflows/deploy.yml` | Deploy on green CI on `main`, or by hand; storefront to Vercel after the API |
+| `.github/workflows/ci.yml` | Tests on every push and pull request; on `main` its last job deploys to Hostinger (§11). The VPS deploy workflow (`deploy.yml`) was removed on 2026-11-18 — restore it from git history (`backup/main-2026-11-18`) before using §§2–9's GitHub steps |
 | `toymartbd-storefront/vercel.json` | Vercel build settings for the storefront |
 
 ---
@@ -159,7 +159,7 @@ The names are your choice; `SERVER_NAMES` in `provision.env` must list the serve
 | 10 | Start Horizon if it is not running (first deploy); `horizon:terminate` — running jobs finish, Supervisor restarts Horizon on the new code | warning only |
 | 11 | Record `deployed <sha>`; delete the artifact; keep the newest 5 releases (never the live one or the rollback target) | — |
 
-**By hand:** GitHub → Actions → **Deploy** → *Run workflow* (branch `main`), action `deploy`, optional `sha` (a commit on `main` whose CI passed; empty = head of `main`). Or on the server with an artifact you already have: `/var/www/toymartbd/bin/toymart-deploy release <file.tar.gz> <sha>`.
+**By hand** (needs the removed `deploy.yml`, see the table above): GitHub → Actions → **Deploy** → *Run workflow* (branch `main`), action `deploy`, optional `sha` (a commit on `main` whose CI passed; empty = head of `main`). Or on the server with an artifact you already have: `/var/www/toymartbd/bin/toymart-deploy release <file.tar.gz> <sha>`.
 
 **Migration policy.** Every schema change is expand-and-contract (`SYSTEM-ARCHITECTURE.md` §12; `CLAUDE.md` conventions): migrations run before the swap, and the previous release must keep working against the new schema. That is what makes zero-downtime deploys and code-only rollbacks safe.
 
@@ -254,7 +254,7 @@ ssh deploy@api.<domain> /var/www/toymartbd/bin/toymart-deploy rollback          
 ssh deploy@api.<domain> /var/www/toymartbd/bin/toymart-deploy rollback <sha>    # to a specific one still on disk
 ssh deploy@api.<domain> /var/www/toymartbd/bin/toymart-deploy list              # what is on disk, what is live, history
 ```
-or GitHub → Actions → Deploy → Run workflow → action `rollback`. It re-caches the target's config against the current `.env`, switches `current`, reloads PHP-FPM, restarts Horizon, runs the health check, and records `rolled-back-to`. Running it again goes one release further back.
+or, with `deploy.yml` restored, GitHub → Actions → Deploy → Run workflow → action `rollback`. It re-caches the target's config against the current `.env`, switches `current`, reloads PHP-FPM, restarts Horizon, runs the health check, and records `rolled-back-to`. Running it again goes one release further back.
 
 **The database schema is NOT rolled back.** Migrations from the newer release stay applied. That is safe because of expand-and-contract: the previous release never needs a column or table that a later release removed. If the release you are leaving ran a `@deploy:destructive` migration, check the data before trusting the older code. There is no `migrate:rollback` in this flow — to undo a schema change, write a new forward migration.
 
@@ -302,9 +302,9 @@ Then `curl -s https://api.<domain>/api/v1/health`.
 10. **Monthly**: the maintenance in §8 and the restore rehearsal (`backup-and-restore.md`).
 11. **Storefront maintenance switch** (§5): add `STOREFRONT_MAINTENANCE` to the Vercel project only when needed; it is off when absent.
 
-## 11. Hostinger (`.github/workflows/deploy-hostinger.yml`)
+## 11. Hostinger (the `deploy` job in `.github/workflows/ci.yml`)
 
-An alternative to the VPS release swap above, for a Hostinger plan with SSH (added 2026-11-17, modelled on the uptms-ad project's deploy). It runs after CI is green on `main`, or by hand (Actions → Deploy to Hostinger → Run workflow, from `main`). With no `HOSTINGER_*` secrets set it skips with a notice and succeeds, like `deploy.yml`. Configure **one** of the two targets: with both configured, both deploy.
+An alternative to the VPS release swap above, for a Hostinger plan with SSH (added 2026-11-17, modelled on the uptms-ad project's deploy). Since 2026-11-18 it is the last job of the single test-and-deploy workflow (`ci.yml`, "CI and deploy"): it runs on `main` only, after every test job passed — on a push, or by hand (Actions → CI and deploy → Run workflow, from `main`; the `reset_database` input lives there). Pull requests and other branches run the tests and never deploy. With no `HOSTINGER_*` secrets set it skips with a notice and succeeds. It is now the only deploy target: the VPS workflow was removed.
 
 What it does: builds `vendor/` (`--no-dev`) and `public/build` on the runner; rsyncs the tree with `--delete`, never sending or deleting `.env`, `storage/`, `public/storage`, the host's `.htaccess` or `.well-known/` (and leaving out `tests/`, `e2e/`, `docs/`); then on the host runs `migrate --force`, `RolesAndPermissionsSeeder` (every deploy — it never touches what the owner edited, rule 20b), the full `db:seed` only while there are no users (reference data only: demo data and accounts are seeded in local/testing alone), `storage:link`, the config/route/view/event caches and `queue:restart`. Never interrupt a run on `main`: between the rsync and the migrations the host serves new code against an old schema.
 
