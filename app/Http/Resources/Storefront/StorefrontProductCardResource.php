@@ -95,6 +95,15 @@ final class StorefrontProductCardResource extends ApiResource
              */
             'default_variant_id' => $variants->count() === 1 ? $variants->first()?->id : null,
             /**
+             * The option the card's cart button adds in place: the variant the product page
+             * preselects (the default, else the first active one), with its option name so the
+             * confirmation can say which was added. Null only without an active variant. For a
+             * single-variant product it is that variant, like `default_variant_id`.
+             *
+             * @var array{id: int, name: string|null, name_bn: string|null}|null
+             */
+            'quick_add_variant' => self::quickAdd($variants->first(static fn (ProductVariant $v): bool => $v->is_default) ?? $variants->first()),
+            /**
              * An active variant has available stock (on_hand − reserved > 0). Sold-out
              * cards stay listed and show their out-of-stock state.
              *
@@ -174,5 +183,11 @@ final class StorefrontProductCardResource extends ApiResource
             'width' => $image->width,
             'height' => $image->height,
         ];
+    }
+
+    /** @return array{id: int, name: string|null, name_bn: string|null}|null */
+    private static function quickAdd(?ProductVariant $variant): ?array
+    {
+        return $variant === null ? null : ['id' => $variant->id, 'name' => $variant->name, 'name_bn' => $variant->name_bn];
     }
 }

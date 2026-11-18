@@ -18396,6 +18396,17 @@ export interface components {
              */
             default_variant_id: number | null;
             /**
+             * @description The option the card's cart button adds in place: the variant the product page
+             *     preselects (the default, else the first active one), with its option name so the
+             *     confirmation can say which was added. Null only without an active variant. For a
+             *     single-variant product it is that variant, like `default_variant_id`.
+             */
+            quick_add_variant: {
+                id: number;
+                name: string | null;
+                name_bn: string | null;
+            } | null;
+            /**
              * @description An active variant has available stock (on_hand − reserved > 0). Sold-out
              *     cards stay listed and show their out-of-stock state.
              */

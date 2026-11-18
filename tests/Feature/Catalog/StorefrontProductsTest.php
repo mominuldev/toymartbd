@@ -77,7 +77,7 @@ it('returns cards in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe(['data', 'links', 'meta'])
         ->and(array_keys($response->json('data.0')))->toBe([
             'id', 'slug', 'name', 'name_bn', 'brand', 'price', 'compare_at_price', 'price_max', 'discount_percent', 'age_min_months',
-            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'default_variant_id', 'in_stock', 'image', 'flash_sale',
+            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'variant_count', 'default_variant_id', 'quick_add_variant', 'in_stock', 'image', 'flash_sale',
         ])
         ->and($response->json('data.0'))->toMatchArray([
             'slug' => 'rainbow-stacker',
@@ -109,7 +109,29 @@ it('names the one variant of a single-variant product so a card can add it to th
     ProductVariant::factory()->for($product)->archived()->create(['price' => '10.00']);
 
     expect(listing()->json('data.0.default_variant_id'))->toBe($variant->id)
-        ->and(listing()->json('data.0.variant_count'))->toBe(1);
+        ->and(listing()->json('data.0.variant_count'))->toBe(1)
+        ->and(listing()->json('data.0.quick_add_variant.id'))->toBe($variant->id);
+});
+
+it('gives a several-option card the variant the product page preselects, named, for the cart button', function (): void {
+    $product = Product::factory()->variable()->create();
+    ProductVariant::factory()->for($product)->create(['name' => 'Red', 'name_bn' => 'লাল', 'position' => 0]);
+    $blue = ProductVariant::factory()->for($product)->create(['name' => 'Blue', 'name_bn' => 'নীল', 'position' => 1, 'is_default' => true]);
+    ProductVariant::factory()->for($product)->archived()->create(['name' => 'Gone', 'position' => 2, 'is_default' => false]);
+
+    $card = listing()->assertOk()->json('data.0');
+    expect($card['default_variant_id'])->toBeNull()
+        ->and($card['quick_add_variant'])->toBe(['id' => $blue->id, 'name' => 'Blue', 'name_bn' => 'নীল'])
+        // The same variant the product page preselects.
+        ->and(test()->withToken(listingToken())->getJson('/api/v1/storefront/products/'.$product->slug)->assertOk()->json('default_variant_id'))->toBe($blue->id);
+});
+
+it('falls back to the first active variant when none is marked default', function (): void {
+    $product = Product::factory()->variable()->create();
+    $first = ProductVariant::factory()->for($product)->create(['name' => 'Small', 'position' => 0]);
+    ProductVariant::factory()->for($product)->create(['name' => 'Large', 'position' => 1]);
+
+    expect(listing()->json('data.0.quick_add_variant.id'))->toBe($first->id);
 });
 
 it('drops a was-price that is not above the price', function (): void {

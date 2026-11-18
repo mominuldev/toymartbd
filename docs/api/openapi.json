@@ -77583,6 +77583,35 @@
                         ],
                         "description": "The one active variant of a single-variant product, so a card can add it to the\ncart directly; null when the shopper must choose an option on the product page."
                     },
+                    "quick_add_variant": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The option the card's cart button adds in place: the variant the product page\npreselects (the default, else the first active one), with its option name so the\nconfirmation can say which was added. Null only without an active variant. For a\nsingle-variant product it is that variant, like `default_variant_id`.",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "name_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "name_bn"
+                        ]
+                    },
                     "in_stock": {
                         "type": "boolean",
                         "description": "An active variant has available stock (on_hand \u2212 reserved > 0). Sold-out\ncards stay listed and show their out-of-stock state."
@@ -77711,6 +77740,7 @@
                     "is_featured",
                     "variant_count",
                     "default_variant_id",
+                    "quick_add_variant",
                     "in_stock",
                     "image",
                     "flash_sale"
