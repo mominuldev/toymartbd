@@ -77,7 +77,7 @@ return [
 
     /**
      * Whether DemoCatalogSeeder (local/testing only) attaches the Figma product photos
-     * (docs/_design/assets/products) through the upload pipeline. Unset: on in `local`,
+     * (database/seeders/assets/products) through the upload pipeline. Unset: on in `local`,
      * off everywhere else — PHPUnit and the E2E seeds stay fast without 16 × 9 encodes.
      */
     'demo_seed_images' => env('DEMO_SEED_IMAGES'),

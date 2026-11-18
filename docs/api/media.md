@@ -65,7 +65,7 @@ All routes sit under `/api/v1/admin/products/{product}/images`. `GET` needs cata
 
 ## Demo seed images
 
-`DemoCatalogSeeder` (local/testing only) attaches each demo product's Figma photo (`docs/_design/assets/products/NN-{SKU}.png`, 1024×1024) through `UploadProductImage` — the same sniffing, payload scan, re-encode and renditions as an admin upload — with English and Bangla alt text from the product name, and runs `GenerateImageRenditions` synchronously, so `migrate:fresh --seed` yields `ready` images without a worker. A 1024 px source yields the 160–800 renditions; 1200 is skipped, never upscaled.
+`DemoCatalogSeeder` (local/testing only) attaches each demo product's Figma photo (`database/seeders/assets/products/NN-{SKU}.png`, 1024×1024) through `UploadProductImage` — the same sniffing, payload scan, re-encode and renditions as an admin upload — with English and Bangla alt text from the product name, and runs `GenerateImageRenditions` synchronously, so `migrate:fresh --seed` yields `ready` images without a worker. A 1024 px source yields the 160–800 renditions; 1200 is skipped, never upscaled.
 
 `DEMO_SEED_IMAGES` (`media.demo_seed_images`) controls it: unset means on in `local`, off everywhere else (PHPUnit, the admin E2E `serve.sh` sets `false` explicitly). About 16 s for the full seed with images on the dev machine, 1.6 s without.
 

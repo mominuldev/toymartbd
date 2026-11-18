@@ -43,7 +43,7 @@ use RuntimeException;
  * in their bestseller order under the default `featured` sort; the "New" eight are
  * published within the last 21 days, newest first in C1.1 order.
  *
- * Images: each product's Figma photo (docs/_design/assets/products/NN-{SKU}.png) is
+ * Images: each product's Figma photo (database/seeders/assets/products/NN-{SKU}.png) is
  * attached as its primary image through UploadProductImage — the same validation,
  * re-encode and renditions as an admin upload (minus the C2PA chunk; see
  * attachImage) — with English and Bangla alt text,
@@ -65,7 +65,7 @@ use RuntimeException;
 class DemoCatalogSeeder extends Seeder
 {
     /** Where the Figma product exports live: `NN-{SKU}.png`. */
-    public const string IMAGE_DIR = 'docs/_design/assets/products';
+    public const string IMAGE_DIR = 'database/seeders/assets/products';
 
     /**
      * Media-library filenames for the demo photos: generic product-type names, never a
