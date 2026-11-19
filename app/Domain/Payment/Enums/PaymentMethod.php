@@ -9,6 +9,7 @@ enum PaymentMethod: string
 {
     case Cod = 'cod';
     case Sslcommerz = 'sslcommerz';
+    case Paystation = 'paystation';
     case Bkash = 'bkash';
     case Nagad = 'nagad';
     case Card = 'card';
@@ -18,6 +19,6 @@ enum PaymentMethod: string
     /** Paid through a hosted gateway session before dispatch (P4-PAY-02); reserves stock until paid or expired. */
     public function isOnline(): bool
     {
-        return in_array($this, [self::Sslcommerz, self::Bkash, self::Nagad, self::Card], true);
+        return in_array($this, [self::Sslcommerz, self::Paystation, self::Bkash, self::Nagad, self::Card], true);
     }
 }

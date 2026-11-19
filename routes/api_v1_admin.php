@@ -529,6 +529,7 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     // Phase 10 batch 2 — one file per screen, so parallel work never shares a file.
     require __DIR__.'/api_v1_admin_audit.php';
     require __DIR__.'/api_v1_admin_integrations.php';
+    require __DIR__.'/api_v1_admin_payment_gateways.php';
     require __DIR__.'/api_v1_admin_store_settings.php';
     require __DIR__.'/api_v1_admin_checkout_settings.php';
     // Phase 10 batch 4.
