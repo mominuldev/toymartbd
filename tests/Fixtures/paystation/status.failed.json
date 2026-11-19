@@ -1,0 +1,15 @@
+{
+    "status_code": "200",
+    "status": "success",
+    "message": "Transaction found.",
+    "data": {
+        "invoice_number": "{{invoice_number}}",
+        "trx_status": "Failed",
+        "trx_id": "",
+        "payment_amount": "{{payment_amount}}",
+        "order_date_time": "2026-11-19 14:05:11",
+        "payer_mobile_no": "",
+        "payment_method": "",
+        "reference": "{{reference}}"
+    }
+}

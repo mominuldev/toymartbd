@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\CourierFixtures;
+use Tests\Support\Payments\FakePaystationGateway;
+use Tests\Support\Payments\FakeSslcommerzGateway;
 use Tests\Support\RoleMatrix;
 use Tests\Support\TrackingFixtures;
 
@@ -83,7 +85,7 @@ it('lists every service by category, with not-built services as not_available', 
     $response = $this->getJson(HUB_URL)->assertOk();
 
     $keys = collect($response->json('data'))->pluck('key')->all();
-    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console', 'anthropic', 'openai', 'gemini']);
+    expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'paystation', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console', 'anthropic', 'openai', 'gemini']);
     expect(collect($response->json('data'))->pluck('category')->unique()->values()->all())->toBe(['couriers', 'payments', 'messaging', 'marketing', 'ai']);
 
     foreach (['redx', 'bkash', 'nagad', 'live_chat', 'search_console'] as $key) {
@@ -178,15 +180,77 @@ it('only offers the courier switch to someone who may change rates', function ()
 it('derives payment status from the gateway switchboard', function (): void {
     hubOwner();
     config(['payments.sslcommerz.store_id' => null, 'payments.sslcommerz.store_password' => null]);
-    PaymentProvider::query()->where('code', 'sslcommerz')->update(['credentials' => null]);
+    PaymentProvider::query()->where('code', 'sslcommerz')->update(['credentials' => null, 'is_active' => false]);
 
-    $item = hubItem($this->getJson(HUB_URL)->assertOk(), 'sslcommerz');
-    expect($item['status'])->toBe('not_connected')
-        ->and($item['notes'])->toContain('unverified_payment_blocked')
-        ->and($item['notes'])->toContain('switched_off')
-        ->and($item['enabled'])->toBeFalse()
-        ->and($item['settings_path'])->toBeNull();
+    // The real SSLCommerz driver, no keys anywhere and switched off.
+    expect(hubItem($this->getJson(HUB_URL)->assertOk(), 'sslcommerz'))->toMatchArray([
+        'status' => 'not_connected',
+        'notes' => ['no_credentials', 'switched_off'],
+        'enabled' => false,
+        'settings_path' => '/integrations/payments',
+    ]);
 });
+
+/*
+ * SSLCommerz and PayStation are judged on their CURRENT mode only. A switchboard fake stands
+ * in for each driver so this does not depend on the real drivers' env handling.
+ */
+dataset('hub managed gateways', [
+    'SSLCommerz' => [FakeSslcommerzGateway::class, 'sslcommerz', 'SSLCommerz', ['store_id' => 'hub-store-SECRETID-1', 'store_password' => 'hub-pass-SECRET-4411'], ['store_id' => 'hub-live-SECRETID-2', 'store_password' => 'hub-livepass-SECRET-5522']],
+    'PayStation' => [FakePaystationGateway::class, 'paystation', 'PayStation', ['merchant_id' => 'hub-merchant-SECRETID-3', 'password' => 'hub-ps-pass-SECRET-6633'], ['merchant_id' => 'hub-live-merchant-SECRETID-4', 'password' => 'hub-ps-livepass-SECRET-7744']],
+]);
+
+it('derives an admin-managed gateway\'s status from its current mode', function (string $fake, string $code, string $name, array $sandboxKeys, array $liveKeys): void {
+    hubOwner();
+    (new $fake)->register();
+    $row = PaymentProvider::query()->where('code', $code)->firstOrFail();
+    $set = function (array $attributes) use ($row): void {
+        $row->forceFill($attributes)->save();
+    };
+    $item = fn (): array => hubItem($this->getJson(HUB_URL)->assertOk(), $code);
+
+    // No keys for the current (sandbox) mode, switched off → not connected.
+    $set(['credentials' => null, 'sandbox' => true, 'verified' => false, 'is_active' => false]);
+    expect($item())->toMatchArray([
+        'name' => $name, 'category' => 'payments', 'status' => 'not_connected',
+        'notes' => ['no_credentials', 'switched_off'], 'enabled' => false, 'settings_path' => '/integrations/payments',
+    ]);
+
+    // Sandbox keys saved, sandbox mode, active → test mode.
+    $set(['credentials' => ['sandbox' => $sandboxKeys], 'is_active' => true]);
+    expect($item())->toMatchArray(['status' => 'test_mode', 'notes' => ['sandbox'], 'enabled' => true]);
+
+    // Switched to live with only the sandbox set saved → not connected: the live set decides.
+    $set(['sandbox' => false]);
+    expect($item())->toMatchArray(['status' => 'not_connected', 'notes' => ['no_credentials']]);
+
+    // A half live set is still incomplete.
+    $set(['credentials' => ['sandbox' => $sandboxKeys, 'live' => array_slice($liveKeys, 0, 1, true)]]);
+    expect($item())->toMatchArray(['status' => 'not_connected', 'notes' => ['no_credentials']]);
+
+    // Live keys complete but the owner has not verified it → test mode, production refuses it.
+    $set(['credentials' => ['sandbox' => $sandboxKeys, 'live' => $liveKeys]]);
+    expect($item())->toMatchArray(['status' => 'test_mode', 'notes' => ['live_unverified']]);
+
+    // Live and verified → connected · live.
+    $set(['verified' => true, 'verified_at' => now()]);
+    expect($item())->toMatchArray(['status' => 'connected_live', 'notes' => ['live'], 'attention' => null]);
+
+    // Switched off keeps its note, whatever the mode.
+    $set(['is_active' => false]);
+    expect($item())->toMatchArray(['status' => 'connected_live', 'notes' => ['live', 'switched_off'], 'enabled' => false]);
+
+    // Back to sandbox: the verified flag does not make sandbox live.
+    $set(['sandbox' => true, 'is_active' => true]);
+    expect($item())->toMatchArray(['status' => 'test_mode', 'notes' => ['sandbox']]);
+
+    // No key value of either mode ever appears in the body.
+    $body = $this->getJson(HUB_URL)->getContent();
+    foreach ([...array_values($sandboxKeys), ...array_values($liveKeys)] as $secret) {
+        expect($body)->not->toContain($secret);
+    }
+    expect($body)->not->toContain('SECRET');
+})->with('hub managed gateways');
 
 it('derives SMS status from the messaging settings', function (): void {
     hubOwner();

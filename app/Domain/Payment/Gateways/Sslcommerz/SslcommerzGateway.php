@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Payment\Gateways\Sslcommerz;
 
 use App\Domain\Payment\Contracts\ChecksConfiguration;
+use App\Domain\Payment\Contracts\ChecksConnection;
 use App\Domain\Payment\Contracts\PaymentGateway;
 use App\Domain\Payment\DTOs\GatewayResult;
 use App\Domain\Payment\DTOs\PaymentContext;
@@ -30,6 +31,7 @@ use Throwable;
  *   validate → GET /validator/api/validationserverAPI.php?val_id=…   (the authoritative answer)
  *   verify   → GET /validator/api/merchantTransIDvalidationAPI.php?tran_id=…  (query by our tran_id)
  *   refund   → GET /validator/api/merchantTransIDvalidationAPI.php?bank_tran_id=…&refund_amount=…
+ *   check    → GET /validator/api/merchantTransIDvalidationAPI.php?tran_id={probe}  (keys only, no money)
  *
  * Our `tran_id` is `{order number}-P{payment id}` — unique per attempt, so a retry is a new
  * session and an old session can never be confused with it. It is stored in
@@ -45,7 +47,7 @@ use Throwable;
  * request URLs nor transport exception messages (which embed the URL) are ever logged or
  * copied into a result — only the exception class.
  */
-final readonly class SslcommerzGateway implements ChecksConfiguration, PaymentGateway
+final readonly class SslcommerzGateway implements ChecksConfiguration, ChecksConnection, PaymentGateway
 {
     public const string PROVIDER = 'sslcommerz';
 
@@ -72,6 +74,44 @@ final readonly class SslcommerzGateway implements ChecksConfiguration, PaymentGa
     public function isSandbox(): bool
     {
         return SslcommerzCredentials::sandboxMode();
+    }
+
+    /**
+     * Integrations › Payments › "Check connection" for the current mode: the Transaction
+     * Query API (by tran_id) with a probe tran_id that matches no payment — read-only, takes
+     * no money. The v4 doc lists its `APIConnect` values: `DONE` "API Connection Success",
+     * `FAILED` "API Authentication Failed", `INACTIVE` "API User/Store ID is Inactive",
+     * `INVALID_REQUEST` "Invalid data imputed to call the API" (the probe is well-formed, so
+     * that can only be the store credentials). Its answer to bad keys has not been seen
+     * against a real sandbox store yet — [UNVERIFIED] until a store id exists (Gate 1, 5).
+     */
+    public function checkConnection(): array
+    {
+        $credentials = SslcommerzCredentials::resolve();
+        if ($credentials === null) {
+            return ['ok' => false, 'code' => 'not_configured'];
+        }
+
+        try {
+            $response = $this->client()->get($credentials->host().'/validator/api/merchantTransIDvalidationAPI.php', [
+                'tran_id' => 'TMB-CHECK-'.Str::upper(Str::random(12)),
+                'store_id' => $credentials->storeId,
+                'store_passwd' => $credentials->storePassword,
+                'format' => 'json',
+            ]);
+        } catch (Throwable $e) {
+            self::logTransport('check_connection', $e);
+
+            return ['ok' => false, 'code' => 'unreachable'];
+        }
+
+        $body = self::json($response);
+
+        return match (strtoupper(($body === null ? null : self::str($body['APIConnect'] ?? null)) ?? '')) {
+            'DONE' => ['ok' => true, 'code' => 'ok'],
+            'FAILED', 'INACTIVE', 'INVALID_REQUEST' => ['ok' => false, 'code' => 'credentials_rejected'],
+            default => ['ok' => false, 'code' => 'unreachable'],
+        };
     }
 
     public static function tranId(Payment $payment, string $orderNumber): string

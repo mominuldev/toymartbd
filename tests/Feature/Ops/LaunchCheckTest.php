@@ -424,6 +424,41 @@ it('fails a gateway that is active but cannot take money, warns on COD-only', fu
         ->and(launchDetail('payments.gateway'))->toContain('sslcommerz');
 });
 
+it('holds PayStation and SSLCommerz to live + verified + live keys when active', function (string $fake, string $code, array $keys): void {
+    (new $fake)->register();
+    $row = PaymentProvider::query()->where('code', $code)->firstOrFail();
+    PaymentProvider::query()->where('code', '!=', $code)->update(['is_active' => false]);
+
+    // Active in sandbox mode, even verified → fail.
+    $row->forceFill(['is_active' => true, 'sandbox' => true, 'verified' => true, 'credentials' => ['sandbox' => $keys]])->save();
+    expect(launchStatus('payments.gateway'))->toBe('fail')
+        ->and(launchDetail('payments.gateway'))->toContain($code);
+
+    // Live mode with no live key set → fail (not_configured); the sandbox set does not count.
+    $row->forceFill(['sandbox' => false])->save();
+    expect(launchStatus('payments.gateway'))->toBe('fail')
+        ->and(launchDetail('payments.gateway'))->toContain("{$code} (not_configured)");
+
+    // Live keys, live mode, not verified → fail.
+    $row->forceFill(['verified' => false, 'credentials' => ['live' => $keys]])->save();
+    expect(launchDetail('payments.gateway'))->toContain("{$code} (unverified)");
+
+    // Live, verified, live keys → pass, and no key is printed.
+    $row->forceFill(['verified' => true, 'verified_at' => now()])->save();
+    expect(launchStatus('payments.gateway'))->toBe('pass')
+        ->and(launchDetail('payments.gateway'))->toContain($code)->not->toContain('SECRET');
+})->with([
+    'sslcommerz' => [Tests\Support\Payments\FakeSslcommerzGateway::class, 'sslcommerz', ['store_id' => 'launch-store-SECRETID', 'store_password' => 'launch-pass-SECRET-1']],
+    'paystation' => [Tests\Support\Payments\FakePaystationGateway::class, 'paystation', ['merchant_id' => 'launch-merchant-SECRETID', 'password' => 'launch-pass-SECRET-2']],
+]);
+
+it('fails an active gateway row with no driver behind it', function (): void {
+    PaymentProvider::query()->updateOrCreate(['code' => 'nagad'], ['name' => 'Nagad', 'is_active' => true, 'verified' => false, 'sandbox' => true]);
+
+    expect(launchStatus('payments.gateway'))->toBe('fail')
+        ->and(launchDetail('payments.gateway'))->toContain('nagad (not_registered)');
+});
+
 // ── E. SEO ───────────────────────────────────────────────────────────────────────────────────
 
 it('requires robots.txt to allow the shop and point to an https sitemap', function (): void {

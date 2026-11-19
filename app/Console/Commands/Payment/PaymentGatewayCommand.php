@@ -7,12 +7,16 @@ namespace App\Console\Commands\Payment;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\PaymentProvider;
 use App\Domain\Payment\Services\OnlineGateways;
+use App\Domain\Payment\Support\GatewayCredentials;
 use Illuminate\Console\Command;
 
 /**
- * Show or switch an online gateway's row (P4-PAY-02). `--verify` is an owner decision taken
- * only after a live merchant account has been tested end to end; until then production
- * offers no online payment through it (rule 33a spirit). Never prints a credential.
+ * Show or switch an online gateway's row (P4-PAY-02), for any gateway code (sslcommerz,
+ * paystation, …). The sandbox/live switch is also on Integrations › Payments in the admin;
+ * `--verify` stays here, an owner decision taken only after a live merchant account has been
+ * tested end to end — until then production offers no online payment through it (rule 33a
+ * spirit). `--live` is refused while the gateway's live key set is incomplete
+ * ({@see GatewayCredentials::complete}); env never supplies a live key. Never prints a credential.
  */
 final class PaymentGatewayCommand extends Command
 {
@@ -27,6 +31,17 @@ final class PaymentGatewayCommand extends Command
         $row = $method === null ? null : PaymentProvider::forCode($method->value);
         if ($method === null || $row === null) {
             $this->error('Unknown gateway.');
+
+            return self::FAILURE;
+        }
+
+        if ($this->option('live') && $this->option('sandbox')) {
+            $this->error('Choose one of --live or --sandbox.');
+
+            return self::FAILURE;
+        }
+        if ($this->option('live') && ! GatewayCredentials::complete($method, GatewayCredentials::forMode($row, sandbox: false))) {
+            $this->error("Refusing --live: {$method->value} has no complete live key set. Save the live keys at Admin → Integrations → Payments first. Nothing was changed.");
 
             return self::FAILURE;
         }
@@ -54,8 +69,8 @@ final class PaymentGatewayCommand extends Command
         $row->save();
 
         $status = $gateways->status($method);
-        $this->table(['method', 'active', 'verified', 'sandbox', 'configured', 'enabled', 'reason'], [[
-            $status['method'], self::yes($status['active']), self::yes($status['verified']), self::yes($status['sandbox']),
+        $this->table(['method', 'mode', 'active', 'verified', 'configured', 'enabled', 'reason'], [[
+            $status['method'], GatewayCredentials::mode($status['sandbox']), self::yes($status['active']), self::yes($status['verified']),
             self::yes($status['configured']), self::yes($status['enabled']), $status['reason'] ?? '—',
         ]]);
 

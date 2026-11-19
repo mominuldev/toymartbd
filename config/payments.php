@@ -28,7 +28,6 @@ return [
     'sslcommerz' => [
         'store_id' => env('SSLCOMMERZ_STORE_ID'),
         'store_password' => env('SSLCOMMERZ_STORE_PASSWORD'),
-        'sandbox' => (bool) env('SSLCOMMERZ_SANDBOX', true),
         // Published v4 hosts (docs/_research/agent4-bd-market-and-payments.md §1.2).
         'hosts' => [
             'sandbox' => 'https://sandbox.sslcommerz.com',
@@ -44,5 +43,26 @@ return [
         // signature + validation re-query are the controls either way. Published IPs:
         // sandbox 103.26.139.87; live 103.26.139.81, 103.132.153.81.
         'ipn_allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('SSLCOMMERZ_IPN_ALLOWED_IPS', ''))))),
+    ],
+
+    // PayStation (docs/_research/paystation-api.md — read 2026-11-19, page behind a
+    // Cloudflare challenge, so built from search extracts of the official page only).
+    // Keys live in payment_gateways.credentials per mode (GatewayCredentials); these env
+    // values fill the SANDBOX set only — a live key always comes from the admin.
+    'paystation' => [
+        'merchant_id' => env('PAYSTATION_MERCHANT_ID'),
+        'password' => env('PAYSTATION_PASSWORD'),
+        'hosts' => [
+            'sandbox' => 'https://sandbox.paystation.com.bd',
+            'live' => 'https://api.paystation.com.bd',
+        ],
+        'timeout_seconds' => (int) env('PAYSTATION_TIMEOUT', 15),
+        // The storefront's route handler the customer returns to (callback_url).
+        'return_base_url' => env('PAYSTATION_RETURN_URL', env('STOREFRONT_URL')),
+        // PLACEHOLDER: PayStation requires cust_email; checkout's email is optional.
+        'fallback_email' => env('PAYSTATION_FALLBACK_EMAIL', 'orders@toymartbd.com'),
+        // Optional IPN source-IP allowlist (comma separated). PayStation publishes no IPs,
+        // so empty = not enforced; the IPN is only a trigger to re-query either way.
+        'ipn_allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('PAYSTATION_IPN_ALLOWED_IPS', ''))))),
     ],
 ];

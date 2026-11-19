@@ -19,6 +19,7 @@ use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Domain\Notification\Services\MessagingSettings;
 use App\Domain\Notification\Support\StoreHotline;
 use App\Domain\Payment\Enums\PaymentMethod;
+use App\Domain\Payment\Models\PaymentProvider;
 use App\Domain\Payment\Services\OnlineGateways;
 use App\Domain\Risk\Services\RiskSettings;
 use App\Domain\Seo\Services\RobotsTxt;
@@ -539,6 +540,11 @@ final class LaunchChecks
             : CheckResult::fail('couriers.rate_card', 'Courier rate cards entered by the owner', 'D5', 'Still the seeded placeholder rates (৳70/৳100/৳130): '.implode(', ', $stale).'. They price the customer\'s delivery charge.', 'Admin → Integrations → Couriers → Rate card: enter the contracted rates and save (even if they match).');
     }
 
+    /**
+     * Every ACTIVE online gateway (SSLCommerz, PayStation, …) must be able to take money in
+     * production: a registered driver, keys complete for the live mode, `sandbox` off and the
+     * owner's `verified` — exactly what OnlineGateways::status() enforces in production.
+     */
     private function payments(): CheckResult
     {
         /** @var OnlineGateways $gateways */
@@ -554,16 +560,19 @@ final class LaunchChecks
                 $enabled[] = $method->value;
             } elseif ($status['active']) {
                 $broken[] = $method->value.' ('.$status['reason'].')';
+            } elseif (! $status['registered'] && PaymentProvider::forCode($method->value)?->is_active === true) {
+                // An active row with no driver behind it: it can never take money.
+                $broken[] = $method->value.' (not_registered)';
             }
         }
 
         if ($broken !== []) {
-            return CheckResult::fail('payments.gateway', 'Online payment gateway state', 'D6', 'Active but not taking payments: '.implode(', ', $broken).'.', 'Either finish it (live credentials, `php artisan toymart:payments:gateway <code> --verify --live` after the live test D7) or deactivate it.');
+            return CheckResult::fail('payments.gateway', 'Online payment gateway state', 'D6', 'Active but not taking payments: '.implode(', ', $broken).'.', 'Either finish it (save the live keys and switch to live at Admin → Integrations → Payments, then `php artisan toymart:payments:gateway <code> --verify` after the live test D7) or deactivate it.');
         }
 
         return $enabled !== []
             ? CheckResult::pass('payments.gateway', 'Online payment gateway state', 'D6', 'Taking online payments: '.implode(', ', $enabled).' (verified, live). COD is always on.')
-            : CheckResult::warn('payments.gateway', 'Online payment gateway state', 'D6', 'No online gateway is active: the shop launches COD-only.', 'Owner decision (Gate 1 decision 5): launch COD-only, or finish SSLCommerz merchant onboarding first.');
+            : CheckResult::warn('payments.gateway', 'Online payment gateway state', 'D6', 'No online gateway is active: the shop launches COD-only.', 'Owner decision (Gate 1 decision 5): launch COD-only, or finish SSLCommerz or PayStation merchant onboarding first.');
     }
 
     // ── E. SEO ───────────────────────────────────────────────────────────────────────────────

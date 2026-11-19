@@ -79,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
             // Offered only while its payment_gateways row is active, configured and (in
             // production) verified — OnlineGateways (P4-PAY-02).
             $registry->register(PaymentMethod::Sslcommerz, \App\Domain\Payment\Gateways\Sslcommerz\SslcommerzGateway::class);
+            $registry->register(PaymentMethod::Paystation, \App\Domain\Payment\Gateways\Paystation\PaystationGateway::class);
 
             return $registry;
         });

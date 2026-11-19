@@ -724,6 +724,22 @@ export const payRefundRequestSchema = z.object({
 });
 export type PayRefundRequestInput = z.input<typeof payRefundRequestSchema>;
 
+/** A PayStation IPN (a JSON POST, sent only for successful transactions). PayStation */
+export const paystationNotificationRequestSchema = z.object({
+    "invoice_number": z.string().min(1).max(128),
+    "trx_id": z.string().max(128).nullable().optional(),
+    "trx_status": z.string().max(32).nullable().optional(),
+});
+export type PaystationNotificationRequestInput = z.input<typeof paystationNotificationRequestSchema>;
+
+/** The customer's browser came back from PayStation to our callback_url; the storefront */
+export const paystationReturnRequestSchema = z.object({
+    "order_number": z.string().min(1).regex(new RegExp("^[A-Za-z0-9\\-]{3,32}$")),
+    "invoice_number": z.string().max(128).nullable().optional(),
+    "query": z.array(z.string().max(500).nullable()).max(20).nullable().optional(),
+});
+export type PaystationReturnRequestInput = z.input<typeof paystationReturnRequestSchema>;
+
 /** `GET /risk/lookup?phone=…` and `POST /risk/lookup/rescore` — a Bangladesh mobile number */
 export const phoneLookupRequestSchema = z.object({
     "phone": z.string().min(1).max(32),
@@ -2012,6 +2028,21 @@ export const updateOwnProfileRequestSchema = z.object({
     "current_password": z.string().max(255).nullable().optional(),
 });
 export type UpdateOwnProfileRequestInput = z.input<typeof updateOwnProfileRequestSchema>;
+
+/** `PUT /settings/payment-gateways/{code}` — needs settings.manage_integrations. Every member is */
+export const updatePaymentGatewayRequestSchema = z.object({
+    "is_active": z.boolean().optional(),
+    "mode": z.enum(["sandbox","live"]).optional(),
+    "credentials": z.object({
+    "sandbox": z.array(z.string().max(500).nullable()).optional(),
+    "live": z.array(z.string().max(500).nullable()).optional(),
+}).optional(),
+    "clear": z.object({
+    "sandbox": z.array(z.string().max(40)).optional(),
+    "live": z.array(z.string().max(40)).optional(),
+}).optional(),
+});
+export type UpdatePaymentGatewayRequestInput = z.input<typeof updatePaymentGatewayRequestSchema>;
 
 /** `PUT /settings/pos` — Store settings › Point of sale (the whole section); needs settings.update. */
 export const updatePosSettingsRequestSchema = z.object({

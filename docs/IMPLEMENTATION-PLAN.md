@@ -355,6 +355,13 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10: online payment gateways, sandbox or live (2026-11-19, owner request) — in progress
+
+The owner asked for two online gateways, **SSLCommerz and PayStation**, each in sandbox or live mode switched from the admin.
+- **Done:** `PaymentMethod::Paystation` and its `payment_gateways` row (inactive, unverified, sandbox); per-mode credentials (`GatewayCredentials`, env fallback sandbox-only); `ChecksConnection` contract. Integrations hub lists COD, SSLCommerz, PayStation, bKash, Nagad, judged on the current mode (new note codes `live`, `live_unverified`; `unverified_payment_blocked` retired), `settings_path` `/integrations/payments`. `toymart:payments:gateway` shows the mode and refuses `--live` without a complete live key set. `toymart:launch:check` holds every active gateway (PayStation included) to live + verified + live keys, and fails an active row with no driver.
+- **In progress:** PayStation driver, checkout and webhooks; admin settings API `GET/PUT /settings/payment-gateways[/{code}]` + `POST …/{code}/check`; SSLCommerz credentials read per mode.
+- **Not started:** Integrations › Payments admin screen and its Figma frame; admin i18n for the new hub note codes.
+
 ### Progress — Phase 10: Purchasing, Profit & loss, Finance pages, owner capital, layout and money format (2026-11-16, owner requests)
 
 **Done, with passing tests.** Full counts are in the PR. Figma premium pass `366:65205`: Purchasing group `414:70076` (list `414:70079`, PO `415:70452`, receive drawer `416:70736`, new PO `417:71096`); Profit & loss `378:69156`; Finance group `422:71411` (13 frames, ids in `docs/_design/06-admin-feature-checklist.md`).

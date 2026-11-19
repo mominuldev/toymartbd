@@ -7,12 +7,15 @@ namespace App\Http\Controllers\Api\V1\Storefront;
 use App\Domain\Ordering\Actions\StartOnlinePayment;
 use App\Domain\Ordering\Exceptions\OnlinePaymentNotAllowed;
 use App\Domain\Ordering\Models\Order;
+use App\Domain\Payment\Actions\HandlePaystationNotification;
 use App\Domain\Payment\Actions\HandleSslcommerzNotification;
 use App\Domain\Payment\Enums\PaymentMethod;
+use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Services\OnlineGateways;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Problems\ProblemDetails;
 use App\Http\Problems\ProblemType;
+use App\Http\Requests\Storefront\Payments\PaystationReturnRequest;
 use App\Http\Requests\Storefront\Payments\StartOrderPaymentRequest;
 use App\Http\Requests\Webhooks\SslcommerzNotificationRequest;
 use Dedoc\Scramble\Attributes\HeaderParameter;
@@ -20,6 +23,7 @@ use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Online payment for the storefront (P4-PAY-02/03/04, docs/api/checkout.md "Online
@@ -102,6 +106,36 @@ final class PaymentController extends ApiController
             'payment_status' => $payment?->status->value,
             /** @var string|null */
             'order_payment_status' => $order?->payment_status->value,
+        ]])->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * `POST /payments/paystation/return` — the customer's browser came back from PayStation
+     * to the storefront's route handler, which forwards the order number from our
+     * callback_url (and PayStation's invoice number, if it appended one). PayStation signs
+     * nothing, so these only pick which of our payments to re-query; the status comes from
+     * PayStation's transaction-status API, never from this request.
+     */
+    #[OpenApiResponse(404, 'No PayStation payment for that order (and invoice) — nothing was written')]
+    public function paystationReturn(PaystationReturnRequest $request, HandlePaystationNotification $handler): JsonResponse
+    {
+        $order = Order::query()->where('number', $request->orderNumber())->first() ?? throw new NotFoundHttpException;
+        $payment = Payment::query()
+            ->where('order_id', $order->id)
+            ->where('method', PaymentMethod::Paystation->value)
+            ->whereNotNull('transaction_id')
+            ->when($request->invoiceNumber() !== null, fn ($q) => $q->where('transaction_id', $request->invoiceNumber()))
+            ->orderByDesc('id')
+            ->first() ?? throw new NotFoundHttpException;
+
+        $received = $handler->receive($payment, $request->kept(), HandlePaystationNotification::SOURCE_RETURN, $request->keptHeaders());
+        $payment = $received['payment'];
+        $order->refresh();
+
+        return response()->json(['data' => [
+            'order_number' => $order->number,
+            'payment_status' => $payment->status->value,
+            'order_payment_status' => $order->payment_status->value,
         ]])->header('Cache-Control', 'no-store');
     }
 }

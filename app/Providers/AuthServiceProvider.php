@@ -106,6 +106,7 @@ class AuthServiceProvider extends ServiceProvider
         OrderFinancial::class => OrderFinancialPolicy::class,
         Payment::class => PaymentPolicy::class,
         \App\Domain\Fulfilment\Models\CourierProvider::class => \App\Policies\CourierProviderPolicy::class,
+        \App\Domain\Payment\Models\PaymentProvider::class => \App\Policies\PaymentProviderPolicy::class,
         \App\Domain\Fulfilment\Models\CourierLocation::class => \App\Policies\CourierLocationPolicy::class,
         Refund::class => RefundPolicy::class,
         RefundItem::class => RefundPolicy::class,

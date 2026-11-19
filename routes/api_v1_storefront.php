@@ -122,6 +122,7 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::get('/payment-methods', [PaymentController::class, 'methods'])->name('payment-methods.index');
     Route::post('/orders/{number}/payment', [PaymentController::class, 'start'])->middleware(['throttle:checkout', 'idempotent'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.payment.store');
     Route::post('/payments/sslcommerz/return', [PaymentController::class, 'sslcommerzReturn'])->middleware('throttle:checkout')->name('payments.sslcommerz.return');
+    Route::post('/payments/paystation/return', [PaymentController::class, 'paystationReturn'])->middleware('throttle:checkout')->name('payments.paystation.return');
 });
 
 // Customer sign-in (P4-STO-11) — docs/api/account.md. Phone + SMS code (never WhatsApp,

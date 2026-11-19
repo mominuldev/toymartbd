@@ -1,0 +1,5 @@
+{
+    "status_code": "2001",
+    "status": "failed",
+    "message": "Invalid token or transaction not resolved."
+}

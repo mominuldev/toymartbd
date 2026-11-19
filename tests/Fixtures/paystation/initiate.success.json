@@ -1,0 +1,8 @@
+{
+    "status_code": "200",
+    "status": "success",
+    "message": "Payment Link Created Successfully.",
+    "payment_amount": "{{payment_amount}}",
+    "invoice_number": "{{invoice_number}}",
+    "payment_url": "{{host}}/checkout/{{invoice_number}}"
+}

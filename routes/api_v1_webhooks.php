@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Webhooks\PaystationWebhookController;
 use App\Http\Controllers\Api\V1\Webhooks\SslcommerzWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,10 @@ Route::get('/ping', fn () => ['ok' => true, 'audience' => 'webhooks'])->name('pi
 
 // SSLCommerz IPN (P4-PAY-03): signature first, receipt (replay = no-op), queued re-query.
 Route::post('/payments/sslcommerz/ipn', [SslcommerzWebhookController::class, 'ipn'])->name('payments.sslcommerz.ipn');
+
+// PayStation IPN: no documented signature, so a trigger to re-query only (like Pathao):
+// unknown invoice → 404 before any write, receipt (replay = no-op), queued re-query.
+Route::post('/payments/paystation/ipn', [PaystationWebhookController::class, 'ipn'])->name('payments.paystation.ipn');
 
 // Courier webhooks (P6): the driver verifies the signature first (401, nothing written),
 // a receipt makes a replay a no-op, and a queued re-query of status() is what gets applied.

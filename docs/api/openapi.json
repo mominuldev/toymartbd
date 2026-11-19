@@ -23380,6 +23380,140 @@
                 }
             }
         },
+        "/admin/settings/payment-gateways": {
+            "get": {
+                "operationId": "v1.admin.settings.payment-gateways.index",
+                "summary": "`GET /settings/payment-gateways` \u2014 every managed gateway, in display order",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `PaymentGatewaySettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PaymentGatewaySettings"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/payment-gateways/{code}": {
+            "put": {
+                "operationId": "v1.admin.settings.payment-gateways.update",
+                "summary": "`PUT /settings/payment-gateways/{code}` \u2014 on/off, mode, and either mode's keys. A blank key\nkeeps the saved value; `clear` removes one. 422 when switching to live without a complete\nlive set, or switching on without a complete set for the mode",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePaymentGatewayRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`PaymentGatewaySettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentGatewaySettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/admin/settings/payment-gateways/{code}/check": {
+            "post": {
+                "operationId": "v1.admin.settings.payment-gateways.check",
+                "summary": "`POST /settings/payment-gateways/{code}/check` \u2014 \"Check connection\": one read-only call to\nthe gateway with the keys saved for its CURRENT mode. Takes no money, verifies nothing.\nThrottled. 422 `connection-check-unsupported` when the gateway's driver cannot check keys",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`PaymentGatewayConnectionCheck`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/PaymentGatewayConnectionCheck"
+                                        },
+                                        {
+                                            "type": "string"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundHttpException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/settings/business": {
             "get": {
                 "operationId": "v1.admin.settings.business.show",
@@ -35877,6 +36011,7 @@
                                                             "enum": [
                                                                 "cod",
                                                                 "sslcommerz",
+                                                                "paystation",
                                                                 "bkash",
                                                                 "nagad",
                                                                 "card",
@@ -36049,6 +36184,95 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/storefront/payments/paystation/return": {
+            "post": {
+                "operationId": "v1.storefront.payments.paystation.return",
+                "summary": "`POST /payments/paystation/return` \u2014 the customer's browser came back from PayStation\nto the storefront's route handler, which forwards the order number from our\ncallback_url (and PayStation's invoice number, if it appended one). PayStation signs\nnothing, so these only pick which of our payments to re-query; the status comes from\nPayStation's transaction-status API, never from this request",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaystationReturnRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "order_number": {
+                                                    "type": "string"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "initiated",
+                                                        "authorised",
+                                                        "paid",
+                                                        "failed",
+                                                        "cancelled",
+                                                        "expired"
+                                                    ]
+                                                },
+                                                "order_payment_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "unpaid",
+                                                        "pending",
+                                                        "partially_paid",
+                                                        "paid",
+                                                        "partially_refunded",
+                                                        "refunded",
+                                                        "failed"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "order_number",
+                                                "payment_status",
+                                                "order_payment_status"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No PayStation payment for that order (and invoice) \u2014 nothing was written",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -37541,6 +37765,71 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/webhooks/payments/paystation/ipn": {
+            "post": {
+                "operationId": "v1.webhooks.payments.paystation.ipn",
+                "tags": [
+                    "Webhooks"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaystationNotificationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "received": {
+                                            "type": "boolean"
+                                        },
+                                        "replayed": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "received",
+                                        "replayed"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The source IP is not on the configured allowlist",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The invoice is not one of our PayStation payments \u2014 nothing was written",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -51911,7 +52200,7 @@
                 "properties": {
                     "key": {
                         "type": "string",
-                        "description": "Stable service key: pathao, steadfast, redx, cod, sslcommerz, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console."
+                        "description": "Stable service key: pathao, steadfast, redx, cod, sslcommerz, paystation, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console."
                     },
                     "name": {
                         "type": "string",
@@ -51940,7 +52229,7 @@
                     },
                     "notes": {
                         "type": "array",
-                        "description": "Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `unverified_booking_blocked`, `bookings`, `browser_only`.",
+                        "description": "Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `live`, `live_unverified`, `unverified_booking_blocked`, `bookings`, `browser_only`.",
                         "items": {
                             "type": "string"
                         }
@@ -56844,6 +57133,7 @@
                                     "enum": [
                                         "cod",
                                         "sslcommerz",
+                                        "paystation",
                                         "bkash",
                                         "nagad",
                                         "card",
@@ -58512,6 +58802,276 @@
                     }
                 },
                 "title": "PayRefundRequest"
+            },
+            "PaymentGatewayConnectionCheck": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean",
+                        "description": "The gateway accepted the keys saved for the current mode."
+                    },
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "not_configured",
+                            "credentials_rejected",
+                            "unreachable"
+                        ]
+                    },
+                    "mode": {
+                        "type": "string",
+                        "description": "The mode whose keys were checked.",
+                        "enum": [
+                            "sandbox",
+                            "live"
+                        ]
+                    },
+                    "checked_at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "code",
+                    "mode",
+                    "checked_at"
+                ],
+                "title": "PaymentGatewayConnectionCheck"
+            },
+            "PaymentGatewaySettings": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "sslcommerz",
+                            "paystation"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "description": "The key set in use.",
+                        "enum": [
+                            "sandbox",
+                            "live"
+                        ]
+                    },
+                    "verified": {
+                        "type": "boolean",
+                        "description": "A real payment has been proven through this gateway; set by the owner's CLI only."
+                    },
+                    "verified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "configured": {
+                        "type": "boolean",
+                        "description": "Every key the current mode needs is available (sandbox may use env values)."
+                    },
+                    "status": {
+                        "type": "object",
+                        "description": "Whether checkout offers it now, and why not.",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "not_registered",
+                                    "inactive",
+                                    "not_configured",
+                                    "unverified",
+                                    "sandbox_in_production",
+                                    null
+                                ]
+                            }
+                        },
+                        "required": [
+                            "enabled",
+                            "reason"
+                        ]
+                    },
+                    "credentials": {
+                        "type": "object",
+                        "description": "Saved keys per mode. `value` is null for every secret. `complete` counts saved keys only.",
+                        "properties": {
+                            "sandbox": {
+                                "type": "object",
+                                "properties": {
+                                    "complete": {
+                                        "type": "boolean"
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "secret": {
+                                                    "type": "boolean"
+                                                },
+                                                "set": {
+                                                    "type": "boolean"
+                                                },
+                                                "value": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "key",
+                                                "secret",
+                                                "set",
+                                                "value"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "complete",
+                                    "fields"
+                                ]
+                            },
+                            "live": {
+                                "type": "object",
+                                "properties": {
+                                    "complete": {
+                                        "type": "boolean"
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "secret": {
+                                                    "type": "boolean"
+                                                },
+                                                "set": {
+                                                    "type": "boolean"
+                                                },
+                                                "value": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "key",
+                                                "secret",
+                                                "set",
+                                                "value"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "complete",
+                                    "fields"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "sandbox",
+                            "live"
+                        ]
+                    }
+                },
+                "required": [
+                    "code",
+                    "name",
+                    "is_active",
+                    "mode",
+                    "verified",
+                    "verified_at",
+                    "configured",
+                    "status",
+                    "credentials"
+                ],
+                "title": "PaymentGatewaySettings"
+            },
+            "PaystationNotificationRequest": {
+                "type": "object",
+                "description": "A PayStation IPN (a JSON POST, sent only for successful transactions). PayStation\ndocuments no signature, so validation here is shape only: it parses nothing into a\ndomain object, writes nothing, and nothing in it is ever trusted \u2014 the invoice number\nonly says which of OUR payments to re-query (rule 19, docs/_research/paystation-api.md \u00a75).",
+                "properties": {
+                    "invoice_number": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "trx_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 128
+                    },
+                    "trx_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 32
+                    }
+                },
+                "required": [
+                    "invoice_number"
+                ],
+                "title": "PaystationNotificationRequest"
+            },
+            "PaystationReturnRequest": {
+                "type": "object",
+                "description": "The customer's browser came back from PayStation to our callback_url; the storefront\nforwards the order number from that URL and, if PayStation appended one, the invoice\nnumber. PayStation documents neither the redirect's parameters nor any signature, so\nthese only select which of OUR payments to re-query \u2014 never its status or amount\n(rule 19, docs/_research/paystation-api.md \u00a76). Everything else PayStation appended\nmay be forwarded in `query` and is kept for disputes only.",
+                "properties": {
+                    "order_number": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9\\-]{3,32}$"
+                    },
+                    "invoice_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 128
+                    },
+                    "query": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 500
+                        },
+                        "maxItems": 20
+                    }
+                },
+                "required": [
+                    "order_number"
+                ],
+                "title": "PaystationReturnRequest"
             },
             "PermissionInfoResource": {
                 "type": "object",
@@ -81161,6 +81721,69 @@
                     "email"
                 ],
                 "title": "UpdateOwnProfileRequest"
+            },
+            "UpdatePaymentGatewayRequest": {
+                "type": "object",
+                "description": "`PUT /settings/payment-gateways/{code}` \u2014 needs settings.manage_integrations. Every member is\noptional; send only what changes.\n\n    {\"is_active\": true, \"mode\": \"live\",\n     \"credentials\": {\"live\": {\"store_id\": \"\u2026\", \"store_password\": \"\u2026\"}},\n     \"clear\": {\"sandbox\": [\"store_password\"]}}\n\nKeys are write-only (rule 20). The clear convention matches the courier credentials:\n- `credentials.{sandbox|live}.{key}` sets a new value; an absent, blank or null value KEEPS\n  the stored one (so a form can send its secret inputs empty);\n- `clear.{sandbox|live}` lists keys to REMOVE. A key both set and cleared is a 422.\n`{key}` is one of the gateway's fields (`GET /settings/payment-gateways` lists them); any\nother key is a 422. Switching to `live` without a complete live set, or switching the gateway\non without a complete set for its mode, is a 422 (checked under the row lock by the Action).",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Switch the gateway on or off. On needs a complete key set for its mode."
+                    },
+                    "mode": {
+                        "type": "string",
+                        "description": "Which key set the gateway uses. `live` needs a complete live set.",
+                        "enum": [
+                            "sandbox",
+                            "live"
+                        ]
+                    },
+                    "credentials": {
+                        "type": "object",
+                        "properties": {
+                            "sandbox": {
+                                "type": "array",
+                                "items": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 500
+                                }
+                            },
+                            "live": {
+                                "type": "array",
+                                "items": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 500
+                                }
+                            }
+                        }
+                    },
+                    "clear": {
+                        "type": "object",
+                        "properties": {
+                            "sandbox": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                }
+                            },
+                            "live": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                }
+                            }
+                        }
+                    }
+                },
+                "title": "UpdatePaymentGatewayRequest"
             },
             "UpdatePosSettingsRequest": {
                 "type": "object",

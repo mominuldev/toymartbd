@@ -240,8 +240,11 @@ describe('availability (rule 33a spirit)', function (): void {
         PaymentProvider::query()->where('code', 'sslcommerz')->update(['verified' => true]);
         expect($gateways->status(PaymentMethod::Sslcommerz)['reason'])->toBe('sandbox_in_production');
 
+        // Live mode reads the saved live set only — env never fills it.
         PaymentProvider::query()->where('code', 'sslcommerz')->update(['sandbox' => false]);
-        config(['payments.sslcommerz.sandbox' => false]);
+        expect($gateways->status(PaymentMethod::Sslcommerz)['reason'])->toBe('not_configured');
+
+        PaymentProvider::forCode('sslcommerz')?->forceFill(['credentials' => ['live' => ['store_id' => 'live-store', 'store_password' => 'live-secret']]])->save();
         expect($gateways->isEnabled(PaymentMethod::Sslcommerz))->toBeTrue();
         app()->detectEnvironment(fn (): string => 'testing');
     });

@@ -144,6 +144,7 @@ Legend — **S** = full desktop screen drawn on page 07 this pass · **C** = cov
 - [S] Staff & roles: users list + PermissionMatrix — **built 2026-11-14** (`features/staff`): People + read-only matrix; 2FA, branch, sessions, shifts and editable roles not built
 - [S] Automations & notifications: workflow list (order confirmed → WhatsApp utility message; high risk → hold + alert; low stock → email; abandoned cart → reminder), template editor, channel costs
 - [S] Integrations hub: couriers, payments, messaging, marketing/tracking, AI, accounting, with status
+- [S] Integrations › Payments (`/integrations/payments`, owner request 2026-11-19): SSLCommerz and PayStation keys per mode (sandbox / live), mode switch, Check connection; verifying for live money stays a CLI owner action — **API in progress** (hub status and CLI/launch checks done 2026-11-19; settings endpoints being built); **UI and Figma frame pending**
 - [S] Store settings: business info, trade licence/BIN, branches & warehouses, invoice, checkout rules, languages
 - [S] Activity log: global audit feed with sensitive-change diff
 - [S] Sign in (email/phone + password, 2FA)

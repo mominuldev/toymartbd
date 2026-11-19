@@ -1,0 +1,9 @@
+{
+    "invoice_number": "{{invoice_number}}",
+    "trx_status": "Success",
+    "trx_id": "{{trx_id}}",
+    "trx_amount": "{{payment_amount}}",
+    "order_date_time": "2026-11-19 14:05:11",
+    "payment_method": "bKash",
+    "reference": "{{reference}}"
+}

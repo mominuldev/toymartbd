@@ -18,6 +18,7 @@ use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Notification\Services\MessagingSettings;
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Services\OnlineGateways;
+use App\Domain\Payment\Support\GatewayCredentials;
 use App\Domain\Tracking\Queries\TrackingDiagnostics;
 use App\Domain\Tracking\Services\TrackingSettings;
 use App\Models\User;
@@ -30,11 +31,14 @@ use Carbon\CarbonImmutable;
  * cached (a credential fixed on a settings screen must show on the next load) and nothing
  * here returns a credential: only whether it is set, as a note code.
  *
- * A service with no driver in the codebase (RedX, bKash, Nagad, Facebook Messenger, Google
- * Search Console) is listed as `not_available` — honest "not built yet", never "not
- * connected", which would imply the owner could connect it today. No AI or accounting
- * provider is named anywhere in the docs, so those categories are omitted rather than
- * invented. No balance, token expiry or count is reported that the database does not hold.
+ * Online payment gateways (SSLCommerz, PayStation) are configured on Integrations › Payments
+ * (`/integrations/payments`, owner request 2026-11-19: keys per mode, sandbox or live switched
+ * in the admin); verifying a gateway for live money stays an owner action on the CLI.
+ *
+ * A service with no driver in the codebase (RedX, bKash, Nagad, Google Search Console) is
+ * listed as `not_available` — honest "not built yet", never "not connected", which would
+ * imply the owner could connect it today. No accounting provider is named anywhere in the
+ * docs, so that category is omitted rather than invented. No balance, token expiry or count is reported that the database does not hold.
  *
  * Statuses: `connected_live` · `test_mode` · `needs_attention` · `not_connected` · `not_available`.
  * `notes` and `attention` are stable codes; the admin renders them through i18n.
@@ -169,7 +173,16 @@ final readonly class IntegrationHub
         return $items;
     }
 
-    /** @return list<Integration> */
+    /**
+     * Payments: COD, then each online gateway. A gateway the admin manages keys for
+     * (SSLCommerz, PayStation — `GatewayCredentials::methods()`) is judged on its CURRENT mode
+     * only, as `OnlineGateways::status()` reports it: no complete key set for that mode →
+     * not connected; sandbox → test mode; live but not yet verified by the owner (a CLI
+     * action after a real live payment) → still test mode, because production refuses it;
+     * live and verified → connected · live.
+     *
+     * @return list<Integration>
+     */
     private function payments(): array
     {
         $items = [
@@ -177,8 +190,15 @@ final readonly class IntegrationHub
             $this->item('cod', 'Cash on delivery', 'payments', 'connected_live', ['cod_always_on']),
         ];
 
-        $names = [PaymentMethod::Sslcommerz->value => 'SSLCommerz', PaymentMethod::Bkash->value => 'bKash', PaymentMethod::Nagad->value => 'Nagad'];
-        foreach ([PaymentMethod::Sslcommerz, PaymentMethod::Bkash, PaymentMethod::Nagad] as $method) {
+        $names = [
+            PaymentMethod::Sslcommerz->value => 'SSLCommerz',
+            PaymentMethod::Paystation->value => 'PayStation',
+            PaymentMethod::Bkash->value => 'bKash',
+            PaymentMethod::Nagad->value => 'Nagad',
+        ];
+        $managed = array_map(fn (PaymentMethod $m): string => $m->value, GatewayCredentials::methods());
+
+        foreach ([PaymentMethod::Sslcommerz, PaymentMethod::Paystation, PaymentMethod::Bkash, PaymentMethod::Nagad] as $method) {
             $s = $this->gateways->status($method);
             $name = $names[$method->value];
             if (! $s['registered']) {
@@ -187,15 +207,12 @@ final readonly class IntegrationHub
                 continue;
             }
 
-            $notes = [];
-            if (! $s['configured']) {
-                $notes[] = 'no_credentials';
-            } elseif ($s['sandbox']) {
-                $notes[] = 'sandbox';
-            }
-            if (! $s['verified']) {
-                $notes[] = 'unverified_payment_blocked';
-            }
+            $notes = [match (true) {
+                ! $s['configured'] => 'no_credentials',
+                $s['sandbox'] => 'sandbox',
+                ! $s['verified'] => 'live_unverified',
+                default => 'live',
+            }];
             if (! $s['active']) {
                 $notes[] = 'switched_off';
             }
@@ -206,8 +223,15 @@ final readonly class IntegrationHub
                 default => 'connected_live',
             };
 
-            // No admin screen edits payment gateways yet, so there is nowhere to send the owner.
-            $items[] = $this->item($method->value, $name, 'payments', $status, $notes, enabled: $s['active']);
+            $items[] = $this->item(
+                $method->value,
+                $name,
+                'payments',
+                $status,
+                $notes,
+                enabled: $s['active'],
+                path: in_array($method->value, $managed, true) ? '/integrations/payments' : null,
+            );
         }
 
         return $items;

@@ -24,7 +24,7 @@ final class IntegrationResource extends ApiResource
         $r = $this->resource;
 
         return [
-            /** @var string Stable service key: pathao, steadfast, redx, cod, sslcommerz, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console. */
+            /** @var string Stable service key: pathao, steadfast, redx, cod, sslcommerz, paystation, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console. */
             'key' => $r['key'],
             /** @var string English name; the admin translates by `key` where the name is not a brand. */
             'name' => $r['name'],
@@ -32,7 +32,7 @@ final class IntegrationResource extends ApiResource
             'category' => $r['category'],
             /** @var 'connected_live'|'test_mode'|'needs_attention'|'not_connected'|'not_available' `not_available` = no driver in the codebase yet. */
             'status' => $r['status'],
-            /** @var list<string> Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `unverified_booking_blocked`, `bookings`, `browser_only`. */
+            /** @var list<string> Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `live`, `live_unverified`, `unverified_booking_blocked`, `bookings`, `browser_only`. */
             'notes' => $r['notes'],
             /** @var string|null Why it needs attention (a code), when `status` is `needs_attention`. */
             'attention' => $r['attention'],

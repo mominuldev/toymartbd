@@ -4896,6 +4896,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/payment-gateways": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /settings/payment-gateways` — every managed gateway, in display order */
+        get: operations["v1.admin.settings.payment-gateways.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/payment-gateways/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * `PUT /settings/payment-gateways/{code}` — on/off, mode, and either mode's keys. A blank key
+         *     keeps the saved value; `clear` removes one. 422 when switching to live without a complete
+         *     live set, or switching on without a complete set for the mode
+         */
+        put: operations["v1.admin.settings.payment-gateways.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/payment-gateways/{code}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/payment-gateways/{code}/check` — "Check connection": one read-only call to
+         *     the gateway with the keys saved for its CURRENT mode. Takes no money, verifies nothing.
+         *     Throttled. 422 `connection-check-unsupported` when the gateway's driver cannot check keys
+         */
+        post: operations["v1.admin.settings.payment-gateways.check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/business": {
         parameters: {
             query?: never;
@@ -7883,6 +7942,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/payments/paystation/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /payments/paystation/return` — the customer's browser came back from PayStation
+         *     to the storefront's route handler, which forwards the order number from our
+         *     callback_url (and PayStation's invoice number, if it appended one). PayStation signs
+         *     nothing, so these only pick which of our payments to re-query; the status comes from
+         *     PayStation's transaction-status API, never from this request
+         */
+        post: operations["v1.storefront.payments.paystation.return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/auth/otp": {
         parameters: {
             query?: never;
@@ -8211,6 +8293,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["v1.webhooks.payments.sslcommerz.ipn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/payments/paystation/ipn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["v1.webhooks.payments.paystation.ipn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11835,7 +11933,7 @@ export interface components {
         };
         /** Integration */
         Integration: {
-            /** @description Stable service key: pathao, steadfast, redx, cod, sslcommerz, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console. */
+            /** @description Stable service key: pathao, steadfast, redx, cod, sslcommerz, paystation, bkash, nagad, sms, whatsapp, messenger, meta_capi, ga4, gtm, search_console. */
             key: string;
             /** @description English name; the admin translates by `key` where the name is not a brand. */
             name: string;
@@ -11846,7 +11944,7 @@ export interface components {
              * @enum {string}
              */
             status: "connected_live" | "test_mode" | "needs_attention" | "not_connected" | "not_available";
-            /** @description Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `unverified_booking_blocked`, `bookings`, `browser_only`. */
+            /** @description Factual note codes for the detail line, e.g. `no_credentials`, `sandbox`, `live`, `live_unverified`, `unverified_booking_blocked`, `bookings`, `browser_only`. */
             notes: string[];
             /** @description Why it needs attention (a code), when `status` is `needs_attention`. */
             attention: string | null;
@@ -13094,7 +13192,7 @@ export interface components {
             payments: {
                 id: number;
                 /** @enum {string} */
-                method: "cod" | "sslcommerz" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
+                method: "cod" | "sslcommerz" | "paystation" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
                 /** @enum {string} */
                 status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
                 amount: string;
@@ -13473,6 +13571,89 @@ export interface components {
             /** @enum {string|null} */
             method?: "bkash" | "nagad" | "cash" | "bank_transfer" | null;
             reference?: string | null;
+        };
+        /** PaymentGatewayConnectionCheck */
+        PaymentGatewayConnectionCheck: {
+            /** @description The gateway accepted the keys saved for the current mode. */
+            ok: boolean;
+            /** @enum {string} */
+            code: "ok" | "not_configured" | "credentials_rejected" | "unreachable";
+            /**
+             * @description The mode whose keys were checked.
+             * @enum {string}
+             */
+            mode: "sandbox" | "live";
+            checked_at: string;
+        };
+        /** PaymentGatewaySettings */
+        PaymentGatewaySettings: {
+            /** @enum {string} */
+            code: "sslcommerz" | "paystation";
+            name: string;
+            is_active: string;
+            /**
+             * @description The key set in use.
+             * @enum {string}
+             */
+            mode: "sandbox" | "live";
+            /** @description A real payment has been proven through this gateway; set by the owner's CLI only. */
+            verified: boolean;
+            verified_at: string | null;
+            /** @description Every key the current mode needs is available (sandbox may use env values). */
+            configured: boolean;
+            /** @description Whether checkout offers it now, and why not. */
+            status: {
+                enabled: boolean;
+                /** @enum {string|null} */
+                reason: "not_registered" | "inactive" | "not_configured" | "unverified" | "sandbox_in_production" | null;
+            };
+            /** @description Saved keys per mode. `value` is null for every secret. `complete` counts saved keys only. */
+            credentials: {
+                sandbox: {
+                    complete: boolean;
+                    fields: {
+                        key: string;
+                        secret: boolean;
+                        set: boolean;
+                        value: string | null;
+                    }[];
+                };
+                live: {
+                    complete: boolean;
+                    fields: {
+                        key: string;
+                        secret: boolean;
+                        set: boolean;
+                        value: string | null;
+                    }[];
+                };
+            };
+        };
+        /**
+         * PaystationNotificationRequest
+         * @description A PayStation IPN (a JSON POST, sent only for successful transactions). PayStation
+         *     documents no signature, so validation here is shape only: it parses nothing into a
+         *     domain object, writes nothing, and nothing in it is ever trusted — the invoice number
+         *     only says which of OUR payments to re-query (rule 19, docs/_research/paystation-api.md §5).
+         */
+        PaystationNotificationRequest: {
+            invoice_number: string;
+            trx_id?: string | null;
+            trx_status?: string | null;
+        };
+        /**
+         * PaystationReturnRequest
+         * @description The customer's browser came back from PayStation to our callback_url; the storefront
+         *     forwards the order number from that URL and, if PayStation appended one, the invoice
+         *     number. PayStation documents neither the redirect's parameters nor any signature, so
+         *     these only select which of OUR payments to re-query — never its status or amount
+         *     (rule 19, docs/_research/paystation-api.md §6). Everything else PayStation appended
+         *     may be forwarded in `query` and is kept for disputes only.
+         */
+        PaystationReturnRequest: {
+            order_number: string;
+            invoice_number?: string | null;
+            query?: (string | null)[] | null;
         };
         /** PermissionInfoResource */
         PermissionInfoResource: {
@@ -19440,6 +19621,40 @@ export interface components {
             /** Format: email */
             email: string;
             current_password?: string | null;
+        };
+        /**
+         * UpdatePaymentGatewayRequest
+         * @description `PUT /settings/payment-gateways/{code}` — needs settings.manage_integrations. Every member is
+         *     optional; send only what changes.
+         *
+         *         {"is_active": true, "mode": "live",
+         *          "credentials": {"live": {"store_id": "…", "store_password": "…"}},
+         *          "clear": {"sandbox": ["store_password"]}}
+         *
+         *     Keys are write-only (rule 20). The clear convention matches the courier credentials:
+         *     - `credentials.{sandbox|live}.{key}` sets a new value; an absent, blank or null value KEEPS
+         *       the stored one (so a form can send its secret inputs empty);
+         *     - `clear.{sandbox|live}` lists keys to REMOVE. A key both set and cleared is a 422.
+         *     `{key}` is one of the gateway's fields (`GET /settings/payment-gateways` lists them); any
+         *     other key is a 422. Switching to `live` without a complete live set, or switching the gateway
+         *     on without a complete set for its mode, is a 422 (checked under the row lock by the Action).
+         */
+        UpdatePaymentGatewayRequest: {
+            /** @description Switch the gateway on or off. On needs a complete key set for its mode. */
+            is_active?: boolean;
+            /**
+             * @description Which key set the gateway uses. `live` needs a complete live set.
+             * @enum {string}
+             */
+            mode?: "sandbox" | "live";
+            credentials?: {
+                sandbox?: (string | null)[];
+                live?: (string | null)[];
+            };
+            clear?: {
+                sandbox?: string[];
+                live?: string[];
+            };
         };
         /**
          * UpdatePosSettingsRequest
@@ -32640,6 +32855,84 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
         };
     };
+    "v1.admin.settings.payment-gateways.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `PaymentGatewaySettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PaymentGatewaySettings"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "v1.admin.settings.payment-gateways.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePaymentGatewayRequest"];
+            };
+        };
+        responses: {
+            /** @description `PaymentGatewaySettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentGatewaySettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.settings.payment-gateways.check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `PaymentGatewayConnectionCheck` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentGatewayConnectionCheck"] | string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["NotFoundHttpException"];
+        };
+    };
     "v1.admin.settings.business.show": {
         parameters: {
             query?: never;
@@ -39916,7 +40209,7 @@ export interface operations {
                                 /** @enum {string} */
                                 status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
                                 /** @enum {string} */
-                                method: "cod" | "sslcommerz" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
+                                method: "cod" | "sslcommerz" | "paystation" | "bkash" | "nagad" | "card" | "bank_transfer" | "cash";
                                 expires_at: string | null;
                             };
                             /** @description `null` when no session could be opened — show the payment-failed page with retry. */
@@ -39998,6 +40291,48 @@ export interface operations {
             };
             /** @description The signature did not verify (`unauthenticated`) — nothing was written */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.payments.paystation.return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaystationReturnRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            order_number: string;
+                            /** @enum {string} */
+                            payment_status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
+                            /** @enum {string} */
+                            order_payment_status: "unpaid" | "pending" | "partially_paid" | "paid" | "partially_refunded" | "refunded" | "failed";
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No PayStation payment for that order (and invoice) — nothing was written */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41094,6 +41429,51 @@ export interface operations {
             };
             /** @description The source IP is not on the configured allowlist */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.webhooks.payments.paystation.ipn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaystationNotificationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        received: boolean;
+                        replayed: boolean;
+                    };
+                };
+            };
+            /** @description The source IP is not on the configured allowlist */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The invoice is not one of our PayStation payments — nothing was written */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

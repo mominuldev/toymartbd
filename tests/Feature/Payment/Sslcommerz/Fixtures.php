@@ -38,7 +38,6 @@ final class Fixtures
         config([
             'payments.sslcommerz.store_id' => self::STORE_ID,
             'payments.sslcommerz.store_password' => self::STORE_PASSWORD,
-            'payments.sslcommerz.sandbox' => true,
             'payments.sslcommerz.return_base_url' => 'https://shop.example.test',
             'payments.sslcommerz.ipn_allowed_ips' => [],
         ]);

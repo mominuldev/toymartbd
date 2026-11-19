@@ -50,6 +50,8 @@ enum ProblemType: string
     case AiCapReached = 'ai-cap-reached';
     case AiNotShared = 'ai-not-shared';
     case AiUnavailable = 'ai-unavailable';
+    /** Integrations › Payments › Check connection: this gateway's driver cannot check its keys (yet). */
+    case ConnectionCheckUnsupported = 'connection-check-unsupported';
     case ServerError = 'server-error';
     /** Any other 4xx/5xx HttpException without a dedicated type. */
     case HttpError = 'http-error';
@@ -80,6 +82,7 @@ enum ProblemType: string
             self::PriceChanged, self::InsufficientStock, self::MediaInUse, self::BranchModeBlocked, self::SingleBranchMode => 409,
             self::AiNotConfigured, self::AiCapReached, self::AiNotShared => 409,
             self::AiUnavailable => 503,
+            self::ConnectionCheckUnsupported => 422,
             self::ServerError, self::HttpError => 500,
         };
     }
@@ -112,6 +115,7 @@ enum ProblemType: string
             self::AiCapReached => 'AI spending cap reached',
             self::AiNotShared => 'Not shared with AI',
             self::AiUnavailable => 'AI is unavailable',
+            self::ConnectionCheckUnsupported => 'Connection check not supported',
             self::ServerError => 'Server error',
             self::HttpError => 'HTTP error',
         };
@@ -145,6 +149,7 @@ enum ProblemType: string
             self::AiNotConfigured => 'Connect an AI provider for this feature in Integrations › AI assistant.',
             self::AiCapReached => 'This month’s AI spending cap is reached. Raise it in Integrations › AI assistant, or wait until the 1st.',
             self::AiUnavailable => 'The AI provider did not give a usable answer. Try again in a moment.',
+            self::ConnectionCheckUnsupported => 'This gateway cannot check its keys yet. Save them, then try a sandbox payment.',
             self::AiNotShared => 'What this feature needs is not shared with AI. Turn it on in Integrations › AI assistant › What the AI can see.',
             self::ServerError => 'An unexpected error occurred. Please try again later.',
             self::HttpError => 'The request could not be completed.',

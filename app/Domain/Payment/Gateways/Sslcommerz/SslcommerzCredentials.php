@@ -6,13 +6,17 @@ namespace App\Domain\Payment\Gateways\Sslcommerz;
 
 use App\Domain\Payment\Enums\PaymentMethod;
 use App\Domain\Payment\Models\PaymentProvider;
+use App\Domain\Payment\Support\GatewayCredentials;
+use App\Domain\Payment\Support\GatewayEnvFallback;
 use SensitiveParameter;
 
 /**
- * SSLCommerz store credentials (rule 20). Resolved from the `payment_gateways` row's
- * encrypted `credentials` when an owner has stored them, else from env (sandbox during
- * development). Never logged: `__debugInfo` hides the password and the class is not
- * serialised into payloads.
+ * SSLCommerz store credentials (rule 20) for the gateway's CURRENT mode. The
+ * `payment_gateways` row's `sandbox` flag — switched by the owner in Integrations › Payments —
+ * picks the key set in its encrypted `credentials` ({@see GatewayCredentials}); env values
+ * fill gaps in the sandbox set only, never the live one. Production still refuses an
+ * unverified gateway ({@see \App\Domain\Payment\Services\OnlineGateways}). Never logged:
+ * `__debugInfo` hides the password and the class is not serialised into payloads.
  */
 final readonly class SslcommerzCredentials
 {
@@ -25,23 +29,24 @@ final readonly class SslcommerzCredentials
     public static function resolve(): ?self
     {
         $row = PaymentProvider::forCode(PaymentMethod::Sslcommerz->value);
-        $stored = $row === null ? [] : ($row->credentials ?? []);
+        $sandbox = self::sandboxMode($row);
+        $set = GatewayCredentials::forMode($row, $sandbox, GatewayEnvFallback::for(PaymentMethod::Sslcommerz));
 
-        $storeId = self::string($stored['store_id'] ?? null) ?? self::string(config('payments.sslcommerz.store_id'));
-        $password = self::string($stored['store_password'] ?? null) ?? self::string(config('payments.sslcommerz.store_password'));
+        $storeId = $set['store_id'] ?? null;
+        $password = $set['store_password'] ?? null;
         if ($storeId === null || $password === null) {
             return null;
         }
 
-        return new self($storeId, $password, self::sandboxMode($row));
+        return new self($storeId, $password, $sandbox);
     }
 
-    /** Sandbox unless BOTH the row and env say live — a half-configured switch stays safe. */
+    /** The row's mode; no row means sandbox. */
     public static function sandboxMode(?PaymentProvider $row = null): bool
     {
         $row ??= PaymentProvider::forCode(PaymentMethod::Sslcommerz->value);
 
-        return ($row === null || $row->sandbox) || (bool) config('payments.sslcommerz.sandbox', true);
+        return $row === null || $row->sandbox;
     }
 
     public function host(): string
@@ -53,10 +58,5 @@ final readonly class SslcommerzCredentials
     public function __debugInfo(): array
     {
         return ['storeId' => $this->storeId, 'storePassword' => '[redacted]', 'sandbox' => $this->sandbox];
-    }
-
-    private static function string(mixed $value): ?string
-    {
-        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 }
