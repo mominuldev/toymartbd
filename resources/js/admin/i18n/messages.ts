@@ -237,6 +237,7 @@ export const en = {
     'common.edit': 'Edit',
     'common.actions': 'Actions',
     'common.close': 'Close',
+    'toast.region': 'Notifications',
 
     'catalog.tab.products': 'Products',
     'catalog.tab.categories': 'Categories',
@@ -569,6 +570,7 @@ export const bn: Messages = {
     'common.edit': 'সম্পাদনা',
     'common.actions': 'অ্যাকশন',
     'common.close': 'বন্ধ করুন',
+    'toast.region': 'বিজ্ঞপ্তি',
 
     'catalog.tab.products': 'পণ্য',
     'catalog.tab.categories': 'ক্যাটাগরি',
