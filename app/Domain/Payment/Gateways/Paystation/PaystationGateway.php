@@ -200,7 +200,7 @@ final readonly class PaystationGateway implements ChecksConfiguration, ChecksCon
      * merchant id and answers 2001 for both "invalid" and "not found", so it cannot test
      * the password (docs/_research/paystation-api.md, "Not documented" 9).
      *
-     * @return array{ok: bool, code: 'ok'|'not_configured'|'credentials_rejected'|'unreachable'}
+     * @return array{ok: bool, code: 'ok'|'not_configured'|'credentials_rejected'|'unreachable'|'sandbox_only'}
      */
     public function checkConnection(): array
     {

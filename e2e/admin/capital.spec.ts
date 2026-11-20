@@ -28,7 +28,7 @@ test('add a partner → invest → draw → reverse the drawing → totals follo
     await add.getByRole('button', { name: 'Partner' }).click();
     await add.getByRole('button', { name: 'Add person' }).click();
     await expect(add).toBeHidden();
-    await expect(page.getByRole('listitem').filter({ hasText: partner })).toContainText('Partner');
+    await expect(page.getByRole('main').getByRole('listitem').filter({ hasText: partner })).toContainText('Partner');
 
     // New investment — money in.
     await page.getByRole('button', { name: 'New investment' }).click();
@@ -41,7 +41,7 @@ test('add a partner → invest → draw → reverse the drawing → totals follo
     await invest.getByRole('button', { name: 'Record ৳50,000.00 in' }).click();
     await expect(invest).toBeHidden();
 
-    const card = page.getByRole('listitem').filter({ hasText: partner });
+    const card = page.getByRole('main').getByRole('listitem').filter({ hasText: partner });
     await expect(card).toContainText('৳50,000.00');
 
     // Owner drawing — money out, from the same person.

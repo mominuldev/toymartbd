@@ -40,8 +40,12 @@ test('home in the pages list, and a new page built from sections', async ({ page
     const publish = page.getByRole('button', { name: 'Publish', exact: true });
     await expect(publish).toBeEnabled();
     await publish.click();
-    await expect(page.getByText(/^Published version \d+\. The page on the storefront is refreshing\.$/)).toBeVisible();
+    const published = page.getByText(/^Published version \d+\. The page on the storefront is refreshing\.$/);
+    await expect(published).toBeVisible();
     if (shots) await page.screenshot({ path: `${shots}/page-builder.png` });
+    // The toast stack sits over the top-right actions, and hovering it pauses its timer: let it close first.
+    await page.mouse.move(0, 0);
+    await expect(published).toBeHidden({ timeout: 15_000 });
 
     await page.getByRole('link', { name: 'Page settings' }).click();
     // Settings: details and the SEO panel share the left column; the save bar closes the page.

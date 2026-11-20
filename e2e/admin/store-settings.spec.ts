@@ -72,7 +72,7 @@ test('owner adds, edits and switches off a branch; the default stays on', async 
     await add.getByRole('button', { name: 'Add branch' }).click();
     await expect(page.getByText('Khulna · Sonadanga added')).toBeVisible();
 
-    const row = page.getByRole('listitem').filter({ hasText: 'Khulna · Sonadanga' });
+    const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Khulna · Sonadanga' });
     await expect(row).toContainText('Retail shop · POS · click & collect');
     await expect(row).toContainText('Shop 4, Sonadanga Bus Stand Market, Sonadanga, Khulna');
     await expect(row).toContainText('Near Opposite the bus stand');
@@ -88,7 +88,7 @@ test('owner adds, edits and switches off a branch; the default stays on', async 
     await expect(row).toContainText('Switched off');
 
     // The default location cannot be switched off.
-    const first = page.getByRole('listitem').filter({ hasText: 'Default' }).first();
+    const first = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Default' }).first();
     await first.getByRole('button', { name: /^Edit / }).click();
     await expect(page.getByRole('dialog').getByLabel('Active')).toBeDisabled();
 });
