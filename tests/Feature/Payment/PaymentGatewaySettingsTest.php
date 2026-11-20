@@ -105,6 +105,38 @@ describe('GET /settings/payment-gateways', function (): void {
             ->assertJsonPath('data.1.credentials.live.complete', false);
     });
 
+    it('gives each gateway its IPN URL and the host per mode, for display', function (): void {
+        gatewayAdmin();
+
+        $this->getJson('/api/v1/admin/settings/payment-gateways')
+            ->assertOk()
+            ->assertJsonPath('data.0.ipn_url', route('api.v1.webhooks.payments.sslcommerz.ipn'))
+            ->assertJsonPath('data.0.hosts', ['sandbox' => 'sandbox.sslcommerz.com', 'live' => 'securepay.sslcommerz.com'])
+            ->assertJsonPath('data.1.ipn_url', route('api.v1.webhooks.payments.paystation.ipn'))
+            ->assertJsonPath('data.1.hosts', ['sandbox' => 'sandbox.paystation.com.bd', 'live' => 'api.paystation.com.bd']);
+        expect(route('api.v1.webhooks.payments.sslcommerz.ipn'))->toEndWith('/api/v1/webhooks/payments/sslcommerz/ipn');
+    });
+
+    it('says when the settings were last saved and by whom — from the audit row, null until the first save', function (): void {
+        $user = gatewayAdmin();
+
+        $this->getJson('/api/v1/admin/settings/payment-gateways')
+            ->assertOk()
+            ->assertJsonPath('data.0.updated_at', null)
+            ->assertJsonPath('data.0.updated_by', null);
+
+        $this->putJson('/api/v1/admin/settings/payment-gateways/sslcommerz', ['credentials' => ['sandbox' => ['store_id' => 'sbx-store']]])
+            ->assertOk()
+            ->assertJsonPath('updated_by', ['name' => $user->name]);
+        $audit = AuditSensitive::query()->where('action', AuditAction::CredentialChanged->value)->latest('id')->firstOrFail();
+
+        $this->getJson('/api/v1/admin/settings/payment-gateways')
+            ->assertOk()
+            ->assertJsonPath('data.0.updated_at', $audit->created_at->toIso8601String())
+            ->assertJsonPath('data.0.updated_by', ['name' => $user->name])
+            ->assertJsonPath('data.1.updated_at', null);
+    });
+
     it('in production, a live gateway that is not verified saves but says it takes no payment', function (): void {
         storeSsl(['live' => ['store_id' => 'live-store', 'store_password' => PGS_LIVE_SECRET]], ['sandbox' => false, 'is_active' => true]);
         gatewayAdmin();
@@ -192,6 +224,12 @@ describe('PUT /settings/payment-gateways/{code}', function (): void {
         ])->assertStatus(422);
         $this->putJson('/api/v1/admin/settings/payment-gateways/sslcommerz', ['credentials' => ['production' => ['store_id' => 'x']]])
             ->assertStatus(422);
+        // Values are checked in after() (the OpenAPI shape stays a key → value map): too long or not text.
+        $this->putJson('/api/v1/admin/settings/payment-gateways/sslcommerz', ['credentials' => ['live' => ['store_id' => str_repeat('x', 501)]]])
+            ->assertStatus(422)->assertJsonPath('errors.0.field', 'credentials.live.store_id');
+        $this->putJson('/api/v1/admin/settings/payment-gateways/sslcommerz', ['credentials' => ['sandbox' => ['store_id' => ['nested']]]])
+            ->assertStatus(422)->assertJsonPath('errors.0.field', 'credentials.sandbox.store_id');
+        expect(sslRow()->refresh()->credentials)->toBeNull();
         $this->putJson('/api/v1/admin/settings/payment-gateways/bkash', ['is_active' => true])
             ->assertNotFound()->assertJsonPath('type', 'https://toymartbd.com/problems/not-found');
         $this->postJson('/api/v1/admin/settings/payment-gateways/cod/check')->assertNotFound();

@@ -27,6 +27,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
 import { buttonClass } from '@/components/ui/Button';
+import { PaymentLogo, isPaymentLogoCode } from '@/features/settings/payments/logos/PaymentLogo';
 import { ContentHeader } from '@/components/shell/ContentHeader';
 import { QueryError } from '@/components/ui/QueryError';
 import { StatusChip, type StatusTone } from '@/components/ui/StatusChip';
@@ -98,6 +99,7 @@ const icons: Record<string, ComponentType<IconProps>> = {
     gemini: SparkleIcon,
     cod: MoneyIcon,
     sslcommerz: CreditCardIcon,
+    paystation: CreditCardIcon,
     bkash: WalletIcon,
     nagad: WalletIcon,
     sms: ChatTextIcon,
@@ -234,9 +236,16 @@ function IntegrationCard({ item }: { item: Integration }) {
             className="flex flex-col gap-4 rounded-lg border border-line-default bg-surface p-4 shadow-e1"
         >
             <div className="flex items-center gap-3">
-                <span aria-hidden className={`grid size-9 shrink-0 place-items-center rounded-sm ${attention ? 'bg-danger-subtle text-feedback-danger' : 'bg-subtle text-fg-primary'}`}>
-                    <Icon size={18} />
-                </span>
+                {isPaymentLogoCode(item.key) ? (
+                    // A gateway's own mark (B · 37a logos) on a surface tile, so its colours read in either theme.
+                    <span aria-hidden className={`grid size-9 shrink-0 place-items-center rounded-sm border bg-surface ${attention ? 'border-line-danger' : 'border-line-default'}`}>
+                        <PaymentLogo code={item.key} className="size-5" />
+                    </span>
+                ) : (
+                    <span aria-hidden className={`grid size-9 shrink-0 place-items-center rounded-sm ${attention ? 'bg-danger-subtle text-feedback-danger' : 'bg-subtle text-fg-primary'}`}>
+                        <Icon size={18} />
+                    </span>
+                )}
                 <h3 className="min-w-0 flex-1 truncate t-admin-body-strong text-fg-primary">{name}</h3>
                 <CardSwitch item={item} name={name} />
             </div>

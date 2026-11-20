@@ -56,6 +56,7 @@ import { aiAdvisorBn, aiAdvisorEn } from './messages.aiAdvisor';
 import { aiCopyBn, aiCopyEn } from './messages.aiCopy';
 import { aiInboxBn, aiInboxEn } from './messages.aiInbox';
 import { inboxChannelsBn, inboxChannelsEn } from './messages.inboxChannels';
+import { paymentGatewaysBn, paymentGatewaysEn } from './messages.paymentGateways';
 import { aiRestockBn, aiRestockEn } from './messages.aiRestock';
 import { printBn, printEn } from './messages.print';
 import { printInvoiceBn, printInvoiceEn } from './messages.printInvoice';
@@ -108,6 +109,7 @@ export const en = {
     ...aiCopyEn,
     ...aiInboxEn,
     ...inboxChannelsEn,
+    ...paymentGatewaysEn,
     ...aiRestockEn,
     ...printEn,
     ...printInvoiceEn,
@@ -445,6 +447,7 @@ export const bn: Messages = {
     ...aiCopyBn,
     ...aiInboxBn,
     ...inboxChannelsBn,
+    ...paymentGatewaysBn,
     ...aiRestockBn,
     ...printBn,
     ...printInvoiceBn,

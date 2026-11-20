@@ -52,10 +52,10 @@ final class UpdatePaymentGatewayRequest extends ApiFormRequest
             'mode' => ['sometimes', 'string', Rule::in($modes)],
             /** @var array{sandbox?: array<string, string|null>, live?: array<string, string|null>} Per mode: field key → new value. Blank or absent keeps the saved value. */
             'credentials' => ['sometimes', 'array:'.implode(',', $modes)],
+            /** @var array<string, string|null> Sandbox key → new value. */
             'credentials.sandbox' => ['sometimes', 'array'],
-            'credentials.sandbox.*' => ['nullable', 'string', 'max:500'],
+            /** @var array<string, string|null> Live key → new value. */
             'credentials.live' => ['sometimes', 'array'],
-            'credentials.live.*' => ['nullable', 'string', 'max:500'],
             /** @var array{sandbox?: list<string>, live?: list<string>} Per mode: field keys to remove. */
             'clear' => ['sometimes', 'array:'.implode(',', $modes)],
             'clear.sandbox' => ['sometimes', 'array'],
@@ -74,8 +74,11 @@ final class UpdatePaymentGatewayRequest extends ApiFormRequest
             }
             $allowed = array_column(GatewayCredentials::fields($this->gateway()), 'key');
             foreach ([GatewayCredentials::SANDBOX, GatewayCredentials::LIVE] as $mode) {
-                foreach (array_keys((array) $this->input('credentials.'.$mode, [])) as $key) {
-                    if (! in_array($key, $allowed, true)) {
+                foreach ((array) $this->input('credentials.'.$mode, []) as $key => $value) {
+                    // Values are checked here, not by a `.*` rule, so the OpenAPI shape stays a map.
+                    if ($value !== null && (! is_string($value) || mb_strlen($value) > 500)) {
+                        $validator->errors()->add("credentials.{$mode}.{$key}", 'Enter text of at most 500 characters.');
+                    } elseif (! in_array($key, $allowed, true)) {
                         $validator->errors()->add("credentials.{$mode}.{$key}", 'This gateway does not use this key.');
                     }
                 }

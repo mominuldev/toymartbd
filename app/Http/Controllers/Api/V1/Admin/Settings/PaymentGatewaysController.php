@@ -16,6 +16,8 @@ use App\Http\Problems\ProblemType;
 use App\Http\Requests\Admin\Settings\UpdatePaymentGatewayRequest;
 use App\Http\Resources\Admin\PaymentGatewayConnectionCheckResource;
 use App\Http\Resources\Admin\PaymentGatewayResource;
+use App\Models\AuditSensitive;
+use App\Models\Enums\AuditAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -83,12 +85,33 @@ final class PaymentGatewaysController extends ApiController
         return new PaymentGatewayConnectionCheckResource($result);
     }
 
-    /** @return array{gateway: PaymentProvider, method: PaymentMethod, status: array{enabled: bool, reason: string|null}} */
+    /** @return array{gateway: PaymentProvider, method: PaymentMethod, status: array{enabled: bool, reason: string|null}, last_saved: AuditSensitive|null} */
     private static function view(PaymentProvider $row, OnlineGateways $gateways): array
     {
         $method = PaymentMethod::from($row->code);
         $status = $gateways->status($method);
 
-        return ['gateway' => $row, 'method' => $method, 'status' => ['enabled' => $status['enabled'], 'reason' => $status['reason']]];
+        return [
+            'gateway' => $row,
+            'method' => $method,
+            'status' => ['enabled' => $status['enabled'], 'reason' => $status['reason']],
+            'last_saved' => self::lastSaved($row),
+        ];
+    }
+
+    /**
+     * The audit row of the last save on this screen ("Last saved … by …"). Every save through
+     * UpdatePaymentGatewaySettings writes one `credential_changed` row (field names only), so
+     * this is a lookup on the (model_type, model_id) index, not a second record of who saved.
+     */
+    private static function lastSaved(PaymentProvider $row): ?AuditSensitive
+    {
+        return AuditSensitive::query()
+            ->where('model_type', $row->getMorphClass())
+            ->where('model_id', $row->id)
+            ->where('action', AuditAction::CredentialChanged->value)
+            ->with('user:id,name')
+            ->orderByDesc('id')
+            ->first();
     }
 }

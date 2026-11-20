@@ -9,8 +9,10 @@ use App\Domain\Payment\Models\PaymentProvider;
 use App\Domain\Payment\Support\GatewayCredentials;
 use App\Domain\Payment\Support\GatewayEnvFallback;
 use App\Http\Resources\ApiResource;
+use App\Models\AuditSensitive;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /**
  * One online gateway on Integrations › Payments (owner request 2026-11-19). A secret key is
@@ -21,7 +23,11 @@ use Illuminate\Http\Request;
  * in production a live gateway that is not `verified` saves fine but takes no payment
  * (`reason: unverified`) until the owner verifies it from the CLI.
  *
- * @property array{gateway: PaymentProvider, method: PaymentMethod, status: array{enabled: bool, reason: string|null}} $resource
+ * `ipn_url`, `hosts` and `updated_*` are display-only (redesign 2026-11-20): the IPN address the
+ * owner pastes into the gateway's panel, the host each mode talks to, and who saved last — read
+ * from the `credential_changed` audit row that every save writes, never a second record.
+ *
+ * @property array{gateway: PaymentProvider, method: PaymentMethod, status: array{enabled: bool, reason: string|null}, last_saved?: AuditSensitive|null} $resource
  */
 #[SchemaName('PaymentGatewaySettings')]
 final class PaymentGatewayResource extends ApiResource
@@ -33,11 +39,14 @@ final class PaymentGatewayResource extends ApiResource
         $method = $this->resource['method'];
         $status = $this->resource['status'];
         $env = GatewayEnvFallback::for($method);
+        $saved = $this->resource['last_saved'] ?? null;
+        $ipnRoute = 'api.v1.webhooks.payments.'.$row->code.'.ipn';
 
         return [
             /** @var 'sslcommerz'|'paystation' */
             'code' => $row->code,
             'name' => $row->name,
+            /** @var bool */
             'is_active' => $row->is_active,
             /** @var 'sandbox'|'live' The key set in use. */
             'mode' => GatewayCredentials::mode($row->sandbox),
@@ -57,7 +66,26 @@ final class PaymentGatewayResource extends ApiResource
                 GatewayCredentials::SANDBOX => self::set($method, $row, true),
                 GatewayCredentials::LIVE => self::set($method, $row, false),
             ],
+            /** @var string|null Absolute URL of this gateway's IPN webhook — what the owner gives the gateway. Null when it has none. */
+            'ipn_url' => Route::has($ipnRoute) ? route($ipnRoute) : null,
+            /** @var array{sandbox: string|null, live: string|null} The host each mode talks to, for display only (config/payments.php). */
+            'hosts' => [
+                GatewayCredentials::SANDBOX => self::host($row->code, GatewayCredentials::SANDBOX),
+                GatewayCredentials::LIVE => self::host($row->code, GatewayCredentials::LIVE),
+            ],
+            /** @var string|null When these settings were last saved on Integrations › Payments; null if never. */
+            'updated_at' => $saved?->created_at->toIso8601String(),
+            /** @var array{name: string}|null Who saved them last; null if never saved here, or saved by a console command. */
+            'updated_by' => $saved?->user === null ? null : ['name' => $saved->user->name],
         ];
+    }
+
+    private static function host(string $code, string $mode): ?string
+    {
+        $url = config("payments.{$code}.hosts.{$mode}");
+        $host = is_string($url) ? parse_url($url, PHP_URL_HOST) : null;
+
+        return is_string($host) && $host !== '' ? $host : null;
     }
 
     /** @return array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null}>} */

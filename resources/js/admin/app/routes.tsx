@@ -43,6 +43,7 @@ import { TrackingDiagnosticsPage, TrackingSettingsPage } from '@/features/settin
 import { PeopleTab, RolesTab, StaffPage } from '@/features/staff';
 import { ActivityLogPage } from '@/features/audit/ActivityLogPage';
 import { IntegrationsHubPage } from '@/features/integrations/IntegrationsHubPage';
+import { PaymentGatewaysPage } from '@/features/settings/payments/PaymentGatewaysPage';
 import { SettingsLayout } from '@/features/storeSettings/SettingsLayout';
 import { BusinessSection } from '@/features/storeSettings/BusinessSection';
 import { SiteBrandingSection } from '@/features/storeSettings/SiteBrandingSection';
@@ -272,6 +273,7 @@ export const routes: RouteObject[] = [
                     // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
                     { path: 'integrations', element: <IntegrationsHubPage /> },
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
+                    { path: 'integrations/payments', element: <PaymentGatewaysPage /> },
                     // P8 invoicing: the list (no frame; Purchase orders B · 16 DataTable pattern) and
                     // Settings → Invoice details (Store settings B · 38 241:50827 "Business" card).
                     { path: 'invoices', element: <InvoicesPage /> },
