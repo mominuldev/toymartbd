@@ -449,6 +449,16 @@ export const collectDueRequestSchema = z.object({
 });
 export type CollectDueRequestInput = z.input<typeof collectDueRequestSchema>;
 
+/** `POST /storefront/auth/register/verify` (owner decision 2026-11-20) — the `register` code plus */
+export const completeRegistrationRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+    "code": z.string().min(1).regex(new RegExp("^\\d{6}$")),
+    "name": z.string().min(2).max(160),
+    "password": z.string().min(1).max(128),
+    "password_confirmation": z.string().min(1).max(128),
+});
+export type CompleteRegistrationRequestInput = z.input<typeof completeRegistrationRequestSchema>;
+
 /** `POST /orders/{order}/confirm` — needs orders.confirm; optional `note`. */
 export const confirmOrderRequestSchema = z.object({
     "note": z.string().max(500).nullable().optional(),
@@ -724,6 +734,13 @@ export const orderWorkflowRequestSchema = z.object({
 });
 export type OrderWorkflowRequestInput = z.input<typeof orderWorkflowRequestSchema>;
 
+/** `POST /storefront/auth/password` (owner decision 2026-11-20) — phone + password. An optional */
+export const passwordSignInRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+    "password": z.string().min(1).max(128),
+});
+export type PasswordSignInRequestInput = z.input<typeof passwordSignInRequestSchema>;
+
 /** `POST /finance/expenses/{expense}/pay` — `payment_method` and `paid_on` (a Dhaka date, not in the future). */
 export const payExpenseRequestSchema = z.object({
     "payment_method": expensePaymentMethodSchema,
@@ -978,6 +995,15 @@ export const resendReportRunRequestSchema = z.object({
     "user_id": z.number().int().nullable().optional(),
 });
 export type ResendReportRunRequestInput = z.input<typeof resendReportRunRequestSchema>;
+
+/** `POST /storefront/auth/password/reset` (owner decision 2026-11-20) — the `password_reset` code */
+export const resetPasswordRequestSchema = z.object({
+    "phone": z.string().min(1).max(32),
+    "code": z.string().min(1).regex(new RegExp("^\\d{6}$")),
+    "password": z.string().min(1).max(128),
+    "password_confirmation": z.string().min(1).max(128),
+});
+export type ResetPasswordRequestInput = z.input<typeof resetPasswordRequestSchema>;
 
 /** `POST /staff/{user}/password` — `{ password }`, a new temporary password; needs staff.manage. */
 export const resetStaffPasswordRequestSchema = z.object({
@@ -2045,13 +2071,21 @@ export const updateOwnProfileRequestSchema = z.object({
 });
 export type UpdateOwnProfileRequestInput = z.input<typeof updateOwnProfileRequestSchema>;
 
+/** `PUT /storefront/account/password` (owner decision 2026-11-20) — set the first password (after */
+export const updatePasswordRequestSchema = z.object({
+    "current_password": z.string().max(128).nullable().optional(),
+    "password": z.string().min(1).max(128),
+    "password_confirmation": z.string().min(1).max(128),
+});
+export type UpdatePasswordRequestInput = z.input<typeof updatePasswordRequestSchema>;
+
 /** `PUT /settings/payment-gateways/{code}` — needs settings.manage_integrations. Every member is */
 export const updatePaymentGatewayRequestSchema = z.object({
     "is_active": z.boolean().optional(),
     "mode": z.enum(["sandbox","live"]).optional(),
     "credentials": z.object({
-    "sandbox": z.array(z.string().max(500).nullable()).optional(),
-    "live": z.array(z.string().max(500).nullable()).optional(),
+    "sandbox": z.record(z.string(), z.string().nullable()).optional(),
+    "live": z.record(z.string(), z.string().nullable()).optional(),
 }).optional(),
     "clear": z.object({
     "sandbox": z.array(z.string().max(40)).optional(),

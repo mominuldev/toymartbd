@@ -12,6 +12,13 @@ return [
         'format' => 'Enter the 6-digit code from the SMS.',
         'blocked' => 'This account cannot sign in. Please call us for help.',
     ],
+    'password' => [
+        'invalid' => 'That mobile number and password do not match. Try again, or sign in with an SMS code.',
+        'current_invalid' => 'Your current password is not right. Forgot it? Reset it with an SMS code.',
+    ],
+    'register' => [
+        'exists' => 'This mobile number is already registered. Sign in, or reset your password.',
+    ],
     'address' => [
         'limit' => 'You can save up to :max addresses. Remove one first.',
     ],

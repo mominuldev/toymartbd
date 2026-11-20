@@ -30,6 +30,12 @@ final class OtpCodes
 
     public const string PURPOSE_LOGIN = 'login';
 
+    /** "Create an account" (owner decision 2026-11-20): the code proves the phone before the account is made. */
+    public const string PURPOSE_REGISTER = 'register';
+
+    /** "Forgot password": the code proves the phone before a new password is set. */
+    public const string PURPOSE_PASSWORD_RESET = 'password_reset';
+
     public function generate(): string
     {
         return str_pad((string) random_int(0, 10 ** self::LENGTH - 1), self::LENGTH, '0', STR_PAD_LEFT);

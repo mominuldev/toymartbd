@@ -8090,6 +8090,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/password` — sign in with phone + password; merges the guest cart named by
+         *     `X-Cart-Token`. One `password` error for an unknown phone, no password set, or a wrong one
+         */
+        post: operations["v1.storefront.auth.password.login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/register` — "Create an account", step 1: text a `register` code, or answer 409
+         *     `phone-already-registered` when the phone already has an account (a guest-checkout record
+         *     does not count). Limited per phone and per IP like `otp`
+         */
+        post: operations["v1.storefront.auth.register.start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/auth/register/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/register/verify` — "Create an account", step 2: check the `register` code, make
+         *     the account with the name and password (a guest-checkout record keeps its own name), sign in
+         *     and merge the guest cart named by `X-Cart-Token`
+         */
+        post: operations["v1.storefront.auth.register.verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/auth/password/forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/password/forgot` — text a `password_reset` code. Same answer whether or not the
+         *     phone has an account
+         */
+        post: operations["v1.storefront.auth.password.forgot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /auth/password/reset` — check the `password_reset` code, set the new password, sign
+         *     out every other session, sign in and merge the guest cart named by `X-Cart-Token`
+         */
+        post: operations["v1.storefront.auth.password.reset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/account": {
         parameters: {
             query?: never;
@@ -8106,6 +8208,26 @@ export interface paths {
         head?: never;
         /** `PATCH /account` — name, email, language, date of birth. The phone is the identity and not editable here */
         patch: operations["v1.storefront.account.update"];
+        trace?: never;
+    };
+    "/storefront/account/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * `PUT /account/password` — set the first password (required after an SMS sign-in) or change
+         *     it (needs `current_password`). Signs out every other session; this one stays signed in
+         */
+        put: operations["v1.storefront.account.password.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/storefront/account/consents": {
@@ -10074,6 +10196,19 @@ export interface components {
                 /** @description bKash / Nagad TrxID or the card slip's approval code. Required for every non-cash tender. */
                 reference?: string | null;
             }[];
+        };
+        /**
+         * CompleteRegistrationRequest
+         * @description `POST /storefront/auth/register/verify` (owner decision 2026-11-20) — the `register` code plus
+         *     the new account's name and password. An optional `X-Cart-Token` names the guest cart to merge.
+         */
+        CompleteRegistrationRequest: {
+            phone: string;
+            /** @description The 6-digit code from the SMS. */
+            code: string;
+            name: string;
+            password: string;
+            password_confirmation: string;
         };
         /**
          * ConfirmOrderRequest
@@ -13720,6 +13855,16 @@ export interface components {
          */
         PageTemplate: "default" | "sidebar" | "faq";
         /**
+         * PasswordSignInRequest
+         * @description `POST /storefront/auth/password` (owner decision 2026-11-20) — phone + password. An optional
+         *     `X-Cart-Token` names the guest cart to merge into the customer's cart on sign-in.
+         */
+        PasswordSignInRequest: {
+            /** @description A Bangladeshi mobile, 013–019. */
+            phone: string;
+            password: string;
+        };
+        /**
          * PayExpenseRequest
          * @description `POST /finance/expenses/{expense}/pay` — `payment_method` and `paid_on` (a Dhaka date, not in the future).
          */
@@ -13758,7 +13903,7 @@ export interface components {
             /** @enum {string} */
             code: "sslcommerz" | "paystation";
             name: string;
-            is_active: string;
+            is_active: boolean;
             /**
              * @description The key set in use.
              * @enum {string}
@@ -13796,6 +13941,19 @@ export interface components {
                     }[];
                 };
             };
+            /** @description Absolute URL of this gateway's IPN webhook — what the owner gives the gateway. Null when it has none. */
+            ipn_url: string | null;
+            /** @description The host each mode talks to, for display only (config/payments.php). */
+            hosts: {
+                sandbox: string | null;
+                live: string | null;
+            };
+            /** @description When these settings were last saved on Integrations › Payments; null if never. */
+            updated_at: string | null;
+            /** @description Who saved them last; null if never saved here, or saved by a console command. */
+            updated_by: {
+                name: string;
+            } | null;
         };
         /**
          * PaystationNotificationRequest
@@ -15989,6 +16147,18 @@ export interface components {
             user_id?: number | null;
         };
         /**
+         * ResetPasswordRequest
+         * @description `POST /storefront/auth/password/reset` (owner decision 2026-11-20) — the `password_reset` code
+         *     and the new password. An optional `X-Cart-Token` names the guest cart to merge on sign-in.
+         */
+        ResetPasswordRequest: {
+            phone: string;
+            /** @description The 6-digit code from the SMS. */
+            code: string;
+            password: string;
+            password_confirmation: string;
+        };
+        /**
          * ResetStaffPasswordRequest
          * @description `POST /staff/{user}/password` — `{ password }`, a new temporary password; needs staff.manage.
          */
@@ -18018,13 +18188,15 @@ export interface components {
         /** StorefrontAccount */
         StorefrontAccount: {
             id: number;
-            /** @description Empty until the customer adds it (OTP sign-up asks only for the phone). */
+            /** @description Empty until the customer adds it ("Create an account" asks for it; an SMS sign-in does not). */
             name: string;
             phone: string;
             email: string | null;
             /** @enum {string} */
             preferred_language: "en" | "bn";
             phone_verified_at: string | null;
+            /** @description False until the customer sets a password; the storefront then requires "Set your password" before the account pages. */
+            has_password: boolean;
             member_since: string | null;
             counts: {
                 orders: number;
@@ -19795,6 +19967,18 @@ export interface components {
             current_password?: string | null;
         };
         /**
+         * UpdatePasswordRequest
+         * @description `PUT /storefront/account/password` (owner decision 2026-11-20) — set the first password (after
+         *     an SMS sign-in) or change it. `current_password` is required by the Action only when the
+         *     customer already has one.
+         */
+        UpdatePasswordRequest: {
+            /** @description Required when the customer already has a password. */
+            current_password?: string | null;
+            password: string;
+            password_confirmation: string;
+        };
+        /**
          * UpdatePaymentGatewayRequest
          * @description `PUT /settings/payment-gateways/{code}` — needs settings.manage_integrations. Every member is
          *     optional; send only what changes.
@@ -19820,8 +20004,12 @@ export interface components {
              */
             mode?: "sandbox" | "live";
             credentials?: {
-                sandbox?: (string | null)[];
-                live?: (string | null)[];
+                sandbox?: {
+                    [key: string]: string | null;
+                };
+                live?: {
+                    [key: string]: string | null;
+                };
             };
             clear?: {
                 sandbox?: string[];
@@ -40796,6 +40984,293 @@ export interface operations {
             };
         };
     };
+    "v1.storefront.auth.password.login": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The guest cart to merge into the customer's cart. */
+                "X-Cart-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordSignInRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unknown phone, no password set, or a wrong password — the same `password` error for each (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many password attempts for this phone or from this IP (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.register.start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontOtpIssued` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOtpIssued"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The phone already has an account (`phone-already-registered`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a valid 013–019 mobile number (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A code was sent under a minute ago, five this hour, or three in 10 minutes (`too-many-requests`, `Retry-After`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.register.verify": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The guest cart to merge into the customer's cart. */
+                "X-Cart-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteRegistrationRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The phone became registered since the code was sent (`phone-already-registered`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Wrong, expired or used code, or an invalid name or password (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many verification attempts for this phone */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.password.forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontOtpIssued` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontOtpIssued"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not a valid 013–019 mobile number (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A code was sent under a minute ago, five this hour, or three in 10 minutes (`too-many-requests`, `Retry-After`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.auth.password.reset": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The guest cart to merge into the customer's cart. */
+                "X-Cart-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccountSession` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccountSession"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Wrong, expired or used code, or an invalid password (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many verification attempts for this phone */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     "v1.storefront.account.show": {
         parameters: {
             query?: never;
@@ -40861,6 +41336,58 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             /** @description A field is invalid (`validation-error`) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.account.password.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description `StorefrontAccount` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontAccount"];
+                };
+            };
+            /** @description No valid customer token (`unauthenticated`) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            403: components["responses"]["AuthorizationException"];
+            /** @description The current password is wrong or missing, or the new one is invalid (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many password changes for this account (`too-many-requests`) */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

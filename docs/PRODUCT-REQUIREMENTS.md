@@ -202,7 +202,7 @@ Four mechanics that admins routinely conflate, kept deliberately distinct becaus
 |---|---|---|
 | U-01 | Customer records keyed on phone; **guest orders auto-attach**, so lifetime value works without registration | M |
 | U-02 | Multiple addresses; order history; notes; lifetime value, order count, AOV | M |
-| U-03 | Phone + OTP login, rate limited | M |
+| U-03 | Phone + password login (default) or phone + SMS-code login; register with name + phone + password, proved by an SMS code; forgot password by SMS code; a password is required after an SMS sign-in; all rate limited (owner decision 2026-11-20, `docs/api/account.md`) | M |
 | U-04 | Children's profiles (opt-in, consented) driving age-appropriate recommendations and birthday reminders | P2 |
 | U-05 | Segmentation and SMS/WhatsApp campaigns | P2 |
 | M-01 | Coupons: fixed, percentage, free shipping, with limits keyed on phone, scope and exclusions | M |

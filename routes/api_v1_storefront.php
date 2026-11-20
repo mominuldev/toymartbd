@@ -126,12 +126,20 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
 });
 
 // Customer sign-in (P4-STO-11) — docs/api/account.md. Phone + SMS code (never WhatsApp,
-// rule 32b), called by the Next.js server with its storefront token. Limited per phone
+// rule 32b) or phone + password (2026-11-20), called by the Next.js server with its storefront token. Limited per phone
 // (3 codes / 10 min, 10 checks / 10 min) and per IP, on top of the Action's own
 // 60-second resend cooldown, 5-codes-an-hour cap and 5-guesses-per-code burn.
 Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->prefix('auth')->name('auth.')->group(function (): void {
     Route::post('/otp', [AccountAuthController::class, 'requestOtp'])->middleware(['throttle:otp', 'throttle:otp-ip'])->name('otp.request');
     Route::post('/otp/verify', [AccountAuthController::class, 'verify'])->middleware('throttle:otp-verify')->name('otp.verify');
+    // Password sign-in, "Create an account" and "Forgot password" (owner decision 2026-11-20).
+    // Codes for them go by SMS too and share the per-phone/per-IP code limits; a password guess
+    // is limited per phone and per IP (`password-login`).
+    Route::post('/password', [AccountAuthController::class, 'passwordSignIn'])->middleware('throttle:password-login')->name('password.login');
+    Route::post('/register', [AccountAuthController::class, 'startRegistration'])->middleware(['throttle:otp', 'throttle:otp-ip'])->name('register.start');
+    Route::post('/register/verify', [AccountAuthController::class, 'completeRegistration'])->middleware('throttle:otp-verify')->name('register.verify');
+    Route::post('/password/forgot', [AccountAuthController::class, 'requestPasswordReset'])->middleware(['throttle:otp', 'throttle:otp-ip'])->name('password.forgot');
+    Route::post('/password/reset', [AccountAuthController::class, 'resetPassword'])->middleware('throttle:otp-verify')->name('password.reset');
 });
 
 // The signed-in customer's account (P4-STO-11): the customer's own Sanctum token (guard
@@ -140,6 +148,8 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->p
 Route::middleware(['auth:customer', CheckAbilities::class.':customer', EnsureActiveCustomer::class])->prefix('account')->name('account.')->group(function (): void {
     Route::get('/', [AccountController::class, 'show'])->name('show');
     Route::patch('/', [AccountController::class, 'update'])->name('update');
+    // Set the first password (required after an SMS sign-in) or change it (owner decision 2026-11-20).
+    Route::put('/password', [AccountController::class, 'updatePassword'])->middleware('throttle:account-password')->name('password.update');
     // Purpose consents (P8): birthday reminders with offers, opted in on the profile page — never on checkout.
     Route::get('/consents', [AccountConsentController::class, 'show'])->name('consents.show');
     Route::put('/consents', [AccountConsentController::class, 'update'])->name('consents.update');

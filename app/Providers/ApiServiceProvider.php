@@ -88,6 +88,15 @@ class ApiServiceProvider extends ServiceProvider
     /** Code checks per phone per 10 minutes, on top of the 5-guesses-per-code burn. */
     public const int OTP_VERIFY_PER_TEN_MINUTES = 10;
 
+    /** POST /storefront/auth/password (2026-11-20): password guesses per phone per 10 minutes… */
+    public const int PASSWORD_LOGIN_PER_PHONE_PER_TEN_MINUTES = 5;
+
+    /** …and per shopper IP per hour, so many phones cannot be sprayed from one place. */
+    public const int PASSWORD_LOGIN_PER_IP_PER_HOUR = 30;
+
+    /** PUT /storefront/account/password: per customer per 10 minutes (it checks the current password). */
+    public const int ACCOUNT_PASSWORD_PER_TEN_MINUTES = 5;
+
     public const int CHECKOUT_PER_MINUTE = 10;
 
     public const int HEALTH_PER_MINUTE = 60;
@@ -185,6 +194,15 @@ class ApiServiceProvider extends ServiceProvider
 
         RateLimiter::for('otp-verify', fn (Request $request): Limit => Limit::perMinutes(10, self::OTP_VERIFY_PER_TEN_MINUTES)
             ->by(($phone = self::phoneKey($request)) !== '' ? 'otp-verify:'.$phone : 'otp-verify-ip:'.$request->ip()));
+
+        RateLimiter::for('password-login', fn (Request $request): array => [
+            Limit::perMinutes(10, self::PASSWORD_LOGIN_PER_PHONE_PER_TEN_MINUTES)
+                ->by(($phone = self::phoneKey($request)) !== '' ? 'password-phone:'.$phone : 'password-noip:'.$request->ip()),
+            Limit::perHour(self::PASSWORD_LOGIN_PER_IP_PER_HOUR)->by('password-ip:'.$request->ip()),
+        ]);
+
+        RateLimiter::for('account-password', fn (Request $request): Limit => Limit::perMinutes(10, self::ACCOUNT_PASSWORD_PER_TEN_MINUTES)
+            ->by('account-password:'.(($id = $request->user('customer')?->getAuthIdentifier()) !== null && is_scalar($id) ? (string) $id : $request->ip())));
 
         RateLimiter::for('checkout', fn (Request $request): Limit => Limit::perMinute(self::CHECKOUT_PER_MINUTE)
             ->by(($cart = self::cartKey($request)) !== '' ? 'cart:'.$cart : 'ip:'.$request->ip()));

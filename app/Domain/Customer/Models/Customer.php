@@ -27,14 +27,20 @@ use Laravel\Sanctum\HasApiTokens;
  * The aggregate columns are a projection of `orders` (P4-ORD-10), written only by
  * {@see \App\Domain\Customer\Services\CustomerAggregates}.
  *
- * Authenticatable for the `customer` guard (P4-STO-11): a storefront account signs in
- * with phone + SMS OTP and holds a Sanctum token — there is no password.
+ * Authenticatable for the `customer` guard (P4-STO-11): a storefront account signs in with
+ * phone + password or phone + SMS code (owner decision 2026-11-20) and holds a Sanctum token.
+ * `password` is hashed (the `hashed` cast) and hidden; it is null for guest-checkout customers
+ * and anyone who has not set one yet — the storefront sends a signed-in customer without one to
+ * "Set your password" before the account pages. Registered = has a password or has signed in
+ * ({@see isRegistered()}); a guest-checkout row is not, so its owner can still register.
  *
  * @property int $id
  * @property int|null $user_id
  * @property string $name
  * @property string $phone
  * @property Carbon|null $phone_verified_at
+ * @property string|null $password Hashed; never logged, never serialised.
+ * @property Carbon|null $password_set_at
  * @property string|null $email
  * @property Carbon|null $date_of_birth Personal data: shown to staff only with customers.view_pii.
  * @property string $preferred_language
@@ -67,6 +73,9 @@ final class Customer extends Model implements AuthenticatableContract
         'gender', 'preferred_language', 'source', 'tags', 'status',
     ];
 
+    /** @var list<string> */
+    protected $hidden = ['password'];
+
     /** @var array<string, mixed> */
     protected $attributes = [
         'preferred_language' => 'bn',
@@ -86,6 +95,8 @@ final class Customer extends Model implements AuthenticatableContract
             'phone_verified_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'date_of_birth' => 'date',
+            'password' => 'hashed',
+            'password_set_at' => 'datetime',
             'source' => CustomerSource::class,
             'tags' => 'array',
             'status' => CustomerStatus::class,
@@ -97,6 +108,20 @@ final class Customer extends Model implements AuthenticatableContract
             'avg_order_value' => MoneyCast::class,
             'aggregates_refreshed_at' => 'datetime',
         ];
+    }
+
+    public function hasPassword(): bool
+    {
+        return $this->password !== null && $this->password !== '';
+    }
+
+    /**
+     * Has an account, as opposed to a guest-checkout row: a password is set, or the phone was
+     * proved by a sign-in code. "Create an account" refuses a registered phone (409).
+     */
+    public function isRegistered(): bool
+    {
+        return $this->hasPassword() || $this->phone_verified_at !== null;
     }
 
     /** Find by any accepted spelling of the phone (rule 30 normalisation). */

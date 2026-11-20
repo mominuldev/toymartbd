@@ -29,7 +29,7 @@ final class AccountResource extends ApiResource
 
         return [
             'id' => $customer->id,
-            /** Empty until the customer adds it (OTP sign-up asks only for the phone). */
+            /** Empty until the customer adds it ("Create an account" asks for it; an SMS sign-in does not). */
             'name' => $customer->name,
             /** @var string */
             'phone' => $phone?->national() ?? '',
@@ -39,6 +39,8 @@ final class AccountResource extends ApiResource
             'preferred_language' => $customer->preferred_language === 'en' ? 'en' : 'bn',
             /** @var string|null */
             'phone_verified_at' => self::iso($customer->phone_verified_at),
+            /** False until the customer sets a password; the storefront then requires "Set your password" before the account pages. */
+            'has_password' => $customer->hasPassword(),
             /** @var string|null */
             'member_since' => self::iso($customer->created_at),
             /** @var array{orders: int, wishlist: int, addresses: int} */

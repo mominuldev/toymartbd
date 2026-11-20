@@ -14,8 +14,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Send a sign-in code by SMS (P4-STO-11, rule 32b). Works the same for a known and an
- * unknown phone, so the answer never reveals who has an account.
+ * Send a one-time code by SMS (P4-STO-11, rule 32b) for a purpose: sign-in (`login`), "Create an
+ * account" (`register`) or "Forgot password" (`password_reset`). A code only verifies for the
+ * purpose it was sent for ({@see ConsumeOtp}). Works the same for a known and an unknown phone, so
+ * the answer never reveals who has an account (register checks that separately, before this).
  *
  * Enforces the resend cooldown and the hourly cap per phone (OtpCodes), then supersedes
  * any open code — only the newest code works. The SMS is queued after commit (rule 4).
@@ -24,13 +26,13 @@ final readonly class RequestLoginOtp
 {
     public function __construct(private OtpCodes $codes) {}
 
-    public function handle(PhoneNumber $phone, ?string $ip, string $locale): OtpIssued
+    public function handle(PhoneNumber $phone, ?string $ip, string $locale, string $purpose = OtpCodes::PURPOSE_LOGIN): OtpIssued
     {
         $phoneHash = $this->codes->phoneHash($phone);
         $code = $this->codes->generate();
 
         /** @var CustomerOtp $otp */
-        $otp = DB::transaction(function () use ($phone, $phoneHash, $code, $ip): CustomerOtp {
+        $otp = DB::transaction(function () use ($phone, $phoneHash, $code, $ip, $purpose): CustomerOtp {
             $now = Carbon::now();
             $recent = CustomerOtp::query()
                 ->where('phone_hash', $phoneHash)
@@ -56,7 +58,7 @@ final readonly class RequestLoginOtp
             return CustomerOtp::query()->create([
                 'phone_hash' => $phoneHash,
                 'code_hash' => $this->codes->codeHash($phone, $code),
-                'purpose' => OtpCodes::PURPOSE_LOGIN,
+                'purpose' => $purpose,
                 'expires_at' => $now->copy()->addSeconds(OtpCodes::TTL_SECONDS),
                 'ip_hash' => $this->codes->ipHash($ip),
             ]);

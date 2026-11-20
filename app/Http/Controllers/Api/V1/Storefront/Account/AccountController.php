@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Storefront\Account;
 
+use App\Domain\Customer\Actions\ChangeCustomerPassword;
 use App\Domain\Customer\Actions\UpdateCustomerProfile;
 use App\Http\Controllers\Api\V1\ApiController;
 use App\Http\Requests\Storefront\Account\AccountReadRequest;
+use App\Http\Requests\Storefront\Account\UpdatePasswordRequest;
 use App\Http\Requests\Storefront\Account\UpdateProfileRequest;
 use App\Http\Resources\Storefront\Account\AccountResource;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
@@ -27,5 +29,21 @@ final class AccountController extends ApiController
     public function update(UpdateProfileRequest $request, UpdateCustomerProfile $update): AccountResource
     {
         return new AccountResource($update->handle($request->customer(), $request->changes()));
+    }
+
+    /**
+     * `PUT /account/password` — set the first password (required after an SMS sign-in) or change
+     * it (needs `current_password`). Signs out every other session; this one stays signed in.
+     */
+    #[OpenApiResponse(401, 'No valid customer token (`unauthenticated`)')]
+    #[OpenApiResponse(422, 'The current password is wrong or missing, or the new one is invalid (`validation-error`)')]
+    #[OpenApiResponse(429, 'Too many password changes for this account (`too-many-requests`)')]
+    public function updatePassword(UpdatePasswordRequest $request, ChangeCustomerPassword $change): AccountResource
+    {
+        $customer = $request->customer();
+        // The customer guard is bearer-token only (Sanctum), so this is the PersonalAccessToken in use.
+        $keep = (int) $customer->currentAccessToken()->getKey();
+
+        return new AccountResource($change->handle($customer, $request->currentPassword(), $request->password(), $keep));
     }
 }

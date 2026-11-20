@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Problems;
 
 use App\Domain\Ai\Exceptions\AiException;
+use App\Domain\Customer\Exceptions\PhoneAlreadyRegistered;
 use App\Support\Logging\RequestId;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Responsable;
@@ -59,6 +60,8 @@ final readonly class ProblemDetails implements Responsable
                 self::flattenErrors($e->errors()),
             ),
             $e instanceof AuthenticationException => self::make(ProblemType::Unauthenticated),
+            // "Create an account" for a registered phone: its own stable type (storefront, 2026-11-20).
+            $e instanceof PhoneAlreadyRegistered => self::make(ProblemType::PhoneAlreadyRegistered, $e->getMessage()),
             // AI messages are ours (no key, no prompt, no provider body), so safe to show.
             $e instanceof AiException => match ($e->reason) {
                 AiException::NOT_CONFIGURED => self::make(ProblemType::AiNotConfigured),

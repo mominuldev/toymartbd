@@ -36648,6 +36648,376 @@
                 }
             }
         },
+        "/storefront/auth/password": {
+            "post": {
+                "operationId": "v1.storefront.auth.password.login",
+                "summary": "`POST /auth/password` \u2014 sign in with phone + password; merges the guest cart named by\n`X-Cart-Token`. One `password` error for an unknown phone, no password set, or a wrong one",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "description": "The guest cart to merge into the customer's cart.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PasswordSignInRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountSession"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Unknown phone, no password set, or a wrong password \u2014 the same `password` error for each (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many password attempts for this phone or from this IP (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/auth/register": {
+            "post": {
+                "operationId": "v1.storefront.auth.register.start",
+                "summary": "`POST /auth/register` \u2014 \"Create an account\", step 1: text a `register` code, or answer 409\n`phone-already-registered` when the phone already has an account (a guest-checkout record\ndoes not count). Limited per phone and per IP like `otp`",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`StorefrontOtpIssued`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontOtpIssued"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Not a valid 013\u2013019 mobile number (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The phone already has an account (`phone-already-registered`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "A code was sent under a minute ago, five this hour, or three in 10 minutes (`too-many-requests`, `Retry-After`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/auth/register/verify": {
+            "post": {
+                "operationId": "v1.storefront.auth.register.verify",
+                "summary": "`POST /auth/register/verify` \u2014 \"Create an account\", step 2: check the `register` code, make\nthe account with the name and password (a guest-checkout record keeps its own name), sign in\nand merge the guest cart named by `X-Cart-Token`",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "description": "The guest cart to merge into the customer's cart.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CompleteRegistrationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountSession"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Wrong, expired or used code, or an invalid name or password (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The phone became registered since the code was sent (`phone-already-registered`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many verification attempts for this phone",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/auth/password/forgot": {
+            "post": {
+                "operationId": "v1.storefront.auth.password.forgot",
+                "summary": "`POST /auth/password/forgot` \u2014 text a `password_reset` code. Same answer whether or not the\nphone has an account",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "`StorefrontOtpIssued`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontOtpIssued"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Not a valid 013\u2013019 mobile number (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "A code was sent under a minute ago, five this hour, or three in 10 minutes (`too-many-requests`, `Retry-After`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/auth/password/reset": {
+            "post": {
+                "operationId": "v1.storefront.auth.password.reset",
+                "summary": "`POST /auth/password/reset` \u2014 check the `password_reset` code, set the new password, sign\nout every other session, sign in and merge the guest cart named by `X-Cart-Token`",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "description": "The guest cart to merge into the customer's cart.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccountSession`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccountSession"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Wrong, expired or used code, or an invalid password (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability, or the customer is blocked (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many verification attempts for this phone",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/account": {
             "get": {
                 "operationId": "v1.storefront.account.show",
@@ -36732,6 +37102,70 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/storefront/account/password": {
+            "put": {
+                "operationId": "v1.storefront.account.password.update",
+                "summary": "`PUT /account/password` \u2014 set the first password (required after an SMS sign-in) or change\nit (needs `current_password`). Signs out every other session; this one stays signed in",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontAccount`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontAccount"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid customer token (`unauthenticated`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "The current password is wrong or missing, or the new one is invalid (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "429": {
+                        "description": "Too many password changes for this account (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -44595,6 +45029,42 @@
                     "tenders"
                 ],
                 "title": "CollectDueRequest"
+            },
+            "CompleteRegistrationRequest": {
+                "type": "object",
+                "description": "`POST /storefront/auth/register/verify` (owner decision 2026-11-20) \u2014 the `register` code plus\nthe new account's name and password. An optional `X-Cart-Token` names the guest cart to merge.",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "The 6-digit code from the SMS.",
+                        "pattern": "^\\d{6}$"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 160
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "phone",
+                    "code",
+                    "name",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "CompleteRegistrationRequest"
             },
             "ConfirmOrderRequest": {
                 "type": "object",
@@ -59245,6 +59715,26 @@
                 ],
                 "title": "PageTemplate"
             },
+            "PasswordSignInRequest": {
+                "type": "object",
+                "description": "`POST /storefront/auth/password` (owner decision 2026-11-20) \u2014 phone + password. An optional\n`X-Cart-Token` names the guest cart to merge into the customer's cart on sign-in.",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "description": "A Bangladeshi mobile, 013\u2013019.",
+                        "maxLength": 32
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "phone",
+                    "password"
+                ],
+                "title": "PasswordSignInRequest"
+            },
             "PayExpenseRequest": {
                 "type": "object",
                 "description": "`POST /finance/expenses/{expense}/pay` \u2014 `payment_method` and `paid_on` (a Dhaka date, not in the future).",
@@ -59341,7 +59831,7 @@
                         "type": "string"
                     },
                     "is_active": {
-                        "type": "string"
+                        "type": "boolean"
                     },
                     "mode": {
                         "type": "string",
@@ -59483,6 +59973,57 @@
                             "sandbox",
                             "live"
                         ]
+                    },
+                    "ipn_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Absolute URL of this gateway's IPN webhook \u2014 what the owner gives the gateway. Null when it has none."
+                    },
+                    "hosts": {
+                        "type": "object",
+                        "description": "The host each mode talks to, for display only (config/payments.php).",
+                        "properties": {
+                            "sandbox": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "live": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "sandbox",
+                            "live"
+                        ]
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When these settings were last saved on Integrations \u203a Payments; null if never."
+                    },
+                    "updated_by": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Who saved them last; null if never saved here, or saved by a console command.",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "name"
+                        ]
                     }
                 },
                 "required": [
@@ -59494,7 +60035,11 @@
                     "verified_at",
                     "configured",
                     "status",
-                    "credentials"
+                    "credentials",
+                    "ipn_url",
+                    "hosts",
+                    "updated_at",
+                    "updated_by"
                 ],
                 "title": "PaymentGatewaySettings"
             },
@@ -67596,6 +68141,36 @@
                 },
                 "title": "ResendReportRunRequest"
             },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "description": "`POST /storefront/auth/password/reset` (owner decision 2026-11-20) \u2014 the `password_reset` code\nand the new password. An optional `X-Cart-Token` names the guest cart to merge on sign-in.",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "The 6-digit code from the SMS.",
+                        "pattern": "^\\d{6}$"
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "phone",
+                    "code",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "ResetPasswordRequest"
+            },
             "ResetStaffPasswordRequest": {
                 "type": "object",
                 "description": "`POST /staff/{user}/password` \u2014 `{ password }`, a new temporary password; needs staff.manage.",
@@ -75415,7 +75990,7 @@
                     },
                     "name": {
                         "type": "string",
-                        "description": "Empty until the customer adds it (OTP sign-up asks only for the phone)."
+                        "description": "Empty until the customer adds it (\"Create an account\" asks for it; an SMS sign-in does not)."
                     },
                     "phone": {
                         "type": "string"
@@ -75438,6 +76013,10 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "has_password": {
+                        "type": "boolean",
+                        "description": "False until the customer sets a password; the storefront then requires \"Set your password\" before the account pages."
                     },
                     "member_since": {
                         "type": [
@@ -75472,6 +76051,7 @@
                     "email",
                     "preferred_language",
                     "phone_verified_at",
+                    "has_password",
                     "member_since",
                     "counts"
                 ],
@@ -82226,6 +82806,33 @@
                 ],
                 "title": "UpdateOwnProfileRequest"
             },
+            "UpdatePasswordRequest": {
+                "type": "object",
+                "description": "`PUT /storefront/account/password` (owner decision 2026-11-20) \u2014 set the first password (after\nan SMS sign-in) or change it. `current_password` is required by the Action only when the\ncustomer already has one.",
+                "properties": {
+                    "current_password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Required when the customer already has a password.",
+                        "maxLength": 128
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "UpdatePasswordRequest"
+            },
             "UpdatePaymentGatewayRequest": {
                 "type": "object",
                 "description": "`PUT /settings/payment-gateways/{code}` \u2014 needs settings.manage_integrations. Every member is\noptional; send only what changes.\n\n    {\"is_active\": true, \"mode\": \"live\",\n     \"credentials\": {\"live\": {\"store_id\": \"\u2026\", \"store_password\": \"\u2026\"}},\n     \"clear\": {\"sandbox\": [\"store_password\"]}}\n\nKeys are write-only (rule 20). The clear convention matches the courier credentials:\n- `credentials.{sandbox|live}.{key}` sets a new value; an absent, blank or null value KEEPS\n  the stored one (so a form can send its secret inputs empty);\n- `clear.{sandbox|live}` lists keys to REMOVE. A key both set and cleared is a 422.\n`{key}` is one of the gateway's fields (`GET /settings/payment-gateways` lists them); any\nother key is a 422. Switching to `live` without a complete live set, or switching the gateway\non without a complete set for its mode, is a 422 (checked under the row lock by the Action).",
@@ -82246,23 +82853,21 @@
                         "type": "object",
                         "properties": {
                             "sandbox": {
-                                "type": "array",
-                                "items": {
+                                "type": "object",
+                                "additionalProperties": {
                                     "type": [
                                         "string",
                                         "null"
-                                    ],
-                                    "maxLength": 500
+                                    ]
                                 }
                             },
                             "live": {
-                                "type": "array",
-                                "items": {
+                                "type": "object",
+                                "additionalProperties": {
                                     "type": [
                                         "string",
                                         "null"
-                                    ],
-                                    "maxLength": 500
+                                    ]
                                 }
                             }
                         }

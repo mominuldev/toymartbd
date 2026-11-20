@@ -170,7 +170,7 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 
 ### 3.3 Customers & Addresses
 
-**`customers`** `id` · `user_id` FK NULL (set when they register) · `name` · `phone` UNIQUE (normalised `01XXXXXXXXX`) · `phone_verified_at` NULL · `email` NULL · `email_verified_at` · `date_of_birth` NULL · `gender` NULL · `preferred_language` (`bn`|`en`) · `source` (`web`|`facebook`|`phone`|`walk_in`|`whatsapp`) · `tags` JSON · `first_order_at` · `last_order_at` · `orders_count` · `delivered_orders_count` · `total_spent` · `avg_order_value` · `status` · timestamps · `deleted_at`
+**`customers`** `id` · `user_id` FK NULL (set when they register) · `name` · `phone` UNIQUE (normalised `01XXXXXXXXX`) · `phone_verified_at` NULL · `password` NULL (hashed, hidden; storefront sign-in, 2026-11-20) · `password_set_at` NULL · `email` NULL · `email_verified_at` · `date_of_birth` NULL · `gender` NULL · `preferred_language` (`bn`|`en`) · `source` (`web`|`facebook`|`phone`|`walk_in`|`whatsapp`) · `tags` JSON · `first_order_at` · `last_order_at` · `orders_count` · `delivered_orders_count` · `total_spent` · `avg_order_value` · `status` · timestamps · `deleted_at`
 
 > The aggregate columns are maintained by a queued listener on order state change. They are a projection, rebuildable from `orders`. They exist because the customer list must sort by lifetime value without scanning the order table.
 >
@@ -197,7 +197,7 @@ Index: `(variant_id, created_at)`, `(reference_type, reference_id)`, `(type, cre
 
 **`customer_notes`** `id` · `customer_id` · `user_id` · `body` · `is_pinned` · `created_at`
 
-**`customer_otps`** (as built, Phase 4 batch 6) `id` · `phone_hash` (HMAC of the E.164 phone with the app key) · `code_hash` (HMAC) · `purpose` (`login`) · `attempts` · `expires_at` · `consumed_at` NULL · `ip_hash` NULL · timestamps — neither the code nor the phone is stored in plain; 5 wrong guesses burn the code.
+**`customer_otps`** (as built, Phase 4 batch 6) `id` · `phone_hash` (HMAC of the E.164 phone with the app key) · `code_hash` (HMAC) · `purpose` (`login` | `register` | `password_reset` — a code verifies only for its own purpose, 2026-11-20) · `attempts` · `expires_at` · `consumed_at` NULL · `ip_hash` NULL · timestamps — neither the code nor the phone is stored in plain; 5 wrong guesses burn the code.
 
 **`wishlist_items`** (as built) `id` · `customer_id` FK · `product_id` FK · `created_at` — UNIQUE(`customer_id`, `product_id`); price and stock are read live, never copied.
 
