@@ -24,7 +24,8 @@ use InvalidArgumentException;
  *
  *  - WhatsApp: `GET /{phone-number-id}?fields=display_phone_number,verified_name,quality_rating`
  *    (documentation/business-messaging/whatsapp/reference/whatsapp-business-phone-number/…).
- *  - Messenger: `GET /{page-id}?fields=name` (docs/graph-api/reference/page).
+ *  - Messenger: `GET /{page-id}?fields=name` (docs/graph-api/reference/page), then — when the
+ *    App ID is saved — `GET /{page-id}/subscribed_apps`: our app missing is `not_subscribed`.
  *
  * The provider call happens BEFORE the transaction (rule 4). The stored result holds what Meta
  * said about the account (display name / number, quality rating) or a Graph error code and its
@@ -85,6 +86,25 @@ final readonly class TestInboxChannelConnection
         }
 
         $text = static fn (string $key): ?string => is_string($response->json($key)) && $response->json($key) !== '' ? mb_substr((string) $response->json($key), 0, 120) : null;
+
+        // Messenger: is the Page still subscribed to OUR app? Meta drops the subscription after an
+        // hour of failed webhook deliveries (docs/messenger-platform/webhooks), and chats then stop
+        // without any error on our side. Only checkable once the App ID is known.
+        if ($channel === InboxChannel::Messenger && ($appId = $this->settings->get($channel, 'app_id')) !== null) {
+            try {
+                $apps = Http::withToken($token)->acceptJson()->timeout((int) config('inbox.timeout', 10))
+                    ->get($url.'/subscribed_apps');
+            } catch (ConnectionException) {
+                return self::failed('unreachable', null);
+            }
+            if (! $apps->successful()) {
+                return self::failed(self::errorCode($apps), self::errorMessage($apps, $token));
+            }
+            $ids = array_map(static fn (mixed $row): mixed => is_array($row) ? ($row['id'] ?? null) : null, (array) $apps->json('data'));
+            if (! in_array($appId, $ids, true)) {
+                return self::failed('not_subscribed', 'The Page no longer sends its chats to the Toy Mart app.');
+            }
+        }
 
         return [
             'ok' => true,

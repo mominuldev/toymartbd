@@ -58,6 +58,9 @@ function PHASE10_SCREENS(): Array<[string, string]> {
         ['two-factor', '/admin/account/two-factor'],
         ['integrations-hub', '/admin/integrations'],
         ['ai-settings', '/admin/integrations/ai'],
+        // Inbox › Channels (Figma 623:50926): nothing connected on the seeded database.
+        ['channel-messenger', '/admin/inbox/channels/messenger'],
+        ['channel-whatsapp', '/admin/inbox/channels/whatsapp'],
         ['ai-advisor', '/admin/analytics/advisor'],
         ['ai-restock', '/admin/inventory/restock'],
         ['settings-business', '/admin/settings/business'],

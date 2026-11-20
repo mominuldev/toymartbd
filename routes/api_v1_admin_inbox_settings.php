@@ -24,3 +24,18 @@ Route::post('/settings/inbox-channels/{channel}/test', [InboxChannelSettingsCont
     ->where('channel', '[a-z_]{1,20}')
     ->middleware('throttle:5,1')
     ->name('settings.inbox-channels.test');
+
+// "Continue with Facebook" (Inbox › Channels › Facebook Page): start, finish, connect the chosen Page.
+Route::post('/settings/inbox-channels/messenger/login', [InboxChannelSettingsController::class, 'startLogin'])
+    ->middleware('throttle:10,1')
+    ->name('settings.inbox-channels.messenger.login');
+Route::post('/settings/inbox-channels/messenger/login/finish', [InboxChannelSettingsController::class, 'finishLogin'])
+    ->middleware('throttle:10,1')
+    ->name('settings.inbox-channels.messenger.login.finish');
+Route::post('/settings/inbox-channels/messenger/connect', [InboxChannelSettingsController::class, 'connect'])
+    ->middleware('throttle:10,1')
+    ->name('settings.inbox-channels.messenger.connect');
+// Disconnect a Page / number: clears the saved account and token, replies off.
+Route::post('/settings/inbox-channels/{channel}/disconnect', [InboxChannelSettingsController::class, 'disconnect'])
+    ->where('channel', '[a-z_]{1,20}')
+    ->name('settings.inbox-channels.disconnect');

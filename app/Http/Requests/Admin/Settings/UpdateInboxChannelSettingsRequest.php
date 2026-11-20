@@ -61,6 +61,10 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
             'messenger_page_id' => ['nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
             /** Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep. */
             'messenger_human_agent' => ['sometimes', 'boolean'],
+            /** Toy Mart's Meta App ID (digits) — for "Continue with Facebook". Absent = keep; blank = remove. */
+            'messenger_app_id' => ['sometimes', 'nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
+            /** The Facebook Login for Business configuration ID (digits). Absent = keep; blank = remove (the login then asks for the permissions by name). */
+            'messenger_login_config_id' => ['sometimes', 'nullable', 'string', 'regex:'.self::ACCOUNT_ID_PATTERN],
             'messenger_page_access_token' => ['nullable', 'string', 'max:2048'],
             'messenger_app_secret' => ['nullable', 'string', 'max:255'],
             'messenger_verify_token' => ['nullable', 'string', 'max:255'],
@@ -77,6 +81,8 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
             'whatsapp_phone_number_id.regex' => 'Digits only — the Phone number ID from WhatsApp Manager.',
             'whatsapp_business_account_id.regex' => 'Digits only — the WhatsApp Business Account ID.',
             'messenger_page_id.regex' => 'Digits only — the Facebook Page ID.',
+            'messenger_app_id.regex' => 'Digits only — the App ID from the Meta app dashboard.',
+            'messenger_login_config_id.regex' => 'Digits only — the configuration ID from Facebook Login for Business.',
         ];
     }
 
@@ -151,6 +157,11 @@ final class UpdateInboxChannelSettingsRequest extends ApiFormRequest
             }
             if ($channel === InboxChannel::Messenger && $this->has('messenger_human_agent')) {
                 $extra['human_agent'] = $this->boolean('messenger_human_agent');
+            }
+            foreach (['app_id', 'login_config_id'] as $name) {
+                if ($channel === InboxChannel::Messenger && $this->has('messenger_'.$name)) {
+                    $extra[$name] = $text('messenger_'.$name);
+                }
             }
 
             $out[] = new InboxChannelCredentials(

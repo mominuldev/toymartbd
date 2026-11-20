@@ -392,6 +392,26 @@ The owner asked for two online gateways, **SSLCommerz and PayStation**, each in 
 
 **Owner decisions open:** native-speaker review of the new Bangla strings; whether old favicon files are ever cleaned up; no static storefront favicon before the first icon upload; `logo_dark` has no storefront surface yet; the media host must be listed in `MEDIA_ORIGINS` in production.
 
+### Progress — Phase 10: Inbox channels, modelled on SSFlows (2026-11-20)
+
+**Owner decisions of 2026-11-20 (accepted):**
+- Connect channels "exactly like SSFlows", built on the existing inbox, not as a SaaS (no plans, page approval or AI agent switch). Designed first in Figma (section `623:50926`).
+- WhatsApp: a guided paste-the-keys setup, because Embedded Signup and Business-app coexistence are for Meta Tech Providers only.
+- Facebook Page: a real "Continue with Facebook" on Toy Mart's own Meta app, with paste-the-keys as the fallback.
+
+**Done, with passing tests** (`docs/api/inbox.md` › Inbox › Channels):
+- Inbox submenu: Chats · Facebook Page · WhatsApp (the channel links need settings.manage_integrations).
+- Facebook Page screen: Continue with Facebook (Meta's manual login flow — no SDK, CSP unchanged), Page chooser, connected card with reply switch, counts, Test connection, Reconnect Page, Keys & webhook, Disconnect; 7-day HUMAN_AGENT switch; webhook card.
+- WhatsApp screen: four-step guide drawer saving each step, verify token made in the browser, Test connection before replies switch on; connected card with quality, templates link and Disconnect (never deregisters the number).
+- Reconnect needed: from a failed test (`meta_190`, new `not_subscribed` check on Messenger) or a reply refused with error 190.
+- Keys form gains Meta App ID and Login configuration ID, and shows the OAuth redirect URI.
+- AI provider cards in Figma now use the real logos (`logo/claude`, `logo/openai`, `logo/gemini` in `BrandLogo`).
+
+**Not confirmed / open:**
+- Whether customer chats (people with no role on the Meta app) arrive before App Review — test with such an account once the app exists; plan App Review + Business Verification as the fallback.
+- Whether the Meta app must be Live; whether the manual dialog honours `config_id` like the JS SDK.
+- Native-speaker review of the new Bangla strings.
+
 ### Progress — Phase 10 batch 5: shipments board, booking queue, metro districts, inbox badge and keys (2026-11-15, 4 parallel agents)
 
 **Owner decisions of 2026-11-15 (accepted):**

@@ -41,6 +41,8 @@ type FormValues = {
     messenger_driver: string;
     messenger_page_id: string;
     messenger_human_agent: boolean;
+    messenger_app_id: string;
+    messenger_login_config_id: string;
     messenger_page_access_token: string;
     messenger_app_secret: string;
     messenger_verify_token: string;
@@ -96,6 +98,8 @@ function toForm(s: InboxChannelSettings): FormValues {
         messenger_driver: s.messenger.driver,
         messenger_page_id: s.messenger.account_id_source === 'settings' ? (s.messenger.account_id ?? '') : '',
         messenger_human_agent: s.messenger.human_agent,
+        messenger_app_id: s.messenger.app_id_source === 'settings' ? (s.messenger.app_id ?? '') : '',
+        messenger_login_config_id: s.messenger.login_config_id_source === 'settings' ? (s.messenger.login_config_id ?? '') : '',
         messenger_page_access_token: '',
         messenger_app_secret: '',
         messenger_verify_token: '',
@@ -121,6 +125,8 @@ function toInput(v: FormValues): InboxChannelSettingsInput {
         messenger_driver: v.messenger_driver as InboxChannelSettingsInput['messenger_driver'],
         messenger_page_id: orNull(v.messenger_page_id),
         messenger_human_agent: v.messenger_human_agent,
+        messenger_app_id: orNull(v.messenger_app_id),
+        messenger_login_config_id: orNull(v.messenger_login_config_id),
         messenger_page_access_token: orNull(v.messenger_page_access_token),
         messenger_app_secret: orNull(v.messenger_app_secret),
         messenger_verify_token: orNull(v.messenger_verify_token),
@@ -165,7 +171,7 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
         resolver: async (values, context, options) => {
             const result = await validateInput(toInput(values), context, options as never);
             const errors = result.errors as Partial<Record<keyof FormValues, { message?: string }>>;
-            for (const id of [...CHANNELS.map((channel) => FIELDS[channel].id), 'whatsapp_business_account_id'] as const) {
+            for (const id of [...CHANNELS.map((channel) => FIELDS[channel].id), 'whatsapp_business_account_id', 'messenger_app_id', 'messenger_login_config_id'] as const) {
                 if (errors[id]) errors[id] = { ...errors[id], message: t('messaging.inbox.idInvalid') };
             }
             return Object.keys(errors).length > 0 ? { values: {}, errors: errors as never } : { values, errors: {} };
@@ -174,6 +180,11 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
     const { handleSubmit, setError, reset } = form;
 
     useEffect(() => reset(toForm(settings)), [settings, reset]);
+
+    // "Enter keys manually" / "Keys & webhook" on Inbox › Channels link straight here.
+    useEffect(() => {
+        if (window.location.hash === `#${FORM_ID}`) document.getElementById(FORM_ID)?.scrollIntoView({ block: 'start' });
+    }, []);
 
     const submit = handleSubmit((values) =>
         save.mutate(toInput(values), {
@@ -306,6 +317,44 @@ function ChannelCard({ channel, data, form, dirty }: { channel: Channel; data: I
                     );
                 })}
             </div>
+
+            {channel === 'messenger' && (
+                <div className="flex flex-col gap-3.5 border-t border-line-default pt-3.5">
+                    <div className="flex flex-col gap-1">
+                        <p className="t-admin-body-strong text-fg-primary">{t('messaging.inbox.messenger.login')}</p>
+                        <p className="t-admin-caption text-fg-secondary">{t('messaging.inbox.messenger.loginHint')}</p>
+                    </div>
+                    <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                        {(['messenger_app_id', 'messenger_login_config_id'] as const).map((field) => {
+                            const name = field === 'messenger_app_id' ? 'app_id' : 'login_config_id';
+                            return (
+                                <Field
+                                    key={field}
+                                    label={t(`messaging.inbox.messenger.${name}`)}
+                                    hint={data[`${name}_source`] === 'env' ? t('messaging.inbox.idFromEnv', { id: data[name] ?? '' }) : t(`messaging.inbox.messenger.${name}Hint`)}
+                                    error={errorOf(field)}
+                                >
+                                    {({ id, describedBy, invalid }) => (
+                                        <input
+                                            id={id}
+                                            inputMode="numeric"
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                            aria-describedby={describedBy}
+                                            aria-invalid={invalid || undefined}
+                                            className={`h-10 ${monoInputClass}`}
+                                            {...register(field)}
+                                        />
+                                    )}
+                                </Field>
+                            );
+                        })}
+                    </div>
+                    {data.oauth_redirect_uri && (
+                        <p className="t-admin-caption break-all text-fg-secondary">{t('messaging.inbox.messenger.redirectUri', { uri: data.oauth_redirect_uri })}</p>
+                    )}
+                </div>
+            )}
 
             {channel === 'messenger' && (
                 <div className="flex items-start gap-4 border-t border-line-default pt-3.5">

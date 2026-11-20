@@ -25,7 +25,7 @@ final class InboxChannelSettings
     /** @var array<string, list<string>> */
     public const array KEYS = [
         'whatsapp' => ['driver', 'phone_number_id', 'business_account_id', 'access_token', 'app_secret', 'verify_token'],
-        'messenger' => ['driver', 'page_id', 'page_access_token', 'app_secret', 'verify_token', 'human_agent'],
+        'messenger' => ['driver', 'page_id', 'page_access_token', 'app_secret', 'verify_token', 'human_agent', 'app_id', 'login_config_id'],
         'live_chat' => ['driver'],
     ];
 
@@ -45,7 +45,13 @@ final class InboxChannelSettings
      * Non-secret values beyond driver + account id: the WhatsApp Business Account id (template
      * sync) and the Messenger HUMAN_AGENT switch (a boolean, read with {@see self::enabled()}).
      */
-    public const array EXTRA = ['whatsapp' => ['business_account_id'], 'messenger' => ['human_agent']];
+    public const array EXTRA = ['whatsapp' => ['business_account_id'], 'messenger' => ['human_agent', 'app_id', 'login_config_id']];
+
+    /**
+     * Written by "Continue with Facebook" ({@see \App\Domain\Inbox\Actions\ConnectMessengerPage}),
+     * never by the keys form: the Page's name and who connected it when. Plain values.
+     */
+    public const array CONNECTION = ['page_name', 'connected_at', 'connected_by'];
 
     /** The last "Test connection" result per channel (plain JSON, never a token). */
     public const string LAST_CHECK = 'last_check';

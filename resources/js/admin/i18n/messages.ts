@@ -55,6 +55,7 @@ import { aiSettingsBn, aiSettingsEn } from './messages.aiSettings';
 import { aiAdvisorBn, aiAdvisorEn } from './messages.aiAdvisor';
 import { aiCopyBn, aiCopyEn } from './messages.aiCopy';
 import { aiInboxBn, aiInboxEn } from './messages.aiInbox';
+import { inboxChannelsBn, inboxChannelsEn } from './messages.inboxChannels';
 import { aiRestockBn, aiRestockEn } from './messages.aiRestock';
 import { printBn, printEn } from './messages.print';
 import { printInvoiceBn, printInvoiceEn } from './messages.printInvoice';
@@ -106,6 +107,7 @@ export const en = {
     ...aiAdvisorEn,
     ...aiCopyEn,
     ...aiInboxEn,
+    ...inboxChannelsEn,
     ...aiRestockEn,
     ...printEn,
     ...printInvoiceEn,
@@ -156,6 +158,9 @@ export const en = {
     'nav.store.banners': 'Banners',
     'nav.store.testimonials': 'Testimonials',
     'nav.store.media': 'Media library',
+    'nav.inbox.chats': 'Chats',
+    'nav.inbox.messenger': 'Facebook Page',
+    'nav.inbox.whatsapp': 'WhatsApp',
     'nav.finance': 'Finance',
     'nav.staff': 'Staff & roles',
     'nav.automations': 'Automations',
@@ -439,6 +444,7 @@ export const bn: Messages = {
     ...aiAdvisorBn,
     ...aiCopyBn,
     ...aiInboxBn,
+    ...inboxChannelsBn,
     ...aiRestockBn,
     ...printBn,
     ...printInvoiceBn,
@@ -489,6 +495,9 @@ export const bn: Messages = {
     'nav.store.banners': 'ব্যানার',
     'nav.store.testimonials': 'গ্রাহকের মতামত',
     'nav.store.media': 'মিডিয়া লাইব্রেরি',
+    'nav.inbox.chats': 'চ্যাট',
+    'nav.inbox.messenger': 'ফেসবুক পেজ',
+    'nav.inbox.whatsapp': 'হোয়াটসঅ্যাপ',
     'nav.finance': 'ফাইন্যান্স',
     'nav.staff': 'স্টাফ ও ভূমিকা',
     'nav.automations': 'অটোমেশন',

@@ -6129,6 +6129,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings/inbox-channels/messenger/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/inbox-channels/messenger/login` — "Continue with Facebook", step 1: the
+         *     Facebook dialog URL (Facebook Login for Business on Toy Mart's own Meta app) with a one-time
+         *     state bound to this staff member. 409 `conflict` until the App ID and App secret are saved
+         */
+        post: operations["v1.admin.settings.inbox-channels.messenger.login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/inbox-channels/messenger/login/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/inbox-channels/messenger/login/finish` — step 2: `{code, state}` from the
+         *     redirect. Exchanges the code for a long-lived sign-in and lists the Pages that were shared,
+         *     ids and names only. 409 when the state is unknown, expired, used or someone else's, or
+         *     Facebook refused the code; 503 when Facebook cannot be reached
+         */
+        post: operations["v1.admin.settings.inbox-channels.messenger.login.finish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/inbox-channels/messenger/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/inbox-channels/messenger/connect` — step 3: `{session, page_id}`. Subscribes
+         *     the Page to the app's webhook, saves it with its Page token (encrypted) and turns Messenger
+         *     replies on. Audited. Returns the channel settings. Never marks the channel verified
+         */
+        post: operations["v1.admin.settings.inbox-channels.messenger.connect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/inbox-channels/{channel}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /settings/inbox-channels/{channel}/disconnect` — removes the saved Page / number and
+         *     its token and switches replies off; the webhook keys and the Meta App ID stay. Messenger
+         *     also asks Meta to stop sending the Page's chats (best effort). Audited. Conversations stay
+         */
+        post: operations["v1.admin.settings.inbox-channels.disconnect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/blog/posts": {
         parameters: {
             query?: never;
@@ -9999,6 +10084,17 @@ export interface components {
             note?: string | null;
         };
         /**
+         * ConnectMessengerPageRequest
+         * @description `POST /settings/inbox-channels/messenger/connect` — the Page chosen after "Continue with
+         *      * Facebook"; needs settings.manage_integrations.
+         */
+        ConnectMessengerPageRequest: {
+            /** @description The `session` from `…/messenger/login/finish`. */
+            session: string;
+            /** @description One of the Page ids that call returned. */
+            page_id: string;
+        };
+        /**
          * ConsentConfirmationMethod
          * @description How staff confirmed a customer agreed to a purpose consent (P8 batch 3, owner decision 2026-11-13). Required when staff record a "yes" in the admin; null for a storefront opt-in.
          * @enum {string}
@@ -11330,6 +11426,17 @@ export interface components {
             }[];
         };
         /**
+         * FinishMessengerLoginRequest
+         * @description `POST /settings/inbox-channels/messenger/login/finish` — the `code` and `state` Facebook added
+         *     to the redirect back to Inbox › Channels › Facebook Page; needs settings.manage_integrations.
+         */
+        FinishMessengerLoginRequest: {
+            /** @description The `code` query parameter Facebook sent back (valid for a few minutes). */
+            code: string;
+            /** @description The `state` query parameter: the one-time value from `…/messenger/login`. */
+            state: string;
+        };
+        /**
          * Gender
          * @description `products.gender` — nullable: most toys need no gender at all.
          * @enum {string}
@@ -11734,6 +11841,49 @@ export interface components {
                 error_code: string | null;
                 error_message: string | null;
             } | null;
+            /**
+             * @description `not_connected`: no account id or send token. `reconnect`: Meta refused the token
+             *     (Graph error 190 — on the last test or on a send since the last good test) or the Page
+             *     dropped the app (`not_subscribed`). `connected` otherwise. `since` = when that was seen.
+             */
+            connection: {
+                /** @enum {string} */
+                state: "connected" | "reconnect" | "not_connected";
+                reason: string | null;
+                since: string | null;
+            };
+            /**
+             * @description The card's counts, from the inbox tables: open chats, waiting on a staff reply, unread
+             *     messages, the oldest wait, the last customer message (and the contact's name) and the
+             *     last webhook Meta delivered.
+             */
+            activity: {
+                open: number;
+                waiting: number;
+                unread: number;
+                oldest_waiting_at: string | null;
+                last_inbound_at: string | null;
+                last_inbound_from: string | null;
+                last_event_at: string | null;
+            };
+            /** @description Messenger: the Page's name, saved by "Continue with Facebook". */
+            page_name: string | null;
+            /** @description Messenger: when the Page was connected with Facebook (ISO 8601). */
+            connected_at: string | null;
+            /** @description Messenger: who connected it. */
+            connected_by: string | null;
+            /** @description Messenger: Toy Mart's Meta App ID. */
+            app_id: string | null;
+            /** @enum {string|null} */
+            app_id_source: "settings" | "env" | null;
+            /** @description Messenger: the Facebook Login for Business configuration ID (null = the login asks for the permissions by name). */
+            login_config_id: string | null;
+            /** @enum {string|null} */
+            login_config_id_source: "settings" | "env" | null;
+            /** @description Messenger: App ID and App secret are set, so "Continue with Facebook" can start. */
+            login_ready: boolean;
+            /** @description Messenger: paste into the Meta app's "Valid OAuth Redirect URIs". */
+            oauth_redirect_uri: string | null;
         };
         /** InboxChannelSettings */
         InboxChannelSettings: {
@@ -12947,6 +13097,24 @@ export interface components {
                 whatsapp_driver: "settings" | "env";
             };
         };
+        /** MessengerLoginPages */
+        MessengerLoginPages: {
+            /** @description Pass to `…/messenger/connect` within 10 minutes. */
+            session: string;
+            /** @description `can_message` false: this account cannot manage the Page's messages. */
+            pages: {
+                id: string;
+                name: string;
+                can_message: boolean;
+            }[];
+        };
+        /** MessengerLoginStart */
+        MessengerLoginStart: {
+            /** @description Facebook's login dialog; open it in the same tab. Valid for 10 minutes. */
+            url: string;
+            /** @description Where Facebook sends the owner back — must be listed in the Meta app's Valid OAuth Redirect URIs. */
+            redirect_uri: string;
+        };
         /**
          * MoveCategoryRequest
          * @description `POST /categories/{category}/move` — `{ parent_id, position }`. The category
@@ -13577,7 +13745,7 @@ export interface components {
             /** @description The gateway accepted the keys saved for the current mode. */
             ok: boolean;
             /** @enum {string} */
-            code: "ok" | "not_configured" | "credentials_rejected" | "unreachable";
+            code: "ok" | "not_configured" | "credentials_rejected" | "unreachable" | "sandbox_only";
             /**
              * @description The mode whose keys were checked.
              * @enum {string}
@@ -19433,6 +19601,10 @@ export interface components {
             messenger_page_id?: string | null;
             /** @description Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep. */
             messenger_human_agent?: boolean;
+            /** @description Toy Mart's Meta App ID (digits) — for "Continue with Facebook". Absent = keep; blank = remove. */
+            messenger_app_id?: string | null;
+            /** @description The Facebook Login for Business configuration ID (digits). Absent = keep; blank = remove (the login then asks for the permissions by name). */
+            messenger_login_config_id?: string | null;
             messenger_page_access_token?: string | null;
             messenger_app_secret?: string | null;
             messenger_verify_token?: string | null;
@@ -35673,6 +35845,180 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+        };
+    };
+    "v1.admin.settings.inbox-channels.messenger.login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `MessengerLoginStart` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessengerLoginStart"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description The Meta app is not set up yet (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many attempts (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.settings.inbox-channels.messenger.login.finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinishMessengerLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description `MessengerLoginPages` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessengerLoginPages"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Expired or foreign sign-in, or Facebook refused it (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many attempts (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Facebook could not be reached (`service-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.settings.inbox-channels.messenger.connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectMessengerPageRequest"];
+            };
+        };
+        responses: {
+            /** @description `InboxChannelSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxChannelSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            /** @description Expired sign-in, Page not shared, or Facebook refused the subscription (`conflict`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many attempts (`too-many-requests`) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Facebook could not be reached (`service-unavailable`) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.admin.settings.inbox-channels.disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                channel: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InboxChannelSettings` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxChannelSettings"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "v1.admin.blog.posts.index": {

@@ -37,7 +37,14 @@ export type NavItem = {
     children?: NavChild[];
 };
 
-export type NavChild = { key: MessageKey; path: string };
+export type NavChild = {
+    key: MessageKey;
+    path: string;
+    /** Hidden unless the user also holds this permission (the parent's is always needed). */
+    permission?: string;
+    /** For a child at the parent's own path (Inbox › Chats): not active under this prefix. */
+    activeUnless?: string;
+};
 
 export type NavGroup = { label: MessageKey | null; items: NavItem[] };
 
@@ -50,7 +57,18 @@ export const navigation: NavGroup[] = [
         label: null,
         items: [
             { key: 'nav.overview', path: '/', icon: SquaresFourIcon, permission: 'dashboard.view' },
-            { key: 'nav.inbox', path: '/inbox', icon: ChatsIcon, permission: 'inbox.view' },
+            {
+                key: 'nav.inbox',
+                path: '/inbox',
+                icon: ChatsIcon,
+                permission: 'inbox.view',
+                // Inbox › Channels (Figma 623:50926, modelled on SSFlows): connect the Facebook Page and WhatsApp.
+                children: [
+                    { key: 'nav.inbox.chats', path: '/inbox', activeUnless: '/inbox/channels' },
+                    { key: 'nav.inbox.messenger', path: '/inbox/channels/messenger', permission: 'settings.manage_integrations' },
+                    { key: 'nav.inbox.whatsapp', path: '/inbox/channels/whatsapp', permission: 'settings.manage_integrations' },
+                ],
+            },
         ],
     },
     {
@@ -127,7 +145,14 @@ export const navigation: NavGroup[] = [
 /** Groups with only the items this user may open; empty groups disappear. */
 export function visibleNavigation(permissions: readonly string[]): NavGroup[] {
     return navigation
-        .map((group) => ({ ...group, items: group.items.filter((item) => permissions.includes(item.permission)) }))
+        .map((group) => ({
+            ...group,
+            items: group.items
+                .filter((item) => permissions.includes(item.permission))
+                .map((item) =>
+                    item.children ? { ...item, children: item.children.filter((child) => !child.permission || permissions.includes(child.permission)) } : item,
+                ),
+        }))
         .filter((group) => group.items.length > 0);
 }
 

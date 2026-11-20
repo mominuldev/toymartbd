@@ -33,6 +33,8 @@ import { MessageTemplatesPage } from '@/features/notifications/MessageTemplatesP
 import { NewTemplatePage } from '@/features/notifications/NewTemplatePage';
 import { TemplateEditorPage } from '@/features/notifications/TemplateEditorPage';
 import { MessagingSettingsPage } from '@/features/settings/messaging/MessagingSettingsPage';
+import { MessengerChannelPage } from '@/features/settings/messaging/channels/MessengerChannelPage';
+import { WhatsAppChannelPage } from '@/features/settings/messaging/channels/WhatsAppChannelPage';
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
 import { InvoicePrintTab } from '@/features/print/InvoicePrintTab';
 import { ReceiptPrintTab } from '@/features/print/ReceiptPrintTab';
@@ -263,6 +265,9 @@ export const routes: RouteObject[] = [
                     { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
                     // Unified inbox (Figma B · 22 241:43115); `:conversationId` selects a thread.
                     { path: 'inbox', element: <InboxPage /> },
+                    // Inbox › Channels (Figma 623:50926): connect the Facebook Page (Facebook login) and WhatsApp (guided setup).
+                    { path: 'inbox/channels/messenger', element: <MessengerChannelPage /> },
+                    { path: 'inbox/channels/whatsapp', element: <WhatsAppChannelPage /> },
                     { path: 'inbox/:conversationId', element: <InboxPage /> },
                     // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
                     { path: 'integrations', element: <IntegrationsHubPage /> },

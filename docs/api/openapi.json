@@ -27973,6 +27973,236 @@
                 }
             }
         },
+        "/admin/settings/inbox-channels/messenger/login": {
+            "post": {
+                "operationId": "v1.admin.settings.inbox-channels.messenger.login",
+                "summary": "`POST /settings/inbox-channels/messenger/login` \u2014 \"Continue with Facebook\", step 1: the\nFacebook dialog URL (Facebook Login for Business on Toy Mart's own Meta app) with a one-time\nstate bound to this staff member. 409 `conflict` until the App ID and App secret are saved",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`MessengerLoginStart`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessengerLoginStart"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "The Meta app is not set up yet (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many attempts (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/settings/inbox-channels/messenger/login/finish": {
+            "post": {
+                "operationId": "v1.admin.settings.inbox-channels.messenger.login.finish",
+                "summary": "`POST /settings/inbox-channels/messenger/login/finish` \u2014 step 2: `{code, state}` from the\nredirect. Exchanges the code for a long-lived sign-in and lists the Pages that were shared,\nids and names only. 409 when the state is unknown, expired, used or someone else's, or\nFacebook refused the code; 503 when Facebook cannot be reached",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FinishMessengerLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`MessengerLoginPages`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessengerLoginPages"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Expired or foreign sign-in, or Facebook refused it (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Facebook could not be reached (`service-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many attempts (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/settings/inbox-channels/messenger/connect": {
+            "post": {
+                "operationId": "v1.admin.settings.inbox-channels.messenger.connect",
+                "summary": "`POST /settings/inbox-channels/messenger/connect` \u2014 step 3: `{session, page_id}`. Subscribes\nthe Page to the app's webhook, saves it with its Page token (encrypted) and turns Messenger\nreplies on. Audited. Returns the channel settings. Never marks the channel verified",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConnectMessengerPageRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`InboxChannelSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxChannelSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "409": {
+                        "description": "Expired sign-in, Page not shared, or Facebook refused the subscription (`conflict`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Facebook could not be reached (`service-unavailable`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many attempts (`too-many-requests`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/settings/inbox-channels/{channel}/disconnect": {
+            "post": {
+                "operationId": "v1.admin.settings.inbox-channels.disconnect",
+                "summary": "`POST /settings/inbox-channels/{channel}/disconnect` \u2014 removes the saved Page / number and\nits token and switches replies off; the webhook keys and the Meta App ID stay. Messenger\nalso asks Meta to stop sending the Page's chats (best effort). Audited. Conversations stay",
+                "tags": [
+                    "Admin"
+                ],
+                "parameters": [
+                    {
+                        "name": "channel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InboxChannelSettings`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InboxChannelSettings"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
         "/admin/blog/posts": {
             "get": {
                 "operationId": "v1.admin.blog.posts.index",
@@ -44381,6 +44611,28 @@
                 },
                 "title": "ConfirmOrderRequest"
             },
+            "ConnectMessengerPageRequest": {
+                "type": "object",
+                "description": "`POST /settings/inbox-channels/messenger/connect` \u2014 the Page chosen after \"Continue with\n * Facebook\"; needs settings.manage_integrations.",
+                "properties": {
+                    "session": {
+                        "type": "string",
+                        "description": "The `session` from `\u2026/messenger/login/finish`.",
+                        "minLength": 48,
+                        "maxLength": 48
+                    },
+                    "page_id": {
+                        "type": "string",
+                        "description": "One of the Page ids that call returned.",
+                        "pattern": "^\\d{1,32}$"
+                    }
+                },
+                "required": [
+                    "session",
+                    "page_id"
+                ],
+                "title": "ConnectMessengerPageRequest"
+            },
             "ConsentConfirmationMethod": {
                 "type": "string",
                 "description": "How staff confirmed a customer agreed to a purpose consent (P8 batch 3, owner decision 2026-11-13). Required when staff record a \"yes\" in the admin; null for a storefront opt-in.\n",
@@ -49833,6 +50085,28 @@
                 ],
                 "title": "FinanceRefundsOwed"
             },
+            "FinishMessengerLoginRequest": {
+                "type": "object",
+                "description": "`POST /settings/inbox-channels/messenger/login/finish` \u2014 the `code` and `state` Facebook added\nto the redirect back to Inbox \u203a Channels \u203a Facebook Page; needs settings.manage_integrations.",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "The `code` query parameter Facebook sent back (valid for a few minutes).",
+                        "maxLength": 2048
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "The `state` query parameter: the one-time value from `\u2026/messenger/login`.",
+                        "minLength": 48,
+                        "maxLength": 48
+                    }
+                },
+                "required": [
+                    "code",
+                    "state"
+                ],
+                "title": "FinishMessengerLoginRequest"
+            },
             "Gender": {
                 "type": "string",
                 "description": "`products.gender` \u2014 nullable: most toys need no gender at all.\n",
@@ -51338,6 +51612,153 @@
                             "error_code",
                             "error_message"
                         ]
+                    },
+                    "connection": {
+                        "type": "object",
+                        "description": "`not_connected`: no account id or send token. `reconnect`: Meta refused the token\n(Graph error 190 \u2014 on the last test or on a send since the last good test) or the Page\ndropped the app (`not_subscribed`). `connected` otherwise. `since` = when that was seen.",
+                        "properties": {
+                            "state": {
+                                "type": "string",
+                                "enum": [
+                                    "connected",
+                                    "reconnect",
+                                    "not_connected"
+                                ]
+                            },
+                            "reason": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "since": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "state",
+                            "reason",
+                            "since"
+                        ]
+                    },
+                    "activity": {
+                        "type": "object",
+                        "description": "The card's counts, from the inbox tables: open chats, waiting on a staff reply, unread\nmessages, the oldest wait, the last customer message (and the contact's name) and the\nlast webhook Meta delivered.",
+                        "properties": {
+                            "open": {
+                                "type": "integer"
+                            },
+                            "waiting": {
+                                "type": "integer"
+                            },
+                            "unread": {
+                                "type": "integer"
+                            },
+                            "oldest_waiting_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last_inbound_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last_inbound_from": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "last_event_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "open",
+                            "waiting",
+                            "unread",
+                            "oldest_waiting_at",
+                            "last_inbound_at",
+                            "last_inbound_from",
+                            "last_event_at"
+                        ]
+                    },
+                    "page_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: the Page's name, saved by \"Continue with Facebook\"."
+                    },
+                    "connected_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: when the Page was connected with Facebook (ISO 8601)."
+                    },
+                    "connected_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: who connected it."
+                    },
+                    "app_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: Toy Mart's Meta App ID."
+                    },
+                    "app_id_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "login_config_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: the Facebook Login for Business configuration ID (null = the login asks for the permissions by name)."
+                    },
+                    "login_config_id_source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "settings",
+                            "env",
+                            null
+                        ]
+                    },
+                    "login_ready": {
+                        "type": "boolean",
+                        "description": "Messenger: App ID and App secret are set, so \"Continue with Facebook\" can start."
+                    },
+                    "oauth_redirect_uri": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Messenger: paste into the Meta app's \"Valid OAuth Redirect URIs\"."
                     }
                 },
                 "required": [
@@ -51357,7 +51778,18 @@
                     "webhook_ready",
                     "send_ready",
                     "verified",
-                    "last_check"
+                    "last_check",
+                    "connection",
+                    "activity",
+                    "page_name",
+                    "connected_at",
+                    "connected_by",
+                    "app_id",
+                    "app_id_source",
+                    "login_config_id",
+                    "login_config_id_source",
+                    "login_ready",
+                    "oauth_redirect_uri"
                 ],
                 "title": "InboxChannelCredentials"
             },
@@ -56030,6 +56462,61 @@
                 ],
                 "title": "MessagingSettings"
             },
+            "MessengerLoginPages": {
+                "type": "object",
+                "properties": {
+                    "session": {
+                        "type": "string",
+                        "description": "Pass to `\u2026/messenger/connect` within 10 minutes."
+                    },
+                    "pages": {
+                        "type": "array",
+                        "description": "`can_message` false: this account cannot manage the Page's messages.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "can_message": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "can_message"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "session",
+                    "pages"
+                ],
+                "title": "MessengerLoginPages"
+            },
+            "MessengerLoginStart": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Facebook's login dialog; open it in the same tab. Valid for 10 minutes."
+                    },
+                    "redirect_uri": {
+                        "type": "string",
+                        "description": "Where Facebook sends the owner back \u2014 must be listed in the Meta app's Valid OAuth Redirect URIs."
+                    }
+                },
+                "required": [
+                    "url",
+                    "redirect_uri"
+                ],
+                "title": "MessengerLoginStart"
+            },
             "MoveCategoryRequest": {
                 "type": "object",
                 "description": "`POST /categories/{category}/move` \u2014 `{ parent_id, position }`. The category\nbecomes the child of `parent_id` (null = a root) at sibling index `position`\n(0-based; past the end means last). Up/down keeps the parent and changes the\nposition; indent/outdent changes the parent.",
@@ -58816,7 +59303,8 @@
                             "ok",
                             "not_configured",
                             "credentials_rejected",
-                            "unreachable"
+                            "unreachable",
+                            "sandbox_only"
                         ]
                     },
                     "mode": {
@@ -81167,6 +81655,22 @@
                     "messenger_human_agent": {
                         "type": "boolean",
                         "description": "Reply with Meta's HUMAN_AGENT tag up to 7 days after the customer's message (may need Meta app review). Absent = keep."
+                    },
+                    "messenger_app_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Toy Mart's Meta App ID (digits) \u2014 for \"Continue with Facebook\". Absent = keep; blank = remove.",
+                        "pattern": "^\\d{1,32}$"
+                    },
+                    "messenger_login_config_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The Facebook Login for Business configuration ID (digits). Absent = keep; blank = remove (the login then asks for the permissions by name).",
+                        "pattern": "^\\d{1,32}$"
                     },
                     "messenger_page_access_token": {
                         "type": [

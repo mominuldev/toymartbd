@@ -58,7 +58,16 @@ return [
         // message (instead of 24 h). Off by default: Meta may require app review for the tag.
         // Admin → Integrations → Messaging overrides it (`inbox.messenger.human_agent`).
         'human_agent' => (bool) env('MESSENGER_HUMAN_AGENT', false),
+        // "Continue with Facebook" (Inbox › Channels › Facebook Page): Toy Mart's own Meta app id
+        // and, optionally, its Facebook Login for Business configuration id. Without a config id the
+        // login asks for the Page permissions by name (`scope`). The app secret above signs the
+        // code exchange. Admin → Integrations → Messaging overrides both.
+        'app_id' => env('META_APP_ID'),
+        'login_config_id' => env('META_LOGIN_CONFIG_ID'),
     ],
+
+    // How long a Facebook login stays valid between leaving for Facebook and choosing the Page.
+    'oauth_ttl_minutes' => 10,
 
     // No storefront chat widget exists; live chat is a channel with no inbound path yet.
     'live_chat' => [

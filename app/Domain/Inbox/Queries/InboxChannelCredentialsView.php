@@ -7,6 +7,9 @@ namespace App\Domain\Inbox\Queries;
 use App\Domain\Inbox\Enums\InboxChannel;
 use App\Domain\Inbox\Services\InboxChannels;
 use App\Domain\Inbox\Services\InboxChannelSettings;
+use App\Domain\Inbox\Services\MetaPageLogin;
+use App\Models\User;
+use Illuminate\Support\Carbon;
 
 /**
  * What Admin → Integrations → Messaging shows for the WhatsApp and Messenger inbox: the
@@ -17,11 +20,17 @@ use App\Domain\Inbox\Services\InboxChannelSettings;
  *
  * @phpstan-type SecretState array{set: bool, hint: ?string, source: ?string}
  * @phpstan-type LastCheck array{ok: bool, checked_at: string, display_name: ?string, display_number: ?string, quality_rating: ?string, error_code: ?string, error_message: ?string}
- * @phpstan-type ChannelView array{channel: string, driver: string, driver_source: string, account_id: ?string, account_id_source: ?string, business_account_id: ?string, business_account_id_source: ?string, human_agent: bool, human_agent_source: string, send_token: SecretState, app_secret: SecretState, verify_token: SecretState, webhook_url: string, webhook_ready: bool, send_ready: bool, verified: bool, last_check: ?LastCheck}
+ *
+ * @phpstan-import-type Activity from InboxChannelActivity
+ *
+ * @phpstan-type ChannelView array{channel: string, driver: string, driver_source: string, account_id: ?string, account_id_source: ?string, business_account_id: ?string, business_account_id_source: ?string, human_agent: bool, human_agent_source: string, send_token: SecretState, app_secret: SecretState, verify_token: SecretState, webhook_url: string, webhook_ready: bool, send_ready: bool, verified: bool, last_check: ?LastCheck, connection: array{state: 'connected'|'reconnect'|'not_connected', reason: ?string, since: ?string}, activity: Activity, page_name: ?string, connected_at: ?string, connected_by: ?string, app_id: ?string, app_id_source: ?string, login_config_id: ?string, login_config_id_source: ?string, login_ready: bool, oauth_redirect_uri: ?string}
  */
 final readonly class InboxChannelCredentialsView
 {
-    public function __construct(private InboxChannelSettings $settings, private InboxChannels $channels) {}
+    /** Graph errors that mean the saved token no longer works: only signing in again fixes them. */
+    private const array RECONNECT_CODES = ['meta_190', 'not_subscribed'];
+
+    public function __construct(private InboxChannelSettings $settings, private InboxChannels $channels, private InboxChannelActivity $activity, private MetaPageLogin $login) {}
 
     /** @return array{whatsapp: ChannelView, messenger: ChannelView} */
     public function get(): array
@@ -65,8 +74,58 @@ final readonly class InboxChannelCredentialsView
             'webhook_ready' => $summary['webhook_ready'],
             'send_ready' => $summary['send_ready'],
             'verified' => $summary['verified'],
-            'last_check' => self::lastCheck($this->settings->lastCheck($channel)),
+            'last_check' => $lastCheck = self::lastCheck($this->settings->lastCheck($channel)),
+            'connection' => $this->connection($channel, $summary['send_ready'], $lastCheck),
+            'activity' => $this->activity->for($channel),
+            // Messenger: "Continue with Facebook" (Inbox › Channels › Facebook Page).
+            'page_name' => $channel === InboxChannel::Messenger ? $this->settings->stored($channel, 'page_name') : null,
+            'connected_at' => $channel === InboxChannel::Messenger ? $this->settings->stored($channel, 'connected_at') : null,
+            'connected_by' => $channel === InboxChannel::Messenger ? $this->connectedBy() : null,
+            'app_id' => $channel === InboxChannel::Messenger ? $this->settings->get($channel, 'app_id') : null,
+            'app_id_source' => $channel === InboxChannel::Messenger ? $this->settings->source($channel, 'app_id') : null,
+            'login_config_id' => $channel === InboxChannel::Messenger ? $this->settings->get($channel, 'login_config_id') : null,
+            'login_config_id_source' => $channel === InboxChannel::Messenger ? $this->settings->source($channel, 'login_config_id') : null,
+            'login_ready' => $channel === InboxChannel::Messenger && $this->login->configured(),
+            'oauth_redirect_uri' => $channel === InboxChannel::Messenger ? MetaPageLogin::redirectUri() : null,
         ];
+    }
+
+    /**
+     * `not_connected` (no account id or send token), `reconnect` (Meta refused the token, or the
+     * Page dropped our app — the last test said so, or a send failed with error 190 after the
+     * last good test / connection), otherwise `connected`. `since` is when the problem was seen.
+     *
+     * @param  LastCheck|null  $lastCheck
+     * @return array{state: 'connected'|'reconnect'|'not_connected', reason: ?string, since: ?string}
+     */
+    private function connection(InboxChannel $channel, bool $sendReady, ?array $lastCheck): array
+    {
+        if (! $sendReady) {
+            return ['state' => 'not_connected', 'reason' => null, 'since' => null];
+        }
+        if ($lastCheck !== null && ! $lastCheck['ok'] && in_array($lastCheck['error_code'], self::RECONNECT_CODES, true)) {
+            return ['state' => 'reconnect', 'reason' => $lastCheck['error_code'], 'since' => $lastCheck['checked_at']];
+        }
+
+        $failed = $this->activity->lastTokenFailureAt($channel);
+        $goodSince = $lastCheck !== null && $lastCheck['ok'] ? Carbon::parse($lastCheck['checked_at']) : null;
+        $connectedAt = $channel === InboxChannel::Messenger ? $this->settings->stored($channel, 'connected_at') : null;
+        if ($connectedAt !== null && ($goodSince === null || Carbon::parse($connectedAt)->greaterThan($goodSince))) {
+            $goodSince = Carbon::parse($connectedAt);
+        }
+        if ($failed !== null && ($goodSince === null || $failed->greaterThan($goodSince))) {
+            return ['state' => 'reconnect', 'reason' => 'meta_190', 'since' => $failed->toIso8601String()];
+        }
+
+        return ['state' => 'connected', 'reason' => null, 'since' => null];
+    }
+
+    /** Name of the staff member who connected the Page with Facebook, or null. */
+    private function connectedBy(): ?string
+    {
+        $id = $this->settings->stored(InboxChannel::Messenger, 'connected_by');
+
+        return $id !== null && ctype_digit($id) ? User::query()->whereKey((int) $id)->value('name') : null;
     }
 
     /**

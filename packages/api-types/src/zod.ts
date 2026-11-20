@@ -455,6 +455,13 @@ export const confirmOrderRequestSchema = z.object({
 });
 export type ConfirmOrderRequestInput = z.input<typeof confirmOrderRequestSchema>;
 
+/** `POST /settings/inbox-channels/messenger/connect` — the Page chosen after "Continue with */
+export const connectMessengerPageRequestSchema = z.object({
+    "session": z.string().min(48).max(48),
+    "page_id": z.string().min(1).regex(new RegExp("^\\d{1,32}$")),
+});
+export type ConnectMessengerPageRequestInput = z.input<typeof connectMessengerPageRequestSchema>;
+
 /** `POST /storefront/contact-messages` — the Contact page's "Send us a message" form (owner */
 export const contactMessageRequestSchema = z.object({
     "name": z.string().min(1).max(80),
@@ -528,6 +535,13 @@ export const expenseRequestSchema = z.object({
     "receipt": z.instanceof(Blob).nullable().optional(),
 });
 export type ExpenseRequestInput = z.input<typeof expenseRequestSchema>;
+
+/** `POST /settings/inbox-channels/messenger/login/finish` — the `code` and `state` Facebook added */
+export const finishMessengerLoginRequestSchema = z.object({
+    "code": z.string().min(1).max(2048),
+    "state": z.string().min(48).max(48),
+});
+export type FinishMessengerLoginRequestInput = z.input<typeof finishMessengerLoginRequestSchema>;
 
 /** `POST /products/{product}/barcodes` — give this product's variants without a barcode an */
 export const generateBarcodesRequestSchema = z.object({
@@ -1903,6 +1917,8 @@ export const updateInboxChannelSettingsRequestSchema = z.object({
     "messenger_driver": z.enum(["log","messenger"]),
     "messenger_page_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
     "messenger_human_agent": z.boolean().optional(),
+    "messenger_app_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
+    "messenger_login_config_id": z.string().regex(new RegExp("^\\d{1,32}$")).nullable().optional(),
     "messenger_page_access_token": z.string().max(2048).nullable().optional(),
     "messenger_app_secret": z.string().max(255).nullable().optional(),
     "messenger_verify_token": z.string().max(255).nullable().optional(),

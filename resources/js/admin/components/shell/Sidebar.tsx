@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { Link, NavLink, useLocation } from 'react-router';
 import { CaretDownIcon, ShoppingBagOpenIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
@@ -7,7 +7,13 @@ import { CountBadge } from '@/components/ui/CountBadge';
 import { Avatar } from './Avatar';
 import { BranchSwitcher } from './BranchSwitcher';
 import type { WorkingBranchLocation } from './workingBranch';
-import { visibleNavigation, type NavItem } from './nav';
+import { visibleNavigation, type NavChild, type NavItem } from './nav';
+
+/** A sub-page link is current at its path or below it — except under `activeUnless` (Inbox › Chats vs Channels). */
+export function childActive(child: NavChild, pathname: string): boolean {
+    if (child.activeUnless && pathname.startsWith(child.activeUnless)) return false;
+    return pathname === child.path || pathname.startsWith(`${child.path}/`);
+}
 
 type SidebarProps = {
     permissions: readonly string[];
@@ -151,18 +157,17 @@ export function Sidebar({ permissions, counts = {}, collapsed, onNavigate, varia
                                         <ul aria-label={t(item.key)} className={`flex-col gap-px pt-px pb-1 ${onlyExpanded}`}>
                                             {item.children.map((child) => (
                                                 <li key={child.path}>
-                                                    <NavLink
+                                                    <Link
                                                         to={child.path}
                                                         onClick={onNavigate}
-                                                        className={({ isActive }) =>
-                                                            [
-                                                                'flex h-8 items-center rounded-sm ps-11 pe-3 transition-colors duration-150 ease-standard',
-                                                                isActive ? 'bg-brand-subtle t-admin-body-strong text-fg-primary' : 't-admin-body text-fg-secondary hover:bg-subtle',
-                                                            ].join(' ')
-                                                        }
+                                                        aria-current={childActive(child, pathname) ? 'page' : undefined}
+                                                        className={[
+                                                            'flex h-8 items-center rounded-sm ps-11 pe-3 transition-colors duration-150 ease-standard',
+                                                            childActive(child, pathname) ? 'bg-brand-subtle t-admin-body-strong text-fg-primary' : 't-admin-body text-fg-secondary hover:bg-subtle',
+                                                        ].join(' ')}
                                                     >
                                                         <span className="min-w-0 truncate">{t(child.key)}</span>
-                                                    </NavLink>
+                                                    </Link>
                                                 </li>
                                             ))}
                                         </ul>
@@ -204,6 +209,7 @@ export function Sidebar({ permissions, counts = {}, collapsed, onNavigate, varia
  */
 function RailSubmenu({ item, visibility, onNavigate, children }: { item: NavItem; visibility: string | null; onNavigate?: () => void; children: ReactNode }) {
     const { t } = useI18n();
+    const { pathname } = useLocation();
     const root = useRef<HTMLLIElement>(null);
     const timer = useRef<number | undefined>(undefined);
     const [style, setStyle] = useState<CSSProperties | null>(null);
@@ -267,21 +273,22 @@ function RailSubmenu({ item, visibility, onNavigate, children }: { item: NavItem
                         <ul aria-label={t(item.key)} className="flex flex-col gap-px">
                             {items.map((child) => (
                                 <li key={child.path}>
-                                    <NavLink
+                                    <Link
                                         to={child.path}
                                         onClick={() => {
                                             setStyle(null);
                                             onNavigate?.();
                                         }}
-                                        className={({ isActive }) =>
-                                            [
-                                                'flex h-8 items-center rounded-sm px-3 whitespace-nowrap transition-colors duration-150 ease-standard',
-                                                isActive ? 'bg-brand-subtle t-admin-body-strong text-fg-primary' : 't-admin-body text-fg-secondary hover:bg-subtle hover:text-fg-primary',
-                                            ].join(' ')
-                                        }
+                                        aria-current={childActive(child, pathname) ? 'page' : undefined}
+                                        className={[
+                                            'flex h-8 items-center rounded-sm px-3 whitespace-nowrap transition-colors duration-150 ease-standard',
+                                            childActive(child, pathname)
+                                                ? 'bg-brand-subtle t-admin-body-strong text-fg-primary'
+                                                : 't-admin-body text-fg-secondary hover:bg-subtle hover:text-fg-primary',
+                                        ].join(' ')}
                                     >
                                         {t(child.key)}
-                                    </NavLink>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>

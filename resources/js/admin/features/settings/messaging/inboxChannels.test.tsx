@@ -31,6 +31,21 @@ const messaging: MessagingSettings = {
 
 const unset = { set: false, hint: null, source: null } as const;
 
+/** Fields added for Inbox › Channels (connection state, counts, Facebook login). */
+const channelExtras = {
+    connection: { state: 'not_connected', reason: null, since: null },
+    activity: { open: 0, waiting: 0, unread: 0, oldest_waiting_at: null, last_inbound_at: null, last_inbound_from: null, last_event_at: null },
+    page_name: null,
+    connected_at: null,
+    connected_by: null,
+    app_id: null,
+    app_id_source: null,
+    login_config_id: null,
+    login_config_id_source: null,
+    login_ready: false,
+    oauth_redirect_uri: null,
+} as const;
+
 const whatsapp: InboxChannelCredentials = {
     channel: 'whatsapp',
     driver: 'cloud',
@@ -49,6 +64,7 @@ const whatsapp: InboxChannelCredentials = {
     send_ready: true,
     verified: false,
     last_check: null,
+    ...channelExtras,
 };
 
 const messenger: InboxChannelCredentials = {
@@ -69,6 +85,7 @@ const messenger: InboxChannelCredentials = {
     send_ready: false,
     verified: false,
     last_check: null,
+    ...channelExtras,
 };
 
 const saved: InboxChannelSettings = { whatsapp, messenger };
@@ -165,6 +182,8 @@ describe('integrations → messaging → inbox channels', () => {
             messenger_page_access_token: 'EAAG-page-token',
             messenger_app_secret: 'fb-app-secret',
             messenger_verify_token: null,
+            messenger_app_id: null,
+            messenger_login_config_id: null,
             clear_messenger_page_access_token: false,
             clear_messenger_app_secret: false,
             clear_messenger_verify_token: false,
