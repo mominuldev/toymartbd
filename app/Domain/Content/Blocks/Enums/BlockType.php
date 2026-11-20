@@ -9,6 +9,7 @@ use App\Domain\Content\Blocks\Schemas\BlockSchema;
 use App\Domain\Content\Blocks\Schemas\BlogTeaserSchema;
 use App\Domain\Content\Blocks\Schemas\BrandStripSchema;
 use App\Domain\Content\Blocks\Schemas\CategoryTilesSchema;
+use App\Domain\Content\Blocks\Schemas\ChatBandSchema;
 use App\Domain\Content\Blocks\Schemas\ContactFormSchema;
 use App\Domain\Content\Blocks\Schemas\ContactHeroSchema;
 use App\Domain\Content\Blocks\Schemas\ContactInfoSchema;
@@ -16,6 +17,7 @@ use App\Domain\Content\Blocks\Schemas\CtaBandSchema;
 use App\Domain\Content\Blocks\Schemas\FaqSchema;
 use App\Domain\Content\Blocks\Schemas\FeatureTilesSchema;
 use App\Domain\Content\Blocks\Schemas\FlashSaleSchema;
+use App\Domain\Content\Blocks\Schemas\HelpHeroSchema;
 use App\Domain\Content\Blocks\Schemas\HeroSchema;
 use App\Domain\Content\Blocks\Schemas\ImageSchema;
 use App\Domain\Content\Blocks\Schemas\NumberedCardsSchema;
@@ -68,6 +70,10 @@ enum BlockType: string
     case ContactHero = 'contact_hero';
     /** "Send us a message" (→ the admin Inbox) beside an optional visit card with hours and a quick-links card. */
     case ContactForm = 'contact_form';
+    /** Help hero (FAQ): centred overline, the page headline, a lead and a question search box. */
+    case HelpHero = 'help_hero';
+    /** "Still need help?": a mint band with a button to the store's WhatsApp. */
+    case ChatBand = 'chat_band';
 
     public function schema(): BlockSchema
     {
@@ -92,6 +98,8 @@ enum BlockType: string
             self::CtaBand => new CtaBandSchema,
             self::ContactHero => new ContactHeroSchema,
             self::ContactForm => new ContactFormSchema,
+            self::HelpHero => new HelpHeroSchema,
+            self::ChatBand => new ChatBandSchema,
         };
     }
 

@@ -96,6 +96,11 @@ it('rejects invalid content per type', function (string $type, array $content, s
     'contact form without title' => ['contact_form', ['title' => ''], 'title'],
     'contact form hours row without value' => ['contact_form', ['hours' => [['label' => 'Friday']]], 'hours.0.value'],
     'contact form link without href' => ['contact_form', ['links' => [['icon' => 'clock', 'label' => 'Track']]], 'links.0.href'],
+    'faq unknown icon' => ['faq', ['title' => 'x', 'icon' => 'rocket', 'items' => [['question' => 'Q?', 'answer' => 'A.']]], 'icon'],
+    'help hero without title' => ['help_hero', ['title' => ''], 'title'],
+    'help hero bad search switch' => ['help_hero', ['title' => 'x', 'show_search' => 'perhaps'], 'show_search'],
+    'chat band without title' => ['chat_band', ['title' => ''], 'title'],
+    'chat band label too long' => ['chat_band', ['title' => 'x', 'button_label' => str_repeat('x', 41)], 'button_label'],
     'contact form javascript map' => ['contact_form', ['visit_map_href' => 'javascript:alert(1)'], 'visit_map_href'],
 ]);
 

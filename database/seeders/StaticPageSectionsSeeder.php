@@ -32,8 +32,8 @@ use Illuminate\Support\Facades\Event;
  * - delivery-policy — charges, times, cut-off, cash-on-delivery rules, and a delivery FAQ;
  * - returns-policy  — the 7-day window, conditions, how to return, refunds, and a FAQ;
  * - privacy-policy, terms — the policy text;
- * - faq             — four FAQ sections (ordering & payment, delivery, returns, toys & safety)
- *                     and the Contact details section.
+ * - faq             — as designed (Figma 171:10747): the help hero with its question search, four
+ *                     FAQ sections with topic icons, and the "Still need help?" WhatsApp band.
  *
  * Numbers quote the seeded settings, not a guess: delivery ৳70 / ৳100 / ৳130 up to 1 kg and
  * ৳20 per extra kg (DeliverySeeder, Steadfast), free delivery from ৳3,000, a 5 PM cut-off, no
@@ -467,8 +467,16 @@ final class StaticPageSectionsSeeder extends Seeder
     private function faq(): array
     {
         return [
+            [BlockType::HelpHero, 'Common questions', [
+                'overline' => 'Help centre', 'overline_bn' => 'সহায়তা কেন্দ্র',
+                'title' => 'Common questions', 'title_bn' => 'সাধারণ প্রশ্ন',
+                'lead' => 'Quick answers about orders, delivery, payment and returns.',
+                'lead_bn' => 'অর্ডার, ডেলিভারি, পেমেন্ট ও রিটার্ন নিয়ে দ্রুত উত্তর।',
+                'show_search' => true,
+                'search_placeholder' => 'Search questions, e.g. “delivery charge”', 'search_placeholder_bn' => 'প্রশ্ন খুঁজুন, যেমন “ডেলিভারি চার্জ”',
+            ], []],
             [BlockType::Faq, 'Ordering & payment', [
-                'title' => 'Ordering and payment', 'title_bn' => 'অর্ডার ও পেমেন্ট',
+                'title' => 'Ordering and payment', 'title_bn' => 'অর্ডার ও পেমেন্ট', 'icon' => 'gift',
                 'items' => [
                     $this->qa('How do I place an order?', 'Add toys to your cart, go to checkout, and enter your name, phone number and address. You do not need an account. We may call to confirm a first order before sending it.',
                         'কীভাবে অর্ডার করব?', 'খেলনা কার্টে যোগ করুন, চেকআউটে যান, তারপর নাম, ফোন নম্বর ও ঠিকানা দিন। অ্যাকাউন্ট লাগবে না। প্রথম অর্ডার পাঠানোর আগে আমরা ফোন করে নিশ্চিত করতে পারি।'),
@@ -483,7 +491,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 ],
             ], []],
             [BlockType::Faq, 'Delivery', [
-                'title' => 'Delivery', 'title_bn' => 'ডেলিভারি',
+                'title' => 'Delivery', 'title_bn' => 'ডেলিভারি', 'icon' => 'map_pin',
                 'items' => [
                     $this->qa('How much is delivery?', '৳70 inside Dhaka city, ৳100 in the Dhaka suburbs and ৳130 outside Dhaka, for parcels up to 1 kg; each extra kilogram adds ৳20. Delivery is free on orders of ৳3,000 or more.',
                         'ডেলিভারি চার্জ কত?', '1 কেজি পর্যন্ত পার্সেলে ঢাকা শহরে ৳70, ঢাকার আশপাশে ৳100 আর ঢাকার বাইরে ৳130; প্রতি অতিরিক্ত কেজিতে ৳20 যোগ হয়। ৳3,000 বা তার বেশি অর্ডারে ডেলিভারি ফ্রি।'),
@@ -494,7 +502,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 ],
             ], []],
             [BlockType::Faq, 'Returns & refunds', [
-                'title' => 'Returns and refunds', 'title_bn' => 'রিটার্ন ও টাকা ফেরত',
+                'title' => 'Returns and refunds', 'title_bn' => 'রিটার্ন ও টাকা ফেরত', 'icon' => 'check_circle',
                 'items' => [
                     $this->qa('What is your return policy?', 'Tell us within 7 days of delivery. Damaged, faulty or wrong items are always replaced or refunded free. For a change of mind, the toy must be unused in its unopened box.',
                         'রিটার্ন নীতি কী?', 'ডেলিভারির 7 দিনের মধ্যে জানান। ক্ষতিগ্রস্ত, ত্রুটিপূর্ণ বা ভুল পণ্য সবসময় বিনা খরচে বদলে বা টাকা ফেরত দিই। মত বদলালে খেলনা অব্যবহৃত ও বাক্স না খোলা থাকতে হবে।'),
@@ -505,7 +513,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 ],
             ], []],
             [BlockType::Faq, 'Toys & safety', [
-                'title' => 'Toys and safety', 'title_bn' => 'খেলনা ও নিরাপত্তা',
+                'title' => 'Toys and safety', 'title_bn' => 'খেলনা ও নিরাপত্তা', 'icon' => 'shield_check',
                 'items' => [
                     $this->qa('Are your toys genuine?', 'Yes. We buy only from brands and their authorised distributors, never copies. Brand warranties apply where offered.',
                         'আপনাদের খেলনা কি আসল?', 'হ্যাঁ। আমরা শুধু ব্র্যান্ড ও তাদের অনুমোদিত পরিবেশক থেকে কিনি, কখনো নকল নয়। যেখানে আছে, ব্র্যান্ডের ওয়ারেন্টি প্রযোজ্য।'),
@@ -515,10 +523,11 @@ final class StaticPageSectionsSeeder extends Seeder
                         'ব্যাটারির খেলনার সঙ্গে ব্যাটারি থাকে?', 'ব্যাটারি দেওয়া আছে কি না পণ্যের পাতায় লেখা থাকে। না থাকলে কোন সাইজের কয়টি লাগবে তা দেওয়া থাকে।'),
                 ],
             ], []],
-            [BlockType::ContactInfo, 'Still have a question?', [
-                'title' => 'Still have a question?', 'title_bn' => 'আরও প্রশ্ন আছে?',
-                'sub' => 'Our team is happy to help — call, message or email us.', 'sub_bn' => 'আমাদের টিম খুশি মনে সাহায্য করবে — কল, মেসেজ বা ইমেইল করুন।',
-                'show_address' => false,
+            [BlockType::ChatBand, 'Still need help?', [
+                'title' => 'Still need help?', 'title_bn' => 'আরও সাহায্য দরকার?',
+                'body' => 'A real person on WhatsApp, 9 am – 9 pm, Saturday to Thursday.',
+                'body_bn' => 'হোয়াটসঅ্যাপে সত্যিকারের মানুষ, শনিবার থেকে বৃহস্পতিবার সকাল 9টা – রাত 9টা।',
+                'button_label' => 'Chat on WhatsApp', 'button_label_bn' => 'হোয়াটসঅ্যাপে কথা বলুন',
             ], []],
         ];
     }

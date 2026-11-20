@@ -188,6 +188,14 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
             return (
                 <>
                     <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <SelectField
+                        label={t('homeBuilder.f.topicIcon')}
+                        value={str(content.icon)}
+                        options={[{ value: '', label: t('homeBuilder.f.noIcon') }, ...tileIconOptions(t)]}
+                        onChange={(v) => set('icon', v === '' ? null : v)}
+                        path="icon"
+                        ctx={ctx}
+                    />
                     {items.map((item, i) => {
                         const title = t('homeBuilder.f.item', { n: i + 1 });
                         const setItem = (key: string, value: unknown) => setRow('items', i, key, value);
@@ -412,6 +420,25 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                 </>
             );
         }
+        case 'help_hero':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} hint={t('homeBuilder.f.storyHeading')} />
+                    <Bilingual content={content} keyName="overline" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="lead" set={set} ctx={ctx} multiline />
+                    <SwitchRow label={t('homeBuilder.f.showSearch')} checked={bool(content.show_search, true)} onChange={(v) => set('show_search', v)} disabled={ctx.disabled} />
+                    <Bilingual content={content} keyName="search_placeholder" set={set} ctx={ctx} hint={t('homeBuilder.f.showSearchHint')} />
+                </>
+            );
+        case 'chat_band':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
+                    <Bilingual content={content} keyName="button_label" set={set} ctx={ctx} />
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.chatBandSource')}</p>
+                </>
+            );
     }
 }
 

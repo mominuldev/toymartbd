@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Schemas;
 
-/** FAQ: plain-text questions and answers in both languages; the storefront adds FAQPage JSON-LD. */
+use App\Domain\Content\Blocks\Enums\TileIcon;
+use Illuminate\Validation\Rule;
+
+/**
+ * FAQ: plain-text questions and answers in both languages; the storefront adds FAQPage JSON-LD.
+ * `icon` (optional, 2026-11-17, Figma FAQ 171:10994) is the group's glyph in the page's topic list.
+ */
 final class FaqSchema extends BlockSchema
 {
     public function rules(): array
     {
         return [
             ...self::text('title', 120),
+            'icon' => ['nullable', Rule::in(TileIcon::values())],
             'items' => ['required', 'array', 'min:1', 'max:20'],
             'items.*' => ['required', 'array'],
             'items.*.question' => ['required', 'string', 'max:200'],
@@ -24,6 +31,7 @@ final class FaqSchema extends BlockSchema
     {
         return [
             'title' => 'Questions parents ask', 'title_bn' => 'অভিভাবকদের সাধারণ প্রশ্ন',
+            'icon' => null,
             'items' => [[
                 'question' => 'Can I pay cash on delivery?', 'question_bn' => 'ক্যাশ অন ডেলিভারিতে টাকা দেওয়া যাবে?',
                 'answer' => 'Yes. Pay the delivery person when the parcel reaches you, anywhere in Bangladesh.', 'answer_bn' => 'হ্যাঁ। পার্সেল হাতে পেয়ে ডেলিভারি কর্মীকে টাকা দিন, বাংলাদেশের যেকোনো জায়গায়।',
@@ -35,6 +43,8 @@ final class FaqSchema extends BlockSchema
     {
         $out = [];
         self::copyText($content, $out, 'title');
+        $icon = $content['icon'] ?? null;
+        $out['icon'] = is_string($icon) ? TileIcon::tryFrom($icon)?->value : null;
         $out['items'] = [];
         foreach (is_array($content['items'] ?? null) ? $content['items'] : [] as $item) {
             if (is_array($item)) {

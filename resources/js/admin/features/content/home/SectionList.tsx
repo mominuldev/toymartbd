@@ -14,6 +14,7 @@ import {
     ImageSquareIcon,
     ListNumbersIcon,
     MegaphoneSimpleIcon,
+    LifebuoyIcon,
     LightningIcon,
     LayoutIcon,
     PackageIcon,
@@ -25,6 +26,7 @@ import {
     StorefrontIcon,
     TextAlignLeftIcon,
     UsersThreeIcon,
+    WhatsappLogoIcon,
     type Icon,
 } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -54,6 +56,8 @@ export const typeIcons: Record<BlockType, Icon> = {
     cta_band: MegaphoneSimpleIcon,
     contact_hero: ChatTeardropTextIcon,
     contact_form: EnvelopeSimpleIcon,
+    help_hero: LifebuoyIcon,
+    chat_band: WhatsappLogoIcon,
 };
 
 type Props = {

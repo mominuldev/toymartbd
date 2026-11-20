@@ -9224,9 +9224,11 @@ export interface components {
          *     | `cta_band` <br/> A gradient band with a title, a line of copy and up to two buttons. |
          *     | `contact_hero` <br/> Contact hero (Contact us): overline, the page headline, a lead, a status pill and up to four chat bubbles. |
          *     | `contact_form` <br/> "Send us a message" (→ the admin Inbox) beside an optional visit card with hours and a quick-links card. |
+         *     | `help_hero` <br/> Help hero (FAQ): centred overline, the page headline, a lead and a question search box. |
+         *     | `chat_band` <br/> "Still need help?": a mint band with a button to the store's WhatsApp. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -10031,7 +10033,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band";
             label: string | null;
             content: {
                 [key: string]: unknown;

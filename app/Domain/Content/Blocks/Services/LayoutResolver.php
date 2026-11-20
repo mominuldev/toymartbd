@@ -176,6 +176,8 @@ final class LayoutResolver
             case BlockType::CtaBand:
             case BlockType::ContactHero:
             case BlockType::ContactForm:
+            case BlockType::HelpHero:
+            case BlockType::ChatBand: // the WhatsApp number comes from GET /storefront/store-info
             case BlockType::UspBand:
             case BlockType::ContactInfo: // values come from GET /storefront/store-info
             case BlockType::FlashSale:

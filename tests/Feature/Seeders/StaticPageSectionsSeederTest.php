@@ -42,7 +42,7 @@ it('builds and publishes every static page from sections', function (): void {
         ->and(seededTypes('returns-policy'))->toBe(['rich_text', 'faq'])
         ->and(seededTypes('privacy-policy'))->toBe(['rich_text'])
         ->and(seededTypes('terms'))->toBe(['rich_text'])
-        ->and(seededTypes('faq'))->toBe(['faq', 'faq', 'faq', 'faq', 'contact_info']);
+        ->and(seededTypes('faq'))->toBe(['help_hero', 'faq', 'faq', 'faq', 'faq', 'chat_band']);
 
     // Every section validates against its schema and carries Bangla copy; nothing says PLACEHOLDER.
     foreach (CmsBlock::query()->get() as $block) {

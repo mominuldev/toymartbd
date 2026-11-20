@@ -34,15 +34,17 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `testimonials` | `title`*, `limit` 1–12 — published testimonials, in their order |
 | `blog_teaser` | `title`*, `sub`, `limit` 1–6 — latest live posts (StorefrontBlogPostCard) |
 | `rich_text` | `html`*, `html_bn` |
-| `faq` | `title`*, `items[1..20]`: `question`*, `answer`* (plain text; the storefront adds FAQPage JSON-LD) |
+| `faq` | `title`*, `icon` (optional, as feature_tiles — the group's glyph in the topic list), `items[1..20]`: `question`*, `answer`* (plain text; the storefront adds FAQPage JSON-LD) |
 | `image` | `media_id` (library image; a block without one is removed on the storefront), `alt`, `caption`, `href` (store path or https), `width` content\|wide |
 | `contact_info` | `title` (optional since 2026-11-16), `sub`, `hours` (Call tile caption), `whatsapp_note`, `email_note`, `address_label` (Visit tile value instead of the full address), `address_note`, `map_href`, `show_hotline`, `show_whatsapp`, `show_messenger`, `show_email`, `show_address` (default true) — the values come from Settings › Store › Business via `GET /storefront/store-info`, never from the block; an unset value renders as the marked sample, never as a link |
 | `story_hero` | `overline`, `title`*, `lead`*, `body`, `media_ids[0..3]` (library images, the sticker collage; the storefront gets `images[]` with only those that still exist), `badge`, `badge_sub`, `tone` sunrise\|sky\|mint\|candy — placed first on a page built from sections it replaces the page header and its title is the page's H1 (About us 170:10502) |
-| `feature_tiles` | `title`, `items[2..4]`: `icon`* (shield_check, check_circle, gift, map_pin, truck, money, chat, phone, star, heart, puzzle, books, clock), `title`*, `body` — tile colours follow the position (mint, sky, butter, lavender) |
+| `feature_tiles` | `title`, `items[2..4]`: `icon`* (shield_check, check_circle, gift, map_pin, truck, money, chat, phone, star, heart, puzzle, books, clock, user), `title`*, `body` — tile colours follow the position (mint, sky, butter, lavender) |
 | `numbered_cards` | `title`*, `items[1..6]`: `title`*, `body` — numbered 01, 02… by position |
 | `cta_band` | `title`*, `body`, `primary_label`/`primary_href`/`primary_icon`, `secondary_label`/`secondary_href`/`secondary_icon` (a label needs a store path or https link; icons as feature_tiles), `tone` candy\|sunrise\|sky\|mint |
 | `contact_hero` | `overline`, `title`*, `lead`*, `status` (pill with a green dot), `bubbles[0..4]`: `from`* customer\|store, `label`, `text`* — placed first on a page built from sections it replaces the page header and its title is the page's H1 (Contact us 165:9891) |
 | `contact_form` | `title`*, `intro`, `privacy` — the "Send us a message" card; its fields are fixed and post to `POST /storefront/contact-messages` (→ admin Inbox, channel `web_form`). Beside it: `visit_title`, `visit_body`, `visit_map_href`, `hours[0..6]`: `label`*, `value`*; `links_title`, `links[0..6]`: `icon`* (as feature_tiles, plus `clock`), `label`*, `href`* — a side card without its title is not shown |
+| `help_hero` | `overline`, `title`*, `lead`, `show_search` (default true; filters the page's FAQ sections in the browser), `search_placeholder` — placed first it replaces the page header and its title is the page's H1 (Common questions 171:10981) |
+| `chat_band` | `title`*, `body`, `button_label` — "Still need help?"; the button links to the store's WhatsApp from `GET /storefront/store-info` and is left out while that is the sample |
 
 ## Admin API (`/api/v1/admin`, content.view to read, content.manage to change)
 

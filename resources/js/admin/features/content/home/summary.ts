@@ -41,6 +41,12 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
         case 'contact_form':
             parts.push(t('homeBuilder.summary.contactForm'));
             break;
+        case 'help_hero':
+            parts.push(t(bool(c.show_search, true) ? 'homeBuilder.summary.withSearch' : 'homeBuilder.summary.text'));
+            break;
+        case 'chat_band':
+            parts.push(t('homeBuilder.summary.whatsapp'));
+            break;
         case 'story_hero':
             parts.push(ids(c.media_ids).length ? t('homeBuilder.summary.photos', { count: ids(c.media_ids).length }) : t('homeBuilder.summary.noImage'));
             break;

@@ -10,12 +10,12 @@ export type Content = Record<string, unknown>;
 
 export const BLOCK_TYPES: readonly BlockType[] = [
     'hero', 'category_tiles', 'age_tiles', 'product_rail', 'flash_sale', 'brand_strip', 'usp_band', 'promo_split', 'testimonials', 'blog_teaser', 'rich_text', 'faq', 'contact_info', 'image',
-    'story_hero', 'feature_tiles', 'numbered_cards', 'cta_band', 'contact_hero', 'contact_form',
+    'story_hero', 'feature_tiles', 'numbered_cards', 'cta_band', 'contact_hero', 'contact_form', 'help_hero', 'chat_band',
 ];
 
 /** Channels a Contact block can show (ContactInfoSchema::CHANNELS); the values come from Settings › Store › Business. */
 /** Glyphs of feature tiles and call-to-action buttons (TileIcon). */
-export const TILE_ICONS = ['shield_check', 'check_circle', 'gift', 'map_pin', 'truck', 'money', 'chat', 'phone', 'star', 'heart', 'puzzle', 'books', 'clock'] as const;
+export const TILE_ICONS = ['shield_check', 'check_circle', 'gift', 'map_pin', 'truck', 'money', 'chat', 'phone', 'star', 'heart', 'puzzle', 'books', 'clock', 'user'] as const;
 
 /** Bloom gradient backgrounds a story hero / call-to-action band may use (StoryHeroSchema / CtaBandSchema::TONES). */
 export const BLOOM_TONES = ['sunrise', 'sky', 'mint', 'candy'] as const;
