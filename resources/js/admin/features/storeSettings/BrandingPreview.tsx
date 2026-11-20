@@ -89,7 +89,10 @@ export function BrandingPreview({ content, className = '' }: { content: PreviewC
                 <div className="flex bg-surface px-2.5 py-2">
                     <p className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-subtle px-2.5 py-1 t-admin-mono-sm text-fg-secondary">
                         <LockSimpleIcon size={12} aria-hidden className="shrink-0" />
-                        <span className="truncate">{host}</span>
+                        {/* Clip sideways only: `truncate` also hides vertical overflow, and in the Bangla layout the domain's
+                            JetBrains Mono line overflows its box by a pixel, so it was cropped top and bottom
+                            (admin-a11y bangla.spec "clipped" at 768/1440). The ellipsis still works with overflow-x: clip. */}
+                        <span className="overflow-x-clip text-ellipsis whitespace-nowrap">{host}</span>
                     </p>
                 </div>
             </div>
@@ -132,7 +135,7 @@ export function BrandingPreview({ content, className = '' }: { content: PreviewC
                                 {description}
                             </p>
                         )}
-                        <p className="truncate t-admin-mono-sm text-fg-tertiary">{host}</p>
+                        <p className="overflow-x-clip text-ellipsis whitespace-nowrap t-admin-mono-sm text-fg-tertiary">{host}</p>
                     </div>
                     <p className="truncate px-1.5 t-admin-caption text-fg-brand">{content.host ? `${content.host}/${t('storeBranding.preview.samplePath')}` : host}</p>
                 </div>
