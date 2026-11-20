@@ -1606,7 +1606,7 @@ Audit finding: SK Toy states three different free-delivery thresholds, Krystal's
 
 ## B10. Customer account ("user dashboard") — built 2026-11-11
 
-Playful storefront language (pill buttons, Fredoka headings, pastel tiles), the phone as the identity — signed in with a password (default) or an SMS code (owner decision 2026-11-20; frames 648:13680 / 648:27330, Create account 644:12659 / 646:14060, Set your password 656:28417 / 656:28553), guest checkout always available. English shown; every string goes through i18n like the rest of the store.
+Playful storefront language (pill buttons, Fredoka headings, pastel tiles), the phone as the identity — signed in with a password (default) or an SMS code (owner decision 2026-11-20; frames 648:13680 / 648:27330, Create account 644:12659 / 646:14060, Set your password 656:28417 / 656:28553, Reset your password 661:28684 / 659:28162, Profile › Password card 661:28901 / 661:16754), guest checkout always available. English shown; every string goes through i18n like the rest of the store.
 
 **Components (page 03, section `08 Account`):** `AccountNavItem` `236:2112` (Default / Active) · `AccountOrderCard` `236:2302` (Processing · On the way · Delivered · Cancelled — status is a pastel pill with icon + words; actions follow the stage: track while moving, buy again / rate after delivery) · `AddressCard` `236:2384` (Default / Other — label tag, name + phone, address, landmark, delivery charge and speed for that area) · `RewardsCard` `236:2385` (Bloom gradient: tier, points, worth in ৳, store credit).
 
