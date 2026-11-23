@@ -448,7 +448,7 @@ export const resolvedColors: Record<'light' | 'dark' | 'admin-light' | 'admin-da
     "color/text/on-danger": "#FFFFFF",
     "color/text/price": "#1E293B",
     "color/text/price-was": "#475569",
-    "color/text/discount": "#E11D48",
+    "color/text/discount": "#BE123C",
     "color/text/link": "#0369A1",
     "color/text/disabled": "#475569",
     "color/text/inverse": "#FFFFFF",

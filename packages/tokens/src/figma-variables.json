@@ -224,7 +224,7 @@
         "color/text/on-danger": ["{neutral/0}", "{neutral/0}", "#FFFFFF", "#FFFFFF", "{sj-slate/0}"],
         "color/text/price": ["{neutral/900}", "{neutral/50}", "#0F172A", "#F1F5F9", "{sj-slate/800}"],
         "color/text/price-was": ["{neutral/600}", "{neutral/400}", "#586377", "#94A3B8", "{sj-slate/600}"],
-        "color/text/discount": ["{brand/600}", "{brand/300}", "#BE123C", "#FDA4AF", "{sj-pink/600}"],
+        "color/text/discount": ["{brand/600}", "{brand/300}", "#BE123C", "#FDA4AF", "{sj-pink/700}"],
         "color/text/link": ["{teal/700}", "{teal/300}", "#4338CA", "#A5B4FC", "{sj-blue/700}"],
         "color/text/disabled": ["{neutral/600}", "{neutral/400}", "#586377", "#94A3B8", "{sj-slate/600}"],
         "color/text/inverse": ["{neutral/0}", "{neutral/900}", "#FFFFFF", "#0F172A", "{sj-slate/0}"],

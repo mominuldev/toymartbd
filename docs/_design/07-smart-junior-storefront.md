@@ -609,3 +609,19 @@ Code follows the plan in §5, with one change: the storefront keeps its existing
   | `tile-*` | the six palette 100 tints |
   | `deco-*` | the palette 400/500 colours |
   | `danger` | a red ramp, kept apart from sale pink |
+- **Fonts.** The storefront uses Fredoka for Latin text and digits, Anek Bangla for Bangla text and Hind Siliguri for Bangla titles (§7.2). Hanken Grotesk and Baloo Da 2 are gone. Hind Siliguri stops at 700, so the two 800 styles render at 700.
+- **Name.** The storefront fallback copy, SEO titles and the logo say Smart Junior. Invoices, emails, the admin and the legal name in `lib/site-config.ts` still say Toy Mart BD (owner, 2026-11-24). The site name a visitor sees comes from Admin › Settings › Site & branding. If that is blank, the storefront shows the business name (Toy Mart BD), so the owner must set Site name = Smart Junior there.
+- **Built so far (storefront repo).**
+  - The theme and fonts.
+  - The header: ink announcement strip with track, help and the EN | বাংলা switch; the logo; the search pill with an orange button; hotline; wishlist and account; and the cart pill, which shows the API's `totals.grand_total` from a readable `tm_cart_total` cookie the cart handlers keep current.
+  - The category pills, with icons, "All categories" and a pink "Offers & deals".
+  - The mobile header with its search row.
+  - The bottom tab bar: Home · Shop · raised cart · Wishlist · Account. Search is now in the header row.
+  - The night-sky footer: art exported from Figma and recoloured to tokens, mobile accordions.
+  - The home sections, product card, PDP, cart and checkout are still the Toy Mart look.
+- **Deviations from Figma, and why.**
+  - The announcement strip shows one message, the CMS banner or the COD promise, not three. "Free over ৳1,500" and "7-day returns" are business values the owner has not confirmed.
+  - The footer "We accept" shows cash on delivery only, until the online gateways are live.
+  - The footer sticker headings on purple and pink use the 600 fill with white text: ink on the 500s fails AA.
+  - The footer contact subtitles keep the sample hours and address (`data-placeholder`).
+  - The CMS footer and header menus in the database still have Toy Mart wording; that is admin content.
