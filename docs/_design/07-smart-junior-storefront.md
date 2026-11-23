@@ -625,3 +625,35 @@ Code follows the plan in §5, with one change: the storefront keeps its existing
   - The footer sticker headings on purple and pink use the 600 fill with white text: ink on the 500s fails AA.
   - The footer contact subtitles keep the sample hours and address (`data-placeholder`).
   - The CMS footer and header menus in the database still have Toy Mart wording; that is admin content.
+
+### 16.1 Home sections (2026-11-24)
+
+These blocks are restyled to the Vivid frames on page `34:5658`, and the built-in fallback home matches them:
+- **Hero.** A deep-blue card with confetti, a yellow eyebrow chip, the orange CTA and photo dots.
+- **Trust strip.** Tinted icon chips. On mobile it is a card scroller.
+- **Category tiles.** Pastel circles that morph into a squircle on hover, showing the API image or an icon.
+- **Age tiles.** Tinted cards with a "go" chip.
+- **Product card.** No border and no hover; a rating row from the API; a two-line title box; a blue cart square followed by the orange "Buy now"; a pink sale badge. This applies sitewide.
+- **Section header.** An optional eyebrow, a subtitle and an orange "see all" pill.
+- **Flash deals.** A pink band with confetti and the countdown pill.
+- **Journal and blog cards, Help CTA / chat band, Promo banner, Testimonials.** Restyled to the Smart Junior card language.
+
+Not built, because the data or decision is missing (owner or API work):
+
+| Figma element | What is missing |
+|---|---|
+| Hero mini promo cards | A `promos` field on the hero block, plus the promo figures |
+| Hero social-proof row (★4.9, 12,000+ parents) | Unconfirmed business figures |
+| Headline accent word | No data marks which word to accent |
+| Card "New" badge | The card API sends no new-arrival flag |
+| Bestsellers category chips | No data on the rail block |
+| Rail eyebrows and subtitles | The `product_rail` block has a title only |
+| Two-up promo pairing | A `HomeBlocks` layout change |
+| Age photo cards | We keep 7 bands with icons; there are no age photos (Figma has 4) |
+
+New block types are needed (rule 34a) before these sections can exist:
+- **Gifts & combos** (`57:12772`): a rail driven by a gift or combo collection.
+- **Video reel** (`55:12790`): video hosting is undecided (§10).
+- **Why Smart Junior** (`34:5786`): its stats (50,000+, 4.9/5, 64, 1,200+) are unconfirmed.
+
+The live home still has a `testimonials` block, which the design replaces with the reel.
