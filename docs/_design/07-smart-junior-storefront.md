@@ -142,8 +142,8 @@ Home is section-based, so each section maps to a CMS block in the homepage build
 |---|---|---|
 | Icons | `4:2` | 55 Phosphor icons, `Icon/<Name>` |
 | Logo | `5:51` | Full Light · Full Dark · Mark · Stacked |
-| Button | `5:124` | Primary · Secondary · Accent · Soft · Outline · Ghost × L 52 / M 44 / S 36 |
-| Icon Button | `5:161` | Surface · Soft · Primary · Ghost × 48 / 40 / 32 |
+| Button | `5:124` | Primary · Secondary · Accent · Soft · Outline · Ghost × L 52 / M 44 / S 36. Corners: `radius/md` 14 for L and M, `radius/sm` 10 for S. These were pills (`radius/full`) until §12 |
+| Icon Button | `5:161` | Surface · Soft · Primary · Ghost × 48 / 40 / 32. Rounded squares: `radius/md` for L and M, `radius/sm` for S. These were circles until §12 |
 | Badge | `5:176` | Sale · New · Bestseller · Age · Stock · Gift · Low |
 | Price | `7:59` | L / M / S × Default · Sale · Was |
 | Eyebrow | `7:80` | Coral · Sky · Mint · Lilac · Butter |
@@ -303,7 +303,7 @@ Each colour was resolved in its screen's mode and composited against the real ba
   - confetti plus soft `brand/sun` and `brand/grow` blobs
 
   The flash-sale card is now `pastel/coral-strong` and the STEM card `pastel/mint-strong` (was baby blue), both with white eyebrow chips. The hero now reads as one grape / pink / aqua palette. Every hero text passes AA.
-- **Add to cart.** There is a new **`action/cart`** token (Light `butter/500`, Vivid `aqua/500` #00F5D4), with labels and icons in `text/primary` / `icon/default` (11.1:1). It is used on all 67 add-to-cart controls on the Vivid page: the product-card cart buttons, the product-page button, the "add all 3" bundle button and the mobile cross-sell "যোগ করুন". "Buy now" stays `action/primary` pink, so the two actions never look alike.
+- **Add to cart.** There is a new **`action/cart`** token (Light `butter/500`, Vivid `lemon/300` #FEF096; Vivid was `aqua/500` until §12), with labels and icons in `text/primary` / `icon/default` (11.1:1). It is used on all 67 add-to-cart controls on the Vivid page: the product-card cart buttons, the product-page button, the "add all 3" bundle button and the mobile cross-sell "যোগ করুন". "Buy now" stays `action/primary` pink, so the two actions never look alike.
 
 ## 10. Home: the video reel replaces the reviews (2026-11-23)
 
@@ -378,3 +378,12 @@ The tablet home never had a reviews section, so it has no reel.
 - The reference has a dotted background. It is not added, because the owner limits patterns to specific sections (§7.4). Adding one is a single layer if wanted.
 - The combo names, prices and discounts are placeholders. The photos are the existing AI product placeholders, matched to the titles.
 - **Code:** the section is a product rail driven by a "gift"/"combo" collection or tag. That needs a CMS block that takes a product source (rule 34a), and the server sets the prices (rule 1).
+
+## 12. Buttons, cart colour and card shadows (2026-11-23)
+
+Owner requests:
+- **Rounded buttons, not pills or circles.** Every `Button` and `Icon Button` variant now binds its corners to `radius/md` (14) at L and M, and `radius/sm` (10) at S. Instances inherit this, so all screens on both pages follow. Chips, badges, the duration and product chips in the video reel, and the eyebrow keep `radius/full`.
+- **Add-to-cart colour.** The Vivid value of `action/cart` changed from `aqua/500` to **`lemon/300` #FEF096**. That gives a pale yellow button with a navy icon, as in the owner's reference. It still reads clearly against the pink Buy now. Light is unchanged. On the Vivid page, 75 cart paints were refreshed to the new base colour (gotcha 1).
+- **Product-card shadows were being cut off.** The rows, scrollers and sections that hold product cards clipped their content, so the `SJ/Elevation` shadow was cropped at the row edge. These were the Flash deals, Bestsellers, New arrivals, Gifts, category grid, You may also like and cross-sell containers, on both pages. Clipping is now off on every container between a card and its screen frame. The screen frame still clips, so a mobile scroller still runs off the edge. Layers inside component instances were left as they were.
+
+**Rule:** a container that holds elevated cards never clips its content. Let the screen frame do the clipping.
