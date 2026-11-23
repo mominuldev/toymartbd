@@ -393,27 +393,33 @@ Owner requests:
 The owner asked for 3D category art in place of the Phosphor icons and supplied a reference: a pastel circle holding a glossy, saturated 3D object that nearly fills it.
 
 - **Tile shape.** The `Tile` frame in both `Category Tile` variants now binds its corners to `radius/full`, so it is a circle. The tint fill is unchanged.
-- **Art.** Nine components, `Category 3D/<Name>` (Components page, frame `77:1051`): Educational `77:1052`, Soft Toys `77:1054`, Books `77:1056`, Montessori `77:1058`, Art & Craft `77:1060`, STEM `77:1062`, Baby Care `77:1064`, Birthday `77:1066`, Gifts `77:1068`. Each holds one AI render (Figma `generate_image`) on white. The `Art` layer uses a **MULTIPLY** blend, so the white drops out against the tile tint, the same trick the product card uses.
+- **Art.** Nine components, `Category 3D/<Name>` (Components page, frame `77:1051`): Educational `77:1052`, Soft Toys `77:1054`, Books `77:1056`, Montessori `77:1058`, Art & Craft `77:1060`, STEM `77:1062`, Baby Care `77:1064`, Birthday `77:1066`, Gifts `77:1068`. Each holds one AI render (Figma `generate_image`), cut out to a **transparent 512 px PNG**: the near-white background is removed with an edge flood-fill and a feathered edge. The art used to be white-background renders with a MULTIPLY blend. Off-white showed as a faint square once the art popped out of the tile on hover, so they were replaced.
 - **Size.** The `Icon` instance-swap property (`Icon#9:18`) now points at the 3D art: 112 px on desktop and 68 px on mobile. All 48 tile instances on both pages (Light `0:1` and Vivid `34:5658`) were set by label. "Birthday Gifts" and "Gifts" now have their own art (cake, and gift boxes); before, both used the cake icon.
 - **Caveats.**
   - The renders are placeholders, like the product photos. Production needs real transparent PNG or WebP files, which the CMS or the storefront would serve.
-  - MULTIPLY only works on a light tint, so a dark mode would need transparent cut-outs.
+  - The cut-outs are transparent, so they also work on a dark background.
 - **Name and count spacing.** The name and the count now sit in their own `Text` stack (desktop `78:1034`, mobile `78:1035`) with a 2 px gap bound to `space/2`. The gap from the tile to the name stays 12 px on desktop and 8 px on mobile. The desktop tile is now 136 × 177.
-- **Hover state (reworked to the owner's second reference).** `Category Tile` has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
-  - a rounded **card** appears behind the whole tile: `Card`, `radius/lg`, filled with the category tint. It is absolutely positioned and sized like the reference. On desktop it reaches 14 px past the sides, 12 px above and 16 px below the tile (164 × 205). On mobile it reaches 8 px past the sides, 8 px above and 10 px below (96 × 118). The row does not reflow and neighbouring tiles do not move. To stop the card being cropped, clipping is off on the home category rows and their section wrappers on both pages (Light `14:327`, `14:292`, `17:1446`, `17:1470`, `17:1500`, `19:2139`, `19:2162`; Vivid `34:5706`, `34:5708`, `34:5915`, `34:5917`, `34:5922`, `34:6041`, `34:6043`). The screen frames still clip;
-  - the circle turns white (`bg/surface`);
-  - a **dashed ring** sits inside the circle: `Ring`, 6 px inset (4 px on mobile), dash 5/4, the category's `-ink` colour at 55 %;
-  - the 3D art stays the same size, with no zoom, tilt or shadow. The name and subtitle do not change.
+- **Hover state ("pop & go": the owner asked for something of our own, not a copy of the reference).** `Category Tile` has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
+  - **The circle morphs into the brand squircle.** This is the logo's shape: `radius/2xl` on desktop, `radius/lg` on mobile. The tint stays the same.
+  - **The 3D toy pops out.** It becomes absolutely positioned, a little larger (136 px on desktop, 82 px on mobile) and lifted out of the top of the shape (−22 px desktop, −14 px mobile). The tile does not clip.
+  - **Two sparkles pop in.** They use `Icon/Sparkle` and stand for "Play".
+  - **A white "go" chip appears at the bottom-right.** It is `bg/surface` with `SJ/Elevation/e1` and an `Icon/ArrowRight`, and it says the tile is a link.
+  - The name and subtitle do not change. There is no card and no shadow on the tile.
 
-  **Per-category colour comes from a variable mode, not from fill overrides.** The new collection `SJ · Category tint` (`87:1036`) has the modes Sky, Butter, Lilac, Mint, Blush, Coral and Lagoon. Its variables are:
-  - `tint/fill`, which aliases `pastel/<x>-strong`; the default circle and the hover card use it;
-  - `tint/ring`, which aliases `pastel/<x>-ink`.
+  **Per-category colour comes from a variable mode, not from fill overrides.** The collection `SJ · Category tint` (`87:1036`) has the modes Sky, Butter, Lilac, Mint, Blush, Coral and Lagoon. Its variables are:
+  - `tint/fill`, which aliases `pastel/<x>-strong`; the tile uses it in both states;
+  - `tint/ink`, which aliases `pastel/<x>-ink`; the sparkles and the chip arrow use it.
 
-  Each tile instance sets its mode. Instance fill overrides would have carried into the Hover variant and kept the circle tinted, so all 48 instances were reset and their art, text and Bangla fonts reapplied. The variables alias `SJ · Color`, so Vivid resolves them automatically.
+  Each tile instance sets its mode, and the mode carries across the variant swap. The variables alias `SJ · Color`, so Vivid resolves them automatically.
 
-  The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms.
+  The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. Clipping is off on the home category rows and their section wrappers on both pages, so the popped art is not cropped: Light `14:327`, `14:292`, `17:1446`, `17:1470`, `17:1500`, `19:2139`, `19:2162`; Vivid `34:5706`, `34:5708`, `34:5915`, `34:5917`, `34:5922`, `34:6041`, `34:6043`.
 
-  **For the storefront:** the tint is a per-category value, delivered as a CSS custom property such as `--tile-tint`, not a class per colour. Fade the card and ring in with `opacity` and keep the transition under 200 ms. Respect `prefers-reduced-motion`.
+  **For the storefront:**
+  - Tint: deliver it per category as a CSS custom property, `--tile-tint` / `--tile-ink`.
+  - Shape: animate `border-radius` from 50 % to the squircle radius.
+  - Art: move it with `transform: translateY(-14px) scale(1.06)` and a spring-like ease.
+  - Sparkles and chip: fade and scale them in.
+  - Keep everything under 250 ms and respect `prefers-reduced-motion`; under reduced motion, drop the lift and keep the shape change.
 - **Reference categories and Bangla subtitles.** The home category row now uses the owner's reference set, in this order (tint in brackets):
   1. Educational Toys (butter)
   2. Learning Books (lilac)
