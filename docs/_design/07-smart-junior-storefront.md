@@ -262,3 +262,33 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 - **Hero and product photos** are still the AI placeholders from the Light design.
 - **Code.** Nothing is built yet. Building this variation means adding the Vivid mode to `packages/tokens` as a second storefront theme. It also needs the three web fonts (Hind Siliguri, Anek Bangla, Fredoka; all on Google Fonts, OFL), and the Bangla strings added to the storefront's i18n files.
 - **Light-mode buttons.** These still use white labels on lagoon (4.6:1), which is unchanged.
+
+## 8. Contrast audit — both storefront pages (2026-11-23)
+
+The audit was scripted in Figma and covered every visible text segment and icon:
+- Light page `0:1`: 2,058 text segments and 1,021 icons
+- Vivid page `34:5658`: 2,579 text segments and 1,021 icons
+
+Each colour was resolved in its screen's mode and composited against the real background stack (parent fills, sibling shapes underneath, opacity). It was then checked against WCAG 2.2 AA: 4.5:1 for normal text, 3:1 for large text (≥ 24 px, or ≥ 18.66 px bold), and 3:1 for icons and control boundaries (1.4.11).
+
+**Result after fixes: 0 failures on both pages.**
+
+| Found | Was | Fix |
+|---|---|---|
+| Rating stars (yellow), 380+ instances | 1.3 Vivid / 1.5 Light | New `icon/star-outline` stroke on every star in `Rating` (`butter/700` Light, `lemon/700` Vivid). The fill stays yellow; the outline is ≥ 6:1 |
+| Text-input, search, select, coupon and note borders (`border/default`) | 1.45 | New primitive `ink/400` = `#8388a6` → new `border/input` (3.48 on white, 3.40 on canvas, 3.23 on cream/100). Applied to `Input`, `Search` and the local fields on both pages |
+| Checkbox and radio "off" borders (`border/strong`) | 2.22 | `border/input` |
+| Focus ring (`effect/focus-ring`) | 1.75 Light / 1.86 Vivid | Light `lagoon/700` (7.1), Vivid `bubblegum/700` (7.5) |
+| Order-confirmed ✓ (`brand/grow` on mint) | 1.94 / 1.26 | `pastel/mint-ink` |
+| "Sold out" label (`text/disabled`) | 2.22 | `text/muted` |
+| Inactive checkout step numbers (`text/muted` on `bg/muted`) | 4.31 | `text/secondary` |
+
+**Exempt by WCAG and left as they are:**
+- the coloured "•" in the logo tagline (logotype)
+- the "|" dividers and review quote marks (decorative)
+- the disabled "150 pcs" option (inactive control)
+- buttons, chips and option cards: they are identified by their labels, which pass, so their borders don't need 3:1
+
+**Rule going forward:**
+- New form controls use `border/input`, never `border/default`.
+- Text on a coloured fill is checked in **both** modes. `brand/*` tokens are fills and accents, never body text on white.
