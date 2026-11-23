@@ -402,8 +402,9 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
 - **Hover state.** `Category Tile` now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
   - the tile lifts with `SJ/Elevation/e3`;
   - a white inside ring appears, bound to `bg/surface` (3 px on desktop, 2 px on mobile);
-  - the 3D art zooms (112 → 124 px on desktop, 68 → 76 px on mobile) and tilts −6°, still clipped to the circle;
-  - the name turns `text/brand`.
+  - the 3D art zooms (112 → 124 px on desktop, 68 → 76 px on mobile) and tilts −6°, still clipped to the circle.
+
+  The name and subtitle do not change on hover; the owner removed the brand-colour name.
 
   The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On touch, use the mobile Hover variant as the pressed state.
 
