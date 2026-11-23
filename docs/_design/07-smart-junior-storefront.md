@@ -399,18 +399,21 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   - The renders are placeholders, like the product photos. Production needs real transparent PNG or WebP files, which the CMS or the storefront would serve.
   - MULTIPLY only works on a light tint, so a dark mode would need transparent cut-outs.
 - **Name and count spacing.** The name and the count now sit in their own `Text` stack (desktop `78:1034`, mobile `78:1035`) with a 2 px gap bound to `space/2`. The gap from the tile to the name stays 12 px on desktop and 8 px on mobile. The desktop tile is now 136 × 177.
-- **Hover state.** `Category Tile` now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
-  - the tile lifts with `SJ/Elevation/e3`;
-  - a white inside ring appears, bound to `bg/surface` (3 px on desktop, 2 px on mobile);
-  - the 3D art zooms (112 → 124 px on desktop, 68 → 76 px on mobile) and tilts −6°, still clipped to the circle.
+- **Hover state (reworked to the owner's second reference).** `Category Tile` has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
+  - a rounded **card** appears behind the whole tile: `Card`, `radius/lg`, filled with the category tint. It is absolutely positioned and reaches 6 px past the sides and 8 px above the tile, so the row does not reflow. Neighbouring tiles do not move;
+  - the circle turns white (`bg/surface`);
+  - a **dashed ring** sits inside the circle: `Ring`, 6 px inset (4 px on mobile), dash 5/4, the category's `-ink` colour at 55 %;
+  - the 3D art stays the same size, with no zoom, tilt or shadow. The name and subtitle do not change.
 
-  The name and subtitle do not change on hover; the owner removed the brand-colour name.
+  **Per-category colour comes from a variable mode, not from fill overrides.** The new collection `SJ · Category tint` (`87:1036`) has the modes Sky, Butter, Lilac, Mint, Blush, Coral and Lagoon. Its variables are:
+  - `tint/fill`, which aliases `pastel/<x>-strong`; the default circle and the hover card use it;
+  - `tint/ring`, which aliases `pastel/<x>-ink`.
 
-  The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On touch, use the mobile Hover variant as the pressed state.
+  Each tile instance sets its mode. Instance fill overrides would have carried into the Hover variant and kept the circle tinted, so all 48 instances were reset and their art, text and Bangla fonts reapplied. The variables alias `SJ · Color`, so Vivid resolves them automatically.
 
-  The tile stays clipped on purpose. With clipping off, the elevation shadow follows the art's square white background instead of the circle.
+  The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms.
 
-  **For the storefront:** animate `transform` only (scale 1.1 and rotate −6deg on the art, a small lift on the tile). Respect `prefers-reduced-motion`.
+  **For the storefront:** the tint is a per-category value, delivered as a CSS custom property such as `--tile-tint`, not a class per colour. Fade the card and ring in with `opacity` and keep the transition under 200 ms. Respect `prefers-reduced-motion`.
 - **Reference categories and Bangla subtitles.** The home category row now uses the owner's reference set, in this order (tint in brackets):
   1. Educational Toys (butter)
   2. Learning Books (lilac)
