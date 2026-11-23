@@ -446,15 +446,18 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
 
 `Product Card` (`9:146`) now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `94:1083`, Mobile Hover `94:1130`. It sits in the same family as the category tile's "pop & go". On hover:
 
-- **Lift and ring.** The shadow goes from `SJ/Elevation/e1` to `e3`, and an inside stroke in `border/brand` appears: 2 px on desktop, 1.5 px on mobile. It is teal on Light and purple on Vivid.
+- **Lift and ring.** The shadow goes from `SJ/Elevation/e1` to `e3`, and the card's 1 px border changes colour from `border/default` to `border/brand`: teal on Light, purple on Vivid. **The weight stays 1 px.** The card counts its stroke in its layout, so a thicker hover stroke grew the card by 2 px and shifted its content. That made the card "dance", and in the prototype it could flicker in and out of hover. A script compared every layer's bounds between Default and Hover: nothing moves except the zoomed photo and the chip.
 - **Photo zoom.** `Photo` scales to 106 % inside `Media`, which clips it. The product image override carries over.
 - **Quick view chip (desktop only).** A white pill sits at the bottom centre of the photo: `bg/surface`, `radius/full`, `SJ/Elevation/e2`, `Icon/MagnifyingGlass` and `SJ/Label/S`. Its text is the new `Quick view` component property (`Quick view#94:0`). The 46 Vivid desktop cards set it to "দ্রুত দেখুন" with `SJ Vivid/Label/S`. The chip also exists in Default at opacity 0 and 10 px lower, so Smart Animate fades and slides it up. That also gives instances a layer to hold the Bangla font override.
 - **The title changes colour only** (owner, 2026-11-23): it goes to `text/brand`. Its font and weight never change.
 - The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On mobile, the Hover variant serves as the pressed state, without the chip.
 
-**The title font is now a token.** The Vivid page set the card title to Fredoka by a direct font override. Figma dropped that override on the variant swap, because the title carries a text style, so the hovered title fell back to Plus Jakarta Sans. The fix is a new collection, `SJ · Type` (`94:17161`), with the modes Light and Vivid:
+**The title font and line height are now tokens.** The Vivid page set the card title to Fredoka by a direct font override. Figma dropped that override on the variant swap, because the title carries a text style, so the hovered title fell back to Plus Jakarta Sans. The fix is a new collection, `SJ · Type` (`94:17161`), with the modes Light and Vivid:
 - `font/card-title` is Plus Jakarta Sans in Light and Fredoka in Vivid, and both title layers bind their font family to it;
+- `line-height/card-title` is 21 px in Light and 24.15 px in Vivid (15 px text at 140 % and 161 %), and `line-height/card-title-s` is 18.2 / 20.86 px (14 px text at 130 % and 149 %). They are bound in px on purpose, because a bound FLOAT is read as pixels (Figma rule 7). The Vivid line-height override was dropped on hover in the same way as the font, so the hovered title shrank;
 - all 20 top-level frames on the Vivid page set the Vivid mode.
+
+  A hovered title now has exactly the same height as the default one (49 px for two lines on Vivid desktop).
 
 **For the storefront:**
 - Animate only `box-shadow`, `border-color`, the photo's `transform: scale(1.06)`, the chip's opacity/translate, and the title's `color`.
