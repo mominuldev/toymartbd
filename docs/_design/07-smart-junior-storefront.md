@@ -455,3 +455,12 @@ A hover state was designed (lift, brand border, photo zoom, Quick view chip) and
 
   Both card title layers are bound to these, and the Vivid page's 20 top-level frames set the Vivid mode. The values are in px on purpose, because a bound FLOAT is read as pixels (Figma rule 7).
 - **For the storefront:** no hover effect on product cards. Keyboard focus still needs a visible `SJ/Focus/ring` on the card link.
+- **Every card is the same height (owner, 2026-11-23).** One-line titles used to make cards shorter: 427 instead of 448 on Light desktop, 301 instead of 319 on Light mobile, and similar gaps on Vivid. Prices and buttons then didn't line up across a row. The title is now a fixed **two-line box**: text auto-resize "truncate", ending in an ellipsis. Its height is bound to two new `SJ · Type` tokens:
+  - `size/card-title-h`: 42 px in Light, 50 px in Vivid;
+  - `size/card-title-h-s`: 36 px in Light, 42 px in Vivid.
+
+  Measured on all 144 instances, every card is now one height per size and page:
+  - Light: desktop 448, mobile 319;
+  - Vivid: desktop 458, mobile 327.
+
+  **For the storefront:** clamp the title with `line-clamp: 2` (`-webkit-line-clamp`) and give it `min-height: calc(2 * line-height)`. Give the card `height: 100%` inside a grid row, so a translated title that wraps differently never changes the card height.
