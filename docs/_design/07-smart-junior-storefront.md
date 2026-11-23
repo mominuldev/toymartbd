@@ -292,3 +292,14 @@ Each colour was resolved in its screen's mode and composited against the real ba
 **Rule going forward:**
 - New form controls use `border/input`, never `border/default`.
 - Text on a coloured fill is checked in **both** modes. `brand/*` tokens are fills and accents, never body text on white.
+
+## 9. Vivid hero and add-to-cart colours (2026-11-23)
+
+- **Home hero (Vivid, all three sizes).** The main card moves to a new token, **`bg/brand-strong`** (Light `lagoon/700`, Vivid `grape/700`). On it:
+  - headline and body in `text/inverse`
+  - the word "খেলনা" accented in `brand/sun`
+  - a lemon eyebrow chip
+  - confetti plus soft `brand/sun` and `brand/grow` blobs
+
+  The flash-sale card is now `pastel/coral-strong` and the STEM card `pastel/mint-strong` (was baby blue), both with white eyebrow chips. The hero now reads as one grape / pink / aqua palette. Every hero text passes AA.
+- **Add to cart.** There is a new **`action/cart`** token (Light `butter/500`, Vivid `aqua/500` #00F5D4), with labels and icons in `text/primary` / `icon/default` (11.1:1). It is used on all 67 add-to-cart controls on the Vivid page: the product-card cart buttons, the product-page button, the "add all 3" bundle button and the mobile cross-sell "যোগ করুন". "Buy now" stays `action/primary` pink, so the two actions never look alike.
