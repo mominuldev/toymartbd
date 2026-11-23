@@ -155,7 +155,7 @@ Home is section-based, so each section maps to a CMS block in the homepage build
 | Input | `7:178` | Default · Focus · Error |
 | Trust Item | `7:214` | Sky · Mint · Butter · Coral · Lilac |
 | Product Card | `9:146` | Desktop 272 × 450 · Mobile 171 × 321 |
-| Category Tile | `9:159` | Desktop 136 × 187 · Mobile 80 × 100 |
+| Category Tile | `9:159` | Desktop 136 × 187 · Mobile 80 × 100. Circle tile with 3D art (§13) |
 | Age Card | `9:176` | Desktop · Mobile |
 | Section Header | `9:213` | Desktop 1200 · Mobile 358 |
 | Header | `10:289` | Desktop 1440 × 205 · Mobile 390 × 159 |
@@ -387,3 +387,14 @@ Owner requests:
 - **Product-card shadows were being cut off.** The rows, scrollers and sections that hold product cards clipped their content, so the `SJ/Elevation` shadow was cropped at the row edge. These were the Flash deals, Bestsellers, New arrivals, Gifts, category grid, You may also like and cross-sell containers, on both pages. Clipping is now off on every container between a card and its screen frame. The screen frame still clips, so a mobile scroller still runs off the edge. Layers inside component instances were left as they were.
 
 **Rule:** a container that holds elevated cards never clips its content. Let the screen frame do the clipping.
+
+## 13. Category tiles: 3D art instead of icons (2026-11-23)
+
+The owner asked for 3D category art in place of the Phosphor icons and supplied a reference: a pastel circle holding a glossy, saturated 3D object that nearly fills it.
+
+- **Tile shape.** The `Tile` frame in both `Category Tile` variants now binds its corners to `radius/full`, so it is a circle. The tint fill is unchanged.
+- **Art.** Nine components, `Category 3D/<Name>` (Components page, frame `77:1051`): Educational `77:1052`, Soft Toys `77:1054`, Books `77:1056`, Montessori `77:1058`, Art & Craft `77:1060`, STEM `77:1062`, Baby Care `77:1064`, Birthday `77:1066`, Gifts `77:1068`. Each holds one AI render (Figma `generate_image`) on white. The `Art` layer uses a **MULTIPLY** blend, so the white drops out against the tile tint, the same trick the product card uses.
+- **Size.** The `Icon` instance-swap property (`Icon#9:18`) now points at the 3D art: 112 px on desktop and 68 px on mobile. All 48 tile instances on both pages (Light `0:1` and Vivid `34:5658`) were set by label. "Birthday Gifts" and "Gifts" now have their own art (cake, and gift boxes); before, both used the cake icon.
+- **Caveats.**
+  - The renders are placeholders, like the product photos. Production needs real transparent PNG or WebP files, which the CMS or the storefront would serve.
+  - MULTIPLY only works on a light tint, so a dark mode would need transparent cut-outs.
