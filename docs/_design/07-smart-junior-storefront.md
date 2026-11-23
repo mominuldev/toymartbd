@@ -567,3 +567,16 @@ The screens on page `34:5658` re-render through the variables, and nothing on th
   | Yellow | about 1.7:1, fails 3:1 |
 
   The owner accepted this.
+
+**Playful Pink carries promotions (owner, 2026-11-24).** Until now #F43F5E itself barely showed in Vivid: only dark shades and pale tints were in use. The following Vivid aliases now point at pink:
+
+| Token | Now | Was |
+|---|---|---|
+| `action/sale` | `pink/500` | `pink/600` |
+| `action/accent` | `pink/500` (header "Offers" button, cart and wishlist count badges) | blue |
+| `text/sale` | `pink/600` | `pink/700` |
+| `pastel/coral`, `pastel/coral-strong`, `pastel/coral-ink` | `pink/50`, `pink/100`, `pink/700` (Flash deals band, flash-sale promo card, sale eyebrows) | orange tints |
+| `effect/glow-accent` | `#F43F5E` at 28% | blue |
+
+- **Sale badges.** The 72 "-NN%" Sale badges on page `34:5658` were bound to the primitive `coral/700`, a rule-26 defect in the Badge component. On the Vivid page they are overridden to `action/sale`. The Light page and the main component still bind `coral/700`; fix the component when it is built in code.
+- **Contrast.** White on #F43F5E is **3.7:1**, which passes for large text and icons but not for the small bold badge labels (4.5:1).
