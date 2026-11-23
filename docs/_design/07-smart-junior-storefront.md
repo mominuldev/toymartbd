@@ -580,3 +580,32 @@ The screens on page `34:5658` re-render through the variables, and nothing on th
 
 - **Sale badges.** The 72 "-NN%" Sale badges on page `34:5658` were bound to the primitive `coral/700`, a rule-26 defect in the Badge component. On the Vivid page they are overridden to `action/sale`. The Light page and the main component still bind `coral/700`; fix the component when it is built in code.
 - **Contrast.** White on #F43F5E is **3.7:1**, which passes for large text and icons but not for the small bold badge labels (4.5:1).
+
+**Darkened for the contrast gate (owner, 2026-11-24, before building).** The token build fails on any AA failure, so the owner chose to keep white labels and darken the fills. In Vivid, both here and in code:
+
+| Token | Now | Contrast with white |
+|---|---|---|
+| `action/primary` | `orange/700` #C2410C (hover `orange/800`) | 5.2:1 |
+| `action/cart` | `blue/700` #0369A1 | 5.9:1 |
+| `action/sale` and `action/accent` | `pink/600` #E11D48 | 4.7:1 |
+
+The lighter tints, the confetti and the flash-sale band keep the brighter palette.
+
+## 16. Code: the `smart-junior` theme (2026-11-24)
+
+Code follows the plan in §5, with one change: the storefront keeps its existing semantic vocabulary (`bg-brand`, `text-fg-primary`, `bg-tile-*`, `deco-*` …) instead of adopting the `SJ · *` names.
+
+- **Tokens.** The Toy Mart library (`PWZp5VzEgEEf5N2Y38lGIh`) has a fifth `Color` mode, **Smart Junior**. It aliases the new primitives `sj-blue|sunshine|pink|green|purple|orange|red|slate/*` and uses the effect styles `Elevation/Smart Junior/e1–e4`. The export runs through `packages/tokens` as `data-theme="smart-junior"`, and the contrast gate covers it (150 pairs pass). The admin themes are unchanged.
+- **Mapping.**
+
+  | Storefront token | Smart Junior colour |
+  |---|---|
+  | `brand` | orange/700 (the CTA) |
+  | `text/brand` and `link` | blue/700 |
+  | `teal` | blue |
+  | `accent` | sunshine |
+  | `grape` | purple/600 |
+  | `discount` and `bg/pink` | pink/600 |
+  | `tile-*` | the six palette 100 tints |
+  | `deco-*` | the palette 400/500 colours |
+  | `danger` | a red ramp, kept apart from sale pink |

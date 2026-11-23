@@ -24,6 +24,7 @@ const THEMES = [
   ['Dark', 'dark'],
   ['Admin Light', 'admin-light'],
   ['Admin Dark', 'admin-dark'],
+  ['Smart Junior', 'smart-junior'],
 ];
 
 const slug = (name) => name.replaceAll('/', '-');

@@ -18,7 +18,7 @@ visual bug: change it in Figma, re-export, run `npm run tokens:build`, and commi
 
 ## Themes
 
-The Figma `Color` collection has four modes; each is a `data-theme` value. Themes nest, because every
+The Figma `Color` collection has five modes; each is a `data-theme` value. Themes nest, because every
 block sets its values directly.
 
 | Figma mode | `data-theme` | Used by |
@@ -27,6 +27,7 @@ block sets its values directly.
 | Dark | `dark` | Storefront dark |
 | Admin Light | `admin-light` | Admin (Theme B, slate & indigo) |
 | Admin Dark | `admin-dark` | Admin dark, and the admin sidebar in both admin themes |
+| Smart Junior | `smart-junior` | Storefront (Smart Junior rebrand, the Vivid palette from Figma `2b6PVOOapPbcaKYIdHWZup`; primitives `sj-*`, see `docs/_design/07-smart-junior-storefront.md` §15) |
 
 ## Utility names
 
