@@ -298,6 +298,17 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 - **Track and ground.** The train runs on a rail with `pastel/mint-ink` sleepers, over a `brand/grow` grass strip with small flowers. The bottom bar is `text/primary` (navy).
 - **Mobile.** The engine runs on its own track. The four link groups are two two-carriage trains, each carriage an accordion with a "+" button.
 
+**Concept D, "Treasure map" (2026-11-24, alternative for the owner to choose).** It is component set `Footer — Vivid · বাংলা · Concept D (Treasure map)` (`115:1932`: Desktop `114:1805`, Mobile `115:1805`) on the Components page. **No screen uses it yet.**
+
+- **Sea.** The footer is a sea (`pastel/sky-strong`). Its top edge is a wavy `bg/canvas` shoreline, and white wave doodles are scattered over it.
+- **Banner.** A ribbon reading "Smart Junior দ্বীপে স্বাগতম!" (`action/primary`, with `action/primary-hover` tails).
+- **Map scrolls.** Brand info (logo, blurb, socials) and contact details sit on two parchment scrolls (`pastel/butter` paper, `pastel/butter-strong` rolls). The mascot peeks over the Contact scroll.
+- **Islands.** The link groups (শপ, সহায়তা, প্রতিষ্ঠান) are islands: `pastel/butter-strong` sand on a `brand/grow` grass rim. They are drawn as organic squircle blobs, so the text never leaves the sand. Each island has a flag in its group colour (`brand/sun`, `brand/grow`, `brand/learn`).
+- **Trail.** A dotted `action/sale` treasure trail runs from "শুরু এখান থেকে" under the brand scroll, past each island, to an **X** and "এখানে আমরা!" below the Contact scroll.
+- **Extras.** A compass rose (top right) and a little sailing ship (bottom left).
+- **Mobile.** The brand scroll comes first. Below it, the four groups (Contact included) are accordion islands that zigzag left and right, joined by the trail, which ends at the X.
+- **Contrast.** All text sits on the parchment or sand fills, using `text/primary` and `text/secondary` (never muted).
+
 ### 7.6 Not done / open
 
 - **Hero and product photos** are still the AI placeholders from the Light design.
