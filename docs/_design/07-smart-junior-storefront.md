@@ -286,6 +286,18 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 - **Wordmark.** A giant "Smart Junior" in Fredoka Bold: 200 px on desktop, 61 px on mobile. Each letter takes a brand colour, with an ink outline and a hard shadow. It is a logotype, so it is exempt from text contrast.
 - **Bottom bar.** `text/primary` (navy) with `text/inverse` text.
 
+**Concept C, "Toy train" (2026-11-23, alternative for the owner to choose).** It is component set `Footer — Vivid · বাংলা · Concept C (Toy train)` (`111:1959`: Desktop `110:1718`, Mobile `111:1747`) on the Components page. **No screen uses it yet.**
+
+- **Day sky.** The background is `pastel/sky`. Its top edge is a row of `bg/canvas` cloud bumps, so the page above appears to melt into clouds. There is a `brand/sun` sun and white outlined clouds.
+- **Headline.** "চলো খেলার দেশে!", with the subline "খেলনা, বই আর শেখার মজা — সব এক ট্রেনে।"
+- **Train.** All content rides in a train with `text/primary` roofs, wheels with `brand/sun` hubs, and couplings. Each car body is a brand colour with a white window, so every link sits on `bg/surface` and contrast is the same as a plain card:
+  - **engine:** `action/primary`, with a chimney, smoke and a lamp. It carries the logo, blurb and socials.
+  - **carriages:** শপ `brand/sun`, সহায়তা `brand/grow`, প্রতিষ্ঠান `brand/learn`, যোগাযোগ `brand/lagoon`.
+  
+  The mascot rides on the last carriage.
+- **Track and ground.** The train runs on a rail with `pastel/mint-ink` sleepers, over a `brand/grow` grass strip with small flowers. The bottom bar is `text/primary` (navy).
+- **Mobile.** The engine runs on its own track. The four link groups are two two-carriage trains, each carriage an accordion with a "+" button.
+
 ### 7.6 Not done / open
 
 - **Hero and product photos** are still the AI placeholders from the Light design.
