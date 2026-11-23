@@ -258,6 +258,19 @@ Cart and checkout carry no pattern, following `03-storefront-spec.md` §0 rule 9
 
 The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 footer instances on the Vivid page use it. The tablet uses the Mobile variant stretched to 834.
 
+**Redesign, "night-sky playground" (owner request 2026-11-23: more creative and kid-friendly).** The earlier version is kept as `Footer — Vivid · বাংলা (backup 2026-11-23)` (`102:1042`) on the Components page. No instance uses it.
+
+- **Newsletter removed** (owner). The "Smart Junior ক্লাব" WhatsApp sign-up card is gone from both variants.
+- **Sky.** The four dim blobs are replaced by a `brand/sun` crescent moon and four-point sparkles in the brand colours. The confetti layer stays.
+- **Mascot** says "আবার এসো!" in a speech bubble beside it on the wave.
+- **Desktop column headings** are tilted sticker pills (±2–3°): শপ `brand/sun`, সহায়তা `brand/grow`, প্রতিষ্ঠান `brand/play`, যোগাযোগ `brand/learn`, with `text/primary` labels. Contact icons sit in rounded squares in the same four colours, with `icon/default` glyphs.
+- **Mobile accordion rows** start with a tilted colour tile, and their "+" icons take the row colour.
+- **"Toy town" band** (new frame between the columns and the bottom bar): aqua and blue hills, an A-B-C block stack, a ball, a kite and balloons tied to the hill. The front hill is `bg/brand-strong` and runs into the bottom bar, which now sits on that colour with `text/inverse` text and white-outlined payment chips (white on grape/700 ≥ 7:1).
+- **Stretching.** The band's hills scale with the frame. Blocks pin to the left; balloons, kite, moon and bubble pin to the right, so the tablet (Mobile variant at 834) keeps its layout.
+- Every new fill and stroke is bound to an `SJ · Color` token (no raw hex).
+
+**Code note:** the band and sky are decorative. Ship them as one inline SVG per breakpoint with `aria-hidden="true"`, not as images, and don't animate them unless `prefers-reduced-motion` allows it.
+
 ### 7.6 Not done / open
 
 - **Hero and product photos** are still the AI placeholders from the Light design.
