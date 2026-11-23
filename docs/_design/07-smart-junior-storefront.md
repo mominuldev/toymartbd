@@ -446,7 +446,10 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
 
 `Product Card` (`9:146`) now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `94:1083`, Mobile Hover `94:1130`. It sits in the same family as the category tile's "pop & go". On hover:
 
-- **Lift and ring.** The shadow goes from `SJ/Elevation/e1` to `e3`, and the card's 1 px border changes colour from `border/default` to `border/brand`: teal on Light, purple on Vivid. **The weight stays 1 px.** The card counts its stroke in its layout, so a thicker hover stroke grew the card by 2 px and shifted its content. That made the card "dance", and in the prototype it could flicker in and out of hover. A script compared every layer's bounds between Default and Hover: nothing moves except the zoomed photo and the chip.
+- **Lift and border (owner, 2026-11-23).** The shadow goes from `SJ/Elevation/e1` to `e3`.
+  - **Border:** the card has a **2 px border that is transparent by default and `border/brand` on hover** (teal on Light, purple on Vivid). It lives on its own locked `Border` layer: absolutely positioned, stretched to the card, `radius/lg` (`radius/md` on mobile), fill none, 2 px inside stroke. Its opacity is 0 in Default and 1 in Hover, so Smart Animate fades it in.
+  - **Why a separate layer:** all 72 screen cards carried a stroke override on the card root from the earlier paint refresh. The override showed a border at rest and would have carried into Hover. The root stroke is now empty in the component, and those overrides were cleared.
+  - **No movement:** the border is not part of the layout, so its weight cannot change the card's size. Cards are 2 px shorter than before (desktop 448, mobile 319), because the old 1 px root stroke counted in layout. A script compared every layer's bounds between Default and Hover: nothing moves except the zoomed photo and the chip, so the card no longer "dances".
 - **Photo zoom.** `Photo` scales to 106 % inside `Media`, which clips it. The product image override carries over.
 - **Quick view chip (desktop only).** A white pill sits at the bottom centre of the photo: `bg/surface`, `radius/full`, `SJ/Elevation/e2`, `Icon/MagnifyingGlass` and `SJ/Label/S`. Its text is the new `Quick view` component property (`Quick view#94:0`). The 46 Vivid desktop cards set it to "দ্রুত দেখুন" with `SJ Vivid/Label/S`. The chip also exists in Default at opacity 0 and 10 px lower, so Smart Animate fades and slides it up. That also gives instances a layer to hold the Bangla font override.
 - **The title changes colour only** (owner, 2026-11-23): it goes to `text/brand`. Its font and weight never change.
@@ -460,7 +463,7 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   A hovered title now has exactly the same height as the default one (49 px for two lines on Vivid desktop).
 
 **For the storefront:**
-- Animate only `box-shadow`, `border-color`, the photo's `transform: scale(1.06)`, the chip's opacity/translate, and the title's `color`.
+- Use a 2 px `border` that is `transparent` by default, so the box never changes size. Animate only `box-shadow`, `border-color`, the photo's `transform: scale(1.06)`, the chip's opacity/translate, and the title's `color`.
 - Keep it to 200 ms ease-out.
 - Quick view is a button, so it opens the quick-view sheet and is reachable by keyboard.
 - Show the chip on `:focus-within` as well as `:hover`.
