@@ -181,3 +181,84 @@ The design is done. Nothing below has been built yet.
 - **Dark mode.** The Smart Junior file defines light values only. Does the storefront ship with a dark mode?
 - **Babur Gallery / Themes proposal** (`docs/global-site/`, the `global-site` branch). Does it still stand, with Smart Junior as the default theme?
 - **Real assets.** We need logo source files (SVG) and real product photography in place of the AI placeholders.
+
+---
+
+## 7. Variation 2 — "Vivid · বাংলা" (2026-11-23)
+
+A second look for the same storefront. The colour change is made entirely in the tokens. Type, pattern and footer were changed only for this variation. Owner requests: a Coolors palette, a Bangla-first copy with **product names kept in English**, rounded kid-friendly type, the pattern only in specific sections, a fancier footer, and buttons in `#F15BB5`.
+
+**Figma page:** `Smart Junior — Vivid · বাংলা` (`34:5658`). It holds all 14 screens, duplicated from page `0:1`. Each screen frame sets `SJ · Color` to the **Vivid** mode explicitly. The original page is untouched and still renders in **Light**.
+
+### 7.1 Colour: the Vivid mode on `SJ · Color` (mode id `34:0`)
+
+Source palette: [coolors 9b5de5-f15bb5-fee440-00bbf9-00f5d4](https://coolors.co/palette/9b5de5-f15bb5-fee440-00bbf9-00f5d4). Five new primitive ramps sit in `SJ · Primitives`: 50 / 100 / 300 are tints, 500 is the palette colour, and 600 / 700 are darkened for contrast.
+
+| Ramp | 500 | 600 (white text ≥ 4.6:1) | 700 (on its 100 tint ≥ 6:1) | Replaces in Vivid |
+|---|---|---|---|---|
+| `grape` | `#9b5de5` | `#9350e3` | `#6d20c9` | lagoon, lilac |
+| `bubblegum` | `#f15bb5` | `#dd138c` | `#a30e67` | coral, blush |
+| `lemon` | `#fee440` | `#867301` | `#655701` | butter |
+| `splash` | `#00bbf9` | `#007ea7` | `#005d7c` | sky |
+| `aqua` | `#00f5d4` | `#008271` | `#006456` | mint |
+
+Neutrals (ink, cream, white) are the same in both modes.
+
+**Button colour (owner, 2026-11-23):** `action/primary` = `bubblegum/500` **#F15BB5**. White text on #F15BB5 is only **3.0:1**, which fails WCAG AA, so primary labels and icons now use the new **`text/on-primary` / `icon/on-primary`** tokens. These are white in Light and `ink/900` in Vivid (navy on #F15BB5 = 5.1:1). Every Button, Icon Button, checkbox and badge on a primary fill was rebound to them. Light looks the same as before. Other Vivid action colours:
+- `action/primary-hover` = `bubblegum/300`
+- `action/primary-soft` = `bubblegum/50`
+- `action/accent` = `aqua/500`, so accent buttons stay distinct from primary.
+
+**Effects follow the mode too.** `SJ/Focus/ring`, `SJ/Glow/lagoon` and `SJ/Glow/coral` were raw hex. They are now bound to `effect/focus-ring`, `effect/glow-primary` and `effect/glow-accent`. Before this change, every fill and stroke on the screens was already token-bound (4,699 bindings, zero raw).
+
+### 7.2 Type (Vivid only): `SJ Vivid/*` text styles
+
+| Role | Font |
+|---|---|
+| Bangla titles: Display, H1–H3 | **Hind Siliguri** Bold |
+| Bangla text, buttons, labels, prices, H4 | **Anek Bangla** (weights as in `SJ/*`) |
+| Latin words, product names, digits | **Fredoka** (rounded), set per character range inside mixed strings |
+
+- Bangla line-height is about 1.15× the Latin value (CLAUDE.md rule 38).
+- Numerals stay Western (rule 36).
+- Tracking is 0 and Overline is not uppercased in Bangla.
+
+Rejected along the way (owner): Baloo Da 2, Nunito, Noto Sans Bengali, Mina, Atma, and Galada for titles. Hind Siliguri was first rejected for body text, then chosen for titles.
+
+### 7.3 Copy
+
+All UI copy is in Bangla. These stay in English:
+- product names, the brand name and the logo lockup
+- payment brands (bKash, Nagad, Visa, Mastercard, SSLCommerz), WhatsApp, STEM
+- phone numbers, the email address, SKUs and order numbers
+
+The translations were done in the design. They are not yet strings in the i18n layer.
+
+### 7.4 Pattern: component `Pattern / Confetti` (`39:252`, Components page)
+
+A 480×480 seamless tile of stars, hearts, rings, plus signs, squiggles, triangles and dots. Its colours are the brand tokens (`brand/play|learn|sun|grow|lagoon`) at low opacity, so it follows the mode: pastel in Light, vivid in Vivid.
+
+Owner: **sections only, not the whole page.** It appears in:
+- Home: Flash deals, the "Why Smart Junior" band, the Help CTA card, and the gift banner (mobile)
+- the Category hero
+- the Order-confirmed content
+- the footer
+
+Cart and checkout carry no pattern, following `03-storefront-spec.md` §0 rule 9: nothing playful below a decision.
+
+### 7.5 Footer: component set `Footer — Vivid · বাংলা` (`41:9166`: Desktop `41:8217`, Mobile `41:8832`)
+
+- scalloped wave top
+- brand-colour blobs and the confetti layer, also inside the club card
+- column headings in lemon / aqua / pink / blue
+- colourful social buttons
+- the logo mark peeking over the wave
+- a five-colour rainbow stripe at the bottom
+
+The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 footer instances on the Vivid page use it. The tablet uses the Mobile variant stretched to 834.
+
+### 7.6 Not done / open
+
+- **Hero and product photos** are still the AI placeholders from the Light design.
+- **Code.** Nothing is built yet. Building this variation means adding the Vivid mode to `packages/tokens` as a second storefront theme. It also needs the three web fonts (Hind Siliguri, Anek Bangla, Fredoka; all on Google Fonts, OFL), and the Bangla strings added to the storefront's i18n files.
+- **Light-mode buttons.** These still use white labels on lagoon (4.6:1), which is unchanged.
