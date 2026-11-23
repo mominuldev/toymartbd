@@ -441,3 +441,23 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   **Open:**
   - The Bangla subtitle on the English page is a deliberate bilingual touch from the reference. In code it is still an i18n string per category, not hardcoded.
   - The category list itself, including Stock Clearance as a category or a sale collection, needs to match the real catalogue.
+
+## 14. Product Card hover (2026-11-23)
+
+`Product Card` (`9:146`) now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `94:1083`, Mobile Hover `94:1130`. It sits in the same family as the category tile's "pop & go". On hover:
+
+- **Lift and ring.** The shadow goes from `SJ/Elevation/e1` to `e3`, and an inside stroke in `border/brand` appears: 2 px on desktop, 1.5 px on mobile. It is teal on Light and purple on Vivid.
+- **Photo zoom.** `Photo` scales to 106 % inside `Media`, which clips it. The product image override carries over.
+- **Quick view chip (desktop only).** A white pill sits at the bottom centre of the photo: `bg/surface`, `radius/full`, `SJ/Elevation/e2`, `Icon/MagnifyingGlass` and `SJ/Label/S`. Its text is the new `Quick view` component property (`Quick view#94:0`). The 46 Vivid desktop cards set it to "দ্রুত দেখুন" with `SJ Vivid/Label/S`. The chip also exists in Default at opacity 0 and 10 px lower, so Smart Animate fades and slides it up. That also gives instances a layer to hold the Bangla font override.
+- **The title changes colour only** (owner, 2026-11-23): it goes to `text/brand`. Its font and weight never change.
+- The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On mobile, the Hover variant serves as the pressed state, without the chip.
+
+**The title font is now a token.** The Vivid page set the card title to Fredoka by a direct font override. Figma dropped that override on the variant swap, because the title carries a text style, so the hovered title fell back to Plus Jakarta Sans. The fix is a new collection, `SJ · Type` (`94:17161`), with the modes Light and Vivid:
+- `font/card-title` is Plus Jakarta Sans in Light and Fredoka in Vivid, and both title layers bind their font family to it;
+- all 20 top-level frames on the Vivid page set the Vivid mode.
+
+**For the storefront:**
+- Animate only `box-shadow`, `border-color`, the photo's `transform: scale(1.06)`, the chip's opacity/translate, and the title's `color`.
+- Keep it to 200 ms ease-out.
+- Quick view is a button, so it opens the quick-view sheet and is reachable by keyboard.
+- Show the chip on `:focus-within` as well as `:hover`.
