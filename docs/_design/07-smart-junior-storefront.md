@@ -399,3 +399,14 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   - The renders are placeholders, like the product photos. Production needs real transparent PNG or WebP files, which the CMS or the storefront would serve.
   - MULTIPLY only works on a light tint, so a dark mode would need transparent cut-outs.
 - **Name and count spacing.** The name and the count now sit in their own `Text` stack (desktop `78:1034`, mobile `78:1035`) with a 2 px gap bound to `space/2`. The gap from the tile to the name stays 12 px on desktop and 8 px on mobile. The desktop tile is now 136 × 177.
+- **Hover state.** `Category Tile` now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `79:1034`, Mobile Hover `79:1041`. On hover:
+  - the tile lifts with `SJ/Elevation/e3`;
+  - a white inside ring appears, bound to `bg/surface` (3 px on desktop, 2 px on mobile);
+  - the 3D art zooms (112 → 124 px on desktop, 68 → 76 px on mobile) and tilts −6°, still clipped to the circle;
+  - the name turns `text/brand`.
+
+  The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On touch, use the mobile Hover variant as the pressed state.
+
+  The tile stays clipped on purpose. With clipping off, the elevation shadow follows the art's square white background instead of the circle.
+
+  **For the storefront:** animate `transform` only (scale 1.1 and rotate −6deg on the art, a small lift on the tile). Respect `prefers-reduced-motion`.
