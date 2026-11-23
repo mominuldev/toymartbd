@@ -387,3 +387,71 @@ Owner requests:
 - **Product-card shadows were being cut off.** The rows, scrollers and sections that hold product cards clipped their content, so the `SJ/Elevation` shadow was cropped at the row edge. These were the Flash deals, Bestsellers, New arrivals, Gifts, category grid, You may also like and cross-sell containers, on both pages. Clipping is now off on every container between a card and its screen frame. The screen frame still clips, so a mobile scroller still runs off the edge. Layers inside component instances were left as they were.
 
 **Rule:** a container that holds elevated cards never clips its content. Let the screen frame do the clipping.
+
+## 13. Variation 3 — "Brand · বাংলা": the brand-guideline palette and type (2026-11-23)
+
+**Owner request:** apply the Smart Junior brand guideline:
+- Colours: primary blue `#0755A4`, secondary sky blue `#079FE8`, accents yellow, orange, green and pink, backgrounds white `#FFFFFF` and light blue `#D9F2FF`.
+- Type: Fredoka + Nunito.
+- **Owner override (same day):** the primary colour stays **pink**. Buttons and other primary actions keep `#F15BB5`, and the blue becomes the brand colour.
+
+**Where it is:** a third mode, **Brand** (mode id `72:0`), on `SJ · Color`, and a new page, `Smart Junior — Brand · বাংলা` (`72:13165`). The page is a copy of the Vivid page; each of its 14 screens and 6 row labels sets `SJ · Color` to Brand. The Light and Vivid pages are unchanged.
+
+### 13.1 New primitives (`SJ · Primitives`)
+
+| Ramp | 50 | 100 | 300 | 500 | 600 | 700 | Role |
+|---|---|---|---|---|---|---|---|
+| `royal` | `#eaf2fb` | `#cfe1f5` | `#7fb0e3` | **`#0755a4`** | `#064a8f` | `#053d76` | Brand blue (white on 500 = 7.4:1) |
+| `azure` | `#eef9ff` | **`#d9f2ff`** | `#7fd0f5` | **`#079fe8`** | `#0277b0` | `#035a85` | Secondary sky blue; 100 is the light-blue background |
+| `tangerine` | `#fff4e8` | `#ffe3c7` | `#ffb873` | `#ff8a1f` | `#b35000` | `#8a3d00` | Orange accent |
+| `leaf` | `#ecfaf1` | `#d2f3de` | `#8fe0ac` | `#3cc26b` | `#1b7d3f` | `#14612f` | Green accent |
+| `ink/600` | | | | `#5a5f80` | | | `text/muted` in Brand (5.3:1 on `#D9F2FF`; `ink/500` was 4.39) |
+
+Pink is the existing `bubblegum` ramp and yellow is the existing `lemon` ramp. The orange and green hexes were picked by us, because the guideline names those accents without values.
+
+### 13.2 Brand mode, the key mappings
+
+| Token | Brand |
+|---|---|
+| `action/primary` · hover · soft | `bubblegum/500` #F15BB5 · `/300` · `/50`, with labels in `text/on-primary` = navy (5.1:1) |
+| `action/accent` · `brand/learn` | `azure/500` #079FE8 |
+| `bg/brand-strong` (hero card) · `text/brand` · `icon/brand` · `border/brand` · `brand/lagoon` | `royal/500` #0755A4 |
+| `bg/canvas` · `bg/surface` | white |
+| `bg/subtle` · `pastel/sky-strong` | `azure/100` #D9F2FF |
+| `brand/play` · `pastel/coral*` | tangerine |
+| `brand/grow` · `pastel/mint*` · `text/success` | leaf |
+| `brand/sun` · `action/secondary` · `action/cart` · stars | lemon (cart stays `lemon/300`, as in Vivid) |
+| `pastel/lilac*` · `pastel/lagoon*` | royal tints (the guideline has no purple) |
+| `pastel/blush*` · `text/sale` · `action/sale` | bubblegum |
+| `effect/focus-ring` | `#0755A4` · glows: pink and sky at 28% |
+
+### 13.3 Type: `SJ Brand/*` text styles
+
+| Guideline role | Font | Styles |
+|---|---|---|
+| Logo | Fredoka Bold 700 | `Logo` 28 |
+| Main headings | Fredoka SemiBold 600 | `Display/XL` 64 · `Display/L` 52 · `Heading/H1` 40 · `H2` 32 · `H3` 24 · `Price/L|M|S` 28/18/16 |
+| Subheadings | Nunito Bold 700 | `Heading/H4` 20 · `Title/Card` 15 · `Label/L|M|S` |
+| Body text | Nunito Regular 400 | `Body/L|M|S` 16/14/13 · `Caption` (SemiBold) 12 |
+| Buttons | Nunito ExtraBold 800 | `Button/L|M|S` 16/14/12 · `Overline` 12, +8% tracking |
+
+Tracking is 0 everywhere except Overline; Fredoka needs no negative tracking.
+
+**Bangla is unchanged.** Fredoka and Nunito have no Bengali glyphs, so Bangla stays Hind Siliguri Bold for titles and Anek Bangla for text (§7.2). On the Brand page, 1,011 Latin runs inside the mixed Bangla strings (product names, digits, prices, ratings) were remapped by role:
+- Fredoka SemiBold for headings and anything ≥ 24 px, and for prices.
+- Nunito Bold for subheadings and card titles.
+- Nunito ExtraBold for buttons.
+- Nunito Regular or SemiBold for body and captions.
+
+The logo wordmark keeps Fredoka Bold.
+
+### 13.4 Contrast (§8 method, Brand page)
+
+2,587 text segments were checked. One real failure was fixed: the Gifts card "Buy now" label and icon were white on pink (3.0:1). They are now `text/on-primary` / `icon/on-primary`. Everything else that is flagged is exempt as in §8: the coloured logo-tagline dots, the "|" dividers and the disabled "150 pcs" option.
+
+### 13.5 Open
+
+- **The Vivid page has the same Gifts "Buy now" white-on-pink label** (desktop `57:12772`). It is not fixed there yet, because that page was kept untouched.
+- The `Logo` component and the Vivid-only footer are shared components, so their structure is unchanged. Only the colours follow the mode.
+- **Code:** adds a third storefront theme to `packages/tokens`, plus the Nunito web font (Google Fonts, OFL).
+- **Owner decision needed:** which of Light, Vivid and Brand ships.
