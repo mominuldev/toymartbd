@@ -287,7 +287,7 @@ export const radiusTokens = ${JSON.stringify(Object.keys(src.collections.Radius)
 export const effectTokens = ${JSON.stringify(effects.map(([n]) => effectName(n)))} as const;
 export const typeUtilities = ${JSON.stringify(typeUtilities.map(([u]) => u))} as const;
 export type TypeUtility = (typeof typeUtilities)[number];
-export const resolvedColors: Record<'light' | 'dark' | 'admin-light' | 'admin-dark', Record<ColorToken, string>> = ${JSON.stringify(resolved, null, 2)};
+export const resolvedColors: Record<${THEMES.map(([, t]) => `'${t}'`).join(' | ')}, Record<ColorToken, string>> = ${JSON.stringify(resolved, null, 2)};
 `;
 
 if (failures.length) {

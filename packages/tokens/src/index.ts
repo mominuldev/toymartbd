@@ -4,7 +4,7 @@ export { colorTokens, resolvedColors } from './generated';
 export type { ColorToken } from './generated';
 
 /** data-theme values. Light is also the :root default. */
-export const themes = ['light', 'dark', 'admin-light', 'admin-dark'] as const;
+export const themes = ['light', 'dark', 'admin-light', 'admin-dark', 'smart-junior'] as const;
 export type Theme = (typeof themes)[number];
 
 /**
