@@ -191,7 +191,7 @@ A second look for the same storefront. The colour change is made entirely in the
 
 **Figma page:** `Smart Junior — Vivid · বাংলা` (`34:5658`). It holds all 14 screens, duplicated from page `0:1`. Each screen frame sets `SJ · Color` to the **Vivid** mode explicitly. The original page is untouched and still renders in **Light**.
 
-### 7.1 Colour: the Vivid mode on `SJ · Color` (mode id `34:0`)
+### 7.1 Colour: the Vivid mode on `SJ · Color` (mode id `34:0`) — values superseded by §15 (2026-11-24)
 
 Source palette: [coolors 9b5de5-f15bb5-fee440-00bbf9-00f5d4](https://coolors.co/palette/9b5de5-f15bb5-fee440-00bbf9-00f5d4). Five new primitive ramps sit in `SJ · Primitives`: 50 / 100 / 300 are tints, 500 is the palette colour, and 600 / 700 are darkened for contrast.
 
@@ -515,3 +515,42 @@ A hover state was designed (lift, brand border, photo zoom, Quick view chip) and
   - Vivid: desktop 458, mobile 327.
 
   **For the storefront:** clamp the title with `line-clamp: 2` (`-webkit-line-clamp`) and give it `min-height: calc(2 * line-height)`. Give the card `height: 100%` inside a grid row, so a translated title that wraps differently never changes the card height.
+
+## 15. Vivid repalette: the Smart Junior brand colours (2026-11-24)
+
+The owner gave the Smart Junior brand palette and asked for it to **replace the Vivid values**. Light is unchanged. Section 7.1's Coolors ramps (`grape`, `bubblegum`, `lemon`, `splash`, `aqua`) and the owner's #F15BB5 button choice (§7.1, §12) are superseded for Vivid. The ramps stay in `SJ · Primitives`, but no `SJ · Color` token references them any more.
+
+| Colour | Hex | Purpose (owner) | Ramp in `SJ · Primitives` |
+|---|---|---|---|
+| Bright Blue | `#0EA5E9` | Primary brand | `blue/500` |
+| Sunshine Yellow | `#FBBF24` | Highlights | `sunshine/400` |
+| Playful Pink | `#F43F5E` | Promotions | `pink/500` |
+| Fresh Green | `#22C55E` | Learning | `green/500` |
+| Creative Purple | `#8B5CF6` | Creativity | `purple/500` |
+| Energetic Orange | `#FB923C` | Call to action | `orange/400` |
+| White | `#FFFFFF` | Neutral | `white` |
+| Light Blue | `#F0F9FF` | Neutral | `blue/50` |
+| Gray | `#64748B` | Neutral | `slate/500` |
+| Dark Navy | `#1E293B` | Neutral | `slate/800` |
+
+Every hex is an exact Tailwind value (sky, amber, rose, green, violet, orange, slate), so each ramp is that Tailwind ramp, steps 50–800 (slate to 900). Sixty-four primitives were added. The palette colour is at the step where Tailwind has it, so it is **not** always 500 (yellow and orange are `/400`).
+
+**Owner decision (2026-11-24):** the main buttons use the orange CTA, and blue is the brand colour for surfaces, the hero and links.
+
+Vivid aliases:
+- **Action.**
+  - `action/primary` → `orange/400`, hover → `orange/500`, soft → `orange/50`.
+  - `text/on-primary` and `icon/on-primary` → `slate/800`. Navy on #FB923C is 6.5:1; white would be 2.2:1.
+  - `action/cart` and `action/accent` → `blue/500`. The navy icon is 5.3:1, and blue stays clearly apart from the orange Buy now.
+  - `action/sale` → `pink/600`, because white on `pink/500` is only 3.7:1.
+  - `action/secondary` → `sunshine/400`.
+- **Brand.** `brand/lagoon` → blue, `brand/play` → pink, `brand/learn` → green (the palette's *Learning*), `brand/grow` → purple (*Creativity*), `brand/sun` → sunshine/400. `bg/brand-strong` (hero) → `blue/700`, where white text is 5.9:1.
+- **Neutrals.**
+  - `bg/canvas` → `blue/50` (Light Blue), `bg/surface` → white, `bg/subtle` → `blue/100`.
+  - `text/primary`, `icon/default` and `bg/inverse` → `slate/800` (Dark Navy). `text/secondary` → `slate/700`.
+  - `text/muted` → **`slate/600`, not Gray**: Gray #64748B on the Light Blue canvas is 4.47:1, just under AA. Gray is used for `icon/muted` and `border/input` (≥ 3:1 on both backgrounds).
+- **Text on white.** `text/brand` → `blue/700`, `text/sale` → `pink/700`, `text/success` → `green/700`.
+- **Pastels.** coral → orange, sky and lagoon → blue (100/200/800, because blue/50 is the canvas and a tile in it would disappear), butter → sunshine, lilac → purple, blush → pink, mint → green (50/100/800).
+- **Effects.** focus ring `#0369a1`, glow-primary orange at 28%, glow-accent blue at 28%.
+
+The screens on page `34:5658` re-render through the variables, and nothing on the canvas was repainted. The §8 contrast audit was not re-run for the new values; the ratios above are the ones that were checked.
