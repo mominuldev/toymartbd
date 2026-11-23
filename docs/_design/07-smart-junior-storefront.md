@@ -236,7 +236,7 @@ The translations were done in the design. They are not yet strings in the i18n l
 
 ### 7.4 Pattern: component `Pattern / Confetti` (`39:252`, Components page)
 
-A 480×480 seamless tile of stars, hearts, rings, plus signs, squiggles, triangles and dots. Its colours are the brand tokens (`brand/play|learn|sun|grow|lagoon`) at low opacity, so it follows the mode: pastel in Light, vivid in Vivid.
+A 480×480 seamless tile of stars, hearts, rings, plus signs, squiggles, triangles and dots. Its colours are the brand tokens (`brand/play|learn|sun|grow|lagoon`) at 9–28% opacity per shape (halved on owner request), so it follows the mode: pastel in Light, vivid in Vivid.
 
 Owner: **sections only, not the whole page.** It appears in:
 - Home: Flash deals, the "Why Smart Junior" band, the Help CTA card, and the gift banner (mobile)
