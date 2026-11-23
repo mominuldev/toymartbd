@@ -442,28 +442,16 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   - The Bangla subtitle on the English page is a deliberate bilingual touch from the reference. In code it is still an i18n string per category, not hardcoded.
   - The category list itself, including Stock Clearance as a category or a sale collection, needs to match the real catalogue.
 
-## 14. Product Card hover (2026-11-23)
+## 14. Product Card: no hover state (2026-11-23)
 
-`Product Card` (`9:146`) now has a `State` variant with the values `Default` and `Hover`: Desktop Hover `94:1083`, Mobile Hover `94:1130`. It sits in the same family as the category tile's "pop & go". On hover:
+A hover state was designed (lift, brand border, photo zoom, Quick view chip) and then **removed at the owner's request**.
 
-- **Lift and border (owner, 2026-11-23).** The shadow goes from `SJ/Elevation/e1` to `e3`.
-  - **Border:** the card has a **2 px border that is transparent by default and `border/brand` on hover** (teal on Light, purple on Vivid). It lives on its own locked `Border` layer: absolutely positioned, stretched to the card, `radius/lg` (`radius/md` on mobile), fill none, 2 px inside stroke. Its opacity is 0 in Default and 1 in Hover, so Smart Animate fades it in.
-  - **Why a separate layer:** all 72 screen cards carried a stroke override on the card root from the earlier paint refresh. The override showed a border at rest and would have carried into Hover. The root stroke is now empty in the component, and those overrides were cleared.
-  - **No movement:** the border is not part of the layout, so its weight cannot change the card's size. Cards are 2 px shorter than before (desktop 448, mobile 319), because the old 1 px root stroke counted in layout. A script compared every layer's bounds between Default and Hover: nothing moves except the zoomed photo and the chip, so the card no longer "dances".
-- **Photo zoom.** `Photo` scales to 106 % inside `Media`, which clips it. The product image override carries over.
-- **Quick view chip (desktop only).** A white pill sits at the bottom centre of the photo: `bg/surface`, `radius/full`, `SJ/Elevation/e2`, `Icon/MagnifyingGlass` and `SJ/Label/S`. Its text is the new `Quick view` component property (`Quick view#94:0`). The 46 Vivid desktop cards set it to "দ্রুত দেখুন" with `SJ Vivid/Label/S`. The chip also exists in Default at opacity 0 and 10 px lower, so Smart Animate fades and slides it up. That also gives instances a layer to hold the Bangla font override.
-- **The title changes colour only** (owner, 2026-11-23): it goes to `text/brand`. Its font and weight never change.
-- The Default variants have a prototype interaction: while hovering, change to Hover with Smart Animate, ease-out, 200 ms. On mobile, the Hover variant serves as the pressed state, without the chip.
+- `Product Card` (`9:146`) is back to a single `Size` variant (`Desktop` `9:60`, `Mobile` `9:103`). It has no `State` property, no prototype hover, and no `Quick view` property.
+- **The card has no border at rest.** The old 1 px `border/default` stroke is gone; the card is set off by `SJ/Elevation/e1` alone. The stroke overrides that all 72 screen cards carried were cleared. Cards are 2 px shorter than before (desktop 448, mobile 319), because the old stroke counted in layout.
+- **Kept from that work:** `SJ · Type` (`94:17161`), with the modes Light and Vivid. It holds:
+  - `font/card-title`: Plus Jakarta Sans in Light, Fredoka in Vivid;
+  - `line-height/card-title`: 21 / 24.15 px, at 15 px text;
+  - `line-height/card-title-s`: 18.2 / 20.86 px, at 14 px text.
 
-**The title font and line height are now tokens.** The Vivid page set the card title to Fredoka by a direct font override. Figma dropped that override on the variant swap, because the title carries a text style, so the hovered title fell back to Plus Jakarta Sans. The fix is a new collection, `SJ · Type` (`94:17161`), with the modes Light and Vivid:
-- `font/card-title` is Plus Jakarta Sans in Light and Fredoka in Vivid, and both title layers bind their font family to it;
-- `line-height/card-title` is 21 px in Light and 24.15 px in Vivid (15 px text at 140 % and 161 %), and `line-height/card-title-s` is 18.2 / 20.86 px (14 px text at 130 % and 149 %). They are bound in px on purpose, because a bound FLOAT is read as pixels (Figma rule 7). The Vivid line-height override was dropped on hover in the same way as the font, so the hovered title shrank;
-- all 20 top-level frames on the Vivid page set the Vivid mode.
-
-  A hovered title now has exactly the same height as the default one (49 px for two lines on Vivid desktop).
-
-**For the storefront:**
-- Use a 2 px `border` that is `transparent` by default, so the box never changes size. Animate only `box-shadow`, `border-color`, the photo's `transform: scale(1.06)`, the chip's opacity/translate, and the title's `color`.
-- Keep it to 200 ms ease-out.
-- Quick view is a button, so it opens the quick-view sheet and is reachable by keyboard.
-- Show the chip on `:focus-within` as well as `:hover`.
+  Both card title layers are bound to these, and the Vivid page's 20 top-level frames set the Vivid mode. The values are in px on purpose, because a bound FLOAT is read as pixels (Figma rule 7).
+- **For the storefront:** no hover effect on product cards. Keyboard focus still needs a visible `SJ/Focus/ring` on the card link.
