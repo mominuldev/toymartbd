@@ -261,7 +261,7 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 **Redesign, "night-sky playground" (owner request 2026-11-23: more creative and kid-friendly).** The earlier version is kept as `Footer — Vivid · বাংলা (backup 2026-11-23)` (`102:1042`) on the Components page. No instance uses it.
 
 - **Newsletter removed** (owner). The "Smart Junior ক্লাব" WhatsApp sign-up card is gone from both variants.
-- **Sky.** The four dim blobs are replaced by a `brand/sun` crescent moon and four-point sparkles in the brand colours. The confetti layer stays.
+- **Sky.** The four dim blobs are replaced by a `brand/sun` crescent moon and four-point sparkles in the brand colours. The confetti layer stays, at 50% layer opacity in the footer (owner, 2026-11-23), so it sits further back than in other sections.
 - **Mascot** says "আবার এসো!" in a speech bubble beside it on the wave.
 - **Desktop column headings** are tilted sticker pills (±2–3°): শপ `brand/sun`, সহায়তা `brand/grow`, প্রতিষ্ঠান `brand/play`, যোগাযোগ `brand/learn`, with `text/primary` labels. Contact icons sit in rounded squares in the same four colours, with `icon/default` glyphs.
 - **Mobile accordion rows** start with a tilted colour tile, and their "+" icons take the row colour.
