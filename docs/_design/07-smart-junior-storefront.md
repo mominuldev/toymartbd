@@ -540,7 +540,7 @@ Every hex is an exact Tailwind value (sky, amber, rose, green, violet, orange, s
 Vivid aliases:
 - **Action.**
   - `action/primary` → `orange/400`, hover → `orange/500`, soft → `orange/50`.
-  - `text/on-primary` and `icon/on-primary` → `slate/800`. Navy on #FB923C is 6.5:1; white would be 2.2:1.
+  - `text/on-primary` and `icon/on-primary` → **`white`** (owner, 2026-11-24; first set to `slate/800`, which is 6.5:1). White on #FB923C is **2.2:1, which fails WCAG AA** for text (4.5:1) and for the large-text and icon minimum (3:1). This is a known, accepted gap. It closes if `action/primary` moves to `orange/700` #C2410C (white 5.2:1), or `orange/600` #EA580C (3.6:1, large text only).
   - `action/cart` and `action/accent` → `blue/500`. The navy icon is 5.3:1, and blue stays clearly apart from the orange Buy now.
   - `action/sale` → `pink/600`, because white on `pink/500` is only 3.7:1.
   - `action/secondary` → `sunshine/400`.
