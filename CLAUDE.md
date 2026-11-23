@@ -25,6 +25,7 @@ The business value is split roughly evenly between winning organic search traffi
 | Schema, transactions, invariants | `docs/DATABASE-DESIGN.md` |
 | Tokens, components, screens | `docs/UI-UX-DESIGN-SPEC.md` (§9 maps Figma components to React files) · `packages/tokens/README.md` |
 | Admin screen checklist + Figma node ids | `docs/_design/06-admin-feature-checklist.md` |
+| Storefront rebrand — **Smart Junior** (Figma `2b6PVOOapPbcaKYIdHWZup`, source of truth for the storefront since 2026-11-23) | `docs/_design/07-smart-junior-storefront.md` |
 | Phases, estimates, gates | `docs/DEVELOPMENT-ROADMAP.md` |
 | Task-level breakdown | `docs/IMPLEMENTATION-PLAN.md` |
 | Market, payments, couriers, legal | `docs/_research/` |

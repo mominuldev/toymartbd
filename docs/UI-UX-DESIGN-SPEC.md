@@ -8,7 +8,7 @@
 
 **2026-11-11 — design complete, signed off, development started.** The owner reviewed the finished file and approved it ("looks good, now start develop"), which closes Gate 2 for the MVP design. The admin adopts **Theme B — slate & indigo with a dark sidebar**; the storefront keeps the coral/sunshine/teal palette.
 
-**Where truth lives now.** Figma file `PWZp5VzEgEEf5N2Y38lGIh` is the source of truth for every token, component and screen. Its variables are exported to `packages/tokens/src/figma-variables.json` and built into CSS, Tailwind and TypeScript by `npm run tokens:build` (see `packages/tokens/README.md`). Where this document's prose and the Figma file disagree, **Figma wins** and this document is the defect. Sections 3 and 9 below were rewritten on 2026-11-11 to match the file; sections 2, 4–8 are the reasoning and still hold.
+**Where truth lives now.** Figma file `PWZp5VzEgEEf5N2Y38lGIh` is the source of truth for every token, component and screen. Its variables are exported to `packages/tokens/src/figma-variables.json` and built into CSS, Tailwind and TypeScript by `npm run tokens:build` (see `packages/tokens/README.md`). Where this document's prose and the Figma file disagree, **Figma wins** and this document is the defect. **Storefront rebrand (owner, 2026-11-23):** the storefront look moves to **Smart Junior**, designed in its own Figma file `2b6PVOOapPbcaKYIdHWZup`. That file supersedes the storefront tokens and screens here; see `docs/_design/07-smart-junior-storefront.md`. The admin is unchanged. Sections 3 and 9 below were rewritten on 2026-11-11 to match the file; sections 2, 4–8 are the reasoning and still hold.
 
 | Figma page | Contents |
 |---|---|
