@@ -359,7 +359,7 @@ The tablet home never had a reviews section, so it has no reel.
 
 **Structure:**
 - The same wrapper-and-band pattern as the video reel (§10). The wrapper keeps the page's section top padding (80 on desktop, 36 on mobile).
-- The `Band` uses `pastel/butter` as the section background, with padding 56/120/64 on desktop and 28/16 on mobile. On mobile the cards bleed off the right edge.
+- The `Band` uses **`pastel/blush-strong`** as the section background (Light #FFDDE7, Vivid #FCDEF0), with padding 56/120/64 on desktop and 28/16 on mobile. On mobile the cards bleed off the right edge. The owner rejected `pastel/butter`: in Vivid it is #FFFAD9, which reads as off-white.
 - The header is `Section Header` with View all and prev/next arrows. Copy:
   - eyebrow "Gift ideas" / "গিফট আইডিয়া"
   - heading "Gifts & combo sets" / "উপহার ও কম্বো সেট"
@@ -369,7 +369,9 @@ The tablet home never had a reviews section, so it has no reel.
   - **mobile:** the Flash deals card scroller
 - Every card has the cart button and Buy now ("এখনই কিনুন").
 
-**Contrast on butter:** the lowest value is `text/muted` at 4.85 (Light) and 5.0 (Vivid), which passes AA.
+**Contrast on blush-strong:** `text/muted` is only 4.07–4.10 here, which fails AA. So the subheading uses `text/secondary` (8.1:1). Headings and View all pass easily.
+
+**Rule:** muted text never sits on a `-strong` pastel. Every `-strong` pastel puts `text/muted` below 4.5:1, in the range 3.95–4.61.
 
 **Open:**
 - The reference shows **five** cards per row. We kept four so the cards match the 282 product grid. At five across (≈221 px), the cart and Buy now buttons don't fit side by side.
