@@ -271,6 +271,21 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 
 **Code note:** the band and sky are decorative. Ship them as one inline SVG per breakpoint with `aria-hidden="true"`, not as images, and don't animate them unless `prefers-reduced-motion` allows it.
 
+**Concept B, "Toy blocks" (2026-11-23, alternative for the owner to choose).** It is component set `Footer — Vivid · বাংলা · Concept B (Toy blocks)` (`109:1796`: Desktop `108:1660`, Mobile `109:1689`) on the Components page. **No screen uses it yet**; the night-sky set above is still live.
+
+- **Light footer.** The background is `pastel/lilac`, with a party-bunting edge: flags in the five brand colours on a sagging string.
+- **Blocks.** Each link group is a chunky toy block. Blocks have `text/primary` 2.5 px outlines, Lego studs on top and a hard, zero-blur 6 px shadow, whose colour is bound to `text/primary`:
+  - brand on `bg/surface`
+  - শপ on `pastel/butter-strong`
+  - সহায়তা on `pastel/mint-strong`
+  - প্রতিষ্ঠান on `pastel/blush-strong`
+  - যোগাযোগ on `pastel/sky-strong`
+  
+  On desktop the blocks have different heights and stand on a `bg/brand-strong` shelf. The mascot sits on the Contact block. Links use `text/secondary`, never `text/muted`, because of the -strong pastel rule (§11).
+- **Mobile.** The four link groups are accordion blocks, each with a white "+" button.
+- **Wordmark.** A giant "Smart Junior" in Fredoka Bold: 200 px on desktop, 61 px on mobile. Each letter takes a brand colour, with an ink outline and a hard shadow. It is a logotype, so it is exempt from text contrast.
+- **Bottom bar.** `text/primary` (navy) with `text/inverse` text.
+
 ### 7.6 Not done / open
 
 - **Hero and product photos** are still the AI placeholders from the Light design.
