@@ -115,7 +115,7 @@ The primitive ramps are `coral`, `sky`, `butter`, `mint`, `lagoon` and `ink`, at
 | Promo banners | `16:901` | `18:1905` (gift banner) | — |
 | New arrivals | `16:932` | — | — |
 | Why Smart Junior | `16:1124` | `18:1918` | `19:2717` |
-| Reviews | `16:1147` | `18:1939` | — |
+| **Video reel** (replaced Reviews, §10) | `54:5625` | `54:5747` | — |
 | Play & learn journal | `16:1255` | — | — |
 | Help CTA | `16:1306` | `18:1978` | `19:2737` |
 | Footer | `16:1324` | `18:1993` | `19:2747` |
@@ -303,3 +303,41 @@ Each colour was resolved in its screen's mode and composited against the real ba
 
   The flash-sale card is now `pastel/coral-strong` and the STEM card `pastel/mint-strong` (was baby blue), both with white eyebrow chips. The hero now reads as one grape / pink / aqua palette. Every hero text passes AA.
 - **Add to cart.** There is a new **`action/cart`** token (Light `butter/500`, Vivid `aqua/500` #00F5D4), with labels and icons in `text/primary` / `icon/default` (11.1:1). It is used on all 67 add-to-cart controls on the Vivid page: the product-card cart buttons, the product-page button, the "add all 3" bundle button and the mobile cross-sell "যোগ করুন". "Buy now" stays `action/primary` pink, so the two actions never look alike.
+
+## 10. Home: the video reel replaces the reviews (2026-11-23)
+
+**Owner request:** replace the home page's testimonial section ("Parents are talking", three review cards) with a video reel, on a section background. Product-page reviews (`23:4090`) are not affected.
+
+**Where it is:**
+
+| Page | Desktop | Mobile |
+|---|---|---|
+| Light `0:1` | `54:5625` | `54:5747` |
+| Vivid · বাংলা `34:5658` | `55:12790` | `55:12912` |
+
+The tablet home never had a reviews section, so it has no reel.
+
+**Structure:**
+- A transparent wrapper, `Video reel`, keeps the section rhythm: top padding 96 on desktop, 36 on mobile.
+- Inside it, a full-width `Band` uses `pastel/lilac` as the section background, the same way Flash deals uses `pastel/coral`. Padding is 64/120/72 on desktop. On mobile it is 28/16, with the reel bleeding off the right edge like the Flash deals scroller.
+- The section header reuses `Section Header` with View all and prev/next arrows. Copy:
+  - eyebrow "Watch & play" / "দেখুন ও খেলুন"
+  - heading "Toys in action" / "খেলার মুহূর্ত"
+  - subheading
+- `Reels`: five cards, which fill the row on desktop. On mobile they are 156 px wide and scroll sideways.
+- Each `Reel` card is `bg/surface` with radius 24 (20 on mobile). Inside it:
+  - A **9:16** `Video` thumbnail, which carries:
+    - a duration chip (`bg/inverse` with ▶ and time)
+    - a centred play button (`bg/surface` with `icon/brand`)
+    - a "shop this" product chip (`bg/surface`, product name and arrow), which links to the product page
+  - Below the thumbnail, a `Caption`: a two-line title (`Title/Card`) and a view count (`Caption`, `text/muted`). Caption heights are equalised across the row.
+- **Vivid:** `SJ Vivid/*` styles. Product names, durations and counts are set in Fredoka per character range (§7.3).
+
+**Contrast on lilac** (§8 method): the lowest value is `text/muted` at 4.56 (Light) and 4.64 (Vivid), which passes AA.
+
+**Open:**
+- Thumbnails reuse the AI placeholder photos from the journal and hero, so they don't match the captions yet.
+- The view counts and durations are placeholder values.
+- Video hosting is undecided: self-hosted, YouTube Shorts, or Facebook/Instagram Reels. It decides the player, the poster images and the privacy and performance cost. That makes it an owner question before code.
+- The section needs a CMS block in the homepage builder (rule 34a). Each reel is a video, a poster, a caption and a linked product.
+- Recommendation attribution (rule 25d) may apply if the product chip counts as a placement.
