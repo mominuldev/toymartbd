@@ -114,6 +114,7 @@ The primitive ramps are `coral`, `sky`, `butter`, `mint`, `lagoon` and `ink`, at
 | Bestsellers | `15:594` | `18:1695` | `19:2414` |
 | Promo banners | `16:901` | `18:1905` (gift banner) | — |
 | New arrivals | `16:932` | — | — |
+| **Gifts & combos** (§11) | `57:18557` | `57:18747` (after the gift banner) | — |
 | Why Smart Junior | `16:1124` | `18:1918` | `19:2717` |
 | **Video reel** (replaced Reviews, §10) | `54:5625` | `54:5747` | — |
 | Play & learn journal | `16:1255` | — | — |
@@ -341,3 +342,37 @@ The tablet home never had a reviews section, so it has no reel.
 - Video hosting is undecided: self-hosted, YouTube Shorts, or Facebook/Instagram Reels. It decides the player, the poster images and the privacy and performance cost. That makes it an owner question before code.
 - The section needs a CMS block in the homepage builder (rule 34a). Each reel is a video, a poster, a caption and a linked product.
 - Recommendation attribution (rule 25d) may apply if the product chip counts as a placement.
+
+## 11. Home: Gifts & combo sets (2026-11-23)
+
+**Owner request:** add a gift and combo-set product row, from a reference screenshot.
+
+**Where it is:**
+- **Desktop:** after New arrivals.
+- **Mobile:** after the Gift banner.
+- **Tablet:** not added.
+
+| Page | Desktop | Mobile |
+|---|---|---|
+| Light `0:1` | `57:18557` | `57:18747` |
+| Vivid · বাংলা `34:5658` | `57:12772` | `57:12962` |
+
+**Structure:**
+- The same wrapper-and-band pattern as the video reel (§10). The wrapper keeps the page's section top padding (80 on desktop, 36 on mobile).
+- The `Band` uses `pastel/butter` as the section background, with padding 56/120/64 on desktop and 28/16 on mobile. On mobile the cards bleed off the right edge.
+- The header is `Section Header` with View all and prev/next arrows. Copy:
+  - eyebrow "Gift ideas" / "গিফট আইডিয়া"
+  - heading "Gifts & combo sets" / "উপহার ও কম্বো সেট"
+  - subheading "জন্মদিন বা যেকোনো উপলক্ষে প্রিয় শিশুর জন্য সেরা উপহার"
+- The cards are `Product Card` instances, with the sale badge and was-price on:
+  - **desktop:** four across at 282, the same grid as every other product row
+  - **mobile:** the Flash deals card scroller
+- Every card has the cart button and Buy now ("এখনই কিনুন").
+
+**Contrast on butter:** the lowest value is `text/muted` at 4.85 (Light) and 5.0 (Vivid), which passes AA.
+
+**Open:**
+- The reference shows **five** cards per row. We kept four so the cards match the 282 product grid. At five across (≈221 px), the cart and Buy now buttons don't fit side by side.
+- The reference has a dotted background. It is not added, because the owner limits patterns to specific sections (§7.4). Adding one is a single layer if wanted.
+- The combo names, prices and discounts are placeholders. The photos are the existing AI product placeholders, matched to the titles.
+- **Code:** the section is a product rail driven by a "gift"/"combo" collection or tag. That needs a CMS block that takes a product source (rule 34a), and the server sets the prices (rule 1).
