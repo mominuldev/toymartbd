@@ -451,7 +451,7 @@ The logo wordmark keeps Fredoka Bold.
 
 ### 13.5 Open
 
-- ~~The Vivid page had the same Gifts "Buy now" white-on-pink label~~ (desktop `57:12772`). **Fixed 2026-11-23** with the same rebind to `text/on-primary` / `icon/on-primary` (owner request).
+- **The Vivid page has the same Gifts "Buy now" white-on-pink label** (desktop `57:12772`). It is not fixed there yet, because that page was kept untouched.
 - The `Logo` component and the Vivid-only footer are shared components, so their structure is unchanged. Only the colours follow the mode.
 - **Code:** adds a third storefront theme to `packages/tokens`, plus the Nunito web font (Google Fonts, OFL).
 - **Owner decision needed:** which of Light, Vivid and Brand ships.
