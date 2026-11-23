@@ -410,3 +410,24 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
   The tile stays clipped on purpose. With clipping off, the elevation shadow follows the art's square white background instead of the circle.
 
   **For the storefront:** animate `transform` only (scale 1.1 and rotate −6deg on the art, a small lift on the tile). Respect `prefers-reduced-motion`.
+- **Reference categories and Bangla subtitles.** The home category row now uses the owner's reference set, in this order (tint in brackets):
+  1. Educational Toys (butter)
+  2. Learning Books (lilac)
+  3. Montessori (mint)
+  4. Birthday Gifts (blush)
+  5. Gifts & Combos (coral)
+  6. STEM & Science (sky)
+  7. Art & Writing (lilac)
+  8. Stock Clearance (blush)
+
+  Stock Clearance has new art, `Category 3D/Clearance` (`83:1036`), a % price tag. The `Count` line is now a Bangla subtitle set in Anek Bangla Regular, on both locales; for example "শেখা ও খেলা" and "বই ও অ্যাক্টিভিটি". The item counts are gone. Names are now Bold: Plus Jakarta Sans Bold on the English page, Anek Bangla Bold on the Bangla page, with Fredoka SemiBold for Latin runs such as "STEM".
+
+  Mobile and tablet tiles use the Mobile variant. It hides the subtitle and uses short names: Educational, Books, Montessori, Birthday, Combos, STEM, Art, Clearance.
+
+  On the Bangla page, two reference subtitles would have repeated the title, so they were replaced:
+  - "জন্মদিনের উপহার" has the subtitle "জন্মদিনের সারপ্রাইজ";
+  - "আঁকা ও লেখা" has the subtitle "রং, পেন্সিল ও খাতা".
+
+  **Open:**
+  - The Bangla subtitle on the English page is a deliberate bilingual touch from the reference. In code it is still an i18n string per category, not hardcoded.
+  - The category list itself, including Stock Clearance as a category or a sale collection, needs to match the real catalogue.
