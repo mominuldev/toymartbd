@@ -554,3 +554,16 @@ Vivid aliases:
 - **Effects.** focus ring `#0369a1`, glow-primary orange at 28%, glow-accent blue at 28%.
 
 The screens on page `34:5658` re-render through the variables, and nothing on the canvas was repainted. The §8 contrast audit was not re-run for the new values; the ratios above are the ones that were checked.
+
+**White icons on cart and social buttons (owner, 2026-11-24).**
+- **Cart.** There are two new tokens, **`icon/on-cart`** and **`text/on-cart`**: Light `ink/900`, Vivid `white`. All 75 add-to-cart controls on page `34:5658` were rebound from `icon/default` / `text/primary` (77 paints, Vivid page only; the Light page is unchanged). White on `blue/500` is **2.8:1**, just under the 3:1 needed for icons.
+- **Footer social buttons.** In the Vivid-only footer (`41:8145` desktop, `41:8796` mobile), the icons are now bound to `icon/inverse` instead of `text/primary`. All 9 footer instances follow. White icons on the brand circles:
+
+  | Circle | White icon |
+  |---|---|
+  | Pink | 3.7:1 |
+  | Purple | about 4.2:1 |
+  | Green | about 2.3:1, fails 3:1 |
+  | Yellow | about 1.7:1, fails 3:1 |
+
+  The owner accepted this.
