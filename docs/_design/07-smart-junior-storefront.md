@@ -398,3 +398,4 @@ The owner asked for 3D category art in place of the Phosphor icons and supplied 
 - **Caveats.**
   - The renders are placeholders, like the product photos. Production needs real transparent PNG or WebP files, which the CMS or the storefront would serve.
   - MULTIPLY only works on a light tint, so a dark mode would need transparent cut-outs.
+- **Name and count spacing.** The name and the count now sit in their own `Text` stack (desktop `78:1034`, mobile `78:1035`) with a 2 px gap bound to `space/2`. The gap from the tile to the name stays 12 px on desktop and 8 px on mobile. The desktop tile is now 136 × 177.
