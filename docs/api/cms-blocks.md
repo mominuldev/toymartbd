@@ -27,7 +27,7 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `category_tiles` | `title`*, `eyebrow` (chip above the heading), `sub` (line under it), `source` `top_level`\|`manual`, `category_ids` (manual), `limit` 2–12, `show_see_all` — each category node carries its `tagline` / `tagline_bn` (the tile's short line, edited on the category) |
 | `age_tiles` | `title`*, `show_see_all` — counts are live |
 | `product_rail` | `title`*, `rule` `new`\|`best_sellers`\|`category`\|`brand`\|`manual`, `category_id`, `brand_id`, `product_ids` (≤ 24), `window_days` 7\|30\|90, `limit` 2–12, `min_items` ≤ limit, `hide_sold_out`, `show_see_all` |
-| `flash_sale` | `title`*, `limit` 2–12 — a slot: the storefront reads the running sale from `GET /storefront/flash-sales` (tags `flash-sale`, `products`) and hides the block when none runs |
+| `flash_sale` | `title`*, `sub` (line under the heading; none = the sale's end time), `limit` 2–12 — a slot: the storefront reads the running sale from `GET /storefront/flash-sales` (tags `flash-sale`, `products`) and hides the block when none runs |
 | `brand_strip` | `title`*, `brand_ids` (none = active brands with a logo), `limit` 3–24 |
 | `usp_band` | `eyebrow`, `title`*, `items[2..4]`: `icon` (cod, return, authentic, support, delivery, gift, educational), `title`*, `detail` (`{phone}` = hotline) |
 | `promo_split` | `headline`*, `overline`, `body`, `cta_label`, `cta_href`, `media_id`, `alt`, `image_side` left\|right |

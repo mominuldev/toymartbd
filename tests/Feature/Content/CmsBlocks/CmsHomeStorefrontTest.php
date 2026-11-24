@@ -358,3 +358,12 @@ it('renders the category tiles heading chip and line, and each category tagline 
         ->and($bn->json('blocks.0.categories.0.tagline'))->toBe('Learn and play')
         ->and($bn->json('blocks.0.categories.0.tagline_bn'))->toBe('শেখা ও খেলা');
 });
+
+it('sends the flash sale band line in the locale, null when the editor left it empty (Smart Junior 34:5719)', function (): void {
+    CmsKit::block('flash_sale', ['title' => 'Flash deals', 'sub' => 'Prices drop every day at 10', 'sub_bn' => 'প্রতিদিন সকাল 10টায় দাম কমে']);
+    CmsKit::block('flash_sale', ['title' => 'More deals']);
+    cmsPublish();
+
+    expect(CmsKit::home('bn')->json('blocks.0.content.sub'))->toBe('প্রতিদিন সকাল 10টায় দাম কমে')
+        ->and(CmsKit::home('en')->json('blocks.1.content.sub'))->toBeNull();
+});

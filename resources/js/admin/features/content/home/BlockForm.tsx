@@ -117,9 +117,15 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                     {str(content.source) === 'manual' && <CategoryPicker legend={t('homeBuilder.f.pickCategories')} picked={ids(content.category_ids)} onChange={(v) => set('category_ids', v)} ctx={ctx} path="category_ids" />}
                 </>
             );
+        case 'flash_sale':
+            return (
+                <>
+                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="sub" set={set} ctx={ctx} hint={t('homeBuilder.f.flashSubHint')} />
+                </>
+            );
         case 'age_tiles':
         case 'testimonials':
-        case 'flash_sale':
             return <Bilingual content={content} keyName="title" set={set} ctx={ctx} />;
         case 'blog_teaser':
             return (

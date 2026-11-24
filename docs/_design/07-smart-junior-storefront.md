@@ -635,7 +635,7 @@ These blocks are restyled to the Vivid frames on page `34:5658`, and the built-i
 - **Age tiles.** Tinted cards with a "go" chip.
 - **Product card.** No border and no hover; a rating row from the API; a two-line title box; a blue cart square followed by the orange "Buy now"; a pink sale badge. This applies sitewide.
 - **Section header.** An optional eyebrow, a subtitle and an orange "see all" pill.
-- **Flash deals.** A pink band with confetti and the countdown pill.
+- **Flash deals (2026-11-24, exact pass).** The pink band with confetti; the header with the pink chip, the heading and the block's `sub` line (Figma "প্রতিদিন সকাল 10টায় দাম কমে — স্টক থাকা পর্যন্ত।"; without one, the sale's end time), "See all", the 48 px square prev / next and the countdown pill. From 1024 the cards are a 4-up slider driven by those header arrows (dimmed and disabled when every card fits, as Figma shows them); below 1024 the swipe rail with the countdown under the header. Deviation: the band is `tile-pink` `#FFE4E6`, Figma `pastel/coral` `#FFF1F2` (no storefront token).
 - **Journal and blog cards, Help CTA / chat band, Promo banner, Testimonials.** Restyled to the Smart Junior card language.
 
 Hero deviations still open: the page gutter is 80 px at 1440 (Figma 120) and 24 px at 834 (Figma 32) — a sitewide container value, not a hero change; the card radius is 32 (Figma `radius/2xl` 36 has no storefront token). The hero's promo and proof values on the local database are the Figma sample copy; the owner must enter the real promotions and figures in Pages › Home.
