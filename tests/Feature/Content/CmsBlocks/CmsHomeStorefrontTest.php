@@ -300,11 +300,19 @@ it('seeds the default homepage once, published as version 1, without queueing a 
 
     expect(CmsLayoutVersion::query()->count())->toBe(1)
         ->and(array_column(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks ?? [], 'type'))
-        ->toBe(['hero', 'category_tiles', 'flash_sale', 'age_tiles', 'product_rail', 'product_rail', 'usp_band', 'testimonials', 'blog_teaser']);
+        ->toBe(['hero', 'usp_band', 'category_tiles', 'flash_sale', 'age_tiles', 'product_rail', 'promo_banners', 'product_rail', 'why_band', 'video_reel', 'blog_teaser', 'chat_band']);
     Bus::assertNothingDispatched();
 
     // With an empty catalogue the data-driven blocks hide themselves; nothing renders empty.
-    expect(CmsKit::types(CmsKit::home()))->toBe(['hero', 'flash_sale', 'age_tiles', 'usp_band']);
+    // The reel has no videos off a developer machine, so it is left out too.
+    expect(CmsKit::types(CmsKit::home()))->toBe(['hero', 'usp_band', 'flash_sale', 'age_tiles', 'promo_banners', 'why_band', 'chat_band']);
+
+    // No invented business figure outside a developer machine (owner rule, §16.2).
+    $why = collect(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks)->firstWhere('type', 'why_band');
+    $hero = collect(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks)->firstWhere('type', 'hero');
+    expect($why['content']['stats'])->toBe([])
+        ->and($hero['content']['proof'])->toBeNull()
+        ->and($hero['content']['promos'])->toBe([]);
 });
 
 it('renders the hero promos and proof row with their images, in the locale (Smart Junior hero)', function (): void {

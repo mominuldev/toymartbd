@@ -56,7 +56,9 @@ class DatabaseSeeder extends Seeder
         $this->call(MediaFoldersSeeder::class);
         $this->call(DeliverySeeder::class);
         $this->call(ExpenseCategoriesSeeder::class);
-        $this->call(CmsHomeBlocksSeeder::class);
+        if (! DemoLogin::enabled()) {
+            $this->call(CmsHomeBlocksSeeder::class);
+        }
         $this->call(StaticPagesSeeder::class);
         $this->call(StaticPageSectionsSeeder::class);
 
@@ -72,6 +74,8 @@ class DatabaseSeeder extends Seeder
             $this->call(BrandDemoSeeder::class);
             $this->call(DemoCatalogSeeder::class);
             $this->call(DemoInventorySeeder::class);
+            // After the demo catalogue: the home's category chips and gift picks name its rows.
+            $this->call(CmsHomeBlocksSeeder::class);
             // Demo inbox conversations (local/testing only; the admin E2E thread tests use them).
             $this->call(DemoInboxSeeder::class);
 
