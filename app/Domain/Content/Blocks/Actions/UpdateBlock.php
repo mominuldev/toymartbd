@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Content\Blocks\Actions;
 
 use App\Domain\Content\Blocks\DTOs\BlockSettings;
+use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
+use App\Domain\Content\Blocks\Services\VideoLengths;
 use Illuminate\Support\Facades\DB;
 
 /** Edits a draft block: content (replaced whole), label, visibility, schedule. The type never changes. */
@@ -19,6 +21,9 @@ final class UpdateBlock
             $block->updated_by = $userId;
             $block->save();
             CmsBlockMedia::syncDraft($block->placement); // Media Library "where used"
+            if ($block->type === BlockType::VideoReel) {
+                VideoLengths::queueFor($block->content); // looked up after commit (rule 4)
+            }
 
             return $block->refresh();
         });

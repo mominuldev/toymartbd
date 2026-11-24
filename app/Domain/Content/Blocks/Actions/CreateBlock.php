@@ -8,6 +8,7 @@ use App\Domain\Content\Blocks\DTOs\BlockSettings;
 use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
+use App\Domain\Content\Blocks\Services\VideoLengths;
 use App\Domain\Content\Blocks\ValueObjects\LayoutKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -46,6 +47,9 @@ final class CreateBlock
             ]);
             $block->save();
             CmsBlockMedia::syncDraft($placement); // Media Library "where used"
+            if ($type === BlockType::VideoReel) {
+                VideoLengths::queueFor($block->content); // looked up after commit (rule 4)
+            }
 
             return $block->refresh();
         });

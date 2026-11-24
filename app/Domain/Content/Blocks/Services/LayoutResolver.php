@@ -141,7 +141,11 @@ final class LayoutResolver
                 }
                 $content['items'] = $items;
 
-                return [$content, ['media' => $media, 'products' => $this->listableProducts(array_column($items, 'product_id'))]];
+                return [$content, [
+                    'media' => $media,
+                    'products' => $this->listableProducts(array_column($items, 'product_id')),
+                    'lengths' => VideoLengths::secondsFor(array_values(array_filter(array_column($items, 'video_url'), is_string(...)))),
+                ]];
 
             case BlockType::Image:
                 // No image (or a deleted one): nothing to show, so the block is removed.

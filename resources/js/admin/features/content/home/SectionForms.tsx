@@ -15,6 +15,9 @@ import { ProductPicker } from './pickers';
 
 export type MediaThumb = { id: number; thumb_url: string | null; alt_text: string | null };
 
+/** What the server found for a reel link's length (CmsHomeDraft `video_lengths`), by link. */
+export type VideoLengthInfo = { seconds: number | null; status: 'pending' | 'found' | 'unavailable' | 'failed' | 'no_key' | 'unsupported' };
+
 export type FormKit = {
     content: Content;
     set: (key: string, value: unknown) => void;
@@ -23,6 +26,15 @@ export type FormKit = {
     pickImage: (apply: (id: number | null) => void) => (next: PickedImage | null) => void;
     imageOf: (row: Content) => PickedImage | null;
     ctx: FieldCtx;
+    videoLengths?: ReadonlyMap<string, VideoLengthInfo>;
+};
+
+/** 42 → "0:42", 3725 → "1:02:05" (same as the server's VideoLengths::format). */
+export const formatLength = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = String(seconds % 60).padStart(2, '0');
+    return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
 };
 
 /** The palette (BlockSchema::TONES). */
@@ -157,8 +169,15 @@ export function WhyBandForm({ kit }: { kit: FormKit }) {
 /** Video reel: the header and its "see all" link, then each reel (video link, poster, caption, product). */
 export function VideoReelForm({ kit }: { kit: FormKit }) {
     const { t } = useI18n();
-    const { content, set, setRow, listOps, pickImage, imageOf, ctx } = kit;
+    const { content, set, setRow, listOps, pickImage, imageOf, ctx, videoLengths } = kit;
     const items = rows(content.items);
+    // The Length hint says what the server read from the video; a typed length overrides it.
+    const lengthHint = (url: string): string => {
+        const info = url ? videoLengths?.get(url) : undefined;
+        if (!info) return t('homeBuilder.f.durationAuto.pending');
+        if (info.status === 'found' && info.seconds) return t('homeBuilder.f.durationAuto.found', { length: formatLength(info.seconds) });
+        return t(`homeBuilder.f.durationAuto.${info.status === 'found' ? 'unavailable' : info.status}`);
+    };
     return (
         <>
             <SectionHeaderFields kit={kit} tone="pink" />
@@ -174,7 +193,7 @@ export function VideoReelForm({ kit }: { kit: FormKit }) {
                         <TextField label={t('homeBuilder.f.videoUrl')} hint={t('homeBuilder.f.videoUrlHint')} value={str(item.video_url)} onChange={(v) => setItem('video_url', v)} path={`items.${i}.video_url`} ctx={ctx} mono />
                         <MediaField label={t('homeBuilder.f.poster')} hint={t('homeBuilder.f.posterHint')} pickerTitle="homeBuilder.f.pickImage" ratio={[9, 16]} value={imageOf(item)} onChange={pickImage((id) => setItem('media_id', id))} disabled={ctx.disabled} error={ctx.errors[`content.items.${i}.media_id`]} />
                         <Bilingual content={item} prefix={`items.${i}.`} keyName="alt" set={setItem} ctx={ctx} hint={t('homeBuilder.f.altHint')} />
-                        <TextField label={t('homeBuilder.f.duration')} hint={t('homeBuilder.f.durationHint')} value={str(item.duration)} onChange={(v) => setItem('duration', v)} path={`items.${i}.duration`} ctx={ctx} mono />
+                        <TextField label={t('homeBuilder.f.duration')} hint={lengthHint(str(item.video_url))} value={str(item.duration)} onChange={(v) => setItem('duration', v)} path={`items.${i}.duration`} ctx={ctx} mono />
                         <Bilingual content={item} prefix={`items.${i}.`} keyName="views" set={setItem} ctx={ctx} hint={t('homeBuilder.f.viewsHint')} />
                         <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.reelProduct')}</p>
                         <ProductPicker picked={ids(product)} onChange={(next) => setItem('product_id', next[next.length - 1] ?? null)} ctx={ctx} path={`items.${i}.product_id`} max={1} />

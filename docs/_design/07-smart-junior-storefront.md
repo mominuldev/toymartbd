@@ -653,7 +653,7 @@ Owner rule: every word, link, image and figure on a home section is a block fiel
 | Gifts & combos `57:12772` | `product_rail` with `band: pink` | any rule (a gift category or a manual pick) on a full-width pastel band |
 | Promo banners `34:5763` | `promo_banners` (new) | 1–2 banners: eyebrow, title, line, button, photo, tone |
 | Why Smart Junior `34:5786` | `why_band` (new) | eyebrow, title, paragraph, up to 4 figures typed by the owner (never defaulted), photo |
-| Video reel `55:12790` | `video_reel` (new) | header, band, see-all; up to 12 reels: video link that plays in a popup on the page — YouTube (via youtube-nocookie.com), Facebook, Instagram, or a hosted .mp4/.webm; the player loads only on play, 9:16 poster, title, length, views caption, optional product chip (listable products only) |
+| Video reel `55:12790` | `video_reel` (new) | header, band, see-all; up to 12 reels: video link that plays in a popup on the page — YouTube (via youtube-nocookie.com), Facebook, Instagram, or a hosted .mp4/.webm; the player loads only on play, 9:16 poster, title, length (read from YouTube or the file after save; a typed one overrides; Facebook/Instagram are typed), views caption, optional product chip (listable products only) |
 | Journal `34:5851` | `blog_teaser` | header, see-all switch (→ `/blog`) |
 | Help CTA `34:5872` | `chat_band`, `tone: yellow` | title, line, WhatsApp button text, hotline button switch (both numbers come from Settings › Store › Business and stay hidden while they are the sample) |
 | Product card "নতুন" | API `is_new` | published within `catalog.new_badge_days` (default 30) |

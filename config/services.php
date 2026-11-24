@@ -30,6 +30,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // YouTube Data API v3 (videos.list, part=contentDetails): the length of a home video reel that
+    // links to YouTube (FetchVideoLength). Empty → YouTube reels show only a typed length. A browser
+    // or server API key from Google Cloud, restricted to the YouTube Data API.
+    'youtube' => [
+        'key' => env('YOUTUBE_API_KEY'),
+    ],
+
     // Next.js storefront cache revalidation (docs/api/revalidation.md). Either empty → the
     // RevalidateStorefrontTags job logs at debug level and sends nothing.
     'storefront' => [

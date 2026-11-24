@@ -9,6 +9,7 @@ use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
+use App\Domain\Content\Blocks\Services\VideoLengths;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Database\Eloquent\Collection;
@@ -45,7 +46,33 @@ final class CmsHomeDraftResource extends ApiResource
             'block_types' => array_map(static fn (BlockType $type): array => ['type' => $type->value, 'defaults' => $type->schema()->normalize($type->schema()->defaults())], BlockType::cases()),
             /** @var list<array{id: int, thumb_url: string|null, alt_text: string|null, alt_text_bn: string|null}> */
             'media' => self::media($blocks),
+            /**
+             * What is known about each video reel link's length (looked up after save; the editor's typed length wins on the storefront).
+             *
+             * @var list<array{url: string, seconds: int|null, status: 'pending'|'found'|'unavailable'|'failed'|'no_key'|'unsupported'}>
+             */
+            'video_lengths' => self::videoLengths($blocks),
         ];
+    }
+
+    /**
+     * @param  Collection<int, CmsBlock>  $blocks
+     * @return list<array{url: string, seconds: int|null, status: string}>
+     */
+    private static function videoLengths(Collection $blocks): array
+    {
+        $urls = [];
+        foreach ($blocks as $block) {
+            if ($block->type === BlockType::VideoReel) {
+                $urls = [...$urls, ...VideoLengths::urls($block->content)];
+            }
+        }
+        $out = [];
+        foreach (VideoLengths::statusFor(array_values(array_unique($urls))) as $url => $row) {
+            $out[] = ['url' => $url, 'seconds' => $row['seconds'], 'status' => $row['status']];
+        }
+
+        return $out;
     }
 
     /**

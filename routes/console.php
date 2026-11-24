@@ -87,6 +87,14 @@ Schedule::command('toymart:content:revalidate-scheduled')
     ->withoutOverlapping(5)
     ->onOneServer();
 
+// Home video reel lengths (P10): queue a lookup for any reel link without one and retry the failed
+// and "no YouTube key" ones. Daily at 04:30 Dhaka, off-peak; the lookups run on `index`.
+Schedule::command('toymart:content:video-lengths')
+    ->dailyAt('04:30')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping(30)
+    ->onOneServer();
+
 // XML sitemaps (P7 SEO, docs/api/seo.md §5): rebuilt nightly at 03:00 Dhaka on `index`, then the
 // storefront's cached copies are purged. The admin can also rebuild on demand.
 Schedule::job(new App\Domain\Seo\Jobs\GenerateSitemaps)

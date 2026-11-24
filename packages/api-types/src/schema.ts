@@ -10077,6 +10077,13 @@ export interface components {
                 alt_text: string | null;
                 alt_text_bn: string | null;
             }[];
+            /** @description What is known about each video reel link's length (looked up after save; the editor's typed length wins on the storefront). */
+            video_lengths: {
+                url: string;
+                seconds: number | null;
+                /** @enum {string} */
+                status: "pending" | "found" | "unavailable" | "failed" | "no_key" | "unsupported";
+            }[];
         };
         /** CmsLayoutVersion */
         CmsLayoutVersion: {

@@ -9,6 +9,7 @@ use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Content\Blocks\DTOs\ResolvedBlock;
 use App\Domain\Content\Blocks\Enums\BlockType;
+use App\Domain\Content\Blocks\Services\VideoLengths;
 use App\Domain\Content\Blocks\ValueObjects\VideoEmbed;
 use App\Domain\Content\Models\Testimonial;
 use App\Http\Resources\Admin\BrandResource as AdminBrandResource;
@@ -153,7 +154,12 @@ final class StorefrontHomeResource extends ApiResource
             case BlockType::VideoReel:
                 /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Domain\Catalog\Models\Product> $reelProducts */
                 $reelProducts = $data['products'];
-                $content['items'] = array_map(static function (array $item) use ($media, $locale, $reelProducts): array {
+                /** @var array<string, int> $lengths detected seconds by video link */
+                $lengths = $data['lengths'] ?? [];
+                $content['items'] = array_map(static function (array $item) use ($media, $locale, $reelProducts, $lengths): array {
+                    // The editor's typed length wins; else the one read from YouTube or the file (VideoLengths).
+                    $detected = $lengths[$item['video_url'] ?? ''] ?? null;
+                    $item['duration'] = is_string($item['duration'] ?? null) && $item['duration'] !== '' ? $item['duration'] : ($detected === null ? null : VideoLengths::format($detected));
                     $item['poster'] = self::image($media->get($item['media_id'] ?? 0), $item['alt'] ?? null, $locale);
                     $item['embed'] = VideoEmbed::fromUrl(is_string($item['video_url'] ?? null) ? $item['video_url'] : null)?->toArray();
                     $product = $reelProducts->get((int) ($item['product_id'] ?? 0));

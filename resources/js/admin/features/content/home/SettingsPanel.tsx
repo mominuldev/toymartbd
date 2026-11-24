@@ -8,6 +8,7 @@ import { tabClass } from '@/components/ui/Tabs';
 import { endsBeforeStart, formatDhakaDateTime, fromDhakaInput, toDhakaInput } from '@/features/content/shared/dhaka';
 import type { BlockPatch, CmsBlock } from './api';
 import { ContentForm, StyleForm, type MediaThumb } from './BlockForm';
+import type { VideoLengthInfo } from './SectionForms';
 import { blockTitle, typeLabel, type Content } from './content';
 import { SwitchRow, type FieldCtx } from './fields';
 
@@ -20,6 +21,7 @@ type Props = {
     canManage: boolean;
     errors: Record<string, string>;
     media: ReadonlyMap<number, MediaThumb>;
+    videoLengths?: ReadonlyMap<string, VideoLengthInfo>;
     /** Autosave: called with the changed fields, debounced. */
     onSave: (block: CmsBlock, patch: BlockPatch) => void;
     onDelete: (block: CmsBlock) => void;
@@ -35,7 +37,7 @@ const AUTOSAVE_MS = 700;
  * bg/subtle. Every edit is kept locally and autosaved to the draft after a short pause; leaving
  * the section saves at once. Nothing reaches the storefront until Publish.
  */
-export function SettingsPanel({ block, tab, onTab, canManage, errors, media, onSave, onDelete, onDuplicate, deleting }: Props) {
+export function SettingsPanel({ block, tab, onTab, canManage, errors, media, videoLengths, onSave, onDelete, onDuplicate, deleting }: Props) {
     const { t, locale } = useI18n();
     const [content, setContent] = useState<Content>(block.content as Content);
     const [starts, setStarts] = useState(toDhakaInput(block.starts_at));
@@ -103,7 +105,7 @@ export function SettingsPanel({ block, tab, onTab, canManage, errors, media, onS
             </div>
 
             <div id="home-tabpanel" role="tabpanel" aria-labelledby={`home-tab-${tab}`} className="flex flex-col gap-4">
-                {tab === 'content' && <ContentForm block={block} content={content} onChange={changeContent} onSettings={(patch) => queue(patch, true)} ctx={ctx} media={media} />}
+                {tab === 'content' && <ContentForm block={block} content={content} onChange={changeContent} onSettings={(patch) => queue(patch, true)} ctx={ctx} media={media} videoLengths={videoLengths} />}
                 {tab === 'style' && <StyleForm block={block} content={content} onChange={changeContent} ctx={ctx} />}
                 {tab === 'visibility' && (
                     <>

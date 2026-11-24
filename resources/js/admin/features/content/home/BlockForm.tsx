@@ -7,7 +7,7 @@ import type { CmsBlock } from './api';
 import { BLOOM_TONES, bool, CONTACT_CHANNELS, ids, num, rows, str, TILE_ICONS, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
-import { AgeTilesForm, BandField, PromoBannersForm, SectionHeaderFields, VideoReelForm, WhyBandForm, type FormKit } from './SectionForms';
+import { AgeTilesForm, BandField, PromoBannersForm, SectionHeaderFields, VideoReelForm, WhyBandForm, type FormKit, type VideoLengthInfo } from './SectionForms';
 
 /*
  * The Content and Style tabs of the B · 26 settings panel, one form per block type. Each edit
@@ -25,6 +25,8 @@ type Props = {
     onSettings: (patch: { show_mobile: boolean }) => void;
     ctx: FieldCtx;
     media: ReadonlyMap<number, MediaThumb>;
+    /** Detected reel lengths by video link (CmsHomeDraft `video_lengths`). */
+    videoLengths?: ReadonlyMap<string, VideoLengthInfo>;
 };
 
 const USP_ICONS = ['cod', 'return', 'authentic', 'support', 'delivery', 'gift', 'educational'] as const;
@@ -45,7 +47,7 @@ function imageValue(content: Content, media: ReadonlyMap<number, MediaThumb>, pi
 /** Thumbnails of images picked in this session, before the draft reload knows them. */
 const pickedThisSession = new Map<number, PickedImage>();
 
-export function ContentForm({ block, content, onChange, onSettings, ctx, media }: Props) {
+export function ContentForm({ block, content, onChange, onSettings, ctx, media, videoLengths }: Props) {
     const { t } = useI18n();
     const set = (key: string, value: unknown) => onChange({ ...content, [key]: value });
     const setRow = (listKey: string, index: number, key: string, value: unknown) => {
@@ -60,7 +62,7 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
         if (next) pickedThisSession.set(next.media_id, next);
         apply(next?.media_id ?? null);
     };
-    const kit: FormKit = { content, set, setRow, listOps, pickImage, imageOf: (row) => imageValue(row, media, pickedThisSession), ctx };
+    const kit: FormKit = { content, set, setRow, listOps, pickImage, imageOf: (row) => imageValue(row, media, pickedThisSession), ctx, videoLengths };
 
     switch (block.type) {
         case 'hero': {
@@ -512,7 +514,7 @@ function RailContent({ kit, setMany, block, onSettings }: { kit: FormKit; setMan
 }
 
 /** The Style tab: counts, layout switches. Types without style options say so. */
-export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media' | 'onSettings'>) {
+export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media' | 'onSettings' | 'videoLengths'>) {
     const { t } = useI18n();
     const set = (key: string, value: unknown) => onChange({ ...content, [key]: value });
     const howMany = (min: number, max: number, fallback: number, label: (n: number) => string) => (

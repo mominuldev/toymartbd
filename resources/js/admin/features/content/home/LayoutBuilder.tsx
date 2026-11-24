@@ -27,6 +27,7 @@ import {
     type LayoutBase,
 } from './api';
 import type { MediaThumb } from './BlockForm';
+import type { VideoLengthInfo } from './SectionForms';
 import { blockTitle, typeLabel } from './content';
 import { PreviewCanvas, type Device } from './PreviewCanvas';
 import { SectionList } from './SectionList';
@@ -112,6 +113,10 @@ export function LayoutBuilder({ base, title, breadcrumb, titleAddon, actions, ba
     const blocks = draft.data?.blocks ?? [];
     const selected = blocks.find((b) => b.id === selectedId) ?? blocks[0] ?? null;
     const media: ReadonlyMap<number, MediaThumb> = useMemo(() => new Map((draft.data?.media ?? []).map((m): [number, MediaThumb] => [m.id, m])), [draft.data?.media]);
+    const videoLengths: ReadonlyMap<string, VideoLengthInfo> = useMemo(
+        () => new Map((draft.data?.video_lengths ?? []).map((v): [string, VideoLengthInfo] => [v.url, { seconds: v.seconds, status: v.status }])),
+        [draft.data?.video_lengths],
+    );
     const refreshPreview = () => setRevision((r) => r + 1);
     // Canvas outline names: the section type, then the name the section list shows ("Product rail · Best sellers").
     const labels = useMemo(
@@ -339,6 +344,7 @@ export function LayoutBuilder({ base, title, breadcrumb, titleAddon, actions, ba
                                     canManage={canManage}
                                     errors={errors}
                                     media={media}
+                                    videoLengths={videoLengths}
                                     onSave={(block, patch) => save(block, patch)}
                                     onDelete={(block) =>
                                         remove.mutate(block.id, {

@@ -44475,6 +44475,40 @@
                                 "alt_text_bn"
                             ]
                         }
+                    },
+                    "video_lengths": {
+                        "type": "array",
+                        "description": "What is known about each video reel link's length (looked up after save; the editor's typed length wins on the storefront).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": "string"
+                                },
+                                "seconds": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "pending",
+                                        "found",
+                                        "unavailable",
+                                        "failed",
+                                        "no_key",
+                                        "unsupported"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "url",
+                                "seconds",
+                                "status"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -44483,7 +44517,8 @@
                     "live",
                     "has_unpublished_changes",
                     "block_types",
-                    "media"
+                    "media",
+                    "video_lengths"
                 ],
                 "title": "CmsHomeDraft"
             },

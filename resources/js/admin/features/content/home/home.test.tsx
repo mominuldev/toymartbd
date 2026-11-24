@@ -46,6 +46,7 @@ const draft = (patch: Partial<CmsHomeDraft> = {}): CmsHomeDraft => ({
     has_unpublished_changes: true,
     block_types: [],
     media: [],
+    video_lengths: [],
     ...patch,
 });
 
@@ -189,6 +190,34 @@ describe('homepage builder', () => {
             },
             { timeout: 4000 },
         );
+    });
+
+    it('shows under each reel’s Length what was read from the video, and why when nothing was', { timeout: 20_000 }, async () => {
+        const reel = block(1, 'video_reel', {
+            title: 'Toys in action',
+            items: [
+                { title: 'Tower', video_url: 'https://www.youtube.com/shorts/Abc_def-123', media_id: null, duration: null },
+                { title: 'Unboxing', video_url: 'https://www.facebook.com/reel/123', media_id: null, duration: null },
+            ],
+        });
+        api(editor, (url) =>
+            url.endsWith('/content/home')
+                ? {
+                      status: 200,
+                      body: draft({
+                          blocks: [reel],
+                          video_lengths: [
+                              { url: 'https://www.youtube.com/shorts/Abc_def-123', seconds: 42, status: 'found' },
+                              { url: 'https://www.facebook.com/reel/123', seconds: null, status: 'unsupported' },
+                          ],
+                      }),
+                  }
+                : null,
+        );
+        renderApp('/store/home');
+
+        expect(await screen.findByText(t('homeBuilder.f.durationAuto.found', { length: '0:42' }), {}, { timeout: 5000 })).toBeTruthy();
+        expect(screen.getByText(t('homeBuilder.f.durationAuto.unsupported'))).toBeTruthy();
     });
 
     it('summarises the Smart Junior sections', () => {

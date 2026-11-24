@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Content\Blocks\Actions;
 
+use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
 use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use App\Domain\Content\Blocks\Services\HomeLayoutCache;
+use App\Domain\Content\Blocks\Services\VideoLengths;
 use App\Domain\Content\Events\CmsLayoutPublished;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +50,9 @@ final class RevertLayout
                     'updated_by' => $userId,
                 ]);
                 $block->save();
+                if ($block->type === BlockType::VideoReel) {
+                    VideoLengths::queueFor($block->content); // looked up after commit (rule 4)
+                }
             }
 
             CmsBlockMedia::syncDraft($placement); // Media Library "where used"

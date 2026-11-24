@@ -55,6 +55,7 @@ const homeDraft = (patch: Partial<CmsHomeDraft> = {}): CmsHomeDraft => ({
     has_unpublished_changes: true,
     block_types: [],
     media: [],
+    video_lengths: [],
     ...patch,
 });
 const richText: CmsBlock = {

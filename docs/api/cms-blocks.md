@@ -51,13 +51,13 @@ empty optional label).
 | `chat_band` | `title`*, `body`, `button_label`, `tone` mint\|yellow (yellow = Smart Junior Help CTA 34:5872), `show_hotline` (a call button) — "Still need help?"; the buttons link to the store's WhatsApp and hotline from `GET /storefront/store-info` and each is left out while its number is the sample |
 | `promo_banners` | `items[1..2]` (Smart Junior Promo banners 34:5763): `overline`, `title`*, `body`, `cta_label`, `cta_href`, `media_id`, `alt`, `tone` — the storefront gets `content.items[].image` |
 | `why_band` | `eyebrow`, `title`*, `body`, `stats[0..4]`: `value`* (as typed, Western digits, both languages, e.g. `50,000+`), `label`*; `media_id`, `alt` (Why Smart Junior 34:5786) — the storefront gets `content.image`. Figures are the owner's; nothing is defaulted |
-| `video_reel` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `band`; `see_all_label` + `see_all_href`; `items[0..12]` (Video reel 55:12790): `title`*, `video_url`* (a YouTube Shorts/watch/youtu.be, Facebook or Instagram video link, or an https `.mp4`/`.webm` file — anything else is a 422; it plays in the storefront's popup player), `media_id`* (the 9:16 poster), `alt`, `duration` (`m:ss`), `views` (caption as typed), `product_id` — the storefront gets `content.items[].poster`, `.embed` (`{kind: youtube|facebook|instagram|file, src}` — the player source: youtube-nocookie.com embed, Facebook video plugin, Instagram /embed, or the file itself; null for a link saved before this rule) and `.product` (`{name, slug}`, only while listable, else null). Reels whose poster is gone are dropped; a reel block with none is removed |
+| `video_reel` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `band`; `see_all_label` + `see_all_href`; `items[0..12]` (Video reel 55:12790): `title`*, `video_url`* (a YouTube Shorts/watch/youtu.be, Facebook or Instagram video link, or an https `.mp4`/`.webm` file — anything else is a 422; it plays in the storefront's popup player), `media_id`* (the 9:16 poster), `alt`, `duration` (`m:ss`, optional: it overrides the detected length — see *Video reel lengths* below), `views` (caption as typed), `product_id` — the storefront gets `content.items[].poster`, `.embed` (`{kind: youtube|facebook|instagram|file, src}` — the player source: youtube-nocookie.com embed, Facebook video plugin, Instagram /embed, or the file itself; null for a link saved before this rule) and `.product` (`{name, slug}`, only while listable, else null). Reels whose poster is gone are dropped; a reel block with none is removed |
 
 ## Admin API (`/api/v1/admin`, content.view to read, content.manage to change)
 
 | | |
 |---|---|
-| `GET /content/home` | `{ placement, blocks: CmsBlock[], live: CmsLayoutVersion\|null, has_unpublished_changes, block_types: [{type, defaults}], media: [{id, thumb_url, alt_text, alt_text_bn}] }` |
+| `GET /content/home` | `{ placement, blocks: CmsBlock[], live: CmsLayoutVersion\|null, has_unpublished_changes, block_types: [{type, defaults}], media: [{id, thumb_url, alt_text, alt_text_bn}], video_lengths: [{url, seconds, status}] }` |
 | `POST /content/home/blocks` | `{ type, position?, content?, label?, is_enabled?, show_en?, show_bn?, show_mobile?, show_desktop?, starts_at?, ends_at? }` → 201 `CmsBlock`. Without `content` the type's defaults are used. A time without an offset is Dhaka time |
 | `PATCH /content/home/blocks/{id}` | any subset of the same; `content` replaces the block's content whole → `CmsBlock` |
 | `DELETE /content/home/blocks/{id}` | 204 |
@@ -94,6 +94,27 @@ plain text), published as version 1. `cms_pages.content*` / `faq_items` stay for
   published_at, preview, blocks }`, `blocks` resolved exactly as the homepage's. 404 when the page
   is not live. `GET /content/pages/preview?locale=…` with a `page_draft` token — that page's draft,
   whatever its status.
+
+## Video reel lengths
+
+A reel's length is read from the video itself; the editor's typed `duration` overrides it. The
+storefront's `items[].duration` is the typed value, else the detected one (`m:ss`, `h:mm:ss`), else null.
+
+- Lengths live in `video_lengths` (keyed by the link's sha256), outside block content, so published
+  versions stay frozen and a changed link means a fresh lookup.
+- Saving, adding or reverting a `video_reel` block queues `FetchVideoLength` (queue `index`) for each
+  new link, **after commit** (rule 4). Status: `pending` → `found` / `unavailable` / `failed` (after
+  3 tries) / `no_key` / `unsupported`.
+- **YouTube:** YouTube Data API v3 `videos.list?part=contentDetails` with `YOUTUBE_API_KEY`
+  (`services.youtube.key`). Without a key the status is `no_key`.
+- **Hosted .mp4 / .webm:** the file header via HTTP `Range` (first 64 KB; an MP4 without "fast start"
+  also its last 1 MB): MP4 `mvhd`, WebM `Duration` × `TimecodeScale`. Only https on 443, only a host
+  whose every address is public (the connection is pinned to the checked address), no redirects.
+- **Facebook / Instagram:** `unsupported` — no official API gives a video's length; the editor types it.
+- A found or changed length revalidates `content:home` and `content:pages`.
+- `toymart:content:video-lengths` (daily 04:30 Dhaka) queues any reel link without a row and retries
+  `pending`, `failed` and `no_key` — so adding the YouTube key fills the YouTube lengths in by the next morning.
+- The admin's draft (`video_lengths`) tells the editor, under each reel's Length field, what was found.
 
 ## Caching and revalidation
 
